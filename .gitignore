@@ -1,0 +1,14 @@
+# Flutter
+build/
+.dart_tool/
+.packages
+pubspec.lock
+
+# IDE files
+.idea/
+android/.gradle/
+
+# Sensitive files
+*.env
+.env
+keys.dart
