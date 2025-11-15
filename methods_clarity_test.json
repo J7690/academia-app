@@ -1,0 +1,38 @@
+{
+  "timestamp": "2025-11-13T19:54:38.379021",
+  "methods_tested": {
+    "list_tables_detailed": {
+      "status": "working",
+      "description": "Lister toutes les tables",
+      "response_type": "list"
+    },
+    "describe_table_detailed": {
+      "status": "working",
+      "description": "Décrire une table",
+      "response_type": "list"
+    },
+    "table_exists": {
+      "status": "working",
+      "description": "Vérifier existence table",
+      "response_type": "bool"
+    },
+    "column_exists": {
+      "status": "working",
+      "description": "Vérifier existence colonne",
+      "response_type": "bool"
+    },
+    "api_SELECT": {
+      "status": "working",
+      "description": "Lire des données",
+      "response_type": "list"
+    },
+    "api_COUNT": {
+      "status": "working",
+      "description": "Compter des données",
+      "response_type": "list"
+    }
+  },
+  "clarity_score": 100.0,
+  "total_methods": 6,
+  "working_methods": 6
+}

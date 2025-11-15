@@ -1,0 +1,15 @@
+{
+  "timestamp": "2025-11-13T19:59:52.614518",
+  "test_type": "windsurf_mandatory_compliance",
+  "total_rule_files": 50,
+  "mandatory_files": 26,
+  "compliance_score": 75.0,
+  "checks": {
+    "supabase_integration": true,
+    "intervention_procedures": true,
+    "agent_choice": false,
+    "coding_standards": true
+  },
+  "overall_compliant": true,
+  "enforcement_level": "MANDATORY"
+}
