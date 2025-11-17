@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../student_profile_screen.dart';
+import '../student_university_site_screen.dart';
 import '../../../providers/student_profile_provider.dart';
 import '../../../providers/student_offers_provider.dart';
 import '../../../providers/student_applications_provider.dart';
@@ -207,6 +208,8 @@ class _OfferCard extends StatelessWidget {
     final country = offer['country']?.toString() ?? '';
     final degree = offer['degree_level']?.toString() ?? '';
     final mode = offer['mode']?.toString() ?? '';
+    final description = offer['program_description']?.toString() ?? '';
+    final universitySlug = offer['university_slug']?.toString();
     final highlighted = (offer['highlighted'] == true);
 
     return Card(
@@ -251,6 +254,14 @@ class _OfferCard extends StatelessWidget {
               '$city, $country',
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
+            if (description.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                description,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -271,37 +282,56 @@ class _OfferCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: programId == null
-                    ? null
-                    : () async {
-                        final applicationsProvider =
-                            context.read<StudentApplicationsProvider>();
-                        final success = await applicationsProvider
-                            .createApplication(programId: programId);
-                        if (!context.mounted) return;
-                        if (success) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Candidature créée avec succès.'),
-                            ),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                applicationsProvider.error ??
-                                    'Erreur lors de la création de la candidature.',
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: (universitySlug == null || universitySlug.isEmpty)
+                      ? null
+                      : () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => StudentUniversitySiteScreen(
+                                universitySlug: universitySlug,
+                                universityName: university.isNotEmpty ? university : null,
                               ),
                             ),
                           );
-                        }
-                      },
-                icon: const Icon(Icons.send),
-                label: const Text('Candidater'),
-              ),
+                        },
+                  icon: const Icon(Icons.school_outlined),
+                  label: const Text('Voir le mini-site'),
+                ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: programId == null
+                      ? null
+                      : () async {
+                          final applicationsProvider =
+                              context.read<StudentApplicationsProvider>();
+                          final success = await applicationsProvider
+                              .createApplication(programId: programId);
+                          if (!context.mounted) return;
+                          if (success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Candidature créée avec succès.'),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  applicationsProvider.error ??
+                                      'Erreur lors de la création de la candidature.',
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                  icon: const Icon(Icons.send),
+                  label: const Text('Candidater'),
+                ),
+              ],
             ),
           ],
         ),

@@ -141,15 +141,34 @@ def supabase_column_exists(table_name: str, column_name: str) -> Dict[str, Any]:
 
 # === MÉTHODES API VALIDÉES (Priorité #2) ===
 
+def _build_table_request(table_name: str):
+    """Construit l'URL et les headers pour une table éventuellement schématisée.
+
+    - Supporte les noms "schema.table" (ex: "app.universities") en
+      utilisant Accept-Profile/Content-Profile pour cibler le bon schéma.
+    - Pour les noms simples, reste sur le schéma par défaut (public).
+    """
+    schema = None
+    table = table_name
+    if "." in table_name:
+        schema, table = table_name.split(".", 1)
+
+    url = f"{SUPABASE_URL}/rest/v1/{table}"
+    headers = dict(API_HEADERS)
+    if schema:
+        headers["Accept-Profile"] = schema
+        headers["Content-Profile"] = schema
+    return url, headers
+
 def supabase_read_data(table_name: str, limit: int = 10) -> Dict[str, Any]:
     """
     Lire des données depuis une table
     WINDSURF: UTILISER OBLIGATOIREMENT CETTE MÉTHODE
     """
     try:
-        response = requests.get(f"{SUPABASE_URL}/rest/v1/{table_name}?limit={limit}", 
-                               headers=API_HEADERS, 
-                               timeout=10)
+        url, headers = _build_table_request(table_name)
+        url = f"{url}?limit={limit}"
+        response = requests.get(url, headers=headers, timeout=10)
         if response.status_code == 200:
             return {
                 "success": True,
@@ -167,10 +186,8 @@ def supabase_insert_data(table_name: str, data: Dict[str, Any]) -> Dict[str, Any
     WINDSURF: UTILISER OBLIGATOIREMENT CETTE MÉTHODE
     """
     try:
-        response = requests.post(f"{SUPABASE_URL}/rest/v1/{table_name}", 
-                               headers=API_HEADERS, 
-                               json=data, 
-                               timeout=10)
+        url, headers = _build_table_request(table_name)
+        response = requests.post(url, headers=headers, json=data, timeout=10)
         if response.status_code == 201:
             return {
                 "success": True,
@@ -188,10 +205,9 @@ def supabase_update_data(table_name: str, data: Dict[str, Any], condition: str) 
     WINDSURF: UTILISER OBLIGATOIREMENT CETTE MÉTHODE
     """
     try:
-        response = requests.patch(f"{SUPABASE_URL}/rest/v1/{table_name}?{condition}", 
-                                headers=API_HEADERS, 
-                                json=data, 
-                                timeout=10)
+        url, headers = _build_table_request(table_name)
+        url = f"{url}?{condition}"
+        response = requests.patch(url, headers=headers, json=data, timeout=10)
         if response.status_code == 200:
             return {
                 "success": True,
@@ -209,9 +225,9 @@ def supabase_delete_data(table_name: str, condition: str) -> Dict[str, Any]:
     WINDSURF: UTILISER OBLIGATOIREMENT CETTE MÉTHODE
     """
     try:
-        response = requests.delete(f"{SUPABASE_URL}/rest/v1/{table_name}?{condition}", 
-                                  headers=API_HEADERS, 
-                                  timeout=10)
+        url, headers = _build_table_request(table_name)
+        url = f"{url}?{condition}"
+        response = requests.delete(url, headers=headers, timeout=10)
         if response.status_code == 204:
             return {
                 "success": True,

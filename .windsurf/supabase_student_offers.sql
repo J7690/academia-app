@@ -89,6 +89,7 @@ BEGIN
                 'tuition_fees', p.tuition_fees,
                 'highlighted', p.highlighted,
                 'university_id', u.id,
+                'university_slug', u.slug,
                 'university_name', u.name,
                 'university_logo_url', u.logo_url,
                 'country', u.country,
@@ -188,6 +189,268 @@ $$;
 
 GRANT EXECUTE ON FUNCTION app_list_programs_by_university(UUID) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION app_list_programs_by_university(UUID) TO service_role;
+
+-- ========================================
+-- 6) RPC - FONCTIONS DE GESTION DES PROGRAMMES POUR LES UNIVERSITÉS ET LES ADMINISTRATEURS
+-- ========================================
+
+CREATE OR REPLACE FUNCTION app_list_university_programs_for_management()
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_university_id UUID;
+    v_result JSONB;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT
+        raw_user_meta_data->>'role',
+        (raw_user_meta_data->>'university_id')::UUID
+    INTO v_role, v_university_id
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'university' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_university');
+    END IF;
+
+    IF v_university_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'university_not_configured');
+    END IF;
+
+    SELECT COALESCE(
+        JSONB_AGG(
+            JSONB_BUILD_OBJECT(
+                'id', p.id,
+                'university_id', p.university_id,
+                'title', p.title,
+                'description', p.description,
+                'degree_level', p.degree_level,
+                'mode', p.mode,
+                'duration_months', p.duration_months,
+                'tuition_fees', p.tuition_fees,
+                'highlighted', p.highlighted,
+                'is_active', p.is_active,
+                'created_at', p.created_at,
+                'updated_at', p.updated_at
+            )
+            ORDER BY p.created_at DESC
+        ),
+        '[]'::JSONB
+    ) INTO v_result
+    FROM app.programs p
+    WHERE p.university_id = v_university_id;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'programs', v_result);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_list_university_programs_for_management() TO authenticated;
+GRANT EXECUTE ON FUNCTION app_list_university_programs_for_management() TO service_role;
+
+CREATE OR REPLACE FUNCTION app_upsert_university_program(
+    p_program_id UUID,
+    p_title TEXT,
+    p_description TEXT,
+    p_degree_level TEXT,
+    p_mode TEXT,
+    p_duration_months INTEGER,
+    p_tuition_fees NUMERIC,
+    p_highlighted BOOLEAN,
+    p_is_active BOOLEAN
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_university_id UUID;
+    v_program_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT
+        raw_user_meta_data->>'role',
+        (raw_user_meta_data->>'university_id')::UUID
+    INTO v_role, v_university_id
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'university' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_university');
+    END IF;
+
+    IF v_university_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'university_not_configured');
+    END IF;
+
+    IF p_title IS NULL OR LENGTH(TRIM(p_title)) = 0 THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_title');
+    END IF;
+
+    IF p_program_id IS NULL THEN
+        INSERT INTO app.programs (
+            university_id,
+            title,
+            description,
+            degree_level,
+            mode,
+            duration_months,
+            tuition_fees,
+            highlighted,
+            is_active
+        )
+        VALUES (
+            v_university_id,
+            p_title,
+            p_description,
+            p_degree_level,
+            p_mode,
+            p_duration_months,
+            p_tuition_fees,
+            COALESCE(p_highlighted, FALSE),
+            COALESCE(p_is_active, TRUE)
+        )
+        RETURNING id INTO v_program_id;
+    ELSE
+        UPDATE app.programs
+        SET
+            title = p_title,
+            description = p_description,
+            degree_level = p_degree_level,
+            mode = p_mode,
+            duration_months = p_duration_months,
+            tuition_fees = p_tuition_fees,
+            highlighted = COALESCE(p_highlighted, highlighted),
+            is_active = COALESCE(p_is_active, is_active),
+            updated_at = NOW()
+        WHERE id = p_program_id
+          AND university_id = v_university_id
+        RETURNING id INTO v_program_id;
+    END IF;
+
+    IF v_program_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'program_not_found');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'program_id', v_program_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_upsert_university_program(UUID, TEXT, TEXT, TEXT, TEXT, INTEGER, NUMERIC, BOOLEAN, BOOLEAN) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_upsert_university_program(UUID, TEXT, TEXT, TEXT, TEXT, INTEGER, NUMERIC, BOOLEAN, BOOLEAN) TO service_role;
+
+CREATE OR REPLACE FUNCTION app_admin_list_all_programs()
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_result JSONB;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    SELECT COALESCE(
+        JSONB_AGG(
+            JSONB_BUILD_OBJECT(
+                'id', p.id,
+                'university_id', u.id,
+                'university_name', u.name,
+                'university_slug', u.slug,
+                'university_website_url', u.website_url,
+                'title', p.title,
+                'description', p.description,
+                'degree_level', p.degree_level,
+                'mode', p.mode,
+                'duration_months', p.duration_months,
+                'tuition_fees', p.tuition_fees,
+                'highlighted', p.highlighted,
+                'is_active', p.is_active,
+                'created_at', p.created_at,
+                'updated_at', p.updated_at
+            )
+            ORDER BY u.name ASC, p.created_at DESC
+        ),
+        '[]'::JSONB
+    ) INTO v_result
+    FROM app.programs p
+    JOIN app.universities u ON u.id = p.university_id;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'programs', v_result);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_list_all_programs() TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_list_all_programs() TO service_role;
+
+CREATE OR REPLACE FUNCTION app_admin_update_program_status(
+    p_program_id UUID,
+    p_is_active BOOLEAN,
+    p_highlighted BOOLEAN
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_program_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    UPDATE app.programs
+    SET
+        is_active = COALESCE(p_is_active, is_active),
+        highlighted = COALESCE(p_highlighted, highlighted),
+        updated_at = NOW()
+    WHERE id = p_program_id
+    RETURNING id INTO v_program_id;
+
+    IF v_program_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'program_not_found');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'program_id', v_program_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_update_program_status(UUID, BOOLEAN, BOOLEAN) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_update_program_status(UUID, BOOLEAN, BOOLEAN) TO service_role;
 
 -- ========================================
 -- 6) VALIDATION RAPIDE DU MODULE UNIVERSITÉS/OFFRES

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../student_university_site_screen.dart';
 import '../../../providers/student_offers_provider.dart';
 import '../../../providers/student_applications_provider.dart';
 import '../../../widgets/loading_widget.dart';
@@ -58,6 +59,7 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
                 itemBuilder: (context, index) {
                   final uni = universities[index];
                   final selected = uni['id'] == _selectedUniversityId;
+                  final slug = uni['slug']?.toString();
                   return Card(
                     color: selected ? Theme.of(context).colorScheme.primaryContainer : null,
                     margin: const EdgeInsets.only(bottom: 8),
@@ -65,6 +67,22 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
                       title: Text(uni['name']?.toString() ?? ''),
                       subtitle: Text(
                         '${uni['city'] ?? ''}, ${uni['country'] ?? ''}',
+                      ),
+                      trailing: TextButton.icon(
+                        onPressed: (slug == null || slug.isEmpty)
+                            ? null
+                            : () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => StudentUniversitySiteScreen(
+                                      universitySlug: slug,
+                                      universityName: uni['name']?.toString(),
+                                    ),
+                                  ),
+                                );
+                              },
+                        icon: const Icon(Icons.school_outlined),
+                        label: const Text('Mini-site'),
                       ),
                       onTap: () async {
                         final id = uni['id']?.toString();

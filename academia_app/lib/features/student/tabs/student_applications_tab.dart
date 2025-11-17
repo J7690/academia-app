@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../../providers/student_applications_provider.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
+import '../student_application_detail_screen.dart';
+import 'student_home_tab.dart';
 
 class StudentApplicationsTab extends StatefulWidget {
   const StudentApplicationsTab({super.key});
@@ -51,9 +53,15 @@ class _StudentApplicationsTabState extends State<StudentApplicationsTab> {
                 const SizedBox(height: 8),
                 ElevatedButton.icon(
                   onPressed: () {
-                    // La logique de création de candidature ciblée sera ajoutée plus tard
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Création de candidature à venir.')),
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => Scaffold(
+                          appBar: AppBar(
+                            title: Text('Nouvelle candidature'),
+                          ),
+                          body: const StudentHomeTab(),
+                        ),
+                      ),
                     );
                   },
                   icon: const Icon(Icons.add),
@@ -90,7 +98,18 @@ class _StudentApplicationsTabState extends State<StudentApplicationsTab> {
                 itemCount: applications.length,
                 itemBuilder: (context, index) {
                   final app = applications[index];
-                  return _ApplicationCard(application: app);
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => StudentApplicationDetailScreen(
+                            application: app,
+                          ),
+                        ),
+                      );
+                    },
+                    child: _ApplicationCard(application: app),
+                  );
                 },
               ),
             ),
@@ -153,11 +172,29 @@ class _ApplicationCard extends StatelessWidget {
     final status = application['status']?.toString() ?? '';
     final createdAt = application['created_at']?.toString() ?? '';
     final submittedAt = application['submitted_at']?.toString() ?? '';
+    final hasUnread = application['has_unread_for_student'] == true;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
-        leading: const Icon(Icons.assignment),
+        leading: Stack(
+          children: [
+            const Icon(Icons.assignment),
+            if (hasUnread)
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+          ],
+        ),
         title: Row(
           children: [
             Expanded(

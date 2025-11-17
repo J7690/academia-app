@@ -47,19 +47,62 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
                 itemBuilder: (context, index) {
                   final msg = messages[index];
                   final isUser = msg['sender'] == 'student';
+                  final messageId = msg['id']?.toString();
+                  final content = msg['content']?.toString() ?? '';
+                  final bubble = Container(
+                    margin: const EdgeInsets.only(bottom: 4),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isUser
+                          ? Theme.of(context).colorScheme.primaryContainer
+                          : Theme.of(context).colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(content),
+                  );
+
+                  final feedbackRow = (!isUser && messageId != null)
+                      ? Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: isUser
+                                ? MainAxisAlignment.end
+                                : MainAxisAlignment.start,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.thumb_up_alt_outlined, size: 18),
+                                tooltip: 'Réponse utile',
+                                onPressed: () {
+                                  context
+                                      .read<BobodoProvider>()
+                                      .sendFeedback(messageId: messageId, rating: 'up');
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.thumb_down_alt_outlined, size: 18),
+                                tooltip: 'Réponse peu utile',
+                                onPressed: () {
+                                  context
+                                      .read<BobodoProvider>()
+                                      .sendFeedback(messageId: messageId, rating: 'down');
+                                },
+                              ),
+                            ],
+                          ),
+                        )
+                      : const SizedBox.shrink();
+
                   return Align(
                     alignment:
                         isUser ? Alignment.centerRight : Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isUser
-                            ? Theme.of(context).colorScheme.primaryContainer
-                            : Theme.of(context).colorScheme.surfaceVariant,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(msg['content']?.toString() ?? ''),
+                    child: Column(
+                      crossAxisAlignment:
+                          isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                      children: [
+                        bubble,
+                        feedbackRow,
+                      ],
                     ),
                   );
                 },

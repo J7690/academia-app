@@ -103,7 +103,7 @@ class BobodoProvider extends ChangeNotifier {
     _setLoading(true);
     var backendOk = true;
     try {
-      final uri = Uri.parse('http://127.0.0.1:8001/bobodo/chat');
+      final uri = Uri.parse('https://academia-app-production.up.railway.app/bobodo/chat');
       final body = jsonEncode({
         'session_id': sessionId,
         'message': content,
@@ -130,6 +130,32 @@ class BobodoProvider extends ChangeNotifier {
     // si le backend a répondu correctement. Sinon on garde le message local.
     if (backendOk) {
       await loadMessages();
+    }
+  }
+
+  /// Envoi d'un feedback sur une réponse Bobodo ("up" ou "down").
+  /// Utilise la RPC app_add_bobodo_feedback côté Supabase.
+  Future<void> sendFeedback({
+    required String messageId,
+    required String rating,
+    String? comment,
+  }) async {
+    final sessionId = _currentSessionId;
+    if (sessionId == null) return;
+    if (rating != 'up' && rating != 'down') return;
+
+    try {
+      await _client.rpc(
+        'app_add_bobodo_feedback',
+        params: {
+          'p_session_id': sessionId,
+          'p_message_id': messageId,
+          'p_rating': rating,
+          if (comment != null) 'p_comment': comment,
+        },
+      );
+    } catch (_) {
+      // On ignore les erreurs de feedback pour ne pas bloquer l'UX.
     }
   }
 }

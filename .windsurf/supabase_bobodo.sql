@@ -243,12 +243,345 @@ $$;
 GRANT EXECUTE ON FUNCTION app_search_bobodo_knowledge(TEXT, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION app_search_bobodo_knowledge(TEXT, TEXT) TO service_role;
 
+CREATE TABLE IF NOT EXISTS app.bobodo_unanswered_questions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id UUID NOT NULL REFERENCES app.bobodo_sessions (id) ON DELETE CASCADE,
+    question_text TEXT NOT NULL,
+    category TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'new',
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+ALTER TABLE app.bobodo_unanswered_questions ENABLE ROW LEVEL SECURITY;
+
+GRANT ALL ON app.bobodo_unanswered_questions TO service_role;
+
 -- ========================================
--- 8) VALIDATION DU MODULE BOBODO
+-- 8) RPC ADMIN - LECTURE DES QUESTIONS ET CONVERSATIONS BOBODO
+-- ========================================
+
+CREATE OR REPLACE FUNCTION app_admin_list_bobodo_unanswered_questions(
+    p_status TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_result JSONB;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN '[]'::JSONB;
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN '[]'::JSONB;
+    END IF;
+
+    SELECT COALESCE(
+        JSONB_AGG(
+            JSONB_BUILD_OBJECT(
+                'id', q.id,
+                'session_id', q.session_id,
+                'question_text', q.question_text,
+                'category', q.category,
+                'status', q.status,
+                'created_at', q.created_at
+            )
+            ORDER BY q.created_at DESC
+        ),
+        '[]'::JSONB
+    ) INTO v_result
+    FROM app.bobodo_unanswered_questions q
+    WHERE p_status IS NULL OR q.status = p_status;
+
+    RETURN v_result;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_list_bobodo_unanswered_questions(TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_list_bobodo_unanswered_questions(TEXT) TO service_role;
+
+
+CREATE OR REPLACE FUNCTION app_admin_list_bobodo_sessions(
+    p_student_id UUID DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_result JSONB;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN '[]'::JSONB;
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN '[]'::JSONB;
+    END IF;
+
+    SELECT COALESCE(
+        JSONB_AGG(
+            JSONB_BUILD_OBJECT(
+                'id', s.id,
+                'student_id', s.student_id,
+                'student_full_name', st.full_name,
+                'title', s.title,
+                'created_at', s.created_at,
+                'updated_at', s.updated_at
+            )
+            ORDER BY s.created_at DESC
+        ),
+        '[]'::JSONB
+    ) INTO v_result
+    FROM app.bobodo_sessions s
+    JOIN app.students st ON st.id = s.student_id
+    WHERE p_student_id IS NULL OR s.student_id = p_student_id;
+
+    RETURN v_result;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_list_bobodo_sessions(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_list_bobodo_sessions(UUID) TO service_role;
+
+
+CREATE OR REPLACE FUNCTION app_admin_list_bobodo_messages(
+    p_session_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_result JSONB;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN '[]'::JSONB;
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN '[]'::JSONB;
+    END IF;
+
+    SELECT COALESCE(
+        JSONB_AGG(
+            JSONB_BUILD_OBJECT(
+                'id', m.id,
+                'session_id', m.session_id,
+                'sender', m.sender,
+                'content', m.content,
+                'safety_flag', m.safety_flag,
+                'created_at', m.created_at
+            )
+            ORDER BY m.created_at ASC
+        ),
+        '[]'::JSONB
+    ) INTO v_result
+    FROM app.bobodo_messages m
+    WHERE m.session_id = p_session_id;
+
+    RETURN v_result;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_list_bobodo_messages(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_list_bobodo_messages(UUID) TO service_role;
+
+
+-- ========================================
+-- 9) TABLE BESOINS DÉTECTÉS PAR BOBODO
+-- ========================================
+
+CREATE TABLE IF NOT EXISTS app.bobodo_detected_needs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id UUID NOT NULL REFERENCES app.bobodo_sessions (id) ON DELETE CASCADE,
+    question_text TEXT NOT NULL,
+    category TEXT NOT NULL,
+    need_summary TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+ALTER TABLE app.bobodo_detected_needs ENABLE ROW LEVEL SECURITY;
+
+GRANT ALL ON app.bobodo_detected_needs TO service_role;
+
+
+-- ========================================
+-- 10) RPC ADMIN - LECTURE DES BESOINS DÉTECTÉS
+-- ========================================
+
+CREATE OR REPLACE FUNCTION app_admin_list_bobodo_detected_needs(
+    p_student_id UUID DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_result JSONB;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN '[]'::JSONB;
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN '[]'::JSONB;
+    END IF;
+
+    SELECT COALESCE(
+        JSONB_AGG(
+            JSONB_BUILD_OBJECT(
+                'id', n.id,
+                'session_id', n.session_id,
+                'student_id', s.student_id,
+                'student_full_name', st.full_name,
+                'question_text', n.question_text,
+                'category', n.category,
+                'need_summary', n.need_summary,
+                'created_at', n.created_at
+            )
+            ORDER BY n.created_at DESC
+        ),
+        '[]'::JSONB
+    ) INTO v_result
+    FROM app.bobodo_detected_needs n
+    JOIN app.bobodo_sessions s ON s.id = n.session_id
+    JOIN app.students st ON st.id = s.student_id
+    WHERE p_student_id IS NULL OR s.student_id = p_student_id;
+
+    RETURN v_result;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_list_bobodo_detected_needs(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_list_bobodo_detected_needs(UUID) TO service_role;
+
+
+-- ========================================
+-- 11) TABLE FEEDBACK BOBODO
+-- ========================================
+
+CREATE TABLE IF NOT EXISTS app.bobodo_feedback (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id UUID NOT NULL REFERENCES app.bobodo_sessions (id) ON DELETE CASCADE,
+    message_id UUID NOT NULL REFERENCES app.bobodo_messages (id) ON DELETE CASCADE,
+    student_id UUID NOT NULL REFERENCES app.students (id) ON DELETE CASCADE,
+    rating TEXT NOT NULL CHECK (rating IN ('up','down')),
+    comment TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+ALTER TABLE app.bobodo_feedback ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS student_select_own_bobodo_feedback ON app.bobodo_feedback;
+CREATE POLICY student_select_own_bobodo_feedback
+ON app.bobodo_feedback FOR SELECT
+USING (student_id = auth.uid());
+
+DROP POLICY IF EXISTS student_insert_own_bobodo_feedback ON app.bobodo_feedback;
+CREATE POLICY student_insert_own_bobodo_feedback
+ON app.bobodo_feedback FOR INSERT
+WITH CHECK (student_id = auth.uid());
+
+GRANT SELECT, INSERT ON app.bobodo_feedback TO authenticated;
+GRANT ALL ON app.bobodo_feedback TO service_role;
+
+
+CREATE OR REPLACE FUNCTION app_add_bobodo_feedback(
+    p_session_id UUID,
+    p_message_id UUID,
+    p_rating TEXT,
+    p_comment TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_student_id UUID;
+    v_feedback_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    IF p_rating NOT IN ('up','down') THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_rating');
+    END IF;
+
+    SELECT student_id INTO v_student_id
+    FROM app.bobodo_sessions
+    WHERE id = p_session_id;
+
+    IF v_student_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'session_not_found');
+    END IF;
+
+    IF v_student_id <> v_user_id THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_owner');
+    END IF;
+
+    INSERT INTO app.bobodo_feedback (session_id, message_id, student_id, rating, comment)
+    VALUES (
+        p_session_id,
+        p_message_id,
+        v_student_id,
+        p_rating,
+        NULLIF(TRIM(p_comment), '')
+    )
+    RETURNING id INTO v_feedback_id;
+
+    RETURN JSONB_BUILD_OBJECT(
+        'success', TRUE,
+        'feedback_id', v_feedback_id
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_add_bobodo_feedback(UUID, UUID, TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_add_bobodo_feedback(UUID, UUID, TEXT, TEXT) TO service_role;
+
+
+-- ========================================
+-- 12) VALIDATION DU MODULE BOBODO
 -- ========================================
 
 SELECT
   'bobodo_module_status' AS check_name,
   (SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'app' AND table_name = 'bobodo_sessions')) AS bobodo_sessions_table_exists,
   (SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'app' AND table_name = 'bobodo_messages')) AS bobodo_messages_table_exists,
-  (SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'app' AND table_name = 'bobodo_knowledge')) AS bobodo_knowledge_table_exists;
+  (SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'app' AND table_name = 'bobodo_knowledge')) AS bobodo_knowledge_table_exists,
+  (SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'app' AND table_name = 'bobodo_unanswered_questions')) AS bobodo_unanswered_questions_table_exists,
+  (SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'app' AND table_name = 'bobodo_detected_needs')) AS bobodo_detected_needs_table_exists,
+  (SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'app' AND table_name = 'bobodo_feedback')) AS bobodo_feedback_table_exists;

@@ -49,6 +49,16 @@ class StudentProfileProvider extends ChangeNotifier {
     String? city,
     String? dateOfBirth,
     String? avatarUrl,
+    int? bepcYear,
+    String? bepcInstitution,
+    String? bepcCountry,
+    String? bepcMention,
+    int? bacYear,
+    String? bacSeries,
+    String? bacMention,
+    String? bacInstitution,
+    String? bacCountry,
+    String? studyProjectText,
   }) async {
     _setLoading(true);
     _setError(null);
@@ -60,6 +70,18 @@ class StudentProfileProvider extends ChangeNotifier {
       if (city != null) params['p_city'] = city;
       if (dateOfBirth != null) params['p_date_of_birth'] = dateOfBirth;
       if (avatarUrl != null) params['p_avatar_url'] = avatarUrl;
+      if (bepcYear != null) params['p_bepc_year'] = bepcYear;
+      if (bepcInstitution != null) params['p_bepc_institution'] = bepcInstitution;
+      if (bepcCountry != null) params['p_bepc_country'] = bepcCountry;
+      if (bepcMention != null) params['p_bepc_mention'] = bepcMention;
+      if (bacYear != null) params['p_bac_year'] = bacYear;
+      if (bacSeries != null) params['p_bac_series'] = bacSeries;
+      if (bacMention != null) params['p_bac_mention'] = bacMention;
+      if (bacInstitution != null) params['p_bac_institution'] = bacInstitution;
+      if (bacCountry != null) params['p_bac_country'] = bacCountry;
+      if (studyProjectText != null) {
+        params['p_study_project_text'] = studyProjectText;
+      }
 
       final result = await _client.rpc('app_update_student_profile', params: params);
       if (result is Map) {

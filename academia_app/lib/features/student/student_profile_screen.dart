@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/student_profile_provider.dart';
+import '../../providers/student_dossier_documents_provider.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart';
+import 'student_dossier_documents_screen.dart';
 
 class StudentProfileScreen extends StatefulWidget {
   const StudentProfileScreen({super.key});
@@ -18,6 +20,16 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   final TextEditingController _countryController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _dobController = TextEditingController();
+  final TextEditingController _bepcYearController = TextEditingController();
+  final TextEditingController _bepcInstitutionController = TextEditingController();
+  final TextEditingController _bepcCountryController = TextEditingController();
+  final TextEditingController _bepcMentionController = TextEditingController();
+  final TextEditingController _bacYearController = TextEditingController();
+  final TextEditingController _bacSeriesController = TextEditingController();
+  final TextEditingController _bacMentionController = TextEditingController();
+  final TextEditingController _bacInstitutionController = TextEditingController();
+  final TextEditingController _bacCountryController = TextEditingController();
+  final TextEditingController _studyProjectController = TextEditingController();
 
   bool _initializedFromProfile = false;
 
@@ -36,6 +48,16 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     _countryController.dispose();
     _cityController.dispose();
     _dobController.dispose();
+    _bepcYearController.dispose();
+    _bepcInstitutionController.dispose();
+    _bepcCountryController.dispose();
+    _bepcMentionController.dispose();
+    _bacYearController.dispose();
+    _bacSeriesController.dispose();
+    _bacMentionController.dispose();
+    _bacInstitutionController.dispose();
+    _bacCountryController.dispose();
+    _studyProjectController.dispose();
     super.dispose();
   }
 
@@ -70,6 +92,26 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
               final s = dobRaw.toString();
               _dobController.text = s.length >= 10 ? s.substring(0, 10) : s;
             }
+            _bepcYearController.text =
+                profile['bepc_year']?.toString() ?? '';
+            _bepcInstitutionController.text =
+                profile['bepc_institution']?.toString() ?? '';
+            _bepcCountryController.text =
+                profile['bepc_country']?.toString() ?? '';
+            _bepcMentionController.text =
+                profile['bepc_mention']?.toString() ?? '';
+            _bacYearController.text =
+                profile['bac_year']?.toString() ?? '';
+            _bacSeriesController.text =
+                profile['bac_series']?.toString() ?? '';
+            _bacMentionController.text =
+                profile['bac_mention']?.toString() ?? '';
+            _bacInstitutionController.text =
+                profile['bac_institution']?.toString() ?? '';
+            _bacCountryController.text =
+                profile['bac_country']?.toString() ?? '';
+            _studyProjectController.text =
+                profile['study_project_text']?.toString() ?? '';
             _initializedFromProfile = true;
           }
 
@@ -151,6 +193,117 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                   },
                 ),
                 const SizedBox(height: 24),
+                const Text(
+                  'Parcours scolaire',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _bepcYearController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Année du BEPC / Brevet',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _bepcInstitutionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Établissement (BEPC)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _bepcCountryController,
+                  decoration: const InputDecoration(
+                    labelText: 'Pays (BEPC)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _bepcMentionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Mention (BEPC)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _bacYearController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Année du Baccalauréat',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _bacSeriesController,
+                  decoration: const InputDecoration(
+                    labelText: 'Série du Baccalauréat',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _bacMentionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Mention du Baccalauréat',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _bacInstitutionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Établissement (Bac)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _bacCountryController,
+                  decoration: const InputDecoration(
+                    labelText: 'Pays (Bac)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Projet d\'études',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _studyProjectController,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Décrivez brièvement votre projet d\'études',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ChangeNotifierProvider.value(
+                            value: context.read<StudentDossierDocumentsProvider>(),
+                            child: const StudentDossierDocumentsScreen(),
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.folder_shared_outlined),
+                    label: const Text('Gérer mes documents de dossier'),
+                  ),
+                ),
+                const SizedBox(height: 24),
                 ElevatedButton.icon(
                   onPressed: saving
                       ? null
@@ -161,6 +314,22 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                           final country = _countryController.text.trim();
                           final city = _cityController.text.trim();
                           final dobText = _dobController.text.trim();
+                          final bepcYearText = _bepcYearController.text.trim();
+                          final bepcInstitution =
+                              _bepcInstitutionController.text.trim();
+                          final bepcCountry =
+                              _bepcCountryController.text.trim();
+                          final bepcMention =
+                              _bepcMentionController.text.trim();
+                          final bacYearText = _bacYearController.text.trim();
+                          final bacSeries = _bacSeriesController.text.trim();
+                          final bacMention = _bacMentionController.text.trim();
+                          final bacInstitution =
+                              _bacInstitutionController.text.trim();
+                          final bacCountry =
+                              _bacCountryController.text.trim();
+                          final studyProject =
+                              _studyProjectController.text.trim();
 
                           final success = await provider.updateProfile(
                             fullName: fullName.isEmpty ? null : fullName,
@@ -168,6 +337,31 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                             country: country.isEmpty ? null : country,
                             city: city.isEmpty ? null : city,
                             dateOfBirth: dobText.isEmpty ? null : dobText,
+                            bepcYear: bepcYearText.isEmpty
+                                ? null
+                                : int.tryParse(bepcYearText),
+                            bepcInstitution: bepcInstitution.isEmpty
+                                ? null
+                                : bepcInstitution,
+                            bepcCountry:
+                                bepcCountry.isEmpty ? null : bepcCountry,
+                            bepcMention:
+                                bepcMention.isEmpty ? null : bepcMention,
+                            bacYear: bacYearText.isEmpty
+                                ? null
+                                : int.tryParse(bacYearText),
+                            bacSeries:
+                                bacSeries.isEmpty ? null : bacSeries,
+                            bacMention:
+                                bacMention.isEmpty ? null : bacMention,
+                            bacInstitution: bacInstitution.isEmpty
+                                ? null
+                                : bacInstitution,
+                            bacCountry:
+                                bacCountry.isEmpty ? null : bacCountry,
+                            studyProjectText: studyProject.isEmpty
+                                ? null
+                                : studyProject,
                           );
 
                           if (!mounted) return;

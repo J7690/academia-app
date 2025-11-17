@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../providers/student_applications_provider.dart';
 import 'tabs/student_home_tab.dart';
 import 'tabs/student_applications_tab.dart';
 import 'tabs/student_partners_tab.dart';
@@ -22,6 +24,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   void initState() {
     super.initState();
     _ensureStudentProfile();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        // Précharger les candidatures pour que le badge soit à jour
+        context.read<StudentApplicationsProvider>().loadApplications();
+      } catch (_) {}
+    });
   }
 
   void _ensureStudentProfile() async {
@@ -37,47 +45,100 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       const StudentHomeTab(),
       const StudentApplicationsTab(),
       const StudentPartnersTab(),
-       const StudentCoursesTab(),
-       const StudentBobodoTab(),
+      const StudentCoursesTab(),
+      const StudentBobodoTab(),
     ];
 
-    return Scaffold(
-      body: tabs[_currentIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Accueil',
+    return Consumer<StudentApplicationsProvider>(
+      builder: (context, applicationsProvider, child) {
+        final unread = applicationsProvider.unreadCount;
+        return Scaffold(
+          body: tabs[_currentIndex],
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _currentIndex,
+            onDestinationSelected: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            destinations: [
+              const NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home),
+                label: 'Accueil',
+              ),
+              NavigationDestination(
+                icon: _NavBadgeIcon(
+                  icon: Icons.assignment_outlined,
+                  count: unread,
+                ),
+                selectedIcon: _NavBadgeIcon(
+                  icon: Icons.assignment,
+                  count: unread,
+                ),
+                label: 'Candidatures',
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.apartment_outlined),
+                selectedIcon: Icon(Icons.apartment),
+                label: 'Universités',
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.menu_book_outlined),
+                selectedIcon: Icon(Icons.menu_book),
+                label: 'Cours',
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.smart_toy_outlined),
+                selectedIcon: Icon(Icons.smart_toy),
+                label: 'Bobodo',
+              ),
+            ],
           ),
-          NavigationDestination(
-            icon: Icon(Icons.assignment_outlined),
-            selectedIcon: Icon(Icons.assignment),
-            label: 'Candidatures',
+        );
+      },
+    );
+  }
+}
+
+class _NavBadgeIcon extends StatelessWidget {
+  final IconData icon;
+  final int count;
+
+  const _NavBadgeIcon({required this.icon, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    if (count <= 0) {
+      return Icon(icon);
+    }
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(icon),
+        Positioned(
+          right: -2,
+          top: -2,
+          child: Container(
+            padding: const EdgeInsets.all(2),
+            decoration: const BoxDecoration(
+              color: Colors.red,
+              shape: BoxShape.circle,
+            ),
+            constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+            child: Center(
+              child: Text(
+                count > 9 ? '9+' : '$count',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.apartment_outlined),
-            selectedIcon: Icon(Icons.apartment),
-            label: 'Universités',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.menu_book_outlined),
-            selectedIcon: Icon(Icons.menu_book),
-            label: 'Cours',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.smart_toy_outlined),
-            selectedIcon: Icon(Icons.smart_toy),
-            label: 'Bobodo',
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
