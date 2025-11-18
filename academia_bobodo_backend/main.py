@@ -572,6 +572,7 @@ async def call_openrouter_safety_refusal(message: str) -> str:
 async def generate_answer_with_fallback(
     message: str,
     knowledge: List[Dict[str, Any]],
+    session_id: str,
 ) -> str:
     primary_answer = await call_openrouter(
         message,
@@ -579,7 +580,7 @@ async def generate_answer_with_fallback(
         system_prompt=None,
         include_no_answer_sentinel=True,
     )
-    if primary_answer.strip() != NO_ANSWER_SENTINEL:
+    if NO_ANSWER_SENTINEL not in primary_answer:
         return primary_answer
 
     web_results: List[Dict[str, Any]] = []
@@ -589,6 +590,11 @@ async def generate_answer_with_fallback(
         web_results = []
 
     if not web_results:
+        await log_unanswered_question(
+            session_id,
+            message,
+            CATEGORY_ORIENTATION_ETUDES_EMPLOI,
+        )
         base_message = (
             "Je n'ai pas trouvé d'information fiable sur cette question, "
             "ni dans la base de connaissances interne Nexiom/Academia ni via la recherche web. "
@@ -614,7 +620,12 @@ async def generate_answer_with_fallback(
         include_no_answer_sentinel=True,
     )
 
-    if secondary_answer.strip() == NO_ANSWER_SENTINEL:
+    if NO_ANSWER_SENTINEL in secondary_answer:
+        await log_unanswered_question(
+            session_id,
+            message,
+            CATEGORY_ORIENTATION_ETUDES_EMPLOI,
+        )
         base_message = (
             "Même après consultation de sources externes, je ne dispose pas d'information "
             "suffisamment fiable pour répondre à cette question. "
@@ -668,20 +679,25 @@ async def generate_answer_for_category(
         else:
             answer = NO_ANSWER_SENTINEL
 
-        if answer.strip() != NO_ANSWER_SENTINEL:
-            return answer
+        normalized = answer.strip()
+        if NO_ANSWER_SENTINEL in normalized:
+            await log_unanswered_question(session_id, message, CATEGORY_NEXIOM_ACADEMIA_INTERNE)
+            cleaned = normalized.replace(NO_ANSWER_SENTINEL, "").strip()
+            if cleaned:
+                return cleaned
 
-        # Contexte interne insuffisant : log + réponse neutre reformulée par OpenRouter
-        await log_unanswered_question(session_id, message, CATEGORY_NEXIOM_ACADEMIA_INTERNE)
-        base_message = (
-            "Je n'ai pas encore suffisamment d'informations internes pour répondre précisément à cette question "
-            "sur Nexiom Group ou la plateforme Academia. Cette demande sera transmise à l'équipe en charge du contenu."
-        )
-        return await wrap_with_openrouter_style(base_message, message)
+            # Contexte interne insuffisant : log + réponse neutre reformulée par OpenRouter
+            base_message = (
+                "Je n'ai pas encore suffisamment d'informations internes pour répondre précisément à cette question "
+                "sur Nexiom Group ou la plateforme Academia. Cette demande sera transmise à l'équipe en charge du contenu."
+            )
+            return await wrap_with_openrouter_style(base_message, message)
+
+        return answer
 
     # Orientation / études / emploi : pipeline complet local + OpenRouter + WebSearch
     if category == CATEGORY_ORIENTATION_ETUDES_EMPLOI:
-        return await generate_answer_with_fallback(message, knowledge)
+        return await generate_answer_with_fallback(message, knowledge, session_id)
 
     # Université partenaire : description générale sans détails contractuels, pas de WebSearch
     if category == CATEGORY_PARTENAIRE_UNIVERSITE_DETAILLEE:
@@ -719,6 +735,7 @@ async def generate_answer_for_category(
         return await wrap_with_openrouter_style(base_message, message)
 
     # HORS_SCOPE ou catégorie inconnue : refuser poliment car hors domaine
+    await log_unanswered_question(session_id, message, category)
     base_message = (
         "Je suis un assistant spécialisé pour Nexiom Group, la plateforme Academia, l'orientation et l'emploi. "
         "Cette question sort de mon domaine de compétence, je ne peux donc pas y répondre."
