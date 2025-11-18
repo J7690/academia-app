@@ -203,29 +203,17 @@ async def search_knowledge(query: str) -> List[Dict[str, Any]]:
 async def log_unanswered_question(session_id: str, question: str, category: str) -> None:
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         return
-
-    url = f"{SUPABASE_URL}/rest/v1/bobodo_unanswered_questions"
-    headers = {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Prefer": "return=minimal",
-        "Accept-Profile": "app",
-        "Content-Profile": "app",
-    }
-
-    payload = {
-        "session_id": session_id,
-        "question_text": question,
-        "category": category,
-    }
-
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        try:
-            await client.post(url, headers=headers, json=payload)
-        except httpx.HTTPError:
-            return
+    try:
+        await call_supabase_rpc(
+            "app_log_bobodo_unanswered_question",
+            {
+                "p_session_id": session_id,
+                "p_question_text": question,
+                "p_category": category,
+            },
+        )
+    except HTTPException:
+        return
 
 
 async def log_detected_need(session_id: str, question: str, category: str) -> None:
@@ -265,29 +253,18 @@ async def log_detected_need(session_id: str, question: str, category: str) -> No
             # En cas d'échec OpenRouter, on garde la question brute comme résumé
             pass
 
-    url = f"{SUPABASE_URL}/rest/v1/bobodo_detected_needs"
-    headers = {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Prefer": "return=minimal",
-        "Accept-Profile": "app",
-        "Content-Profile": "app",
-    }
-
-    payload = {
-        "session_id": session_id,
-        "question_text": question,
-        "category": category,
-        "need_summary": need_summary,
-    }
-
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        try:
-            await client.post(url, headers=headers, json=payload)
-        except httpx.HTTPError:
-            return
+    try:
+        await call_supabase_rpc(
+            "app_log_bobodo_detected_need",
+            {
+                "p_session_id": session_id,
+                "p_question_text": question,
+                "p_category": category,
+                "p_need_summary": need_summary,
+            },
+        )
+    except HTTPException:
+        return
 
 
 def classify_query_with_rules(message: str) -> str:
@@ -330,6 +307,9 @@ def classify_query_with_rules(message: str) -> str:
         "carriere",
         "cv",
         "lettre de motivation",
+        "actuariat",
+        "actuaria",
+        "actuaire",
     )):
         return CATEGORY_ORIENTATION_ETUDES_EMPLOI
 

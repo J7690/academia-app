@@ -256,6 +256,25 @@ ALTER TABLE app.bobodo_unanswered_questions ENABLE ROW LEVEL SECURITY;
 
 GRANT ALL ON app.bobodo_unanswered_questions TO service_role;
 
+
+CREATE OR REPLACE FUNCTION app_log_bobodo_unanswered_question(
+    p_session_id UUID,
+    p_question_text TEXT,
+    p_category TEXT
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    INSERT INTO app.bobodo_unanswered_questions (session_id, question_text, category)
+    VALUES (p_session_id, p_question_text, p_category);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_log_bobodo_unanswered_question(UUID, TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_log_bobodo_unanswered_question(UUID, TEXT, TEXT) TO service_role;
+
 -- ========================================
 -- 8) RPC ADMIN - LECTURE DES QUESTIONS ET CONVERSATIONS BOBODO
 -- ========================================
@@ -427,6 +446,33 @@ CREATE TABLE IF NOT EXISTS app.bobodo_detected_needs (
 ALTER TABLE app.bobodo_detected_needs ENABLE ROW LEVEL SECURITY;
 
 GRANT ALL ON app.bobodo_detected_needs TO service_role;
+
+
+CREATE OR REPLACE FUNCTION app_log_bobodo_detected_need(
+    p_session_id UUID,
+    p_question_text TEXT,
+    p_category TEXT,
+    p_need_summary TEXT
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_summary TEXT;
+BEGIN
+    v_summary := NULLIF(TRIM(p_need_summary), '');
+    IF v_summary IS NULL THEN
+        v_summary := p_question_text;
+    END IF;
+
+    INSERT INTO app.bobodo_detected_needs (session_id, question_text, category, need_summary)
+    VALUES (p_session_id, p_question_text, p_category, v_summary);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_log_bobodo_detected_need(UUID, TEXT, TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_log_bobodo_detected_need(UUID, TEXT, TEXT, TEXT) TO service_role;
 
 
 -- ========================================
