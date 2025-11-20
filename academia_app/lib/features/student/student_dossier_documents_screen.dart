@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/student_dossier_documents_provider.dart';
 
@@ -41,7 +42,7 @@ class _StudentDossierDocumentsScreenState extends State<StudentDossierDocumentsS
       allowMultiple: false,
       withData: true,
       type: FileType.custom,
-      allowedExtensions: const ['pdf', 'jpg', 'jpeg', 'png'],
+      allowedExtensions: const ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'],
     );
 
     if (result == null || result.files.isEmpty) {
@@ -167,20 +168,124 @@ class _StudentDossierDocumentsScreenState extends State<StudentDossierDocumentsS
                       leading: const Icon(Icons.insert_drive_file),
                       title: Text(type.isNotEmpty ? type : 'Document'),
                       subtitle: Text(path),
-                      trailing: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (status.isNotEmpty)
-                            Text(
-                              status,
-                              style: const TextStyle(fontSize: 11),
-                            ),
-                          if (uploadedAt.isNotEmpty)
-                            Text(
-                              uploadedAt,
-                              style: const TextStyle(fontSize: 11),
-                            ),
+                          IconButton(
+                            icon: const Icon(Icons.visibility),
+                            tooltip: 'Voir',
+                            onPressed: () async {
+                              final provider =
+                                  context.read<StudentDossierDocumentsProvider>();
+                              final url = await provider.createSignedUrl(path);
+                              if (!context.mounted) return;
+                              if (url == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      provider.error ??
+                                          'Impossible d\'ouvrir le document.',
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              final uri = Uri.parse(url);
+                              final opened = await launchUrl(
+                                uri,
+                                mode: LaunchMode.externalApplication,
+                              );
+                              if (!opened && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Impossible d\'ouvrir le document.',
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete),
+                            tooltip: 'Supprimer',
+                            onPressed: () async {
+                              final id = doc['id']?.toString();
+                              if (id == null || id.isEmpty) {
+                                return;
+                              }
+
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title:
+                                      const Text('Supprimer ce document ?'),
+                                  content: const Text(
+                                    'Cette action est définitive.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(ctx).pop(false),
+                                      child: const Text('Annuler'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(ctx).pop(true),
+                                      child: const Text('Supprimer'),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              if (confirm != true || !context.mounted) return;
+
+                              final provider =
+                                  context.read<StudentDossierDocumentsProvider>();
+                              final ok = await provider.deleteDocument(
+                                documentId: id,
+                                storagePath: path,
+                              );
+
+                              if (!context.mounted) return;
+
+                              if (ok) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Document supprimé avec succès.',
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      provider.error ??
+                                          'Erreur lors de la suppression.',
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (status.isNotEmpty)
+                                Text(
+                                  status,
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                              if (uploadedAt.isNotEmpty)
+                                Text(
+                                  uploadedAt,
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                            ],
+                          ),
                         ],
                       ),
                     );

@@ -9,7 +9,6 @@ import '../../providers/university_applications_provider.dart';
 import '../../providers/selected_university_application_provider.dart';
 import '../../providers/university_site_provider.dart';
 import '../../providers/university_programs_provider.dart';
-import '../student/mini_site_media_viewer_screen.dart';
 import 'university_application_detail_screen.dart';
 
 class UniversityDashboardScreen extends StatelessWidget {
@@ -93,90 +92,985 @@ Future<void> _showEditConfigDialog(
       TextEditingController(text: current['hero_primary_color']?.toString() ?? '');
   final secondaryColorController =
       TextEditingController(text: current['hero_secondary_color']?.toString() ?? '');
+  final media = provider.media;
+  String? selectedHeroMediaId = current['hero_poster_media_id']?.toString();
 
   await showDialog<void>(
     context: context,
     builder: (context) {
-      return AlertDialog(
-        title: const Text('Configuration du hero'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Titre *',
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: subtitleController,
-                decoration: const InputDecoration(
-                  labelText: 'Sous-titre',
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: primaryColorController,
-                decoration: const InputDecoration(
-                  labelText: 'Couleur primaire (hex, optionnel)',
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: secondaryColorController,
-                decoration: const InputDecoration(
-                  labelText: 'Couleur secondaire (hex, optionnel)',
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Annuler'),
-          ),
-          TextButton(
-            onPressed: () async {
-              final title = titleController.text.trim();
-              final subtitle = subtitleController.text.trim();
-              final primaryColor = primaryColorController.text.trim();
-              final secondaryColor = secondaryColorController.text.trim();
-
-              if (title.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Le titre du hero est obligatoire.'),
-                  ),
-                );
-                return;
-              }
-
-              final ok = await provider.upsertConfig(
-                heroTitle: title,
-                heroSubtitle: subtitle.isNotEmpty ? subtitle : null,
-                heroPrimaryColor: primaryColor.isNotEmpty ? primaryColor : null,
-                heroSecondaryColor: secondaryColor.isNotEmpty ? secondaryColor : null,
-                heroPosterMediaId: current['hero_poster_media_id']?.toString(),
-              );
-              if (!context.mounted) return;
-              if (ok) {
-                Navigator.of(context).pop();
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      provider.error ?? 'Erreur lors de la sauvegarde de la configuration.',
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Configuration du hero'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Titre *',
                     ),
                   ),
-                );
-              }
-            },
-            child: const Text('Enregistrer'),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: subtitleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Sous-titre',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: primaryColorController,
+                    decoration: const InputDecoration(
+                      labelText: 'Couleur primaire (hex, optionnel)',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: secondaryColorController,
+                    decoration: const InputDecoration(
+                      labelText: 'Couleur secondaire (hex, optionnel)',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (media.isNotEmpty)
+                    DropdownButtonFormField<String>(
+                      value: selectedHeroMediaId != null &&
+                              media.any((m) => m['id']?.toString() == selectedHeroMediaId)
+                          ? selectedHeroMediaId
+                          : null,
+                      items: media.map((m) {
+                        final id = m['id']?.toString();
+                        if (id == null) return null;
+                        final title = m['title']?.toString() ?? '';
+                        final type = m['media_type']?.toString() ?? '';
+                        return DropdownMenuItem<String>(
+                          value: id,
+                          child: Text(
+                            [title, type].where((e) => e.isNotEmpty).join(' · '),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).whereType<DropdownMenuItem<String>>().toList(),
+                      decoration: const InputDecoration(
+                        labelText: 'Média hero (affiche, optionnel)',
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedHeroMediaId = value;
+                        });
+                      },
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Annuler'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final title = titleController.text.trim();
+                  final subtitle = subtitleController.text.trim();
+                  final primaryColor = primaryColorController.text.trim();
+                  final secondaryColor = secondaryColorController.text.trim();
+
+                  if (title.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Le titre du hero est obligatoire.'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  final ok = await provider.upsertConfig(
+                    heroTitle: title,
+                    heroSubtitle: subtitle.isNotEmpty ? subtitle : null,
+                    heroPrimaryColor: primaryColor.isNotEmpty ? primaryColor : null,
+                    heroSecondaryColor:
+                        secondaryColor.isNotEmpty ? secondaryColor : null,
+                    heroPosterMediaId: selectedHeroMediaId,
+                  );
+                  if (!context.mounted) return;
+                  if (ok) {
+                    Navigator.of(context).pop();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          provider.error ??
+                              'Erreur lors de la sauvegarde de la configuration.',
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Enregistrer'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+class _UniversityProgramCoursesSheet extends StatelessWidget {
+  final String programId;
+  final String programTitle;
+
+  const _UniversityProgramCoursesSheet({
+    required this.programId,
+    required this.programTitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.read<UniversityProgramsProvider>();
+    final allCourses = provider.courses;
+    final programCourses = allCourses
+        .where((c) => c['program_id']?.toString() == programId)
+        .toList(growable: false);
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Cours du programme',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                if (programTitle.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    programTitle,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => _showEditCourseDialog(
+                        context,
+                        provider,
+                        programId: programId,
+                      ),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Ajouter un cours'),
+                    ),
+                    const SizedBox(width: 8),
+                    if (provider.error != null)
+                      Expanded(
+                        child: Text(provider.error!),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (programCourses.isEmpty)
+                  const Text('Aucun cours configuré pour ce programme.')
+                else
+                  ...programCourses.map((course) {
+                    final title = course['title']?.toString() ?? '';
+                    final description = course['description']?.toString() ?? '';
+                    final credits = course['credits'];
+                    final instructor = course['instructor']?.toString() ?? '';
+                    final isActive = course['is_active'] != false;
+
+                    final metaParts = <String>[];
+                    if (credits is int) {
+                      metaParts.add('$credits crédits');
+                    } else if (credits is String && credits.isNotEmpty) {
+                      metaParts.add('$credits crédits');
+                    }
+                    if (instructor.isNotEmpty) {
+                      metaParts.add(instructor);
+                    }
+
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    title,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Chip(
+                                  label: Text(isActive ? 'Actif' : 'Inactif'),
+                                ),
+                              ],
+                            ),
+                            if (metaParts.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                metaParts.join(' • '),
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                            if (description.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                description,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton.icon(
+                                onPressed: () => _showEditCourseDialog(
+                                  context,
+                                  provider,
+                                  programId: programId,
+                                  course: course,
+                                ),
+                                icon: const Icon(Icons.edit),
+                                label: const Text('Modifier'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> _showEditCourseDialog(
+  BuildContext context,
+  UniversityProgramsProvider provider, {
+  required String programId,
+  Map<String, dynamic>? course,
+}) async {
+  final titleController = TextEditingController(text: course?['title']?.toString() ?? '');
+  final descriptionController =
+      TextEditingController(text: course?['description']?.toString() ?? '');
+  final creditsController =
+      TextEditingController(text: course?['credits']?.toString() ?? '');
+  final prerequisitesController =
+      TextEditingController(text: course?['prerequisites']?.toString() ?? '');
+  final instructorController =
+      TextEditingController(text: course?['instructor']?.toString() ?? '');
+  bool isActive = course?['is_active'] != false;
+
+  await showDialog<void>(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(course == null ? 'Ajouter un cours' : 'Modifier le cours'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Titre du cours *',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: descriptionController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Description',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: creditsController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Crédits',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: prerequisitesController,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      labelText: 'Prérequis',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: instructorController,
+                    decoration: const InputDecoration(
+                      labelText: 'Enseignant',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: isActive,
+                        onChanged: (value) {
+                          setState(() {
+                            isActive = value ?? true;
+                          });
+                        },
+                      ),
+                      const Text('Cours actif'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Annuler'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final title = titleController.text.trim();
+                  final description = descriptionController.text.trim();
+                  final creditsText = creditsController.text.trim();
+                  final prerequisites = prerequisitesController.text.trim();
+                  final instructor = instructorController.text.trim();
+
+                  if (title.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Le titre du cours est obligatoire.'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  final credits =
+                      creditsText.isEmpty ? null : int.tryParse(creditsText);
+
+                  final ok = await provider.upsertCourse(
+                    courseId: course?['id']?.toString(),
+                    programId: programId,
+                    title: title,
+                    description: description.isNotEmpty ? description : null,
+                    credits: credits,
+                    prerequisites:
+                        prerequisites.isNotEmpty ? prerequisites : null,
+                    instructor: instructor.isNotEmpty ? instructor : null,
+                    isActive: isActive,
+                  );
+                  if (!context.mounted) return;
+                  if (ok) {
+                    Navigator.of(context).pop();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          provider.error ??
+                              'Erreur lors de la sauvegarde du cours.',
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Enregistrer'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+Future<void> _showEditEventDialog(
+  BuildContext context,
+  UniversitySiteProvider provider, {
+  Map<String, dynamic>? event,
+}) async {
+  final titleController = TextEditingController(text: event?['title']?.toString() ?? '');
+  final descriptionController =
+      TextEditingController(text: event?['description']?.toString() ?? '');
+  final typeController = TextEditingController(text: event?['event_type']?.toString() ?? '');
+  final locationController = TextEditingController(text: event?['location']?.toString() ?? '');
+  final startAtController =
+      TextEditingController(text: event?['start_at']?.toString() ?? '');
+  final endAtController = TextEditingController(text: event?['end_at']?.toString() ?? '');
+  bool isHighlighted = event?['is_highlighted'] == true;
+  bool isActive = event?['is_active'] != false;
+
+  await showDialog<void>(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(event == null ? 'Ajouter un événement' : 'Modifier l\'événement'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Titre de l\'événement *',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: descriptionController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Description',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: typeController,
+                    decoration: const InputDecoration(
+                      labelText: 'Type (portes ouvertes, webinaire...)',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: locationController,
+                    decoration: const InputDecoration(
+                      labelText: 'Lieu (présentiel / en ligne...)',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: startAtController,
+                    decoration: const InputDecoration(
+                      labelText: 'Début (ISO 8601, optionnel)',
+                      hintText: '2025-03-15T09:00:00Z',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: endAtController,
+                    decoration: const InputDecoration(
+                      labelText: 'Fin (ISO 8601, optionnel)',
+                      hintText: '2025-03-15T12:00:00Z',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: isHighlighted,
+                        onChanged: (value) {
+                          setState(() {
+                            isHighlighted = value ?? false;
+                          });
+                        },
+                      ),
+                      const Text('Mettre en avant'),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: isActive,
+                        onChanged: (value) {
+                          setState(() {
+                            isActive = value ?? true;
+                          });
+                        },
+                      ),
+                      const Text('Événement actif'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Annuler'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final title = titleController.text.trim();
+                  final description = descriptionController.text.trim();
+                  final type = typeController.text.trim();
+                  final location = locationController.text.trim();
+                  final startText = startAtController.text.trim();
+                  final endText = endAtController.text.trim();
+
+                  if (title.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Le titre de l\'événement est obligatoire.'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  DateTime? startAt;
+                  DateTime? endAt;
+
+                  if (startText.isNotEmpty) {
+                    startAt = DateTime.tryParse(startText);
+                    if (startAt == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Format de date de début invalide.'),
+                        ),
+                      );
+                      return;
+                    }
+                  }
+
+                  if (endText.isNotEmpty) {
+                    endAt = DateTime.tryParse(endText);
+                    if (endAt == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Format de date de fin invalide.'),
+                        ),
+                      );
+                      return;
+                    }
+                  }
+
+                  final ok = await provider.upsertEvent(
+                    eventId: event?['id']?.toString(),
+                    title: title,
+                    description: description.isNotEmpty ? description : null,
+                    eventType: type.isNotEmpty ? type : null,
+                    startAt: startAt,
+                    endAt: endAt,
+                    location: location.isNotEmpty ? location : null,
+                    isHighlighted: isHighlighted,
+                    isActive: isActive,
+                  );
+                  if (!context.mounted) return;
+                  if (ok) {
+                    Navigator.of(context).pop();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          provider.error ??
+                              'Erreur lors de la sauvegarde de l\'événement.',
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Enregistrer'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+Future<void> _showEditNewsDialog(
+  BuildContext context,
+  UniversitySiteProvider provider, {
+  Map<String, dynamic>? news,
+}) async {
+  final titleController = TextEditingController(text: news?['title']?.toString() ?? '');
+  final slugController = TextEditingController(text: news?['slug']?.toString() ?? '');
+  final summaryController =
+      TextEditingController(text: news?['summary']?.toString() ?? '');
+  final contentController =
+      TextEditingController(text: news?['content']?.toString() ?? '');
+  final publishedAtController =
+      TextEditingController(text: news?['published_at']?.toString() ?? '');
+  final heroMediaIdRaw = news?['hero_media_id']?.toString();
+  String? selectedHeroMediaId = heroMediaIdRaw?.isNotEmpty == true ? heroMediaIdRaw : null;
+  bool isActive = news?['is_active'] != false;
+
+  await showDialog<void>(
+    context: context,
+    builder: (context) {
+      final mediaItems = provider.media;
+
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(news == null ? 'Ajouter une actualité' : 'Modifier l\'actualité'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Titre de l\'actualité *',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: slugController,
+                    decoration: const InputDecoration(
+                      labelText: 'Slug (optionnel, unique)',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: summaryController,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      labelText: 'Résumé (court)',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: contentController,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      labelText: 'Contenu (détail)',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: publishedAtController,
+                    decoration: const InputDecoration(
+                      labelText: 'Date de publication (ISO 8601, optionnel)',
+                      hintText: '2025-03-15T10:00:00Z',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (mediaItems.isNotEmpty)
+                    DropdownButtonFormField<String>(
+                      value: selectedHeroMediaId != null &&
+                              mediaItems.any((m) => m['id']?.toString() == selectedHeroMediaId)
+                          ? selectedHeroMediaId
+                          : null,
+                      items: mediaItems
+                          .map((m) {
+                            final id = m['id']?.toString();
+                            if (id == null) return null;
+                            final title = m['title']?.toString() ?? '';
+                            final type = m['media_type']?.toString() ?? '';
+                            return DropdownMenuItem<String>(
+                              value: id,
+                              child: Text(
+                                [title, type].where((e) => e.isNotEmpty).join(' · '),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          })
+                          .whereType<DropdownMenuItem<String>>()
+                          .toList(),
+                      decoration: const InputDecoration(
+                        labelText: 'Média hero (optionnel)',
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedHeroMediaId = value;
+                        });
+                      },
+                    ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: isActive,
+                        onChanged: (value) {
+                          setState(() {
+                            isActive = value ?? true;
+                          });
+                        },
+                      ),
+                      const Text('Actualité publiée'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Annuler'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final title = titleController.text.trim();
+                  final slug = slugController.text.trim();
+                  final summary = summaryController.text.trim();
+                  final content = contentController.text.trim();
+                  final publishedText = publishedAtController.text.trim();
+
+                  if (title.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Le titre de l\'actualité est obligatoire.'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  DateTime? publishedAt;
+                  if (publishedText.isNotEmpty) {
+                    publishedAt = DateTime.tryParse(publishedText);
+                    if (publishedAt == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Format de date de publication invalide.'),
+                        ),
+                      );
+                      return;
+                    }
+                  }
+
+                  final ok = await provider.upsertNews(
+                    newsId: news?['id']?.toString(),
+                    title: title,
+                    slug: slug.isNotEmpty ? slug : null,
+                    summary: summary.isNotEmpty ? summary : null,
+                    content: content.isNotEmpty ? content : null,
+                    publishedAt: publishedAt,
+                    heroMediaId: selectedHeroMediaId,
+                    isActive: isActive,
+                  );
+                  if (!context.mounted) return;
+                  if (ok) {
+                    Navigator.of(context).pop();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          provider.error ??
+                              'Erreur lors de la sauvegarde de l\'actualité.',
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Enregistrer'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+Future<void> _showEditStaffDialog(
+  BuildContext context,
+  UniversitySiteProvider provider, {
+  Map<String, dynamic>? staff,
+}) async {
+  final fullNameController =
+      TextEditingController(text: staff?['full_name']?.toString() ?? '');
+  final roleController = TextEditingController(text: staff?['role']?.toString() ?? '');
+  final bioController = TextEditingController(text: staff?['bio']?.toString() ?? '');
+  final emailController = TextEditingController(text: staff?['email']?.toString() ?? '');
+  final phoneController = TextEditingController(text: staff?['phone']?.toString() ?? '');
+  final sortOrderController =
+      TextEditingController(text: staff?['sort_order']?.toString() ?? '');
+  final photoMediaIdRaw = staff?['photo_media_id']?.toString();
+  String? selectedPhotoMediaId =
+      photoMediaIdRaw?.isNotEmpty == true ? photoMediaIdRaw : null;
+  bool isActive = staff?['is_active'] != false;
+
+  await showDialog<void>(
+    context: context,
+    builder: (context) {
+      final mediaItems = provider.media;
+
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(
+                staff == null ? 'Ajouter un membre de l\'équipe' : 'Modifier le membre de l\'équipe'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: fullNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nom complet *',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: roleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Rôle / fonction',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: bioController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Bio courte',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: emailController,
+                    decoration: const InputDecoration(
+                      labelText: 'Email (optionnel)',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: phoneController,
+                    decoration: const InputDecoration(
+                      labelText: 'Téléphone (optionnel)',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: sortOrderController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Ordre d\'affichage',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (mediaItems.isNotEmpty)
+                    DropdownButtonFormField<String>(
+                      value: selectedPhotoMediaId != null &&
+                              mediaItems.any((m) => m['id']?.toString() == selectedPhotoMediaId)
+                          ? selectedPhotoMediaId
+                          : null,
+                      items: mediaItems
+                          .map((m) {
+                            final id = m['id']?.toString();
+                            if (id == null) return null;
+                            final title = m['title']?.toString() ?? '';
+                            final type = m['media_type']?.toString() ?? '';
+                            return DropdownMenuItem<String>(
+                              value: id,
+                              child: Text(
+                                [title, type].where((e) => e.isNotEmpty).join(' · '),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          })
+                          .whereType<DropdownMenuItem<String>>()
+                          .toList(),
+                      decoration: const InputDecoration(
+                        labelText: 'Média photo (optionnel)',
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedPhotoMediaId = value;
+                        });
+                      },
+                    ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: isActive,
+                        onChanged: (value) {
+                          setState(() {
+                            isActive = value ?? true;
+                          });
+                        },
+                      ),
+                      const Text('Membre actif'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Annuler'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final fullName = fullNameController.text.trim();
+                  final role = roleController.text.trim();
+                  final bio = bioController.text.trim();
+                  final email = emailController.text.trim();
+                  final phone = phoneController.text.trim();
+                  final sortText = sortOrderController.text.trim();
+
+                  if (fullName.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Le nom complet est obligatoire.'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  final sortOrder = sortText.isEmpty ? null : int.tryParse(sortText);
+
+                  final ok = await provider.upsertStaff(
+                    staffId: staff?['id']?.toString(),
+                    fullName: fullName,
+                    role: role.isNotEmpty ? role : null,
+                    bio: bio.isNotEmpty ? bio : null,
+                    photoMediaId: selectedPhotoMediaId,
+                    email: email.isNotEmpty ? email : null,
+                    phone: phone.isNotEmpty ? phone : null,
+                    sortOrder: sortOrder,
+                    isActive: isActive,
+                  );
+                  if (!context.mounted) return;
+                  if (ok) {
+                    Navigator.of(context).pop();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          provider.error ??
+                              'Erreur lors de la sauvegarde du membre de l\'équipe.',
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Enregistrer'),
+              ),
+            ],
+          );
+        },
       );
     },
   );
@@ -584,6 +1478,486 @@ class _UniversityApplicationsBucket extends StatelessWidget {
   }
 }
 
+class _UniversitySiteEventsTab extends StatelessWidget {
+  const _UniversitySiteEventsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<UniversitySiteProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading && provider.events.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final events = provider.events;
+
+        if (events.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => _showEditEventDialog(context, provider),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Ajouter un événement'),
+                    ),
+                    const SizedBox(width: 8),
+                    if (provider.error != null)
+                      Expanded(child: Text(provider.error!)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text('Aucun événement configuré pour le moment.'),
+              ],
+            ),
+          );
+        }
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () => _showEditEventDialog(context, provider),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Ajouter un événement'),
+                  ),
+                  const SizedBox(width: 8),
+                  if (provider.error != null)
+                    Expanded(child: Text(provider.error!)),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: events.length,
+                itemBuilder: (context, index) {
+                  final event = events[index];
+                  final title = event['title']?.toString() ?? '';
+                  final description = event['description']?.toString() ?? '';
+                  final type = event['event_type']?.toString() ?? '';
+                  final location = event['location']?.toString() ?? '';
+                  final startAt = event['start_at']?.toString() ?? '';
+                  final endAt = event['end_at']?.toString() ?? '';
+                  final isHighlighted = event['is_highlighted'] == true;
+                  final isActive = event['is_active'] != false;
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  title,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              if (type.isNotEmpty) Chip(label: Text(type)),
+                              const SizedBox(width: 8),
+                              Chip(label: Text(isActive ? 'Actif' : 'Inactif')),
+                              const SizedBox(width: 8),
+                              if (isHighlighted)
+                                const Chip(
+                                  label: Text('En vedette'),
+                                ),
+                            ],
+                          ),
+                          if (location.isNotEmpty || startAt.isNotEmpty || endAt.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              [
+                                if (location.isNotEmpty) location,
+                                if (startAt.isNotEmpty) 'Début: $startAt',
+                                if (endAt.isNotEmpty) 'Fin: $endAt',
+                              ].join(' · '),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                          if (description.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              description,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () => _showEditEventDialog(
+                                  context,
+                                  provider,
+                                  event: event,
+                                ),
+                                icon: const Icon(Icons.edit),
+                                label: const Text('Modifier'),
+                              ),
+                              const SizedBox(width: 8),
+                              TextButton.icon(
+                                onPressed: () async {
+                                  final id = event['id']?.toString();
+                                  if (id == null) return;
+                                  final ok = await provider.deleteEvent(id);
+                                  if (!context.mounted) return;
+                                  if (!ok) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          provider.error ??
+                                              'Erreur lors de la suppression de l\'événement.',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                                icon: const Icon(Icons.delete_outline),
+                                label: const Text('Supprimer'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _UniversitySiteNewsTab extends StatelessWidget {
+  const _UniversitySiteNewsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<UniversitySiteProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading && provider.news.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final news = provider.news;
+
+        if (news.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => _showEditNewsDialog(context, provider),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Ajouter une actualité'),
+                    ),
+                    const SizedBox(width: 8),
+                    if (provider.error != null)
+                      Expanded(child: Text(provider.error!)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text('Aucune actualité configurée pour le moment.'),
+              ],
+            ),
+          );
+        }
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () => _showEditNewsDialog(context, provider),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Ajouter une actualité'),
+                  ),
+                  const SizedBox(width: 8),
+                  if (provider.error != null)
+                    Expanded(child: Text(provider.error!)),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: news.length,
+                itemBuilder: (context, index) {
+                  final item = news[index];
+                  final title = item['title']?.toString() ?? '';
+                  final summary = item['summary']?.toString() ?? '';
+                  final content = item['content']?.toString() ?? '';
+                  final slug = item['slug']?.toString() ?? '';
+                  final publishedAt = item['published_at']?.toString() ?? '';
+                  final isActive = item['is_active'] != false;
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  title,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Chip(label: Text(isActive ? 'Publiée' : 'Masquée')),
+                            ],
+                          ),
+                          if (slug.isNotEmpty || publishedAt.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text([
+                              if (slug.isNotEmpty) 'Slug: $slug',
+                              if (publishedAt.isNotEmpty) 'Publié le: $publishedAt',
+                            ].join(' · ')),
+                          ],
+                          if (summary.isNotEmpty || content.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              summary.isNotEmpty ? summary : content,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () => _showEditNewsDialog(
+                                  context,
+                                  provider,
+                                  news: item,
+                                ),
+                                icon: const Icon(Icons.edit),
+                                label: const Text('Modifier'),
+                              ),
+                              const SizedBox(width: 8),
+                              TextButton.icon(
+                                onPressed: () async {
+                                  final id = item['id']?.toString();
+                                  if (id == null) return;
+                                  final ok = await provider.deleteNews(id);
+                                  if (!context.mounted) return;
+                                  if (!ok) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          provider.error ??
+                                              'Erreur lors de la suppression de l\'actualité.',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                                icon: const Icon(Icons.delete_outline),
+                                label: const Text('Supprimer'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _UniversitySiteStaffTab extends StatelessWidget {
+  const _UniversitySiteStaffTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<UniversitySiteProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading && provider.staff.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final staff = provider.staff;
+
+        if (staff.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => _showEditStaffDialog(context, provider),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Ajouter un membre de l\'équipe'),
+                    ),
+                    const SizedBox(width: 8),
+                    if (provider.error != null)
+                      Expanded(child: Text(provider.error!)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text('Aucun membre d\'équipe configuré pour le moment.'),
+              ],
+            ),
+          );
+        }
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () => _showEditStaffDialog(context, provider),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Ajouter un membre de l\'équipe'),
+                  ),
+                  const SizedBox(width: 8),
+                  if (provider.error != null)
+                    Expanded(child: Text(provider.error!)),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: staff.length,
+                itemBuilder: (context, index) {
+                  final member = staff[index];
+                  final fullName = member['full_name']?.toString() ?? '';
+                  final role = member['role']?.toString() ?? '';
+                  final bio = member['bio']?.toString() ?? '';
+                  final sortOrder = member['sort_order']?.toString() ?? '';
+                  final isActive = member['is_active'] != false;
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  fullName,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              if (role.isNotEmpty) Chip(label: Text(role)),
+                              const SizedBox(width: 8),
+                              Chip(label: Text(isActive ? 'Actif' : 'Inactif')),
+                              if (sortOrder.isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                Chip(label: Text('Ordre $sortOrder')),
+                              ],
+                            ],
+                          ),
+                          if (bio.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              bio,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () => _showEditStaffDialog(
+                                  context,
+                                  provider,
+                                  staff: member,
+                                ),
+                                icon: const Icon(Icons.edit),
+                                label: const Text('Modifier'),
+                              ),
+                              const SizedBox(width: 8),
+                              TextButton.icon(
+                                onPressed: () async {
+                                  final id = member['id']?.toString();
+                                  if (id == null) return;
+                                  final ok = await provider.deleteStaff(id);
+                                  if (!context.mounted) return;
+                                  if (!ok) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          provider.error ??
+                                              'Erreur lors de la suppression du membre de l\'équipe.',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                                icon: const Icon(Icons.delete_outline),
+                                label: const Text('Supprimer'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _UniversitySiteWorkspace extends StatefulWidget {
   const _UniversitySiteWorkspace();
 
@@ -602,13 +1976,16 @@ class _UniversitySiteWorkspaceState extends State<_UniversitySiteWorkspace> {
       try {
         context.read<UniversityProgramsProvider>().loadPrograms();
       } catch (_) {}
+      try {
+        context.read<UniversityProgramsProvider>().loadCourses();
+      } catch (_) {}
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 5,
+      length: 8,
       child: Column(
         children: [
           const TabBar(
@@ -618,6 +1995,9 @@ class _UniversitySiteWorkspaceState extends State<_UniversitySiteWorkspace> {
               Tab(text: 'Contenus'),
               Tab(text: 'Médias'),
               Tab(text: 'Programmes'),
+              Tab(text: 'Événements'),
+              Tab(text: 'Actualités'),
+              Tab(text: 'Équipe'),
             ],
           ),
           const Divider(height: 1),
@@ -629,6 +2009,9 @@ class _UniversitySiteWorkspaceState extends State<_UniversitySiteWorkspace> {
                 _UniversitySiteBlocksTab(),
                 _UniversitySiteMediaTab(),
                 _UniversitySiteProgramsTab(),
+                _UniversitySiteEventsTab(),
+                _UniversitySiteNewsTab(),
+                _UniversitySiteStaffTab(),
               ],
             ),
           ),
@@ -672,7 +2055,12 @@ class _UniversitySitePreview extends StatelessWidget {
         final config = siteProvider.config;
         final blocks = siteProvider.blocks;
         final media = siteProvider.media;
+        final banners = siteProvider.banners;
+        final events = siteProvider.events;
+        final news = siteProvider.news;
+        final staff = siteProvider.staff;
         final programs = programsProvider.programs;
+        final courses = programsProvider.courses;
 
         if (university == null) {
           return Center(
@@ -701,164 +2089,542 @@ class _UniversitySitePreview extends StatelessWidget {
         final country = university['country']?.toString() ?? '';
         final description = university['description']?.toString() ?? '';
         final websiteUrl = university['website_url']?.toString() ?? '';
+        final logoUrl = university['logo_url']?.toString() ?? '';
+        final tagline = university['tagline']?.toString() ?? '';
+        final mission = university['mission']?.toString() ?? '';
+        final vision = university['vision']?.toString() ?? '';
+        final contactEmail = university['contact_email']?.toString() ?? '';
+        final contactPhone = university['contact_phone']?.toString() ?? '';
+        final address = university['address']?.toString() ?? '';
+
+        Map<String, dynamic> keyFigures = {};
+        final rawKeyFigures = university['key_figures'];
+        if (rawKeyFigures is Map) {
+          keyFigures = Map<String, dynamic>.from(rawKeyFigures);
+        }
+
+        Map<String, dynamic> socialLinks = {};
+        final rawSocialLinks = university['social_links'];
+        if (rawSocialLinks is Map) {
+          socialLinks = Map<String, dynamic>.from(rawSocialLinks);
+        }
+
         final heroTitle = (config?['hero_title']?.toString() ?? '').trim();
         final heroSubtitle = (config?['hero_subtitle']?.toString() ?? '').trim();
 
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Text(
-              heroTitle.isNotEmpty ? heroTitle : name,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            if (city.isNotEmpty || country.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                [city, country].where((e) => e.isNotEmpty).join(', '),
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
-            if (websiteUrl.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                websiteUrl,
-                style: const TextStyle(fontSize: 12, color: Colors.blue),
-              ),
-            ],
-            if (heroSubtitle.isNotEmpty || description.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(heroSubtitle.isNotEmpty ? heroSubtitle : description),
-            ],
-            const SizedBox(height: 16),
-            if (blocks.isNotEmpty) ...[
-              const Text(
-                'Blocs éditoriaux',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              ...blocks.map((b) {
-                final title = b['title']?.toString() ?? '';
-                final content = b['content']?.toString() ?? '';
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (title.isNotEmpty)
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
+        final aboutBlocks = blocks
+            .where((b) => (b['key']?.toString() ?? '').toLowerCase() == 'about')
+            .toList(growable: false);
+        final otherBlocks = blocks
+            .where((b) => (b['key']?.toString() ?? '').toLowerCase() != 'about')
+            .toList(growable: false);
+
+        final highlightedPrograms =
+            programs.where((p) => p['highlighted'] == true).toList(growable: false);
+        final otherPrograms =
+            programs.where((p) => p['highlighted'] != true).toList(growable: false);
+
+        final topBanners = banners
+            .where((b) => (b['position']?.toString() ?? '') == 'top_carousel')
+            .toList(growable: false);
+        final middleBanners = banners
+            .where((b) => (b['position']?.toString() ?? '') == 'middle_strip')
+            .toList(growable: false);
+        final bottomBanners = banners
+            .where((b) => (b['position']?.toString() ?? '') == 'bottom_strip')
+            .toList(growable: false);
+
+        return Container(
+          color: const Color(0xFFF9FAFB),
+          child: SingleChildScrollView(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF006D3C),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  [city, country]
+                                      .where((e) => e.trim().isNotEmpty)
+                                      .join(', '),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF6B7280),
+                                  ),
+                                ),
+                                if (websiteUrl.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    websiteUrl,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF2563EB),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
-                        if (content.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            content,
-                            maxLines: 4,
-                            overflow: TextOverflow.ellipsis,
+                          const SizedBox(width: 8),
+                          Container(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE53935).withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              'Aperçu du mini-site',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFFE53935),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ],
-                      ],
-                    ),
-                  ),
-                );
-              }),
-              const SizedBox(height: 16),
-            ],
-            if (media.isNotEmpty) ...[
-              const Text(
-                'Médias',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              ...media.map((m) {
-                final title = m['title']?.toString() ?? '';
-                final description = m['description']?.toString() ?? '';
-                final url = m['url']?.toString() ?? '';
-                final storagePath = m['storage_path']?.toString() ?? '';
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    onTap: storagePath.isEmpty
-                        ? null
-                        : () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => MiniSiteMediaViewerScreen(media: m),
-                              ),
-                            );
-                          },
-                    title: Text(title.isNotEmpty ? title : 'Média'),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (description.isNotEmpty) Text(description),
-                        if (url.isNotEmpty)
-                          Text(
-                            url,
-                            style: const TextStyle(fontSize: 12, color: Colors.blue),
-                          ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-              const SizedBox(height: 16),
-            ],
-            if (programs.isNotEmpty) ...[
-              const Text(
-                'Programmes configurés',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              ...programs.map((program) {
-                final title = program['title']?.toString() ?? '';
-                final degree = program['degree_level']?.toString() ?? '';
-                final mode = program['mode']?.toString() ?? '';
-                final isActive = program['is_active'] == true;
-                final highlighted = program['highlighted'] == true;
-
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
+                      ),
+                      const SizedBox(height: 16),
+                      if (media.isNotEmpty || topBanners.isNotEmpty) ...[
+                        Row(
                           children: [
-                            if (degree.isNotEmpty) Chip(label: Text(degree)),
-                            if (mode.isNotEmpty) Chip(label: Text(mode)),
-                            Chip(
-                              label: Text(isActive ? 'Actif' : 'Inactif'),
-                            ),
-                            if (highlighted)
-                              const Chip(
-                                label: Text('En vedette'),
+                            const Expanded(
+                              child: Text(
+                                'Médias / ambiance du campus',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF111827),
+                                ),
                               ),
+                            ),
+                            TextButton.icon(
+                              onPressed: () {
+                                DefaultTabController.of(context).animateTo(3);
+                              },
+                              icon: const Icon(Icons.photo_library_outlined, size: 16),
+                              label: const Text('Gérer les médias'),
+                            ),
                           ],
                         ),
+                        const SizedBox(height: 8),
+                        Card(
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: _MediaStrip(media: media),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                       ],
-                    ),
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Présentation de l\'université',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: () {
+                              _showEditConfigDialog(context, siteProvider);
+                            },
+                            icon: const Icon(Icons.edit, size: 16),
+                            label: const Text('Modifier la présentation'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Card(
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: const BorderSide(color: Color(0xFFE5E7EB)),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (logoUrl.isNotEmpty)
+                                Align(
+                                  alignment: Alignment.topRight,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.network(
+                                      logoUrl,
+                                      height: 48,
+                                      width: 48,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, _, __) =>
+                                          const SizedBox.shrink(),
+                                    ),
+                                  ),
+                                ),
+                              Text(
+                                heroTitle.isNotEmpty ? heroTitle : name,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                tagline.isNotEmpty
+                                    ? tagline
+                                    : (mission.isNotEmpty ? mission : vision),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF6B7280),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                heroSubtitle.isNotEmpty
+                                    ? heroSubtitle
+                                    : description,
+                              ),
+                              if (keyFigures.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                _KeyFiguresChips(keyFigures: keyFigures),
+                              ],
+                              if (aboutBlocks.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                _BlocksList(blocks: aboutBlocks),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (programs.isNotEmpty) ...[
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'Programmes',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: () {
+                                DefaultTabController.of(context).animateTo(4);
+                              },
+                              icon: const Icon(Icons.school_outlined, size: 16),
+                              label: const Text('Gérer les programmes'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Card(
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (highlightedPrograms.isNotEmpty) ...[
+                                  const Text(
+                                    'Programmes phares',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _ProgramsGrid(
+                                    programs: highlightedPrograms,
+                                    courses: courses,
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (otherPrograms.isNotEmpty)
+                                  _ProgramsGrid(
+                                    programs: otherPrograms,
+                                    courses: courses,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      if (events.isNotEmpty) ...[
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'Événements',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: () {
+                                DefaultTabController.of(context).animateTo(5);
+                              },
+                              icon: const Icon(Icons.event, size: 16),
+                              label: const Text('Gérer les événements'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Card(
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: _EventsList(events: events),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      if (news.isNotEmpty) ...[
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'Actualités',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: () {
+                                DefaultTabController.of(context).animateTo(6);
+                              },
+                              icon: const Icon(Icons.article_outlined, size: 16),
+                              label: const Text('Gérer les actualités'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Card(
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: _NewsList(news: news),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      if (middleBanners.isNotEmpty) ...[
+                        const Text(
+                          'Informations clés',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Card(
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child:
+                                _BannerStrips(banners: middleBanners, media: media),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      if (otherBlocks.isNotEmpty) ...[
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'Informations complémentaires',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: () {
+                                DefaultTabController.of(context).animateTo(2);
+                              },
+                              icon: const Icon(Icons.notes, size: 16),
+                              label: const Text('Gérer les contenus'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Card(
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: _BlocksList(blocks: otherBlocks),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      if (staff.isNotEmpty) ...[
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'Équipe',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: () {
+                                DefaultTabController.of(context).animateTo(7);
+                              },
+                              icon: const Icon(Icons.group_outlined, size: 16),
+                              label: const Text('Gérer l\'équipe'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Card(
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: _StaffList(staff: staff),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      if (bottomBanners.isNotEmpty) ...[
+                        const Text(
+                          'À ne pas manquer',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Card(
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child:
+                                _BannerStrips(banners: bottomBanners, media: media),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      if (contactEmail.isNotEmpty ||
+                          contactPhone.isNotEmpty ||
+                          address.isNotEmpty ||
+                          socialLinks.isNotEmpty) ...[
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'Contact & informations',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: () {
+                                DefaultTabController.of(context).animateTo(1);
+                              },
+                              icon: const Icon(Icons.settings, size: 16),
+                              label: const Text('Configurer le contact'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Card(
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: _ContactSection(
+                              email: contactEmail,
+                              phone: contactPhone,
+                              address: address,
+                              socialLinks: socialLinks,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                );
-              }),
-            ],
-          ],
+                ),
+              ),
+            ),
+          ),
         );
       },
     );
@@ -1385,6 +3151,7 @@ class _UniversitySiteProgramsTab extends StatelessWidget {
         }
 
         final programs = provider.programs;
+        final courses = provider.courses;
 
         if (programs.isEmpty) {
           return Padding(
@@ -1417,7 +3184,10 @@ class _UniversitySiteProgramsTab extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
-                    onPressed: provider.loadPrograms,
+                    onPressed: () async {
+                      await provider.loadPrograms();
+                      await provider.loadCourses();
+                    },
                     icon: const Icon(Icons.refresh),
                     label: const Text('Recharger'),
                   ),
@@ -1439,6 +3209,12 @@ class _UniversitySiteProgramsTab extends StatelessWidget {
                   final mode = program['mode']?.toString() ?? '';
                   final isActive = program['is_active'] == true;
                   final highlighted = program['highlighted'] == true;
+                  final programId = program['id']?.toString();
+                  final programCourses = programId == null
+                      ? <Map<String, dynamic>>[]
+                      : courses
+                          .where((c) => c['program_id']?.toString() == programId)
+                          .toList(growable: false);
 
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),
@@ -1468,20 +3244,46 @@ class _UniversitySiteProgramsTab extends StatelessWidget {
                                 const Chip(
                                   label: Text('En vedette'),
                                 ),
+                              if (programCourses.isNotEmpty)
+                                Chip(
+                                  label: Text(
+                                    '${programCourses.length} cours',
+                                  ),
+                                ),
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton.icon(
-                              onPressed: () => _showEditProgramDialog(
-                                context,
-                                provider,
-                                program: program,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              TextButton.icon(
+                                onPressed: programId == null
+                                    ? null
+                                    : () {
+                                        showModalBottomSheet<void>(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          builder: (context) {
+                                            return _UniversityProgramCoursesSheet(
+                                              programId: programId,
+                                              programTitle: title,
+                                            );
+                                          },
+                                        );
+                                      },
+                                icon: const Icon(Icons.menu_book_outlined),
+                                label: const Text('Gérer les cours'),
                               ),
-                              icon: const Icon(Icons.edit),
-                              label: const Text('Modifier'),
-                            ),
+                              TextButton.icon(
+                                onPressed: () => _showEditProgramDialog(
+                                  context,
+                                  provider,
+                                  program: program,
+                                ),
+                                icon: const Icon(Icons.edit),
+                                label: const Text('Modifier le programme'),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -1595,9 +3397,6 @@ Future<void> _showEditMediaDialog(
   final titleController = TextEditingController(text: media?['title']?.toString() ?? '');
   final descriptionController =
       TextEditingController(text: media?['description']?.toString() ?? '');
-  final urlController = TextEditingController(text: media?['url']?.toString() ?? '');
-  final thumbnailController =
-      TextEditingController(text: media?['thumbnail_url']?.toString() ?? '');
 
   await showDialog<void>(
     context: context,
@@ -1634,20 +3433,6 @@ Future<void> _showEditMediaDialog(
                     maxLines: 3,
                     decoration: const InputDecoration(
                       labelText: 'Description',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: urlController,
-                    decoration: const InputDecoration(
-                      labelText: 'URL (YouTube, lien externe...)',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: thumbnailController,
-                    decoration: const InputDecoration(
-                      labelText: 'URL de vignette (optionnel)',
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -1722,8 +3507,6 @@ Future<void> _showEditMediaDialog(
                   final type = typeController.text.trim();
                   final title = titleController.text.trim();
                   final description = descriptionController.text.trim();
-                  final url = urlController.text.trim();
-                  final thumbnail = thumbnailController.text.trim();
 
                   if (type.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -1761,9 +3544,9 @@ Future<void> _showEditMediaDialog(
                     mediaType: type,
                     title: title.isNotEmpty ? title : null,
                     description: description.isNotEmpty ? description : null,
-                    url: url.isNotEmpty ? url : null,
+                    url: null,
                     storagePath: storagePath,
-                    thumbnailUrl: thumbnail.isNotEmpty ? thumbnail : null,
+                    thumbnailUrl: null,
                   );
                   if (!context.mounted) return;
                   if (ok) {
@@ -1787,6 +3570,605 @@ Future<void> _showEditMediaDialog(
       );
     },
   );
+}
+
+class _MediaStrip extends StatelessWidget {
+  final List<Map<String, dynamic>> media;
+
+  const _MediaStrip({required this.media});
+
+  @override
+  Widget build(BuildContext context) {
+    if (media.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return SizedBox(
+      height: 130,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: media.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final m = media[index];
+          final title = m['title']?.toString() ?? '';
+          final description = m['description']?.toString() ?? '';
+          final mediaType = m['media_type']?.toString() ?? '';
+
+          return Container(
+            width: 260,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: const Color(0xFF006D3C).withOpacity(0.06),
+            ),
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.play_circle_fill,
+                        size: 18, color: Color(0xFF006D3C)),
+                    const SizedBox(width: 6),
+                    Text(
+                      mediaType.isNotEmpty ? mediaType : 'Média',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF006D3C),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  title.isNotEmpty ? title : 'Titre du média',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (description.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _KeyFiguresChips extends StatelessWidget {
+  final Map<String, dynamic> keyFigures;
+
+  const _KeyFiguresChips({required this.keyFigures});
+
+  @override
+  Widget build(BuildContext context) {
+    if (keyFigures.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final entries = keyFigures.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: entries.map((e) {
+        final label = e.key.toString();
+        final value = e.value?.toString() ?? '';
+        return Chip(
+          label: Text('$value $label'),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _BlocksList extends StatelessWidget {
+  final List<Map<String, dynamic>> blocks;
+
+  const _BlocksList({required this.blocks});
+
+  @override
+  Widget build(BuildContext context) {
+    if (blocks.isEmpty) {
+      return const Text('Aucun contenu pour l\'instant.');
+    }
+
+    return Column(
+      children: blocks.map((block) {
+        final title = block['title']?.toString() ?? '';
+        final key = block['key']?.toString() ?? '';
+        final content = block['content']?.toString() ?? '';
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title.isNotEmpty ? title : key,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  if (key.isNotEmpty)
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(999),
+                        color: const Color(0xFFE5E7EB),
+                      ),
+                      child: Text(
+                        key,
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                    ),
+                ],
+              ),
+              if (content.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  content,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _ProgramsGrid extends StatelessWidget {
+  final List<Map<String, dynamic>> programs;
+  final List<Map<String, dynamic>> courses;
+
+  const _ProgramsGrid({
+    required this.programs,
+    required this.courses,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (programs.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final isWide = MediaQuery.of(context).size.width > 900;
+
+    if (isWide) {
+      return Wrap(
+        spacing: 16,
+        runSpacing: 16,
+        children: programs.map((program) {
+          return SizedBox(
+            width: 320,
+            child: _ProgramPreviewCard(
+              program: program,
+              courses: courses,
+            ),
+          );
+        }).toList(),
+      );
+    }
+
+    return Column(
+      children: programs.map((program) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: _ProgramPreviewCard(
+            program: program,
+            courses: courses,
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _ProgramPreviewCard extends StatelessWidget {
+  final Map<String, dynamic> program;
+  final List<Map<String, dynamic>> courses;
+
+  const _ProgramPreviewCard({
+    required this.program,
+    required this.courses,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final title = program['title']?.toString() ?? '';
+    final degree = program['degree_level']?.toString() ?? '';
+    final mode = program['mode']?.toString() ?? '';
+    final isActive = program['is_active'] == true;
+    final highlighted = program['highlighted'] == true;
+    final programId = program['id']?.toString();
+    final programCourses = programId == null
+        ? <Map<String, dynamic>>[]
+        : courses
+            .where((c) => c['program_id']?.toString() == programId)
+            .toList(growable: false);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Wrap(
+          spacing: 6,
+          runSpacing: 4,
+          children: [
+            if (degree.isNotEmpty) Chip(label: Text(degree)),
+            if (mode.isNotEmpty) Chip(label: Text(mode)),
+            Chip(label: Text(isActive ? 'Actif' : 'Inactif')),
+            if (highlighted)
+              const Chip(
+                label: Text('En vedette'),
+              ),
+            if (programCourses.isNotEmpty)
+              Chip(
+                label: Text('${programCourses.length} cours'),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _EventsList extends StatelessWidget {
+  final List<Map<String, dynamic>> events;
+
+  const _EventsList({required this.events});
+
+  @override
+  Widget build(BuildContext context) {
+    if (events.isEmpty) {
+      return const Text('Aucun événement à venir.');
+    }
+
+    return Column(
+      children: events.map((event) {
+        final title = event['title']?.toString() ?? '';
+        final location = event['location']?.toString() ?? '';
+        final startDate = event['start_date']?.toString() ?? '';
+        final endDate = event['end_date']?.toString() ?? '';
+
+        final dateParts = <String>[];
+        if (startDate.isNotEmpty) dateParts.add(startDate);
+        if (endDate.isNotEmpty && endDate != startDate) {
+          dateParts.add(endDate);
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (dateParts.isNotEmpty || location.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  [
+                    if (dateParts.isNotEmpty) dateParts.join(' – '),
+                    if (location.isNotEmpty) location,
+                  ].join(' • '),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _NewsList extends StatelessWidget {
+  final List<Map<String, dynamic>> news;
+
+  const _NewsList({required this.news});
+
+  @override
+  Widget build(BuildContext context) {
+    if (news.isEmpty) {
+      return const Text('Aucune actualité pour le moment.');
+    }
+
+    return Column(
+      children: news.map((item) {
+        final title = item['title']?.toString() ?? '';
+        final summary = item['summary']?.toString() ?? '';
+        final publishedAt = item['published_at']?.toString() ?? '';
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (publishedAt.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  publishedAt,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ],
+              if (summary.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  summary,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _BannerStrips extends StatelessWidget {
+  final List<Map<String, dynamic>> banners;
+  final List<Map<String, dynamic>> media;
+
+  const _BannerStrips({
+    required this.banners,
+    required this.media,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (banners.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      children: banners.map((banner) {
+        final title = banner['title']?.toString() ?? '';
+        final subtitle = banner['subtitle']?.toString() ?? '';
+        final mediaId = banner['media_id']?.toString();
+        final mediaItem = mediaId == null
+            ? null
+            : media.firstWhere(
+                (m) => m['id']?.toString() == mediaId,
+                orElse: () => <String, dynamic>{},
+              );
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: const Color(0xFF006D3C).withOpacity(0.04),
+            ),
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (subtitle.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (mediaItem != null && mediaItem.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  const Icon(Icons.link, size: 16, color: Color(0xFF006D3C)),
+                ],
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _StaffList extends StatelessWidget {
+  final List<Map<String, dynamic>> staff;
+
+  const _StaffList({required this.staff});
+
+  @override
+  Widget build(BuildContext context) {
+    if (staff.isEmpty) {
+      return const Text('Aucun membre d\'équipe configuré.');
+    }
+
+    return Column(
+      children: staff.map((member) {
+        final fullName = member['full_name']?.toString() ?? '';
+        final role = member['role']?.toString() ?? '';
+        final isActive = member['is_active'] != false;
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Row(
+            children: [
+              const CircleAvatar(
+                radius: 14,
+                child: Icon(
+                  Icons.person,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      fullName,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (role.isNotEmpty)
+                      Text(
+                        role,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Chip(
+                label: Text(isActive ? 'Actif' : 'Inactif'),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _ContactSection extends StatelessWidget {
+  final String email;
+  final String phone;
+  final String address;
+  final Map<String, dynamic> socialLinks;
+
+  const _ContactSection({
+    required this.email,
+    required this.phone,
+    required this.address,
+    required this.socialLinks,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (address.isNotEmpty) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.location_on_outlined,
+                  size: 16, color: Color(0xFF006D3C)),
+              const SizedBox(width: 8),
+              Expanded(child: Text(address)),
+            ],
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (email.isNotEmpty) ...[
+          Row(
+            children: [
+              const Icon(Icons.mail_outline,
+                  size: 16, color: Color(0xFF006D3C)),
+              const SizedBox(width: 8),
+              Text(email),
+            ],
+          ),
+          const SizedBox(height: 4),
+        ],
+        if (phone.isNotEmpty) ...[
+          Row(
+            children: [
+              const Icon(Icons.phone_outlined,
+                  size: 16, color: Color(0xFF006D3C)),
+              const SizedBox(width: 8),
+              Text(phone),
+            ],
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (socialLinks.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: socialLinks.entries.map((entry) {
+              final platform = entry.key.toString();
+              return Chip(
+                avatar: const Icon(
+                  Icons.link,
+                  size: 16,
+                ),
+                label: Text(platform),
+              );
+            }).toList(),
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 Future<void> _showEditProgramDialog(

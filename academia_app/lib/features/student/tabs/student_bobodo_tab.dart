@@ -49,6 +49,9 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
                   final isUser = msg['sender'] == 'student';
                   final messageId = msg['id']?.toString();
                   final content = msg['content']?.toString() ?? '';
+                  final selectedFeedback = messageId != null
+                      ? provider.feedbackForMessage(messageId)
+                      : null;
                   final bubble = Container(
                     margin: const EdgeInsets.only(bottom: 4),
                     padding: const EdgeInsets.all(12),
@@ -71,7 +74,15 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
                                 : MainAxisAlignment.start,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.thumb_up_alt_outlined, size: 18),
+                                icon: Icon(
+                                  selectedFeedback == 'up'
+                                      ? Icons.thumb_up_alt
+                                      : Icons.thumb_up_alt_outlined,
+                                  size: 18,
+                                ),
+                                color: selectedFeedback == 'up'
+                                    ? Theme.of(context).colorScheme.primary
+                                    : null,
                                 tooltip: 'Réponse utile',
                                 onPressed: () {
                                   context
@@ -80,7 +91,15 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
                                 },
                               ),
                               IconButton(
-                                icon: const Icon(Icons.thumb_down_alt_outlined, size: 18),
+                                icon: Icon(
+                                  selectedFeedback == 'down'
+                                      ? Icons.thumb_down_alt
+                                      : Icons.thumb_down_alt_outlined,
+                                  size: 18,
+                                ),
+                                color: selectedFeedback == 'down'
+                                    ? Theme.of(context).colorScheme.error
+                                    : null,
                                 tooltip: 'Réponse peu utile',
                                 onPressed: () {
                                   context

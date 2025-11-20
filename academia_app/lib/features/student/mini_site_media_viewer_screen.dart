@@ -25,28 +25,29 @@ class _MiniSiteMediaViewerScreenState extends State<MiniSiteMediaViewerScreen> {
   }
 
   Future<void> _loadUrl() async {
-    final storagePath = widget.media['storage_path']?.toString() ?? '';
-    if (storagePath.isEmpty) {
-      setState(() {
-        _error = 'Média non disponible.';
-        _isLoading = false;
-      });
-      return;
-    }
-
     try {
+      final storagePath = widget.media['storage_path']?.toString() ?? '';
+      final mediaType = widget.media['media_type']?.toString().toLowerCase() ?? '';
+      final isVideo = mediaType.contains('video');
+
+      if (storagePath.isEmpty) {
+        setState(() {
+          _error = 'Média non disponible.';
+          _isLoading = false;
+        });
+        return;
+      }
+
       final client = Supabase.instance.client;
-      final signedUrl = await client.storage.from('university-media').createSignedUrl(
+      final resolvedUrl = await client.storage.from('university-media').createSignedUrl(
             storagePath,
             3600,
           );
 
-      final mediaType = widget.media['media_type']?.toString().toLowerCase() ?? '';
-      final isVideo = mediaType.contains('video');
-
       if (isVideo) {
-        final controller = VideoPlayerController.networkUrl(Uri.parse(signedUrl));
+        final controller = VideoPlayerController.networkUrl(Uri.parse(resolvedUrl));
         await controller.initialize();
+        controller.setLooping(true);
         controller.play();
         setState(() {
           _videoController = controller;
@@ -55,7 +56,7 @@ class _MiniSiteMediaViewerScreenState extends State<MiniSiteMediaViewerScreen> {
         });
       } else {
         setState(() {
-          _url = signedUrl;
+          _url = resolvedUrl;
           _isVideo = false;
           _isLoading = false;
         });

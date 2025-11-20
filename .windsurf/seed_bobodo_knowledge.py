@@ -177,6 +177,43 @@ KNOWLEDGE_ITEMS: List[Dict[str, Any]] = [
 ]
 
 
+def call_admin_execute_sql(sql: str) -> bool:
+    """Appelle la RPC admin_execute_sql avec une requête SQL arbitraire.
+
+    Utilise la clé service_role validée par .windsurf.
+    """
+    url = f"{sup.SUPABASE_URL}/rest/v1/rpc/admin_execute_sql"  # type: ignore[attr-defined]
+    headers: Dict[str, Any] = {
+        "apikey": sup.SUPABASE_SERVICE_KEY,  # type: ignore[attr-defined]
+        "Authorization": f"Bearer {sup.SUPABASE_SERVICE_KEY}",  # type: ignore[attr-defined]
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    try:
+        resp = requests.post(url, headers=headers, json={"p_sql": sql}, timeout=20)
+    except Exception as exc:  # pragma: no cover
+        print("[ERROR] Exception admin_execute_sql:", exc)
+        return False
+
+    if resp.status_code != 200:
+        print("[ERROR] HTTP", resp.status_code, "admin_execute_sql")
+        print(resp.text[:400])
+        return False
+
+    try:
+        data = resp.json()
+    except Exception:
+        return True
+
+    if isinstance(data, dict) and not data.get("ok", True):
+        print("[WARN] admin_execute_sql logical error:")
+        print(str(data)[:400])
+        return False
+
+    return True
+
+
 def main() -> int:
     # Vérifier s'il y a déjà des connaissances : si oui, on ne reseed pas.
     check = sup.read("app.bobodo_knowledge", limit=1)
@@ -184,10 +221,7 @@ def main() -> int:
         print("[INFO] Des connaissances existent déjà dans app.bobodo_knowledge, seed ignoré.")
         return 0
 
-    print("[INFO] Aucune connaissance interne trouvée, démarrage du seed Bobodo (via RPC execute_sql)...")
-
-    supabase_url: str = sup.SUPABASE_URL  # type: ignore[attr-defined]
-    rpc_headers: Dict[str, Any] = sup.RPC_HEADERS  # type: ignore[attr-defined]
+    print("[INFO] Aucune connaissance interne trouvée, démarrage du seed Bobodo (via admin_execute_sql)...")
 
     for item in KNOWLEDGE_ITEMS:
         title = str(item["title"])
@@ -214,25 +248,8 @@ VALUES (
 );
 """.strip()
 
-        try:
-            resp = requests.post(
-                f"{supabase_url}/rest/v1/rpc/execute_sql",
-                headers=rpc_headers,
-                json={"sql_query": sql},
-                timeout=20,
-            )
-        except Exception as exc:  # pragma: no cover
-            print("[ERROR] Exception réseau pour l'item:", title)
-            print(exc)
-            return 1
-
-        if resp.status_code >= 300:
-            print("[ERROR] Échec d'insertion connaissance (HTTP):", title)
-            print("Status:", resp.status_code)
-            try:
-                print(resp.json())
-            except Exception:
-                print(resp.text)
+        if not call_admin_execute_sql(sql):
+            print("[ERROR] Échec d'insertion connaissance via admin_execute_sql:", title)
             return 1
 
         print("[OK] Connaissance insérée:", title)

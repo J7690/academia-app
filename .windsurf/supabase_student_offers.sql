@@ -19,6 +19,15 @@ CREATE TABLE IF NOT EXISTS app.universities (
     city TEXT,
     website_url TEXT,
     description TEXT,
+    tagline TEXT,
+    banner_image_url TEXT,
+    contact_email TEXT,
+    contact_phone TEXT,
+    address TEXT,
+    social_links JSONB,
+    mission TEXT,
+    vision TEXT,
+    key_figures JSONB,
     is_active BOOLEAN DEFAULT TRUE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
@@ -48,6 +57,8 @@ CREATE TABLE IF NOT EXISTS app.programs (
     mode TEXT,                  -- online, presentiel, hybride
     duration_months INTEGER,
     tuition_fees NUMERIC,
+    structure TEXT,
+    career_outcomes TEXT,
     highlighted BOOLEAN DEFAULT FALSE NOT NULL,
     is_active BOOLEAN DEFAULT TRUE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -64,6 +75,21 @@ USING (is_active = TRUE);
 
 GRANT SELECT ON app.programs TO anon, authenticated;
 GRANT ALL ON app.programs TO service_role;
+
+ALTER TABLE app.universities
+    ADD COLUMN IF NOT EXISTS tagline TEXT,
+    ADD COLUMN IF NOT EXISTS banner_image_url TEXT,
+    ADD COLUMN IF NOT EXISTS contact_email TEXT,
+    ADD COLUMN IF NOT EXISTS contact_phone TEXT,
+    ADD COLUMN IF NOT EXISTS address TEXT,
+    ADD COLUMN IF NOT EXISTS social_links JSONB,
+    ADD COLUMN IF NOT EXISTS mission TEXT,
+    ADD COLUMN IF NOT EXISTS vision TEXT,
+    ADD COLUMN IF NOT EXISTS key_figures JSONB;
+
+ALTER TABLE app.programs
+    ADD COLUMN IF NOT EXISTS structure TEXT,
+    ADD COLUMN IF NOT EXISTS career_outcomes TEXT;
 
 -- ========================================
 -- 3) RPC - LISTE D'OFFRES POUR LA PAGE D'ACCUEIL ÉTUDIANT

@@ -18,6 +18,7 @@ import 'providers/university_site_provider.dart';
 import 'providers/admin_applications_provider.dart';
 import 'providers/admin_application_messages_provider.dart';
 import 'providers/admin_programs_provider.dart';
+import 'providers/admin_courses_provider.dart';
 import 'providers/admin_universities_provider.dart';
 import 'providers/admin_university_site_provider.dart';
 import 'providers/admin_bobodo_conversations_provider.dart';
@@ -29,6 +30,7 @@ import 'providers/university_application_detail_provider.dart';
 import 'providers/selected_university_application_provider.dart';
 import 'providers/university_programs_provider.dart';
 import 'providers/bobodo_provider.dart';
+import 'providers/landing_content_provider.dart';
 import 'features/auth/auth_wrapper.dart';
 
 void main() async {
@@ -49,6 +51,7 @@ class AcademiaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final providers = <SingleChildWidget>[
+      ChangeNotifierProvider(create: (_) => LandingContentProvider()),
       ChangeNotifierProvider(create: (_) => StudentOffersProvider()),
       ChangeNotifierProvider(create: (_) => StudentApplicationsProvider()),
       ChangeNotifierProvider(create: (_) => StudentApplicationFilesProvider()),
@@ -60,6 +63,7 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => AdminApplicationsProvider()),
       ChangeNotifierProvider(create: (_) => AdminApplicationMessagesProvider()),
       ChangeNotifierProvider(create: (_) => AdminProgramsProvider()),
+      ChangeNotifierProvider(create: (_) => AdminCoursesProvider()),
       ChangeNotifierProvider(create: (_) => AdminUniversitiesProvider()),
       ChangeNotifierProvider(create: (_) => AdminUniversitySiteProvider()),
       ChangeNotifierProvider(create: (_) => AdminBobodoConversationsProvider()),

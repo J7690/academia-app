@@ -20,6 +20,14 @@ class BobodoProvider extends ChangeNotifier {
   String? get currentSessionId => _currentSessionId;
   List<Map<String, dynamic>> get messages => List.unmodifiable(_messages);
 
+  final Map<String, String> _feedbackByMessageId = {};
+
+  Map<String, String> get feedbackByMessageId =>
+      Map.unmodifiable(_feedbackByMessageId);
+
+  String? feedbackForMessage(String messageId) =>
+      _feedbackByMessageId[messageId];
+
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
@@ -156,6 +164,9 @@ class BobodoProvider extends ChangeNotifier {
       );
     } catch (_) {
       // On ignore les erreurs de feedback pour ne pas bloquer l'UX.
+    } finally {
+      _feedbackByMessageId[messageId] = rating;
+      notifyListeners();
     }
   }
 }

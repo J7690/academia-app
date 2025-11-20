@@ -22,6 +22,53 @@ CREATE TABLE IF NOT EXISTS app.university_site_blocks (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
+-- Événements du mini-site (journées portes ouvertes, webinaires, etc.)
+CREATE TABLE IF NOT EXISTS app.university_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    university_id UUID NOT NULL REFERENCES app.universities (id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT,
+    event_type TEXT,
+    start_at TIMESTAMPTZ,
+    end_at TIMESTAMPTZ,
+    location TEXT,
+    is_highlighted BOOLEAN DEFAULT FALSE NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- Actualités / articles du mini-site
+CREATE TABLE IF NOT EXISTS app.university_news (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    university_id UUID NOT NULL REFERENCES app.universities (id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    slug TEXT UNIQUE,
+    summary TEXT,
+    content TEXT,
+    published_at TIMESTAMPTZ,
+    hero_media_id UUID REFERENCES app.university_media (id),
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- Équipe (personnes clés de l'université) pour le mini-site
+CREATE TABLE IF NOT EXISTS app.university_staff (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    university_id UUID NOT NULL REFERENCES app.universities (id) ON DELETE CASCADE,
+    full_name TEXT NOT NULL,
+    role TEXT,
+    bio TEXT,
+    photo_media_id UUID REFERENCES app.university_media (id),
+    email TEXT,
+    phone TEXT,
+    sort_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
 -- Configuration globale du mini-site (hero, couleurs, affiche principale)
 CREATE TABLE IF NOT EXISTS app.university_site_config (
     university_id UUID PRIMARY KEY REFERENCES app.universities (id) ON DELETE CASCADE,
@@ -77,6 +124,15 @@ CREATE INDEX IF NOT EXISTS university_site_config_university_id_idx
 CREATE INDEX IF NOT EXISTS university_site_banners_university_id_idx
     ON app.university_site_banners (university_id);
 
+CREATE INDEX IF NOT EXISTS university_events_university_id_start_at_idx
+    ON app.university_events (university_id, start_at);
+
+CREATE INDEX IF NOT EXISTS university_news_university_id_published_at_idx
+    ON app.university_news (university_id, published_at);
+
+CREATE INDEX IF NOT EXISTS university_staff_university_id_sort_order_idx
+    ON app.university_staff (university_id, sort_order);
+
 -- ========================================
 -- 2) RLS & DROITS
 -- ========================================
@@ -85,6 +141,10 @@ ALTER TABLE app.university_site_blocks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app.university_media ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app.university_site_config ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app.university_site_banners ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE app.university_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE app.university_news ENABLE ROW LEVEL SECURITY;
+ALTER TABLE app.university_staff ENABLE ROW LEVEL SECURITY;
 
 -- Lecture publique (uniquement contenus actifs)
 DROP POLICY IF EXISTS public_select_university_site_blocks ON app.university_site_blocks;
@@ -112,11 +172,32 @@ CREATE POLICY public_select_university_site_banners
 ON app.university_site_banners FOR SELECT
 USING (is_active = TRUE);
 
+DROP POLICY IF EXISTS public_select_university_events ON app.university_events;
+CREATE POLICY public_select_university_events
+ON app.university_events FOR SELECT
+USING (is_active = TRUE);
+
+DROP POLICY IF EXISTS public_select_university_news ON app.university_news;
+CREATE POLICY public_select_university_news
+ON app.university_news FOR SELECT
+USING (is_active = TRUE);
+
+DROP POLICY IF EXISTS public_select_university_staff ON app.university_staff;
+CREATE POLICY public_select_university_staff
+ON app.university_staff FOR SELECT
+USING (is_active = TRUE);
+
 GRANT SELECT ON app.university_site_config TO anon, authenticated;
 GRANT SELECT ON app.university_site_banners TO anon, authenticated;
+GRANT SELECT ON app.university_events TO anon, authenticated;
+GRANT SELECT ON app.university_news TO anon, authenticated;
+GRANT SELECT ON app.university_staff TO anon, authenticated;
+
 GRANT ALL ON app.university_site_config TO service_role;
 GRANT ALL ON app.university_site_banners TO service_role;
-
+GRANT ALL ON app.university_events TO service_role;
+GRANT ALL ON app.university_news TO service_role;
+GRANT ALL ON app.university_staff TO service_role;
 -- ========================================
 -- 3) RPC - GESTION MINI-SITE (CÔTÉ UNIVERSITÉ)
 -- ========================================
@@ -136,6 +217,9 @@ DECLARE
     v_blocks JSONB;
     v_media JSONB;
     v_banners JSONB;
+    v_events JSONB;
+    v_news JSONB;
+    v_staff JSONB;
 BEGIN
     IF v_user_id IS NULL THEN
         RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
@@ -194,13 +278,40 @@ BEGIN
     FROM app.university_site_banners ban
     WHERE ban.university_id = v_university_id;
 
+    SELECT COALESCE(
+        JSONB_AGG(TO_JSONB(e) ORDER BY e.start_at NULLS LAST, e.created_at DESC),
+        '[]'::JSONB
+    )
+    INTO v_events
+    FROM app.university_events e
+    WHERE e.university_id = v_university_id;
+
+    SELECT COALESCE(
+        JSONB_AGG(TO_JSONB(n) ORDER BY n.published_at DESC NULLS LAST, n.created_at DESC),
+        '[]'::JSONB
+    )
+    INTO v_news
+    FROM app.university_news n
+    WHERE n.university_id = v_university_id;
+
+    SELECT COALESCE(
+        JSONB_AGG(TO_JSONB(s) ORDER BY s.sort_order, s.created_at),
+        '[]'::JSONB
+    )
+    INTO v_staff
+    FROM app.university_staff s
+    WHERE s.university_id = v_university_id;
+
     RETURN JSONB_BUILD_OBJECT(
         'success', TRUE,
         'university', v_university,
         'config', v_config,
         'blocks', v_blocks,
         'media', v_media,
-        'banners', v_banners
+        'banners', v_banners,
+        'events', v_events,
+        'news', v_news,
+        'staff', v_staff
     );
 END;
 $$;
@@ -704,6 +815,443 @@ $$;
 GRANT EXECUTE ON FUNCTION app_delete_university_site_banner(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION app_delete_university_site_banner(UUID) TO service_role;
 
+-- Gestion des événements du mini-site pour l'université connectée
+CREATE OR REPLACE FUNCTION app_upsert_university_event(
+    p_event_id UUID,
+    p_title TEXT,
+    p_description TEXT,
+    p_event_type TEXT,
+    p_start_at TIMESTAMPTZ,
+    p_end_at TIMESTAMPTZ,
+    p_location TEXT,
+    p_is_highlighted BOOLEAN,
+    p_is_active BOOLEAN
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_university_id UUID;
+    v_event_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT
+        raw_user_meta_data->>'role',
+        (raw_user_meta_data->>'university_id')::UUID
+    INTO v_role, v_university_id
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'university' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_university');
+    END IF;
+
+    IF v_university_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'university_not_configured');
+    END IF;
+
+    IF p_title IS NULL OR LENGTH(TRIM(p_title)) = 0 THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_title');
+    END IF;
+
+    IF p_event_id IS NULL THEN
+        INSERT INTO app.university_events (
+            university_id,
+            title,
+            description,
+            event_type,
+            start_at,
+            end_at,
+            location,
+            is_highlighted,
+            is_active
+        )
+        VALUES (
+            v_university_id,
+            p_title,
+            p_description,
+            p_event_type,
+            p_start_at,
+            p_end_at,
+            p_location,
+            COALESCE(p_is_highlighted, FALSE),
+            COALESCE(p_is_active, TRUE)
+        )
+        RETURNING id INTO v_event_id;
+    ELSE
+        UPDATE app.university_events
+        SET
+            title = p_title,
+            description = p_description,
+            event_type = p_event_type,
+            start_at = p_start_at,
+            end_at = p_end_at,
+            location = p_location,
+            is_highlighted = COALESCE(p_is_highlighted, is_highlighted),
+            is_active = COALESCE(p_is_active, is_active),
+            updated_at = NOW()
+        WHERE id = p_event_id
+          AND university_id = v_university_id
+        RETURNING id INTO v_event_id;
+    END IF;
+
+    IF v_event_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'event_not_found');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'event_id', v_event_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_upsert_university_event(UUID, TEXT, TEXT, TEXT, TIMESTAMPTZ, TIMESTAMPTZ, TEXT, BOOLEAN, BOOLEAN) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_upsert_university_event(UUID, TEXT, TEXT, TEXT, TIMESTAMPTZ, TIMESTAMPTZ, TEXT, BOOLEAN, BOOLEAN) TO service_role;
+
+CREATE OR REPLACE FUNCTION app_delete_university_event(
+    p_event_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_university_id UUID;
+    v_deleted_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT
+        raw_user_meta_data->>'role',
+        (raw_user_meta_data->>'university_id')::UUID
+    INTO v_role, v_university_id
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'university' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_university');
+    END IF;
+
+    IF v_university_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'university_not_configured');
+    END IF;
+
+    UPDATE app.university_events
+    SET is_active = FALSE,
+        updated_at = NOW()
+    WHERE id = p_event_id
+      AND university_id = v_university_id
+    RETURNING id INTO v_deleted_id;
+
+    IF v_deleted_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'event_not_found');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'event_id', v_deleted_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_delete_university_event(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_delete_university_event(UUID) TO service_role;
+
+-- Gestion des actualités du mini-site pour l'université connectée
+CREATE OR REPLACE FUNCTION app_upsert_university_news(
+    p_news_id UUID,
+    p_title TEXT,
+    p_slug TEXT,
+    p_summary TEXT,
+    p_content TEXT,
+    p_published_at TIMESTAMPTZ,
+    p_hero_media_id UUID,
+    p_is_active BOOLEAN
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_university_id UUID;
+    v_news_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT
+        raw_user_meta_data->>'role',
+        (raw_user_meta_data->>'university_id')::UUID
+    INTO v_role, v_university_id
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'university' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_university');
+    END IF;
+
+    IF v_university_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'university_not_configured');
+    END IF;
+
+    IF p_title IS NULL OR LENGTH(TRIM(p_title)) = 0 THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_title');
+    END IF;
+
+    IF p_news_id IS NULL THEN
+        INSERT INTO app.university_news (
+            university_id,
+            title,
+            slug,
+            summary,
+            content,
+            published_at,
+            hero_media_id,
+            is_active
+        )
+        VALUES (
+            v_university_id,
+            p_title,
+            p_slug,
+            p_summary,
+            p_content,
+            p_published_at,
+            p_hero_media_id,
+            COALESCE(p_is_active, TRUE)
+        )
+        RETURNING id INTO v_news_id;
+    ELSE
+        UPDATE app.university_news
+        SET
+            title = p_title,
+            slug = p_slug,
+            summary = p_summary,
+            content = p_content,
+            published_at = p_published_at,
+            hero_media_id = p_hero_media_id,
+            is_active = COALESCE(p_is_active, is_active),
+            updated_at = NOW()
+        WHERE id = p_news_id
+          AND university_id = v_university_id
+        RETURNING id INTO v_news_id;
+    END IF;
+
+    IF v_news_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'news_not_found');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'news_id', v_news_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_upsert_university_news(UUID, TEXT, TEXT, TEXT, TEXT, TIMESTAMPTZ, UUID, BOOLEAN) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_upsert_university_news(UUID, TEXT, TEXT, TEXT, TEXT, TIMESTAMPTZ, UUID, BOOLEAN) TO service_role;
+
+CREATE OR REPLACE FUNCTION app_delete_university_news(
+    p_news_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_university_id UUID;
+    v_deleted_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT
+        raw_user_meta_data->>'role',
+        (raw_user_meta_data->>'university_id')::UUID
+    INTO v_role, v_university_id
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'university' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_university');
+    END IF;
+
+    IF v_university_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'university_not_configured');
+    END IF;
+
+    UPDATE app.university_news
+    SET is_active = FALSE,
+        updated_at = NOW()
+    WHERE id = p_news_id
+      AND university_id = v_university_id
+    RETURNING id INTO v_deleted_id;
+
+    IF v_deleted_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'news_not_found');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'news_id', v_deleted_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_delete_university_news(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_delete_university_news(UUID) TO service_role;
+
+-- Gestion de l'équipe du mini-site pour l'université connectée
+CREATE OR REPLACE FUNCTION app_upsert_university_staff(
+    p_staff_id UUID,
+    p_full_name TEXT,
+    p_role TEXT,
+    p_bio TEXT,
+    p_photo_media_id UUID,
+    p_email TEXT,
+    p_phone TEXT,
+    p_sort_order INTEGER,
+    p_is_active BOOLEAN
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_university_id UUID;
+    v_staff_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT
+        raw_user_meta_data->>'role',
+        (raw_user_meta_data->>'university_id')::UUID
+    INTO v_role, v_university_id
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'university' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_university');
+    END IF;
+
+    IF v_university_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'university_not_configured');
+    END IF;
+
+    IF p_full_name IS NULL OR LENGTH(TRIM(p_full_name)) = 0 THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_full_name');
+    END IF;
+
+    IF p_staff_id IS NULL THEN
+        INSERT INTO app.university_staff (
+            university_id,
+            full_name,
+            role,
+            bio,
+            photo_media_id,
+            email,
+            phone,
+            sort_order,
+            is_active
+        )
+        VALUES (
+            v_university_id,
+            p_full_name,
+            p_role,
+            p_bio,
+            p_photo_media_id,
+            p_email,
+            p_phone,
+            COALESCE(p_sort_order, 0),
+            COALESCE(p_is_active, TRUE)
+        )
+        RETURNING id INTO v_staff_id;
+    ELSE
+        UPDATE app.university_staff
+        SET
+            full_name = p_full_name,
+            role = p_role,
+            bio = p_bio,
+            photo_media_id = p_photo_media_id,
+            email = p_email,
+            phone = p_phone,
+            sort_order = COALESCE(p_sort_order, sort_order),
+            is_active = COALESCE(p_is_active, is_active),
+            updated_at = NOW()
+        WHERE id = p_staff_id
+          AND university_id = v_university_id
+        RETURNING id INTO v_staff_id;
+    END IF;
+
+    IF v_staff_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'staff_not_found');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'staff_id', v_staff_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_upsert_university_staff(UUID, TEXT, TEXT, TEXT, UUID, TEXT, TEXT, INTEGER, BOOLEAN) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_upsert_university_staff(UUID, TEXT, TEXT, TEXT, UUID, TEXT, TEXT, INTEGER, BOOLEAN) TO service_role;
+
+CREATE OR REPLACE FUNCTION app_delete_university_staff(
+    p_staff_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_university_id UUID;
+    v_deleted_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT
+        raw_user_meta_data->>'role',
+        (raw_user_meta_data->>'university_id')::UUID
+    INTO v_role, v_university_id
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'university' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_university');
+    END IF;
+
+    IF v_university_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'university_not_configured');
+    END IF;
+
+    UPDATE app.university_staff
+    SET is_active = FALSE,
+        updated_at = NOW()
+    WHERE id = p_staff_id
+      AND university_id = v_university_id
+    RETURNING id INTO v_deleted_id;
+
+    IF v_deleted_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'staff_not_found');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'staff_id', v_deleted_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_delete_university_staff(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_delete_university_staff(UUID) TO service_role;
+
 -- ========================================
 -- 4) RPC - MINI-SITE PUBLIC (CÔTÉ ÉTUDIANT)
 -- ========================================
@@ -723,7 +1271,11 @@ DECLARE
     v_blocks JSONB;
     v_media JSONB;
     v_programs JSONB;
+    v_courses JSONB;
     v_banners JSONB;
+    v_events JSONB;
+    v_news JSONB;
+    v_staff JSONB;
 BEGIN
     SELECT u.id
     INTO v_university_id
@@ -744,7 +1296,16 @@ BEGIN
         'country', u.country,
         'city', u.city,
         'website_url', u.website_url,
-        'description', u.description
+        'description', u.description,
+        'tagline', u.tagline,
+        'banner_image_url', u.banner_image_url,
+        'contact_email', u.contact_email,
+        'contact_phone', u.contact_phone,
+        'address', u.address,
+        'social_links', u.social_links,
+        'mission', u.mission,
+        'vision', u.vision,
+        'key_figures', u.key_figures
     )
     INTO v_university
     FROM app.universities u
@@ -791,6 +1352,29 @@ BEGIN
     WHERE p.university_id = v_university_id
       AND p.is_active = TRUE;
 
+    SELECT COALESCE(
+        JSONB_AGG(
+            JSONB_BUILD_OBJECT(
+                'id', c.id,
+                'program_id', c.program_id,
+                'title', c.title,
+                'description', c.description,
+                'credits', c.credits,
+                'prerequisites', c.prerequisites,
+                'instructor', c.instructor,
+                'is_active', c.is_active,
+                'created_at', c.created_at,
+                'updated_at', c.updated_at
+            ) ORDER BY c.created_at DESC
+        ),
+        '[]'::JSONB
+    )
+    INTO v_courses
+    FROM app.courses c
+    JOIN app.programs p2 ON p2.id = c.program_id
+    WHERE p2.university_id = v_university_id
+      AND c.is_active = TRUE;
+
     SELECT COALESCE(TO_JSONB(c), '{}'::JSONB)
     INTO v_config
     FROM app.university_site_config c
@@ -805,6 +1389,33 @@ BEGIN
     WHERE ban.university_id = v_university_id
       AND ban.is_active = TRUE;
 
+    SELECT COALESCE(
+        JSONB_AGG(TO_JSONB(e) ORDER BY e.start_at NULLS LAST, e.created_at DESC),
+        '[]'::JSONB
+    )
+    INTO v_events
+    FROM app.university_events e
+    WHERE e.university_id = v_university_id
+      AND e.is_active = TRUE;
+
+    SELECT COALESCE(
+        JSONB_AGG(TO_JSONB(n) ORDER BY n.published_at DESC NULLS LAST, n.created_at DESC),
+        '[]'::JSONB
+    )
+    INTO v_news
+    FROM app.university_news n
+    WHERE n.university_id = v_university_id
+      AND n.is_active = TRUE;
+
+    SELECT COALESCE(
+        JSONB_AGG(TO_JSONB(s) ORDER BY s.sort_order, s.created_at),
+        '[]'::JSONB
+    )
+    INTO v_staff
+    FROM app.university_staff s
+    WHERE s.university_id = v_university_id
+      AND s.is_active = TRUE;
+
     RETURN JSONB_BUILD_OBJECT(
         'success', TRUE,
         'university', v_university,
@@ -812,7 +1423,11 @@ BEGIN
         'blocks', v_blocks,
         'media', v_media,
         'programs', v_programs,
-        'banners', v_banners
+        'courses', v_courses,
+        'banners', v_banners,
+        'events', v_events,
+        'news', v_news,
+        'staff', v_staff
     );
 END;
 $$;
@@ -838,6 +1453,9 @@ DECLARE
     v_university JSONB;
     v_blocks JSONB;
     v_media JSONB;
+    v_events JSONB;
+    v_news JSONB;
+    v_staff JSONB;
 BEGIN
     IF v_user_id IS NULL THEN
         RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
@@ -886,11 +1504,38 @@ BEGIN
     FROM app.university_media m
     WHERE m.university_id = p_university_id;
 
+    SELECT COALESCE(
+        JSONB_AGG(TO_JSONB(e) ORDER BY e.start_at NULLS LAST, e.created_at DESC),
+        '[]'::JSONB
+    )
+    INTO v_events
+    FROM app.university_events e
+    WHERE e.university_id = p_university_id;
+
+    SELECT COALESCE(
+        JSONB_AGG(TO_JSONB(n) ORDER BY n.published_at DESC NULLS LAST, n.created_at DESC),
+        '[]'::JSONB
+    )
+    INTO v_news
+    FROM app.university_news n
+    WHERE n.university_id = p_university_id;
+
+    SELECT COALESCE(
+        JSONB_AGG(TO_JSONB(s) ORDER BY s.sort_order, s.created_at),
+        '[]'::JSONB
+    )
+    INTO v_staff
+    FROM app.university_staff s
+    WHERE s.university_id = p_university_id;
+
     RETURN JSONB_BUILD_OBJECT(
         'success', TRUE,
         'university', v_university,
         'blocks', v_blocks,
-        'media', v_media
+        'media', v_media,
+        'events', v_events,
+        'news', v_news,
+        'staff', v_staff
     );
 END;
 $$;
@@ -1161,6 +1806,410 @@ $$;
 
 GRANT EXECUTE ON FUNCTION app_admin_delete_university_media(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION app_admin_delete_university_media(UUID) TO service_role;
+
+CREATE OR REPLACE FUNCTION app_admin_upsert_university_event(
+    p_university_id UUID,
+    p_event_id UUID,
+    p_title TEXT,
+    p_description TEXT,
+    p_event_type TEXT,
+    p_start_at TIMESTAMPTZ,
+    p_end_at TIMESTAMPTZ,
+    p_location TEXT,
+    p_is_highlighted BOOLEAN,
+    p_is_active BOOLEAN
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_event_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    IF p_university_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'university_required');
+    END IF;
+
+    IF p_title IS NULL OR LENGTH(TRIM(p_title)) = 0 THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_title');
+    END IF;
+
+    IF p_event_id IS NULL THEN
+        INSERT INTO app.university_events (
+            university_id,
+            title,
+            description,
+            event_type,
+            start_at,
+            end_at,
+            location,
+            is_highlighted,
+            is_active
+        )
+        VALUES (
+            p_university_id,
+            p_title,
+            p_description,
+            p_event_type,
+            p_start_at,
+            p_end_at,
+            p_location,
+            COALESCE(p_is_highlighted, FALSE),
+            COALESCE(p_is_active, TRUE)
+        )
+        RETURNING id INTO v_event_id;
+    ELSE
+        UPDATE app.university_events
+        SET
+            title = p_title,
+            description = p_description,
+            event_type = p_event_type,
+            start_at = p_start_at,
+            end_at = p_end_at,
+            location = p_location,
+            is_highlighted = COALESCE(p_is_highlighted, is_highlighted),
+            is_active = COALESCE(p_is_active, is_active),
+            updated_at = NOW()
+        WHERE id = p_event_id
+          AND university_id = p_university_id
+        RETURNING id INTO v_event_id;
+    END IF;
+
+    IF v_event_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'event_not_found');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'event_id', v_event_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_upsert_university_event(UUID, UUID, TEXT, TEXT, TEXT, TIMESTAMPTZ, TIMESTAMPTZ, TEXT, BOOLEAN, BOOLEAN) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_upsert_university_event(UUID, UUID, TEXT, TEXT, TEXT, TIMESTAMPTZ, TIMESTAMPTZ, TEXT, BOOLEAN, BOOLEAN) TO service_role;
+
+CREATE OR REPLACE FUNCTION app_admin_delete_university_event(
+    p_event_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_deleted_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    UPDATE app.university_events
+    SET is_active = FALSE,
+        updated_at = NOW()
+    WHERE id = p_event_id
+    RETURNING id INTO v_deleted_id;
+
+    IF v_deleted_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'event_not_found');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'event_id', v_deleted_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_delete_university_event(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_delete_university_event(UUID) TO service_role;
+
+CREATE OR REPLACE FUNCTION app_admin_upsert_university_news(
+    p_university_id UUID,
+    p_news_id UUID,
+    p_title TEXT,
+    p_slug TEXT,
+    p_summary TEXT,
+    p_content TEXT,
+    p_published_at TIMESTAMPTZ,
+    p_hero_media_id UUID,
+    p_is_active BOOLEAN
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_news_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    IF p_university_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'university_required');
+    END IF;
+
+    IF p_title IS NULL OR LENGTH(TRIM(p_title)) = 0 THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_title');
+    END IF;
+
+    IF p_news_id IS NULL THEN
+        INSERT INTO app.university_news (
+            university_id,
+            title,
+            slug,
+            summary,
+            content,
+            published_at,
+            hero_media_id,
+            is_active
+        )
+        VALUES (
+            p_university_id,
+            p_title,
+            p_slug,
+            p_summary,
+            p_content,
+            p_published_at,
+            p_hero_media_id,
+            COALESCE(p_is_active, TRUE)
+        )
+        RETURNING id INTO v_news_id;
+    ELSE
+        UPDATE app.university_news
+        SET
+            title = p_title,
+            slug = p_slug,
+            summary = p_summary,
+            content = p_content,
+            published_at = p_published_at,
+            hero_media_id = p_hero_media_id,
+            is_active = COALESCE(p_is_active, is_active),
+            updated_at = NOW()
+        WHERE id = p_news_id
+          AND university_id = p_university_id
+        RETURNING id INTO v_news_id;
+    END IF;
+
+    IF v_news_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'news_not_found');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'news_id', v_news_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_upsert_university_news(UUID, UUID, TEXT, TEXT, TEXT, TEXT, TIMESTAMPTZ, UUID, BOOLEAN) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_upsert_university_news(UUID, UUID, TEXT, TEXT, TEXT, TEXT, TIMESTAMPTZ, UUID, BOOLEAN) TO service_role;
+
+CREATE OR REPLACE FUNCTION app_admin_delete_university_news(
+    p_news_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_deleted_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    UPDATE app.university_news
+    SET is_active = FALSE,
+        updated_at = NOW()
+    WHERE id = p_news_id
+    RETURNING id INTO v_deleted_id;
+
+    IF v_deleted_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'news_not_found');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'news_id', v_deleted_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_delete_university_news(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_delete_university_news(UUID) TO service_role;
+
+CREATE OR REPLACE FUNCTION app_admin_upsert_university_staff(
+    p_university_id UUID,
+    p_staff_id UUID,
+    p_full_name TEXT,
+    p_role TEXT,
+    p_bio TEXT,
+    p_photo_media_id UUID,
+    p_email TEXT,
+    p_phone TEXT,
+    p_sort_order INTEGER,
+    p_is_active BOOLEAN
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_staff_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    IF p_university_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'university_required');
+    END IF;
+
+    IF p_full_name IS NULL OR LENGTH(TRIM(p_full_name)) = 0 THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_full_name');
+    END IF;
+
+    IF p_staff_id IS NULL THEN
+        INSERT INTO app.university_staff (
+            university_id,
+            full_name,
+            role,
+            bio,
+            photo_media_id,
+            email,
+            phone,
+            sort_order,
+            is_active
+        )
+        VALUES (
+            p_university_id,
+            p_full_name,
+            p_role,
+            p_bio,
+            p_photo_media_id,
+            p_email,
+            p_phone,
+            COALESCE(p_sort_order, 0),
+            COALESCE(p_is_active, TRUE)
+        )
+        RETURNING id INTO v_staff_id;
+    ELSE
+        UPDATE app.university_staff
+        SET
+            full_name = p_full_name,
+            role = p_role,
+            bio = p_bio,
+            photo_media_id = p_photo_media_id,
+            email = p_email,
+            phone = p_phone,
+            sort_order = COALESCE(p_sort_order, sort_order),
+            is_active = COALESCE(p_is_active, is_active),
+            updated_at = NOW()
+        WHERE id = p_staff_id
+          AND university_id = p_university_id
+        RETURNING id INTO v_staff_id;
+    END IF;
+
+    IF v_staff_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'staff_not_found');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'staff_id', v_staff_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_upsert_university_staff(UUID, UUID, TEXT, TEXT, TEXT, UUID, TEXT, TEXT, INTEGER, BOOLEAN) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_upsert_university_staff(UUID, UUID, TEXT, TEXT, TEXT, UUID, TEXT, TEXT, INTEGER, BOOLEAN) TO service_role;
+
+CREATE OR REPLACE FUNCTION app_admin_delete_university_staff(
+    p_staff_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_deleted_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    UPDATE app.university_staff
+    SET is_active = FALSE,
+        updated_at = NOW()
+    WHERE id = p_staff_id
+    RETURNING id INTO v_deleted_id;
+
+    IF v_deleted_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'staff_not_found');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'staff_id', v_deleted_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_delete_university_staff(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_delete_university_staff(UUID) TO service_role;
 
 -- Configuration du mini-site (côté admin)
 CREATE OR REPLACE FUNCTION app_admin_upsert_university_site_config(

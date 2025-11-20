@@ -1,5 +1,7 @@
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/mime_type_helper.dart';
 
 class AdminUniversitySiteProvider extends ChangeNotifier {
   final SupabaseClient _client = Supabase.instance.client;
@@ -11,6 +13,9 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
   Map<String, dynamic>? _university;
   List<Map<String, dynamic>> _blocks = [];
   List<Map<String, dynamic>> _media = [];
+  List<Map<String, dynamic>> _events = [];
+  List<Map<String, dynamic>> _news = [];
+  List<Map<String, dynamic>> _staff = [];
 
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
@@ -19,6 +24,9 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
   Map<String, dynamic>? get university => _university;
   List<Map<String, dynamic>> get blocks => List.unmodifiable(_blocks);
   List<Map<String, dynamic>> get media => List.unmodifiable(_media);
+  List<Map<String, dynamic>> get events => List.unmodifiable(_events);
+  List<Map<String, dynamic>> get news => List.unmodifiable(_news);
+  List<Map<String, dynamic>> get staff => List.unmodifiable(_staff);
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -63,6 +71,9 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
       final uni = response['university'];
       final blocks = response['blocks'];
       final media = response['media'];
+      final events = response['events'];
+      final news = response['news'];
+      final staff = response['staff'];
 
       if (uni is Map) {
         _university = Map<String, dynamic>.from(uni);
@@ -88,11 +99,41 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
         _media = [];
       }
 
+      if (events is List) {
+        _events = events
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+      } else {
+        _events = [];
+      }
+
+      if (news is List) {
+        _news = news
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+      } else {
+        _news = [];
+      }
+
+      if (staff is List) {
+        _staff = staff
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+      } else {
+        _staff = [];
+      }
+
       notifyListeners();
     } catch (e) {
       _university = null;
       _blocks = [];
       _media = [];
+      _events = [];
+      _news = [];
+      _staff = [];
       _setError(e.toString());
     } finally {
       _setLoading(false);
@@ -263,11 +304,304 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> upsertEvent({
+    String? eventId,
+    required String title,
+    String? description,
+    String? eventType,
+    DateTime? startAt,
+    DateTime? endAt,
+    String? location,
+    bool? isHighlighted,
+    bool? isActive,
+  }) async {
+    final universityId = _currentUniversityId;
+    if (universityId == null) {
+      _setError('Aucune université sélectionnée.');
+      return false;
+    }
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_admin_upsert_university_event',
+        params: {
+          'p_university_id': universityId,
+          'p_event_id': eventId,
+          'p_title': title,
+          'p_description': description,
+          'p_event_type': eventType,
+          'p_start_at': startAt?.toIso8601String(),
+          'p_end_at': endAt?.toIso8601String(),
+          'p_location': location,
+          'p_is_highlighted': isHighlighted,
+          'p_is_active': isActive,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError("Réponse invalide du serveur lors de la sauvegarde de l'événement (admin).");
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ??
+            "Erreur lors de la sauvegarde de l'événement (admin).");
+        return false;
+      }
+      await loadSiteForUniversity(universityId);
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> deleteEvent(String eventId) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_admin_delete_university_event',
+        params: {
+          'p_event_id': eventId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError("Réponse invalide du serveur lors de la suppression de l'événement (admin).");
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ??
+            "Erreur lors de la suppression de l'événement (admin).");
+        return false;
+      }
+      final universityId = _currentUniversityId;
+      if (universityId != null) {
+        await loadSiteForUniversity(universityId);
+      }
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> upsertNews({
+    String? newsId,
+    required String title,
+    String? slug,
+    String? summary,
+    String? content,
+    DateTime? publishedAt,
+    String? heroMediaId,
+    bool? isActive,
+  }) async {
+    final universityId = _currentUniversityId;
+    if (universityId == null) {
+      _setError('Aucune université sélectionnée.');
+      return false;
+    }
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_admin_upsert_university_news',
+        params: {
+          'p_university_id': universityId,
+          'p_news_id': newsId,
+          'p_title': title,
+          'p_slug': slug,
+          'p_summary': summary,
+          'p_content': content,
+          'p_published_at': publishedAt?.toIso8601String(),
+          'p_hero_media_id': heroMediaId,
+          'p_is_active': isActive,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError("Réponse invalide du serveur lors de la sauvegarde de l'actualité (admin).");
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ??
+            "Erreur lors de la sauvegarde de l'actualité (admin).");
+        return false;
+      }
+      await loadSiteForUniversity(universityId);
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> deleteNews(String newsId) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_admin_delete_university_news',
+        params: {
+          'p_news_id': newsId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError("Réponse invalide du serveur lors de la suppression de l'actualité (admin).");
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ??
+            "Erreur lors de la suppression de l'actualité (admin).");
+        return false;
+      }
+      final universityId = _currentUniversityId;
+      if (universityId != null) {
+        await loadSiteForUniversity(universityId);
+      }
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> upsertStaff({
+    String? staffId,
+    required String fullName,
+    String? role,
+    String? bio,
+    String? photoMediaId,
+    String? email,
+    String? phone,
+    int? sortOrder,
+    bool? isActive,
+  }) async {
+    final universityId = _currentUniversityId;
+    if (universityId == null) {
+      _setError('Aucune université sélectionnée.');
+      return false;
+    }
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_admin_upsert_university_staff',
+        params: {
+          'p_university_id': universityId,
+          'p_staff_id': staffId,
+          'p_full_name': fullName,
+          'p_role': role,
+          'p_bio': bio,
+          'p_photo_media_id': photoMediaId,
+          'p_email': email,
+          'p_phone': phone,
+          'p_sort_order': sortOrder,
+          'p_is_active': isActive,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+            "Réponse invalide du serveur lors de la sauvegarde du membre de l'équipe (admin).");
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ??
+            "Erreur lors de la sauvegarde du membre de l'équipe (admin).");
+        return false;
+      }
+      await loadSiteForUniversity(universityId);
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> deleteStaff(String staffId) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_admin_delete_university_staff',
+        params: {
+          'p_staff_id': staffId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+            "Réponse invalide du serveur lors de la suppression du membre de l'équipe (admin).");
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ??
+            "Erreur lors de la suppression du membre de l'équipe (admin).");
+        return false;
+      }
+      final universityId = _currentUniversityId;
+      if (universityId != null) {
+        await loadSiteForUniversity(universityId);
+      }
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<String?> uploadMediaFile({
+    required Uint8List bytes,
+    required String fileName,
+    String? mimeType,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) {
+        _setError('Utilisateur non authentifié.');
+        return null;
+      }
+
+      final sanitizedFileName =
+          fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+      final storagePath = '${user.id}/mini-site/$sanitizedFileName';
+
+      await _client.storage.from('university-media').uploadBinary(
+            storagePath,
+            bytes,
+            fileOptions: FileOptions(
+              contentType: MimeTypeHelper.normalize(mimeType),
+            ),
+          );
+
+      return storagePath;
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
   void clear() {
     _currentUniversityId = null;
     _university = null;
     _blocks = [];
     _media = [];
+    _events = [];
+    _news = [];
+    _staff = [];
     _error = null;
     notifyListeners();
   }

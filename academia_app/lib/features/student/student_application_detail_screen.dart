@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/student_application_files_provider.dart';
 import '../../providers/student_application_messages_provider.dart';
@@ -70,7 +71,7 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
       allowMultiple: false,
       withData: true,
       type: FileType.custom,
-      allowedExtensions: const ['pdf', 'jpg', 'jpeg', 'png'],
+      allowedExtensions: const ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'],
     );
 
     if (result == null || result.files.isEmpty) {
@@ -117,6 +118,7 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
     final status = app['status']?.toString() ?? '';
     final createdAt = app['created_at']?.toString() ?? '';
     final motivation = app['motivation_text']?.toString() ?? '';
+    final appId = app['id']?.toString() ?? '';
 
     return DefaultTabController(
       length: 2,
@@ -212,9 +214,117 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                             leading: const Icon(Icons.insert_drive_file),
                             title: Text(type.isNotEmpty ? type : 'Document'),
                             subtitle: Text(path),
-                            trailing: Text(
-                              uploadedAt,
-                              style: const TextStyle(fontSize: 11),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.visibility),
+                                  tooltip: 'Voir',
+                                  onPressed: () async {
+                                    final provider = context
+                                        .read<StudentApplicationFilesProvider>();
+                                    final url =
+                                        await provider.createSignedUrl(path);
+                                    if (!context.mounted) return;
+                                    if (url == null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            provider.error ??
+                                                'Impossible d\'ouvrir le document.',
+                                          ),
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    final uri = Uri.parse(url);
+                                    final opened = await launchUrl(
+                                      uri,
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                    if (!opened && context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Impossible d\'ouvrir le document.',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete),
+                                  tooltip: 'Supprimer',
+                                  onPressed: () async {
+                                    final id = file['id']?.toString();
+                                    if (id == null || id.isEmpty || appId.isEmpty) {
+                                      return;
+                                    }
+
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        title: const Text(
+                                            'Supprimer ce document ?'),
+                                        content: const Text(
+                                          'Cette action est définitive.',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.of(ctx).pop(false),
+                                            child: const Text('Annuler'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.of(ctx).pop(true),
+                                            child: const Text('Supprimer'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+
+                                    if (confirm != true || !context.mounted) {
+                                      return;
+                                    }
+
+                                    final provider = context
+                                        .read<StudentApplicationFilesProvider>();
+                                    final ok = await provider.deleteFile(
+                                      fileId: id,
+                                      storagePath: path,
+                                      applicationId: appId,
+                                    );
+
+                                    if (!context.mounted) return;
+
+                                    if (ok) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Document supprimé avec succès.',
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            provider.error ??
+                                                'Erreur lors de la suppression.',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                ),
+                                Text(
+                                  uploadedAt,
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                              ],
                             ),
                           );
                         },

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/mime_type_helper.dart';
 
 /// Provider pour gérer les documents globaux du dossier de candidature (2.1)
 /// d'un étudiant.
@@ -76,7 +77,9 @@ class StudentDossierDocumentsProvider extends ChangeNotifier {
       await _client.storage.from('application-files').uploadBinary(
             storagePath,
             bytes,
-            fileOptions: FileOptions(contentType: mimeType),
+            fileOptions: FileOptions(
+              contentType: MimeTypeHelper.normalize(mimeType),
+            ),
           );
 
       final response = await _client.rpc(
@@ -103,4 +106,51 @@ class StudentDossierDocumentsProvider extends ChangeNotifier {
       _setLoading(false);
     }
   }
+
+  Future<String?> createSignedUrl(String storagePath) async {
+    _setError(null);
+    try {
+      final url = await _client.storage
+          .from('application-files')
+          .createSignedUrl(storagePath, 60 * 60);
+      return url;
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    }
+  }
+
+  Future<bool> deleteDocument({
+    required String documentId,
+    required String storagePath,
+  }) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      await _client.storage.from('application-files').remove([storagePath]);
+
+      final response = await _client.rpc(
+        'app_delete_student_dossier_document',
+        params: {
+          'p_document_id': documentId,
+        },
+      );
+
+      final data = response as Map<String, dynamic>?;
+      final success = data != null && (data['success'] == true);
+      if (success) {
+        await loadDocuments();
+      } else {
+        _setError(data != null ? data['error']?.toString() : 'Erreur inconnue');
+      }
+
+      return success;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
 }

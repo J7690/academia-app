@@ -9,10 +9,12 @@ class UniversityProgramsProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   List<Map<String, dynamic>> _programs = [];
+  List<Map<String, dynamic>> _courses = [];
 
   bool get isLoading => _isLoading;
   String? get error => _error;
   List<Map<String, dynamic>> get programs => List.unmodifiable(_programs);
+  List<Map<String, dynamic>> get courses => List.unmodifiable(_courses);
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -46,6 +48,38 @@ class UniversityProgramsProvider extends ChangeNotifier {
             .toList(growable: false);
       } else {
         _programs = [];
+      }
+      notifyListeners();
+    } catch (e) {
+      _setError(e.toString());
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> loadCourses() async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final response =
+          await _client.rpc('app_list_university_courses_for_management');
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur pour les cours.');
+        return;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ??
+            'Erreur lors du chargement des cours.');
+        return;
+      }
+      final data = response['courses'];
+      if (data is List) {
+        _courses = data
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+      } else {
+        _courses = [];
       }
       notifyListeners();
     } catch (e) {
@@ -93,6 +127,51 @@ class UniversityProgramsProvider extends ChangeNotifier {
         return false;
       }
       await loadPrograms();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<bool> upsertCourse({
+    String? courseId,
+    required String programId,
+    required String title,
+    String? description,
+    int? credits,
+    String? prerequisites,
+    String? instructor,
+    bool? isActive,
+  }) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(
+        'app_upsert_university_course',
+        params: {
+          'p_course_id': courseId,
+          'p_program_id': programId,
+          'p_title': title,
+          'p_description': description,
+          'p_credits': credits,
+          'p_prerequisites': prerequisites,
+          'p_instructor': instructor,
+          'p_is_active': isActive,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur lors de la sauvegarde du cours.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ??
+            'Erreur lors de la sauvegarde du cours.');
+        return false;
+      }
+      await loadCourses();
       return true;
     } catch (e) {
       _setError(e.toString());

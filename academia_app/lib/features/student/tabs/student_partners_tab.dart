@@ -16,6 +16,7 @@ class StudentPartnersTab extends StatefulWidget {
 
 class _StudentPartnersTabState extends State<StudentPartnersTab> {
   String? _selectedUniversityId;
+  String? _selectedUniversitySlug;
 
   @override
   void initState() {
@@ -84,13 +85,14 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
                         icon: const Icon(Icons.school_outlined),
                         label: const Text('Mini-site'),
                       ),
-                      onTap: () async {
+                      onTap: () {
                         final id = uni['id']?.toString();
+                        final slug = uni['slug']?.toString();
                         if (id == null) return;
                         setState(() {
                           _selectedUniversityId = id;
+                          _selectedUniversitySlug = slug;
                         });
-                        await provider.loadProgramsByUniversity(id);
                       },
                     ),
                   );
@@ -109,91 +111,29 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
   }
 
   Widget _buildProgramsColumn(BuildContext context, StudentOffersProvider provider) {
-    if (_selectedUniversityId == null) {
+    if (_selectedUniversitySlug == null || _selectedUniversitySlug!.isEmpty) {
       return const Center(
-        child: Text('Sélectionnez une université pour voir ses programmes.'),
+        child: Text('Sélectionnez une université pour voir son mini-site.'),
       );
     }
 
-    final programs = provider.programsByUniversity;
-
-    if (provider.isLoading && programs.isEmpty) {
-      return const LoadingWidget(message: 'Chargement des programmes...');
+    final slug = _selectedUniversitySlug!;
+    String? universityName;
+    final selectedId = _selectedUniversityId;
+    if (selectedId != null) {
+      for (final uni in provider.universities) {
+        final id = uni['id']?.toString();
+        if (id == selectedId) {
+          universityName = uni['name']?.toString();
+          break;
+        }
+      }
     }
 
-    if (provider.error != null) {
-      return CustomErrorWidget(
-        error: provider.error!,
-        onRetry: () {
-          final id = _selectedUniversityId;
-          if (id != null) {
-            provider.loadProgramsByUniversity(id);
-          }
-        },
-      );
-    }
-
-    if (programs.isEmpty) {
-      return const Center(
-        child: Text('Aucun programme disponible pour cette université.'),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: programs.length,
-      itemBuilder: (context, index) {
-        final program = programs[index];
-        final title = program['title']?.toString() ?? '';
-        final degree = program['degree_level']?.toString() ?? '';
-        final mode = program['mode']?.toString() ?? '';
-        final programId = (program['program_id'] ?? program['id'])?.toString();
-
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            title: Text(title),
-            subtitle: Wrap(
-              spacing: 8,
-              children: [
-                if (degree.isNotEmpty)
-                  Chip(label: Text(degree)),
-                if (mode.isNotEmpty)
-                  Chip(label: Text(mode)),
-              ],
-            ),
-            trailing: TextButton.icon(
-              onPressed: programId == null
-                  ? null
-                  : () async {
-                      final applicationsProvider =
-                          context.read<StudentApplicationsProvider>();
-                      final success = await applicationsProvider
-                          .createApplication(programId: programId);
-                      if (!context.mounted) return;
-                      if (success) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Candidature créée avec succès.'),
-                          ),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              applicationsProvider.error ??
-                                  'Erreur lors de la création de la candidature.',
-                            ),
-                          ),
-                        );
-                      }
-                    },
-              icon: const Icon(Icons.send),
-              label: const Text('Candidater'),
-            ),
-          ),
-        );
-      },
+    return StudentUniversitySiteScreen(
+      key: ValueKey(slug),
+      universitySlug: slug,
+      universityName: universityName,
     );
   }
 }

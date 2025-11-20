@@ -67,7 +67,9 @@ class StudentApplicationFilesProvider extends ChangeNotifier {
       await _client.storage.from('application-files').uploadBinary(
             storagePath,
             bytes,
-            fileOptions: FileOptions(contentType: mimeType),
+            fileOptions: FileOptions(
+              contentType: _normalizeMimeType(mimeType),
+            ),
           );
 
       final response = await _client.rpc(
@@ -93,6 +95,81 @@ class StudentApplicationFilesProvider extends ChangeNotifier {
       return false;
     } finally {
       _setLoading(false);
+    }
+  }
+
+  Future<String?> createSignedUrl(String storagePath) async {
+    _setError(null);
+    try {
+      final url = await _client.storage
+          .from('application-files')
+          .createSignedUrl(storagePath, 60 * 60);
+      return url;
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    }
+  }
+
+  Future<bool> deleteFile({
+    required String fileId,
+    required String storagePath,
+    required String applicationId,
+  }) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      await _client.storage.from('application-files').remove([storagePath]);
+
+      final response = await _client.rpc(
+        'app_delete_application_file',
+        params: {
+          'p_file_id': fileId,
+        },
+      );
+
+      final data = response as Map<String, dynamic>?;
+      final success = data != null && (data['success'] == true);
+      if (success) {
+        await loadFiles(applicationId);
+      } else {
+        _setError(data != null ? data['error']?.toString() : 'Erreur inconnue');
+      }
+
+      return success;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  String _normalizeMimeType(String? extensionOrMime) {
+    if (extensionOrMime == null || extensionOrMime.isEmpty) {
+      return 'application/octet-stream';
+    }
+
+    final value = extensionOrMime.toLowerCase();
+
+    if (value.contains('/')) {
+      return value;
+    }
+
+    switch (value) {
+      case 'pdf':
+        return 'application/pdf';
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'doc':
+        return 'application/msword';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      default:
+        return 'application/octet-stream';
     }
   }
 }

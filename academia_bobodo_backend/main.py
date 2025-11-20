@@ -157,6 +157,33 @@ def is_sensitive_query(message: str) -> bool:
     return False
 
 
+def should_append_admin_contact_hint(message: str) -> bool:
+    """Détecte les questions où l'utilisateur ne trouve pas une formation sur Academia.
+
+    Cela permet d'ajouter systématiquement un rappel clair d'écrire à
+    l'administrateur de la plateforme Academia dans ces cas.
+    """
+    text = message.lower()
+    if "formation" not in text:
+        return False
+
+    trigger_phrases = (
+        "je ne la trouve pas",
+        "je ne trouve pas",
+        "je ne vois pas",
+        "je ne la vois pas",
+        "n'est pas dans la liste",
+        "n est pas dans la liste",
+        "n'est pas dans vos offres",
+        "n est pas dans vos offres",
+        "n'apparait pas",
+        "n apparait pas",
+        "n'apparaît pas",
+        "n apparait pas",
+    )
+    return any(phrase in text for phrase in trigger_phrases)
+
+
 async def search_knowledge(query: str) -> List[Dict[str, Any]]:
     """Recherche dans la base de connaissances Bobodo via la RPC app_search_bobodo_knowledge."""
     if not query.strip():
@@ -598,7 +625,8 @@ async def generate_answer_with_fallback(
         base_message = (
             "Je n'ai pas trouvé d'information fiable sur cette question, "
             "ni dans la base de connaissances interne Nexiom/Academia ni via la recherche web. "
-            "Je te recommande de contacter directement le support Nexiom Group."
+            "Je te recommande d'écrire à l'administrateur de la plateforme Academia (via la messagerie "
+            "ou les contacts indiqués) pour exposer ta demande et voir si une solution peut être trouvée."
         )
         return await wrap_with_openrouter_style(base_message, message)
 
@@ -629,7 +657,8 @@ async def generate_answer_with_fallback(
         base_message = (
             "Même après consultation de sources externes, je ne dispose pas d'information "
             "suffisamment fiable pour répondre à cette question. "
-            "Je te recommande de contacter directement le support Nexiom Group."
+            "Je te recommande d'écrire à l'administrateur de la plateforme Academia (via la messagerie "
+            "ou les contacts indiqués) pour exposer ta demande et voir si une solution peut être trouvée."
         )
         return await wrap_with_openrouter_style(base_message, message)
 
@@ -693,11 +722,28 @@ async def generate_answer_for_category(
             )
             return await wrap_with_openrouter_style(base_message, message)
 
+        if should_append_admin_contact_hint(message):
+            suffix = (
+                "\n\nSi tu ne trouves pas une formation précise sur la plateforme Academia et qu'elle n'est pas "
+                "diplômante, tu peux écrire à l'administrateur de la plateforme Academia pour que ta demande soit "
+                "étudiée."
+            )
+            return answer.rstrip() + "\n\n" + suffix
+
         return answer
 
     # Orientation / études / emploi : pipeline complet local + OpenRouter + WebSearch
     if category == CATEGORY_ORIENTATION_ETUDES_EMPLOI:
-        return await generate_answer_with_fallback(message, knowledge, session_id)
+        answer = await generate_answer_with_fallback(message, knowledge, session_id)
+        if should_append_admin_contact_hint(message):
+            suffix = (
+                "\n\nSi tu ne trouves pas une formation précise sur la plateforme Academia et qu'elle n'est pas "
+                "diplômante, tu peux écrire à l'administrateur de la plateforme Academia pour que ta demande soit "
+                "étudiée."
+            )
+            return answer.rstrip() + "\n\n" + suffix
+
+        return answer
 
     # Université partenaire : description générale sans détails contractuels, pas de WebSearch
     if category == CATEGORY_PARTENAIRE_UNIVERSITE_DETAILLEE:
@@ -729,8 +775,12 @@ async def generate_answer_for_category(
     if category == CATEGORY_AUTRE_UNIVERSITE_OU_ENTREPRISE:
         base_message = (
             "Je ne peux pas fournir d'informations détaillées ni de comparatifs sur des universités ou entreprises "
-            "qui ne sont pas partenaires d'Academia. Je peux en revanche t'aider sur l'orientation générale, "
-            "les études, l'emploi et le fonctionnement de la plateforme Academia."
+            "spécifiques. La politique de Nexiom Group est de proposer des formations à partir de la liste de ses "
+            "universités et centres de formation partenaires. Je t'invite à consulter la section 'Universités partenaires' "
+            "et 'Centres de formation partenaires' dans la plateforme Academia, puis à regarder les offres de formation "
+            "disponibles. Si une université n'apparaît pas dans cette section, cela signifie que Nexiom Group ne peut pas "
+            "te proposer de formation via cet établissement. En revanche, tu peux toujours explorer l'ensemble des "
+            "formations disponibles sur Academia pour trouver une option qui te convient."
         )
         return await wrap_with_openrouter_style(base_message, message)
 

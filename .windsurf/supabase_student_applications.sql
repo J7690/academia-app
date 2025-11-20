@@ -183,6 +183,27 @@ GRANT SELECT, INSERT, UPDATE ON app.student_dossier_documents TO authenticated;
 GRANT ALL ON app.student_dossier_documents TO service_role;
 
 -- ========================================
+-- 3c bis) CONFIGURATION STORAGE POUR DOCUMENTS ÉTUDIANTS
+-- ========================================
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('application-files', 'application-files', FALSE)
+ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS students_manage_own_application_files ON storage.objects;
+CREATE POLICY students_manage_own_application_files
+ON storage.objects
+AS PERMISSIVE
+FOR ALL
+TO authenticated
+USING (
+  bucket_id = 'application-files'
+)
+WITH CHECK (
+  bucket_id = 'application-files'
+);
+
+-- ========================================
 -- 3d) RPC DOCUMENTS DU DOSSIER ÉTUDIANT (GLOBAL 2.1)
 -- ========================================
 
@@ -277,6 +298,53 @@ $$;
 
 GRANT EXECUTE ON FUNCTION app_add_student_dossier_document(TEXT, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION app_add_student_dossier_document(TEXT, TEXT) TO service_role;
+
+CREATE OR REPLACE FUNCTION app_delete_student_dossier_document(
+    p_document_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_owner_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT(
+            'success', FALSE,
+            'error', 'not_authenticated'
+        );
+    END IF;
+
+    SELECT student_id
+    INTO v_owner_id
+    FROM app.student_dossier_documents
+    WHERE id = p_document_id;
+
+    IF v_owner_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT(
+            'success', FALSE,
+            'error', 'document_not_found'
+        );
+    END IF;
+
+    IF v_owner_id <> v_user_id THEN
+        RETURN JSONB_BUILD_OBJECT(
+            'success', FALSE,
+            'error', 'not_owner'
+        );
+    END IF;
+
+    DELETE FROM app.student_dossier_documents
+    WHERE id = p_document_id;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_delete_student_dossier_document(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_delete_student_dossier_document(UUID) TO service_role;
 
 CREATE TABLE IF NOT EXISTS app.application_messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -389,6 +457,54 @@ $$;
 
 GRANT EXECUTE ON FUNCTION app_add_application_file(UUID, TEXT, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION app_add_application_file(UUID, TEXT, TEXT) TO service_role;
+
+CREATE OR REPLACE FUNCTION app_delete_application_file(
+    p_file_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_student_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT(
+            'success', FALSE,
+            'error', 'not_authenticated'
+        );
+    END IF;
+
+    SELECT a.student_id
+    INTO v_student_id
+    FROM app.application_files f
+    JOIN app.applications a ON a.id = f.application_id
+    WHERE f.id = p_file_id;
+
+    IF v_student_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT(
+            'success', FALSE,
+            'error', 'file_not_found'
+        );
+    END IF;
+
+    IF v_student_id <> v_user_id THEN
+        RETURN JSONB_BUILD_OBJECT(
+            'success', FALSE,
+            'error', 'not_owner'
+        );
+    END IF;
+
+    DELETE FROM app.application_files
+    WHERE id = p_file_id;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_delete_application_file(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_delete_application_file(UUID) TO service_role;
 
 CREATE OR REPLACE FUNCTION app_ensure_student_profile()
 RETURNS JSONB

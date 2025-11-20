@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/mime_type_helper.dart';
 
 class UniversitySiteProvider extends ChangeNotifier {
   final SupabaseClient _client = Supabase.instance.client;
@@ -14,6 +15,9 @@ class UniversitySiteProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _blocks = [];
   List<Map<String, dynamic>> _media = [];
   List<Map<String, dynamic>> _banners = [];
+  List<Map<String, dynamic>> _events = [];
+  List<Map<String, dynamic>> _news = [];
+  List<Map<String, dynamic>> _staff = [];
 
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
@@ -23,6 +27,9 @@ class UniversitySiteProvider extends ChangeNotifier {
   List<Map<String, dynamic>> get blocks => List.unmodifiable(_blocks);
   List<Map<String, dynamic>> get media => List.unmodifiable(_media);
   List<Map<String, dynamic>> get banners => List.unmodifiable(_banners);
+  List<Map<String, dynamic>> get events => List.unmodifiable(_events);
+  List<Map<String, dynamic>> get news => List.unmodifiable(_news);
+  List<Map<String, dynamic>> get staff => List.unmodifiable(_staff);
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -68,6 +75,9 @@ class UniversitySiteProvider extends ChangeNotifier {
       final blocks = response['blocks'];
       final media = response['media'];
       final banners = response['banners'];
+      final events = response['events'];
+      final news = response['news'];
+      final staff = response['staff'];
 
       if (uni is Map) {
         _university = Map<String, dynamic>.from(uni);
@@ -108,6 +118,33 @@ class UniversitySiteProvider extends ChangeNotifier {
         _banners = [];
       }
 
+      if (events is List) {
+        _events = events
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+      } else {
+        _events = [];
+      }
+
+      if (news is List) {
+        _news = news
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+      } else {
+        _news = [];
+      }
+
+      if (staff is List) {
+        _staff = staff
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+      } else {
+        _staff = [];
+      }
+
       notifyListeners();
     } catch (e) {
       _university = null;
@@ -115,6 +152,9 @@ class UniversitySiteProvider extends ChangeNotifier {
       _blocks = [];
       _media = [];
       _banners = [];
+      _events = [];
+      _news = [];
+      _staff = [];
       _setError(e.toString());
     } finally {
       _setLoading(false);
@@ -150,6 +190,232 @@ class UniversitySiteProvider extends ChangeNotifier {
       if (response['success'] != true) {
         _setError(response['error']?.toString() ??
             'Erreur lors de la sauvegarde du bloc.');
+        return false;
+      }
+      await loadSite();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> upsertEvent({
+    String? eventId,
+    required String title,
+    String? description,
+    String? eventType,
+    DateTime? startAt,
+    DateTime? endAt,
+    String? location,
+    bool? isHighlighted,
+    bool? isActive,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_upsert_university_event',
+        params: {
+          'p_event_id': eventId,
+          'p_title': title,
+          'p_description': description,
+          'p_event_type': eventType,
+          'p_start_at': startAt?.toIso8601String(),
+          'p_end_at': endAt?.toIso8601String(),
+          'p_location': location,
+          'p_is_highlighted': isHighlighted,
+          'p_is_active': isActive,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur lors de la sauvegarde de l\'événement.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ??
+            'Erreur lors de la sauvegarde de l\'événement.');
+        return false;
+      }
+      await loadSite();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> deleteEvent(String eventId) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_delete_university_event',
+        params: {
+          'p_event_id': eventId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur lors de la suppression de l\'événement.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ??
+            'Erreur lors de la suppression de l\'événement.');
+        return false;
+      }
+      await loadSite();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> upsertNews({
+    String? newsId,
+    required String title,
+    String? slug,
+    String? summary,
+    String? content,
+    DateTime? publishedAt,
+    String? heroMediaId,
+    bool? isActive,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_upsert_university_news',
+        params: {
+          'p_news_id': newsId,
+          'p_title': title,
+          'p_slug': slug,
+          'p_summary': summary,
+          'p_content': content,
+          'p_published_at': publishedAt?.toIso8601String(),
+          'p_hero_media_id': heroMediaId,
+          'p_is_active': isActive,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur lors de la sauvegarde de l\'actualité.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ??
+            'Erreur lors de la sauvegarde de l\'actualité.');
+        return false;
+      }
+      await loadSite();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> deleteNews(String newsId) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_delete_university_news',
+        params: {
+          'p_news_id': newsId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur lors de la suppression de l\'actualité.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ??
+            'Erreur lors de la suppression de l\'actualité.');
+        return false;
+      }
+      await loadSite();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> upsertStaff({
+    String? staffId,
+    required String fullName,
+    String? role,
+    String? bio,
+    String? photoMediaId,
+    String? email,
+    String? phone,
+    int? sortOrder,
+    bool? isActive,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_upsert_university_staff',
+        params: {
+          'p_staff_id': staffId,
+          'p_full_name': fullName,
+          'p_role': role,
+          'p_bio': bio,
+          'p_photo_media_id': photoMediaId,
+          'p_email': email,
+          'p_phone': phone,
+          'p_sort_order': sortOrder,
+          'p_is_active': isActive,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur lors de la sauvegarde du membre de l\'équipe.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ??
+            'Erreur lors de la sauvegarde du membre de l\'équipe.');
+        return false;
+      }
+      await loadSite();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> deleteStaff(String staffId) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_delete_university_staff',
+        params: {
+          'p_staff_id': staffId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur lors de la suppression du membre de l\'équipe.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ??
+            'Erreur lors de la suppression du membre de l\'équipe.');
         return false;
       }
       await loadSite();
@@ -399,7 +665,9 @@ class UniversitySiteProvider extends ChangeNotifier {
       await _client.storage.from('university-media').uploadBinary(
             storagePath,
             bytes,
-            fileOptions: FileOptions(contentType: mimeType),
+            fileOptions: FileOptions(
+              contentType: MimeTypeHelper.normalize(mimeType),
+            ),
           );
 
       return storagePath;

@@ -5,8 +5,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/admin_applications_provider.dart';
 import 'admin_applications_screen.dart';
 import 'admin_programs_screen.dart';
+import 'admin_courses_screen.dart';
 import 'admin_university_sites_screen.dart';
 import 'admin_bobodo_screen.dart';
+import 'admin_landing_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -18,7 +20,7 @@ class AdminDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 4,
+      length: 6,
       child: Consumer<AdminApplicationsProvider>(
         builder: (context, applicationsProvider, child) {
           final unread = applicationsProvider.unreadCount;
@@ -36,8 +38,10 @@ class AdminDashboardScreen extends StatelessWidget {
                 tabs: [
                   Tab(child: _AdminTabLabel(text: 'Candidatures', count: unread)),
                   const Tab(text: 'Programmes'),
+                  const Tab(text: 'Cours'),
                   const Tab(text: 'Mini-sites'),
                   const Tab(text: 'Bobodo'),
+                  const Tab(text: 'Landing'),
                 ],
               ),
             ),
@@ -45,8 +49,10 @@ class AdminDashboardScreen extends StatelessWidget {
               children: [
                 AdminApplicationsScreen(),
                 AdminProgramsScreen(),
+                AdminCoursesScreen(),
                 AdminUniversitySitesScreen(),
                 AdminBobodoScreen(),
+                AdminLandingScreen(),
               ],
             ),
           );
