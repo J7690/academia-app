@@ -620,7 +620,36 @@ GRANT EXECUTE ON FUNCTION app_add_bobodo_feedback(UUID, UUID, TEXT, TEXT) TO ser
 
 
 -- ========================================
--- 12) VALIDATION DU MODULE BOBODO
+-- 12) RPC - PRÉNOM ÉTUDIANT POUR BOBODO
+-- ========================================
+
+CREATE OR REPLACE FUNCTION app_get_bobodo_student_first_name(
+    p_session_id UUID
+)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_full_name TEXT;
+    v_first_name TEXT;
+BEGIN
+    SELECT st.full_name
+    INTO v_full_name
+    FROM app.bobodo_sessions s
+    JOIN app.students st ON st.id = s.student_id
+    WHERE s.id = p_session_id;
+
+    v_first_name := NULLIF(TRIM(split_part(COALESCE(v_full_name, ''), ' ', 1)), '');
+    RETURN v_first_name;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_get_bobodo_student_first_name(UUID) TO service_role;
+
+
+-- ========================================
+-- 13) VALIDATION DU MODULE BOBODO
 -- ========================================
 
 SELECT

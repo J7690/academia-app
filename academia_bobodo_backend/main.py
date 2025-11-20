@@ -149,6 +149,34 @@ async def call_supabase_rpc(function: str, payload: Dict[str, Any]) -> Any:
         return response.text
 
 
+async def get_student_first_name(session_id: str) -> Optional[str]:
+    """Récupère le prénom de l'étudiant lié à une session Bobodo via une RPC Supabase.
+
+    Utilise la fonction app_get_bobodo_student_first_name (schéma app).
+    """
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return None
+
+    try:
+        data = await call_supabase_rpc(
+            "app_get_bobodo_student_first_name",
+            {"p_session_id": session_id},
+        )
+    except HTTPException:
+        return None
+
+    # Pour une fonction TEXT simple, Supabase renvoie généralement une chaîne JSON
+    if isinstance(data, str):
+        first = data.strip()
+        return first or None
+
+    if isinstance(data, dict) and isinstance(data.get("result"), str):
+        first = data["result"].strip()
+        return first or None
+
+    return None
+
+
 def is_sensitive_query(message: str) -> bool:
     text = message.lower()
     for keyword in SENSITIVE_KEYWORDS:
@@ -680,12 +708,18 @@ async def generate_answer_for_category(
             "que ton rôle principal est d'aider sur Nexiom Group, la plateforme Academia, l'orientation et l'emploi. "
             "Ne donne pas d'avis médical, juridique ou psychologique."
         )
-        return await call_openrouter(
+        answer = await call_openrouter(
             message,
             [],
             system_prompt=smalltalk_system_prompt,
             include_no_answer_sentinel=False,
         )
+
+        first_name = await get_student_first_name(session_id)
+        if first_name:
+            return f"Bonjour {first_name}, " + answer.lstrip()
+
+        return answer
 
     # Questions internes Nexiom/Academia : base locale uniquement, pas de WebSearch
     if category == CATEGORY_NEXIOM_ACADEMIA_INTERNE:
