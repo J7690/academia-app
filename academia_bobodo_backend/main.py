@@ -864,17 +864,35 @@ async def bobodo_chat(payload: BobodoChatRequest) -> BobodoChatResponse:
     knowledge = await search_knowledge(message)
 
     # 3) Filtre de sécurité, classification et génération de la réponse IA
-    if is_sensitive_query(message):
-        assistant_message = await call_openrouter_safety_refusal(message)
-    else:
-        category = await classify_query_with_openrouter(message)
-        assistant_message = await generate_answer_for_category(
-            message,
-            category,
-            knowledge,
-            session_id,
-        )
-        await log_detected_need(session_id, message, category)
+    try:
+        if is_sensitive_query(message):
+            assistant_message = await call_openrouter_safety_refusal(message)
+        else:
+            category = await classify_query_with_openrouter(message)
+            assistant_message = await generate_answer_for_category(
+                message,
+                category,
+                knowledge,
+                session_id,
+            )
+            await log_detected_need(session_id, message, category)
+    except HTTPException as exc:
+        detail = exc.detail
+        fallback_message: Optional[str] = None
+        if isinstance(detail, dict):
+            message_key = str(detail.get("message") or "")
+            if message_key in {"Erreur OpenRouter", "Erreur réseau OpenRouter"}:
+                fallback_message = (
+                    "Je suis temporairement indisponible car le service d'intelligence "
+                    "artificielle externe d'Academia rencontre un problème technique. "
+                    "Tu peux réessayer dans quelques minutes ; les autres fonctionnalités "
+                    "de la plateforme restent disponibles."
+                )
+
+        if fallback_message is None:
+            raise
+
+        assistant_message = fallback_message
 
     # 4) Enregistrer la réponse IA
     await call_supabase_rpc(
