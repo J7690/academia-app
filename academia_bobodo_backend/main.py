@@ -200,6 +200,8 @@ def should_append_admin_contact_hint(message: str) -> bool:
         "je ne trouve pas",
         "je ne vois pas",
         "je ne la vois pas",
+        "je ne vois pas de formation",
+        "je ne trouve pas de formation",
         "n'est pas dans la liste",
         "n est pas dans la liste",
         "n'est pas dans vos offres",
@@ -208,8 +210,20 @@ def should_append_admin_contact_hint(message: str) -> bool:
         "n apparait pas",
         "n'apparaît pas",
         "n apparait pas",
+        "ne figure pas",
+        "ne figure pas dans la liste",
     )
-    return any(phrase in text for phrase in trigger_phrases)
+    if any(phrase in text for phrase in trigger_phrases):
+        return True
+
+    if "liste" in text and ("ne" in text or "n'" in text):
+        if any(
+            keyword in text
+            for keyword in ("vois", "voir", "trouve", "trouver", "figure", "apparait", "apparaît")
+        ):
+            return True
+
+    return False
 
 
 async def search_knowledge(query: str) -> List[Dict[str, Any]]:
@@ -414,10 +428,15 @@ async def classify_query_with_openrouter(message: str) -> str:
     # Catégorie proposée par les règles heuristiques (filet de sécurité)
     rules_category = classify_query_with_rules(message)
 
-    # Priorité absolue : si les règles détectent une question sur Nexiom/Academia,
-    # on force la catégorie interne, même si OpenRouter propose autre chose.
-    if rules_category == CATEGORY_NEXIOM_ACADEMIA_INTERNE:
-        return CATEGORY_NEXIOM_ACADEMIA_INTERNE
+    # Priorité absolue :
+    # - si les règles détectent une question interne Nexiom/Academia
+    # - OU une question sur une autre université / entreprise non partenaire
+    # alors on suit les règles, même si OpenRouter propose autre chose.
+    if rules_category in {
+        CATEGORY_NEXIOM_ACADEMIA_INTERNE,
+        CATEGORY_AUTRE_UNIVERSITE_OU_ENTREPRISE,
+    }:
+        return rules_category
 
     if category in VALID_CATEGORIES:
         return category
