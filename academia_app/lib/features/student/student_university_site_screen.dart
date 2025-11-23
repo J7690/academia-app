@@ -5,6 +5,7 @@ import '../../providers/student_university_site_provider.dart';
 import '../../providers/student_applications_provider.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart';
+import '../../widgets/mini_site_hero_video.dart';
 import 'mini_site_media_viewer_screen.dart';
 
 class StudentUniversitySiteScreen extends StatefulWidget {
@@ -93,6 +94,7 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
 
           final heroTitle = (config['hero_title']?.toString() ?? '').trim();
           final heroSubtitle = (config['hero_subtitle']?.toString() ?? '').trim();
+          final heroPosterMediaId = config['hero_poster_media_id']?.toString();
 
           final aboutBlocks =
               blocks.where((b) => (b['key']?.toString() ?? '').toLowerCase() == 'about').toList();
@@ -118,8 +120,18 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
           final displayName =
               name.isNotEmpty ? name : (widget.universityName ?? '');
 
+          final locationText = [city, country]
+              .where((e) => e.trim().isNotEmpty)
+              .join(', ');
+
+          final heroTagline = tagline.isNotEmpty
+              ? tagline
+              : (mission.isNotEmpty
+                  ? mission
+                  : vision);
+
           return Container(
-            color: const Color(0xFFF9FAFB),
+            color: const Color(0xFFF3F4F6),
             child: SingleChildScrollView(
               child: Center(
                 child: ConstrainedBox(
@@ -146,9 +158,7 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    [city, country]
-                                        .where((e) => e.trim().isNotEmpty)
-                                        .join(', '),
+                                    locationText,
                                     style: const TextStyle(
                                       fontSize: 12,
                                       color: Color(0xFF6B7280),
@@ -159,8 +169,17 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                             ),
                           ],
                         ),
+                        const SizedBox(height: 12),
+                        MiniSiteHeroVideo(
+                          media: media,
+                          title: displayName,
+                          location: locationText,
+                          tagline: heroTagline.isNotEmpty ? heroTagline : null,
+                          logoUrl: logoUrl.isNotEmpty ? logoUrl : null,
+                          heroPosterMediaId: heroPosterMediaId,
+                        ),
                         const SizedBox(height: 16),
-                        if (media.isNotEmpty || topBanners.isNotEmpty) ...[
+                        if ((media.length > 1) || topBanners.isNotEmpty) ...[
                           const Text(
                             'Médias / ambiance du campus',
                             style: TextStyle(
@@ -532,9 +551,12 @@ class _BannerCarousel extends StatelessWidget {
               onTap: associatedMedia == null
                   ? null
                   : () {
+                      final mediaMap = associatedMedia!;
                       final storagePath =
-                          associatedMedia!['storage_path']?.toString() ?? '';
-                      if (storagePath.isEmpty) {
+                          mediaMap['storage_path']?.toString() ?? '';
+                      final directUrl =
+                          mediaMap['url']?.toString().trim() ?? '';
+                      if (storagePath.isEmpty && directUrl.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text(
@@ -547,7 +569,7 @@ class _BannerCarousel extends StatelessWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => MiniSiteMediaViewerScreen(
-                            media: associatedMedia!,
+                            media: mediaMap,
                           ),
                         ),
                       );
@@ -623,9 +645,12 @@ class _BannerStrips extends StatelessWidget {
           onTap: associatedMedia == null
               ? null
               : () {
+                  final mediaMap = associatedMedia!;
                   final storagePath =
-                      associatedMedia!['storage_path']?.toString() ?? '';
-                  if (storagePath.isEmpty) {
+                      mediaMap['storage_path']?.toString() ?? '';
+                  final directUrl =
+                      mediaMap['url']?.toString().trim() ?? '';
+                  if (storagePath.isEmpty && directUrl.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
@@ -638,7 +663,7 @@ class _BannerStrips extends StatelessWidget {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => MiniSiteMediaViewerScreen(
-                        media: associatedMedia!,
+                        media: mediaMap,
                       ),
                     ),
                   );
@@ -815,6 +840,11 @@ class _BlocksList extends StatelessWidget {
         final content = b['content']?.toString() ?? '';
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
+          color: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -852,29 +882,33 @@ class _ProgramsGrid extends StatelessWidget {
     if (programs.isEmpty) {
       return const SizedBox.shrink();
     }
-    final isWide = MediaQuery.of(context).size.width > 700;
-    if (isWide) {
-      return Wrap(
-        spacing: 16,
-        runSpacing: 16,
-        children: programs.map((program) {
-          return SizedBox(
-            width: 320,
-            child: _ProgramCard(
-              program: program,
-              courses: courses,
-            ),
-          );
-        }).toList(),
-      );
+    final width = MediaQuery.of(context).size.width;
+    int crossAxisCount;
+    if (width < 600) {
+      crossAxisCount = 1;
+    } else if (width < 1000) {
+      crossAxisCount = 2;
+    } else {
+      crossAxisCount = 3;
     }
-    return Column(
-      children: programs.map((program) {
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 3 / 2,
+      ),
+      itemCount: programs.length,
+      itemBuilder: (context, index) {
+        final program = programs[index];
         return _ProgramCard(
           program: program,
           courses: courses,
         );
-      }).toList(),
+      },
     );
   }
 }
@@ -899,6 +933,11 @@ class _ProgramCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      color: Colors.white,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -1117,7 +1156,8 @@ class _MediaStrip extends StatelessWidget {
           final description = m['description']?.toString() ?? '';
           final mediaType = m['media_type']?.toString() ?? '';
           final storagePath = m['storage_path']?.toString() ?? '';
-          final hasMediaSource = storagePath.isNotEmpty;
+          final directUrl = m['url']?.toString() ?? '';
+          final hasMediaSource = storagePath.isNotEmpty || directUrl.isNotEmpty;
 
           return SizedBox(
             width: 260,

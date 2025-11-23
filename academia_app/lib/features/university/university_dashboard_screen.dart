@@ -9,6 +9,7 @@ import '../../providers/university_applications_provider.dart';
 import '../../providers/selected_university_application_provider.dart';
 import '../../providers/university_site_provider.dart';
 import '../../providers/university_programs_provider.dart';
+import '../../widgets/mini_site_hero_video.dart';
 import 'university_application_detail_screen.dart';
 
 class UniversityDashboardScreen extends StatelessWidget {
@@ -30,8 +31,21 @@ class UniversityDashboardScreen extends StatelessWidget {
         builder: (context, applicationsProvider, child) {
           final unread = applicationsProvider.unreadTotal;
           return Scaffold(
+            backgroundColor: const Color(0xFFF3F4F6),
             appBar: AppBar(
+              elevation: 0,
+              centerTitle: false,
               title: const Text('Dashboard Université'),
+              foregroundColor: Colors.white,
+              flexibleSpace: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+              ),
               actions: [
                 IconButton(
                   onPressed: _signOut,
@@ -41,6 +55,15 @@ class UniversityDashboardScreen extends StatelessWidget {
               ],
               bottom: TabBar(
                 isScrollable: true,
+                indicator: BoxDecoration(
+                  color: const Color(0xFF1EA75C),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                indicatorPadding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white.withOpacity(0.85),
                 tabs: [
                   Tab(child: _UniversityTabLabel(text: 'Candidatures', count: unread)),
                   const Tab(text: 'Mini-site & offres'),
@@ -49,17 +72,30 @@ class UniversityDashboardScreen extends StatelessWidget {
             ),
             body: Column(
               children: [
-                Container(
-                  width: double.infinity,
-                  color: Colors.black.withOpacity(0.04),
-                  padding: const EdgeInsets.all(8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Email: $email', style: const TextStyle(fontSize: 12)),
-                      const SizedBox(height: 4),
-                      Text('Metadata: ${metadata.toString()}', style: const TextStyle(fontSize: 12)),
-                    ],
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Email: $email', style: const TextStyle(fontSize: 12)),
+                        const SizedBox(height: 4),
+                        Text('Metadata: ${metadata.toString()}', style: const TextStyle(fontSize: 12)),
+                      ],
+                    ),
                   ),
                 ),
                 Expanded(
@@ -93,6 +129,17 @@ Future<void> _showEditConfigDialog(
   final secondaryColorController =
       TextEditingController(text: current['hero_secondary_color']?.toString() ?? '');
   final media = provider.media;
+  final heroCandidates = media
+      .where((m) {
+        final type = m['media_type']?.toString().toLowerCase() ?? '';
+        final isActive = m['is_active'] != false;
+        final url = (m['url'] ?? '').toString().trim();
+        final storagePath = (m['storage_path'] ?? '').toString().trim();
+        if (!type.contains('video')) return false;
+        if (!isActive) return false;
+        return url.isNotEmpty || storagePath.isNotEmpty;
+      })
+      .toList(growable: false);
   String? selectedHeroMediaId = current['hero_poster_media_id']?.toString();
 
   await showDialog<void>(
@@ -134,13 +181,14 @@ Future<void> _showEditConfigDialog(
                     ),
                   ),
                   const SizedBox(height: 12),
-                  if (media.isNotEmpty)
+                  if (heroCandidates.isNotEmpty)
                     DropdownButtonFormField<String>(
                       value: selectedHeroMediaId != null &&
-                              media.any((m) => m['id']?.toString() == selectedHeroMediaId)
+                              heroCandidates
+                                  .any((m) => m['id']?.toString() == selectedHeroMediaId)
                           ? selectedHeroMediaId
                           : null,
-                      items: media.map((m) {
+                      items: heroCandidates.map((m) {
                         final id = m['id']?.toString();
                         if (id == null) return null;
                         final title = m['title']?.toString() ?? '';
@@ -1258,7 +1306,7 @@ class _UniversityTabLabel extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: Colors.red,
+            color: const Color(0xFFFF3B30),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
@@ -1304,6 +1352,16 @@ class _UniversityCandidaturesWorkspaceState extends State<_UniversityCandidature
               final receivedCount = provider.unreadReceived;
               final treatedCount = provider.unreadTreated;
               return TabBar(
+                isScrollable: true,
+                indicator: BoxDecoration(
+                  color: const Color(0xFF1EA75C),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                indicatorPadding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.black87,
                 tabs: [
                   Tab(
                     child: _UniversityTabLabel(
@@ -1413,13 +1471,14 @@ class _UniversityApplicationsBucket extends StatelessWidget {
                   final app = apps[index];
                   final isSelected = app['id'] == effectiveSelected['id'];
                   return Card(
-                    elevation: isSelected ? 4 : 1,
+                    elevation: 0,
+                    color: isSelected ? const Color(0xFFE5F9E7) : Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: isSelected
                           ? BorderSide(
-                              color: Theme.of(context).colorScheme.primary,
-                              width: 2,
+                              color: const Color(0xFF1EA75C),
+                              width: 1.5,
                             )
                           : BorderSide.none,
                     ),
@@ -1448,8 +1507,11 @@ class _UniversityApplicationsBucket extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 if (app['has_unread_for_university'] == true)
-                                  const Icon(Icons.mark_unread_chat_alt,
-                                      size: 18, color: Colors.red),
+                                  const Icon(
+                                    Icons.mark_unread_chat_alt,
+                                    size: 18,
+                                    color: Color(0xFFFF3B30),
+                                  ),
                               ],
                             ),
                             const SizedBox(height: 4),
@@ -1988,8 +2050,18 @@ class _UniversitySiteWorkspaceState extends State<_UniversitySiteWorkspace> {
       length: 8,
       child: Column(
         children: [
-          const TabBar(
-            tabs: [
+          TabBar(
+            isScrollable: true,
+            indicator: BoxDecoration(
+              color: const Color(0xFF1EA75C),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            indicatorPadding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.black87,
+            tabs: const [
               Tab(text: 'Aperçu'),
               Tab(text: 'Configuration'),
               Tab(text: 'Contenus'),
@@ -2111,6 +2183,7 @@ class _UniversitySitePreview extends StatelessWidget {
 
         final heroTitle = (config?['hero_title']?.toString() ?? '').trim();
         final heroSubtitle = (config?['hero_subtitle']?.toString() ?? '').trim();
+        final heroPosterMediaId = config?['hero_poster_media_id']?.toString();
 
         final aboutBlocks = blocks
             .where((b) => (b['key']?.toString() ?? '').toLowerCase() == 'about')
@@ -2133,6 +2206,16 @@ class _UniversitySitePreview extends StatelessWidget {
         final bottomBanners = banners
             .where((b) => (b['position']?.toString() ?? '') == 'bottom_strip')
             .toList(growable: false);
+
+        final locationText = [city, country]
+            .where((e) => e.trim().isNotEmpty)
+            .join(', ');
+
+        final heroTagline = tagline.isNotEmpty
+            ? tagline
+            : (mission.isNotEmpty
+                ? mission
+                : vision);
 
         return Container(
           color: const Color(0xFFF9FAFB),
@@ -2162,9 +2245,7 @@ class _UniversitySitePreview extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  [city, country]
-                                      .where((e) => e.trim().isNotEmpty)
-                                      .join(', '),
+                                  locationText,
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Color(0xFF6B7280),
@@ -2202,7 +2283,18 @@ class _UniversitySitePreview extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
+                      if (media.isNotEmpty) ...[
+                        MiniSiteHeroVideo(
+                          media: media,
+                          title: heroTitle.isNotEmpty ? heroTitle : name,
+                          location: locationText,
+                          tagline: heroTagline.isNotEmpty ? heroTagline : null,
+                          logoUrl: logoUrl.isNotEmpty ? logoUrl : null,
+                          heroPosterMediaId: heroPosterMediaId,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       if (media.isNotEmpty || topBanners.isNotEmpty) ...[
                         Row(
                           children: [
@@ -3393,10 +3485,15 @@ Future<void> _showEditMediaDialog(
   UniversitySiteProvider provider, {
   Map<String, dynamic>? media,
 }) async {
-  final typeController = TextEditingController(text: media?['media_type']?.toString() ?? 'video');
-  final titleController = TextEditingController(text: media?['title']?.toString() ?? '');
+  final typeController =
+      TextEditingController(text: media?['media_type']?.toString() ?? 'video');
+  final titleController =
+      TextEditingController(text: media?['title']?.toString() ?? '');
   final descriptionController =
       TextEditingController(text: media?['description']?.toString() ?? '');
+  final urlController =
+      TextEditingController(text: media?['url']?.toString() ?? '');
+  bool isActive = media?['is_active'] != false;
 
   await showDialog<void>(
     context: context,
@@ -3434,6 +3531,28 @@ Future<void> _showEditMediaDialog(
                     decoration: const InputDecoration(
                       labelText: 'Description',
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: urlController,
+                    decoration: const InputDecoration(
+                      labelText: 'URL vidéo (mp4 ou .m3u8)',
+                      hintText: 'https://...',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: isActive,
+                        onChanged: (value) {
+                          setState(() {
+                            isActive = value ?? true;
+                          });
+                        },
+                      ),
+                      const Text('Média actif'),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   Align(
@@ -3507,6 +3626,8 @@ Future<void> _showEditMediaDialog(
                   final type = typeController.text.trim();
                   final title = titleController.text.trim();
                   final description = descriptionController.text.trim();
+                  final urlText = urlController.text.trim();
+                  final url = urlText.isNotEmpty ? urlText : null;
 
                   if (type.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -3538,15 +3659,19 @@ Future<void> _showEditMediaDialog(
                     }
                     storagePath = uploadedPath;
                   }
+                  if (url != null && pickedBytes == null && pickedFileName == null) {
+                    storagePath = null;
+                  }
 
                   final ok = await provider.upsertMedia(
                     mediaId: media?['id']?.toString(),
                     mediaType: type,
                     title: title.isNotEmpty ? title : null,
                     description: description.isNotEmpty ? description : null,
-                    url: null,
+                    url: url,
                     storagePath: storagePath,
                     thumbnailUrl: null,
+                    isActive: isActive,
                   );
                   if (!context.mounted) return;
                   if (ok) {

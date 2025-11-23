@@ -15,6 +15,16 @@ class AdminBobodoScreen extends StatelessWidget {
       child: Column(
         children: const [
           TabBar(
+            isScrollable: true,
+            indicator: BoxDecoration(
+              color: Color(0xFF1EA75C),
+              borderRadius: BorderRadius.all(Radius.circular(999)),
+            ),
+            indicatorPadding:
+                EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            labelPadding: EdgeInsets.symmetric(horizontal: 16),
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.black87,
             tabs: [
               Tab(text: 'Conversations'),
               Tab(text: 'Besoins détectés'),
@@ -195,13 +205,16 @@ class _AdminBobodoConversationsTabState extends State<_AdminBobodoConversationsT
                                           padding: const EdgeInsets.all(12),
                                           decoration: BoxDecoration(
                                             color: isStudent
-                                                ? Theme.of(context)
-                                                    .colorScheme
-                                                    .surfaceVariant
-                                                : Theme.of(context)
-                                                    .colorScheme
-                                                    .primaryContainer,
-                                            borderRadius: BorderRadius.circular(8),
+                                                ? Colors.white
+                                                : const Color(0xFFE5F9E7),
+                                            borderRadius: BorderRadius.circular(12),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(0.03),
+                                                blurRadius: 6,
+                                                offset: const Offset(0, 3),
+                                              ),
+                                            ],
                                           ),
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,

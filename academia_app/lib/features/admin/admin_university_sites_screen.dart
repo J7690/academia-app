@@ -7,6 +7,7 @@ import '../../providers/admin_universities_provider.dart';
 import '../../providers/admin_university_site_provider.dart';
 import '../../providers/admin_programs_provider.dart';
 import '../../providers/admin_courses_provider.dart';
+import '../../widgets/mini_site_hero_video.dart';
 import 'admin_programs_screen.dart';
 
 class AdminUniversitySitesScreen extends StatefulWidget {
@@ -80,7 +81,11 @@ class _AdminUniversitySitesScreenState extends State<AdminUniversitySitesScreen>
                   final selected = id != null && id == _selectedUniversityId;
 
                   return Card(
-                    color: selected ? Theme.of(context).colorScheme.primaryContainer : null,
+                    elevation: 0,
+                    color: selected ? const Color(0xFFE5F9E7) : Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     margin: const EdgeInsets.only(bottom: 8),
                     child: ListTile(
                       title: Text(uni['name']?.toString() ?? ''),
@@ -220,9 +225,18 @@ class _AdminUniversitySitePanel extends StatelessWidget {
                   ],
                 ),
               ),
-              const TabBar(
+              TabBar(
                 isScrollable: true,
-                tabs: [
+                indicator: BoxDecoration(
+                  color: const Color(0xFF1EA75C),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                indicatorPadding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.black87,
+                tabs: const [
                   Tab(text: 'Aperçu'),
                   Tab(text: 'Contenus'),
                   Tab(text: 'Médias'),
@@ -890,6 +904,10 @@ class _AdminUniversitySitePreview extends StatelessWidget {
         final websiteUrl = university['website_url']?.toString() ?? '';
         final logoUrl = university['logo_url']?.toString() ?? '';
 
+        final locationText = [city, country]
+            .where((e) => e.trim().isNotEmpty)
+            .join(', ');
+
         final contactEmail = university['contact_email']?.toString() ?? '';
         final contactPhone = university['contact_phone']?.toString() ?? '';
         final address = university['address']?.toString() ?? '';
@@ -936,15 +954,13 @@ class _AdminUniversitySitePreview extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  [city, country]
-                                      .where((e) => e.trim().isNotEmpty)
-                                      .join(', '),
+                                  locationText,
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Color(0xFF6B7280),
                                   ),
                                 ),
-                                if (websiteUrl.isNotEmpty) ...[
+                                if (websiteUrl.isNotEmpty) ...[ 
                                   const SizedBox(height: 4),
                                   Text(
                                     websiteUrl,
@@ -978,7 +994,18 @@ class _AdminUniversitySitePreview extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
+                      if (media.isNotEmpty) ...[
+                        MiniSiteHeroVideo(
+                          media: media,
+                          title: name,
+                          location: locationText,
+                          tagline: null,
+                          logoUrl: logoUrl.isNotEmpty ? logoUrl : null,
+                          heroPosterMediaId: null,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       if (media.isNotEmpty) ...[
                         Row(
                           children: [
@@ -2840,6 +2867,10 @@ Future<void> _showAdminEditMediaDialog(
   final descriptionController = TextEditingController(
     text: media?['description']?.toString() ?? '',
   );
+  final urlController = TextEditingController(
+    text: media?['url']?.toString() ?? '',
+  );
+  bool isActive = media?['is_active'] != false;
 
   await showDialog<void>(
     context: context,
@@ -2877,6 +2908,28 @@ Future<void> _showAdminEditMediaDialog(
                     decoration: const InputDecoration(
                       labelText: 'Description',
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: urlController,
+                    decoration: const InputDecoration(
+                      labelText: 'URL vidéo (mp4 ou .m3u8)',
+                      hintText: 'https://...',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: isActive,
+                        onChanged: (value) {
+                          setState(() {
+                            isActive = value ?? true;
+                          });
+                        },
+                      ),
+                      const Text('Média actif'),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   Align(
@@ -2950,6 +3003,8 @@ Future<void> _showAdminEditMediaDialog(
                   final type = typeController.text.trim();
                   final title = titleController.text.trim();
                   final description = descriptionController.text.trim();
+                  final urlText = urlController.text.trim();
+                  final url = urlText.isNotEmpty ? urlText : null;
 
                   if (type.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -2981,15 +3036,20 @@ Future<void> _showAdminEditMediaDialog(
                     }
                     storagePath = uploadedPath;
                   }
+                  if (url != null && pickedBytes == null && pickedFileName == null) {
+                    storagePath = null;
+                  }
 
                   final ok = await provider.upsertMedia(
                     mediaId: media?['id']?.toString(),
                     mediaType: type,
                     title: title.isNotEmpty ? title : null,
                     description: description.isNotEmpty ? description : null,
-                    url: null,
+                    url: url,
                     storagePath: storagePath,
                     thumbnailUrl: null,
+                    sortOrder: null,
+                    isActive: isActive,
                   );
                   if (!context.mounted) return;
                   if (ok) {

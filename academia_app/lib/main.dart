@@ -12,6 +12,7 @@ import 'providers/student_application_files_provider.dart';
 import 'providers/student_application_messages_provider.dart';
 import 'providers/student_dossier_documents_provider.dart';
 import 'providers/student_courses_provider.dart';
+import 'providers/student_course_library_provider.dart';
 import 'providers/student_profile_provider.dart';
 import 'providers/student_university_site_provider.dart';
 import 'providers/university_site_provider.dart';
@@ -19,6 +20,7 @@ import 'providers/admin_applications_provider.dart';
 import 'providers/admin_application_messages_provider.dart';
 import 'providers/admin_programs_provider.dart';
 import 'providers/admin_courses_provider.dart';
+import 'providers/admin_course_library_provider.dart';
 import 'providers/admin_universities_provider.dart';
 import 'providers/admin_university_site_provider.dart';
 import 'providers/admin_bobodo_conversations_provider.dart';
@@ -31,6 +33,7 @@ import 'providers/selected_university_application_provider.dart';
 import 'providers/university_programs_provider.dart';
 import 'providers/bobodo_provider.dart';
 import 'providers/landing_content_provider.dart';
+import 'providers/student_home_content_provider.dart';
 import 'features/auth/auth_wrapper.dart';
 
 void main() async {
@@ -52,11 +55,13 @@ class AcademiaApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final providers = <SingleChildWidget>[
       ChangeNotifierProvider(create: (_) => LandingContentProvider()),
+      ChangeNotifierProvider(create: (_) => StudentHomeContentProvider()),
       ChangeNotifierProvider(create: (_) => StudentOffersProvider()),
       ChangeNotifierProvider(create: (_) => StudentApplicationsProvider()),
       ChangeNotifierProvider(create: (_) => StudentApplicationFilesProvider()),
       ChangeNotifierProvider(create: (_) => StudentApplicationMessagesProvider()),
       ChangeNotifierProvider(create: (_) => StudentCoursesProvider()),
+      ChangeNotifierProvider(create: (_) => StudentCourseLibraryProvider()),
       ChangeNotifierProvider(create: (_) => StudentProfileProvider()),
       ChangeNotifierProvider(create: (_) => StudentUniversitySiteProvider()),
       ChangeNotifierProvider(create: (_) => StudentDossierDocumentsProvider()),
@@ -64,6 +69,7 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => AdminApplicationMessagesProvider()),
       ChangeNotifierProvider(create: (_) => AdminProgramsProvider()),
       ChangeNotifierProvider(create: (_) => AdminCoursesProvider()),
+      ChangeNotifierProvider(create: (_) => AdminCourseLibraryProvider()),
       ChangeNotifierProvider(create: (_) => AdminUniversitiesProvider()),
       ChangeNotifierProvider(create: (_) => AdminUniversitySiteProvider()),
       ChangeNotifierProvider(create: (_) => AdminBobodoConversationsProvider()),
@@ -86,6 +92,7 @@ class AcademiaApp extends StatelessWidget {
       providers: providers,
       child: MaterialApp(
         title: 'Academia - Projet Supabase',
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primarySwatch: Colors.blue,
           useMaterial3: true,

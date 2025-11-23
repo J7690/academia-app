@@ -15,6 +15,7 @@ class LandingContentProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _announcements = [];
   List<Map<String, dynamic>> _partners = [];
   List<Map<String, dynamic>> _whyCards = [];
+  List<Map<String, dynamic>> _videos = [];
 
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
@@ -23,6 +24,7 @@ class LandingContentProvider extends ChangeNotifier {
   List<Map<String, dynamic>> get announcements => List.unmodifiable(_announcements);
   List<Map<String, dynamic>> get partners => List.unmodifiable(_partners);
   List<Map<String, dynamic>> get whyCards => List.unmodifiable(_whyCards);
+  List<Map<String, dynamic>> get videos => List.unmodifiable(_videos);
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -81,6 +83,7 @@ class LandingContentProvider extends ChangeNotifier {
     final announcements = response['announcements'];
     final partners = response['partners'];
     final whyCards = response['why_cards'];
+    final videos = response['videos'];
 
     if (cfg is Map) {
       _config = Map<String, dynamic>.from(cfg);
@@ -113,6 +116,15 @@ class LandingContentProvider extends ChangeNotifier {
           .toList(growable: false);
     } else {
       _whyCards = [];
+    }
+
+    if (videos is List) {
+      _videos = videos
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(growable: false);
+    } else {
+      _videos = [];
     }
 
     notifyListeners();
@@ -367,6 +379,76 @@ class LandingContentProvider extends ChangeNotifier {
       if (response['success'] != true) {
         _setError(
           response['error']?.toString() ?? 'Erreur lors de la suppression de la carte.',
+        );
+        return false;
+      }
+      await loadAdminLandingContent();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> upsertVideo({
+    String? videoId,
+    required String videoUrl,
+    String? title,
+    int? sortOrder,
+    bool? isActive,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_admin_upsert_landing_video',
+        params: {
+          'p_video_id': videoId,
+          'p_video_url': videoUrl,
+          'p_title': title,
+          'p_sort_order': sortOrder,
+          'p_is_active': isActive,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur lors de la sauvegarde de la vidéo.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ?? 'Erreur lors de la sauvegarde de la vidéo.',
+        );
+        return false;
+      }
+      await loadAdminLandingContent();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> deleteVideo(String videoId) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_admin_delete_landing_video',
+        params: {
+          'p_video_id': videoId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur lors de la suppression de la vidéo.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ?? 'Erreur lors de la suppression de la vidéo.',
         );
         return false;
       }

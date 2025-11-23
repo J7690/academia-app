@@ -58,6 +58,11 @@ class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {
             final app = applications[index];
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
+              color: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: ListTile(
                 onTap: () {
                   Navigator.of(context).push(
@@ -110,7 +115,7 @@ class _AdminApplicationLeading extends StatelessWidget {
               width: 10,
               height: 10,
               decoration: BoxDecoration(
-                color: Colors.red,
+                color: const Color(0xFFFF3B30),
                 shape: BoxShape.circle,
               ),
             ),
@@ -132,8 +137,73 @@ class _AdminStatusAndUnread extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(status),
+        _AdminStatusBadge(status: status),
       ],
     );
+  }
+}
+
+class _AdminStatusBadge extends StatelessWidget {
+  final String status;
+
+  const _AdminStatusBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = _adminStatusLabel(status);
+    final color = _adminStatusColor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+String _adminStatusLabel(String? status) {
+  switch (status) {
+    case 'draft':
+      return 'Brouillon';
+    case 'submitted':
+      return 'Soumise';
+    case 'under_review':
+      return 'En étude';
+    case 'accepted':
+      return 'Acceptée';
+    case 'rejected':
+      return 'Refusée';
+    case 'canceled':
+      return 'Annulée';
+    default:
+      return status ?? 'Inconnu';
+  }
+}
+
+Color _adminStatusColor(String? status) {
+  switch (status) {
+    case 'draft':
+      return const Color(0xFF9CA3AF);
+    case 'submitted':
+      return const Color(0xFF1EA75C);
+    case 'under_review':
+      return const Color(0xFFF59E0B);
+    case 'accepted':
+      return const Color(0xFFA3D65C);
+    case 'rejected':
+      return const Color(0xFFFF3B30);
+    case 'canceled':
+      return const Color(0xFF6B7280);
+    default:
+      return const Color(0xFF9CA3AF);
   }
 }

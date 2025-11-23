@@ -1576,6 +1576,10 @@ BEGIN
                 'created_at', a.created_at,
                 'updated_at', a.updated_at,
                 'last_message_at', a.last_message_at,
+                'program_title', p.title,
+                'degree_level', p.degree_level,
+                'university_id', u.id,
+                'university_name', u.name,
                 'has_unread_for_student',
                     CASE
                         WHEN a.last_message_at IS NULL THEN FALSE
@@ -1588,6 +1592,8 @@ BEGIN
         '[]'::JSONB
     ) INTO v_result
     FROM app.applications a
+    JOIN app.programs p ON p.id = a.program_id
+    JOIN app.universities u ON u.id = p.university_id
     WHERE a.student_id = auth.uid();
 
     RETURN v_result;

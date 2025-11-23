@@ -150,9 +150,23 @@ class _StatusFilterBar extends StatelessWidget {
           final label = status == null ? 'Tous' : _statusLabel(status);
           return Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(label),
+            child: FilterChip(
+              label: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: selected ? const Color(0xFF006D3C) : const Color(0xFF374151),
+                ),
+              ),
               selected: selected,
+              selectedColor: const Color(0xFFE5F9E7),
+              backgroundColor: Colors.white,
+              side: BorderSide(
+                color: selected
+                    ? const Color(0xFF006D3C)
+                    : const Color(0xFFE5E7EB),
+              ),
               onSelected: (_) => onFilterChanged(status),
             ),
           );
@@ -169,48 +183,120 @@ class _ApplicationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final id = application['id']?.toString() ?? '';
     final status = application['status']?.toString() ?? '';
-    final createdAt = application['created_at']?.toString() ?? '';
-    final submittedAt = application['submitted_at']?.toString() ?? '';
+    final createdAtRaw = application['created_at']?.toString();
+    final submittedAtRaw = application['submitted_at']?.toString();
+    final createdAt = _formatDate(createdAtRaw);
+    final submittedAt = _formatDate(submittedAtRaw);
     final hasUnread = application['has_unread_for_student'] == true;
+
+    final programTitle = application['program_title']?.toString() ?? '';
+    final degreeLevel = application['degree_level']?.toString() ?? '';
+    final universityName = application['university_name']?.toString() ?? '';
+
+    String shortId = id;
+    if (shortId.length > 8) {
+      shortId = shortId.substring(0, 8);
+    }
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        leading: Stack(
-          children: [
-            const Icon(Icons.assignment),
-            if (hasUnread)
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text('Candidature ${application['id'] ?? ''}'),
-            ),
-            const SizedBox(width: 8),
-            _StatusBadge(status: status),
-          ],
-        ),
-        subtitle: Column(
+      color: Colors.white,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (submittedAt.isNotEmpty)
-              Text('Soumise le: $submittedAt'),
-            if (createdAt.isNotEmpty)
-              Text('Créée le: $createdAt'),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
+                  children: [
+                    const Icon(Icons.assignment_outlined),
+                    if (hasUnread)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFF3B30),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        shortId.isNotEmpty
+                            ? 'Candidature $shortId'
+                            : 'Candidature',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (programTitle.isNotEmpty || universityName.isNotEmpty)
+                        const SizedBox(height: 4),
+                      if (programTitle.isNotEmpty)
+                        Text(
+                          degreeLevel.isNotEmpty
+                              ? '$programTitle · $degreeLevel'
+                              : programTitle,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      if (universityName.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          universityName,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF6B7280),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      const SizedBox(height: 4),
+                      if (submittedAt.isNotEmpty)
+                        Text(
+                          'Soumise le : $submittedAt',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      if (createdAt.isNotEmpty)
+                        Text(
+                          'Créée le : $createdAt',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF9CA3AF),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _StatusBadge(status: status),
+              ],
+            ),
           ],
         ),
       ),
@@ -226,7 +312,7 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = _statusLabel(status);
-    final color = _statusColor(status, Theme.of(context));
+    final color = _statusColor(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -264,21 +350,31 @@ String _statusLabel(String? status) {
   }
 }
 
-Color _statusColor(String? status, ThemeData theme) {
+Color _statusColor(String? status) {
   switch (status) {
     case 'draft':
-      return Colors.grey;
+      return const Color(0xFF9CA3AF);
     case 'submitted':
-      return theme.colorScheme.primary;
+      return const Color(0xFF1EA75C);
     case 'under_review':
-      return Colors.orange;
+      return const Color(0xFFF59E0B);
     case 'accepted':
-      return Colors.green;
+      return const Color(0xFFA3D65C);
     case 'rejected':
-      return Colors.red;
+      return const Color(0xFFFF3B30);
     case 'canceled':
-      return Colors.blueGrey;
+      return const Color(0xFF6B7280);
     default:
-      return Colors.grey;
+      return const Color(0xFF9CA3AF);
   }
+}
+
+String _formatDate(String? value) {
+  if (value == null || value.isEmpty) return '';
+  final parsed = DateTime.tryParse(value);
+  if (parsed == null) return value;
+  final day = parsed.day.toString().padLeft(2, '0');
+  final month = parsed.month.toString().padLeft(2, '0');
+  final year = parsed.year.toString();
+  return '$day/$month/$year';
 }

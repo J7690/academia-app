@@ -31,6 +31,85 @@
 
   <title>academia_app</title>
   <link rel="manifest" href="manifest.json">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.12/hls.min.js"></script>
+  <script>
+    window.createHlsVideo = function(video, url, autoplay, loop, muted) {
+      if (!video) return;
+
+      console.log('[HLS] createHlsVideo url=', url,
+        ' autoplay=', autoplay, ' loop=', loop, ' muted=', muted);
+
+      // Prépare une transition douce à l'entrée de la nouvelle vidéo.
+      if (!video.style.transition) {
+        video.style.transition = 'opacity 0.6s ease-in-out';
+      }
+
+      if (video.hlsInstance && typeof video.hlsInstance.destroy === 'function') {
+        console.log('[HLS] destroying previous hlsInstance');
+        video.hlsInstance.destroy();
+        video.hlsInstance = null;
+      }
+
+      video.addEventListener('error', function() {
+        console.error('[HLS] video element error', video.error);
+      });
+
+      video.addEventListener('loadedmetadata', function() {
+        console.log('[HLS] loadedmetadata duration=', video.duration);
+      });
+
+      function setupAndPlay() {
+        video.autoplay = !!autoplay;
+        video.loop = !!loop;
+        video.muted = !!muted;
+        console.log('[HLS] setupAndPlay autoplay=', video.autoplay,
+          ' loop=', video.loop, ' muted=', video.muted);
+        if (autoplay) {
+          var p = video.play();
+          if (p && p.catch) {
+            p.catch(function(err) {
+              console.warn('[HLS] video.play() rejected', err);
+            });
+          }
+        }
+        // Quand la vidéo est prête à jouer, on l’affiche en fondu.
+        video.style.opacity = '1';
+      }
+
+      var canPlayNative = '';
+      if (video.canPlayType) {
+        canPlayNative = video.canPlayType('application/vnd.apple.mpegurl');
+      }
+      console.log('[HLS] canPlayType("application/vnd.apple.mpegurl") =', canPlayNative);
+
+      if (canPlayNative === 'probably' || canPlayNative === 'maybe') {
+        console.log('[HLS] Using native HLS support');
+        video.src = url;
+        setupAndPlay();
+        return;
+      }
+
+      if (window.Hls) {
+        console.log('[HLS] Using hls.js, version=', window.Hls.version);
+        var hls = new Hls();
+        video.hlsInstance = hls;
+        hls.loadSource(url);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+          console.log('[HLS] MANIFEST_PARSED, starting playback');
+          setupAndPlay();
+        });
+        hls.on(Hls.Events.ERROR, function(event, data) {
+          console.error('[HLS] Hls error', data);
+        });
+      } else {
+        console.log('[HLS] window.Hls not present, fallback to direct src');
+        video.src = url;
+        setupAndPlay();
+      }
+    };
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

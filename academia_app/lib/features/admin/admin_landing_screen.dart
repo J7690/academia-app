@@ -46,8 +46,8 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
 
   void _initControllersFromConfig(Map<String, dynamic>? config) {
     if (_initializedFromConfig) return;
-    _initializedFromConfig = true;
     if (config == null) return;
+    _initializedFromConfig = true;
 
     _badgeController.text = config['hero_badge_text']?.toString() ?? '';
     _titleController.text = config['hero_title']?.toString() ?? '';
@@ -104,12 +104,12 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
 
     final file = result.files.first;
     final bytes = file.bytes;
-    const maxSizeBytes = 20 * 1024 * 1024;
+    const maxSizeBytes = 200 * 1024 * 1024;
     if (file.size > maxSizeBytes) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Fichier vidéo trop volumineux (max 20 Mo).'),
+          content: Text('Fichier vidéo trop volumineux (max 200 Mo).'),
         ),
       );
       return;
@@ -158,6 +158,99 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
   Future<void> _clearHeroVideo(LandingContentProvider provider) async {
     _videoUrlController.clear();
     await _saveConfig(provider);
+  }
+
+  Future<void> _showVideoDialog(
+    LandingContentProvider provider, {
+    Map<String, dynamic>? existing,
+  }) async {
+    final urlController =
+        TextEditingController(text: existing?['video_url']?.toString() ?? '');
+    final titleController =
+        TextEditingController(text: existing?['title']?.toString() ?? '');
+    final sortController = TextEditingController(
+      text: existing?['sort_order']?.toString() ?? '',
+    );
+    bool isActive = existing == null || existing['is_active'] != false;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            existing == null
+                ? 'Nouvelle vidéo (playlist hero)'
+                : 'Modifier la vidéo',
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: urlController,
+                  decoration: const InputDecoration(
+                    labelText: 'URL vidéo (mp4, webm...)',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Titre (facultatif)',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: sortController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Ordre (optionnel)',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Text('Active'),
+                    const Spacer(),
+                    Switch(
+                      value: isActive,
+                      onChanged: (v) {
+                        isActive = v;
+                        (context as Element).markNeedsBuild();
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Enregistrer'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != true) return;
+    final url = urlController.text.trim();
+    if (url.isEmpty) return;
+
+    final sortOrder = int.tryParse(sortController.text.trim());
+    await provider.upsertVideo(
+      videoId: existing?['id']?.toString(),
+      videoUrl: url,
+      title:
+          titleController.text.trim().isEmpty ? null : titleController.text.trim(),
+      sortOrder: sortOrder,
+      isActive: isActive,
+    );
   }
 
   Future<void> _showAnnouncementDialog(
@@ -510,8 +603,21 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
         _initControllersFromConfig(provider.config);
 
         return Scaffold(
+          backgroundColor: const Color(0xFFF3F4F6),
           appBar: AppBar(
+            elevation: 0,
+            centerTitle: false,
             title: const Text('Page d\'accueil - Landing'),
+            foregroundColor: Colors.white,
+            flexibleSpace: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+            ),
             actions: [
               IconButton(
                 onPressed: provider.loadAdminLandingContent,
@@ -577,6 +683,13 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
                           label: const Text('Uploader une vidéo'),
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _videoUrlController,
+                        decoration: const InputDecoration(
+                          labelText: 'URL vidéo (optionnel, lien public)',
+                        ),
+                      ),
                       if (_videoUrlController.text.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Align(
@@ -638,6 +751,75 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
                           label: const Text('Enregistrer la configuration'),
                         ),
                       ),
+                      const SizedBox(height: 24),
+                      Divider(color: Colors.grey.shade300),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Vidéos du hero (playlist publicitaire)',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: provider.isSaving
+                                ? null
+                                : () => _showVideoDialog(provider),
+                            icon: const Icon(Icons.add),
+                            label: const Text('Ajouter'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (provider.videos.isEmpty)
+                        const Text('Aucune vidéo configurée.')
+                      else
+                        Column(
+                          children: provider.videos.map((v) {
+                            final url = (v['video_url'] ?? '').toString();
+                            final title = (v['title'] ?? '').toString();
+                            final active = v['is_active'] == true;
+                            final sortOrder = v['sort_order'];
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: ListTile(
+                                title: Text(
+                                  title.isNotEmpty ? title : url,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                subtitle: Text(
+                                  'URL: $url\nOrdre: ${sortOrder ?? '-'}  •  ' +
+                                      (active ? 'Active' : 'Inactive'),
+                                ),
+                                isThreeLine: true,
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit),
+                                      onPressed: provider.isSaving
+                                          ? null
+                                          : () => _showVideoDialog(
+                                                provider,
+                                                existing: v,
+                                              ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline),
+                                      onPressed: provider.isSaving
+                                          ? null
+                                          : () => provider.deleteVideo(
+                                                v['id']?.toString() ?? '',
+                                              ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       const SizedBox(height: 24),
                       Divider(color: Colors.grey.shade300),
                       const SizedBox(height: 16),

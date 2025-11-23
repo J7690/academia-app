@@ -42,8 +42,21 @@ class _AdminProgramsScreenState extends State<AdminProgramsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
+        elevation: 0,
+        centerTitle: false,
         title: const Text('Programmes - Admin'),
+        foregroundColor: Colors.white,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: Consumer<AdminProgramsProvider>(
         builder: (context, provider, child) {
@@ -90,6 +103,11 @@ class _AdminProgramsScreenState extends State<AdminProgramsScreen> {
 
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
+                color: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Column(
@@ -126,14 +144,30 @@ class _AdminProgramsScreenState extends State<AdminProgramsScreen> {
                                     Chip(
                                       label: Text(
                                         isActive ? 'Actif' : 'Inactif',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: isActive
+                                              ? const Color(0xFF1EA75C)
+                                              : const Color(0xFFFF3B30),
+                                        ),
                                       ),
-                                      backgroundColor:
-                                          isActive ? Colors.green.shade50 : Colors.red.shade50,
+                                      backgroundColor: isActive
+                                          ? const Color(0xFFE5F9E7)
+                                          : const Color(0xFFFEE2E2),
                                     ),
                                     if (highlighted)
                                       Chip(
-                                        label: const Text('En vedette'),
-                                        backgroundColor: Colors.orange.shade50,
+                                        label: const Text(
+                                          'En vedette',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                            color: Color(0xFFF59E0B),
+                                          ),
+                                        ),
+                                        backgroundColor:
+                                            const Color(0xFFFEF3C7),
                                       ),
                                   ],
                                 ),

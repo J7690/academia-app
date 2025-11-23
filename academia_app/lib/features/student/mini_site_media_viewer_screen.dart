@@ -1,6 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:video_player/video_player.dart';
+
+import '../../widgets/hls_web_stub.dart'
+    if (dart.library.html) '../../widgets/hls_web.dart';
 
 class MiniSiteMediaViewerScreen extends StatefulWidget {
   final Map<String, dynamic> media;
@@ -16,6 +20,8 @@ class _MiniSiteMediaViewerScreenState extends State<MiniSiteMediaViewerScreen> {
   String? _error;
   bool _isLoading = true;
   bool _isVideo = false;
+  bool _isHlsWeb = false;
+  String? _hlsUrl;
   VideoPlayerController? _videoController;
 
   @override
@@ -26,11 +32,23 @@ class _MiniSiteMediaViewerScreenState extends State<MiniSiteMediaViewerScreen> {
 
   Future<void> _loadUrl() async {
     try {
-      final storagePath = widget.media['storage_path']?.toString() ?? '';
       final mediaType = widget.media['media_type']?.toString().toLowerCase() ?? '';
       final isVideo = mediaType.contains('video');
+      final storagePath = widget.media['storage_path']?.toString() ?? '';
+      final directUrl = widget.media['url']?.toString().trim() ?? '';
 
-      if (storagePath.isEmpty) {
+      String? resolvedUrl;
+
+      if (directUrl.isNotEmpty) {
+        resolvedUrl = directUrl;
+      } else if (storagePath.isNotEmpty) {
+        final client = Supabase.instance.client;
+        resolvedUrl = await client.storage
+            .from('university-media')
+            .createSignedUrl(storagePath, 3600);
+      }
+
+      if (resolvedUrl == null || resolvedUrl.isEmpty) {
         setState(() {
           _error = 'Média non disponible.';
           _isLoading = false;
@@ -38,11 +56,17 @@ class _MiniSiteMediaViewerScreenState extends State<MiniSiteMediaViewerScreen> {
         return;
       }
 
-      final client = Supabase.instance.client;
-      final resolvedUrl = await client.storage.from('university-media').createSignedUrl(
-            storagePath,
-            3600,
-          );
+      final isHls = resolvedUrl.toLowerCase().contains('.m3u8');
+
+      if (isVideo && kIsWeb && isHls) {
+        setState(() {
+          _isVideo = true;
+          _isHlsWeb = true;
+          _hlsUrl = resolvedUrl;
+          _isLoading = false;
+        });
+        return;
+      }
 
       if (isVideo) {
         final controller = VideoPlayerController.networkUrl(Uri.parse(resolvedUrl));
@@ -99,6 +123,22 @@ class _MiniSiteMediaViewerScreenState extends State<MiniSiteMediaViewerScreen> {
       );
     }
     if (_isVideo) {
+      if (_isHlsWeb && kIsWeb) {
+        final url = _hlsUrl;
+        if (url == null || url.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        return AspectRatio(
+          aspectRatio: 16 / 9,
+          child: HlsWebVideoPlayer(
+            url: url,
+            autoplay: true,
+            loop: true,
+            muted: false,
+            showControls: true,
+          ),
+        );
+      }
       final controller = _videoController;
       if (controller == null) {
         return const SizedBox.shrink();

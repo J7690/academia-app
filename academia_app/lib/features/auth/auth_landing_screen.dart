@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -10,6 +11,8 @@ import '../../providers/landing_content_provider.dart';
 import '../../providers/student_offers_provider.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
+import '../../widgets/hls_web_stub.dart'
+    if (dart.library.html) '../../widgets/hls_web.dart';
 
 class AuthLandingScreen extends StatelessWidget {
   const AuthLandingScreen({super.key});
@@ -81,9 +84,14 @@ class _MarketingLandingView extends StatefulWidget {
 class _MarketingLandingViewState extends State<_MarketingLandingView> {
   VideoPlayerController? _videoController;
   bool _videoReady = false;
+  bool _isHlsWeb = false;
+  String? _currentHlsUrl;
 
   late final ScrollController _tickerController;
   Timer? _tickerTimer;
+
+  List<String> _videoPlaylist = [];
+  int _currentVideoIndex = 0;
 
   static const List<String> _fallbackAnnouncements = [
     'Ouverture des candidatures 2025',
@@ -111,58 +119,156 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
 
       final cfg = landing.config;
       final urlFromConfig = (cfg?['video_url'] as String?)?.trim();
-      final hasCustomVideo =
+      final hasConfigVideo =
           (urlFromConfig != null && urlFromConfig.isNotEmpty);
+
+      final videos = landing.videos;
+      final playlist = <String>[];
+
+      if (videos.isNotEmpty) {
+        debugPrint('Landing: videos from provider (count=${videos.length})');
+        for (final v in videos) {
+          if (v['is_active'] == false) continue;
+          final url = (v['video_url'] ?? '').toString().trim();
+          if (url.isEmpty) continue;
+          debugPrint('Landing: candidate video from Supabase=' + url);
+          playlist.add(url);
+        }
+      }
 
       _startTicker();
 
-      if (hasCustomVideo && urlFromConfig != null) {
-        unawaited(_initVideo(urlFromConfig));
+      if (playlist.isEmpty && hasConfigVideo && urlFromConfig != null) {
+        playlist.add(urlFromConfig);
+      }
+
+      if (playlist.isNotEmpty) {
+        debugPrint('Landing: final playlist=' + playlist.join(', '));
+        _videoPlaylist = playlist;
+        _currentVideoIndex = 0;
+        unawaited(_initVideo(_videoPlaylist[_currentVideoIndex]));
       }
     });
   }
 
   Future<void> _initVideo(String url) async {
+    debugPrint('Landing: _initVideo(url=' + url + ')');
     _videoController?.dispose();
     _videoReady = false;
+    _isHlsWeb = false;
+    _currentHlsUrl = null;
     if (mounted) {
       setState(() {});
     }
 
-    final controller = VideoPlayerController.networkUrl(Uri.parse(url));
-    await controller.initialize();
-    controller
-      ..setLooping(true)
-      ..setVolume(0)
-      ..play();
+    final lowerUrl = url.toLowerCase();
+    final isHls = lowerUrl.contains('.m3u8');
 
-    if (!mounted) {
-      controller.dispose();
+    debugPrint('Landing: _initVideo kIsWeb=' + kIsWeb.toString() +
+        ' isHls=' + isHls.toString());
+
+    if (kIsWeb && isHls) {
+      debugPrint('Landing: using HLS web player for URL=' + url);
+      setState(() {
+        _videoController = null;
+        _isHlsWeb = true;
+        _currentHlsUrl = url;
+        _videoReady = true;
+      });
       return;
     }
 
-    setState(() {
-      _videoController = controller;
-      _videoReady = true;
-    });
+    try {
+      debugPrint('Landing: using VideoPlayer for URL=' + url);
+      final controller = VideoPlayerController.networkUrl(Uri.parse(url));
+      await controller.initialize();
+
+      var hasCompleted = false;
+      controller.addListener(() {
+        final value = controller.value;
+        if (!mounted) return;
+        if (!value.isInitialized) return;
+        final duration = value.duration;
+        if (duration == Duration.zero) return;
+        if (!value.isPlaying && value.position >= duration && !hasCompleted) {
+          hasCompleted = true;
+          _onVideoCompleted();
+        }
+      });
+
+      controller
+        ..setLooping(false)
+        ..setVolume(0)
+        ..play();
+
+      if (!mounted) {
+        controller.dispose();
+        return;
+      }
+
+      setState(() {
+        _videoController = controller;
+        _videoReady = true;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _videoController = null;
+        _videoReady = false;
+      });
+      debugPrint('Landing: _initVideo error for URL=' + url);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Impossible de lire cette vidéo. Utilise un lien direct vers un fichier vidéo (mp4, webm, …) accessible publiquement.',
+          ),
+        ),
+      );
+    }
+  }
+
+  void _onVideoCompleted() {
+    if (!mounted) return;
+    if (_videoPlaylist.isEmpty) return;
+    _currentVideoIndex = (_currentVideoIndex + 1) % _videoPlaylist.length;
+    final nextUrl = _videoPlaylist[_currentVideoIndex];
+    debugPrint('Landing: _onVideoCompleted -> nextUrl=' + nextUrl);
+
+    if (kIsWeb && _isHlsWeb) {
+      setState(() {
+        _currentHlsUrl = nextUrl;
+      });
+      return;
+    }
+
+    unawaited(_initVideo(nextUrl));
   }
 
   void _startTicker() {
     _tickerTimer?.cancel();
-    _tickerTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    const step = 4.0;
+    const tick = Duration(milliseconds: 40);
+    const animDuration = Duration(milliseconds: 40);
+
+    _tickerTimer = Timer.periodic(tick, (_) {
       if (!_tickerController.hasClients) return;
       final position = _tickerController.position;
       if (!position.haveDimensions) return;
       final maxScroll = position.maxScrollExtent;
       if (maxScroll <= 0) return;
-      double next = _tickerController.offset + 180;
+
+      final current = _tickerController.offset;
+      double next = current + step;
+
       if (next >= maxScroll) {
-        next = 0;
+        _tickerController.jumpTo(0);
+        return;
       }
+
       _tickerController.animateTo(
         next,
-        duration: const Duration(milliseconds: 600),
-        curve: Curves.easeOut,
+        duration: animDuration,
+        curve: Curves.linear,
       );
     });
   }
@@ -430,26 +536,40 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                                     child: VideoPlayer(_videoController!),
                                   ),
                                 )
-                              : Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [primaryColor, secondaryColor],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
+                              : _videoReady && _isHlsWeb && kIsWeb && _currentHlsUrl != null
+                                  ? const SizedBox.shrink()
+                                  : Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [primaryColor, secondaryColor],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
                         ),
+                        if (_videoReady && _isHlsWeb && kIsWeb && _currentHlsUrl != null)
+                          Positioned.fill(
+                            child: HlsWebVideoPlayer(
+                              url: _currentHlsUrl!,
+                              autoplay: true,
+                              loop: false,
+                              muted: true,
+                              onEnded: _onVideoCompleted,
+                            ),
+                          ),
                         Positioned.fill(
                           child: Container(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  primaryColor.withOpacity(0.65),
-                                  secondaryColor.withOpacity(0.5),
+                                  primaryColor.withOpacity(0.75),
+                                  primaryColor.withOpacity(0.4),
+                                  secondaryColor.withOpacity(0.05),
                                 ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                                stops: const [0.0, 0.45, 1.0],
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
                               ),
                             ),
                           ),
@@ -606,15 +726,21 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                         }
                         final isWide = MediaQuery.of(context).size.width >= 900;
                         if (!isWide) {
-                          return Column(
-                            children: items
-                                .map(
-                                  (p) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: _buildProgramCard(p),
-                                  ),
-                                )
-                                .toList(),
+                          return SizedBox(
+                            height: 170,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: items.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(width: 12),
+                              itemBuilder: (context, index) {
+                                final p = items[index];
+                                return SizedBox(
+                                  width: 280,
+                                  child: _buildProgramCard(p),
+                                );
+                              },
+                            ),
                           );
                         }
 
@@ -655,12 +781,33 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: whyCards
-                            .map((card) => _buildWhyCard(card, accentColor))
-                            .toList(),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isNarrow = constraints.maxWidth < 900;
+                          if (isNarrow) {
+                            return SizedBox(
+                              height: 210,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: whyCards.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(width: 12),
+                                itemBuilder: (context, index) {
+                                  final card = whyCards[index];
+                                  return _buildWhyCard(card, accentColor);
+                                },
+                              ),
+                            );
+                          }
+
+                          return Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: whyCards
+                                .map((card) => _buildWhyCard(card, accentColor))
+                                .toList(),
+                          );
+                        },
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -765,7 +912,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFFFF3B30), Color(0xFFE11D48)],
+                    colors: [Color(0xFF15803D), Color(0xFF0F766E)],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
@@ -775,13 +922,12 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                   child: ListView.builder(
                     controller: _tickerController,
                     scrollDirection: Axis.horizontal,
-                    reverse: true,
                     itemCount: () {
                       final baseCount = announcements.isNotEmpty
                           ? announcements.length
                           : _fallbackAnnouncements.length;
                       if (baseCount <= 0) return 0;
-                      return baseCount * 4;
+                      return baseCount * 20;
                     }(),
                     itemBuilder: (context, index) {
                       final hasAnnouncements = announcements.isNotEmpty;
@@ -809,7 +955,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                           child: Text(
                             text,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: Color(0xFFF9FAFB),
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),

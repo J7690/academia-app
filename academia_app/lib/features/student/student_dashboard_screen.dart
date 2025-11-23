@@ -53,15 +53,28 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       builder: (context, applicationsProvider, child) {
         final unread = applicationsProvider.unreadCount;
         return Scaffold(
+          backgroundColor: const Color(0xFFF3F4F6),
           body: tabs[_currentIndex],
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: _currentIndex,
-            onDestinationSelected: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            destinations: [
+          bottomNavigationBar: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: NavigationBar(
+              backgroundColor: Colors.transparent,
+              indicatorColor: Colors.white.withOpacity(0.2),
+              height: 52,
+              labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+              selectedIndex: _currentIndex,
+              onDestinationSelected: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              destinations: [
               const NavigationDestination(
                 icon: Icon(Icons.home_outlined),
                 selectedIcon: Icon(Icons.home),
@@ -93,7 +106,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                 selectedIcon: Icon(Icons.smart_toy),
                 label: 'Bobodo',
               ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -122,7 +136,7 @@ class _NavBadgeIcon extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(2),
             decoration: const BoxDecoration(
-              color: Colors.red,
+              color: Color(0xFFFF3B30),
               shape: BoxShape.circle,
             ),
             constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
