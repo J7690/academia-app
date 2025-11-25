@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
@@ -94,6 +94,67 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.api_route("/supabase/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+async def supabase_proxy(full_path: str, request: Request) -> Response:
+    """
+    Proxy HTTP générique vers l'API Supabase pour contourner les problèmes de résolution DNS côté client.
+
+    Toutes les requêtes envoyées par les applications vers /supabase/... sont relayées vers
+    SUPABASE_URL/... avec les bons en-têtes d'authentification.
+    """
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="SUPABASE_URL ou SUPABASE_SERVICE_KEY non configurée côté backend.",
+        )
+
+    supabase_base = SUPABASE_URL.rstrip("/")
+    target_url = f"{supabase_base}/{full_path}"
+    query = request.url.query
+    if query:
+        target_url = f"{target_url}?{query}"
+
+    # Copie des en-têtes de la requête entrante
+    incoming_headers = dict(request.headers)
+    # Nettoyage des en-têtes qui ne doivent pas être forwardés tels quels
+    for h in ("host", "content-length", "connection"):
+        incoming_headers.pop(h, None)
+
+    # Ajout / surcharge des en-têtes Supabase nécessaires
+    incoming_headers["apikey"] = SUPABASE_SERVICE_KEY
+    incoming_headers["Authorization"] = f"Bearer {SUPABASE_SERVICE_KEY}"
+
+    body = await request.body()
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            upstream_response = await client.request(
+                request.method,
+                target_url,
+                headers=incoming_headers,
+                content=body if request.method.upper() != "GET" else None,
+            )
+        except httpx.HTTPError as exc:
+            raise HTTPException(
+                status_code=502,
+                detail={"message": "Erreur réseau Supabase (proxy)", "error": str(exc)},
+            )
+
+    # Filtrer certains en-têtes de réponse problématiques pour FastAPI
+    excluded_headers = {"content-encoding", "transfer-encoding", "connection"}
+    response_headers = {
+        k: v for k, v in upstream_response.headers.items() if k.lower() not in excluded_headers
+    }
+
+    return Response(
+        content=upstream_response.content,
+        status_code=upstream_response.status_code,
+        headers=response_headers,
+        media_type=upstream_response.headers.get("content-type"),
+    )
+
 
 
 class BobodoChatRequest(BaseModel):
