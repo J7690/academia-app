@@ -116,15 +116,25 @@ async def supabase_proxy(full_path: str, request: Request) -> Response:
     if query:
         target_url = f"{target_url}?{query}"
 
-    # Copie des en-têtes de la requête entrante
-    incoming_headers = dict(request.headers)
-    # Nettoyage des en-têtes qui ne doivent pas être forwardés tels quels
-    for h in ("host", "content-length", "connection"):
-        incoming_headers.pop(h, None)
+    # Construction d'en-têtes propres pour l'appel vers Supabase.
+    # On ne relaie pas les en-têtes spécifiques navigateur (Origin, Sec-*, User-Agent, etc.)
+    # pour éviter les 400 HTML côté Cloudflare et limiter les informations exposées.
+    outgoing_headers: Dict[str, str] = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+    }
 
-    # Ajout / surcharge des en-têtes Supabase nécessaires
-    incoming_headers["apikey"] = SUPABASE_SERVICE_KEY
-    incoming_headers["Authorization"] = f"Bearer {SUPABASE_SERVICE_KEY}"
+    content_type = request.headers.get("content-type")
+    if content_type:
+        outgoing_headers["content-type"] = content_type
+
+    accept = request.headers.get("accept")
+    if accept:
+        outgoing_headers["accept"] = accept
+
+    range_header = request.headers.get("range")
+    if range_header:
+        outgoing_headers["range"] = range_header
 
     body = await request.body()
 
@@ -133,7 +143,7 @@ async def supabase_proxy(full_path: str, request: Request) -> Response:
             upstream_response = await client.request(
                 request.method,
                 target_url,
-                headers=incoming_headers,
+                headers=outgoing_headers,
                 content=body if request.method.upper() != "GET" else None,
             )
         except httpx.HTTPError as exc:
