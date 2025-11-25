@@ -647,6 +647,31 @@ $$;
 
 GRANT EXECUTE ON FUNCTION app_get_bobodo_student_first_name(UUID) TO service_role;
 
+CREATE OR REPLACE FUNCTION app_has_bobodo_assistant_message(
+    p_session_id UUID
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_exists BOOLEAN;
+BEGIN
+    SELECT EXISTS(
+        SELECT 1
+        FROM app.bobodo_messages m
+        WHERE m.session_id = p_session_id
+          AND m.sender = 'assistant'
+    )
+    INTO v_exists;
+
+    RETURN v_exists;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_has_bobodo_assistant_message(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_has_bobodo_assistant_message(UUID) TO service_role;
+
 
 -- ========================================
 -- 13) VALIDATION DU MODULE BOBODO

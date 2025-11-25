@@ -177,6 +177,31 @@ async def get_student_first_name(session_id: str) -> Optional[str]:
     return None
 
 
+async def has_bobodo_assistant_message(session_id: str) -> bool:
+    """
+    Indique s'il existe déjà au moins un message de l'assistant Bobodo
+    pour une session donnée, via la RPC app_has_bobodo_assistant_message.
+    """
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return False
+
+    try:
+        data = await call_supabase_rpc(
+            "app_has_bobodo_assistant_message",
+            {"p_session_id": session_id},
+        )
+    except HTTPException:
+        return False
+
+    # Supabase peut renvoyer un booléen brut ou un dict avec un champ result
+    if isinstance(data, bool):
+        return data
+    if isinstance(data, dict) and isinstance(data.get("result"), bool):
+        return data["result"]
+
+    return False
+
+
 def is_sensitive_query(message: str) -> bool:
     text = message.lower()
     for keyword in SENSITIVE_KEYWORDS:
@@ -733,11 +758,6 @@ async def generate_answer_for_category(
             system_prompt=smalltalk_system_prompt,
             include_no_answer_sentinel=False,
         )
-
-        first_name = await get_student_first_name(session_id)
-        if first_name:
-            return f"Bonjour {first_name}, " + answer.lstrip()
-
         return answer
 
     # Questions internes Nexiom/Academia : base locale uniquement, pas de WebSearch
@@ -868,6 +888,9 @@ async def bobodo_chat(payload: BobodoChatRequest) -> BobodoChatResponse:
             detail="session_id manquant. La session Bobodo doit être créée côté Flutter.",
         )
 
+    already_has_assistant = await has_bobodo_assistant_message(session_id)
+    is_first_assistant = not already_has_assistant
+
     # 1) Enregistrer le message de l'étudiant
     await call_supabase_rpc(
         "app_append_bobodo_message",
@@ -912,6 +935,19 @@ async def bobodo_chat(payload: BobodoChatRequest) -> BobodoChatResponse:
             raise
 
         assistant_message = fallback_message
+
+    if is_first_assistant:
+        first_name = await get_student_first_name(session_id)
+        if first_name:
+            greeting_prefix = (
+                f"Bonjour {first_name}, on se rencontre, je suis Bobodo, "
+                "l'assistant d'Academia. "
+            )
+        else:
+            greeting_prefix = (
+                "Bonjour, je suis Bobodo, l'assistant d'Academia. "
+            )
+        assistant_message = greeting_prefix + assistant_message.lstrip()
 
     # 4) Enregistrer la réponse IA
     await call_supabase_rpc(

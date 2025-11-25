@@ -91,6 +91,12 @@ def main() -> int:
             "p_safety_flag": None,
         },
         "app_search_bobodo_knowledge": {"p_query": "test", "p_category": None},
+        "app_get_bobodo_student_first_name": {
+            "p_session_id": "00000000-0000-0000-0000-000000000000",
+        },
+        "app_has_bobodo_assistant_message": {
+            "p_session_id": "00000000-0000-0000-0000-000000000000",
+        },
     }
 
     print("=== AUDIT RPC app_* ===")

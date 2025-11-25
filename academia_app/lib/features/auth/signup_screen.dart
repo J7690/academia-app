@@ -9,6 +9,8 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  final _lastNameController = TextEditingController();
+  final _firstNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
@@ -16,18 +18,22 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   void dispose() {
+    _lastNameController.dispose();
+    _firstNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
+    final lastName = _lastNameController.text.trim();
+    final firstName = _firstNameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
+    if (lastName.isEmpty || firstName.isEmpty || email.isEmpty || password.isEmpty) {
       setState(() {
-        _error = 'Veuillez renseigner email et mot de passe.';
+        _error = 'Veuillez renseigner nom, prnoms, email et mot de passe.';
       });
       return;
     }
@@ -38,10 +44,14 @@ class _SignupScreenState extends State<SignupScreen> {
     });
 
     try {
+      final fullName = '$firstName $lastName';
       await Supabase.instance.client.auth.signUp(
         email: email,
         password: password,
-        data: const {'role': 'student'},
+        data: {
+          'role': 'student',
+          'full_name': fullName,
+        },
       );
       if (mounted) {
         Navigator.of(context).pop();
@@ -78,6 +88,20 @@ class _SignupScreenState extends State<SignupScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                TextField(
+                  controller: _lastNameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nom',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _firstNameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Prnoms',
+                  ),
+                ),
+                const SizedBox(height: 16),
                 TextField(
                   controller: _emailController,
                   decoration: const InputDecoration(
