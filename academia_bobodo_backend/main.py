@@ -119,10 +119,29 @@ async def supabase_proxy(full_path: str, request: Request) -> Response:
     # Construction d'en-têtes propres pour l'appel vers Supabase.
     # On ne relaie pas les en-têtes spécifiques navigateur (Origin, Sec-*, User-Agent, etc.)
     # pour éviter les 400 HTML côté Cloudflare et limiter les informations exposées.
-    outgoing_headers: Dict[str, str] = {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-    }
+    #
+    # Cas 1: requête authentifiée (header Authorization déjà présent côté client, par exemple
+    #        Supabase Flutter). On propage alors le JWT tel quel pour que auth.uid() fonctionne
+    #        côté Supabase et que les politiques RLS s'appliquent correctement.
+    # Cas 2: requête non authentifiée (pas de header Authorization). On utilise la service_role
+    #        key pour les appels système internes ou les endpoints publics côté backend.
+    incoming_auth = request.headers.get("authorization")
+    incoming_apikey = request.headers.get("apikey")
+
+    outgoing_headers: Dict[str, str] = {}
+
+    if incoming_auth:
+        # Mode utilisateur: on garde le JWT du client.
+        outgoing_headers["Authorization"] = incoming_auth
+        # On propage l'apikey du client (clé anon publique) si elle est présente.
+        if incoming_apikey:
+            outgoing_headers["apikey"] = incoming_apikey
+        else:
+            outgoing_headers["apikey"] = SUPABASE_SERVICE_KEY
+    else:
+        # Mode service: appels internes ou publics sans JWT.
+        outgoing_headers["apikey"] = SUPABASE_SERVICE_KEY
+        outgoing_headers["Authorization"] = f"Bearer {SUPABASE_SERVICE_KEY}"
 
     content_type = request.headers.get("content-type")
     if content_type:
