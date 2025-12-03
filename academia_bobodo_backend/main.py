@@ -1,12 +1,14 @@
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
 from dotenv import load_dotenv
+from livekit import api as livekit_api
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
@@ -17,6 +19,28 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "meta-llama/Meta-Llama-3.1-70B-Instruct")
 WEBSEARCH_API_KEY = os.getenv("WEBSEARCH_API_KEY")
 WEBSEARCH_ENGINE = os.getenv("WEBSEARCH_ENGINE")
+
+STUDIO_ASR_URL = os.getenv("STUDIO_ASR_URL")
+STUDIO_ASR_API_KEY = os.getenv("STUDIO_ASR_API_KEY")
+
+STUDIO_AUDIO_MIX_URL = os.getenv("STUDIO_AUDIO_MIX_URL")
+STUDIO_AUDIO_MIX_API_KEY = os.getenv("STUDIO_AUDIO_MIX_API_KEY")
+
+STUDIO_VIDEO_RENDER_URL = os.getenv("STUDIO_VIDEO_RENDER_URL")
+STUDIO_VIDEO_RENDER_API_KEY = os.getenv("STUDIO_VIDEO_RENDER_API_KEY")
+
+LIVEKIT_HOST = os.getenv("LIVEKIT_HOST")
+LIVEKIT_API_KEY = os.getenv("LIVEKIT_API_KEY")
+LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET")
+
+LIVEKIT_SERVER_URL = None
+if LIVEKIT_HOST:
+    if LIVEKIT_HOST.startswith("wss://"):
+        LIVEKIT_SERVER_URL = "https://" + LIVEKIT_HOST[len("wss://") :]
+    elif LIVEKIT_HOST.startswith("ws://"):
+        LIVEKIT_SERVER_URL = "http://" + LIVEKIT_HOST[len("ws://") :]
+    else:
+        LIVEKIT_SERVER_URL = LIVEKIT_HOST
 
 NO_ANSWER_SENTINEL = "__BOBODO_NO_ANSWER__"
 
@@ -196,6 +220,69 @@ class BobodoChatResponse(BaseModel):
     assistant_message: str
 
 
+class StudioTranscriptionRequest(BaseModel):
+    participation_id: str
+    language: Optional[str] = None
+
+
+class StudioTranscriptionResponse(BaseModel):
+    success: bool
+    participation_id: str
+    subtitles: List[Dict[str, Any]]
+    overlays: Dict[str, Any]
+
+
+class StudioAnalyzeRequest(BaseModel):
+    participation_id: str
+
+
+class StudioAnalyzeResponse(BaseModel):
+    success: bool
+    participation_id: str
+    analysis: str
+
+
+class StudioProofreadRequest(BaseModel):
+    text: str
+
+
+class StudioProofreadResponse(BaseModel):
+    success: bool
+    text: str
+
+
+class StudioAudioTrackSpec(BaseModel):
+    asset_url: str
+    start_ms: Optional[int] = None
+    end_ms: Optional[int] = None
+    volume_db: Optional[float] = None
+    kind: Optional[str] = None
+
+
+class StudioAudioRenderRequest(BaseModel):
+    participation_id: str
+    tracks: List[StudioAudioTrackSpec]
+    normalize: Optional[bool] = True
+
+
+class StudioAudioRenderResponse(BaseModel):
+    success: bool
+    participation_id: str
+    video_url: str
+    added_video_id: Optional[str] = None
+
+
+class StudioVideoRenderRequest(BaseModel):
+    participation_id: str
+
+
+class StudioVideoRenderResponse(BaseModel):
+    success: bool
+    participation_id: str
+    video_url: str
+    added_video_id: Optional[str] = None
+
+
 async def call_supabase_rpc(function: str, payload: Dict[str, Any]) -> Any:
     """Appelle une fonction RPC Supabase via l'API REST avec la service_role key."""
     url = f"{SUPABASE_URL}/rest/v1/rpc/{function}"
@@ -237,6 +324,229 @@ async def call_supabase_rpc(function: str, payload: Dict[str, Any]) -> Any:
         return response.json()
     except ValueError:
         return response.text
+
+
+async def call_supabase_rpc_as_user(jwt: str, function: str, payload: Dict[str, Any]) -> Any:
+    """Appelle une RPC Supabase avec le JWT de l'utilisateur pour que auth.uid() reflète bien l'utilisateur courant.
+
+    On utilise la service_role key comme apikey projet, mais le contexte d'authentification
+    est celui du JWT passé en Authorization.
+    """
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="SUPABASE_URL ou SUPABASE_SERVICE_KEY non configurée côté backend.",
+        )
+
+    url = f"{SUPABASE_URL}/rest/v1/rpc/{function}"
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {jwt}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            response = await client.post(url, headers=headers, json=payload)
+        except httpx.HTTPError as exc:
+            raise HTTPException(
+                status_code=502,
+                detail={"message": "Erreur réseau Supabase", "error": str(exc)},
+            )
+
+    if response.status_code >= 400:
+        try:
+            error_body = response.json()
+        except ValueError:
+            error_body = {"raw": response.text}
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Erreur RPC Supabase (user)",
+                "rpc": function,
+                "status_code": response.status_code,
+                "error": error_body,
+            },
+        )
+
+    if not response.content:
+        return None
+
+    try:
+        return response.json()
+    except ValueError:
+        return response.text
+
+
+class LivekitTokenRequest(BaseModel):
+    session_id: str
+
+
+class LivekitTokenResponse(BaseModel):
+    token: str
+    host: str
+    room_name: str
+    identity: str
+    role: str
+
+
+@app.post("/livekit/token", response_model=LivekitTokenResponse)
+async def get_livekit_token(req: LivekitTokenRequest, request: Request) -> LivekitTokenResponse:
+    """Génère un token LiveKit pour une session live donnée.
+
+    - Vérifie le JWT Supabase de l'appelant (Authorization: Bearer ...).
+    - Demande à Supabase (RPC) d'enregistrer/valider le participant pour la session.
+    - Génère un JWT LiveKit avec les clés LIVEKIT_API_KEY / LIVEKIT_API_SECRET.
+    """
+
+    if not LIVEKIT_API_KEY or not LIVEKIT_API_SECRET or not LIVEKIT_HOST:
+        raise HTTPException(
+            status_code=500,
+            detail="LIVEKIT_HOST, LIVEKIT_API_KEY ou LIVEKIT_API_SECRET non configurés côté backend.",
+        )
+
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authorization Bearer manquant pour LiveKit.")
+
+    user_jwt = auth_header.split(" ", 1)[1].strip()
+    if not user_jwt:
+        raise HTTPException(status_code=401, detail="JWT utilisateur invalide pour LiveKit.")
+
+    data = await call_supabase_rpc_as_user(
+        user_jwt,
+        "app_register_online_course_live_session_participant",
+        {"p_session_id": req.session_id},
+    )
+
+    if not isinstance(data, dict) or not data.get("success"):
+        # On normalise un message d'erreur compréhensible côté client
+        error_code = None
+        if isinstance(data, dict):
+            error_code = data.get("error")
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Accès refusé pour cette session live",
+                "error": error_code or "unknown_error",
+            },
+        )
+
+    room_name = str(data.get("livekit_room_name") or "").strip()
+    identity = str(data.get("identity") or "").strip()
+    role = str(data.get("role") or "").strip()
+
+    if not room_name or not identity:
+        raise HTTPException(
+            status_code=500,
+            detail="Réponse Supabase invalide pour la session live (room_name/identity manquants).",
+        )
+
+    token = (
+        livekit_api.AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET)
+        .with_identity(identity)
+        .with_grants(
+            livekit_api.VideoGrants(
+                room_join=True,
+                room=room_name,
+            )
+        )
+    )
+
+    return LivekitTokenResponse(
+        token=token.to_jwt(),
+        host=LIVEKIT_HOST,
+        room_name=room_name,
+        identity=identity,
+        role=role,
+    )
+
+
+class LivekitAdminKickRequest(BaseModel):
+  session_id: str
+  user_id: str
+
+
+class LivekitAdminKickResponse(BaseModel):
+  success: bool
+  kicked: bool
+
+
+@app.post("/livekit/admin/kick", response_model=LivekitAdminKickResponse)
+async def livekit_admin_kick(req: LivekitAdminKickRequest, request: Request) -> LivekitAdminKickResponse:
+  """Bannit un participant via Supabase puis le retire de la room LiveKit si possible.
+
+  - Vérifie le JWT admin Supabase.
+  - Appelle app_admin_ban_user_from_online_course_live_session.
+  - Récupère room_name / identity via app_admin_get_live_session_participant_livekit_identity.
+  - Appelle RoomService.RemoveParticipant si les infos sont disponibles.
+  """
+
+  if not LIVEKIT_API_KEY or not LIVEKIT_API_SECRET or not LIVEKIT_SERVER_URL:
+    raise HTTPException(
+      status_code=500,
+      detail="LIVEKIT_HOST/URL, LIVEKIT_API_KEY ou LIVEKIT_API_SECRET non configurés côté backend.",
+    )
+
+  auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+  if not auth_header or not auth_header.lower().startswith("bearer "):
+    raise HTTPException(status_code=401, detail="Authorization Bearer manquant pour LiveKit admin.")
+
+  admin_jwt = auth_header.split(" ", 1)[1].strip()
+  if not admin_jwt:
+    raise HTTPException(status_code=401, detail="JWT admin invalide pour LiveKit.")
+
+  # 1) Bannissement via RPC admin (contexte admin, audit Supabase)
+  ban_data = await call_supabase_rpc_as_user(
+    admin_jwt,
+    "app_admin_ban_user_from_online_course_live_session",
+    {"p_session_id": req.session_id, "p_user_id": req.user_id},
+  )
+
+  if not isinstance(ban_data, dict) or not ban_data.get("success"):
+    error_code = None
+    if isinstance(ban_data, dict):
+      error_code = ban_data.get("error")
+    raise HTTPException(
+      status_code=403,
+      detail={
+        "message": "Bannissement impossible pour cette session live",
+        "error": error_code or "unknown_error",
+      },
+    )
+
+  # 2) Récupération des infos LiveKit (room_name, identity)
+  ident_data = await call_supabase_rpc_as_user(
+    admin_jwt,
+    "app_admin_get_live_session_participant_livekit_identity",
+    {"p_session_id": req.session_id, "p_user_id": req.user_id},
+  )
+
+  if not isinstance(ident_data, dict) or not ident_data.get("success"):
+    # Bannissement OK mais pas d'info LiveKit exploitable
+    return LivekitAdminKickResponse(success=True, kicked=False)
+
+  room_name = str(ident_data.get("livekit_room_name") or "").strip()
+  identity = str(ident_data.get("identity") or "").strip()
+
+  if not room_name or not identity:
+    return LivekitAdminKickResponse(success=True, kicked=False)
+
+  # 3) Suppression du participant côté LiveKit (ne bloque pas le succès du ban si échec)
+  try:
+    lkapi = livekit_api.LiveKitAPI(
+      url=LIVEKIT_SERVER_URL,
+      api_key=LIVEKIT_API_KEY,
+      api_secret=LIVEKIT_API_SECRET,
+    )
+    await lkapi.room.remove_participant(
+      livekit_api.room.RoomParticipantIdentity(room=room_name, identity=identity)
+    )
+    return LivekitAdminKickResponse(success=True, kicked=True)
+  except Exception:
+    # En cas d'erreur LiveKit, on considère le ban DB comme effectif
+    return LivekitAdminKickResponse(success=True, kicked=False)
 
 
 async def get_student_first_name(session_id: str) -> Optional[str]:
@@ -290,6 +600,35 @@ async def has_bobodo_assistant_message(session_id: str) -> bool:
         return data["result"]
 
     return False
+
+
+async def get_challenge_video_for_user(jwt: str, participation_id: str) -> Dict[str, Any]:
+    data = await call_supabase_rpc_as_user(
+        jwt,
+        "app_student_get_challenge_video",
+        {"p_participation_id": participation_id},
+    )
+
+    if not isinstance(data, dict) or not data.get("success"):
+        error_code = None
+        if isinstance(data, dict):
+            error_code = data.get("error")
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Accs refus pour cette vido de challenge",
+                "error": error_code or "unknown_error",
+            },
+        )
+
+    video = data.get("video")
+    if not isinstance(video, dict):
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "Rponse Supabase invalide pour la vido de challenge."},
+        )
+
+    return video
 
 
 def is_sensitive_query(message: str) -> bool:
@@ -607,6 +946,326 @@ async def perform_web_search(query: str, max_results: int = 5) -> List[Dict[str,
             }
         )
     return results
+
+
+async def call_studio_asr(video_url: str, language: Optional[str]) -> List[Dict[str, Any]]:
+    url = (video_url or "").strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="video_url manquant pour la transcription.")
+
+    if not STUDIO_ASR_URL or not STUDIO_ASR_API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="STUDIO_ASR_URL ou STUDIO_ASR_API_KEY non configur pour la transcription.",
+        )
+
+    payload: Dict[str, Any] = {"video_url": url}
+    if language:
+        payload["language"] = language
+
+    headers = {
+        "Authorization": f"Bearer {STUDIO_ASR_API_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    async with httpx.AsyncClient(timeout=300.0) as client:
+        try:
+            response = await client.post(STUDIO_ASR_URL, headers=headers, json=payload)
+        except httpx.HTTPError as exc:
+            raise HTTPException(
+                status_code=502,
+                detail={"message": "Erreur rseau ASR", "error": str(exc)},
+            )
+
+    if response.status_code >= 400:
+        try:
+            error_body = response.json()
+        except ValueError:
+            error_body = {"raw": response.text}
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Erreur service ASR",
+                "status_code": response.status_code,
+                "error": error_body,
+            },
+        )
+
+    try:
+        data = response.json()
+    except ValueError:
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "Rponse ASR inattendue", "raw": response.text[:500]},
+        )
+
+    segments_raw = data.get("segments")
+    segments: List[Dict[str, Any]] = []
+    if isinstance(segments_raw, list):
+        for item in segments_raw:
+            if not isinstance(item, dict):
+                continue
+            text = str(item.get("text") or "").strip()
+            if not text:
+                continue
+            start_ms_raw = item.get("start_ms")
+            end_ms_raw = item.get("end_ms")
+            try:
+                start_ms = int(start_ms_raw) if start_ms_raw is not None else 0
+            except (TypeError, ValueError):
+                start_ms = 0
+            try:
+                end_ms = int(end_ms_raw) if end_ms_raw is not None else 0
+            except (TypeError, ValueError):
+                end_ms = 0
+            segments.append(
+                {
+                    "text": text,
+                    "start_ms": max(start_ms, 0),
+                    "end_ms": max(end_ms, 0),
+                }
+            )
+
+    return segments
+
+
+async def call_studio_audio_mix(
+    video_url: str,
+    tracks: List[Dict[str, Any]],
+    normalize: Optional[bool],
+) -> str:
+    url = (video_url or "").strip()
+    if not url:
+        raise HTTPException(status_code=400, detail={"message": "video_url manquant pour le rendu audio."})
+
+    if not STUDIO_AUDIO_MIX_URL or not STUDIO_AUDIO_MIX_API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "STUDIO_AUDIO_MIX_URL ou STUDIO_AUDIO_MIX_API_KEY non configuré pour le rendu audio.",
+            },
+        )
+
+    if not tracks:
+        raise HTTPException(status_code=400, detail={"message": "Aucune piste audio fournie pour le rendu."})
+
+    payload: Dict[str, Any] = {
+        "video_url": url,
+        "tracks": tracks,
+        "options": {"normalize": bool(normalize) if normalize is not None else True},
+    }
+
+    headers = {
+        "Authorization": f"Bearer {STUDIO_AUDIO_MIX_API_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    async with httpx.AsyncClient(timeout=600.0) as client:
+        try:
+            response = await client.post(STUDIO_AUDIO_MIX_URL, headers=headers, json=payload)
+        except httpx.HTTPError as exc:
+            raise HTTPException(
+                status_code=502,
+                detail={"message": "Erreur réseau Studio audio", "error": str(exc)},
+            )
+
+    if response.status_code >= 400:
+        try:
+            error_body = response.json()
+        except ValueError:
+            error_body = {"raw": response.text}
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Erreur service Studio audio",
+                "status_code": response.status_code,
+                "error": error_body,
+            },
+        )
+
+    try:
+        data = response.json()
+    except ValueError:
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "Réponse Studio audio inattendue", "raw": response.text[:500]},
+        )
+
+    rendered_url = data.get("video_url")
+    if not isinstance(rendered_url, str) or not rendered_url.strip():
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "URL vidéo de rendu manquante dans la réponse Studio audio."},
+        )
+
+    return rendered_url.strip()
+
+
+async def call_studio_video_render(
+    video_url: str,
+    overlays: Dict[str, Any],
+    participation_id: str,
+) -> str:
+    url = (video_url or "").strip()
+    if not url:
+        raise HTTPException(status_code=400, detail={"message": "video_url manquant pour le rendu vidéo."})
+
+    if not STUDIO_VIDEO_RENDER_URL or not STUDIO_VIDEO_RENDER_API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "STUDIO_VIDEO_RENDER_URL ou STUDIO_VIDEO_RENDER_API_KEY non configuré pour le rendu vidéo.",
+            },
+        )
+
+    if not isinstance(overlays, dict):
+        overlays = {}
+
+    payload: Dict[str, Any] = {
+        "video_url": url,
+        "overlays": overlays,
+        "participation_id": participation_id,
+    }
+
+    headers = {
+        "Authorization": f"Bearer {STUDIO_VIDEO_RENDER_API_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    async with httpx.AsyncClient(timeout=600.0) as client:
+        try:
+            response = await client.post(STUDIO_VIDEO_RENDER_URL, headers=headers, json=payload)
+        except httpx.HTTPError as exc:
+            raise HTTPException(
+                status_code=502,
+                detail={"message": "Erreur réseau Studio vidéo", "error": str(exc)},
+            )
+
+    if response.status_code >= 400:
+        try:
+            error_body = response.json()
+        except ValueError:
+            error_body = {"raw": response.text}
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Erreur service Studio vidéo",
+                "status_code": response.status_code,
+                "error": error_body,
+            },
+        )
+
+    try:
+        data = response.json()
+    except ValueError:
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "Réponse Studio vidéo inattendue", "raw": response.text[:500]},
+        )
+
+    rendered_url = data.get("video_url")
+    if not isinstance(rendered_url, str) or not rendered_url.strip():
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "URL vidéo de rendu manquante dans la réponse Studio vidéo."},
+        )
+
+    return rendered_url.strip()
+
+
+async def create_render_job(
+    participation_id: str,
+    job_type: str,
+    source_video_url: Optional[str],
+    metadata: Optional[Dict[str, Any]] = None,
+) -> Optional[str]:
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return None
+
+    table_url = f"{SUPABASE_URL}/rest/v1/app.challenge_video_render_jobs"
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Prefer": "return=representation",
+    }
+
+    payload: Dict[str, Any] = {
+        "participation_id": participation_id,
+        "job_type": job_type,
+        "status": "running",
+    }
+    if source_video_url:
+        payload["source_video_url"] = source_video_url
+    if metadata:
+        payload["metadata"] = metadata
+    payload["started_at"] = datetime.now(timezone.utc).isoformat()
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            response = await client.post(table_url, headers=headers, json=payload)
+        except httpx.HTTPError:
+            return None
+
+    if response.status_code >= 400:
+        return None
+
+    try:
+        data = response.json()
+    except ValueError:
+        return None
+
+    if isinstance(data, list) and data and isinstance(data[0], dict):
+        job_id_raw = data[0].get("id")
+        if isinstance(job_id_raw, str) and job_id_raw.strip():
+            return job_id_raw.strip()
+
+    return None
+
+
+async def update_render_job(
+    job_id: Optional[str],
+    *,
+    status: Optional[str] = None,
+    result_video_url: Optional[str] = None,
+    error_message: Optional[str] = None,
+) -> None:
+    if not job_id:
+        return
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return
+
+    fields: Dict[str, Any] = {}
+    if status:
+        fields["status"] = status
+        if status.lower() == "completed":
+            fields["completed_at"] = datetime.now(timezone.utc).isoformat()
+    if result_video_url:
+        fields["result_video_url"] = result_video_url
+    if error_message:
+        # Tronquer pour éviter des erreurs sur des messages trop longs
+        fields["error_message"] = error_message[:2000]
+
+    if not fields:
+        return
+
+    table_url = f"{SUPABASE_URL}/rest/v1/app.challenge_video_render_jobs?id=eq.{job_id}"
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            await client.patch(table_url, headers=headers, json=fields)
+        except httpx.HTTPError:
+            return
 
 
 async def call_openrouter(
@@ -944,9 +1603,6 @@ async def generate_answer_for_category(
             "disponibles. Si une université n'apparaît pas dans cette section, cela signifie que Nexiom Group ne peut pas "
             "te proposer de formation via cet établissement. En revanche, tu peux toujours explorer l'ensemble des "
             "formations disponibles sur Academia pour trouver une option qui te convient."
-        )
-        return await wrap_with_openrouter_style(base_message, message)
-
     # HORS_SCOPE ou catégorie inconnue : refuser poliment car hors domaine
     await log_unanswered_question(session_id, message, category)
     base_message = (
@@ -954,6 +1610,384 @@ async def generate_answer_for_category(
         "Cette question sort de mon domaine de compétence, je ne peux donc pas y répondre."
     )
     return await wrap_with_openrouter_style(base_message, message)
+
+
+@app.post("/studio/audio/render", response_model=StudioAudioRenderResponse)
+async def studio_audio_render(req: StudioAudioRenderRequest, request: Request) -> StudioAudioRenderResponse:
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authorization Bearer manquant pour le rendu audio.")
+
+    user_jwt = auth_header.split(" ", 1)[1].strip()
+    if not user_jwt:
+        raise HTTPException(status_code=401, detail="JWT utilisateur invalide pour le rendu audio.")
+
+    participation_id = req.participation_id.strip()
+    if not participation_id:
+        raise HTTPException(status_code=400, detail="participation_id manquant pour le rendu audio.")
+
+    video = await get_challenge_video_for_user(user_jwt, participation_id)
+
+    video_url_raw = video.get("video_url")
+    video_url = str(video_url_raw or "").strip()
+    if not video_url:
+        raise HTTPException(status_code=400, detail="Aucune URL vidéo disponible pour cette participation.")
+
+    tracks_payload: List[Dict[str, Any]] = []
+    for track in req.tracks:
+        asset_url = (track.asset_url or "").strip()
+        if not asset_url:
+            continue
+        track_dict: Dict[str, Any] = {"asset_url": asset_url}
+        if track.start_ms is not None:
+            track_dict["start_ms"] = int(track.start_ms)
+        if track.end_ms is not None:
+            track_dict["end_ms"] = int(track.end_ms)
+        if track.volume_db is not None:
+            track_dict["volume_db"] = float(track.volume_db)
+        if track.kind is not None:
+            kind_val = track.kind.strip()
+            if kind_val:
+                track_dict["kind"] = kind_val
+        tracks_payload.append(track_dict)
+
+    job_id = await create_render_job(
+        participation_id=participation_id,
+        job_type="audio_mix",
+        source_video_url=video_url,
+        metadata={"track_count": len(tracks_payload)},
+    )
+
+    try:
+        rendered_url = await call_studio_audio_mix(
+            video_url=video_url,
+            tracks=tracks_payload,
+            normalize=req.normalize,
+        )
+    except HTTPException as exc:
+        detail = exc.detail
+        msg: Optional[str] = None
+        if isinstance(detail, dict):
+            msg = str(detail.get("message") or "")
+        await update_render_job(job_id, status="failed", error_message=msg)
+        raise
+
+    await update_render_job(job_id, status="completed", result_video_url=rendered_url)
+
+    add_result = await call_supabase_rpc_as_user(
+        user_jwt,
+        "app_student_add_challenge_video",
+        {
+            "p_participation_id": participation_id,
+            "p_video_url": rendered_url,
+            "p_thumbnail_url": None,
+        },
+    )
+
+    if not isinstance(add_result, dict) or not add_result.get("success"):
+        error_code = None
+        if isinstance(add_result, dict):
+            error_code = add_result.get("error")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Erreur lors de l'enregistrement de la vidéo mixée.",
+                "error": error_code or "unknown_error",
+            },
+        )
+
+    added_video_id = None
+    raw_id = None
+    if isinstance(add_result, dict):
+        raw_id = add_result.get("video_id")
+    if isinstance(raw_id, str):
+        added_video_id = raw_id
+
+    return StudioAudioRenderResponse(
+        success=True,
+        participation_id=participation_id,
+        video_url=rendered_url,
+        added_video_id=added_video_id,
+    )
+
+
+@app.post("/studio/video/render", response_model=StudioVideoRenderResponse)
+async def studio_video_render(req: StudioVideoRenderRequest, request: Request) -> StudioVideoRenderResponse:
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authorization Bearer manquant pour le rendu vidéo.")
+
+    user_jwt = auth_header.split(" ", 1)[1].strip()
+    if not user_jwt:
+        raise HTTPException(status_code=401, detail="JWT utilisateur invalide pour le rendu vidéo.")
+
+    participation_id = req.participation_id.strip()
+    if not participation_id:
+        raise HTTPException(status_code=400, detail="participation_id manquant pour le rendu vidéo.")
+
+    video = await get_challenge_video_for_user(user_jwt, participation_id)
+
+    video_url_raw = video.get("video_url")
+    video_url = str(video_url_raw or "").strip()
+    if not video_url:
+        raise HTTPException(status_code=400, detail="Aucune URL vidéo disponible pour cette participation.")
+
+    overlays = video.get("overlays")
+    if not isinstance(overlays, dict):
+        overlays = {}
+
+    metadata: Dict[str, Any] = {
+        "has_layers": bool(overlays.get("layers")),
+        "has_texts": bool(overlays.get("texts")),
+        "has_subtitles": bool(overlays.get("subtitles")),
+        "has_ar_objects": bool(overlays.get("ar_objects")),
+    }
+
+    job_id = await create_render_job(
+        participation_id=participation_id,
+        job_type="video_edit",
+        source_video_url=video_url,
+        metadata=metadata,
+    )
+
+    try:
+        rendered_url = await call_studio_video_render(
+            video_url=video_url,
+            overlays=overlays,
+            participation_id=participation_id,
+        )
+    except HTTPException as exc:
+        detail = exc.detail
+        msg: Optional[str] = None
+        if isinstance(detail, dict):
+            msg = str(detail.get("message") or "")
+        await update_render_job(job_id, status="failed", error_message=msg)
+        raise
+
+    await update_render_job(job_id, status="completed", result_video_url=rendered_url)
+
+    add_result = await call_supabase_rpc_as_user(
+        user_jwt,
+        "app_student_add_challenge_video",
+        {
+            "p_participation_id": participation_id,
+            "p_video_url": rendered_url,
+            "p_thumbnail_url": None,
+        },
+    )
+
+    if not isinstance(add_result, dict) or not add_result.get("success"):
+        error_code = None
+        if isinstance(add_result, dict):
+            error_code = add_result.get("error")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Erreur lors de l'enregistrement de la vidéo montée.",
+                "error": error_code or "unknown_error",
+            },
+        )
+
+    added_video_id = None
+    raw_id = None
+    if isinstance(add_result, dict):
+        raw_id = add_result.get("video_id")
+    if isinstance(raw_id, str):
+        added_video_id = raw_id
+
+    return StudioVideoRenderResponse(
+        success=True,
+        participation_id=participation_id,
+        video_url=rendered_url,
+        added_video_id=added_video_id,
+    )
+
+
+@app.post("/studio/ai/transcribe", response_model=StudioTranscriptionResponse)
+async def studio_ai_transcribe(req: StudioTranscriptionRequest, request: Request) -> StudioTranscriptionResponse:
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authorization Bearer manquant pour la transcription.")
+
+    user_jwt = auth_header.split(" ", 1)[1].strip()
+    if not user_jwt:
+        raise HTTPException(status_code=401, detail="JWT utilisateur invalide pour la transcription.")
+
+    participation_id = req.participation_id.strip()
+    if not participation_id:
+        raise HTTPException(status_code=400, detail="participation_id manquant pour la transcription.")
+
+    video = await get_challenge_video_for_user(user_jwt, participation_id)
+
+    video_url_raw = video.get("video_url")
+    video_url = str(video_url_raw or "").strip()
+    if not video_url:
+        raise HTTPException(status_code=400, detail="Aucune URL vidéo disponible pour cette participation.")
+
+    subtitles = await call_studio_asr(video_url, req.language)
+
+    existing_overlays = video.get("overlays")
+    overlays_dict: Dict[str, Any]
+    if isinstance(existing_overlays, dict):
+        overlays_dict = existing_overlays
+    else:
+        overlays_dict = {}
+
+    new_overlays: Dict[str, Any] = dict(overlays_dict)
+    background = overlays_dict.get("background")
+    if not isinstance(background, dict):
+        background = {}
+    new_overlays["background"] = background
+
+    filter_value = overlays_dict.get("filter")
+    if not isinstance(filter_value, str):
+        filter_value = "none"
+    new_overlays["filter"] = filter_value
+
+    def _normalize_layer_list(value: Any) -> List[Dict[str, Any]]:
+        if isinstance(value, list):
+            result: List[Dict[str, Any]] = []
+            for item in value:
+                if isinstance(item, dict):
+                    result.append(dict(item))
+            return result
+        return []
+
+    new_overlays["texts"] = _normalize_layer_list(overlays_dict.get("texts"))
+    new_overlays["equations"] = _normalize_layer_list(overlays_dict.get("equations"))
+    new_overlays["subtitles"] = subtitles
+    new_overlays["stickers"] = _normalize_layer_list(overlays_dict.get("stickers"))
+
+    update_result = await call_supabase_rpc_as_user(
+        user_jwt,
+        "app_student_update_challenge_video_overlays",
+        {
+            "p_participation_id": participation_id,
+            "p_layers": new_overlays,
+        },
+    )
+
+    if not isinstance(update_result, dict) or not update_result.get("success"):
+        error_code = None
+        if isinstance(update_result, dict):
+            error_code = update_result.get("error")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Erreur lors de la mise à jour des overlays de challenge.",
+                "error": error_code or "unknown_error",
+            },
+        )
+
+    return StudioTranscriptionResponse(
+        success=True,
+        participation_id=participation_id,
+        subtitles=subtitles,
+        overlays=new_overlays,
+    )
+
+
+@app.post("/studio/ai/analyze", response_model=StudioAnalyzeResponse)
+async def studio_ai_analyze(req: StudioAnalyzeRequest, request: Request) -> StudioAnalyzeResponse:
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authorization Bearer manquant pour l'analyse.")
+
+    user_jwt = auth_header.split(" ", 1)[1].strip()
+    if not user_jwt:
+        raise HTTPException(status_code=401, detail="JWT utilisateur invalide pour l'analyse.")
+
+    participation_id = req.participation_id.strip()
+    if not participation_id:
+        raise HTTPException(status_code=400, detail="participation_id manquant pour l'analyse.")
+
+    video = await get_challenge_video_for_user(user_jwt, participation_id)
+
+    overlays = video.get("overlays")
+    transcript_parts: List[str] = []
+    if isinstance(overlays, dict):
+        subtitles_val = overlays.get("subtitles")
+        if isinstance(subtitles_val, list):
+            for item in subtitles_val:
+                if not isinstance(item, dict):
+                    continue
+                text = str(item.get("text") or "").strip()
+                if text:
+                    transcript_parts.append(text)
+
+    transcript = "\n".join(transcript_parts)
+
+    metadata_parts: List[str] = []
+    challenge_title_raw = video.get("challenge_title")
+    if challenge_title_raw:
+        metadata_parts.append(f"Titre du challenge: {challenge_title_raw}")
+    challenge_type_raw = video.get("challenge_type")
+    if challenge_type_raw:
+        metadata_parts.append(f"Type: {challenge_type_raw}")
+    difficulty_raw = video.get("difficulty")
+    if difficulty_raw:
+        metadata_parts.append(f"Difficulté: {difficulty_raw}")
+    points_raw = video.get("points")
+    if points_raw is not None:
+        metadata_parts.append(f"Points: {points_raw}")
+
+    knowledge: List[Dict[str, Any]] = []
+    if transcript:
+        knowledge.append({"title": "transcription_video", "content": transcript})
+    if metadata_parts:
+        knowledge.append({"title": "meta_challenge", "content": "\n".join(metadata_parts)})
+
+    analysis_prompt = (
+        "Analyse cette vidéo de challenge pour en extraire: "
+        "1) un résumé pédagogique clair, "
+        "2) un plan de cours en quelques points, "
+        "3) 3 à 5 questions de type quiz ou QCM pour vérifier la compréhension. "
+        "Réponds en français, dans un texte structuré avec des titres et puces simples."
+    )
+
+    analysis = await call_openrouter(
+        analysis_prompt,
+        knowledge,
+        system_prompt=None,
+        include_no_answer_sentinel=False,
+    )
+
+    return StudioAnalyzeResponse(
+        success=True,
+        participation_id=participation_id,
+        analysis=analysis,
+    )
+
+
+@app.post("/studio/ai/proofread", response_model=StudioProofreadResponse)
+async def studio_ai_proofread(req: StudioProofreadRequest, request: Request) -> StudioProofreadResponse:
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authorization Bearer manquant pour la relecture.")
+
+    user_jwt = auth_header.split(" ", 1)[1].strip()
+    if not user_jwt:
+        raise HTTPException(status_code=401, detail="JWT utilisateur invalide pour la relecture.")
+
+    text = (req.text or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Le texte à relire ne peut pas être vide.")
+
+    system_prompt = (
+        "Tu es un assistant pédagogique pour la plateforme Academia. "
+        "On te fournit un texte court à destination d'étudiants ou de correcteurs. "
+        "Tu dois corriger l'orthographe, la grammaire et la ponctuation, et harmoniser le ton en français académique simple, "
+        "sans changer le sens ni allonger fortement le texte."
+    )
+
+    corrected = await call_openrouter(
+        text,
+        [],
+        system_prompt=system_prompt,
+        include_no_answer_sentinel=False,
+    )
+
+    return StudioProofreadResponse(success=True, text=corrected)
 
 
 @app.post("/bobodo/chat", response_model=BobodoChatResponse)
