@@ -190,6 +190,11 @@ async def supabase_proxy(full_path: str, request: Request) -> Response:
                 content=body if request.method.upper() != "GET" else None,
             )
         except httpx.HTTPError as exc:
+            # Log détaillé pour les erreurs de proxy Supabase (visible dans les logs Railway)
+            print(
+                f"[SUPABASE_PROXY_ERROR] method={request.method} "
+                f"full_path={full_path} target={target_url} error={repr(exc)}"
+            )
             raise HTTPException(
                 status_code=502,
                 detail={"message": "Erreur réseau Supabase (proxy)", "error": str(exc)},
