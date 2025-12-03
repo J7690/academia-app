@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/mime_type_helper.dart';
@@ -581,6 +579,8 @@ class UniversitySiteProvider extends ChangeNotifier {
   }) async {
     _setSaving(true);
     _setError(null);
+    debugPrint(
+        '[UniversitySiteProvider.upsertMedia] mediaId=$mediaId, mediaType=$mediaType, title=$title, description=$description, url=$url, storagePath=$storagePath, thumbnailUrl=$thumbnailUrl, sortOrder=$sortOrder, isActive=$isActive');
     try {
       final dynamic response = await _client.rpc(
         'app_upsert_university_media',
@@ -601,13 +601,18 @@ class UniversitySiteProvider extends ChangeNotifier {
         return false;
       }
       if (response['success'] != true) {
-        _setError(response['error']?.toString() ??
-            'Erreur lors de la sauvegarde du média.');
+        final error = response['error']?.toString();
+        debugPrint(
+            '[UniversitySiteProvider.upsertMedia] error from RPC: $error');
+        _setError(error ?? 'Erreur lors de la sauvegarde du média.');
         return false;
       }
       await loadSite();
+      debugPrint(
+          '[UniversitySiteProvider.upsertMedia] success response=$response');
       return true;
     } catch (e) {
+      debugPrint('[UniversitySiteProvider.upsertMedia] exception: $e');
       _setError(e.toString());
       return false;
     } finally {
@@ -651,6 +656,8 @@ class UniversitySiteProvider extends ChangeNotifier {
   }) async {
     _setSaving(true);
     _setError(null);
+    debugPrint(
+        '[UniversitySiteProvider.uploadMediaFile] fileName=$fileName, mimeType=$mimeType, bytesLength=${bytes.length}');
     try {
       final user = _client.auth.currentUser;
       if (user == null) {
@@ -658,22 +665,49 @@ class UniversitySiteProvider extends ChangeNotifier {
         return null;
       }
 
+      debugPrint(
+          '[UniversitySiteProvider.uploadMediaFile] currentUser=${user.id}');
+
       final sanitizedFileName =
           fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
       final storagePath = '${user.id}/mini-site/$sanitizedFileName';
 
-      await _client.storage.from('university-media').uploadBinary(
-            storagePath,
-            bytes,
-            fileOptions: FileOptions(
-              contentType: MimeTypeHelper.normalize(mimeType),
-            ),
-          );
+      debugPrint(
+          '[UniversitySiteProvider.uploadMediaFile] uploading to bucket=university-media, storagePath=$storagePath');
+
+      try {
+        await _client.storage.from('university-media').uploadBinary(
+              storagePath,
+              bytes,
+              fileOptions: FileOptions(
+                contentType: MimeTypeHelper.normalize(mimeType),
+                upsert: true,
+              ),
+            );
+      } on StorageException catch (e) {
+        debugPrint(
+          '[UniversitySiteProvider.uploadMediaFile] StorageException message=${e.message} '
+          'status=${e.statusCode} error=${e.error}',
+        );
+        final message = e.message.toLowerCase();
+        final error = (e.error ?? '').toLowerCase();
+        final statusCode = e.statusCode?.toString() ?? '';
+        final isDuplicate = statusCode == '409' ||
+            message.contains('already exists') ||
+            error.contains('duplicate');
+
+        if (!isDuplicate) {
+          _setError(e.toString());
+          return null;
+        }
+      } catch (e) {
+        debugPrint(
+            '[UniversitySiteProvider.uploadMediaFile] exception=$e');
+        _setError(e.toString());
+        return null;
+      }
 
       return storagePath;
-    } catch (e) {
-      _setError(e.toString());
-      return null;
     } finally {
       _setSaving(false);
     }

@@ -13,6 +13,7 @@ class UniversityApplicationsScreen extends StatefulWidget {
 
 class _UniversityApplicationsScreenState extends State<UniversityApplicationsScreen> {
   String? _statusFilter;
+  bool _onlyDiscountRequested = false;
 
   @override
   void initState() {
@@ -54,12 +55,18 @@ class _UniversityApplicationsScreenState extends State<UniversityApplicationsScr
           );
         }
 
-        final applications = _statusFilter == null
+        List<Map<String, dynamic>> applications = _statusFilter == null
             ? allApplications
             : allApplications
                 .where((app) =>
                     (app['status']?.toString().toLowerCase() ?? '') == _statusFilter)
                 .toList();
+
+        if (_onlyDiscountRequested) {
+          applications = applications
+              .where((app) => app['discount_requested'] == true)
+              .toList();
+        }
 
         if (applications.isNotEmpty && selectionProvider.selectedApplication == null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -77,6 +84,21 @@ class _UniversityApplicationsScreenState extends State<UniversityApplicationsScr
                 });
               },
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FilterChip(
+                  label: const Text('Avec demande de réduction'),
+                  selected: _onlyDiscountRequested,
+                  onSelected: (selected) {
+                    setState(() {
+                      _onlyDiscountRequested = selected;
+                    });
+                  },
+                ),
+              ),
+            ),
             const Divider(height: 1),
             Expanded(
               child: ListView.builder(
@@ -84,6 +106,18 @@ class _UniversityApplicationsScreenState extends State<UniversityApplicationsScr
                 itemCount: applications.length,
                 itemBuilder: (context, index) {
                   final app = applications[index];
+                  final requestedDegree =
+                      (app['requested_degree_level']?.toString() ?? '').trim();
+                  final requestedMode =
+                      (app['requested_study_mode']?.toString() ?? '').trim();
+                  final requestedSchedule =
+                      (app['requested_schedule']?.toString() ?? '').trim();
+                  final discountRequested = app['discount_requested'] == true;
+                  final hasPreferences =
+                      requestedDegree.isNotEmpty ||
+                      requestedMode.isNotEmpty ||
+                      requestedSchedule.isNotEmpty ||
+                      discountRequested;
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),
                     child: ListTile(
@@ -102,6 +136,43 @@ class _UniversityApplicationsScreenState extends State<UniversityApplicationsScr
                           Text('Étudiant : ${app['student_full_name'] ?? ''}'),
                           if (app['last_message_at'] != null)
                             Text('Dernier message : ${app['last_message_at']}'),
+                          if (hasPreferences) ...[
+                            const SizedBox(height: 4),
+                            Wrap(
+                              spacing: 4,
+                              runSpacing: 2,
+                              children: [
+                                if (requestedDegree.isNotEmpty)
+                                  Chip(
+                                    label: Text('Niveau : $requestedDegree'),
+                                    visualDensity: VisualDensity.compact,
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                if (requestedMode.isNotEmpty)
+                                  Chip(
+                                    label: Text('Mode : $requestedMode'),
+                                    visualDensity: VisualDensity.compact,
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                if (requestedSchedule.isNotEmpty)
+                                  Chip(
+                                    label: Text('Horaires : $requestedSchedule'),
+                                    visualDensity: VisualDensity.compact,
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                if (discountRequested)
+                                  Chip(
+                                    label: const Text('Demande de réduction'),
+                                    visualDensity: VisualDensity.compact,
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),

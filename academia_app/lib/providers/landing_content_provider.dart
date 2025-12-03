@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/mime_type_helper.dart';
@@ -398,6 +396,7 @@ class LandingContentProvider extends ChangeNotifier {
     String? title,
     int? sortOrder,
     bool? isActive,
+    String mediaType = 'video',
   }) async {
     _setSaving(true);
     _setError(null);
@@ -410,6 +409,7 @@ class LandingContentProvider extends ChangeNotifier {
           'p_title': title,
           'p_sort_order': sortOrder,
           'p_is_active': isActive,
+          'p_media_type': mediaType,
         },
       );
       if (response is! Map<String, dynamic>) {
@@ -469,23 +469,24 @@ class LandingContentProvider extends ChangeNotifier {
     String folder = 'generic',
   }) async {
     _setError(null);
+    debugPrint('LandingContentProvider.uploadLandingFile: start fileName='
+        '$fileName folder=$folder mimeType=$mimeType');
+
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      _setError('Utilisateur non authentifié.');
+      debugPrint('LandingContentProvider.uploadLandingFile: user is null');
+      return null;
+    }
+
+    final sanitizedFileName =
+        fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    final storagePath = '${user.id}/landing/$folder/$sanitizedFileName';
+
+    debugPrint(
+        'LandingContentProvider.uploadLandingFile: uploading to landing-media at $storagePath');
+
     try {
-      debugPrint('LandingContentProvider.uploadLandingFile: start fileName='
-          '$fileName folder=$folder mimeType=$mimeType');
-      final user = _client.auth.currentUser;
-      if (user == null) {
-        _setError('Utilisateur non authentifié.');
-        debugPrint('LandingContentProvider.uploadLandingFile: user is null');
-        return null;
-      }
-
-      final sanitizedFileName =
-          fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
-      final storagePath = '${user.id}/landing/$folder/$sanitizedFileName';
-
-      debugPrint(
-          'LandingContentProvider.uploadLandingFile: uploading to landing-media at $storagePath');
-
       await _client.storage.from('landing-media').uploadBinary(
             storagePath,
             bytes,
@@ -494,16 +495,33 @@ class LandingContentProvider extends ChangeNotifier {
               upsert: true,
             ),
           );
+    } on StorageException catch (e) {
+      final message = e.message.toLowerCase();
+      final error = (e.error ?? '').toLowerCase();
+      final statusCode = e.statusCode?.toString() ?? '';
+      final isDuplicate = statusCode == '409' ||
+          message.contains('already exists') ||
+          error.contains('duplicate');
 
-      final publicUrl =
-          _client.storage.from('landing-media').getPublicUrl(storagePath);
-      debugPrint('LandingContentProvider.uploadLandingFile: success publicUrl='
-          '$publicUrl');
-      return publicUrl;
+      if (!isDuplicate) {
+        debugPrint(
+            'LandingContentProvider.uploadLandingFile: storage exception=$e');
+        _setError(e.toString());
+        return null;
+      }
+
+      debugPrint(
+          'LandingContentProvider.uploadLandingFile: file already exists, reusing existing object at $storagePath');
     } catch (e) {
       debugPrint('LandingContentProvider.uploadLandingFile: exception=$e');
       _setError(e.toString());
       return null;
     }
+
+    final publicUrl =
+        _client.storage.from('landing-media').getPublicUrl(storagePath);
+    debugPrint('LandingContentProvider.uploadLandingFile: success publicUrl='
+        '$publicUrl');
+    return publicUrl;
   }
 }

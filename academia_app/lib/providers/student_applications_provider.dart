@@ -67,15 +67,34 @@ class StudentApplicationsProvider extends ChangeNotifier {
   Future<bool> createApplication({
     required String programId,
     String? motivationText,
+    String? requestedDegreeLevel,
+    String? requestedStudyMode,
+    String? requestedSchedule,
+    bool? discountRequested,
+    String? discountDetails,
+    String? studentComment,
   }) async {
     _setLoading(true);
     _setError(null);
     try {
+      String? _normalizeText(String? value) {
+        if (value == null) return null;
+        final trimmed = value.trim();
+        if (trimmed.isEmpty) return null;
+        return trimmed;
+      }
+
       final response = await _client.rpc(
         'app_create_application',
         params: {
           'p_program_id': programId,
-          'p_motivation_text': motivationText,
+          'p_motivation_text': _normalizeText(motivationText),
+          'p_requested_degree_level': _normalizeText(requestedDegreeLevel),
+          'p_requested_study_mode': _normalizeText(requestedStudyMode),
+          'p_requested_schedule': _normalizeText(requestedSchedule),
+          'p_discount_requested': discountRequested,
+          'p_discount_details': _normalizeText(discountDetails),
+          'p_student_comment': _normalizeText(studentComment),
         },
       );
       final data = response as Map<String, dynamic>?;

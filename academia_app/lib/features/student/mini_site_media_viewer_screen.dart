@@ -2,9 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:video_player/video_player.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../widgets/hls_web_stub.dart'
     if (dart.library.html) '../../widgets/hls_web.dart';
+import '../../widgets/academia_video_widget.dart';
 
 class MiniSiteMediaViewerScreen extends StatefulWidget {
   final Map<String, dynamic> media;
@@ -17,6 +19,7 @@ class MiniSiteMediaViewerScreen extends StatefulWidget {
 
 class _MiniSiteMediaViewerScreenState extends State<MiniSiteMediaViewerScreen> {
   String? _url;
+  String? _resolvedUrl;
   String? _error;
   bool _isLoading = true;
   bool _isVideo = false;
@@ -56,6 +59,8 @@ class _MiniSiteMediaViewerScreenState extends State<MiniSiteMediaViewerScreen> {
         return;
       }
 
+      _resolvedUrl = resolvedUrl;
+
       final isHls = resolvedUrl.toLowerCase().contains('.m3u8');
 
       if (isVideo && kIsWeb && isHls) {
@@ -69,15 +74,23 @@ class _MiniSiteMediaViewerScreenState extends State<MiniSiteMediaViewerScreen> {
       }
 
       if (isVideo) {
-        final controller = VideoPlayerController.networkUrl(Uri.parse(resolvedUrl));
-        await controller.initialize();
-        controller.setLooping(true);
-        controller.play();
-        setState(() {
-          _videoController = controller;
-          _isVideo = true;
-          _isLoading = false;
-        });
+        if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+          setState(() {
+            _videoController = null;
+            _isVideo = true;
+            _isLoading = false;
+          });
+        } else {
+          final controller = VideoPlayerController.networkUrl(Uri.parse(resolvedUrl));
+          await controller.initialize();
+          controller.setLooping(true);
+          controller.play();
+          setState(() {
+            _videoController = controller;
+            _isVideo = true;
+            _isLoading = false;
+          });
+        }
       } else {
         setState(() {
           _url = resolvedUrl;
@@ -139,6 +152,24 @@ class _MiniSiteMediaViewerScreenState extends State<MiniSiteMediaViewerScreen> {
           ),
         );
       }
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        final url = _resolvedUrl;
+        if (url == null || url.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        return AspectRatio(
+          aspectRatio: 16 / 9,
+          child: AcademiaVideoWidget(
+            url: url,
+            autoplay: true,
+            loop: true,
+            muted: false,
+            showControls: true,
+            resizeMode: 'contain',
+          ),
+        );
+      }
+
       final controller = _videoController;
       if (controller == null) {
         return const SizedBox.shrink();

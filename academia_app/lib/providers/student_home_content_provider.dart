@@ -1,7 +1,6 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/mime_type_helper.dart';
 
 class StudentHomeContentProvider extends ChangeNotifier {
   final SupabaseClient _client = Supabase.instance.client;
@@ -87,9 +86,25 @@ class StudentHomeContentProvider extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      final dynamic response = await _client.rpc('app_admin_get_student_home_content');
+      debugPrint(
+        'StudentHomeContentProvider.loadAdminStudentHomeContent: start',
+      );
+      final dynamic response =
+          await _client.rpc('app_admin_get_student_home_content');
+      debugPrint(
+        'StudentHomeContentProvider.loadAdminStudentHomeContent: response='
+        '$response',
+      );
       _applyResponse(response);
+      debugPrint(
+        'StudentHomeContentProvider.loadAdminStudentHomeContent: '
+        'videos=${_videos.length} announcements=${_announcements.length}',
+      );
     } catch (e) {
+      debugPrint(
+        'StudentHomeContentProvider.loadAdminStudentHomeContent: '
+        'exception=$e',
+      );
       _setError(e.toString());
     } finally {
       _setLoading(false);
@@ -170,10 +185,16 @@ class StudentHomeContentProvider extends ChangeNotifier {
     String? title,
     int? sortOrder,
     bool? isActive,
+    String mediaType = 'video',
   }) async {
     _setSaving(true);
     _setError(null);
     try {
+      debugPrint(
+        'StudentHomeContentProvider.upsertVideo: start '
+        'videoId=$videoId url=$videoUrl mediaType=$mediaType '
+        'sortOrder=$sortOrder isActive=$isActive',
+      );
       final dynamic response = await _client.rpc(
         'app_admin_upsert_student_home_video',
         params: {
@@ -182,21 +203,38 @@ class StudentHomeContentProvider extends ChangeNotifier {
           'p_title': title,
           'p_sort_order': sortOrder,
           'p_is_active': isActive,
+          'p_media_type': mediaType,
         },
+      );
+      debugPrint(
+        'StudentHomeContentProvider.upsertVideo: response=$response',
       );
       if (response is! Map<String, dynamic>) {
         _setError('Réponse invalide du serveur lors de la sauvegarde de la vidéo.');
+        debugPrint(
+          'StudentHomeContentProvider.upsertVideo: invalid response '
+          '(not a Map)',
+        );
         return false;
       }
       if (response['success'] != true) {
         _setError(
           response['error']?.toString() ?? 'Erreur lors de la sauvegarde de la vidéo.',
         );
+        debugPrint(
+          'StudentHomeContentProvider.upsertVideo: error='
+          "${response['error']}",
+        );
         return false;
       }
       await loadAdminStudentHomeContent();
+      debugPrint(
+        'StudentHomeContentProvider.upsertVideo: success '
+        'videos=${_videos.length}',
+      );
       return true;
     } catch (e) {
+      debugPrint('StudentHomeContentProvider.upsertVideo: exception=$e');
       _setError(e.toString());
       return false;
     } finally {
@@ -241,32 +279,66 @@ class StudentHomeContentProvider extends ChangeNotifier {
     String folder = 'student-home',
   }) async {
     _setError(null);
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      _setError('Utilisateur non authentifié.');
+      debugPrint(
+        'StudentHomeContentProvider.uploadStudentHomeFile: '
+        'user is null (non authentifié)',
+      );
+      return null;
+    }
+
+    final sanitizedFileName =
+        fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    final storagePath = '${user.id}/student-home/$folder/$sanitizedFileName';
+
     try {
-      final user = _client.auth.currentUser;
-      if (user == null) {
-        _setError('Utilisateur non authentifié.');
-        return null;
-      }
-
-      final sanitizedFileName =
-          fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
-      final storagePath = '${user.id}/student-home/$folder/$sanitizedFileName';
-
+      debugPrint(
+        'StudentHomeContentProvider.uploadStudentHomeFile: '
+        'uploading fileName=$fileName mimeType=$mimeType '
+        'to landing-media at $storagePath',
+      );
       await _client.storage.from('landing-media').uploadBinary(
             storagePath,
             bytes,
             fileOptions: FileOptions(
-              contentType: mimeType,
+              contentType: MimeTypeHelper.normalize(mimeType),
               upsert: true,
             ),
           );
+    } on StorageException catch (e) {
+      debugPrint(
+        'StudentHomeContentProvider.uploadStudentHomeFile: '
+        'StorageException message=${e.message} '
+        'status=${e.statusCode} error=${e.error}',
+      );
+      final message = e.message.toLowerCase();
+      final error = (e.error ?? '').toLowerCase();
+      final statusCode = e.statusCode?.toString() ?? '';
+      final isDuplicate = statusCode == '409' ||
+          message.contains('already exists') ||
+          error.contains('duplicate');
 
-      final publicUrl =
-          _client.storage.from('landing-media').getPublicUrl(storagePath);
-      return publicUrl;
+      if (!isDuplicate) {
+        _setError(e.toString());
+        return null;
+      }
     } catch (e) {
+      debugPrint(
+        'StudentHomeContentProvider.uploadStudentHomeFile: '
+        'exception=$e',
+      );
       _setError(e.toString());
       return null;
     }
+
+    final publicUrl =
+        _client.storage.from('landing-media').getPublicUrl(storagePath);
+    debugPrint(
+      'StudentHomeContentProvider.uploadStudentHomeFile: '
+      'success publicUrl=$publicUrl',
+    );
+    return publicUrl;
   }
 }

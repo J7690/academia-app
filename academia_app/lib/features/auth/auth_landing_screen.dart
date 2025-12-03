@@ -9,10 +9,19 @@ import 'package:video_player/video_player.dart';
 
 import '../../providers/landing_content_provider.dart';
 import '../../providers/student_offers_provider.dart';
+import '../debug/network_diagnostic_screen.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
 import '../../widgets/hls_web_stub.dart'
     if (dart.library.html) '../../widgets/hls_web.dart';
+import '../../widgets/academia_video_widget.dart';
+
+class _HeroMediaItem {
+  final String url;
+  final String mediaType; // 'video' ou 'image'
+
+  const _HeroMediaItem({required this.url, required this.mediaType});
+}
 
 class AuthLandingScreen extends StatelessWidget {
   const AuthLandingScreen({super.key});
@@ -24,7 +33,16 @@ class AuthLandingScreen extends StatelessWidget {
       appBar: AppBar(
         elevation: 0,
         centerTitle: false,
-        title: const Text('Academia'),
+        title: GestureDetector(
+          onLongPress: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const NetworkDiagnosticScreen(),
+              ),
+            );
+          },
+          child: const Text('Academia'),
+        ),
         foregroundColor: Colors.white,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -90,8 +108,10 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
   late final ScrollController _tickerController;
   Timer? _tickerTimer;
 
-  List<String> _videoPlaylist = [];
-  int _currentVideoIndex = 0;
+  static const Duration _imageSlideDuration = Duration(seconds: 5);
+  Timer? _mediaTimer;
+  List<_HeroMediaItem> _mediaPlaylist = [];
+  int _currentMediaIndex = 0;
 
   static const List<String> _fallbackAnnouncements = [
     'Ouverture des candidatures 2025',
@@ -123,7 +143,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
           (urlFromConfig != null && urlFromConfig.isNotEmpty);
 
       final videos = landing.videos;
-      final playlist = <String>[];
+      final playlist = <_HeroMediaItem>[];
 
       if (videos.isNotEmpty) {
         debugPrint('Landing: videos from provider (count=${videos.length})');
@@ -132,23 +152,48 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
           final url = (v['video_url'] ?? '').toString().trim();
           if (url.isEmpty) continue;
           debugPrint('Landing: candidate video from Supabase=' + url);
-          playlist.add(url);
+          final rawType = (v['media_type'] ?? 'video').toString().toLowerCase();
+          final mediaType = (rawType == 'image') ? 'image' : 'video';
+          playlist.add(_HeroMediaItem(url: url, mediaType: mediaType));
         }
       }
 
       _startTicker();
 
       if (playlist.isEmpty && hasConfigVideo && urlFromConfig != null) {
-        playlist.add(urlFromConfig);
+        playlist.add(_HeroMediaItem(url: urlFromConfig, mediaType: 'video'));
       }
 
       if (playlist.isNotEmpty) {
-        debugPrint('Landing: final playlist=' + playlist.join(', '));
-        _videoPlaylist = playlist;
-        _currentVideoIndex = 0;
-        unawaited(_initVideo(_videoPlaylist[_currentVideoIndex]));
+        debugPrint('Landing: final playlist=' +
+            playlist.map((e) => '${e.mediaType}:${e.url}').join(', '));
+        _mediaPlaylist = playlist;
+        _goToMediaIndex(0);
       }
     });
+  }
+
+  void _goToMediaIndex(int index) {
+    if (_mediaPlaylist.isEmpty) return;
+    _mediaTimer?.cancel();
+
+    _currentMediaIndex = index % _mediaPlaylist.length;
+    final item = _mediaPlaylist[_currentMediaIndex];
+
+    if (item.mediaType == 'image') {
+      debugPrint('Landing: displaying image media url=' + item.url);
+      _videoController?.dispose();
+      _videoController = null;
+      _isHlsWeb = false;
+      _currentHlsUrl = null;
+      _videoReady = true;
+      if (mounted) {
+        setState(() {});
+      }
+      _mediaTimer = Timer(_imageSlideDuration, _onMediaCompleted);
+    } else {
+      _initVideo(item.url);
+    }
   }
 
   Future<void> _initVideo(String url) async {
@@ -174,6 +219,17 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
         _isHlsWeb = true;
         _currentHlsUrl = url;
         _videoReady = true;
+      });
+      return;
+    }
+
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      debugPrint('Landing: using Android custom video widget for URL=' + url);
+      setState(() {
+        _videoController = null;
+        _videoReady = true;
+        _isHlsWeb = false;
+        _currentHlsUrl = null;
       });
       return;
     }
@@ -228,20 +284,16 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
   }
 
   void _onVideoCompleted() {
+    _onMediaCompleted();
+  }
+
+  void _onMediaCompleted() {
     if (!mounted) return;
-    if (_videoPlaylist.isEmpty) return;
-    _currentVideoIndex = (_currentVideoIndex + 1) % _videoPlaylist.length;
-    final nextUrl = _videoPlaylist[_currentVideoIndex];
-    debugPrint('Landing: _onVideoCompleted -> nextUrl=' + nextUrl);
-
-    if (kIsWeb && _isHlsWeb) {
-      setState(() {
-        _currentHlsUrl = nextUrl;
-      });
-      return;
-    }
-
-    unawaited(_initVideo(nextUrl));
+    if (_mediaPlaylist.isEmpty) return;
+    final nextIndex = (_currentMediaIndex + 1) % _mediaPlaylist.length;
+    final nextItem = _mediaPlaylist[nextIndex];
+    debugPrint('Landing: _onMediaCompleted -> next=${nextItem.mediaType}');
+    _goToMediaIndex(nextIndex);
   }
 
   void _startTicker() {
@@ -276,6 +328,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
   @override
   void dispose() {
     _tickerTimer?.cancel();
+    _mediaTimer?.cancel();
     _tickerController.dispose();
     _videoController?.dispose();
     super.dispose();
@@ -512,6 +565,24 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
     final partners = landing.partners;
     final whyCards = landing.whyCards;
 
+    _HeroMediaItem? currentItem;
+    if (_mediaPlaylist.isNotEmpty &&
+        _currentMediaIndex >= 0 &&
+        _currentMediaIndex < _mediaPlaylist.length) {
+      currentItem = _mediaPlaylist[_currentMediaIndex];
+    }
+
+    String? currentVideoUrl;
+    String? currentImageUrl;
+    final item = currentItem;
+    if (item != null) {
+      if (item.mediaType == 'video') {
+        currentVideoUrl = item.url;
+      } else if (item.mediaType == 'image') {
+        currentImageUrl = item.url;
+      }
+    }
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final firstHeight = constraints.maxHeight;
@@ -527,26 +598,67 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                     child: Stack(
                       children: [
                         Positioned.fill(
-                          child: _videoReady && _videoController != null
-                              ? FittedBox(
-                                  fit: BoxFit.cover,
-                                  child: SizedBox(
-                                    width: _videoController!.value.size.width,
-                                    height: _videoController!.value.size.height,
-                                    child: VideoPlayer(_videoController!),
-                                  ),
-                                )
-                              : _videoReady && _isHlsWeb && kIsWeb && _currentHlsUrl != null
-                                  ? const SizedBox.shrink()
-                                  : Container(
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [primaryColor, secondaryColor],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                        ),
+                          child: () {
+                            if (currentImageUrl != null) {
+                              return Image.network(
+                                currentImageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, _, __) {
+                                  return Container(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [primaryColor, secondaryColor],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
                                       ),
                                     ),
+                                  );
+                                },
+                              );
+                            }
+
+                            if (_videoReady &&
+                                !kIsWeb &&
+                                defaultTargetPlatform == TargetPlatform.android &&
+                                currentVideoUrl != null) {
+                              return AcademiaVideoWidget(
+                                url: currentVideoUrl,
+                                autoplay: true,
+                                loop: true,
+                                muted: true,
+                                showControls: false,
+                                resizeMode: 'cover',
+                              );
+                            }
+
+                            if (_videoReady && _videoController != null) {
+                              return FittedBox(
+                                fit: BoxFit.cover,
+                                child: SizedBox(
+                                  width: _videoController!.value.size.width,
+                                  height: _videoController!.value.size.height,
+                                  child: VideoPlayer(_videoController!),
+                                ),
+                              );
+                            }
+
+                            if (_videoReady &&
+                                _isHlsWeb &&
+                                kIsWeb &&
+                                _currentHlsUrl != null) {
+                              return const SizedBox.shrink();
+                            }
+
+                            return Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [primaryColor, secondaryColor],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                              ),
+                            );
+                          }(),
                         ),
                         if (_videoReady && _isHlsWeb && kIsWeb && _currentHlsUrl != null)
                           Positioned.fill(

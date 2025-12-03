@@ -5,6 +5,7 @@ import 'package:video_player/video_player.dart';
 
 import 'hls_web_stub.dart'
     if (dart.library.html) 'hls_web.dart';
+import 'academia_video_widget.dart';
 
 class MiniSiteHeroVideo extends StatefulWidget {
   final List<Map<String, dynamic>> media;
@@ -31,8 +32,13 @@ class MiniSiteHeroVideo extends StatefulWidget {
 class _MiniSiteVideoItem {
   final String url;
   final Map<String, dynamic> media;
+  final String mediaType; // 'video' ou 'image'
 
-  const _MiniSiteVideoItem({required this.url, required this.media});
+  const _MiniSiteVideoItem({
+    required this.url,
+    required this.media,
+    required this.mediaType,
+  });
 }
 
 class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
@@ -43,6 +49,7 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
   List<_MiniSiteVideoItem> _playlist = const [];
   int _currentIndex = 0;
   String? _mediaSignature;
+  String? _currentImageUrl;
 
   @override
   void initState() {
@@ -77,6 +84,10 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
   }
 
   Future<void> _buildPlaylist() async {
+    debugPrint(
+      '[MiniSiteHeroVideo._buildPlaylist] start media_count=${widget.media.length} '
+      'heroPosterMediaId=${widget.heroPosterMediaId}',
+    );
     _videoController?.dispose();
     _videoController = null;
     _videoReady = false;
@@ -87,6 +98,7 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
     }
 
     if (widget.media.isEmpty) {
+      debugPrint('[MiniSiteHeroVideo._buildPlaylist] no_media');
       if (mounted) {
         setState(() {
           _playlist = const [];
@@ -97,13 +109,28 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
 
     final candidates = widget.media.where((m) {
       final type = (m['media_type'] ?? '').toString().toLowerCase();
-      if (!type.contains('video')) return false;
+      final isVideo = type.contains('video');
+      final isImage = type.contains('image');
+      if (!isVideo && !isImage) return false;
       final url = (m['url'] ?? '').toString().trim();
       final storagePath = (m['storage_path'] ?? '').toString().trim();
       return url.isNotEmpty || storagePath.isNotEmpty;
     }).toList(growable: false);
 
+    debugPrint(
+      '[MiniSiteHeroVideo._buildPlaylist] candidates_count=${candidates.length} '
+      'details=' +
+          candidates
+              .map((m) =>
+                  'id=${m['id']} type=${m['media_type']} so=${m['sort_order']} '
+                  'hasUrl=${(m['url'] ?? '').toString().trim().isNotEmpty} '
+                  'hasStoragePath=${(m['storage_path'] ?? '').toString().trim().isNotEmpty}')
+              .toList()
+              .toString(),
+    );
+
     if (candidates.isEmpty) {
+      debugPrint('[MiniSiteHeroVideo._buildPlaylist] no_candidates_after_filter');
       if (mounted) {
         setState(() {
           _playlist = const [];
@@ -133,12 +160,22 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
     for (final m in candidates) {
       final resolved = await _resolveMediaUrl(client, m);
       if (resolved == null || resolved.isEmpty) continue;
-      items.add(_MiniSiteVideoItem(url: resolved, media: m));
+      final type = (m['media_type'] ?? '').toString().toLowerCase();
+      final isImage = type.contains('image');
+      final mediaType = isImage ? 'image' : 'video';
+      items.add(
+        _MiniSiteVideoItem(
+          url: resolved,
+          media: m,
+          mediaType: mediaType,
+        ),
+      );
     }
 
     if (!mounted) return;
 
     if (items.isEmpty) {
+      debugPrint('[MiniSiteHeroVideo._buildPlaylist] no_items_after_resolve');
       setState(() {
         _playlist = const [];
       });
@@ -146,8 +183,36 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
     }
 
     _playlist = items;
+    final firstMedia = items.first.media;
+    final firstId = firstMedia['id'];
+    final firstType = firstMedia['media_type'];
+    debugPrint(
+      '[MiniSiteHeroVideo._buildPlaylist] playlist_ready size=${items.length} '
+      'first_id=$firstId first_type=$firstType',
+    );
     _currentIndex = 0;
-    await _initVideo(items[0].url);
+    _goToIndex(0);
+  }
+
+  void _goToIndex(int index) {
+    if (_playlist.isEmpty) return;
+    _currentIndex = index % _playlist.length;
+    final item = _playlist[_currentIndex];
+
+    if (item.mediaType == 'image') {
+      _videoController?.dispose();
+      _videoController = null;
+      _isHlsWeb = false;
+      _hlsUrl = null;
+      _currentImageUrl = item.url;
+      _videoReady = true;
+      if (mounted) {
+        setState(() {});
+      }
+    } else {
+      _currentImageUrl = null;
+      _initVideo(item.url);
+    }
   }
 
   Future<String?> _resolveMediaUrl(SupabaseClient client, Map<String, dynamic> media) async {
@@ -173,6 +238,7 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
     _videoReady = false;
     _isHlsWeb = false;
     _hlsUrl = null;
+    _currentImageUrl = null;
     if (mounted) {
       setState(() {});
     }
@@ -185,6 +251,15 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
       setState(() {
         _isHlsWeb = true;
         _hlsUrl = url;
+        _videoReady = true;
+      });
+      return;
+    }
+
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      if (!mounted) return;
+      setState(() {
+        _videoController = null;
         _videoReady = true;
       });
       return;
@@ -232,22 +307,13 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
 
   void _onVideoCompleted() {
     if (_playlist.isEmpty) return;
-    _currentIndex = (_currentIndex + 1) % _playlist.length;
-    final nextUrl = _playlist[_currentIndex].url;
-
-    if (kIsWeb && _isHlsWeb) {
-      setState(() {
-        _hlsUrl = nextUrl;
-      });
-      return;
-    }
-
-    _initVideo(nextUrl);
+    final nextIndex = (_currentIndex + 1) % _playlist.length;
+    _goToIndex(nextIndex);
   }
 
   @override
   Widget build(BuildContext context) {
-    final hasVideo = _playlist.isNotEmpty && _videoReady;
+    final hasMedia = _playlist.isNotEmpty && _videoReady;
     final width = MediaQuery.of(context).size.width;
     double aspectRatio;
     if (width < 600) {
@@ -270,28 +336,68 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
         child: Stack(
           children: [
             Positioned.fill(
-              child: hasVideo && _videoController != null
-                  ? FittedBox(
-                      fit: BoxFit.cover,
-                      child: SizedBox(
-                        width: _videoController!.value.size.width,
-                        height: _videoController!.value.size.height,
-                        child: VideoPlayer(_videoController!),
-                      ),
-                    )
-                  : hasVideo && _isHlsWeb && kIsWeb && _hlsUrl != null
-                      ? const SizedBox.shrink()
-                      : Container(
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
+              child: () {
+                if (_currentImageUrl != null) {
+                  return Image.network(
+                    _currentImageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, _, __) {
+                      return Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
                         ),
+                      );
+                    },
+                  );
+                }
+
+                if (hasMedia &&
+                    !kIsWeb &&
+                    defaultTargetPlatform == TargetPlatform.android &&
+                    _playlist.isNotEmpty &&
+                    _currentIndex < _playlist.length) {
+                  final url = _playlist[_currentIndex].url;
+                  return AcademiaVideoWidget(
+                    url: url,
+                    autoplay: true,
+                    loop: true,
+                    muted: true,
+                    showControls: false,
+                    resizeMode: 'cover',
+                  );
+                }
+
+                if (hasMedia && _videoController != null) {
+                  return FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _videoController!.value.size.width,
+                      height: _videoController!.value.size.height,
+                      child: VideoPlayer(_videoController!),
+                    ),
+                  );
+                }
+
+                if (hasMedia && _isHlsWeb && kIsWeb && _hlsUrl != null) {
+                  return const SizedBox.shrink();
+                }
+
+                return Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                );
+              }(),
             ),
-            if (hasVideo && _isHlsWeb && kIsWeb && _hlsUrl != null)
+            if (hasMedia && _isHlsWeb && kIsWeb && _hlsUrl != null)
               Positioned.fill(
                 child: HlsWebVideoPlayer(
                   url: _hlsUrl!,

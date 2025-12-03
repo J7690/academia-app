@@ -101,10 +101,16 @@ GRANT SELECT, INSERT, UPDATE ON app.applications TO authenticated;
 GRANT ALL ON app.applications TO service_role;
 
 ALTER TABLE app.applications
-    ADD COLUMN IF NOT EXISTS last_message_at TIMESTAMPTZ,
-    ADD COLUMN IF NOT EXISTS last_student_read_at TIMESTAMPTZ,
-    ADD COLUMN IF NOT EXISTS last_admin_read_at TIMESTAMPTZ,
-    ADD COLUMN IF NOT EXISTS last_university_read_at TIMESTAMPTZ;
+    ADD COLUMN IF NOT EXISTS requested_degree_level TEXT,
+    ADD COLUMN IF NOT EXISTS requested_study_mode TEXT,
+    ADD COLUMN IF NOT EXISTS requested_schedule TEXT,
+    ADD COLUMN IF NOT EXISTS discount_requested BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS discount_details TEXT,
+    ADD COLUMN IF NOT EXISTS student_comment TEXT,
+    ADD COLUMN IF NOT EXISTS sent_to_university BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS sent_to_university_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS admin_seen_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS university_seen_at TIMESTAMPTZ;
 
 -- ========================================
 -- 3) TABLE FICHIERS DE CANDIDATURE
@@ -578,79 +584,6 @@ $$;
 GRANT EXECUTE ON FUNCTION app_get_student_profile TO authenticated;
 GRANT EXECUTE ON FUNCTION app_get_student_profile TO service_role;
 
--- Supprimer l'ancienne version (6 paramètres) si elle existe, pour éviter les surcharges ambiguës
-DROP FUNCTION IF EXISTS app_update_student_profile(
-    TEXT,
-    TEXT,
-    TEXT,
-    TEXT,
-    DATE,
-    TEXT
-);
-
-CREATE OR REPLACE FUNCTION app_update_student_profile(
-    p_full_name TEXT DEFAULT NULL,
-    p_phone TEXT DEFAULT NULL,
-    p_country TEXT DEFAULT NULL,
-    p_city TEXT DEFAULT NULL,
-    p_date_of_birth DATE DEFAULT NULL,
-    p_avatar_url TEXT DEFAULT NULL,
-    p_bepc_year INTEGER DEFAULT NULL,
-    p_bepc_institution TEXT DEFAULT NULL,
-    p_bepc_country TEXT DEFAULT NULL,
-    p_bepc_mention TEXT DEFAULT NULL,
-    p_bac_year INTEGER DEFAULT NULL,
-    p_bac_series TEXT DEFAULT NULL,
-    p_bac_mention TEXT DEFAULT NULL,
-    p_bac_institution TEXT DEFAULT NULL,
-    p_bac_country TEXT DEFAULT NULL,
-    p_study_project_text TEXT DEFAULT NULL
-)
-RETURNS JSONB
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-    v_user_id UUID := auth.uid();
-    v_profile JSONB;
-BEGIN
-    IF v_user_id IS NULL THEN
-        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
-    END IF;
-
-    UPDATE app.students
-    SET
-        full_name = COALESCE(p_full_name, full_name),
-        phone = COALESCE(p_phone, phone),
-        country = COALESCE(p_country, country),
-        city = COALESCE(p_city, city),
-        date_of_birth = COALESCE(p_date_of_birth, date_of_birth),
-        avatar_url = COALESCE(p_avatar_url, avatar_url),
-        bepc_year = COALESCE(p_bepc_year, bepc_year),
-        bepc_institution = COALESCE(p_bepc_institution, bepc_institution),
-        bepc_country = COALESCE(p_bepc_country, bepc_country),
-        bepc_mention = COALESCE(p_bepc_mention, bepc_mention),
-        bac_year = COALESCE(p_bac_year, bac_year),
-        bac_series = COALESCE(p_bac_series, bac_series),
-        bac_mention = COALESCE(p_bac_mention, bac_mention),
-        bac_institution = COALESCE(p_bac_institution, bac_institution),
-        bac_country = COALESCE(p_bac_country, bac_country),
-        study_project_text = COALESCE(p_study_project_text, study_project_text),
-        updated_at = NOW()
-    WHERE id = v_user_id;
-
-    SELECT TO_JSONB(s)
-    INTO v_profile
-    FROM app.students s
-    WHERE s.id = v_user_id;
-
-    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'profile', v_profile);
-END;
-$$;
-
-GRANT EXECUTE ON FUNCTION app_update_student_profile TO authenticated;
-GRANT EXECUTE ON FUNCTION app_update_student_profile TO service_role;
-
 -- ========================================
 -- 3c) RPC - STATUT DE COMPLÉTUDE DU DOSSIER (PROFIL ACADÉMIQUE 2.2)
 -- ========================================
@@ -893,6 +826,20 @@ BEGIN
                 'last_student_read_at', a.last_student_read_at,
                 'last_admin_read_at', a.last_admin_read_at,
                 'last_university_read_at', a.last_university_read_at,
+                'requested_degree_level', a.requested_degree_level,
+                'requested_study_mode', a.requested_study_mode,
+                'requested_schedule', a.requested_schedule,
+                'discount_requested', a.discount_requested,
+                'discount_details', a.discount_details,
+                'student_comment', a.student_comment,
+                'sent_to_university', a.sent_to_university,
+                'sent_to_university_at', a.sent_to_university_at,
+                'admin_seen_at', a.admin_seen_at,
+                'has_unseen_for_admin',
+                    CASE
+                        WHEN a.admin_seen_at IS NULL THEN TRUE
+                        ELSE FALSE
+                    END,
                 'student_id', s.id,
                 'student_full_name', s.full_name,
                 'program_id', p.id,
@@ -1107,6 +1054,107 @@ $$;
 
 GRANT EXECUTE ON FUNCTION app_add_application_message_from_admin_to_university(UUID, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION app_add_application_message_from_admin_to_university(UUID, TEXT) TO service_role;
+ 
+-- Admin : mettre à jour les préférences de candidature avant transmission
+CREATE OR REPLACE FUNCTION app_admin_update_application_preferences(
+    p_application_id UUID,
+    p_requested_degree_level TEXT,
+    p_requested_study_mode TEXT,
+    p_requested_schedule TEXT,
+    p_discount_requested BOOLEAN,
+    p_discount_details TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_exists BOOLEAN;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    SELECT EXISTS(SELECT 1 FROM app.applications a WHERE a.id = p_application_id)
+    INTO v_exists;
+
+    IF NOT v_exists THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'application_not_found');
+    END IF;
+
+    UPDATE app.applications
+    SET requested_degree_level = p_requested_degree_level,
+        requested_study_mode = p_requested_study_mode,
+        requested_schedule = p_requested_schedule,
+        discount_requested = COALESCE(p_discount_requested, FALSE),
+        discount_details = p_discount_details,
+        updated_at = NOW()
+    WHERE id = p_application_id;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_update_application_preferences(UUID, TEXT, TEXT, TEXT, BOOLEAN, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_update_application_preferences(UUID, TEXT, TEXT, TEXT, BOOLEAN, TEXT) TO service_role;
+
+-- Admin : transmettre explicitement une candidature à l'université
+CREATE OR REPLACE FUNCTION app_admin_forward_application(
+    p_application_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_app_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    UPDATE app.applications
+    SET sent_to_university = TRUE,
+        sent_to_university_at = COALESCE(sent_to_university_at, NOW()),
+        updated_at = NOW()
+    WHERE id = p_application_id
+    RETURNING id INTO v_app_id;
+
+    IF v_app_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'application_not_found');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT(
+        'success', TRUE,
+        'application_id', v_app_id
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_forward_application(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_forward_application(UUID) TO service_role;
 
 -- Admin : marquer les messages d'une candidature comme lus
 CREATE OR REPLACE FUNCTION app_mark_application_messages_read_for_admin(
@@ -1152,6 +1200,50 @@ $$;
 GRANT EXECUTE ON FUNCTION app_mark_application_messages_read_for_admin(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION app_mark_application_messages_read_for_admin(UUID) TO service_role;
 
+-- Admin : marquer une candidature comme vue (nouvelle candidature sans message)
+CREATE OR REPLACE FUNCTION app_admin_mark_application_seen(
+    p_application_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_exists BOOLEAN;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    SELECT EXISTS(SELECT 1 FROM app.applications a WHERE a.id = p_application_id)
+    INTO v_exists;
+
+    IF NOT v_exists THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'application_not_found');
+    END IF;
+
+    UPDATE app.applications
+    SET admin_seen_at = NOW()
+    WHERE id = p_application_id;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_mark_application_seen(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_mark_application_seen(UUID) TO service_role;
+
 -- Université : lister les candidatures liées à ses programmes
 CREATE OR REPLACE FUNCTION app_list_university_applications()
 RETURNS JSONB
@@ -1196,6 +1288,20 @@ BEGIN
                 'last_student_read_at', a.last_student_read_at,
                 'last_admin_read_at', a.last_admin_read_at,
                 'last_university_read_at', a.last_university_read_at,
+                'requested_degree_level', a.requested_degree_level,
+                'requested_study_mode', a.requested_study_mode,
+                'requested_schedule', a.requested_schedule,
+                'discount_requested', a.discount_requested,
+                'discount_details', a.discount_details,
+                'student_comment', a.student_comment,
+                'sent_to_university', a.sent_to_university,
+                'sent_to_university_at', a.sent_to_university_at,
+                'university_seen_at', a.university_seen_at,
+                'has_unseen_for_university',
+                    CASE
+                        WHEN a.university_seen_at IS NULL THEN TRUE
+                        ELSE FALSE
+                    END,
                 'student_id', s.id,
                 'student_full_name', s.full_name,
                 'program_id', p.id,
@@ -1220,7 +1326,8 @@ BEGIN
     JOIN app.students s ON s.id = a.student_id
     JOIN app.programs p ON p.id = a.program_id
     JOIN app.universities u ON u.id = p.university_id
-    WHERE u.id = v_university_id;
+    WHERE u.id = v_university_id
+      AND a.sent_to_university = TRUE;
 
     RETURN JSONB_BUILD_OBJECT(
         'success', TRUE,
@@ -1513,6 +1620,62 @@ $$;
 GRANT EXECUTE ON FUNCTION app_mark_application_messages_read_for_university(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION app_mark_application_messages_read_for_university(UUID) TO service_role;
 
+-- Université : marquer une candidature comme vue (nouvelle candidature sans message)
+CREATE OR REPLACE FUNCTION app_university_mark_application_seen(
+    p_application_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_university_id UUID;
+    v_exists BOOLEAN;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT
+        raw_user_meta_data->>'role',
+        (raw_user_meta_data->>'university_id')::UUID
+    INTO v_role, v_university_id
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'university' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_university');
+    END IF;
+
+    IF v_university_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'university_not_configured');
+    END IF;
+
+    SELECT EXISTS(
+        SELECT 1
+        FROM app.applications a
+        JOIN app.programs p ON p.id = a.program_id
+        WHERE a.id = p_application_id
+          AND p.university_id = v_university_id
+    ) INTO v_exists;
+
+    IF NOT v_exists THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'application_not_found');
+    END IF;
+
+    UPDATE app.applications
+    SET university_seen_at = NOW()
+    WHERE id = p_application_id;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_university_mark_application_seen(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_university_mark_application_seen(UUID) TO service_role;
+
 -- Étudiant : marquer les messages d'une candidature comme lus
 CREATE OR REPLACE FUNCTION app_mark_application_messages_read_for_student(
     p_application_id UUID
@@ -1576,6 +1739,12 @@ BEGIN
                 'created_at', a.created_at,
                 'updated_at', a.updated_at,
                 'last_message_at', a.last_message_at,
+                'requested_degree_level', a.requested_degree_level,
+                'requested_study_mode', a.requested_study_mode,
+                'requested_schedule', a.requested_schedule,
+                'discount_requested', a.discount_requested,
+                'discount_details', a.discount_details,
+                'student_comment', a.student_comment,
                 'program_title', p.title,
                 'degree_level', p.degree_level,
                 'university_id', u.id,
@@ -1609,7 +1778,13 @@ GRANT EXECUTE ON FUNCTION app_list_student_applications TO service_role;
 
 CREATE OR REPLACE FUNCTION app_create_application(
     p_program_id UUID,
-    p_motivation_text TEXT DEFAULT NULL
+    p_motivation_text TEXT DEFAULT NULL,
+    p_requested_degree_level TEXT DEFAULT NULL,
+    p_requested_study_mode TEXT DEFAULT NULL,
+    p_requested_schedule TEXT DEFAULT NULL,
+    p_discount_requested BOOLEAN DEFAULT NULL,
+    p_discount_details TEXT DEFAULT NULL,
+    p_student_comment TEXT DEFAULT NULL
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -1652,8 +1827,32 @@ BEGIN
     END IF;
 
     -- Créer la candidature
-    INSERT INTO app.applications (student_id, program_id, status, motivation_text, submitted_at)
-    VALUES (v_student_id, p_program_id, 'submitted', p_motivation_text, NOW())
+    INSERT INTO app.applications (
+        student_id,
+        program_id,
+        status,
+        motivation_text,
+        submitted_at,
+        requested_degree_level,
+        requested_study_mode,
+        requested_schedule,
+        discount_requested,
+        discount_details,
+        student_comment
+    )
+    VALUES (
+        v_student_id,
+        p_program_id,
+        'submitted',
+        p_motivation_text,
+        NOW(),
+        p_requested_degree_level,
+        p_requested_study_mode,
+        p_requested_schedule,
+        COALESCE(p_discount_requested, FALSE),
+        p_discount_details,
+        p_student_comment
+    )
     RETURNING id INTO v_application_id;
 
     RETURN JSONB_BUILD_OBJECT(
@@ -1666,8 +1865,8 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION app_create_application(UUID, TEXT) TO authenticated;
-GRANT EXECUTE ON FUNCTION app_create_application(UUID, TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION app_create_application(UUID, TEXT, TEXT, TEXT, TEXT, BOOLEAN, TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_create_application(UUID, TEXT, TEXT, TEXT, TEXT, BOOLEAN, TEXT, TEXT) TO service_role;
 
 CREATE OR REPLACE FUNCTION app_get_university_application_detail(
     p_application_id UUID
@@ -1713,7 +1912,8 @@ BEGIN
     FROM app.applications a
     JOIN app.programs p ON p.id = a.program_id
     WHERE a.id = p_application_id
-      AND p.university_id = v_university_id;
+      AND p.university_id = v_university_id
+      AND a.sent_to_university = TRUE;
 
     IF NOT FOUND THEN
         RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'application_not_found');
@@ -1819,6 +2019,14 @@ BEGIN
             'submitted_at', v_app.submitted_at,
             'created_at', v_app.created_at,
             'updated_at', v_app.updated_at,
+            'sent_to_university', v_app.sent_to_university,
+            'sent_to_university_at', v_app.sent_to_university_at,
+            'requested_degree_level', v_app.requested_degree_level,
+            'requested_study_mode', v_app.requested_study_mode,
+            'requested_schedule', v_app.requested_schedule,
+            'discount_requested', v_app.discount_requested,
+            'discount_details', v_app.discount_details,
+            'student_comment', v_app.student_comment,
             'last_message_at', v_app.last_message_at,
             'last_student_read_at', v_app.last_student_read_at,
             'last_admin_read_at', v_app.last_admin_read_at,

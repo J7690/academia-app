@@ -90,7 +90,7 @@ def main() -> int:
         "LIST course_resources",
         """
         SELECT id, unit_id, title, description, resource_type, storage_bucket, storage_path,
-               external_url, mux_playback_id, sort_order, is_active, created_at, updated_at
+               external_url, sort_order, is_active, created_at, updated_at
         FROM app.course_resources
         ORDER BY created_at DESC
         LIMIT 20;

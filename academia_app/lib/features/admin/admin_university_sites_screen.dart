@@ -2858,9 +2858,25 @@ Future<void> _showAdminEditMediaDialog(
   AdminUniversitySiteProvider provider, {
   Map<String, dynamic>? media,
 }) async {
-  final typeController = TextEditingController(
-    text: media?['media_type']?.toString() ?? 'video',
-  );
+  final rawType = media?['media_type']?.toString() ?? 'video';
+  final lowerInitialType = rawType.toLowerCase();
+  String initialType;
+  if (lowerInitialType.contains('image')) {
+    initialType = 'image';
+  } else if (lowerInitialType.contains('video') ||
+      lowerInitialType.contains('vidéo')) {
+    initialType = 'video';
+  } else if (lowerInitialType.contains('brochure')) {
+    initialType = 'brochure';
+  } else if (lowerInitialType.contains('pdf')) {
+    initialType = 'pdf';
+  } else if (lowerInitialType.contains('doc')) {
+    initialType = 'doc';
+  } else if (lowerInitialType.contains('autre')) {
+    initialType = 'autre';
+  } else {
+    initialType = 'video';
+  }
   final titleController = TextEditingController(
     text: media?['title']?.toString() ?? '',
   );
@@ -2879,19 +2895,59 @@ Future<void> _showAdminEditMediaDialog(
       String? pickedFileName;
       String? pickedMimeType;
       final existingStoragePath = media?['storage_path']?.toString();
+      String selectedType = initialType;
 
       return StatefulBuilder(
         builder: (context, setState) {
+          final lowerType = selectedType.toLowerCase();
+          final isFileMedia = lowerType == 'video' ||
+              lowerType == 'image' ||
+              lowerType == 'brochure' ||
+              lowerType == 'pdf' ||
+              lowerType == 'doc';
+
           return AlertDialog(
             title: Text(media == null ? 'Ajouter un média' : 'Modifier le média'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextField(
-                    controller: typeController,
+                  DropdownButtonFormField<String>(
+                    value: selectedType,
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'video',
+                        child: Text('Vidéo (fichier Supabase)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'image',
+                        child: Text('Image (fichier Supabase)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'brochure',
+                        child: Text('Brochure (PDF, fichier)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'pdf',
+                        child: Text('Document PDF (fichier)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'doc',
+                        child: Text('Document (Word, fichier)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'autre',
+                        child: Text('Autre (URL externe)'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        selectedType = value;
+                      });
+                    },
                     decoration: const InputDecoration(
-                      labelText: 'Type de média (video, image, brochure...)',
+                      labelText: 'Type de média',
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -2909,14 +2965,24 @@ Future<void> _showAdminEditMediaDialog(
                       labelText: 'Description',
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: urlController,
-                    decoration: const InputDecoration(
-                      labelText: 'URL vidéo (mp4 ou .m3u8)',
-                      hintText: 'https://...',
+                  if (!isFileMedia) ...[
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: urlController,
+                      decoration: const InputDecoration(
+                        labelText: 'URL (pour les médias non fichiers, optionnel)',
+                        hintText: 'https://...',
+                      ),
                     ),
-                  ),
+                  ],
+                  if (isFileMedia) ...[
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Pour les vidéos, images, brochures et documents, utilisez uniquement '
+                      "l'upload Supabase Storage ci-dessous. Les URLs externes ne sont plus autorisées.",
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -2975,7 +3041,7 @@ Future<void> _showAdminEditMediaDialog(
                             });
                           },
                           icon: const Icon(Icons.upload_file),
-                          label: const Text('Choisir un fichier (image/vidéo)'),
+                          label: const Text('Choisir un fichier (image/vidéo, Supabase Storage)'),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -3000,11 +3066,21 @@ Future<void> _showAdminEditMediaDialog(
               ),
               TextButton(
                 onPressed: () async {
-                  final type = typeController.text.trim();
+                  final type = selectedType;
                   final title = titleController.text.trim();
                   final description = descriptionController.text.trim();
-                  final urlText = urlController.text.trim();
-                  final url = urlText.isNotEmpty ? urlText : null;
+                  final lowerTypeSave = type.toLowerCase();
+                  final isFileMediaSave = lowerTypeSave == 'video' ||
+                      lowerTypeSave == 'image' ||
+                      lowerTypeSave == 'brochure' ||
+                      lowerTypeSave == 'pdf' ||
+                      lowerTypeSave == 'doc';
+
+                  String? url;
+                  if (!isFileMediaSave) {
+                    final urlText = urlController.text.trim();
+                    url = urlText.isNotEmpty ? urlText : null;
+                  }
 
                   if (type.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -3036,8 +3112,19 @@ Future<void> _showAdminEditMediaDialog(
                     }
                     storagePath = uploadedPath;
                   }
-                  if (url != null && pickedBytes == null && pickedFileName == null) {
-                    storagePath = null;
+
+                  if (isFileMediaSave) {
+                    final pathTrim = (storagePath ?? '').trim();
+                    if (pathTrim.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Pour les vidéos, images, brochures et documents, un fichier doit être uploadé via Supabase Storage.',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
                   }
 
                   final ok = await provider.upsertMedia(
@@ -3055,12 +3142,49 @@ Future<void> _showAdminEditMediaDialog(
                   if (ok) {
                     Navigator.of(context).pop();
                   } else {
+                    final rawError = provider.error;
+                    String message;
+                    switch (rawError) {
+                      case 'invalid_media_type':
+                        message =
+                            'Supabase: le type de média est invalide ou manquant (invalid_media_type).';
+                        break;
+                      case 'storage_required':
+                        message =
+                            'Supabase: un fichier uploadé (storage_path) est obligatoire pour ce type de média (storage_required).';
+                        break;
+                      case 'mux_not_allowed':
+                        message =
+                            "Supabase: Mux n'est plus autorisé comme source média (mux_not_allowed).";
+                        break;
+                      case 'media_url_not_allowed':
+                        message =
+                            'Supabase: les URLs externes ne sont pas autorisées pour ce type de média (media_url_not_allowed).';
+                        break;
+                      case 'not_authenticated':
+                        message =
+                            "Supabase: l'utilisateur connecté n'est pas authentifié (not_authenticated).";
+                        break;
+                      case 'not_university':
+                        message =
+                            "Supabase: le compte connecté n'a pas le rôle université (not_university).";
+                        break;
+                      case 'university_not_configured':
+                        message =
+                            "Supabase: l'université liée à ce compte n'est pas configurée (university_not_configured).";
+                        break;
+                      case 'media_not_found':
+                        message =
+                            'Supabase: le média ciblé est introuvable (media_not_found).';
+                        break;
+                      default:
+                        message = provider.error ??
+                            'Erreur lors de la sauvegarde du média.';
+                        break;
+                    }
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(
-                          provider.error ??
-                              'Erreur lors de la sauvegarde du média.',
-                        ),
+                        content: Text(message),
                       ),
                     );
                   }

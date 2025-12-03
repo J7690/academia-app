@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
@@ -11,12 +12,60 @@ import '../../providers/university_site_provider.dart';
 import '../../providers/university_programs_provider.dart';
 import '../../widgets/mini_site_hero_video.dart';
 import 'university_application_detail_screen.dart';
+import '../../services/notification_sound_service.dart';
+import '../../widgets/notification_sound_settings_dialog.dart';
 
-class UniversityDashboardScreen extends StatelessWidget {
+class UniversityDashboardScreen extends StatefulWidget {
   const UniversityDashboardScreen({super.key});
+
+  @override
+  State<UniversityDashboardScreen> createState() => _UniversityDashboardScreenState();
+}
+
+class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
+  Timer? _pollingTimer;
+  int _lastUniversityUnreadCount = 0;
+  bool _universityUnreadInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 45), (_) async {
+      if (!mounted) return;
+      try {
+        await context.read<UniversityApplicationsProvider>().loadApplications();
+        await _checkUniversityUnreadChange();
+      } catch (_) {}
+    });
+  }
 
   Future<void> _signOut() async {
     await Supabase.instance.client.auth.signOut();
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _checkUniversityUnreadChange() async {
+    if (!mounted) return;
+    final provider = context.read<UniversityApplicationsProvider>();
+    final current = provider.unreadTotal;
+    if (!_universityUnreadInitialized) {
+      _universityUnreadInitialized = true;
+      _lastUniversityUnreadCount = current;
+      return;
+    }
+    if (current > _lastUniversityUnreadCount && current > 0) {
+      _lastUniversityUnreadCount = current;
+      try {
+        await NotificationSoundService.instance.playIfEnabled();
+      } catch (_) {}
+    } else {
+      _lastUniversityUnreadCount = current;
+    }
   }
 
   @override
@@ -47,6 +96,13 @@ class UniversityDashboardScreen extends StatelessWidget {
                 ),
               ),
               actions: [
+                IconButton(
+                  onPressed: () {
+                    NotificationSoundSettingsDialog.show(context);
+                  },
+                  icon: const Icon(Icons.settings),
+                  tooltip: 'Paramètres',
+                ),
                 IconButton(
                   onPressed: _signOut,
                   icon: const Icon(Icons.logout),
@@ -1456,6 +1512,12 @@ class _UniversityApplicationsBucket extends StatelessWidget {
         } else {
           effectiveSelected = apps.first;
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            final appId = effectiveSelected['id']?.toString();
+            if (appId != null && appId.isNotEmpty) {
+              try {
+                applicationsProvider.markApplicationSeen(appId);
+              } catch (_) {}
+            }
             selectionProvider.selectApplication(effectiveSelected);
           });
         }
@@ -1486,6 +1548,12 @@ class _UniversityApplicationsBucket extends StatelessWidget {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
                       onTap: () {
+                        final appId = app['id']?.toString();
+                        if (appId != null && appId.isNotEmpty) {
+                          try {
+                            applicationsProvider.markApplicationSeen(appId);
+                          } catch (_) {}
+                        }
                         selectionProvider.selectApplication(app);
                       },
                       child: Padding(
@@ -1506,7 +1574,8 @@ class _UniversityApplicationsBucket extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                if (app['has_unread_for_university'] == true)
+                                if ((app['has_unread_for_university'] == true) ||
+                                    (app['has_unseen_for_university'] == true))
                                   const Icon(
                                     Icons.mark_unread_chat_alt,
                                     size: 18,
@@ -3485,8 +3554,25 @@ Future<void> _showEditMediaDialog(
   UniversitySiteProvider provider, {
   Map<String, dynamic>? media,
 }) async {
-  final typeController =
-      TextEditingController(text: media?['media_type']?.toString() ?? 'video');
+  final rawType = media?['media_type']?.toString() ?? 'video';
+  final lowerInitialType = rawType.toLowerCase();
+  String initialType;
+  if (lowerInitialType.contains('image')) {
+    initialType = 'image';
+  } else if (lowerInitialType.contains('video') ||
+      lowerInitialType.contains('vidéo')) {
+    initialType = 'video';
+  } else if (lowerInitialType.contains('brochure')) {
+    initialType = 'brochure';
+  } else if (lowerInitialType.contains('pdf')) {
+    initialType = 'pdf';
+  } else if (lowerInitialType.contains('doc')) {
+    initialType = 'doc';
+  } else if (lowerInitialType.contains('autre')) {
+    initialType = 'autre';
+  } else {
+    initialType = 'video';
+  }
   final titleController =
       TextEditingController(text: media?['title']?.toString() ?? '');
   final descriptionController =
@@ -3502,19 +3588,59 @@ Future<void> _showEditMediaDialog(
       String? pickedFileName;
       String? pickedMimeType;
       final existingStoragePath = media?['storage_path']?.toString();
+      String selectedType = initialType;
 
       return StatefulBuilder(
         builder: (context, setState) {
+          final lowerType = selectedType.toLowerCase();
+          final isFileMedia = lowerType == 'video' ||
+              lowerType == 'image' ||
+              lowerType == 'brochure' ||
+              lowerType == 'pdf' ||
+              lowerType == 'doc';
+
           return AlertDialog(
             title: Text(media == null ? 'Ajouter un média' : 'Modifier le média'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextField(
-                    controller: typeController,
+                  DropdownButtonFormField<String>(
+                    value: selectedType,
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'video',
+                        child: Text('Vidéo (fichier Supabase)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'image',
+                        child: Text('Image (fichier Supabase)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'brochure',
+                        child: Text('Brochure (PDF, fichier)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'pdf',
+                        child: Text('Document PDF (fichier)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'doc',
+                        child: Text('Document (Word, fichier)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'autre',
+                        child: Text('Autre (URL externe)'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        selectedType = value;
+                      });
+                    },
                     decoration: const InputDecoration(
-                      labelText: 'Type de média (video, image, brochure...)',
+                      labelText: 'Type de média',
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -3532,14 +3658,16 @@ Future<void> _showEditMediaDialog(
                       labelText: 'Description',
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: urlController,
-                    decoration: const InputDecoration(
-                      labelText: 'URL vidéo (mp4 ou .m3u8)',
-                      hintText: 'https://...',
+                  if (!isFileMedia) ...[
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: urlController,
+                      decoration: const InputDecoration(
+                        labelText: 'URL (pour les médias non fichiers, optionnel)',
+                        hintText: 'https://...',
+                      ),
                     ),
-                  ),
+                  ],
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -3623,11 +3751,21 @@ Future<void> _showEditMediaDialog(
               ),
               TextButton(
                 onPressed: () async {
-                  final type = typeController.text.trim();
+                  final type = selectedType;
                   final title = titleController.text.trim();
                   final description = descriptionController.text.trim();
-                  final urlText = urlController.text.trim();
-                  final url = urlText.isNotEmpty ? urlText : null;
+                  final lowerTypeSave = type.toLowerCase();
+                  final isFileMediaSave = lowerTypeSave == 'video' ||
+                      lowerTypeSave == 'image' ||
+                      lowerTypeSave == 'brochure' ||
+                      lowerTypeSave == 'pdf' ||
+                      lowerTypeSave == 'doc';
+
+                  String? url;
+                  if (!isFileMediaSave) {
+                    final urlText = urlController.text.trim();
+                    url = urlText.isNotEmpty ? urlText : null;
+                  }
 
                   if (type.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -3659,6 +3797,20 @@ Future<void> _showEditMediaDialog(
                     }
                     storagePath = uploadedPath;
                   }
+                  if (isFileMediaSave) {
+                    final pathTrim = (storagePath ?? '').trim();
+                    if (pathTrim.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Pour les vidéos, images, brochures et documents, un fichier doit être uploadé via Supabase Storage.',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                  }
+
                   if (url != null && pickedBytes == null && pickedFileName == null) {
                     storagePath = null;
                   }

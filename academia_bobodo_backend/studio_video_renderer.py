@@ -1,7 +1,11 @@
 from pathlib import Path
 import os
-from typing import Any, Dict
+import uuid
+import tempfile
+import subprocess
+from typing import Any, Dict, Optional
 
+import httpx
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -10,6 +14,8 @@ BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 
 STUDIO_VIDEO_RENDER_API_KEY = os.getenv("STUDIO_VIDEO_RENDER_API_KEY")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 
 
 class RenderRequest(BaseModel):
@@ -25,6 +31,112 @@ class RenderResponse(BaseModel):
 app = FastAPI(title="Academia Studio Video Renderer")
 
 
+async def _download_video_to_temp(url: str) -> Path:
+    cleaned = (url or "").strip()
+    if not cleaned:
+        raise HTTPException(status_code=400, detail="video_url manquant.")
+
+    tmp_dir = Path(tempfile.gettempdir())
+    file_name = f"input_{uuid.uuid4().hex}.mp4"
+    dest_path = tmp_dir / file_name
+
+    async with httpx.AsyncClient(timeout=600.0) as client:
+        resp = await client.get(cleaned)
+
+    if resp.status_code >= 400:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Erreur lors du téléchargement de la vidéo source ({resp.status_code}).",
+        )
+
+    dest_path.write_bytes(resp.content)
+    return dest_path
+
+
+def _run_ffmpeg_transcode(input_path: Path) -> Path:
+    output_path = input_path.with_name(f"rendered_{uuid.uuid4().hex}.mp4")
+
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(input_path),
+        "-c:v",
+        "libx264",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "23",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "128k",
+        str(output_path),
+    ]
+
+    try:
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=500,
+            detail="ffmpeg introuvable sur le serveur de rendu vidéo.",
+        )
+
+    if result.returncode != 0:
+        stderr_text = result.stderr.decode(errors="ignore")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur ffmpeg lors du rendu vidéo ({result.returncode}). {stderr_text[:500]}",
+        )
+
+    return output_path
+
+
+async def _upload_to_supabase_storage(path: Path, participation_id: str) -> str:
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="SUPABASE_URL ou SUPABASE_SERVICE_KEY manquante pour le rendu vidéo.",
+        )
+
+    bucket = "challenge-media"
+    object_key = f"renders/{participation_id}/{uuid.uuid4().hex}.mp4"
+    storage_url = f"{SUPABASE_URL}/storage/v1/object/{bucket}/{object_key}"
+
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "video/mp4",
+    }
+
+    data = path.read_bytes()
+
+    async with httpx.AsyncClient(timeout=600.0) as client:
+        resp = await client.post(storage_url, headers=headers, content=data)
+
+    if resp.status_code >= 400:
+        try:
+            body = resp.json()
+        except ValueError:
+            body = {"raw": resp.text}
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Erreur lors de l'upload de la vidéo rendue dans Supabase Storage.",
+                "status_code": resp.status_code,
+                "error": body,
+            },
+        )
+
+    public_url = f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{object_key}"
+    return public_url
+
+
 @app.post("/render", response_model=RenderResponse)
 async def render_video(req: RenderRequest, request: Request) -> RenderResponse:
     auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
@@ -35,8 +147,27 @@ async def render_video(req: RenderRequest, request: Request) -> RenderResponse:
     if STUDIO_VIDEO_RENDER_API_KEY and token != STUDIO_VIDEO_RENDER_API_KEY:
         raise HTTPException(status_code=403, detail="Cl API de rendu vido invalide.")
 
-    url = (req.video_url or "").strip()
-    if not url:
+    video_url = (req.video_url or "").strip()
+    if not video_url:
         raise HTTPException(status_code=400, detail="video_url manquant.")
 
-    return RenderResponse(video_url=url)
+    input_path: Optional[Path] = None
+    output_path: Optional[Path] = None
+
+    try:
+        input_path = await _download_video_to_temp(video_url)
+        output_path = _run_ffmpeg_transcode(input_path)
+        final_url = await _upload_to_supabase_storage(output_path, req.participation_id)
+    finally:
+        try:
+            if input_path and input_path.exists():
+                input_path.unlink()
+        except Exception:
+            pass
+        try:
+            if output_path and output_path.exists():
+                output_path.unlink()
+        except Exception:
+            pass
+
+    return RenderResponse(video_url=final_url)

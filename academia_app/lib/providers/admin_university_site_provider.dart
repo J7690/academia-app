@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/mime_type_helper.dart';
@@ -237,6 +236,8 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
     }
     _setSaving(true);
     _setError(null);
+    debugPrint(
+        '[AdminUniversitySiteProvider.upsertMedia] universityId=$universityId, mediaId=$mediaId, mediaType=$mediaType, title=$title, description=$description, url=$url, storagePath=$storagePath, thumbnailUrl=$thumbnailUrl, sortOrder=$sortOrder, isActive=$isActive');
     try {
       final dynamic response = await _client.rpc(
         'app_admin_upsert_university_media',
@@ -254,17 +255,26 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
         },
       );
       if (response is! Map<String, dynamic>) {
+        debugPrint(
+            '[AdminUniversitySiteProvider.upsertMedia] invalid response type: ${response.runtimeType}');
         _setError('Réponse invalide du serveur lors de la sauvegarde du média (admin).');
         return false;
       }
       if (response['success'] != true) {
-        _setError(response['error']?.toString() ??
+        final error = response['error']?.toString();
+        debugPrint(
+            '[AdminUniversitySiteProvider.upsertMedia] error from RPC: $error');
+        _setError(error ??
             'Erreur lors de la sauvegarde du média (admin).');
         return false;
       }
       await loadSiteForUniversity(universityId);
+      debugPrint(
+          '[AdminUniversitySiteProvider.upsertMedia] success response=$response');
       return true;
     } catch (e) {
+      debugPrint(
+          '[AdminUniversitySiteProvider.upsertMedia] exception: $e');
       _setError(e.toString());
       return false;
     } finally {
@@ -566,6 +576,8 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
   }) async {
     _setSaving(true);
     _setError(null);
+    debugPrint(
+        '[AdminUniversitySiteProvider.uploadMediaFile] fileName=$fileName, mimeType=$mimeType, bytesLength=${bytes.length}');
     try {
       final user = _client.auth.currentUser;
       if (user == null) {
@@ -573,9 +585,15 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
         return null;
       }
 
+      debugPrint(
+          '[AdminUniversitySiteProvider.uploadMediaFile] currentUser=${user.id}');
+
       final sanitizedFileName =
           fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
       final storagePath = '${user.id}/mini-site/$sanitizedFileName';
+
+      debugPrint(
+          '[AdminUniversitySiteProvider.uploadMediaFile] uploading to bucket=university-media, storagePath=$storagePath');
 
       await _client.storage.from('university-media').uploadBinary(
             storagePath,
@@ -587,6 +605,8 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
 
       return storagePath;
     } catch (e) {
+      debugPrint(
+          '[AdminUniversitySiteProvider.uploadMediaFile] exception: $e');
       _setError(e.toString());
       return null;
     } finally {

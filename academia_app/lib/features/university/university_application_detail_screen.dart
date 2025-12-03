@@ -226,6 +226,23 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
         final studentName = (app['student_full_name'] ?? studentProfile?['full_name'])?.toString() ?? '';
         final programTitle = app['program_title']?.toString() ?? provider.programInfo?['title']?.toString() ?? '';
         final status = app['status']?.toString() ?? '';
+        final requestedDegree =
+            (app['requested_degree_level']?.toString() ?? '').trim();
+        final requestedMode =
+            (app['requested_study_mode']?.toString() ?? '').trim();
+        final requestedSchedule =
+            (app['requested_schedule']?.toString() ?? '').trim();
+        final discountRequested = app['discount_requested'] == true;
+        final discountDetails =
+            (app['discount_details']?.toString() ?? '').trim();
+        final studentComment =
+            (app['student_comment']?.toString() ?? '').trim();
+        final hasPreferencesSection =
+            requestedDegree.isNotEmpty ||
+            requestedMode.isNotEmpty ||
+            requestedSchedule.isNotEmpty ||
+            discountRequested ||
+            studentComment.isNotEmpty;
 
         final hasApplication = appId != null && appId.isNotEmpty;
 
@@ -254,6 +271,45 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
               const SizedBox(height: 8),
               _buildStatusActions(context, provider, appId, status),
               const SizedBox(height: 16),
+              if (hasPreferencesSection) ...[
+                Text('Préférences de candidature',
+                    style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 8),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (requestedDegree.isNotEmpty)
+                          Text('Niveau souhaité : $requestedDegree'),
+                        if (requestedMode.isNotEmpty)
+                          Text('Mode souhaité : $requestedMode'),
+                        if (requestedSchedule.isNotEmpty)
+                          Text('Horaires souhaités : $requestedSchedule'),
+                        if (discountRequested) ...[
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Demande de réduction / échelonnement des frais',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          if (discountDetails.isNotEmpty)
+                            Text(discountDetails),
+                        ],
+                        if (studentComment.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Commentaire de l\'étudiant',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(studentComment),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               if (universityInfo != null &&
                   (universityInfo['website_url']?.toString().trim().isNotEmpty ?? false))
                 Align(

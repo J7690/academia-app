@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -148,7 +146,6 @@ class AdminCourseLibraryProvider extends ChangeNotifier {
     String? storageBucket,
     String? storagePath,
     String? externalUrl,
-    String? muxPlaybackId,
     int? sortOrder,
     bool? isActive,
   }) async {
@@ -166,7 +163,6 @@ class AdminCourseLibraryProvider extends ChangeNotifier {
           'p_storage_bucket': storageBucket,
           'p_storage_path': storagePath,
           'p_external_url': externalUrl,
-          'p_mux_playback_id': muxPlaybackId,
           'p_sort_order': sortOrder,
           'p_is_active': isActive,
         },
@@ -197,17 +193,17 @@ class AdminCourseLibraryProvider extends ChangeNotifier {
     String folder = 'course-library',
   }) async {
     _setError(null);
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      _setError('Utilisateur non authentifié.');
+      return null;
+    }
+
+    final sanitizedFileName =
+        fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    final storagePath = '${user.id}/$folder/$sanitizedFileName';
+
     try {
-      final user = _client.auth.currentUser;
-      if (user == null) {
-        _setError('Utilisateur non authentifié.');
-        return null;
-      }
-
-      final sanitizedFileName =
-          fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
-      final storagePath = '${user.id}/$folder/$sanitizedFileName';
-
       await _client.storage.from('landing-media').uploadBinary(
             storagePath,
             bytes,
@@ -216,14 +212,26 @@ class AdminCourseLibraryProvider extends ChangeNotifier {
               upsert: true,
             ),
           );
+    } on StorageException catch (e) {
+      final message = e.message.toLowerCase();
+      final error = (e.error ?? '').toLowerCase();
+      final statusCode = e.statusCode?.toString() ?? '';
+      final isDuplicate = statusCode == '409' ||
+          message.contains('already exists') ||
+          error.contains('duplicate');
 
-      return {
-        'bucket': 'landing-media',
-        'path': storagePath,
-      };
+      if (!isDuplicate) {
+        _setError(e.toString());
+        return null;
+      }
     } catch (e) {
       _setError(e.toString());
       return null;
     }
+
+    return {
+      'bucket': 'landing-media',
+      'path': storagePath,
+    };
   }
 }

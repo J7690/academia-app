@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../providers/student_course_library_provider.dart';
+import '../../../providers/online_courses_catalog_provider.dart';
+import '../../../providers/student_online_courses_provider.dart';
 import '../course_resource_viewer_screen.dart';
+import '../online_course_detail_screen.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
 
@@ -22,6 +25,8 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<StudentCourseLibraryProvider>().loadLibrary();
+      context.read<OnlineCoursesCatalogProvider>().loadPublicCourses();
+      context.read<StudentOnlineCoursesProvider>().loadMyCourses();
     });
   }
 
@@ -82,74 +87,87 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: Consumer<StudentCourseLibraryProvider>(
-              builder: (context, provider, child) {
-                if (provider.isLoading && provider.domains.isEmpty) {
+            child: Consumer3<OnlineCoursesCatalogProvider,
+                StudentOnlineCoursesProvider, StudentCourseLibraryProvider>(
+              builder: (context, catalogProvider, myCoursesProvider,
+                  libraryProvider, child) {
+                if (libraryProvider.isLoading && libraryProvider.domains.isEmpty) {
                   return const LoadingWidget(
                     message: 'Chargement de la bibliothèque de cours...',
                   );
                 }
 
-                if (provider.error != null) {
+                if (libraryProvider.error != null) {
                   return CustomErrorWidget(
-                    error: provider.error!,
-                    onRetry: () => provider.loadLibrary(),
+                    error: libraryProvider.error!,
+                    onRetry: () => libraryProvider.loadLibrary(),
                   );
                 }
 
-                final filteredDomains = _filterDomains(provider.domains);
+                final filteredDomains = _filterDomains(libraryProvider.domains);
 
-                if (filteredDomains.isEmpty) {
-                  return const Center(
-                    child: Text('Aucune ressource trouvée pour ces critères.'),
-                  );
-                }
-
-                return ListView.builder(
+                return ListView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  itemCount: filteredDomains.length,
-                  itemBuilder: (context, index) {
-                    final domain = filteredDomains[index];
-                    final title = (domain['title'] ?? '').toString();
-                    final description = (domain['description'] ?? '').toString();
-                    final units =
-                        (domain['units'] as List<dynamic>? ?? const [])
-                            .whereType<Map<String, dynamic>>()
-                            .toList(growable: false);
-
-                    return Card(
-                      color: Colors.white,
-                      elevation: 0,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              title,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            if (description.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                description,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                            ],
-                            const SizedBox(height: 12),
-                            ...units.map((unit) => _buildUnitSection(unit)),
-                          ],
+                  children: [
+                    _buildOnlineCoursesSection(
+                      context,
+                      catalogProvider,
+                      myCoursesProvider,
+                    ),
+                    const SizedBox(height: 16),
+                    if (filteredDomains.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            'Aucune ressource trouvée pour ces critères.',
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      )
+                    else
+                      ...filteredDomains.map((domain) {
+                        final title = (domain['title'] ?? '').toString();
+                        final description =
+                            (domain['description'] ?? '').toString();
+                        final units =
+                            (domain['units'] as List<dynamic>? ?? const [])
+                                .whereType<Map<String, dynamic>>()
+                                .toList(growable: false);
+
+                        return Card(
+                          color: Colors.white,
+                          elevation: 0,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  title,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                if (description.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    description,
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                ],
+                                const SizedBox(height: 12),
+                                ...units.map((unit) => _buildUnitSection(unit)),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                  ],
                 );
               },
             ),
@@ -261,6 +279,177 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
     }
 
     return result;
+  }
+
+  Widget _buildOnlineCoursesSection(
+    BuildContext context,
+    OnlineCoursesCatalogProvider catalog,
+    StudentOnlineCoursesProvider myCoursesProvider,
+  ) {
+    final catalogCourses = catalog.courses;
+    final myCourses = myCoursesProvider.myCourses;
+
+    final isLoadingCatalog = catalog.isLoading;
+    final isLoadingMy = myCoursesProvider.isLoading;
+
+    return Card(
+      color: Colors.white,
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Cours en ligne',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Découvre les cours en ligne structurés (vidéo, chapitres, progression).',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            if (isLoadingCatalog || isLoadingMy)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: LinearProgressIndicator(),
+              ),
+            if (myCourses.isNotEmpty) ...[
+              const Text(
+                'Mes cours en ligne',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...myCourses.take(3).map((c) {
+                final title = (c['title'] ?? '').toString();
+                final courseId = (c['course_id'] ?? '').toString();
+                final accessType = (c['access_type'] ?? '').toString();
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Text(
+                    accessType.isNotEmpty
+                        ? 'Accès : $accessType'
+                        : 'Cours en ligne',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    if (courseId.isEmpty) return;
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => OnlineCourseDetailScreen(
+                          courseId: courseId,
+                          initialTitle: title,
+                          initiallyEnrolled: true,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }).toList(),
+              if (myCourses.length > 3)
+                Text(
+                  '+ ${myCourses.length - 3} autre(s) cours',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              const SizedBox(height: 16),
+            ],
+            const Text(
+              'Catalogue des cours en ligne',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (catalog.error != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  catalog.error!,
+                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                ),
+              ),
+            if (catalogCourses.isEmpty && !isLoadingCatalog)
+              const Text(
+                'Aucun cours en ligne disponible pour le moment.',
+                style: TextStyle(fontSize: 12),
+              )
+            else
+              ...catalogCourses.take(5).map((c) {
+                final title = (c['title'] ?? '').toString();
+                final shortDescription =
+                    (c['short_description'] ?? '').toString();
+                final level = (c['level'] ?? '').toString();
+                final category = (c['category'] ?? '').toString();
+                final courseId = (c['id'] ?? '').toString();
+
+                final metaParts = <String>[];
+                if (category.isNotEmpty) metaParts.add(category);
+                if (level.isNotEmpty) metaParts.add(level);
+
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (shortDescription.isNotEmpty)
+                        Text(
+                          shortDescription,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      if (metaParts.isNotEmpty)
+                        Text(
+                          metaParts.join(' • '),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                          ),
+                        ),
+                    ],
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    if (courseId.isEmpty) return;
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => OnlineCourseDetailScreen(
+                          courseId: courseId,
+                          initialTitle: title,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }).toList(),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildUnitSection(Map<String, dynamic> unit) {

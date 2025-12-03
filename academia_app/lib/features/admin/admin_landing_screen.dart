@@ -164,83 +164,209 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
     LandingContentProvider provider, {
     Map<String, dynamic>? existing,
   }) async {
-    final urlController =
-        TextEditingController(text: existing?['video_url']?.toString() ?? '');
+    String uploadedUrl = existing?['video_url']?.toString() ?? '';
     final titleController =
         TextEditingController(text: existing?['title']?.toString() ?? '');
     final sortController = TextEditingController(
       text: existing?['sort_order']?.toString() ?? '',
     );
     bool isActive = existing == null || existing['is_active'] != false;
+    String mediaType = ((existing?['media_type'] ?? 'video')
+                .toString()
+                .toLowerCase() ==
+            'image')
+        ? 'image'
+        : 'video';
 
     final result = await showDialog<bool>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text(
-            existing == null
-                ? 'Nouvelle vidéo (playlist hero)'
-                : 'Modifier la vidéo',
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: urlController,
-                  decoration: const InputDecoration(
-                    labelText: 'URL vidéo (mp4, webm...)',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Titre (facultatif)',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: sortController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Ordre (optionnel)',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Text(
+                existing == null
+                    ? 'Nouveau média (playlist hero)'
+                    : 'Modifier le média',
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Active'),
-                    const Spacer(),
-                    Switch(
-                      value: isActive,
-                      onChanged: (v) {
-                        isActive = v;
-                        (context as Element).markNeedsBuild();
-                      },
+                    Row(
+                      children: [
+                        const Text('Type de média'),
+                        const SizedBox(width: 12),
+                        DropdownButton<String>(
+                          value: mediaType,
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setStateDialog(() {
+                              mediaType = value;
+                              uploadedUrl = '';
+                            });
+                          },
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'video',
+                              child: Text('Vidéo'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'image',
+                              child: Text('Image'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final isImage = mediaType == 'image';
+                          final result = await FilePicker.platform.pickFiles(
+                            allowMultiple: false,
+                            withData: true,
+                            type: FileType.custom,
+                            allowedExtensions: isImage
+                                ? const ['jpg', 'jpeg', 'png', 'webp']
+                                : const ['mp4', 'mov', 'webm'],
+                          );
+
+                          if (result == null || result.files.isEmpty) {
+                            return;
+                          }
+
+                          final file = result.files.first;
+                          final bytes = file.bytes;
+                          const maxSizeBytes = 200 * 1024 * 1024;
+                          if (file.size > maxSizeBytes) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Fichier trop volumineux (max 200 Mo).',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          if (bytes == null) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Impossible de lire le contenu du fichier.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          final publicUrl = await provider.uploadLandingFile(
+                            bytes: Uint8List.fromList(bytes),
+                            fileName: file.name,
+                            mimeType: file.extension,
+                            folder: 'playlist-videos',
+                          );
+
+                          if (!context.mounted) return;
+
+                          if (publicUrl == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  provider.error ??
+                                      'Erreur lors de l\'upload du média de playlist.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          setStateDialog(() {
+                            uploadedUrl = publicUrl;
+                          });
+                        },
+                        icon: const Icon(Icons.upload_file),
+                        label:
+                            const Text('Uploader un média (Supabase Storage)'),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        uploadedUrl.isNotEmpty
+                            ? 'Vidéo sélectionnée.'
+                            : 'Aucune vidéo sélectionnée.',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Titre (facultatif)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: sortController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Ordre (optionnel)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Text('Active'),
+                        const Spacer(),
+                        Switch(
+                          value: isActive,
+                          onChanged: (v) {
+                            setStateDialog(() {
+                              isActive = v;
+                            });
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Annuler'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Enregistrer'),
+                ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Enregistrer'),
-            ),
-          ],
+            );
+          },
         );
       },
     );
 
     if (result != true) return;
-    final url = urlController.text.trim();
-    if (url.isEmpty) return;
+    final url = uploadedUrl.trim();
+    if (url.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Un média doit être uploadé pour la playlist hero.',
+            ),
+          ),
+        );
+      }
+      return;
+    }
 
     final sortOrder = int.tryParse(sortController.text.trim());
     await provider.upsertVideo(
@@ -250,6 +376,7 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
           titleController.text.trim().isEmpty ? null : titleController.text.trim(),
       sortOrder: sortOrder,
       isActive: isActive,
+      mediaType: mediaType,
     );
   }
 
@@ -685,9 +812,13 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
                       ),
                       const SizedBox(height: 8),
                       TextField(
+                        // L'URL vidéo du hero est désormais gérée uniquement via l'upload
+                        // Supabase. On n'expose plus de champ éditable pour éviter les liens
+                        // externes.
+                        enabled: false,
                         controller: _videoUrlController,
                         decoration: const InputDecoration(
-                          labelText: 'URL vidéo (optionnel, lien public)',
+                          labelText: 'URL vidéo hero (gérée automatiquement)',
                         ),
                       ),
                       if (_videoUrlController.text.isNotEmpty) ...[
@@ -700,14 +831,6 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
                                 : () => _clearHeroVideo(provider),
                             icon: const Icon(Icons.delete_outline),
                             label: const Text('Supprimer la vidéo'),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Vidéo actuelle : ${_videoUrlController.text}',
-                            style: const TextStyle(fontSize: 12),
                           ),
                         ),
                       ],

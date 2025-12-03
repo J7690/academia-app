@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../student/student_dashboard_screen.dart';
 import '../university/university_dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
+import '../instructor/instructor_dashboard_screen.dart';
 import 'auth_landing_screen.dart';
 
 class AuthWrapper extends StatefulWidget {
@@ -51,6 +52,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
     switch (role) {
       case 'student':
         return const StudentDashboardScreen();
+      case 'instructor':
+        return const InstructorDashboardScreen();
       case 'university':
         return const UniversityDashboardScreen();
       case 'admin':

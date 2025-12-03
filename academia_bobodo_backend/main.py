@@ -1603,6 +1603,7 @@ async def generate_answer_for_category(
             "disponibles. Si une université n'apparaît pas dans cette section, cela signifie que Nexiom Group ne peut pas "
             "te proposer de formation via cet établissement. En revanche, tu peux toujours explorer l'ensemble des "
             "formations disponibles sur Academia pour trouver une option qui te convient."
+        )
     # HORS_SCOPE ou catégorie inconnue : refuser poliment car hors domaine
     await log_unanswered_question(session_id, message, category)
     base_message = (

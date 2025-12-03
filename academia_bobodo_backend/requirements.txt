@@ -2,3 +2,4 @@
  uvicorn[standard]
  httpx
  python-dotenv
+ livekit-api

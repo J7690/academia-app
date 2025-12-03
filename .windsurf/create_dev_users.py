@@ -27,6 +27,7 @@ DEV_USERS: List[DevUser] = [
   DevUser(email="wendenkoote@gmail.com", password="Wenden@Koote0", role="admin"),
   DevUser(email="hilbertwedraogo@gmail.com", password="Wenden@Koote1", role="university"),
   DevUser(email="nexiomgroup@gmail.com", password="Wenden@Koote3", role="student"),
+  DevUser(email="jocelynouedraogo7@gmail.com", password="Wenden@Koote5", role="instructor"),
 ]
 
 

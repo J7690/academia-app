@@ -12,6 +12,8 @@ class AdminApplicationsScreen extends StatefulWidget {
 }
 
 class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {
+  bool _onlyDiscountRequested = false;
+
   @override
   void initState() {
     super.initState();
@@ -44,52 +46,138 @@ class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {
           );
         }
 
-        final applications = provider.applications;
+        final allApplications = provider.applications;
+        final applications = _onlyDiscountRequested
+            ? allApplications
+                .where((app) => app['discount_requested'] == true)
+                .toList()
+            : allApplications;
         if (applications.isEmpty) {
           return const Center(
             child: Text('Aucune candidature pour le moment.'),
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: applications.length,
-          itemBuilder: (context, index) {
-            final app = applications[index];
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              color: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FilterChip(
+                  label: const Text('Avec demande de réduction'),
+                  selected: _onlyDiscountRequested,
+                  onSelected: (selected) {
+                    setState(() {
+                      _onlyDiscountRequested = selected;
+                    });
+                  },
+                ),
               ),
-              child: ListTile(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => AdminApplicationDetailScreen(application: app),
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: applications.length,
+                itemBuilder: (context, index) {
+                  final app = applications[index];
+                  final requestedDegree =
+                      (app['requested_degree_level']?.toString() ?? '').trim();
+                  final requestedMode =
+                      (app['requested_study_mode']?.toString() ?? '').trim();
+                  final requestedSchedule =
+                      (app['requested_schedule']?.toString() ?? '').trim();
+                  final discountRequested = app['discount_requested'] == true;
+                  final hasPreferences =
+                      requestedDegree.isNotEmpty ||
+                      requestedMode.isNotEmpty ||
+                      requestedSchedule.isNotEmpty ||
+                      discountRequested;
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    color: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ListTile(
+                      onTap: () async {
+                        final appId = app['id']?.toString();
+                        if (appId != null && appId.isNotEmpty) {
+                          try {
+                            await context
+                                .read<AdminApplicationsProvider>()
+                                .markApplicationSeen(appId);
+                          } catch (_) {}
+                        }
+                        if (!context.mounted) return;
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                AdminApplicationDetailScreen(application: app),
+                          ),
+                        );
+                      },
+                      leading: _AdminApplicationLeading(application: app),
+                      title: Text(
+                        app['program_title']?.toString() ?? 'Programme inconnu',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(app['university_name']?.toString() ?? ''),
+                          Text('Étudiant : ${app['student_full_name'] ?? ''}'),
+                          if (app['last_message_at'] != null)
+                            Text('Dernier message : ${app['last_message_at']}'),
+                          if (hasPreferences) ...[
+                            const SizedBox(height: 4),
+                            Wrap(
+                              spacing: 4,
+                              runSpacing: 2,
+                              children: [
+                                if (requestedDegree.isNotEmpty)
+                                  Chip(
+                                    label: Text('Niveau : $requestedDegree'),
+                                    visualDensity: VisualDensity.compact,
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                if (requestedMode.isNotEmpty)
+                                  Chip(
+                                    label: Text('Mode : $requestedMode'),
+                                    visualDensity: VisualDensity.compact,
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                if (requestedSchedule.isNotEmpty)
+                                  Chip(
+                                    label:
+                                        Text('Horaires : $requestedSchedule'),
+                                    visualDensity: VisualDensity.compact,
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                if (discountRequested)
+                                  Chip(
+                                    label: const Text('Demande de réduction'),
+                                    visualDensity: VisualDensity.compact,
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                      trailing: _AdminStatusAndUnread(application: app),
                     ),
                   );
                 },
-                leading: _AdminApplicationLeading(application: app),
-                title: Text(
-                  app['program_title']?.toString() ?? 'Programme inconnu',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(app['university_name']?.toString() ?? ''),
-                    Text('Étudiant : ${app['student_full_name'] ?? ''}'),
-                    if (app['last_message_at'] != null)
-                      Text('Dernier message : ${app['last_message_at']}'),
-                  ],
-                ),
-                trailing: _AdminStatusAndUnread(application: app),
               ),
-            );
-          },
+            ),
+          ],
         );
       },
     );
@@ -104,10 +192,12 @@ class _AdminApplicationLeading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasUnread = application['has_unread_for_admin'] == true;
+    final hasUnseen = application['has_unseen_for_admin'] == true;
+    final hasNotification = hasUnread || hasUnseen;
     return Stack(
       children: [
         const Icon(Icons.assignment),
-        if (hasUnread)
+        if (hasNotification)
           Positioned(
             right: 0,
             top: 0,

@@ -8,14 +8,28 @@ import 'package:video_player/video_player.dart';
 
 import '../student_profile_screen.dart';
 import '../student_university_site_screen.dart';
+import '../application_request_dialog.dart';
 import '../../../providers/student_profile_provider.dart';
 import '../../../providers/student_offers_provider.dart';
 import '../../../providers/student_applications_provider.dart';
 import '../../../providers/student_home_content_provider.dart';
+import '../../../providers/online_courses_catalog_provider.dart';
+import '../../../providers/student_online_courses_provider.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
 import '../../../widgets/hls_web_stub.dart'
     if (dart.library.html) '../../../widgets/hls_web.dart';
+import '../../../widgets/academia_video_widget.dart';
+import '../../../widgets/notification_sound_settings_dialog.dart';
+import '../widgets/student_short_trainings_section.dart';
+import '../widgets/student_home_online_courses_section.dart';
+
+class _StudentHomeMediaItem {
+  final String url;
+  final String mediaType;
+
+  const _StudentHomeMediaItem({required this.url, required this.mediaType});
+}
 
 class StudentHomeTab extends StatefulWidget {
   const StudentHomeTab({super.key});
@@ -33,8 +47,11 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   late final ScrollController _tickerController;
   Timer? _tickerTimer;
 
-  List<String> _videoPlaylist = [];
-  int _currentVideoIndex = 0;
+  static const Duration _imageSlideDuration = Duration(seconds: 5);
+  Timer? _mediaTimer;
+
+  List<_StudentHomeMediaItem> _mediaPlaylist = [];
+  int _currentMediaIndex = 0;
 
   String _searchUniversityQuery = '';
   String _searchProgramQuery = '';
@@ -64,8 +81,15 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
         await homeContent.loadPublicStudentHomeContent();
       } catch (_) {}
 
+      try {
+        await context.read<OnlineCoursesCatalogProvider>().loadPublicCourses();
+      } catch (_) {}
+      try {
+        await context.read<StudentOnlineCoursesProvider>().loadMyCourses();
+      } catch (_) {}
+
       if (!mounted) return;
-      _setupVideoPlaylist(homeContent.videos);
+      _setupMediaPlaylist(homeContent.videos);
       _startTicker();
     });
   }
@@ -76,36 +100,62 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
     _tickerController.dispose();
     _universitySearchController.dispose();
     _programSearchController.dispose();
+    _mediaTimer?.cancel();
     _videoController?.dispose();
     super.dispose();
   }
 
-  void _setupVideoPlaylist(List<Map<String, dynamic>> videos) {
-    final playlist = <String>[];
+  void _setupMediaPlaylist(List<Map<String, dynamic>> videos) {
+    final playlist = <_StudentHomeMediaItem>[];
     for (final v in videos) {
       if (v['is_active'] == false) continue;
       final url = (v['video_url'] ?? '').toString().trim();
       if (url.isEmpty) continue;
-      playlist.add(url);
+      final rawType = (v['media_type'] ?? 'video').toString().toLowerCase();
+      final mediaType = rawType == 'image' ? 'image' : 'video';
+      playlist.add(_StudentHomeMediaItem(url: url, mediaType: mediaType));
     }
 
     if (playlist.isEmpty) {
-      _videoPlaylist = [];
-      _currentVideoIndex = 0;
+      _mediaPlaylist = [];
+      _currentMediaIndex = 0;
       _videoController?.dispose();
       _videoController = null;
       _videoReady = false;
       _isHlsWeb = false;
       _currentHlsUrl = null;
+      _mediaTimer?.cancel();
       if (mounted) {
         setState(() {});
       }
       return;
     }
 
-    _videoPlaylist = playlist;
-    _currentVideoIndex = 0;
-    _initVideo(_videoPlaylist[_currentVideoIndex]);
+    _mediaPlaylist = playlist;
+    _currentMediaIndex = 0;
+    _goToMediaIndex(0);
+  }
+
+  void _goToMediaIndex(int index) {
+    if (_mediaPlaylist.isEmpty) return;
+    _mediaTimer?.cancel();
+
+    _currentMediaIndex = index % _mediaPlaylist.length;
+    final item = _mediaPlaylist[_currentMediaIndex];
+
+    if (item.mediaType == 'image') {
+      _videoController?.dispose();
+      _videoController = null;
+      _isHlsWeb = false;
+      _currentHlsUrl = null;
+      _videoReady = true;
+      if (mounted) {
+        setState(() {});
+      }
+      _mediaTimer = Timer(_imageSlideDuration, _onMediaCompleted);
+    } else {
+      _initVideo(item.url);
+    }
   }
 
   Future<void> _initVideo(String url) async {
@@ -126,6 +176,16 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
         _isHlsWeb = true;
         _currentHlsUrl = url;
         _videoReady = true;
+      });
+      return;
+    }
+
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      setState(() {
+        _videoController = null;
+        _videoReady = true;
+        _isHlsWeb = false;
+        _currentHlsUrl = null;
       });
       return;
     }
@@ -178,18 +238,13 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   }
 
   void _onVideoCompleted() {
-    if (_videoPlaylist.isEmpty) return;
-    _currentVideoIndex = (_currentVideoIndex + 1) % _videoPlaylist.length;
-    final nextUrl = _videoPlaylist[_currentVideoIndex];
+    _onMediaCompleted();
+  }
 
-    if (kIsWeb && _isHlsWeb) {
-      setState(() {
-        _currentHlsUrl = nextUrl;
-      });
-      return;
-    }
-
-    _initVideo(nextUrl);
+  void _onMediaCompleted() {
+    if (_mediaPlaylist.isEmpty) return;
+    final nextIndex = (_currentMediaIndex + 1) % _mediaPlaylist.length;
+    _goToMediaIndex(nextIndex);
   }
 
   void _startTicker() {
@@ -304,10 +359,24 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                   currentHlsUrl: _currentHlsUrl,
                   onVideoCompleted: _onVideoCompleted,
                   videos: homeContent.videos,
-                  currentVideoUrl:
-                      _videoPlaylist.isNotEmpty && _currentVideoIndex < _videoPlaylist.length
-                          ? _videoPlaylist[_currentVideoIndex]
-                          : null,
+                  currentVideoUrl: () {
+                    if (_mediaPlaylist.isEmpty ||
+                        _currentMediaIndex < 0 ||
+                        _currentMediaIndex >= _mediaPlaylist.length) {
+                      return null;
+                    }
+                    final item = _mediaPlaylist[_currentMediaIndex];
+                    return item.mediaType == 'video' ? item.url : null;
+                  }(),
+                  currentImageUrl: () {
+                    if (_mediaPlaylist.isEmpty ||
+                        _currentMediaIndex < 0 ||
+                        _currentMediaIndex >= _mediaPlaylist.length) {
+                      return null;
+                    }
+                    final item = _mediaPlaylist[_currentMediaIndex];
+                    return item.mediaType == 'image' ? item.url : null;
+                  }(),
                 ),
               ),
               SliverToBoxAdapter(
@@ -318,6 +387,18 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                     announcements: homeContent.announcements,
                     fallbackAnnouncements: _fallbackAnnouncements,
                   ),
+                ),
+              ),
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: StudentShortTrainingsSection(),
+                ),
+              ),
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: StudentHomeOnlineCoursesSection(),
                 ),
               ),
             ];
@@ -490,6 +571,7 @@ class _StudentHomeHero extends StatelessWidget {
   final VoidCallback onVideoCompleted;
   final List<Map<String, dynamic>> videos;
   final String? currentVideoUrl;
+  final String? currentImageUrl;
 
   const _StudentHomeHero({
     required this.videoReady,
@@ -499,15 +581,17 @@ class _StudentHomeHero extends StatelessWidget {
     required this.onVideoCompleted,
     required this.videos,
     required this.currentVideoUrl,
+    required this.currentImageUrl,
   });
 
   @override
   Widget build(BuildContext context) {
     String? title;
-    if (currentVideoUrl != null && videos.isNotEmpty) {
+    final matchUrl = currentVideoUrl ?? currentImageUrl;
+    if (matchUrl != null && videos.isNotEmpty) {
       for (final v in videos) {
         final url = (v['video_url'] ?? '').toString().trim();
-        if (url == currentVideoUrl) {
+        if (url == matchUrl) {
           title = v['title']?.toString();
           break;
         }
@@ -533,26 +617,64 @@ class _StudentHomeHero extends StatelessWidget {
           child: Stack(
             children: [
               Positioned.fill(
-                child: videoReady && videoController != null
-                    ? FittedBox(
-                        fit: BoxFit.cover,
-                        child: SizedBox(
-                          width: videoController!.value.size.width,
-                          height: videoController!.value.size.height,
-                          child: VideoPlayer(videoController!),
-                        ),
-                      )
-                    : videoReady && isHlsWeb && kIsWeb && currentHlsUrl != null
-                        ? const SizedBox.shrink()
-                        : Container(
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
+                child: () {
+                  if (currentImageUrl != null) {
+                    return Image.network(
+                      currentImageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, _, __) {
+                        return Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
                           ),
+                        );
+                      },
+                    );
+                  }
+
+                  if (videoReady &&
+                      !kIsWeb &&
+                      defaultTargetPlatform == TargetPlatform.android &&
+                      currentVideoUrl != null) {
+                    return AcademiaVideoWidget(
+                      url: currentVideoUrl!,
+                      autoplay: true,
+                      loop: true,
+                      muted: true,
+                      showControls: false,
+                      resizeMode: 'cover',
+                    );
+                  }
+
+                  if (videoReady && videoController != null) {
+                    return FittedBox(
+                      fit: BoxFit.cover,
+                      child: SizedBox(
+                        width: videoController!.value.size.width,
+                        height: videoController!.value.size.height,
+                        child: VideoPlayer(videoController!),
+                      ),
+                    );
+                  }
+
+                  if (videoReady && isHlsWeb && kIsWeb && currentHlsUrl != null) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                  );
+                }(),
               ),
               if (videoReady && isHlsWeb && kIsWeb && currentHlsUrl != null)
                 Positioned.fill(
@@ -792,6 +914,13 @@ class _ProfileHeader extends StatelessWidget {
                     label: const Text('Mon profil'),
                   ),
                   IconButton(
+                    tooltip: 'Paramètres',
+                    icon: const Icon(Icons.settings),
+                    onPressed: () {
+                      NotificationSoundSettingsDialog.show(context);
+                    },
+                  ),
+                  IconButton(
                     tooltip: 'Se déconnecter',
                     icon: const Icon(Icons.logout),
                     onPressed: () async {
@@ -930,10 +1059,31 @@ class _OfferCard extends StatelessWidget {
                   onPressed: programId == null
                       ? null
                       : () async {
+                          final request = await showApplicationRequestDialog(
+                            context,
+                            programTitle: title,
+                            initialDegreeLevel:
+                                degree.isNotEmpty ? degree : null,
+                            initialStudyMode: mode.isNotEmpty ? mode : null,
+                          );
+                          if (!context.mounted) return;
+                          if (request == null) {
+                            return;
+                          }
+
                           final applicationsProvider =
                               context.read<StudentApplicationsProvider>();
                           final success = await applicationsProvider
-                              .createApplication(programId: programId);
+                              .createApplication(
+                            programId: programId,
+                            requestedDegreeLevel:
+                                request.requestedDegreeLevel,
+                            requestedStudyMode: request.requestedStudyMode,
+                            requestedSchedule: request.requestedSchedule,
+                            discountRequested: request.discountRequested,
+                            discountDetails: request.discountDetails,
+                            studentComment: request.studentComment,
+                          );
                           if (!context.mounted) return;
                           if (success) {
                             ScaffoldMessenger.of(context).showSnackBar(

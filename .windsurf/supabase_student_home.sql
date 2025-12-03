@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS app.student_home_videos (
     title TEXT,
     sort_order INTEGER,
     is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    media_type TEXT NOT NULL DEFAULT 'video',
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
@@ -163,6 +164,7 @@ DECLARE
     v_user_id UUID := auth.uid();
     v_role TEXT;
     v_id UUID;
+    v_video_url_trim TEXT;
 BEGIN
     IF v_user_id IS NULL THEN
         RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
@@ -256,7 +258,8 @@ CREATE OR REPLACE FUNCTION app_admin_upsert_student_home_video(
     p_video_url TEXT,
     p_title TEXT,
     p_sort_order INTEGER,
-    p_is_active BOOLEAN
+    p_is_active BOOLEAN,
+    p_media_type TEXT
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -266,6 +269,8 @@ DECLARE
     v_user_id UUID := auth.uid();
     v_role TEXT;
     v_id UUID;
+    v_video_url_trim TEXT;
+    v_media_type_trim TEXT;
 BEGIN
     IF v_user_id IS NULL THEN
         RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
@@ -280,21 +285,40 @@ BEGIN
         RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
     END IF;
 
-    IF p_video_url IS NULL OR LENGTH(TRIM(p_video_url)) = 0 THEN
+    v_video_url_trim := TRIM(COALESCE(p_video_url, ''));
+    v_media_type_trim := LOWER(TRIM(COALESCE(p_media_type, 'video')));
+
+    IF v_media_type_trim NOT IN ('video', 'image') THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_media_type');
+    END IF;
+
+    IF v_video_url_trim = '' THEN
         RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_video_url');
     END IF;
 
+    IF v_video_url_trim ILIKE '%stream.mux.com%' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'mux_not_allowed');
+    END IF;
+
+    IF v_video_url_trim LIKE 'http%' THEN
+        IF v_video_url_trim NOT LIKE 'https://thevdfcwlcqzdoybfvgs.supabase.co%' AND
+           v_video_url_trim NOT LIKE 'https://academia-app-production.up.railway.app/supabase%' THEN
+            RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'video_url_not_allowed');
+        END IF;
+    END IF;
+
     IF p_video_id IS NULL THEN
-        INSERT INTO app.student_home_videos (video_url, title, sort_order, is_active)
-        VALUES (p_video_url, p_title, p_sort_order, COALESCE(p_is_active, TRUE))
+        INSERT INTO app.student_home_videos (video_url, title, sort_order, is_active, media_type)
+        VALUES (v_video_url_trim, p_title, p_sort_order, COALESCE(p_is_active, TRUE), v_media_type_trim)
         RETURNING id INTO v_id;
     ELSE
         UPDATE app.student_home_videos
         SET
-            video_url = p_video_url,
+            video_url = v_video_url_trim,
             title = p_title,
             sort_order = p_sort_order,
             is_active = COALESCE(p_is_active, is_active),
+            media_type = v_media_type_trim,
             updated_at = NOW()
         WHERE id = p_video_id
         RETURNING id INTO v_id;
@@ -308,8 +332,8 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION app_admin_upsert_student_home_video(UUID, TEXT, TEXT, INTEGER, BOOLEAN) TO authenticated;
-GRANT EXECUTE ON FUNCTION app_admin_upsert_student_home_video(UUID, TEXT, TEXT, INTEGER, BOOLEAN) TO service_role;
+GRANT EXECUTE ON FUNCTION app_admin_upsert_student_home_video(UUID, TEXT, TEXT, INTEGER, BOOLEAN, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_upsert_student_home_video(UUID, TEXT, TEXT, INTEGER, BOOLEAN, TEXT) TO service_role;
 
 CREATE OR REPLACE FUNCTION app_admin_delete_student_home_video(
     p_video_id UUID

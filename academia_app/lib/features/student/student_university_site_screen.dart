@@ -7,6 +7,7 @@ import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart';
 import '../../widgets/mini_site_hero_video.dart';
 import 'mini_site_media_viewer_screen.dart';
+import 'application_request_dialog.dart';
 
 class StudentUniversitySiteScreen extends StatefulWidget {
   final String universitySlug;
@@ -984,10 +985,29 @@ class _ProgramCard extends StatelessWidget {
                   onPressed: programId == null
                       ? null
                       : () async {
+                          final request = await showApplicationRequestDialog(
+                            context,
+                            programTitle: title,
+                            initialDegreeLevel:
+                                degree.isNotEmpty ? degree : null,
+                            initialStudyMode: mode.isNotEmpty ? mode : null,
+                          );
+                          if (!context.mounted) return;
+                          if (request == null) {
+                            return;
+                          }
+
                           final applicationsProvider =
                               context.read<StudentApplicationsProvider>();
                           final success = await applicationsProvider.createApplication(
                             programId: programId,
+                            requestedDegreeLevel:
+                                request.requestedDegreeLevel,
+                            requestedStudyMode: request.requestedStudyMode,
+                            requestedSchedule: request.requestedSchedule,
+                            discountRequested: request.discountRequested,
+                            discountDetails: request.discountDetails,
+                            studentComment: request.studentComment,
                           );
                           if (!context.mounted) return;
                           if (success) {

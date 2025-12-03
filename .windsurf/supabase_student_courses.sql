@@ -494,12 +494,14 @@ CREATE TABLE IF NOT EXISTS app.course_resources (
     storage_bucket TEXT,
     storage_path TEXT,
     external_url TEXT,
-    mux_playback_id TEXT,
     sort_order INTEGER DEFAULT 0 NOT NULL,
     is_active BOOLEAN DEFAULT TRUE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
+
+ALTER TABLE app.course_resources
+    DROP COLUMN IF EXISTS mux_playback_id;
 
 ALTER TABLE app.course_resources ENABLE ROW LEVEL SECURITY;
 
@@ -564,7 +566,6 @@ BEGIN
                                                               'storage_bucket', r.storage_bucket,
                                                               'storage_path', r.storage_path,
                                                               'external_url', r.external_url,
-                                                              'mux_playback_id', r.mux_playback_id,
                                                               'sort_order', r.sort_order,
                                                               'created_at', r.created_at
                                                           )
@@ -657,7 +658,6 @@ BEGIN
                                                               'storage_bucket', r.storage_bucket,
                                                               'storage_path', r.storage_path,
                                                               'external_url', r.external_url,
-                                                              'mux_playback_id', r.mux_playback_id,
                                                               'sort_order', r.sort_order,
                                                               'is_active', r.is_active,
                                                               'created_at', r.created_at,
@@ -858,7 +858,6 @@ CREATE OR REPLACE FUNCTION app_admin_upsert_course_resource(
     p_storage_bucket TEXT,
     p_storage_path TEXT,
     p_external_url TEXT,
-    p_mux_playback_id TEXT,
     p_sort_order INTEGER,
     p_is_active BOOLEAN
 )
@@ -871,6 +870,12 @@ DECLARE
     v_role TEXT;
     v_resource_id UUID;
     v_unit_exists BOOLEAN;
+    v_type TEXT;
+    v_is_file BOOLEAN;
+    v_storage_bucket_trim TEXT;
+    v_storage_path_trim TEXT;
+    v_external_trim TEXT;
+    v_mux_trim TEXT;
 BEGIN
     IF v_user_id IS NULL THEN
         RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
@@ -905,6 +910,35 @@ BEGIN
         RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'unit_not_found');
     END IF;
 
+    v_type := LOWER(TRIM(COALESCE(p_resource_type, '')));
+    v_is_file := POSITION('video' IN v_type) > 0
+                 OR POSITION('vidéo' IN v_type) > 0
+                 OR POSITION('audio' IN v_type) > 0
+                 OR POSITION('document' IN v_type) > 0
+                 OR POSITION('doc' IN v_type) > 0
+                 OR POSITION('pdf' IN v_type) > 0
+                 OR POSITION('image' IN v_type) > 0;
+
+    v_storage_bucket_trim := TRIM(COALESCE(p_storage_bucket, ''));
+    v_storage_path_trim := TRIM(COALESCE(p_storage_path, ''));
+    v_external_trim := TRIM(COALESCE(p_external_url, ''));
+
+    IF v_is_file THEN
+        IF v_storage_bucket_trim = '' OR v_storage_path_trim = '' THEN
+            RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'storage_required');
+        END IF;
+
+        IF v_external_trim <> '' THEN
+            RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'external_url_not_allowed');
+        END IF;
+
+        IF v_storage_bucket_trim ILIKE '%stream.mux.com%'
+           OR v_storage_path_trim ILIKE '%stream.mux.com%'
+        THEN
+            RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'mux_not_allowed');
+        END IF;
+    END IF;
+
     IF p_resource_id IS NULL THEN
         INSERT INTO app.course_resources (
             unit_id,
@@ -914,7 +948,6 @@ BEGIN
             storage_bucket,
             storage_path,
             external_url,
-            mux_playback_id,
             sort_order,
             is_active
         )
@@ -926,7 +959,6 @@ BEGIN
             p_storage_bucket,
             p_storage_path,
             p_external_url,
-            p_mux_playback_id,
             COALESCE(p_sort_order, 0),
             COALESCE(p_is_active, TRUE)
         )
@@ -941,7 +973,6 @@ BEGIN
             storage_bucket = p_storage_bucket,
             storage_path = p_storage_path,
             external_url = p_external_url,
-            mux_playback_id = p_mux_playback_id,
             sort_order = COALESCE(p_sort_order, sort_order),
             is_active = COALESCE(p_is_active, is_active),
             updated_at = NOW()
@@ -957,8 +988,8 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION app_admin_upsert_course_resource(UUID, UUID, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, INTEGER, BOOLEAN) TO authenticated;
-GRANT EXECUTE ON FUNCTION app_admin_upsert_course_resource(UUID, UUID, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, INTEGER, BOOLEAN) TO service_role;
+GRANT EXECUTE ON FUNCTION app_admin_upsert_course_resource(UUID, UUID, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, INTEGER, BOOLEAN) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_upsert_course_resource(UUID, UUID, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, INTEGER, BOOLEAN) TO service_role;
 
 -- ========================================
 -- 10) VALIDATION RAPIDE DU MODULE COURS/EXERCICES/BIBLIOTHÈQUE

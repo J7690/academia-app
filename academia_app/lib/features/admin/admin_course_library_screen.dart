@@ -401,6 +401,14 @@ class _AdminCourseLibraryScreenState extends State<AdminCourseLibraryScreen> {
     final description = res['description']?.toString() ?? '';
     final type = (res['resource_type'] ?? '').toString().toLowerCase();
     final isActive = res['is_active'] != false;
+    final storagePath = res['storage_path']?.toString() ?? '';
+    String fileName = '';
+    if (storagePath.isNotEmpty) {
+      final segments = storagePath.split('/');
+      if (segments.isNotEmpty) {
+        fileName = segments.last;
+      }
+    }
 
     IconData icon;
     Color cardColor;
@@ -420,7 +428,20 @@ class _AdminCourseLibraryScreenState extends State<AdminCourseLibraryScreen> {
       tileColor: cardColor,
       leading: Icon(icon, color: const Color(0xFF1EA75C)),
       title: Text(title),
-      subtitle: description.isNotEmpty ? Text(description) : null,
+      subtitle: (description.isEmpty && fileName.isEmpty)
+          ? null
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (description.isNotEmpty) Text(description),
+                if (fileName.isNotEmpty)
+                  Text(
+                    fileName,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+              ],
+            ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -672,8 +693,6 @@ class _AdminCourseLibraryScreenState extends State<AdminCourseLibraryScreen> {
         TextEditingController(text: existing?['storage_path']?.toString() ?? '');
     final externalUrlController =
         TextEditingController(text: existing?['external_url']?.toString() ?? '');
-    final muxPlaybackIdController =
-        TextEditingController(text: existing?['mux_playback_id']?.toString() ?? '');
     final sortController = TextEditingController(
       text: existing?['sort_order']?.toString() ?? '',
     );
@@ -684,6 +703,14 @@ class _AdminCourseLibraryScreenState extends State<AdminCourseLibraryScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
+            final lowerType = typeController.text.toLowerCase();
+            final isFileResource = lowerType.contains('video') ||
+                lowerType.contains('vidéo') ||
+                lowerType.contains('audio') ||
+                lowerType.contains('document') ||
+                lowerType.contains('doc') ||
+                lowerType.contains('pdf') ||
+                lowerType.contains('image');
             return AlertDialog(
               title:
                   Text(existing == null ? 'Nouvelle ressource' : 'Modifier la ressource'),
@@ -710,6 +737,9 @@ class _AdminCourseLibraryScreenState extends State<AdminCourseLibraryScreen> {
                         labelText:
                             'Type de ressource (obligatoire : video, audio, document, ...)',
                       ),
+                      onChanged: (_) {
+                        setStateDialog(() {});
+                      },
                     ),
                     const SizedBox(height: 12),
                     Align(
@@ -772,11 +802,35 @@ class _AdminCourseLibraryScreenState extends State<AdminCourseLibraryScreen> {
                           setStateDialog(() {
                             storageBucketController.text =
                                 uploadResult['bucket'] ?? '';
-                            storagePathController.text = uploadResult['path'] ?? '';
+                            storagePathController.text =
+                                uploadResult['path'] ?? '';
+
+                            if (titleController.text.trim().isEmpty) {
+                              final baseName = file.name;
+                              final dotIndex = baseName.lastIndexOf('.');
+                              final withoutExt = dotIndex > 0
+                                  ? baseName.substring(0, dotIndex)
+                                  : baseName;
+                              titleController.text = withoutExt;
+                            }
+
+                            if (typeController.text.trim().isEmpty) {
+                              final ext = (file.extension ?? '').toLowerCase();
+                              if (ext == 'mp3') {
+                                typeController.text = 'audio';
+                              } else if (ext == 'mp4' ||
+                                  ext == 'mov' ||
+                                  ext == 'webm') {
+                                typeController.text = 'video';
+                              } else {
+                                typeController.text = 'document';
+                              }
+                            }
                           });
                         },
                         icon: const Icon(Icons.upload_file),
-                        label: const Text('Uploader un fichier (Supabase Storage)'),
+                        label:
+                            const Text('Uploader un fichier (Supabase Storage)'),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -793,21 +847,15 @@ class _AdminCourseLibraryScreenState extends State<AdminCourseLibraryScreen> {
                         labelText: 'Chemin storage (optionnel)',
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: externalUrlController,
-                      decoration: const InputDecoration(
-                        labelText: 'URL externe (optionnel)',
+                    if (!isFileResource) ...[
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: externalUrlController,
+                        decoration: const InputDecoration(
+                          labelText: 'URL externe (optionnel)',
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: muxPlaybackIdController,
-                      decoration: const InputDecoration(
-                        labelText:
-                            'Mux playback ID (optionnel, ex: abc123... pour stream.mux.com)',
-                      ),
-                    ),
+                    ],
                     const SizedBox(height: 8),
                     TextField(
                       controller: sortController,
@@ -853,6 +901,14 @@ class _AdminCourseLibraryScreenState extends State<AdminCourseLibraryScreen> {
 
     final title = titleController.text.trim();
     final type = typeController.text.trim();
+    final lowerType = type.toLowerCase();
+    final isFileResource = lowerType.contains('video') ||
+        lowerType.contains('vidéo') ||
+        lowerType.contains('audio') ||
+        lowerType.contains('document') ||
+        lowerType.contains('doc') ||
+        lowerType.contains('pdf') ||
+        lowerType.contains('image');
 
     if (title.isEmpty) {
       if (context.mounted) {
@@ -878,6 +934,23 @@ class _AdminCourseLibraryScreenState extends State<AdminCourseLibraryScreen> {
       return;
     }
 
+    if (isFileResource) {
+      final bucket = storageBucketController.text.trim();
+      final path = storagePathController.text.trim();
+      if (bucket.isEmpty || path.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Pour les vidéos, audios et documents, un fichier doit être uploadé (bucket + chemin).',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+    }
+
     final sortOrder = int.tryParse(sortController.text.trim());
     final success = await provider.upsertResource(
       resourceId: existing?['resource_id']?.toString(),
@@ -896,14 +969,11 @@ class _AdminCourseLibraryScreenState extends State<AdminCourseLibraryScreen> {
           storagePathController.text.trim().isEmpty
               ? null
               : storagePathController.text.trim(),
-      externalUrl:
-          externalUrlController.text.trim().isEmpty
+      externalUrl: isFileResource
+          ? null
+          : (externalUrlController.text.trim().isEmpty
               ? null
-              : externalUrlController.text.trim(),
-      muxPlaybackId:
-          muxPlaybackIdController.text.trim().isEmpty
-              ? null
-              : muxPlaybackIdController.text.trim(),
+              : externalUrlController.text.trim()),
       sortOrder: sortOrder,
       isActive: isActive,
     );
@@ -926,6 +996,18 @@ class _AdminCourseLibraryScreenState extends State<AdminCourseLibraryScreen> {
         case 'unit_not_found':
           message =
               'Supabase: la sous-matière associée à cette ressource est introuvable (unit_not_found).';
+          break;
+        case 'storage_required':
+          message =
+              'Supabase: un fichier uploadé (storage_bucket + storage_path) est obligatoire pour ce type de ressource (storage_required).';
+          break;
+        case 'external_url_not_allowed':
+          message =
+              'Supabase: les URLs externes ne sont pas autorisées pour ce type de ressource (external_url_not_allowed).';
+          break;
+        case 'mux_not_allowed':
+          message =
+              'Supabase: Mux n\'est plus autorisé comme source vidéo (mux_not_allowed).';
           break;
         case 'not_admin':
           message =

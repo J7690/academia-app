@@ -37,6 +37,156 @@ class _AdminApplicationDetailScreenState extends State<AdminApplicationDetailScr
     super.dispose();
   }
 
+  Future<void> _showEditPreferencesDialog(BuildContext context) async {
+    final app = widget.application;
+    final initialDegree =
+        (app['requested_degree_level']?.toString() ?? '').trim();
+    final initialMode =
+        (app['requested_study_mode']?.toString() ?? '').trim();
+    final initialSchedule =
+        (app['requested_schedule']?.toString() ?? '').trim();
+    final initialDiscountRequested = app['discount_requested'] == true;
+    final initialDiscountDetails =
+        (app['discount_details']?.toString() ?? '').trim();
+
+    final degreeController = TextEditingController(text: initialDegree);
+    final modeController = TextEditingController(text: initialMode);
+    final scheduleController = TextEditingController(text: initialSchedule);
+    final discountDetailsController =
+        TextEditingController(text: initialDiscountDetails);
+
+    bool discountRequested = initialDiscountRequested;
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Modifier les préférences de candidature'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: degreeController,
+                      decoration: const InputDecoration(
+                        labelText: "Niveau d'étude souhaité",
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: modeController,
+                      decoration: const InputDecoration(
+                        labelText:
+                            "Mode d'étude souhaité (présentiel, en ligne, etc.)",
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: scheduleController,
+                      maxLines: 2,
+                      decoration: const InputDecoration(
+                        labelText: 'Disponibilités / horaires préférés',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: discountRequested,
+                      onChanged: (value) {
+                        setState(() {
+                          discountRequested = value ?? false;
+                        });
+                      },
+                      title: const Text(
+                        'Demande de réduction ou échelonnement des frais',
+                      ),
+                    ),
+                    if (discountRequested) ...[
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: discountDetailsController,
+                        maxLines: 3,
+                        decoration: const InputDecoration(
+                          labelText:
+                              'Détail de la demande de réduction / échelonnement',
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Annuler'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final appId = app['id']?.toString();
+                    if (appId == null || appId.isEmpty) {
+                      Navigator.of(context).pop();
+                      return;
+                    }
+
+                    final provider =
+                        context.read<AdminApplicationsProvider>();
+                    final ok = await provider.updateApplicationPreferences(
+                      applicationId: appId,
+                      requestedDegreeLevel: degreeController.text,
+                      requestedStudyMode: modeController.text,
+                      requestedSchedule: scheduleController.text,
+                      discountRequested: discountRequested,
+                      discountDetails: discountDetailsController.text,
+                    );
+
+                    if (!mounted) return;
+                    if (ok) {
+                      setState(() {
+                        app['requested_degree_level'] =
+                            degreeController.text.trim();
+                        app['requested_study_mode'] =
+                            modeController.text.trim();
+                        app['requested_schedule'] =
+                            scheduleController.text.trim();
+                        app['discount_requested'] = discountRequested;
+                        app['discount_details'] =
+                            discountDetailsController.text.trim();
+                      });
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Préférences de candidature mises à jour.',
+                          ),
+                        ),
+                      );
+                      Navigator.of(context).pop();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            provider.error ??
+                                'Erreur lors de la mise à jour des préférences.',
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Enregistrer'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final app = widget.application;
@@ -44,6 +194,26 @@ class _AdminApplicationDetailScreenState extends State<AdminApplicationDetailScr
     final programTitle = app['program_title']?.toString() ?? '';
     final universityName = app['university_name']?.toString() ?? '';
     final status = app['status']?.toString() ?? '';
+    final sentToUniversity = app['sent_to_university'] == true;
+    final sentToUniversityAt =
+        (app['sent_to_university_at']?.toString() ?? '').trim();
+    final requestedDegree =
+        (app['requested_degree_level']?.toString() ?? '').trim();
+    final requestedMode =
+        (app['requested_study_mode']?.toString() ?? '').trim();
+    final requestedSchedule =
+        (app['requested_schedule']?.toString() ?? '').trim();
+    final discountRequested = app['discount_requested'] == true;
+    final discountDetails =
+        (app['discount_details']?.toString() ?? '').trim();
+    final studentComment =
+        (app['student_comment']?.toString() ?? '').trim();
+    final hasPreferencesSection =
+        requestedDegree.isNotEmpty ||
+        requestedMode.isNotEmpty ||
+        requestedSchedule.isNotEmpty ||
+        discountRequested ||
+        studentComment.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
@@ -63,6 +233,110 @@ class _AdminApplicationDetailScreenState extends State<AdminApplicationDetailScr
                 Text('Étudiant : $studentName'),
                 const SizedBox(height: 4),
                 Text('Statut : $status'),
+                const SizedBox(height: 4),
+                Text(
+                  sentToUniversity
+                      ? (sentToUniversityAt.isNotEmpty
+                          ? "Transmise à l'université le $sentToUniversityAt"
+                          : "Transmise à l'université")
+                      : "Pas encore transmise à l'université",
+                ),
+                if (hasPreferencesSection) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'Préférences de candidature',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (requestedDegree.isNotEmpty)
+                            Text('Niveau souhaité : $requestedDegree'),
+                          if (requestedMode.isNotEmpty)
+                            Text('Mode souhaité : $requestedMode'),
+                          if (requestedSchedule.isNotEmpty)
+                            Text('Horaires souhaités : $requestedSchedule'),
+                          if (discountRequested) ...[
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Demande de réduction / échelonnement des frais',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            if (discountDetails.isNotEmpty)
+                              Text(discountDetails),
+                          ],
+                          if (studentComment.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Commentaire de l\'étudiant',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            Text(studentComment),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      TextButton.icon(
+                        onPressed: () {
+                          _showEditPreferencesDialog(context);
+                        },
+                        icon: const Icon(Icons.edit),
+                        label: const Text('Modifier les préférences'),
+                      ),
+                      const SizedBox(width: 8),
+                      if (!sentToUniversity)
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final appId = app['id']?.toString();
+                            if (appId == null || appId.isEmpty) return;
+
+                            final provider =
+                                context.read<AdminApplicationsProvider>();
+                            final ok = await provider
+                                .forwardApplicationToUniversity(
+                              applicationId: appId,
+                            );
+
+                            if (!mounted) return;
+                            if (ok) {
+                              setState(() {
+                                app['sent_to_university'] = true;
+                                app['sent_to_university_at'] =
+                                    DateTime.now().toIso8601String();
+                              });
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "Candidature transmise à l'université.",
+                                  ),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    provider.error ??
+                                        "Erreur lors de la transmission de la candidature à l'université.",
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.send),
+                          label: const Text("Transmettre à l'université"),
+                        ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

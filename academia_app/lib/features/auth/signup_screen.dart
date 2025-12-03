@@ -13,6 +13,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _firstNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _invitationCodeController = TextEditingController();
   bool _isLoading = false;
   String? _error;
 
@@ -22,6 +23,7 @@ class _SignupScreenState extends State<SignupScreen> {
     _firstNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _invitationCodeController.dispose();
     super.dispose();
   }
 
@@ -30,6 +32,7 @@ class _SignupScreenState extends State<SignupScreen> {
     final firstName = _firstNameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
+    final invitationCode = _invitationCodeController.text.trim();
 
     if (lastName.isEmpty || firstName.isEmpty || email.isEmpty || password.isEmpty) {
       setState(() {
@@ -45,7 +48,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
     try {
       final fullName = '$firstName $lastName';
-      await Supabase.instance.client.auth.signUp(
+      final client = Supabase.instance.client;
+      await client.auth.signUp(
         email: email,
         password: password,
         data: {
@@ -53,6 +57,30 @@ class _SignupScreenState extends State<SignupScreen> {
           'full_name': fullName,
         },
       );
+
+      if (invitationCode.isNotEmpty) {
+        try {
+          final dynamic response = await client.rpc(
+            'app_accept_user_invitation',
+            params: {
+              'p_token': invitationCode,
+              'p_full_name': fullName,
+            },
+          );
+          if (response is Map && response['success'] != true) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    response['error']?.toString() ??
+                        'Erreur lors de la validation de l\'invitation.',
+                  ),
+                ),
+              );
+            }
+          }
+        } catch (_) {}
+      }
       if (mounted) {
         Navigator.of(context).pop();
       }
@@ -117,7 +145,13 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   obscureText: true,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _invitationCodeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Code d\'invitation (optionnel)',
+                  ),
+                ),
                 const SizedBox(height: 24),
                 if (_error != null) ...[
                   Text(

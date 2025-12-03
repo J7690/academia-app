@@ -476,6 +476,10 @@ DECLARE
     v_role TEXT;
     v_university_id UUID;
     v_media_id UUID;
+    v_type TEXT;
+    v_is_file BOOLEAN;
+    v_url_trim TEXT;
+    v_storage_path_trim TEXT;
 BEGIN
     IF v_user_id IS NULL THEN
         RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
@@ -500,6 +504,31 @@ BEGIN
         RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_media_type');
     END IF;
 
+    v_type := LOWER(TRIM(COALESCE(p_media_type, '')));
+    v_is_file := POSITION('video' IN v_type) > 0
+                 OR POSITION('image' IN v_type) > 0
+                 OR POSITION('brochure' IN v_type) > 0
+                 OR POSITION('pdf' IN v_type) > 0
+                 OR POSITION('doc' IN v_type) > 0;
+
+    v_url_trim := TRIM(COALESCE(p_url, ''));
+    v_storage_path_trim := TRIM(COALESCE(p_storage_path, ''));
+
+    IF v_is_file THEN
+        IF v_storage_path_trim = '' THEN
+            RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'storage_required');
+        END IF;
+
+        IF v_url_trim ILIKE '%stream.mux.com%' THEN
+            RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'mux_not_allowed');
+        END IF;
+
+        IF v_url_trim LIKE 'http%' AND
+           v_url_trim NOT LIKE 'https://thevdfcwlcqzdoybfvgs.supabase.co%' THEN
+            RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'media_url_not_allowed');
+        END IF;
+    END IF;
+
     IF p_media_id IS NULL THEN
         INSERT INTO app.university_media (
             university_id,
@@ -517,8 +546,8 @@ BEGIN
             p_media_type,
             p_title,
             p_description,
-            p_url,
-            p_storage_path,
+            v_url_trim,
+            v_storage_path_trim,
             p_thumbnail_url,
             COALESCE(p_sort_order, 0),
             COALESCE(p_is_active, TRUE)

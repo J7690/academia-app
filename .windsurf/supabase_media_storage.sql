@@ -22,15 +22,37 @@ USING (
 
 -- Écriture par les utilisateurs authentifiés (universités, admin)
 DROP POLICY IF EXISTS authenticated_write_university_media ON storage.objects;
-CREATE POLICY authenticated_write_university_media
+DROP POLICY IF EXISTS authenticated_write_university_media_insert ON storage.objects;
+DROP POLICY IF EXISTS authenticated_write_university_media_update ON storage.objects;
+DROP POLICY IF EXISTS authenticated_write_university_media_delete ON storage.objects;
+
+CREATE POLICY authenticated_write_university_media_insert
 ON storage.objects
 AS PERMISSIVE
-FOR INSERT, UPDATE, DELETE
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'university-media'
+);
+
+CREATE POLICY authenticated_write_university_media_update
+ON storage.objects
+AS PERMISSIVE
+FOR UPDATE
 TO authenticated
 USING (
   bucket_id = 'university-media'
 )
 WITH CHECK (
+  bucket_id = 'university-media'
+);
+
+CREATE POLICY authenticated_write_university_media_delete
+ON storage.objects
+AS PERMISSIVE
+FOR DELETE
+TO authenticated
+USING (
   bucket_id = 'university-media'
 );
 
@@ -52,14 +74,88 @@ USING (
 
 -- Écriture réservée aux utilisateurs authentifiés (admin)
 DROP POLICY IF EXISTS authenticated_write_landing_media ON storage.objects;
-CREATE POLICY authenticated_write_landing_media
+DROP POLICY IF EXISTS authenticated_write_landing_media_insert ON storage.objects;
+DROP POLICY IF EXISTS authenticated_write_landing_media_update ON storage.objects;
+DROP POLICY IF EXISTS authenticated_write_landing_media_delete ON storage.objects;
+
+CREATE POLICY authenticated_write_landing_media_insert
 ON storage.objects
 AS PERMISSIVE
-FOR INSERT, UPDATE, DELETE
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'landing-media'
+);
+
+CREATE POLICY authenticated_write_landing_media_update
+ON storage.objects
+AS PERMISSIVE
+FOR UPDATE
 TO authenticated
 USING (
   bucket_id = 'landing-media'
 )
 WITH CHECK (
   bucket_id = 'landing-media'
+);
+
+CREATE POLICY authenticated_write_landing_media_delete
+ON storage.objects
+AS PERMISSIVE
+FOR DELETE
+TO authenticated
+USING (
+  bucket_id = 'landing-media'
+);
+
+-- 3) Bucket pour les médias des vidéos de challenges
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('challenge-media', 'challenge-media', TRUE)
+ON CONFLICT (id) DO NOTHING;
+
+-- Lecture publique (vidéos de challenges)
+DROP POLICY IF EXISTS public_read_challenge_media ON storage.objects;
+CREATE POLICY public_read_challenge_media
+ON storage.objects
+AS PERMISSIVE
+FOR SELECT
+TO anon, authenticated
+USING (
+  bucket_id = 'challenge-media'
+);
+
+-- Écriture réservée aux utilisateurs authentifiés (vidéos de challenges)
+DROP POLICY IF EXISTS authenticated_write_challenge_media ON storage.objects;
+DROP POLICY IF EXISTS authenticated_write_challenge_media_insert ON storage.objects;
+DROP POLICY IF EXISTS authenticated_write_challenge_media_update ON storage.objects;
+DROP POLICY IF EXISTS authenticated_write_challenge_media_delete ON storage.objects;
+
+CREATE POLICY authenticated_write_challenge_media_insert
+ON storage.objects
+AS PERMISSIVE
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'challenge-media'
+);
+
+CREATE POLICY authenticated_write_challenge_media_update
+ON storage.objects
+AS PERMISSIVE
+FOR UPDATE
+TO authenticated
+USING (
+  bucket_id = 'challenge-media'
+)
+WITH CHECK (
+  bucket_id = 'challenge-media'
+);
+
+CREATE POLICY authenticated_write_challenge_media_delete
+ON storage.objects
+AS PERMISSIVE
+FOR DELETE
+TO authenticated
+USING (
+  bucket_id = 'challenge-media'
 );

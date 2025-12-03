@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -23,85 +26,247 @@ class _AdminStudentHomeScreenState extends State<AdminStudentHomeScreen> {
     StudentHomeContentProvider provider, {
     Map<String, dynamic>? existing,
   }) async {
-    final urlController =
-        TextEditingController(text: existing?['video_url']?.toString() ?? '');
+    String uploadedUrl = existing?['video_url']?.toString() ?? '';
     final titleController =
         TextEditingController(text: existing?['title']?.toString() ?? '');
     final sortController = TextEditingController(
       text: existing?['sort_order']?.toString() ?? '',
     );
     bool isActive = existing == null || existing['is_active'] != false;
+    String mediaType = ((existing?['media_type'] ?? 'video')
+                .toString()
+                .toLowerCase() ==
+            'image')
+        ? 'image'
+        : 'video';
+
+    print(
+      'AdminStudentHome: open media dialog '
+      'existingId=${existing?['id']} '
+      'initialMediaType=$mediaType '
+      'initialUrl=$uploadedUrl',
+    );
 
     final result = await showDialog<bool>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text(
-            existing == null
-                ? 'Nouvelle vidéo (accueil étudiant)'
-                : 'Modifier la vidéo',
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: urlController,
-                  decoration: const InputDecoration(
-                    labelText: 'URL vidéo (mp4, webm, m3u8...)',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Titre (facultatif)',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: sortController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Ordre (optionnel)',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Text(
+                existing == null
+                    ? 'Nouveau média (accueil étudiant)'
+                    : 'Modifier le média',
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Active'),
-                    const Spacer(),
-                    Switch(
-                      value: isActive,
-                      onChanged: (v) {
-                        isActive = v;
-                        (context as Element).markNeedsBuild();
-                      },
+                    Row(
+                      children: [
+                        const Text('Type de média'),
+                        const SizedBox(width: 12),
+                        DropdownButton<String>(
+                          value: mediaType,
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setStateDialog(() {
+                              mediaType = value;
+                              uploadedUrl = '';
+                            });
+                          },
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'video',
+                              child: Text('Vidéo'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'image',
+                              child: Text('Image'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final isImage = mediaType == 'image';
+                          print(
+                            'AdminStudentHome: pick file '
+                            'isImage=$isImage mediaType=$mediaType',
+                          );
+                          final result = await FilePicker.platform.pickFiles(
+                            allowMultiple: false,
+                            withData: true,
+                            type: FileType.custom,
+                            allowedExtensions: isImage
+                                ? const ['jpg', 'jpeg', 'png', 'webp']
+                                : const ['mp4', 'mov', 'webm'],
+                          );
+
+                          if (result == null || result.files.isEmpty) {
+                            return;
+                          }
+
+                          final file = result.files.first;
+                          final bytes = file.bytes;
+                          print(
+                            'AdminStudentHome: file picked '
+                            'name=${file.name} size=${file.size} '
+                            'extension=${file.extension}',
+                          );
+                          const maxSizeBytes = 200 * 1024 * 1024;
+                          if (file.size > maxSizeBytes) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Fichier trop volumineux (max 200 Mo).',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          if (bytes == null) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Impossible de lire le contenu du fichier.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          print(
+                            'AdminStudentHome: calling '
+                            'uploadStudentHomeFile for ${file.name}',
+                          );
+                          final publicUrl = await provider.uploadStudentHomeFile(
+                            bytes: Uint8List.fromList(bytes),
+                            fileName: file.name,
+                            mimeType: file.extension,
+                            folder: 'hero-videos',
+                          );
+
+                          if (!context.mounted) return;
+
+                          if (publicUrl == null) {
+                            print(
+                              'AdminStudentHome: uploadStudentHomeFile '
+                              'returned null, error=${provider.error}',
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  provider.error ??
+                                      'Erreur lors de l\'upload du média d\'accueil.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          setStateDialog(() {
+                            uploadedUrl = publicUrl;
+                          });
+                          print(
+                            'AdminStudentHome: uploadedUrl set '
+                            'mediaType=$mediaType url=$uploadedUrl',
+                          );
+                        },
+                        icon: const Icon(Icons.upload_file),
+                        label:
+                            const Text('Uploader un média (Supabase Storage)'),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        uploadedUrl.isNotEmpty
+                            ? (mediaType == 'image'
+                                ? 'Image sélectionnée.'
+                                : 'Vidéo sélectionnée.')
+                            : 'Aucun média sélectionné.',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Titre (facultatif)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: sortController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Ordre (optionnel)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Text('Active'),
+                        const Spacer(),
+                        Switch(
+                          value: isActive,
+                          onChanged: (v) {
+                            setStateDialog(() {
+                              isActive = v;
+                            });
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Annuler'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Enregistrer'),
+                ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Enregistrer'),
-            ),
-          ],
+            );
+          },
         );
       },
     );
 
     if (result != true) return;
-    final url = urlController.text.trim();
-    if (url.isEmpty) return;
+    final url = uploadedUrl.trim();
+    if (url.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Un média doit être uploadé pour l\'accueil étudiant.',
+            ),
+          ),
+        );
+      }
+      return;
+    }
 
     final sortOrder = int.tryParse(sortController.text.trim());
+    print(
+      'AdminStudentHome: saving media '
+      'existingId=${existing?['id']} url=$url '
+      'mediaType=$mediaType sortOrder=$sortOrder '
+      'isActive=$isActive',
+    );
     await provider.upsertVideo(
       videoId: existing?['id']?.toString(),
       videoUrl: url,
@@ -109,6 +274,7 @@ class _AdminStudentHomeScreenState extends State<AdminStudentHomeScreen> {
           titleController.text.trim().isEmpty ? null : titleController.text.trim(),
       sortOrder: sortOrder,
       isActive: isActive,
+      mediaType: mediaType,
     );
   }
 
