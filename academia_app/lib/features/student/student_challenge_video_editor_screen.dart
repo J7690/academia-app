@@ -172,6 +172,8 @@ class _StudentChallengeVideoEditorScreenState
         _videoController?.dispose();
         _videoController = null;
       });
+
+      await _uploadVideo();
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -346,6 +348,12 @@ class _StudentChallengeVideoEditorScreenState
       _videoController?.dispose();
       _videoController = null;
     });
+
+    if (!mounted) {
+      return;
+    }
+
+    await _uploadVideo();
   }
 
   Future<void> _uploadVideo() async {
@@ -1049,6 +1057,595 @@ class _StudentChallengeVideoEditorScreenState
         });
       }
     }
+  }
+
+  Future<void> _openAcademicPersonalizationSheet() async {
+    if (_isSubmitting || _isUploading) {
+      return;
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      builder: (sheetContext) {
+        final theme = Theme.of(sheetContext);
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+          ),
+          child: SingleChildScrollView(
+            child: _buildAcademicPersonalizationContent(theme),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAcademicPersonalizationContent(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Personnalisation académique',
+          style: theme.textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _backgroundTheme,
+          decoration: const InputDecoration(
+            labelText: 'Thème de fond',
+            border: OutlineInputBorder(),
+          ),
+          items: const [
+            DropdownMenuItem(
+              value: 'universite-vert',
+              child: Text('Fond universitaire vert'),
+            ),
+            DropdownMenuItem(
+              value: 'universite-bleu',
+              child: Text('Fond universitaire bleu'),
+            ),
+            DropdownMenuItem(
+              value: 'tableau-noir',
+              child: Text('Tableau noir / équations'),
+            ),
+          ],
+          onChanged: _isSubmitting
+              ? null
+              : (value) {
+                  if (value == null) return;
+                  setState(() {
+                    _backgroundTheme = value;
+                  });
+                },
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            ChoiceChip(
+              label: const Text('Sans filtre'),
+              selected: _selectedFilter == 'none',
+              onSelected: _isSubmitting
+                  ? null
+                  : (v) {
+                      if (!v) return;
+                      setState(() {
+                        _selectedFilter = 'none';
+                      });
+                    },
+            ),
+            ChoiceChip(
+              label: const Text('Chaud'),
+              selected: _selectedFilter == 'warm',
+              onSelected: _isSubmitting
+                  ? null
+                  : (v) {
+                      if (!v) return;
+                      setState(() {
+                        _selectedFilter = 'warm';
+                      });
+                    },
+            ),
+            ChoiceChip(
+              label: const Text('Froid'),
+              selected: _selectedFilter == 'cool',
+              onSelected: _isSubmitting
+                  ? null
+                  : (v) {
+                      if (!v) return;
+                      setState(() {
+                        _selectedFilter = 'cool';
+                      });
+                    },
+            ),
+            ChoiceChip(
+              label: const Text('Noir & blanc'),
+              selected: _selectedFilter == 'bw',
+              onSelected: _isSubmitting
+                  ? null
+                  : (v) {
+                      if (!v) return;
+                      setState(() {
+                        _selectedFilter = 'bw';
+                      });
+                    },
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _overlayTextController,
+          maxLines: 2,
+          decoration: const InputDecoration(
+            labelText: 'Texte à afficher (titre, explication courte)',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: _isSubmitting || _isUploading ? null : _openTextsEditor,
+            icon: const Icon(Icons.edit_note),
+            label: const Text('Éditer les textes en détails'),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            onPressed: _isSubmitting || _isUploading ? null : _openArStudio,
+            icon: const Icon(Icons.view_in_ar),
+            label: const Text('Ouvrir le Studio AR 3D'),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          children: [
+            ChoiceChip(
+              label: const Text('Sans sticker'),
+              selected: _selectedSticker == 'none',
+              onSelected: _isSubmitting
+                  ? null
+                  : (v) {
+                      if (!v) return;
+                      setState(() {
+                        _selectedSticker = 'none';
+                      });
+                    },
+            ),
+            ChoiceChip(
+              label: const Text('⭐'),
+              selected: _selectedSticker == 'star',
+              onSelected: _isSubmitting
+                  ? null
+                  : (v) {
+                      if (!v) return;
+                      setState(() {
+                        _selectedSticker = 'star';
+                      });
+                    },
+            ),
+            ChoiceChip(
+              label: const Text('❤'),
+              selected: _selectedSticker == 'heart',
+              onSelected: _isSubmitting
+                  ? null
+                  : (v) {
+                      if (!v) return;
+                      setState(() {
+                        _selectedSticker = 'heart';
+                      });
+                    },
+            ),
+            ChoiceChip(
+              label: const Text('💡'),
+              selected: _selectedSticker == 'idea',
+              onSelected: _isSubmitting
+                  ? null
+                  : (v) {
+                      if (!v) return;
+                      setState(() {
+                        _selectedSticker = 'idea';
+                      });
+                    },
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _equationController,
+          maxLines: 2,
+          decoration: const InputDecoration(
+            labelText: 'Équation (LaTeX ou texte mathématique)',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _subtitleController,
+          maxLines: 2,
+          decoration: const InputDecoration(
+            labelText: 'Sous-titres / explication orale (court)',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed:
+                _isSubmitting || _isUploading ? null : _openSubtitlesEditor,
+            icon: const Icon(Icons.edit_note),
+            label: const Text('Éditer les sous-titres en détails'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openIaToolsSheet() async {
+    if (_isSubmitting || _isUploading) {
+      return;
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      builder: (sheetContext) {
+        final theme = Theme.of(sheetContext);
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Outils IA du Studio',
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Lance les sous-titres IA, l’analyse pédagogique et la correction du texte affiché.',
+                  style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed:
+                          _isTranscribing || _isSubmitting || _isUploading
+                              ? null
+                              : _runTranscription,
+                      icon: _isTranscribing
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.subtitles),
+                      label: const Text('Générer les sous-titres (IA)'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed:
+                          _isAnalyzing || _isSubmitting || _isUploading
+                              ? null
+                              : _runAnalysis,
+                      icon: _isAnalyzing
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.school),
+                      label: const Text('Analyser pédagogiquement'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed:
+                          _isProofreading || _isSubmitting || _isUploading
+                              ? null
+                              : _runProofreadOverlayText,
+                      icon: _isProofreading
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.spellcheck),
+                      label: const Text('Corriger le texte affiché'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(sheetContext).pop(),
+                    child: const Text('Fermer'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openAudioStudioSheet() async {
+    if (_isSubmitting || _isUploading) {
+      return;
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      builder: (sheetContext) {
+        final theme = Theme.of(sheetContext);
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Audio du Studio',
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                _buildAudioStudioContent(theme),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(sheetContext).pop(),
+                    child: const Text('Fermer'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAudioStudioContent(ThemeData theme) {
+    return FutureBuilder<void>(
+      future: _audioAssetsLoaded ? null : _loadAudioAssetsIfNeeded(),
+      builder: (context, snapshot) {
+        if (_isLoadingAudioAssets) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: LinearProgressIndicator(),
+          );
+        }
+
+        if (_audioAssets.isEmpty) {
+          return const Text(
+            'Aucune piste audio Studio n’est disponible pour le moment.',
+            style: TextStyle(fontSize: 13),
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final asset in _audioAssets)
+                  Builder(
+                    builder: (context) {
+                      final id = asset['id']?.toString() ?? '';
+                      final label = asset['label']?.toString() ?? '';
+                      final category = asset['category']?.toString() ?? '';
+                      final selected =
+                          _timelineTracks.any((t) => t.id == id);
+                      if (id.isEmpty || label.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return ChoiceChip(
+                        label: Text(
+                          category.isEmpty
+                              ? label
+                              : '$label ($category)',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        selected: selected,
+                        onSelected: _isRenderingAudio || _isSubmitting
+                            ? null
+                            : (v) {
+                                if (!v) return;
+                                _toggleTimelineTrackForAsset(asset);
+                              },
+                      );
+                    },
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_timelineTracks.isNotEmpty)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Timeline audio multi-pistes',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  for (final track in _timelineTracks)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                track.category.isEmpty
+                                    ? track.label
+                                    : '${track.label} (${track.category})',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed:
+                                  _isRenderingAudio || _isSubmitting
+                                      ? null
+                                      : () => _removeTimelineTrack(track.id),
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                size: 18,
+                              ),
+                              tooltip:
+                                  'Retirer la piste de la timeline',
+                            ),
+                          ],
+                        ),
+                        RangeSlider(
+                          values: track.range,
+                          min: 0.0,
+                          max: _getTimelineDurationSeconds(),
+                          labels: RangeLabels(
+                            _formatTimelineSeconds(track.range.start),
+                            _formatTimelineSeconds(track.range.end),
+                          ),
+                          onChanged: _isRenderingAudio || _isSubmitting
+                              ? null
+                              : (values) {
+                                  final durationSeconds =
+                                      _getTimelineDurationSeconds();
+                                  final start = values.start
+                                      .clamp(0.0, durationSeconds);
+                                  final minEnd = start + 0.1;
+                                  final end = values.end.clamp(
+                                    minEnd,
+                                    durationSeconds,
+                                  );
+                                  setState(() {
+                                    track.range = RangeValues(
+                                      start,
+                                      end,
+                                    );
+                                  });
+                                },
+                        ),
+                        Row(
+                          children: [
+                            const Text(
+                              'Volume',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                            Expanded(
+                              child: Slider(
+                                value: track.volume,
+                                min: 0.0,
+                                max: 1.0,
+                                onChanged:
+                                    _isRenderingAudio || _isSubmitting
+                                        ? null
+                                        : (v) {
+                                            setState(() {
+                                              track.volume =
+                                                  v.clamp(0.0, 1.0);
+                                            });
+                                          },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                ],
+              ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _isRenderingAudio || _isSubmitting
+                    ? null
+                    : _runAudioRender,
+                icon: _isRenderingAudio
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.music_video),
+                label: const Text(
+                  'Mixer la vidéo avec les pistes audio',
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _isRenderingVideo || _isSubmitting || _isUploading
+                    ? null
+                    : _runVideoRender,
+                icon: _isRenderingVideo
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.movie),
+                label: const Text(
+                  'Monter la vidéo finale',
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _isRenderingAudio ||
+                        _isRenderingVideo ||
+                        _isSubmitting
+                    ? null
+                    : _openRenderJobsDialog,
+                icon: const Icon(Icons.list_alt),
+                label: const Text(
+                  'Voir l’historique des jobs de rendu',
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _runAudioRender() async {
@@ -2470,644 +3067,449 @@ class _StudentChallengeVideoEditorScreenState
     );
   }
 
+  Widget _buildStudioActionIcon({
+    required IconData icon,
+    required String tooltip,
+    VoidCallback? onTap,
+  }) {
+    final enabled = onTap != null;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: GestureDetector(
+        onTap: enabled ? onTap : null,
+        child: Tooltip(
+          message: tooltip,
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: enabled ? Colors.black.withOpacity(0.7) : Colors.black26,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStudioActionsColumn(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildStudioActionIcon(
+          icon: Icons.edit_note,
+          tooltip: 'Textes',
+          onTap:
+              _isSubmitting || _isUploading ? null : _openAcademicPersonalizationSheet,
+        ),
+        _buildStudioActionIcon(
+          icon: Icons.subtitles,
+          tooltip: 'Sous-titres IA',
+          onTap: _isSubmitting || _isUploading ? null : _openIaToolsSheet,
+        ),
+        _buildStudioActionIcon(
+          icon: Icons.music_note,
+          tooltip: 'Audio du Studio (render)',
+          onTap: _isSubmitting || _isUploading ? null : _openAudioStudioSheet,
+        ),
+        _buildStudioActionIcon(
+          icon: Icons.movie,
+          tooltip: 'Rendu vidéo final',
+          onTap: _isRenderingVideo || _isSubmitting || _isUploading
+              ? null
+              : _runVideoRender,
+        ),
+        _buildStudioActionIcon(
+          icon: Icons.check_circle_outline,
+          tooltip: 'Publier la vidéo de challenge',
+          onTap: _isSubmitting || _isUploading ? null : _submitVideoChallenge,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFullscreenBottomPanel(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Prépare ta vidéo de challenge',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: Colors.white,
+            ),
+          ),
+          if (_fileName != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Fichier : $_fileName',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Colors.white70,
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          TextField(
+            controller: _descriptionController,
+            maxLines: 2,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Note pour les correcteurs (optionnel)',
+              hintStyle: const TextStyle(color: Colors.white70),
+              filled: true,
+              fillColor: Colors.black.withOpacity(0.4),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.white24),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed:
+                      _isUploading || _isSubmitting ? null : _pickVideo,
+                  icon: const Icon(Icons.video_file),
+                  label: const Text('Changer de vidéo'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _isSubmitting || _isUploading
+                      ? null
+                      : _submitVideoChallenge,
+                  icon: _isSubmitting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.check_circle_outline),
+                  label: const Text('Publier ma vidéo'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     const bool showCameraButton = true;
+    final bool hasUploadedVideo =
+        _uploadedUrl != null && _uploadedUrl!.isNotEmpty;
+
+    if (hasUploadedVideo) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Vidéo de challenge'),
+        ),
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Container(
+                color: Colors.black,
+                child: _videoController != null && _videoInitialized
+                    ? StudentVideoPlayer(
+                        controller: _videoController!,
+                        overlays: _buildOverlaysPayload(),
+                        feedMode: true,
+                      )
+                    : const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+              ),
+            ),
+            Positioned(
+              right: 16,
+              bottom: 24,
+              child: _buildStudioActionsColumn(context),
+            ),
+            Positioned(
+              left: 16,
+              right: 96,
+              bottom: 24,
+              child: _buildFullscreenBottomPanel(theme),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Vidéo de challenge'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Crée une courte vidéo pour illustrer ta participation au challenge.',
-              style: theme.textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 16),
-            if (showCameraButton) ...[
-              OutlinedButton.icon(
-                onPressed: _isUploading || _isSubmitting
-                    ? null
-                    : () => _handleInitialCaptureMode('camera'),
-                icon: const Icon(Icons.videocam),
-                label: const Text('Filmer une vidéo'),
-              ),
-              const SizedBox(height: 8),
-            ],
-            OutlinedButton.icon(
-              onPressed: _isUploading || _isSubmitting ? null : _pickVideo,
-              icon: const Icon(Icons.video_file),
-              label: Text(
-                _fileName == null
-                    ? 'Sélectionner une vidéo depuis l\'appareil'
-                    : 'Changer de vidéo',
-              ),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: _isUploading || _isSubmitting || _videoBytes == null
-                  ? null
-                  : _uploadVideo,
-              icon: _isUploading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.cloud_upload),
-              label: Text(
-                _uploadedUrl == null ? 'Uploader' : 'Ré-uploader',
-              ),
-            ),
-            if (_fileName != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Fichier sélectionné : $_fileName',
-                style: theme.textTheme.bodySmall,
-              ),
-            ],
-            const SizedBox(height: 16),
-            if (_uploadedUrl != null)
-              Card(
-                margin: EdgeInsets.zero,
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Aperçu de la vidéo en ligne',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      if (_videoController != null && _videoInitialized) ...[
-                        StudentVideoPlayer(
-                          controller: _videoController!,
-                          overlays: _buildOverlaysPayload(),
-                        ),
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              final url = _uploadedUrl;
-                              if (url == null || url.isEmpty) {
-                                return;
-                              }
-                              final overlays = _buildOverlaysPayload();
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      StudentChallengeVideoArCombinedScreen(
-                                    videoUrl: url,
-                                    overlays: overlays,
-                                  ),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.view_in_ar),
-                            label: const Text('Vidéo + AR en live'),
-                          ),
-                        ),
-                      ] else
-                        const Center(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16),
-                            child: CircularProgressIndicator(),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            const SizedBox(height: 24),
-            Text(
-              'Personnalisation académique',
-              style: theme.textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              value: _backgroundTheme,
-              decoration: const InputDecoration(
-                labelText: 'Thème de fond',
-                border: OutlineInputBorder(),
-              ),
-              items: const [
-                DropdownMenuItem(
-                  value: 'universite-vert',
-                  child: Text('Fond universitaire vert'),
-                ),
-                DropdownMenuItem(
-                  value: 'universite-bleu',
-                  child: Text('Fond universitaire bleu'),
-                ),
-                DropdownMenuItem(
-                  value: 'tableau-noir',
-                  child: Text('Tableau noir / équations'),
-                ),
-              ],
-              onChanged: _isSubmitting
-                  ? null
-                  : (value) {
-                      if (value == null) return;
-                      setState(() {
-                        _backgroundTheme = value;
-                      });
-                    },
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                ChoiceChip(
-                  label: const Text('Sans filtre'),
-                  selected: _selectedFilter == 'none',
-                  onSelected: _isSubmitting
-                      ? null
-                      : (v) {
-                          if (!v) return;
-                          setState(() {
-                            _selectedFilter = 'none';
-                          });
-                        },
-                ),
-                ChoiceChip(
-                  label: const Text('Chaud'),
-                  selected: _selectedFilter == 'warm',
-                  onSelected: _isSubmitting
-                      ? null
-                      : (v) {
-                          if (!v) return;
-                          setState(() {
-                            _selectedFilter = 'warm';
-                          });
-                        },
-                ),
-                ChoiceChip(
-                  label: const Text('Froid'),
-                  selected: _selectedFilter == 'cool',
-                  onSelected: _isSubmitting
-                      ? null
-                      : (v) {
-                          if (!v) return;
-                          setState(() {
-                            _selectedFilter = 'cool';
-                          });
-                        },
-                ),
-                ChoiceChip(
-                  label: const Text('Noir & blanc'),
-                  selected: _selectedFilter == 'bw',
-                  onSelected: _isSubmitting
-                      ? null
-                      : (v) {
-                          if (!v) return;
-                          setState(() {
-                            _selectedFilter = 'bw';
-                          });
-                        },
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _overlayTextController,
-              maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'Texte à afficher (titre, explication courte)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed:
-                    _isSubmitting || _isUploading ? null : _openTextsEditor,
-                icon: const Icon(Icons.edit_note),
-                label: const Text('Éditer les textes en détails'),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: OutlinedButton.icon(
-                onPressed: _isSubmitting || _isUploading ? null : _openArStudio,
-                icon: const Icon(Icons.view_in_ar),
-                label: const Text('Ouvrir le Studio AR 3D'),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              children: [
-                ChoiceChip(
-                  label: const Text('Sans sticker'),
-                  selected: _selectedSticker == 'none',
-                  onSelected: _isSubmitting
-                      ? null
-                      : (v) {
-                          if (!v) return;
-                          setState(() {
-                            _selectedSticker = 'none';
-                          });
-                        },
-                ),
-                ChoiceChip(
-                  label: const Text('⭐'),
-                  selected: _selectedSticker == 'star',
-                  onSelected: _isSubmitting
-                      ? null
-                      : (v) {
-                          if (!v) return;
-                          setState(() {
-                            _selectedSticker = 'star';
-                          });
-                        },
-                ),
-                ChoiceChip(
-                  label: const Text('❤'),
-                  selected: _selectedSticker == 'heart',
-                  onSelected: _isSubmitting
-                      ? null
-                      : (v) {
-                          if (!v) return;
-                          setState(() {
-                            _selectedSticker = 'heart';
-                          });
-                        },
-                ),
-                ChoiceChip(
-                  label: const Text('💡'),
-                  selected: _selectedSticker == 'idea',
-                  onSelected: _isSubmitting
-                      ? null
-                      : (v) {
-                          if (!v) return;
-                          setState(() {
-                            _selectedSticker = 'idea';
-                          });
-                        },
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _equationController,
-              maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'Équation (LaTeX ou texte mathématique)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _subtitleController,
-              maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'Sous-titres / explication orale (court)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed:
-                    _isSubmitting || _isUploading ? null : _openSubtitlesEditor,
-                icon: const Icon(Icons.edit_note),
-                label: const Text('Éditer les sous-titres en détails'),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Outils IA du Studio',
-              style: theme.textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _isTranscribing || _isSubmitting || _isUploading
-                      ? null
-                      : _runTranscription,
-                  icon: _isTranscribing
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.subtitles),
-                  label: const Text('Générer les sous-titres (IA)'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: _isAnalyzing || _isSubmitting || _isUploading
-                      ? null
-                      : _runAnalysis,
-                  icon: _isAnalyzing
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.school),
-                  label: const Text('Analyser pédagogiquement'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: _isProofreading || _isSubmitting || _isUploading
-                      ? null
-                      : _runProofreadOverlayText,
-                  icon: _isProofreading
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.spellcheck),
-                  label: const Text('Corriger le texte affiché'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            if (_extraClips.isNotEmpty)
-              Column(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Timeline multi-clips',
+                    'Crée une courte vidéo pour illustrer ta participation au challenge.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  if (showCameraButton) ...[
+                    OutlinedButton.icon(
+                      onPressed: _isUploading || _isSubmitting
+                          ? null
+                          : () => _handleInitialCaptureMode('camera'),
+                      icon: const Icon(Icons.videocam),
+                      label: const Text('Filmer une vidéo'),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  OutlinedButton.icon(
+                    onPressed:
+                        _isUploading || _isSubmitting ? null : _pickVideo,
+                    icon: const Icon(Icons.video_file),
+                    label: Text(
+                      _fileName == null
+                          ? 'Sélectionner une vidéo depuis l\'appareil'
+                          : 'Changer de vidéo',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    onPressed: _isUploading ||
+                            _isSubmitting ||
+                            _videoBytes == null
+                        ? null
+                        : _uploadVideo,
+                    icon: _isUploading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child:
+                                CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.cloud_upload),
+                    label: Text(
+                      _uploadedUrl == null ? 'Uploader' : 'Ré-uploader',
+                    ),
+                  ),
+                  if (_fileName != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Fichier sélectionné : $_fileName',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  if (_uploadedUrl != null)
+                    Card(
+                      margin: EdgeInsets.zero,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Aperçu de la vidéo en ligne',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (_videoController != null &&
+                                _videoInitialized) ...[
+                              StudentVideoPlayer(
+                                controller: _videoController!,
+                                overlays: _buildOverlaysPayload(),
+                                feedMode: true,
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: () {
+                                    final url = _uploadedUrl;
+                                    if (url == null || url.isEmpty) {
+                                      return;
+                                    }
+                                    final overlays = _buildOverlaysPayload();
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            StudentChallengeVideoArCombinedScreen(
+                                          videoUrl: url,
+                                          overlays: overlays,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.view_in_ar),
+                                  label:
+                                      const Text('Vidéo + AR en live'),
+                                ),
+                              ),
+                            ] else
+                              const Center(
+                                child: Padding(
+                                  padding:
+                                      EdgeInsets.symmetric(vertical: 16),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Personnalisation académique',
                     style: theme.textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
-                  TextButton.icon(
-                    onPressed: _isSubmitting || _isUploading
-                        ? null
-                        : _openClipsTimelineEditor,
-                    icon: const Icon(Icons.video_collection_outlined),
-                    label: const Text(
-                      'Organiser l\'ordre et les in/out des clips',
+                  Text(
+                    'Configure le thème de fond, les filtres, le texte affiché, les stickers et les sous-titres dans le Studio.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: _isSubmitting || _isUploading
+                          ? null
+                          : _openAcademicPersonalizationSheet,
+                      icon: const Icon(Icons.edit),
+                      label: const Text(
+                        'Ouvrir la personnalisation académique',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Outils IA du Studio',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Utilise les sous-titres IA, l’analyse pédagogique et la correction du texte dans le Studio.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: _isSubmitting || _isUploading
+                          ? null
+                          : _openIaToolsSheet,
+                      icon: const Icon(Icons.auto_awesome),
+                      label: const Text(
+                        'Ouvrir les outils IA du Studio',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  if (_extraClips.isNotEmpty)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Timeline multi-clips',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: _isSubmitting || _isUploading
+                              ? null
+                              : _openClipsTimelineEditor,
+                          icon:
+                              const Icon(Icons.video_collection_outlined),
+                          label: const Text(
+                            'Organiser l\'ordre et les in/out des clips',
+                          ),
+                        ),
+                      ],
+                    ),
+                  if (_extraClips.isNotEmpty) const SizedBox(height: 16),
+                  Text(
+                    'Audio du Studio',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Configure les pistes audio et le mixage avancé dans le Studio.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: _isSubmitting || _isUploading
+                          ? null
+                          : _openAudioStudioSheet,
+                      icon: const Icon(Icons.music_note),
+                      label: const Text(
+                        'Ouvrir le mixeur audio du Studio',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: _descriptionController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText:
+                          'Description pour les correcteurs (optionnel)',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isSubmitting || _isUploading
+                          ? null
+                          : _submitVideoChallenge,
+                      icon: _isSubmitting
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2),
+                            )
+                          : const Icon(Icons.check_circle_outline),
+                      label: const Text(
+                        'Publier ma vidéo de challenge',
+                      ),
                     ),
                   ),
                 ],
               ),
-            if (_extraClips.isNotEmpty) const SizedBox(height: 16),
-            Text(
-              'Audio du Studio',
-              style: theme.textTheme.titleMedium,
             ),
-            const SizedBox(height: 8),
-            FutureBuilder<void>(
-              future: _audioAssetsLoaded ? null : _loadAudioAssetsIfNeeded(),
-              builder: (context, snapshot) {
-                if (_isLoadingAudioAssets) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: LinearProgressIndicator(),
-                  );
-                }
-
-                if (_audioAssets.isEmpty) {
-                  return const Text(
-                    'Aucune piste audio Studio n’est disponible pour le moment.',
-                    style: TextStyle(fontSize: 13),
-                  );
-                }
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final asset in _audioAssets)
-                          Builder(
-                            builder: (context) {
-                              final id = asset['id']?.toString() ?? '';
-                              final label = asset['label']?.toString() ?? '';
-                              final category =
-                                  asset['category']?.toString() ?? '';
-                              final selected =
-                                  _timelineTracks.any((t) => t.id == id);
-                              if (id.isEmpty || label.isEmpty) {
-                                return const SizedBox.shrink();
-                              }
-                              return ChoiceChip(
-                                label: Text(
-                                  category.isEmpty
-                                      ? label
-                                      : '$label ($category)',
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                selected: selected,
-                                onSelected: _isRenderingAudio || _isSubmitting
-                                    ? null
-                                    : (v) {
-                                        if (!v) return;
-                                        _toggleTimelineTrackForAsset(asset);
-                                      },
-                              );
-                            },
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    if (_timelineTracks.isNotEmpty)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Timeline audio multi-pistes',
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                          const SizedBox(height: 8),
-                          for (final track in _timelineTracks)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        track.category.isEmpty
-                                            ? track.label
-                                            : '${track.label} (${track.category})',
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                    IconButton(
-                                      onPressed: _isRenderingAudio ||
-                                              _isSubmitting
-                                          ? null
-                                          : () =>
-                                              _removeTimelineTrack(track.id),
-                                      icon: const Icon(
-                                        Icons.delete_outline,
-                                        size: 18,
-                                      ),
-                                      tooltip:
-                                          'Retirer la piste de la timeline',
-                                    ),
-                                  ],
-                                ),
-                                RangeSlider(
-                                  values: track.range,
-                                  min: 0.0,
-                                  max: _getTimelineDurationSeconds(),
-                                  labels: RangeLabels(
-                                    _formatTimelineSeconds(track.range.start),
-                                    _formatTimelineSeconds(track.range.end),
-                                  ),
-                                  onChanged: _isRenderingAudio || _isSubmitting
-                                      ? null
-                                      : (values) {
-                                          final durationSeconds =
-                                              _getTimelineDurationSeconds();
-                                          final start = values.start
-                                              .clamp(0.0, durationSeconds);
-                                          final minEnd = start + 0.1;
-                                          final end = values.end.clamp(
-                                            minEnd,
-                                            durationSeconds,
-                                          );
-                                          setState(() {
-                                            track.range = RangeValues(
-                                              start,
-                                              end,
-                                            );
-                                          });
-                                        },
-                                ),
-                                Row(
-                                  children: [
-                                    const Text(
-                                      'Volume',
-                                      style: TextStyle(fontSize: 12),
-                                    ),
-                                    Expanded(
-                                      child: Slider(
-                                        value: track.volume,
-                                        min: 0.0,
-                                        max: 1.0,
-                                        onChanged:
-                                            _isRenderingAudio || _isSubmitting
-                                                ? null
-                                                : (v) {
-                                                    setState(() {
-                                                      track.volume =
-                                                          v.clamp(0.0, 1.0);
-                                                    });
-                                                  },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                              ],
-                            ),
-                        ],
-                      ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _isRenderingAudio || _isSubmitting
-                            ? null
-                            : _runAudioRender,
-                        icon: _isRenderingAudio
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Icon(Icons.music_video),
-                        label: const Text(
-                          'Mixer la vidéo avec les pistes audio',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed:
-                            _isRenderingVideo || _isSubmitting || _isUploading
-                                ? null
-                                : _runVideoRender,
-                        icon: _isRenderingVideo
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Icon(Icons.movie),
-                        label: const Text(
-                          'Monter la vidéo finale',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _isRenderingAudio ||
-                                _isRenderingVideo ||
-                                _isSubmitting
-                            ? null
-                            : _openRenderJobsDialog,
-                        icon: const Icon(Icons.list_alt),
-                        label: const Text(
-                          'Voir l’historique des jobs de rendu',
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _descriptionController,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Description pour les correcteurs (optionnel)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _isSubmitting || _isUploading
-                    ? null
-                    : _submitVideoChallenge,
-                icon: _isSubmitting
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.check_circle_outline),
-                label: const Text('Publier ma vidéo de challenge'),
-              ),
-            ),
-          ],
-        ),
+          ),
+          Positioned(
+            right: 16,
+            bottom: 24,
+            child: _buildStudioActionsColumn(context),
+          ),
+        ],
       ),
     );
   }

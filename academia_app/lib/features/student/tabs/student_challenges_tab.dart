@@ -1094,11 +1094,32 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
                         child: StudentVideoPlayer(
                           controller: _controller!,
                           overlays: overlays,
+                          feedMode: true,
                         ),
                       )
                     : const Center(
                         child: CircularProgressIndicator(),
                       ),
+          ),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 220,
+          child: IgnorePointer(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Colors.black87,
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
         Positioned(

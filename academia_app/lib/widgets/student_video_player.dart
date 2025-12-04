@@ -5,12 +5,14 @@ class StudentVideoPlayer extends StatefulWidget {
   final VideoPlayerController controller;
   final bool isAudio;
   final Map<String, dynamic>? overlays;
+  final bool feedMode;
 
   const StudentVideoPlayer({
     super.key,
     required this.controller,
     this.isAudio = false,
     this.overlays,
+    this.feedMode = false,
   });
 
   @override
@@ -25,6 +27,7 @@ class _StudentVideoPlayerState extends State<StudentVideoPlayer> {
   VideoPlayerController get _controller => widget.controller;
 
   Map<String, dynamic>? get _overlays => widget.overlays;
+  bool get _feedMode => widget.feedMode;
 
   String _formatDuration(Duration d) {
     final totalSeconds = d.inSeconds;
@@ -68,6 +71,9 @@ class _StudentVideoPlayerState extends State<StudentVideoPlayer> {
         final isPlaying = value.isPlaying;
 
         Widget _buildControls() {
+          if (_feedMode) {
+            return const SizedBox.shrink();
+          }
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -318,6 +324,63 @@ class _StudentVideoPlayerState extends State<StudentVideoPlayer> {
         return LayoutBuilder(
           builder: (context, constraints) {
             final hasBoundedHeight = constraints.maxHeight < double.infinity;
+
+            if (_feedMode && !widget.isAudio) {
+              return Stack(
+                children: [
+                  Positioned.fill(
+                    child: FittedBox(
+                      fit: BoxFit.cover,
+                      child: SizedBox(
+                        width: constraints.maxWidth,
+                        child: AspectRatio(
+                          aspectRatio: aspectRatio,
+                          child: VideoPlayer(_controller),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        if (!isInitialized) {
+                          return;
+                        }
+                        if (isPlaying) {
+                          _controller.pause();
+                        } else {
+                          _controller.play();
+                        }
+                        setState(() {});
+                      },
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: _buildOverlayLayer(constraints, position),
+                  ),
+                  if (!isPlaying)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.35),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.play_arrow,
+                              color: Colors.white,
+                              size: 40,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            }
 
             if (!hasBoundedHeight) {
               return Column(
