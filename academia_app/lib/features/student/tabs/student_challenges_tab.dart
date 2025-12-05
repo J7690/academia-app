@@ -1021,14 +1021,26 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
     if (url.isNotEmpty) {
       final controller = VideoPlayerController.networkUrl(Uri.parse(url));
       _controller = controller;
-      controller.initialize().then((_) {
-        if (!mounted) return;
-        controller.setLooping(true);
-        controller.play();
-        setState(() {
-          _initialized = true;
-        });
-      });
+      controller
+          .initialize()
+          .then((_) {
+            if (!mounted) return;
+            controller.setLooping(true);
+            controller.play();
+            setState(() {
+              _initialized = true;
+            });
+          })
+          .catchError((_) {
+            if (!mounted) return;
+            controller.dispose();
+            if (mounted) {
+              setState(() {
+                _controller = null;
+                _initialized = false;
+              });
+            }
+          });
     }
   }
 

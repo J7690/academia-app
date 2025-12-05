@@ -2072,6 +2072,13 @@ class _StudentChallengeVideoEditorScreenState
       return;
     }
 
+    try {
+      await StudioVideoService.render(
+        participationId: widget.participationId,
+      );
+    } catch (_) {
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Ta vidéo de challenge a été envoyée pour validation.'),

@@ -1,4 +1,11 @@
 import 'package:ar_flutter_plugin/ar_flutter_plugin.dart';
+import 'package:ar_flutter_plugin/managers/ar_session_manager.dart';
+import 'package:ar_flutter_plugin/managers/ar_object_manager.dart';
+import 'package:ar_flutter_plugin/managers/ar_anchor_manager.dart';
+import 'package:ar_flutter_plugin/managers/ar_location_manager.dart';
+import 'package:ar_flutter_plugin/models/ar_hittest_result.dart';
+import 'package:ar_flutter_plugin/models/ar_node.dart';
+import 'package:ar_flutter_plugin/datatypes/node_types.dart';
 import 'package:flutter/material.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 
@@ -61,7 +68,8 @@ class _StudentChallengeVideoArScreenState extends State<StudentChallengeVideoArS
     final hit = hits.first;
 
     final position = hit.worldTransform.getTranslation();
-    final rotation = hit.worldTransform.getRotation();
+    final rotationMatrix = hit.worldTransform.getRotation();
+    final quaternion = vector.Quaternion.fromRotation(rotationMatrix);
 
     final node = ARNode(
       type: NodeType.webGLB,
@@ -69,10 +77,10 @@ class _StudentChallengeVideoArScreenState extends State<StudentChallengeVideoArS
           'https://github.com/KhronosGroup/glTF-Sample-Models/raw/master/2.0/Duck/glTF-Binary/Duck.glb',
       scale: vector.Vector3(0.2, 0.2, 0.2),
       position: position,
-      rotation: vector.Vector4(rotation.x, rotation.y, rotation.z, rotation.w),
     );
+    node.rotationFromQuaternion = quaternion;
 
-    final added = await _objectManager!.addNode(node, planeAnchor: hit.anchor);
+    final added = await _objectManager!.addNode(node);
     if (added == true) {
       _nodes.add(node);
       _objectsJson.add({
@@ -85,10 +93,10 @@ class _StudentChallengeVideoArScreenState extends State<StudentChallengeVideoArS
           'z': node.position.z,
         },
         'rotation': {
-          'x': rotation.x,
-          'y': rotation.y,
-          'z': rotation.z,
-          'w': rotation.w,
+          'x': quaternion.x,
+          'y': quaternion.y,
+          'z': quaternion.z,
+          'w': quaternion.w,
         },
         'scale': {
           'x': node.scale.x,

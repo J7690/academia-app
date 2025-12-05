@@ -1794,6 +1794,18 @@ async def studio_video_render(req: StudioVideoRenderRequest, request: Request) -
             },
         )
 
+    try:
+        await call_supabase_rpc_as_user(
+            user_jwt,
+            "app_student_set_challenge_main_video",
+            {
+                "p_participation_id": participation_id,
+                "p_video_url": rendered_url,
+            },
+        )
+    except HTTPException:
+        pass
+
     added_video_id = None
     raw_id = None
     if isinstance(add_result, dict):

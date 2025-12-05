@@ -2733,6 +2733,70 @@ $$;
 GRANT EXECUTE ON FUNCTION app_student_list_my_challenge_videos(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION app_student_list_my_challenge_videos(UUID) TO service_role;
 
+CREATE OR REPLACE FUNCTION app_student_set_challenge_main_video(
+    p_participation_id UUID,
+    p_video_url TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_is_banned BOOLEAN;
+    v_owner_id UUID;
+    v_url_trim TEXT;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT EXISTS (
+        SELECT 1
+        FROM app.challenge_user_bans b
+        WHERE b.user_id = v_user_id
+          AND (b.banned_until IS NULL OR b.banned_until > NOW())
+    ) INTO v_is_banned;
+
+    IF v_is_banned THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'banned_from_challenges');
+    END IF;
+
+    SELECT user_id
+    INTO v_owner_id
+    FROM app.challenge_participations
+    WHERE id = p_participation_id
+      AND is_active = TRUE;
+
+    IF v_owner_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'participation_not_found');
+    END IF;
+
+    IF v_owner_id <> v_user_id THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_owner');
+    END IF;
+
+    v_url_trim := NULLIF(TRIM(COALESCE(p_video_url, '')), '');
+    IF v_url_trim IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_video_url');
+    END IF;
+
+    UPDATE app.challenge_participations cp
+    SET video_url = v_url_trim
+    WHERE cp.id = p_participation_id
+      AND cp.is_active = TRUE;
+
+    IF NOT FOUND THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'update_failed');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_student_set_challenge_main_video(UUID, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_student_set_challenge_main_video(UUID, TEXT) TO service_role;
+
 -- ========================================
 -- 12) RPC ADMIN - VIDÉOS MULTIPLES PAR PARTICIPATION
 -- ========================================

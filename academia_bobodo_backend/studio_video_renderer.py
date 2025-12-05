@@ -61,12 +61,24 @@ def _run_ffmpeg_transcode(input_path: Path) -> Path:
         "-y",
         "-i",
         str(input_path),
+        # Limiter la résolution pour rester dans les capacités des décodeurs
+        # mobiles (max ~1280px de large).
+        "-vf",
+        "scale='if(gt(iw,1280),1280,iw)':-2",
         "-c:v",
         "libx264",
+        # Forcer un profil/level largement supporté par Android.
+        "-profile:v",
+        "baseline",
+        "-level:v",
+        "3.1",
         "-preset",
         "veryfast",
         "-crf",
         "23",
+        # Format de pixels universellement supporté.
+        "-pix_fmt",
+        "yuv420p",
         "-c:a",
         "aac",
         "-b:a",
