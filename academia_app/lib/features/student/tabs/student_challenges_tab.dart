@@ -1018,6 +1018,7 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
   void initState() {
     super.initState();
     final url = widget.video['video_url']?.toString() ?? '';
+    print('### FEED VIDEO URL: $url');
     if (url.isNotEmpty) {
       final controller = VideoPlayerController.networkUrl(Uri.parse(url));
       _controller = controller;

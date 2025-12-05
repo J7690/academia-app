@@ -153,7 +153,11 @@ def transcode_to_h264(input_path: str) -> str:
         "-profile:v",
         "baseline",
         "-level:v",
-        "3.1",
+        "3.0",
+        # Désactiver explicitement les options High Profile pour éviter que
+        # le fichier sorte en High (avc1.64...) sur certains ffmpeg/x264.
+        "-x264-params",
+        "ref=1:bframes=0:cabac=0:deblock=0",
         "-preset",
         "veryfast",
         "-crf",
