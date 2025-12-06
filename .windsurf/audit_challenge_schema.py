@@ -161,7 +161,7 @@ def main() -> int:
           status,
           error_message,
           created_at,
-          updated_at
+          completed_at
         FROM app.challenge_video_render_jobs
         ORDER BY created_at DESC
         LIMIT 10

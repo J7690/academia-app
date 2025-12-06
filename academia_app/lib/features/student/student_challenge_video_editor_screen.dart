@@ -99,6 +99,7 @@ class _StudentChallengeVideoEditorScreenState
   List<Map<String, dynamic>> _extraClips = [];
   List<String> _clipOrder = [];
   Map<String, Map<String, dynamic>> _clipEdits = {};
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -124,6 +125,7 @@ class _StudentChallengeVideoEditorScreenState
     _equationController.dispose();
     _subtitleController.dispose();
     _videoController?.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -397,7 +399,18 @@ class _StudentChallengeVideoEditorScreenState
       _uploadedUrl = url;
     });
 
-    await _initRemoteVideo(url);
+    if (kIsWeb) {
+      await _initRemoteVideo(url);
+    }
+
+    if (!kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        _scrollToStudioSection();
+      });
+    }
   }
 
   Future<void> _initRemoteVideo(String url) async {
@@ -642,6 +655,20 @@ class _StudentChallengeVideoEditorScreenState
       return 30.0;
     }
     return seconds.toDouble();
+  }
+
+  void _scrollToStudioSection() {
+    if (!_scrollController.hasClients) {
+      return;
+    }
+    final position = _scrollController.position;
+    final target = (position.maxScrollExtent * 0.5)
+        .clamp(0.0, position.maxScrollExtent);
+    _scrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOut,
+    );
   }
 
   void _toggleTimelineTrackForAsset(Map<String, dynamic> asset) {
@@ -3223,7 +3250,7 @@ class _StudentChallengeVideoEditorScreenState
     final theme = Theme.of(context);
     const bool showCameraButton = true;
     final bool hasUploadedVideo =
-        _uploadedUrl != null && _uploadedUrl!.isNotEmpty;
+        kIsWeb && _uploadedUrl != null && _uploadedUrl!.isNotEmpty;
 
     if (hasUploadedVideo) {
       return Scaffold(
@@ -3270,6 +3297,7 @@ class _StudentChallengeVideoEditorScreenState
         children: [
           Positioned.fill(
             child: SingleChildScrollView(
+              controller: _scrollController,
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -3326,7 +3354,7 @@ class _StudentChallengeVideoEditorScreenState
                     ),
                   ],
                   const SizedBox(height: 16),
-                  if (_uploadedUrl != null)
+                  if (kIsWeb && _uploadedUrl != null)
                     Card(
                       margin: EdgeInsets.zero,
                       child: Padding(

@@ -157,7 +157,17 @@ def transcode_to_h264(input_path: str) -> str:
         # Désactiver explicitement les options High Profile pour éviter que
         # le fichier sorte en High (avc1.64...) sur certains ffmpeg/x264.
         "-x264-params",
-        "ref=1:bframes=0:cabac=0:deblock=0",
+        "ref=1:bframes=0:cabac=0:deblock=0:weightp=0:no-scenecut=1:level=30",
+        "-g",
+        "60",
+        "-keyint_min",
+        "60",
+        "-sc_threshold",
+        "0",
+        "-bf",
+        "0",
+        "-refs",
+        "1",
         "-preset",
         "veryfast",
         "-crf",
@@ -169,6 +179,8 @@ def transcode_to_h264(input_path: str) -> str:
         "aac",
         "-b:a",
         "128k",
+        "-movflags",
+        "+faststart",
         output_path,
     ]
 

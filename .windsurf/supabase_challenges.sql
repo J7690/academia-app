@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS app.challenge_participations (
     reviewed_at TIMESTAMPTZ,
     reviewed_by_user_id UUID REFERENCES auth.users (id) ON DELETE SET NULL,
     video_url TEXT,
+    video_renditions JSONB,
     thumbnail_url TEXT,
     moderation_status TEXT NOT NULL DEFAULT 'pending',
     moderation_flags JSONB,
@@ -77,6 +78,7 @@ CREATE TABLE IF NOT EXISTS app.challenge_participations (
 -- challenge_participations a été créée avant l'ajout des colonnes vidéo / modération
 ALTER TABLE app.challenge_participations
     ADD COLUMN IF NOT EXISTS video_url TEXT,
+    ADD COLUMN IF NOT EXISTS video_renditions JSONB,
     ADD COLUMN IF NOT EXISTS thumbnail_url TEXT,
     ADD COLUMN IF NOT EXISTS moderation_status TEXT NOT NULL DEFAULT 'pending',
     ADD COLUMN IF NOT EXISTS moderation_flags JSONB,
@@ -863,6 +865,7 @@ BEGIN
                 'difficulty', s.difficulty,
                 'points', s.points,
                 'video_url', s.video_url,
+                'video_renditions', s.video_renditions,
                 'thumbnail_url', s.thumbnail_url,
                 'status', s.status,
                 'moderation_status', s.moderation_status,
@@ -891,6 +894,7 @@ BEGIN
                 c.difficulty,
                 c.points,
                 COALESCE(cp.video_url, cp.submission_url) AS video_url,
+                cp.video_renditions AS video_renditions,
                 cp.thumbnail_url,
                 cp.status,
                 cp.moderation_status,
@@ -1088,6 +1092,7 @@ BEGIN
         'difficulty', c.difficulty,
         'points', c.points,
         'video_url', COALESCE(cp.video_url, cp.submission_url),
+        'video_renditions', cp.video_renditions,
         'thumbnail_url', cp.thumbnail_url,
         'status', cp.status,
         'moderation_status', cp.moderation_status,
@@ -2735,7 +2740,8 @@ GRANT EXECUTE ON FUNCTION app_student_list_my_challenge_videos(UUID) TO service_
 
 CREATE OR REPLACE FUNCTION app_student_set_challenge_main_video(
     p_participation_id UUID,
-    p_video_url TEXT
+    p_video_url TEXT,
+    p_video_renditions JSONB DEFAULT NULL
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -2782,7 +2788,9 @@ BEGIN
     END IF;
 
     UPDATE app.challenge_participations cp
-    SET video_url = v_url_trim
+    SET
+        video_url = v_url_trim,
+        video_renditions = COALESCE(p_video_renditions, cp.video_renditions)
     WHERE cp.id = p_participation_id
       AND cp.is_active = TRUE;
 
@@ -2794,8 +2802,8 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION app_student_set_challenge_main_video(UUID, TEXT) TO authenticated;
-GRANT EXECUTE ON FUNCTION app_student_set_challenge_main_video(UUID, TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION app_student_set_challenge_main_video(UUID, TEXT, JSONB) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_student_set_challenge_main_video(UUID, TEXT, JSONB) TO service_role;
 
 -- ========================================
 -- 12) RPC ADMIN - VIDÉOS MULTIPLES PAR PARTICIPATION

@@ -719,23 +719,27 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
                   borderRadius: BorderRadius.circular(24),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.home,
-                          color: Colors.white,
-                          size: iconSize,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Flux',
-                          style: TextStyle(
+                    child: SizedBox(
+                      height: 40,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.home,
                             color: Colors.white,
-                            fontSize: labelFontSize,
+                            size: iconSize,
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 2),
+                          Text(
+                            'Flux',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: labelFontSize,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -760,34 +764,38 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
                     ),
                   ),
                 ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      icon: Icon(
-                        Icons.person_outline,
-                        color: Colors.white,
-                        size: iconSize,
+                SizedBox(
+                  height: 40,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: Icon(
+                          Icons.person_outline,
+                          color: Colors.white,
+                          size: iconSize,
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const StudentProfileScreen(),
+                            ),
+                          );
+                        },
                       ),
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const StudentProfileScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Profil',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: labelFontSize,
+                      const SizedBox(height: 2),
+                      Text(
+                        'Profil',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: labelFontSize,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1017,32 +1025,48 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
   @override
   void initState() {
     super.initState();
-    final url = widget.video['video_url']?.toString() ?? '';
-    print('### FEED VIDEO URL: $url');
-    if (url.isNotEmpty) {
-      final controller = VideoPlayerController.networkUrl(Uri.parse(url));
-      _controller = controller;
-      controller
-          .initialize()
-          .then((_) {
-            if (!mounted) return;
-            controller.setLooping(true);
-            controller.play();
-            setState(() {
-              _initialized = true;
-            });
-          })
-          .catchError((_) {
-            if (!mounted) return;
-            controller.dispose();
-            if (mounted) {
-              setState(() {
-                _controller = null;
-                _initialized = false;
-              });
-            }
-          });
+    String url = '';
+    final renditions = widget.video['video_renditions'];
+    if (renditions is Map) {
+      final r = Map<String, dynamic>.from(renditions);
+      final url480 = r['480p']?.toString() ?? '';
+      final urlDefault = r['default']?.toString() ?? '';
+      if (url480.isNotEmpty) {
+        url = url480;
+      } else if (urlDefault.isNotEmpty) {
+        url = urlDefault;
+      }
     }
+    if (url.isEmpty) {
+      final rawUrl = widget.video['video_url']?.toString() ?? '';
+      url = rawUrl.trim();
+    }
+    print('### FEED VIDEO URL: $url');
+    if (url.isEmpty || !url.contains('/renders/')) {
+      return;
+    }
+    final controller = VideoPlayerController.networkUrl(Uri.parse(url));
+    _controller = controller;
+    controller
+        .initialize()
+        .then((_) {
+          if (!mounted) return;
+          controller.setLooping(true);
+          controller.play();
+          setState(() {
+            _initialized = true;
+          });
+        })
+        .catchError((_) {
+          if (!mounted) return;
+          controller.dispose();
+          if (mounted) {
+            setState(() {
+              _controller = null;
+              _initialized = false;
+            });
+          }
+        });
   }
 
   @override
@@ -1672,10 +1696,24 @@ class _DuoParentVideoPreviewScreenState
       return;
     }
 
-    final url =
-        video['video_url']?.toString() ?? video['submission_url']?.toString();
+    String url = '';
+    final renditions = video['video_renditions'];
+    if (renditions is Map) {
+      final r = Map<String, dynamic>.from(renditions);
+      final url480 = r['480p']?.toString() ?? '';
+      final urlDefault = r['default']?.toString() ?? '';
+      if (url480.isNotEmpty) {
+        url = url480;
+      } else if (urlDefault.isNotEmpty) {
+        url = urlDefault;
+      }
+    }
+    if (url.isEmpty) {
+      final rawUrl = video['video_url']?.toString() ?? '';
+      url = rawUrl.trim();
+    }
 
-    if (url == null || url.isEmpty) {
+    if (url.isEmpty || !url.contains('/renders/')) {
       setState(() {
         _isLoading = false;
         _error = 'Aucune URL vidéo disponible pour la vidéo originale.';

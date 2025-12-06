@@ -1112,7 +1112,7 @@ async def call_studio_video_render(
     video_url: str,
     overlays: Dict[str, Any],
     participation_id: str,
-) -> str:
+) -> Dict[str, Any]:
     url = (video_url or "").strip()
     if not url:
         raise HTTPException(status_code=400, detail={"message": "video_url manquant pour le rendu vidéo."})
@@ -1178,7 +1178,7 @@ async def call_studio_video_render(
             detail={"message": "URL vidéo de rendu manquante dans la réponse Studio vidéo."},
         )
 
-    return rendered_url.strip()
+    return data
 
 
 async def create_render_job(
@@ -1757,7 +1757,7 @@ async def studio_video_render(req: StudioVideoRenderRequest, request: Request) -
     )
 
     try:
-        rendered_url = await call_studio_video_render(
+        render_payload = await call_studio_video_render(
             video_url=video_url,
             overlays=overlays,
             participation_id=participation_id,
@@ -1769,6 +1769,21 @@ async def studio_video_render(req: StudioVideoRenderRequest, request: Request) -
             msg = str(detail.get("message") or "")
         await update_render_job(job_id, status="failed", error_message=msg)
         raise
+    rendered_url_raw: Optional[str] = None
+    video_renditions: Dict[str, Any] = {}
+    if isinstance(render_payload, dict):
+        raw = render_payload.get("video_url") or render_payload.get("rendered_url")
+        if isinstance(raw, str):
+            rendered_url_raw = raw
+        vr = render_payload.get("video_renditions")
+        if isinstance(vr, dict):
+            video_renditions = vr
+
+    rendered_url = (rendered_url_raw or "").strip()
+    if not rendered_url:
+        msg = "URL vidéo rendue manquante dans la réponse du service Studio vidéo."
+        await update_render_job(job_id, status="failed", error_message=msg)
+        raise HTTPException(status_code=500, detail={"message": msg})
 
     await update_render_job(job_id, status="completed", result_video_url=rendered_url)
 
@@ -1801,6 +1816,7 @@ async def studio_video_render(req: StudioVideoRenderRequest, request: Request) -
             {
                 "p_participation_id": participation_id,
                 "p_video_url": rendered_url,
+                "p_video_renditions": video_renditions or None,
             },
         )
     except HTTPException:

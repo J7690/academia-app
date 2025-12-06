@@ -26,6 +26,7 @@ class RenderRequest(BaseModel):
 
 class RenderResponse(BaseModel):
     video_url: str
+    video_renditions: Dict[str, str]
 
 
 app = FastAPI(title="Academia Studio Video Renderer")
@@ -75,7 +76,17 @@ def _run_ffmpeg_transcode(input_path: Path) -> Path:
         # Désactiver explicitement les options High Profile pour éviter que
         # le fichier sorte en High (avc1.64...) sur certains ffmpeg/x264.
         "-x264-params",
-        "ref=1:bframes=0:cabac=0:deblock=0",
+        "ref=1:bframes=0:cabac=0:deblock=0:weightp=0:no-scenecut=1:level=30",
+        "-g",
+        "60",
+        "-keyint_min",
+        "60",
+        "-sc_threshold",
+        "0",
+        "-bf",
+        "0",
+        "-refs",
+        "1",
         "-preset",
         "veryfast",
         "-crf",
@@ -87,6 +98,8 @@ def _run_ffmpeg_transcode(input_path: Path) -> Path:
         "aac",
         "-b:a",
         "128k",
+        "-movflags",
+        "+faststart",
         str(output_path),
     ]
 
@@ -108,6 +121,72 @@ def _run_ffmpeg_transcode(input_path: Path) -> Path:
         raise HTTPException(
             status_code=500,
             detail=f"Erreur ffmpeg lors du rendu vidéo ({result.returncode}). {stderr_text[:500]}",
+        )
+
+    return output_path
+
+
+def _run_ffmpeg_transcode_480p(input_path: Path) -> Path:
+    output_path = input_path.with_name(f"rendered_480p_{uuid.uuid4().hex}.mp4")
+
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(input_path),
+        "-vf",
+        "scale='if(gt(iw,480),480,iw)':-2",
+        "-c:v",
+        "libx264",
+        "-profile:v",
+        "baseline",
+        "-level:v",
+        "3.0",
+        "-x264-params",
+        "ref=1:bframes=0:cabac=0:deblock=0:weightp=0:no-scenecut=1:level=30",
+        "-g",
+        "60",
+        "-keyint_min",
+        "60",
+        "-sc_threshold",
+        "0",
+        "-bf",
+        "0",
+        "-refs",
+        "1",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "23",
+        "-pix_fmt",
+        "yuv420p",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "128k",
+        "-movflags",
+        "+faststart",
+        str(output_path),
+    ]
+
+    try:
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=500,
+            detail="ffmpeg introuvable sur le serveur de rendu vidéo.",
+        )
+
+    if result.returncode != 0:
+        stderr_text = result.stderr.decode(errors="ignore")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur ffmpeg lors du rendu vidéo 480p ({result.returncode}). {stderr_text[:500]}",
         )
 
     return output_path
@@ -168,12 +247,23 @@ async def render_video(req: RenderRequest, request: Request) -> RenderResponse:
         raise HTTPException(status_code=400, detail="video_url manquant.")
 
     input_path: Optional[Path] = None
-    output_path: Optional[Path] = None
+    output_path_default: Optional[Path] = None
+    output_path_480p: Optional[Path] = None
 
     try:
         input_path = await _download_video_to_temp(video_url)
-        output_path = _run_ffmpeg_transcode(input_path)
-        final_url = await _upload_to_supabase_storage(output_path, req.participation_id)
+        output_path_default = _run_ffmpeg_transcode(input_path)
+        output_path_480p = _run_ffmpeg_transcode_480p(input_path)
+        url_default = await _upload_to_supabase_storage(output_path_default, req.participation_id)
+        url_480p = await _upload_to_supabase_storage(output_path_480p, req.participation_id)
+        default_url = url_480p or url_default
+        if not default_url:
+            raise HTTPException(status_code=500, detail="Aucune URL vidéo rendue disponible.")
+        video_renditions: Dict[str, str] = {"default": default_url}
+        if url_480p:
+            video_renditions["480p"] = url_480p
+        if url_default and url_default != default_url:
+            video_renditions["source"] = url_default
     finally:
         try:
             if input_path and input_path.exists():
@@ -181,9 +271,14 @@ async def render_video(req: RenderRequest, request: Request) -> RenderResponse:
         except Exception:
             pass
         try:
-            if output_path and output_path.exists():
-                output_path.unlink()
+            if output_path_default and output_path_default.exists():
+                output_path_default.unlink()
+        except Exception:
+            pass
+        try:
+            if output_path_480p and output_path_480p.exists():
+                output_path_480p.unlink()
         except Exception:
             pass
 
-    return RenderResponse(video_url=final_url)
+    return RenderResponse(video_url=default_url, video_renditions=video_renditions)
