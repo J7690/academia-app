@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timezone
+import subprocess
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -124,6 +125,35 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/debug/ffmpeg")
+async def debug_ffmpeg() -> Dict[str, Any]:
+    """Endpoint de diagnostic pour vérifier la présence de ffmpeg dans le conteneur.
+
+    - Retourne ok=False si ffmpeg n'est pas trouvé dans le PATH.
+    - Sinon, retourne le code de retour et les premières lignes de stdout/stderr.
+    """
+
+    try:
+        result = subprocess.run(
+            ["ffmpeg", "-version"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+    except FileNotFoundError:
+        return {"ok": False, "error": "ffmpeg not found in PATH"}
+
+    stdout_head = result.stdout.decode(errors="ignore").splitlines()[:3]
+    stderr_head = result.stderr.decode(errors="ignore").splitlines()[:3]
+
+    return {
+        "ok": result.returncode == 0,
+        "returncode": result.returncode,
+        "stdout_head": stdout_head,
+        "stderr_head": stderr_head,
+    }
 
 
 @app.api_route("/supabase/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
