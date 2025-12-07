@@ -9,6 +9,12 @@ from pydantic import BaseModel
 import httpx
 from dotenv import load_dotenv
 from livekit import api as livekit_api
+from studio_video_renderer import (
+    _download_video_to_temp,
+    _run_ffmpeg_transcode,
+    _run_ffmpeg_transcode_480p,
+    _upload_to_supabase_storage,
+)
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
@@ -1117,68 +1123,51 @@ async def call_studio_video_render(
     if not url:
         raise HTTPException(status_code=400, detail={"message": "video_url manquant pour le rendu vidéo."})
 
-    if not STUDIO_VIDEO_RENDER_URL or not STUDIO_VIDEO_RENDER_API_KEY:
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "message": "STUDIO_VIDEO_RENDER_URL ou STUDIO_VIDEO_RENDER_API_KEY non configuré pour le rendu vidéo.",
-            },
-        )
-
     if not isinstance(overlays, dict):
         overlays = {}
 
-    payload: Dict[str, Any] = {
-        "video_url": url,
-        "overlays": overlays,
-        "participation_id": participation_id,
-    }
-
-    headers = {
-        "Authorization": f"Bearer {STUDIO_VIDEO_RENDER_API_KEY}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    }
-
-    async with httpx.AsyncClient(timeout=600.0) as client:
-        try:
-            response = await client.post(STUDIO_VIDEO_RENDER_URL, headers=headers, json=payload)
-        except httpx.HTTPError as exc:
-            raise HTTPException(
-                status_code=502,
-                detail={"message": "Erreur réseau Studio vidéo", "error": str(exc)},
-            )
-
-    if response.status_code >= 400:
-        try:
-            error_body = response.json()
-        except ValueError:
-            error_body = {"raw": response.text}
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "message": "Erreur service Studio vidéo",
-                "status_code": response.status_code,
-                "error": error_body,
-            },
-        )
+    input_path: Optional[Path] = None
+    output_path_default: Optional[Path] = None
+    output_path_480p: Optional[Path] = None
 
     try:
-        data = response.json()
-    except ValueError:
-        raise HTTPException(
-            status_code=500,
-            detail={"message": "Réponse Studio vidéo inattendue", "raw": response.text[:500]},
-        )
+        input_path = await _download_video_to_temp(url)
+        output_path_default = _run_ffmpeg_transcode(input_path)
+        output_path_480p = _run_ffmpeg_transcode_480p(input_path)
 
-    rendered_url = data.get("video_url")
-    if not isinstance(rendered_url, str) or not rendered_url.strip():
-        raise HTTPException(
-            status_code=500,
-            detail={"message": "URL vidéo de rendu manquante dans la réponse Studio vidéo."},
-        )
+        url_default = await _upload_to_supabase_storage(output_path_default, participation_id)
+        url_480p = await _upload_to_supabase_storage(output_path_480p, participation_id)
 
-    return data
+        default_url = url_480p or url_default
+        if not default_url:
+            raise HTTPException(status_code=500, detail={"message": "Aucune URL vidéo rendue disponible."})
+
+        video_renditions: Dict[str, str] = {"default": default_url}
+        if url_480p:
+            video_renditions["480p"] = url_480p
+        if url_default and url_default != default_url:
+            video_renditions["source"] = url_default
+    finally:
+        try:
+            if input_path and input_path.exists():
+                input_path.unlink()
+        except Exception:
+            pass
+        try:
+            if output_path_default and output_path_default.exists():
+                output_path_default.unlink()
+        except Exception:
+            pass
+        try:
+            if output_path_480p and output_path_480p.exists():
+                output_path_480p.unlink()
+        except Exception:
+            pass
+
+    return {
+        "video_url": default_url,
+        "video_renditions": video_renditions,
+    }
 
 
 async def create_render_job(
