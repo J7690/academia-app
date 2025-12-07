@@ -1025,40 +1025,54 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
   @override
   void initState() {
     super.initState();
+    print('### FEED VIDEO initState video=${widget.video}');
+
     String url = '';
     final renditions = widget.video['video_renditions'];
     if (renditions is Map) {
       final r = Map<String, dynamic>.from(renditions);
       final url480 = r['480p']?.toString() ?? '';
       final urlDefault = r['default']?.toString() ?? '';
+      print('### FEED VIDEO renditions=$r');
       if (url480.isNotEmpty) {
         url = url480;
+        print('### FEED VIDEO picked 480p=$url');
       } else if (urlDefault.isNotEmpty) {
         url = urlDefault;
+        print('### FEED VIDEO picked default rendition=$url');
       }
     }
     if (url.isEmpty) {
       final rawUrl = widget.video['video_url']?.toString() ?? '';
       url = rawUrl.trim();
+      print('### FEED VIDEO fallback to video_url=$url');
     }
     print('### FEED VIDEO URL: $url');
-    if (url.isEmpty || !url.contains('/renders/')) {
+    if (url.isEmpty) {
+      print('### FEED VIDEO SKIP: empty URL');
       return;
     }
+    if (!url.contains('/renders/')) {
+      print('### FEED VIDEO SKIP: URL without /renders/');
+      return;
+    }
+    print('### FEED VIDEO INIT CONTROLLER url=$url');
     final controller = VideoPlayerController.networkUrl(Uri.parse(url));
     _controller = controller;
     controller
         .initialize()
         .then((_) {
           if (!mounted) return;
+          print('### FEED VIDEO INIT SUCCESS url=$url');
           controller.setLooping(true);
           controller.play();
           setState(() {
             _initialized = true;
           });
         })
-        .catchError((_) {
+        .catchError((error) {
           if (!mounted) return;
+          print('### FEED VIDEO INIT ERROR url=$url error=$error');
           controller.dispose();
           if (mounted) {
             setState(() {

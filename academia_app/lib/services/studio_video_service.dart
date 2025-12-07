@@ -33,6 +33,9 @@ class StudioVideoService {
 
     final uri = backendBase.replace(path: path);
 
+    // Logs de debug pour comprendre comment le rendu vidéo est appelé côté Flutter.
+    print('[StudioVideoService] POST $uri body=${jsonEncode(body)}');
+
     final response = await http.post(
       uri,
       headers: {
@@ -41,6 +44,10 @@ class StudioVideoService {
         'Accept': 'application/json',
       },
       body: jsonEncode(body),
+    );
+
+    print(
+      '[StudioVideoService] RESPONSE status=${response.statusCode} body=${response.body}',
     );
 
     if (response.statusCode >= 400) {
@@ -70,9 +77,17 @@ class StudioVideoService {
       'participation_id': participationId,
     };
 
-    return _postWithUserJwt(
+    print(
+      '[StudioVideoService] render START participation_id=$participationId',
+    );
+
+    final result = await _postWithUserJwt(
       path: '/studio/video/render',
       body: body,
     );
+
+    print('[StudioVideoService] render RESULT participation_id=$participationId result=$result');
+
+    return result;
   }
 }
