@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:academia_universal_video_player/academia_universal_video_player.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1186,9 +1187,41 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
       metaParts.add('$points points');
     }
 
+    final isAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
     // Si une erreur est présente, on l'affiche clairement dans l'UI, mais on garde
-    // les overlays de meta et les actions à droite.
+    // les overlays de meta et les actions à droite. Sur Android, on tente un
+    // fallback via UniversalVideoPlayer avec le décodeur logiciel Google.
     if (_errorMessage != null) {
+      if (isAndroid && _selectedUrl.isNotEmpty) {
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: UniversalVideoPlayer(url: _selectedUrl),
+            ),
+            _buildOverlayMeta(
+              challengeTitle: challengeTitle,
+              metaParts: metaParts,
+              remixType: remixType,
+              parentParticipationId: parentParticipationId,
+              context: context,
+            ),
+            _buildRightActions(
+              context: context,
+              participationId: participationId,
+              likesCount: likesCount,
+              favoritesCount: favoritesCount,
+              commentsCount: commentsCount,
+              hasLiked: hasLiked,
+              hasFavorited: hasFavorited,
+              videoUrl: videoUrl,
+              parentParticipationId: parentParticipationId,
+              remixType: remixType,
+            ),
+          ],
+        );
+      }
+
       return Stack(
         children: [
           Positioned.fill(
