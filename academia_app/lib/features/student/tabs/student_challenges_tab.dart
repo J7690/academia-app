@@ -1022,73 +1022,81 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
   VideoPlayerController? _controller;
   bool _initialized = false;
 
+  String? _errorMessage;
+  String _selectedUrl = '';
+  Map<String, dynamic>? _renditions;
+
   @override
   void initState() {
     super.initState();
-    print('### FEED VIDEO initState video=${widget.video}');
+    _startInit();
+  }
 
-    String url = '';
+  Future<void> _startInit() async {
+    print("### INIT VIDEO FEED ###");
+    print("### RAW VIDEO OBJECT = ${widget.video}");
 
-    String _pickBestRendition(Map<String, dynamic> r) {
-      // Ordre de préférence : 480p → 360p → 240p → default → source
-      const candidates = ['480p', '360p', '240p', 'default', 'source'];
-      for (final key in candidates) {
-        final value = r[key]?.toString().trim() ?? '';
-        if (value.isNotEmpty) {
-          print('### FEED VIDEO picked rendition $key = $value');
-          return value;
-        }
-      }
-      return '';
+    _renditions = widget.video['video_renditions'] is Map
+        ? Map<String, dynamic>.from(widget.video['video_renditions'])
+        : null;
+
+    _selectedUrl = _pickBestUrl();
+    print("### SELECTED URL = $_selectedUrl");
+
+    if (_selectedUrl.isEmpty) {
+      _setError("Aucune URL vidéo disponible (renditions absentes ou invalides).");
+      return;
     }
 
-    final renditions = widget.video['video_renditions'];
-    if (renditions is Map) {
-      final r = Map<String, dynamic>.from(renditions);
-      print('### FEED VIDEO renditions=$r');
-      url = _pickBestRendition(r);
+    // Android → doit utiliser une URL render (pas la vidéo brute)
+    if (!_selectedUrl.contains("/renders/")) {
+      _setError(
+        "Android ne lit pas la vidéo brute. Rendition absente.\nURL : $_selectedUrl",
+      );
+      return;
     }
 
-    if (url.isEmpty) {
+    try {
+      _controller = VideoPlayerController.networkUrl(Uri.parse(_selectedUrl));
+      await _controller!.initialize();
+      _controller!.setLooping(true);
+      _controller!.play();
+
+      if (!mounted) return;
+      setState(() => _initialized = true);
+
+      print("### VIDEO INIT SUCCESS for $_selectedUrl");
+    } catch (e) {
+      print("### VIDEO INIT ERROR → $e");
+      _setError("Erreur Android/ExoPlayer :\n$e\n\nURL : $_selectedUrl");
+    }
+  }
+
+  String _pickBestUrl() {
+    if (_renditions == null) {
       final rawUrl = widget.video['video_url']?.toString() ?? '';
-      url = rawUrl.trim();
-      print('### FEED VIDEO fallback to video_url=$url');
+      return rawUrl.trim();
     }
 
-    print('### FEED VIDEO URL: $url');
-    if (url.isEmpty) {
-      print('### FEED VIDEO SKIP: empty URL');
-      return;
+    const order = ['480p', '360p', '240p', 'default', 'source'];
+    for (final key in order) {
+      final v = _renditions![key]?.toString().trim() ?? '';
+      if (v.isNotEmpty) {
+        print("### Found rendition $key = $v");
+        return v;
+      }
     }
-    if (!url.contains('/renders/')) {
-      print('### FEED VIDEO SKIP: URL without /renders/');
-      return;
-    }
-    print('### FEED VIDEO INIT CONTROLLER url=$url');
-    final controller = VideoPlayerController.networkUrl(Uri.parse(url));
-    _controller = controller;
-    controller
-        .initialize()
-        .then((_) {
-          if (!mounted) return;
-          print('### FEED VIDEO INIT SUCCESS url=$url');
-          controller.setLooping(true);
-          controller.play();
-          setState(() {
-            _initialized = true;
-          });
-        })
-        .catchError((error) {
-          if (!mounted) return;
-          print('### FEED VIDEO INIT ERROR url=$url error=$error');
-          controller.dispose();
-          if (mounted) {
-            setState(() {
-              _controller = null;
-              _initialized = false;
-            });
-          }
-        });
+
+    final rawUrl = widget.video['video_url']?.toString() ?? '';
+    return rawUrl.trim();
+  }
+
+  void _setError(String msg) {
+    setState(() {
+      _errorMessage = msg;
+      _initialized = false;
+      _controller = null;
+    });
   }
 
   @override
@@ -1136,6 +1144,46 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
       metaParts.add('$points points');
     }
 
+    // Si une erreur est présente, on l'affiche clairement dans l'UI, mais on garde
+    // les overlays de meta et les actions à droite.
+    if (_errorMessage != null) {
+      return Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              color: Colors.black,
+              alignment: Alignment.center,
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                '❌ Vidéo indisponible\n\n$_errorMessage',
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+          _buildOverlayMeta(
+            challengeTitle: challengeTitle,
+            metaParts: metaParts,
+            remixType: remixType,
+            parentParticipationId: parentParticipationId,
+            context: context,
+          ),
+          _buildRightActions(
+            context: context,
+            participationId: participationId,
+            likesCount: likesCount,
+            favoritesCount: favoritesCount,
+            commentsCount: commentsCount,
+            hasLiked: hasLiked,
+            hasFavorited: hasFavorited,
+            videoUrl: videoUrl,
+            parentParticipationId: parentParticipationId,
+            remixType: remixType,
+          ),
+        ],
+      );
+    }
+
     return Stack(
       children: [
         Positioned.fill(
@@ -1144,7 +1192,7 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
             child: _controller == null
                 ? const Center(
                     child: Text(
-                      'Vidéo indisponible',
+                      'Vidéo indisponible (aucun contrôleur)',
                       style: TextStyle(color: Colors.white),
                     ),
                   )
@@ -1181,103 +1229,144 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
             ),
           ),
         ),
-        Positioned(
-          left: 16,
-          right: 80,
-          bottom: 96,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (challengeTitle.isNotEmpty)
-                Text(
-                  challengeTitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              if (metaParts.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    metaParts.join(' • '),
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              if (remixType == 'duo' || parentParticipationId.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(999),
-                    onTap: parentParticipationId.isEmpty
-                        ? null
-                        : () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => _DuoParentVideoPreviewScreen(
-                                  parentParticipationId:
-                                      parentParticipationId,
-                                ),
-                              ),
-                            );
-                          },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.18),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(
-                            Icons.people_outline,
-                            size: 14,
-                            color: Colors.white,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'Duo',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+        _buildOverlayMeta(
+          challengeTitle: challengeTitle,
+          metaParts: metaParts,
+          remixType: remixType,
+          parentParticipationId: parentParticipationId,
+          context: context,
         ),
-        Positioned(
-          right: 16,
-          bottom: 96,
-          child: _ChallengeVideoActions(
-            participationId: participationId,
-            likesCount: likesCount,
-            favoritesCount: favoritesCount,
-            commentsCount: commentsCount,
-            hasLiked: hasLiked,
-            hasFavorited: hasFavorited,
-            videoUrl: videoUrl,
-            parentParticipationId: parentParticipationId,
-            remixType: remixType,
-          ),
+        _buildRightActions(
+          context: context,
+          participationId: participationId,
+          likesCount: likesCount,
+          favoritesCount: favoritesCount,
+          commentsCount: commentsCount,
+          hasLiked: hasLiked,
+          hasFavorited: hasFavorited,
+          videoUrl: videoUrl,
+          parentParticipationId: parentParticipationId,
+          remixType: remixType,
         ),
       ],
+    );
+  }
+
+  Widget _buildOverlayMeta({
+    required String challengeTitle,
+    required List<String> metaParts,
+    required String remixType,
+    required String parentParticipationId,
+    required BuildContext context,
+  }) {
+    return Positioned(
+      left: 16,
+      right: 80,
+      bottom: 96,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (challengeTitle.isNotEmpty)
+            Text(
+              challengeTitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          if (metaParts.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                metaParts.join(' • '),
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          if (remixType == 'duo' || parentParticipationId.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(999),
+                onTap: parentParticipationId.isEmpty
+                    ? null
+                    : () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => _DuoParentVideoPreviewScreen(
+                              parentParticipationId: parentParticipationId,
+                            ),
+                          ),
+                        );
+                      },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(
+                        Icons.people_outline,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'Duo',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRightActions({
+    required BuildContext context,
+    required String participationId,
+    required int likesCount,
+    required int favoritesCount,
+    required int commentsCount,
+    required bool hasLiked,
+    required bool hasFavorited,
+    required String videoUrl,
+    required String parentParticipationId,
+    required String remixType,
+  }) {
+    return Positioned(
+      right: 16,
+      bottom: 96,
+      child: _ChallengeVideoActions(
+        participationId: participationId,
+        likesCount: likesCount,
+        favoritesCount: favoritesCount,
+        commentsCount: commentsCount,
+        hasLiked: hasLiked,
+        hasFavorited: hasFavorited,
+        videoUrl: videoUrl,
+        parentParticipationId: parentParticipationId,
+        remixType: remixType,
+      ),
     );
   }
 }

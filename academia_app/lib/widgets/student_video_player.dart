@@ -52,6 +52,22 @@ class _StudentVideoPlayerState extends State<StudentVideoPlayer> {
     return ValueListenableBuilder<VideoPlayerValue>(
       valueListenable: _controller,
       builder: (context, value, child) {
+        if (value.hasError) {
+          final error = value.errorDescription ?? 'Erreur vidéo inconnue.';
+          // ignore: avoid_print
+          print('### STUDENT VIDEO PLAYER ERROR: $error');
+          return Container(
+            color: Colors.black,
+            alignment: Alignment.center,
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              '❌ Erreur Flutter/ExoPlayer :\n\n$error',
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
+          );
+        }
+
         final isInitialized = value.isInitialized;
         final duration = isInitialized ? value.duration : Duration.zero;
         final position = isInitialized ? value.position : Duration.zero;

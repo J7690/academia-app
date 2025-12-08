@@ -67,7 +67,7 @@ def _run_ffmpeg_transcode(input_path: Path) -> Path:
     return _run_ffmpeg_generic(
         input_path=input_path,
         max_width=720,
-        max_bitrate_k=500,
+        max_bitrate_k=900,
         audio_bitrate_k=96,
         label="main",
     )
@@ -79,7 +79,7 @@ def _run_ffmpeg_transcode_480p(input_path: Path) -> Path:
     return _run_ffmpeg_generic(
         input_path=input_path,
         max_width=480,
-        max_bitrate_k=450,
+        max_bitrate_k=600,
         audio_bitrate_k=96,
         label="480p",
     )
@@ -91,8 +91,8 @@ def _run_ffmpeg_transcode_360p(input_path: Path) -> Path:
     return _run_ffmpeg_generic(
         input_path=input_path,
         max_width=360,
-        max_bitrate_k=350,
-        audio_bitrate_k=96,
+        max_bitrate_k=450,
+        audio_bitrate_k=80,
         label="360p",
     )
 
@@ -103,8 +103,8 @@ def _run_ffmpeg_transcode_240p(input_path: Path) -> Path:
     return _run_ffmpeg_generic(
         input_path=input_path,
         max_width=240,
-        max_bitrate_k=250,
-        audio_bitrate_k=80,
+       max_bitrate_k=300,
+        audio_bitrate_k=64,
         label="240p",
     )
 
@@ -116,22 +116,28 @@ def _run_ffmpeg_generic(
     audio_bitrate_k: int,
     label: str,
 ) -> Path:
-    """Profil H.264 Baseline ultra‑compatible Android/MediaTek.
+    """Transcode une vidéo en MP4 H.264 ultra-compatible (MediaTek-friendly).
 
-    - scale avec largeur maximale (max_width), hauteur paire auto
-    - setsar=1 pour normaliser le sample aspect ratio
-    - Baseline Level 3.0 strict via x264‑params
-    - GOP court (g=30) sans B‑frames, sans CABAC, refs=1
-    - pix_fmt=yuv420p universel
-    - bitrate contrôlé et audio AAC léger
+    - H.264 Baseline, Level 3.0
+    - yuv420p
+    - Aucun B-frame, ref=1
+    - Paramètres x264 simples
+    - Colorimétrie BT709 explicite
     """
 
-    output_path = input_path.with_name(
-        f"rendered_{label}_{uuid.uuid4().hex}.mp4"
-    )
+    if not input_path.exists():
+        raise HTTPException(
+            status_code=400,
+            detail=f"[{label}] Input file does not exist: {input_path}",
+        )
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix=f"studio_render_{label}_"))
+    output_path = tmp_dir / "output.mp4"
+
+    vf_filter = f"scale='min({max_width},iw)':-2,format=yuv420p"
 
     maxrate = f"{max_bitrate_k}k"
-    bufsize = f"{max_bitrate_k * 2}k"
+    bufsize = f"{2 * max_bitrate_k}k"
     audio_bitrate = f"{audio_bitrate_k}k"
 
     cmd = [
@@ -140,41 +146,52 @@ def _run_ffmpeg_generic(
         "-i",
         str(input_path),
         "-vf",
-        f"scale='if(gt(iw,{max_width}),{max_width},iw)':-2,setsar=1",
+        vf_filter,
         "-c:v",
         "libx264",
-        "-profile:v",
-        "baseline",
-        "-level:v",
-        "3.0",
-        "-x264-params",
-        "ref=1:no-scenecut=1:bframes=0:weightp=0:cabac=0:deblock=0:level=30",
-        "-g",
-        "30",
-        "-keyint_min",
-        "30",
-        "-sc_threshold",
-        "0",
-        "-bf",
-        "0",
-        "-refs",
-        "1",
         "-preset",
         "veryfast",
+        "-profile:v",
+        "baseline",
+        "-level",
+        "3.0",
+        "-x264-params",
+        (
+            "ref=1:"
+            "bframes=0:"
+            "weightp=0:"
+            "subme=1:"
+            "me=dia:"
+            "partitions=none:"
+            "no-mbtree=1:"
+            "aq-mode=0"
+        ),
+        "-pix_fmt",
+        "yuv420p",
+        "-color_primaries",
+        "bt709",
+        "-color_trc",
+        "bt709",
+        "-colorspace",
+        "bt709",
+        "-movflags",
+        "+faststart",
+        "-c:a",
+        "aac",
+        "-ac",
+        "2",
+        "-ar",
+        "44100",
+        "-b:a",
+        audio_bitrate,
         "-maxrate",
         maxrate,
         "-bufsize",
         bufsize,
-        "-pix_fmt",
-        "yuv420p",
-        "-c:a",
-        "aac",
-        "-b:a",
-        audio_bitrate,
-        "-movflags",
-        "+faststart",
         str(output_path),
     ]
+
+    print(f"[FFMPEG-{label}] Running command: {' '.join(cmd)}")
 
     try:
         result = subprocess.run(
@@ -183,25 +200,31 @@ def _run_ffmpeg_generic(
             stderr=subprocess.PIPE,
             check=False,
         )
-    except FileNotFoundError:
+    except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail="ffmpeg introuvable sur le serveur de rendu vidéo.",
+            detail=f"[{label}] Failed to start ffmpeg: {e}",
         )
 
     if result.returncode != 0:
-        stderr_text = result.stderr.decode(errors="ignore")
-        print("\\n>>>> FFMPEG STDERR (", label, ")")
-        print(stderr_text)
-        print("<<<< END FFMPEG STDERR\\n")
+        stderr_text = result.stderr.decode("utf-8", errors="ignore")
+        print(f"[FFMPEG-{label}] FAILED with code {result.returncode}")
+        print(f"[FFMPEG-{label}] STDERR:\n{stderr_text[:4000]}")
         raise HTTPException(
             status_code=500,
             detail=(
-                f"Erreur ffmpeg lors du rendu vidéo {label}"
-                f" ({result.returncode}). {stderr_text[:500]}"
+                f"[{label}] ffmpeg error (code {result.returncode}): "
+                f"{stderr_text[:4000]}"
             ),
         )
 
+    if not output_path.exists():
+        raise HTTPException(
+            status_code=500,
+            detail=f"[{label}] ffmpeg succeeded but output file is missing",
+        )
+
+    print(f"[FFMPEG-{label}] SUCCESS output={output_path}")
     return output_path
 
 
