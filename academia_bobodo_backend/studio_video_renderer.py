@@ -70,6 +70,7 @@ def _run_ffmpeg_transcode(input_path: Path) -> Path:
         max_bitrate_k=900,
         audio_bitrate_k=96,
         label="main",
+        fps=None,
     )
 
 
@@ -82,6 +83,7 @@ def _run_ffmpeg_transcode_480p(input_path: Path) -> Path:
         max_bitrate_k=600,
         audio_bitrate_k=96,
         label="480p",
+        fps=30,
     )
 
 
@@ -94,6 +96,7 @@ def _run_ffmpeg_transcode_360p(input_path: Path) -> Path:
         max_bitrate_k=450,
         audio_bitrate_k=80,
         label="360p",
+        fps=30,
     )
 
 
@@ -103,9 +106,10 @@ def _run_ffmpeg_transcode_240p(input_path: Path) -> Path:
     return _run_ffmpeg_generic(
         input_path=input_path,
         max_width=240,
-       max_bitrate_k=300,
+        max_bitrate_k=300,
         audio_bitrate_k=64,
         label="240p",
+        fps=24,
     )
 
 
@@ -115,6 +119,7 @@ def _run_ffmpeg_generic(
     max_bitrate_k: int,
     audio_bitrate_k: int,
     label: str,
+    fps: Optional[int] = None,
 ) -> Path:
     """Transcode une vidéo en MP4 H.264 ultra-compatible (MediaTek-friendly).
 
@@ -140,11 +145,25 @@ def _run_ffmpeg_generic(
     bufsize = f"{2 * max_bitrate_k}k"
     audio_bitrate = f"{audio_bitrate_k}k"
 
+    x264_params = (
+        "ref=1:"
+        "bframes=0:"
+        "cabac=0:"
+        "deblock=0:"
+        "weightp=0:"
+        "no-scenecut=1:"
+        "level=30:"
+        f"vbv-maxrate={max_bitrate_k}:"
+        f"vbv-bufsize={2 * max_bitrate_k}"
+    )
+
     cmd = [
         "ffmpeg",
         "-y",
         "-i",
         str(input_path),
+        "-sws_flags",
+        "lanczos+accurate_rnd+full_chroma_int",
         "-vf",
         vf_filter,
         "-c:v",
@@ -156,16 +175,17 @@ def _run_ffmpeg_generic(
         "-level",
         "3.0",
         "-x264-params",
-        (
-            "ref=1:"
-            "bframes=0:"
-            "weightp=0:"
-            "subme=1:"
-            "me=dia:"
-            "partitions=none:"
-            "no-mbtree=1:"
-            "aq-mode=0"
-        ),
+        x264_params,
+    ]
+
+    if fps is not None:
+        cmd.extend(["-r", str(fps)])
+
+    cmd.extend([
+        "-g",
+        "30",
+        "-keyint_min",
+        "30",
         "-pix_fmt",
         "yuv420p",
         "-color_primaries",
@@ -189,7 +209,7 @@ def _run_ffmpeg_generic(
         "-bufsize",
         bufsize,
         str(output_path),
-    ]
+    ])
 
     print(f"[FFMPEG-{label}] Running command: {' '.join(cmd)}")
 

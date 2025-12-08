@@ -1034,14 +1034,14 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
 
   Future<void> _startInit() async {
     print("### INIT VIDEO FEED ###");
-    print("### RAW VIDEO OBJECT = ${widget.video}");
+    print("ANDROID VIDEO DEBUG :: raw video object = ${widget.video}");
 
     _renditions = widget.video['video_renditions'] is Map
         ? Map<String, dynamic>.from(widget.video['video_renditions'])
         : null;
 
     _selectedUrl = _pickBestUrl();
-    print("### SELECTED URL = $_selectedUrl");
+    print("ANDROID VIDEO DEBUG :: picked URL = $_selectedUrl");
 
     if (_selectedUrl.isEmpty) {
       _setError("Aucune URL vidéo disponible (renditions absentes ou invalides).");
@@ -1065,9 +1065,9 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
       if (!mounted) return;
       setState(() => _initialized = true);
 
-      print("### VIDEO INIT SUCCESS for $_selectedUrl");
+      print("ANDROID VIDEO DEBUG :: init success for $_selectedUrl");
     } catch (e) {
-      print("### VIDEO INIT ERROR → $e");
+      print("ANDROID VIDEO ERROR :: $e");
       _setError("Erreur Android/ExoPlayer :\n$e\n\nURL : $_selectedUrl");
     }
   }
@@ -1078,11 +1078,12 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
       return rawUrl.trim();
     }
 
-    const order = ['480p', '360p', '240p', 'default', 'source'];
+    // Priorité Android : 360p → 240p → 480p → default → source
+    const order = ['360p', '240p', '480p', 'default', 'source'];
     for (final key in order) {
       final v = _renditions![key]?.toString().trim() ?? '';
       if (v.isNotEmpty) {
-        print("### Found rendition $key = $v");
+        print("ANDROID VIDEO DEBUG :: found rendition $key = $v");
         return v;
       }
     }
