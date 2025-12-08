@@ -55,79 +55,84 @@ async def _download_video_to_temp(url: str) -> Path:
 
 
 def _run_ffmpeg_transcode(input_path: Path) -> Path:
-    output_path = input_path.with_name(f"rendered_{uuid.uuid4().hex}.mp4")
+    """Rendition principale "source légère" compatible Android/MediaTek.
 
-    cmd = [
-        "ffmpeg",
-        "-y",
-        "-i",
-        str(input_path),
-        # Limiter la résolution pour rester dans les capacités des décodeurs
-        # mobiles (max ~1280px de large).
-        "-vf",
-        "scale='if(gt(iw,1280),1280,iw)':-2",
-        "-c:v",
-        "libx264",
-        # Forcer un profil/level largement supporté par Android.
-        "-profile:v",
-        "baseline",
-        "-level:v",
-        "3.0",
-        # Désactiver explicitement les options High Profile pour éviter que
-        # le fichier sorte en High (avc1.64...) sur certains ffmpeg/x264.
-        "-x264-params",
-        "ref=1:bframes=0:cabac=0:deblock=0:weightp=0:no-scenecut=1:level=30",
-        "-g",
-        "60",
-        "-keyint_min",
-        "60",
-        "-sc_threshold",
-        "0",
-        "-bf",
-        "0",
-        "-refs",
-        "1",
-        "-preset",
-        "veryfast",
-        "-crf",
-        "23",
-        # Format de pixels universellement supporté.
-        "-pix_fmt",
-        "yuv420p",
-        "-c:a",
-        "aac",
-        "-b:a",
-        "128k",
-        "-movflags",
-        "+faststart",
-        str(output_path),
-    ]
+    - max largeur ~ 720 px
+    - H.264 Baseline Level 3.0
+    - pas de B-frames, pas de CABAC
+    - GOP court (g=30) pour limiter les soucis de décodage matériel
+    - bitrate modéré adapté aux appareils d'entrée de gamme
+    """
 
-    try:
-        result = subprocess.run(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=False,
-        )
-    except FileNotFoundError:
-        raise HTTPException(
-            status_code=500,
-            detail="ffmpeg introuvable sur le serveur de rendu vidéo.",
-        )
-
-    if result.returncode != 0:
-        stderr_text = result.stderr.decode(errors="ignore")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erreur ffmpeg lors du rendu vidéo ({result.returncode}). {stderr_text[:500]}",
-        )
-
-    return output_path
+    return _run_ffmpeg_generic(
+        input_path=input_path,
+        max_width=720,
+        max_bitrate_k=500,
+        audio_bitrate_k=96,
+        label="main",
+    )
 
 
 def _run_ffmpeg_transcode_480p(input_path: Path) -> Path:
-    output_path = input_path.with_name(f"rendered_480p_{uuid.uuid4().hex}.mp4")
+    """Rendition 480p prioritaire sur les devices suffisamment puissants."""
+
+    return _run_ffmpeg_generic(
+        input_path=input_path,
+        max_width=480,
+        max_bitrate_k=450,
+        audio_bitrate_k=96,
+        label="480p",
+    )
+
+
+def _run_ffmpeg_transcode_360p(input_path: Path) -> Path:
+    """Rendition 360p (fallback solide pour les appareils fragiles)."""
+
+    return _run_ffmpeg_generic(
+        input_path=input_path,
+        max_width=360,
+        max_bitrate_k=350,
+        audio_bitrate_k=96,
+        label="360p",
+    )
+
+
+def _run_ffmpeg_transcode_240p(input_path: Path) -> Path:
+    """Rendition 240p (dernier recours pour très vieux/low‑end téléphones)."""
+
+    return _run_ffmpeg_generic(
+        input_path=input_path,
+        max_width=240,
+        max_bitrate_k=250,
+        audio_bitrate_k=80,
+        label="240p",
+    )
+
+
+def _run_ffmpeg_generic(
+    input_path: Path,
+    max_width: int,
+    max_bitrate_k: int,
+    audio_bitrate_k: int,
+    label: str,
+) -> Path:
+    """Profil H.264 Baseline ultra‑compatible Android/MediaTek.
+
+    - scale avec largeur maximale (max_width), hauteur paire auto
+    - setsar=1 pour normaliser le sample aspect ratio
+    - Baseline Level 3.0 strict via x264‑params
+    - GOP court (g=30) sans B‑frames, sans CABAC, refs=1
+    - pix_fmt=yuv420p universel
+    - bitrate contrôlé et audio AAC léger
+    """
+
+    output_path = input_path.with_name(
+        f"rendered_{label}_{uuid.uuid4().hex}.mp4"
+    )
+
+    maxrate = f"{max_bitrate_k}k"
+    bufsize = f"{max_bitrate_k * 2}k"
+    audio_bitrate = f"{audio_bitrate_k}k"
 
     cmd = [
         "ffmpeg",
@@ -135,7 +140,7 @@ def _run_ffmpeg_transcode_480p(input_path: Path) -> Path:
         "-i",
         str(input_path),
         "-vf",
-        "scale='if(gt(iw,360),360,iw)':-2",
+        f"scale='if(gt(iw,{max_width}),{max_width},iw)':-2,setsar=1",
         "-c:v",
         "libx264",
         "-profile:v",
@@ -143,11 +148,11 @@ def _run_ffmpeg_transcode_480p(input_path: Path) -> Path:
         "-level:v",
         "3.0",
         "-x264-params",
-        "ref=1:bframes=0:cabac=0:deblock=0:weightp=0:no-scenecut=1:level=30",
+        "ref=1:no-scenecut=1:bframes=0:weightp=0:cabac=0:deblock=0:level=30",
         "-g",
-        "60",
+        "30",
         "-keyint_min",
-        "60",
+        "30",
         "-sc_threshold",
         "0",
         "-bf",
@@ -156,18 +161,16 @@ def _run_ffmpeg_transcode_480p(input_path: Path) -> Path:
         "1",
         "-preset",
         "veryfast",
-        "-crf",
-        "23",
         "-maxrate",
-        "800k",
+        maxrate,
         "-bufsize",
-        "1600k",
+        bufsize,
         "-pix_fmt",
         "yuv420p",
         "-c:a",
         "aac",
         "-b:a",
-        "128k",
+        audio_bitrate,
         "-movflags",
         "+faststart",
         str(output_path),
@@ -188,9 +191,15 @@ def _run_ffmpeg_transcode_480p(input_path: Path) -> Path:
 
     if result.returncode != 0:
         stderr_text = result.stderr.decode(errors="ignore")
+        print("\\n>>>> FFMPEG STDERR (", label, ")")
+        print(stderr_text)
+        print("<<<< END FFMPEG STDERR\\n")
         raise HTTPException(
             status_code=500,
-            detail=f"Erreur ffmpeg lors du rendu vidéo 480p ({result.returncode}). {stderr_text[:500]}",
+            detail=(
+                f"Erreur ffmpeg lors du rendu vidéo {label}"
+                f" ({result.returncode}). {stderr_text[:500]}"
+            ),
         )
 
     return output_path

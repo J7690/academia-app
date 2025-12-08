@@ -1028,25 +1028,33 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
     print('### FEED VIDEO initState video=${widget.video}');
 
     String url = '';
+
+    String _pickBestRendition(Map<String, dynamic> r) {
+      // Ordre de préférence : 480p → 360p → 240p → default → source
+      const candidates = ['480p', '360p', '240p', 'default', 'source'];
+      for (final key in candidates) {
+        final value = r[key]?.toString().trim() ?? '';
+        if (value.isNotEmpty) {
+          print('### FEED VIDEO picked rendition $key = $value');
+          return value;
+        }
+      }
+      return '';
+    }
+
     final renditions = widget.video['video_renditions'];
     if (renditions is Map) {
       final r = Map<String, dynamic>.from(renditions);
-      final url480 = r['480p']?.toString() ?? '';
-      final urlDefault = r['default']?.toString() ?? '';
       print('### FEED VIDEO renditions=$r');
-      if (url480.isNotEmpty) {
-        url = url480;
-        print('### FEED VIDEO picked 480p=$url');
-      } else if (urlDefault.isNotEmpty) {
-        url = urlDefault;
-        print('### FEED VIDEO picked default rendition=$url');
-      }
+      url = _pickBestRendition(r);
     }
+
     if (url.isEmpty) {
       final rawUrl = widget.video['video_url']?.toString() ?? '';
       url = rawUrl.trim();
       print('### FEED VIDEO fallback to video_url=$url');
     }
+
     print('### FEED VIDEO URL: $url');
     if (url.isEmpty) {
       print('### FEED VIDEO SKIP: empty URL');

@@ -14,6 +14,8 @@ from studio_video_renderer import (
     _download_video_to_temp,
     _run_ffmpeg_transcode,
     _run_ffmpeg_transcode_480p,
+    _run_ffmpeg_transcode_360p,
+    _run_ffmpeg_transcode_240p,
     _upload_to_supabase_storage,
 )
 
@@ -1159,25 +1161,50 @@ async def call_studio_video_render(
     input_path: Optional[Path] = None
     output_path_default: Optional[Path] = None
     output_path_480p: Optional[Path] = None
+    output_path_360p: Optional[Path] = None
+    output_path_240p: Optional[Path] = None
 
     try:
+        # 1) Télécharger la vidéo source dans un fichier temporaire
         input_path = await _download_video_to_temp(url)
+
+        # 2) Générer plusieurs renditions pensées pour Android/MediaTek
         output_path_default = _run_ffmpeg_transcode(input_path)
         output_path_480p = _run_ffmpeg_transcode_480p(input_path)
+        output_path_360p = _run_ffmpeg_transcode_360p(input_path)
+        output_path_240p = _run_ffmpeg_transcode_240p(input_path)
 
+        # 3) Uploader chaque rendition dans Supabase Storage
         url_default = await _upload_to_supabase_storage(output_path_default, participation_id)
         url_480p = await _upload_to_supabase_storage(output_path_480p, participation_id)
+        url_360p = await _upload_to_supabase_storage(output_path_360p, participation_id)
+        url_240p = await _upload_to_supabase_storage(output_path_240p, participation_id)
 
-        default_url = url_480p or url_default
+        # 4) Choisir une URL "par défaut" raisonnable (480p > 360p > 240p > source)
+        default_url = (
+            (url_480p or "")
+            or (url_360p or "")
+            or (url_240p or "")
+            or (url_default or "")
+        )
+
         if not default_url:
-            raise HTTPException(status_code=500, detail={"message": "Aucune URL vidéo rendue disponible."})
+            raise HTTPException(
+                status_code=500,
+                detail={"message": "Aucune URL vidéo rendue disponible."},
+            )
 
         video_renditions: Dict[str, str] = {"default": default_url}
         if url_480p:
             video_renditions["480p"] = url_480p
+        if url_360p:
+            video_renditions["360p"] = url_360p
+        if url_240p:
+            video_renditions["240p"] = url_240p
         if url_default and url_default != default_url:
             video_renditions["source"] = url_default
     finally:
+        # Nettoyage des fichiers temporaires, best-effort
         try:
             if input_path and input_path.exists():
                 input_path.unlink()
@@ -1191,6 +1218,16 @@ async def call_studio_video_render(
         try:
             if output_path_480p and output_path_480p.exists():
                 output_path_480p.unlink()
+        except Exception:
+            pass
+        try:
+            if output_path_360p and output_path_360p.exists():
+                output_path_360p.unlink()
+        except Exception:
+            pass
+        try:
+            if output_path_240p and output_path_240p.exists():
+                output_path_240p.unlink()
         except Exception:
             pass
 
