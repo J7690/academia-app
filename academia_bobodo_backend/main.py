@@ -326,6 +326,17 @@ class StudioVideoRenderResponse(BaseModel):
     added_video_id: Optional[str] = None
 
 
+class VideoPlaybackErrorIn(BaseModel):
+    device_model: Optional[str] = None
+    platform: Optional[str] = None
+    os_version: Optional[str] = None
+    app_version: Optional[str] = None
+    video_url: str
+    rendition_key: Optional[str] = None
+    error_message: str
+    raw_error: Optional[Dict[str, Any]] = None
+
+
 async def call_supabase_rpc(function: str, payload: Dict[str, Any]) -> Any:
     """Appelle une fonction RPC Supabase via l'API REST avec la service_role key."""
     url = f"{SUPABASE_URL}/rest/v1/rpc/{function}"
@@ -1891,6 +1902,236 @@ async def studio_video_render(req: StudioVideoRenderRequest, request: Request) -
         video_url=rendered_url,
         added_video_id=added_video_id,
     )
+
+
+@app.post("/admin/challenge_videos/{participation_id}/rerender")
+async def admin_rerender_challenge_video(participation_id: str, request: Request) -> Dict[str, Any]:
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authorization Bearer manquant pour le re-rendu vidéo admin.")
+
+    participation_id = participation_id.strip()
+    if not participation_id:
+        raise HTTPException(status_code=400, detail="participation_id manquant pour le re-rendu vidéo admin.")
+
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="SUPABASE_URL ou SUPABASE_SERVICE_KEY non configurée côté backend.",
+        )
+
+    supabase_base = SUPABASE_URL.rstrip("/")
+
+    # 1) Récupérer la participation pour obtenir l'URL vidéo actuelle
+    participation_url = f"{supabase_base}/rest/v1/app.challenge_participations"
+    params = {
+        "id": f"eq.{participation_id}",
+        "select": "id,video_url,video_renditions,thumbnail_url",
+    }
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Accept": "application/json",
+    }
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp = await client.get(participation_url, headers=headers, params=params)
+
+    if resp.status_code >= 400:
+        try:
+            body = resp.json()
+        except ValueError:
+            body = {"raw": resp.text}
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Erreur lors de la récupération de la participation de challenge.",
+                "status_code": resp.status_code,
+                "error": body,
+            },
+        )
+
+    try:
+        rows = resp.json()
+    except ValueError:
+        rows = []
+
+    if not isinstance(rows, list) or not rows:
+        raise HTTPException(
+            status_code=404,
+            detail={"message": "Participation de challenge introuvable pour le re-rendu vidéo admin."},
+        )
+
+    participation_row = rows[0]
+    source_video_raw = participation_row.get("video_url")
+    source_video_url = str(source_video_raw or "").strip()
+    if not source_video_url:
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "Aucune URL vidéo existante pour cette participation (admin re-render)."},
+        )
+
+    # 2) Récupérer éventuellement les overlays associés (table app.challenge_video_overlays)
+    overlays: Dict[str, Any] = {}
+    overlays_url = f"{supabase_base}/rest/v1/app.challenge_video_overlays"
+    overlays_params = {
+        "participation_id": f"eq.{participation_id}",
+        "select": "layers",
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            overlays_resp = await client.get(overlays_url, headers=headers, params=overlays_params)
+        if overlays_resp.status_code < 400:
+            ov_rows = overlays_resp.json()
+            if isinstance(ov_rows, list) and ov_rows:
+                first = ov_rows[0]
+                layers_val = first.get("layers")
+                if isinstance(layers_val, dict):
+                    overlays = {"layers": layers_val}
+                else:
+                    overlays = {"layers": layers_val}
+    except Exception:
+        # En cas d'erreur, on continue avec des overlays vides
+        overlays = {}
+
+    # 3) Créer un job de rendu spécifique admin pour tracer l'opération
+    metadata: Dict[str, Any] = {"admin_rerender": True}
+    job_id = await create_render_job(
+        participation_id=participation_id,
+        job_type="video_edit_admin",
+        source_video_url=source_video_url,
+        metadata=metadata,
+    )
+
+    # 4) Relancer le pipeline de rendu vidéo Studio
+    try:
+        render_payload = await call_studio_video_render(
+            video_url=source_video_url,
+            overlays=overlays,
+            participation_id=participation_id,
+        )
+    except HTTPException as exc:
+        detail = exc.detail
+        msg: Optional[str] = None
+        if isinstance(detail, dict):
+            msg = str(detail.get("message") or "")
+        await update_render_job(job_id, status="failed", error_message=msg)
+        raise
+
+    rendered_url_raw: Optional[str] = None
+    video_renditions: Dict[str, Any] = {}
+    if isinstance(render_payload, dict):
+        raw = render_payload.get("video_url") or render_payload.get("rendered_url")
+        if isinstance(raw, str):
+            rendered_url_raw = raw
+        vr = render_payload.get("video_renditions")
+        if isinstance(vr, dict):
+            video_renditions = vr
+
+    rendered_url = (rendered_url_raw or "").strip()
+    if not rendered_url:
+        msg = "URL vidéo rendue manquante dans la réponse du service Studio vidéo (admin re-render)."
+        await update_render_job(job_id, status="failed", error_message=msg)
+        raise HTTPException(status_code=500, detail={"message": msg})
+
+    # 5) Mettre à jour la participation avec la nouvelle URL et les renditions
+    patch_url = f"{supabase_base}/rest/v1/app.challenge_participations?id=eq.{participation_id}"
+    patch_body: Dict[str, Any] = {
+        "video_url": rendered_url,
+        "video_renditions": video_renditions or None,
+    }
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        patch_resp = await client.patch(patch_url, headers=headers, json=patch_body)
+
+    if patch_resp.status_code >= 400:
+        try:
+            body = patch_resp.json()
+        except ValueError:
+            body = {"raw": patch_resp.text}
+        msg = "Erreur lors de la mise à jour de la participation avec la nouvelle vidéo rendue (admin)."
+        await update_render_job(job_id, status="failed", error_message=msg)
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": msg,
+                "status_code": patch_resp.status_code,
+                "error": body,
+            },
+        )
+
+    await update_render_job(job_id, status="completed", result_video_url=rendered_url)
+
+    return {
+        "success": True,
+        "participation_id": participation_id,
+        "video_url": rendered_url,
+        "video_renditions": video_renditions,
+    }
+
+
+@app.post("/telemetry/video_playback_error")
+async def telemetry_video_playback_error(payload: VideoPlaybackErrorIn) -> Dict[str, Any]:
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="SUPABASE_URL ou SUPABASE_SERVICE_KEY non configurée côté backend.",
+        )
+
+    supabase_base = SUPABASE_URL.rstrip("/")
+    table_url = f"{supabase_base}/rest/v1/app.video_playback_errors"
+
+    video_url = (payload.video_url or "").strip()
+    error_message = (payload.error_message or "").strip()
+    if not video_url or not error_message:
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "video_url et error_message sont obligatoires pour la télémétrie vidéo."},
+        )
+
+    body: Dict[str, Any] = {
+        "video_url": video_url,
+        "error_message": error_message[:2000],
+    }
+    if payload.device_model:
+        body["device_model"] = payload.device_model
+    if payload.platform:
+        body["platform"] = payload.platform
+    if payload.os_version:
+        body["os_version"] = payload.os_version
+    if payload.app_version:
+        body["app_version"] = payload.app_version
+    if payload.rendition_key:
+        body["rendition_key"] = payload.rendition_key
+    if payload.raw_error is not None:
+        body["raw_error"] = payload.raw_error
+
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp = await client.post(table_url, headers=headers, json=body)
+
+    if resp.status_code >= 400:
+        try:
+            error_body = resp.json()
+        except ValueError:
+            error_body = {"raw": resp.text[:400]}
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Erreur lors de l'enregistrement de la télémétrie de lecture vidéo.",
+                "status_code": resp.status_code,
+                "error": error_body,
+            },
+        )
+
+    return {"success": True}
 
 
 @app.post("/studio/ai/transcribe", response_model=StudioTranscriptionResponse)

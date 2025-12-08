@@ -1,5 +1,9 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:video_player/video_player.dart';
@@ -1072,6 +1076,31 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
     }
   }
 
+  Future<void> _reportPlaybackError({
+    required String videoUrl,
+    String? renditionKey,
+    required String errorMessage,
+  }) async {
+    try {
+      final uri = Uri.parse(
+        'https://academia-app-production.up.railway.app/telemetry/video_playback_error',
+      );
+      final payload = <String, dynamic>{
+        'video_url': videoUrl,
+        'rendition_key': renditionKey,
+        'error_message': errorMessage,
+        'platform': kIsWeb ? 'web' : defaultTargetPlatform.toString(),
+      };
+      await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(payload),
+      );
+    } catch (_) {
+      // on ignore les erreurs de télémétrie
+    }
+  }
+
   String _pickBestUrl() {
     if (_renditions == null) {
       final rawUrl = widget.video['video_url']?.toString() ?? '';
@@ -1093,11 +1122,23 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
   }
 
   void _setError(String msg) {
+    final urlForTelemetry = _selectedUrl.isNotEmpty
+        ? _selectedUrl
+        : widget.video['video_url']?.toString() ?? '';
+
     setState(() {
       _errorMessage = msg;
       _initialized = false;
       _controller = null;
     });
+
+    if (urlForTelemetry.isNotEmpty) {
+      _reportPlaybackError(
+        videoUrl: urlForTelemetry,
+        renditionKey: null,
+        errorMessage: msg,
+      );
+    }
   }
 
   @override
