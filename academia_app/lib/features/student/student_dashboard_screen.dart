@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -339,96 +340,112 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   }
 
   Widget _buildMobileBottomNav(int unread) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: SafeArea(
-        top: false,
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 8),
         child: SizedBox(
-          height: 72,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              children: [
-                _buildMobileNavItem(
-                  index: 0,
-                  label: 'Accueil',
-                  icon: _HomeNavIcon(
-                    icon: Icons.home_outlined,
-                    hasNew: _hasNewHomeContent,
+          height: 76,
+          child: Center(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.92,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE6F3FA),
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x33000000),
+                        offset: Offset(0, 12),
+                        blurRadius: 32,
+                      ),
+                    ],
                   ),
-                  selectedIcon: _HomeNavIcon(
-                    icon: Icons.home,
-                    hasNew: _hasNewHomeContent,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(
+                      children: [
+                        _buildMobileNavItem(
+                          index: 0,
+                          label: 'Accueil',
+                          icon: _HomeNavIcon(
+                            icon: Icons.home_outlined,
+                            hasNew: _hasNewHomeContent,
+                          ),
+                          selectedIcon: _HomeNavIcon(
+                            icon: Icons.home,
+                            hasNew: _hasNewHomeContent,
+                          ),
+                        ),
+                        _buildMobileNavItem(
+                          index: 1,
+                          label: 'Candidatures',
+                          icon: _NavBadgeIcon(
+                            icon: Icons.assignment_outlined,
+                            count: unread,
+                          ),
+                          selectedIcon: _NavBadgeIcon(
+                            icon: Icons.assignment,
+                            count: unread,
+                          ),
+                        ),
+                        _buildMobileNavItem(
+                          index: 2,
+                          label: 'Opportunités',
+                          icon: const Icon(Icons.work_outline),
+                          selectedIcon: const Icon(Icons.work),
+                        ),
+                        _buildMobileNavItem(
+                          index: 3,
+                          label: 'Communautés',
+                          icon: const Icon(Icons.groups_outlined),
+                          selectedIcon: const Icon(Icons.groups),
+                        ),
+                        _buildMobileNavItem(
+                          index: 4,
+                          label: 'Challenges',
+                          icon: const Icon(Icons.emoji_events_outlined),
+                          selectedIcon: const Icon(Icons.emoji_events),
+                        ),
+                        _buildMobileNavItem(
+                          index: 5,
+                          label: 'Universités',
+                          icon: const Icon(Icons.apartment_outlined),
+                          selectedIcon: const Icon(Icons.apartment),
+                        ),
+                        _buildMobileNavItem(
+                          index: 6,
+                          label: 'Cours',
+                          icon: const Icon(Icons.menu_book_outlined),
+                          selectedIcon: const Icon(Icons.menu_book),
+                        ),
+                        _buildMobileNavItem(
+                          index: 7,
+                          label: 'Formations',
+                          icon: const Icon(Icons.play_circle_outline),
+                          selectedIcon: const Icon(Icons.play_circle),
+                        ),
+                        _buildMobileNavItem(
+                          index: 8,
+                          label: 'Lives',
+                          icon: const Icon(Icons.videocam_outlined),
+                          selectedIcon: const Icon(Icons.videocam),
+                        ),
+                        _buildMobileNavItem(
+                          index: 9,
+                          label: 'Bobodo',
+                          icon: const Icon(Icons.smart_toy_outlined),
+                          selectedIcon: const Icon(Icons.smart_toy),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                _buildMobileNavItem(
-                  index: 1,
-                  label: 'Candidatures',
-                  icon: _NavBadgeIcon(
-                    icon: Icons.assignment_outlined,
-                    count: unread,
-                  ),
-                  selectedIcon: _NavBadgeIcon(
-                    icon: Icons.assignment,
-                    count: unread,
-                  ),
-                ),
-                _buildMobileNavItem(
-                  index: 2,
-                  label: 'Opportunités',
-                  icon: const Icon(Icons.work_outline),
-                  selectedIcon: const Icon(Icons.work),
-                ),
-                _buildMobileNavItem(
-                  index: 3,
-                  label: 'Communautés',
-                  icon: const Icon(Icons.groups_outlined),
-                  selectedIcon: const Icon(Icons.groups),
-                ),
-                _buildMobileNavItem(
-                  index: 4,
-                  label: 'Challenges',
-                  icon: const Icon(Icons.emoji_events_outlined),
-                  selectedIcon: const Icon(Icons.emoji_events),
-                ),
-                _buildMobileNavItem(
-                  index: 5,
-                  label: 'Universités',
-                  icon: const Icon(Icons.apartment_outlined),
-                  selectedIcon: const Icon(Icons.apartment),
-                ),
-                _buildMobileNavItem(
-                  index: 6,
-                  label: 'Cours',
-                  icon: const Icon(Icons.menu_book_outlined),
-                  selectedIcon: const Icon(Icons.menu_book),
-                ),
-                _buildMobileNavItem(
-                  index: 7,
-                  label: 'Formations',
-                  icon: const Icon(Icons.play_circle_outline),
-                  selectedIcon: const Icon(Icons.play_circle),
-                ),
-                _buildMobileNavItem(
-                  index: 8,
-                  label: 'Lives',
-                  icon: const Icon(Icons.videocam_outlined),
-                  selectedIcon: const Icon(Icons.videocam),
-                ),
-                _buildMobileNavItem(
-                  index: 9,
-                  label: 'Bobodo',
-                  icon: const Icon(Icons.smart_toy_outlined),
-                  selectedIcon: const Icon(Icons.smart_toy),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -442,38 +459,56 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     required Widget icon,
     required Widget selectedIcon,
   }) {
-    const double iconSize = 26;
+    const double iconSize = 24;
     const double fontSize = 11;
     final bool isSelected = _currentIndex == index;
-    final Color color = isSelected ? Colors.white : Colors.white70;
+
+    final Color selectedColor = const Color(0xFF0A2540);
+    final Color unselectedColor = const Color(0xFF60748F);
 
     final Widget effectiveIcon = isSelected ? selectedIcon : icon;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () => _onDestinationSelected(index),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconTheme(
-              data: IconThemeData(
-                color: color,
-                size: iconSize,
-              ),
-              child: effectiveIcon,
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      child: AnimatedScale(
+        scale: isSelected ? 1.08 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOutCubic,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: () => _onDestinationSelected(index),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color:
+                  isSelected ? Colors.white.withOpacity(0.9) : Colors.transparent,
+              borderRadius: BorderRadius.circular(22),
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: fontSize,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconTheme(
+                  data: IconThemeData(
+                    color: isSelected ? selectedColor : unselectedColor,
+                    size: iconSize,
+                  ),
+                  child: effectiveIcon,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected ? selectedColor : unselectedColor,
+                    fontSize: fontSize,
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

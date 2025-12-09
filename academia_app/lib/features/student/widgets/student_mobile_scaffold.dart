@@ -27,15 +27,34 @@ class StudentMobileScaffold extends StatelessWidget {
     // Les écrans pourront décider plus tard comment utiliser ce scaffold.
     final isMobile = context.isMobile;
 
-    return Scaffold(
+    final scaffold = Scaffold(
       appBar: appBar,
-      backgroundColor: backgroundColor,
+      backgroundColor: isMobile ? Colors.transparent : backgroundColor,
       body: SafeArea(
         top: true,
         bottom: isMobile,
         child: body,
       ),
       bottomNavigationBar: bottomNavigationBar,
+    );
+
+    if (!isMobile) {
+      return scaffold;
+    }
+
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF62A8FF),
+            Color(0xFF9ED7FF),
+            Color(0xFFDFF4FF),
+          ],
+        ),
+      ),
+      child: scaffold,
     );
   }
 }

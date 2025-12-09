@@ -65,23 +65,224 @@ class _StudentHomeMobileTabState extends State<StudentHomeMobileTab> {
   Widget build(BuildContext context) {
     return StudentMobileScrollablePage(
       children: [
-        const _MobileHomeHero(),
-        const SizedBox(height: 12),
-        const _MobileHomeTicker(),
+        const SizedBox(height: 8),
+        const _MobileTopNavBar(),
         const SizedBox(height: 16),
         _MobileProfileCard(),
         const SizedBox(height: 16),
-        _MobileMyTrainingsSection(),
-        const SizedBox(height: 16),
-        _MobileApplicationsSection(),
-        const SizedBox(height: 16),
-        _MobileOpportunitiesSection(),
-        const SizedBox(height: 16),
-        _MobileChallengesSection(),
-        const SizedBox(height: 16),
-        _MobilePartnersSection(),
+        const _MobileSectionsGrid(),
         const SizedBox(height: 24),
       ],
+    );
+  }
+}
+
+class _MobileTopNavBar extends StatefulWidget {
+  const _MobileTopNavBar();
+
+  @override
+  State<_MobileTopNavBar> createState() => _MobileTopNavBarState();
+}
+
+class _MobileTopNavBarState extends State<_MobileTopNavBar>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 130),
+      lowerBound: 0.0,
+      upperBound: 1.0,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onTapSimple(VoidCallback? action) async {
+    if (action == null) return;
+    try {
+      await _controller.forward(from: 0);
+    } finally {
+      _controller.reverse();
+    }
+    action();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = 1.0 + 0.18 * _controller.value;
+
+    return Center(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: scale,
+            child: child,
+          );
+        },
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.22),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33000000),
+                offset: Offset(0, 10),
+                blurRadius: 30,
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              _TopNavIconButton(
+                icon: Icons.notifications_none,
+                onTap: () => _onTapSimple(() {
+                  // Navigation future vers notifications si besoin.
+                }),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  alignment: Alignment.centerLeft,
+                  child: const Text(
+                    'Rechercher une opportunité, un cours...',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF6F6F6F),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              _TopNavIconButton(
+                icon: Icons.person_outline,
+                onTap: () => _onTapSimple(() {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const StudentProfileScreen(),
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(width: 4),
+              _TopNavIconButton(
+                icon: Icons.more_horiz,
+                onTap: () => _onTapSimple(() {
+                  // Menu / paramètres plus tard.
+                }),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TopNavIconButton extends StatefulWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  const _TopNavIconButton({
+    required this.icon,
+    this.onTap,
+  });
+
+  @override
+  State<_TopNavIconButton> createState() => _TopNavIconButtonState();
+}
+
+class _TopNavIconButtonState extends State<_TopNavIconButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 130),
+      lowerBound: 0.0,
+      upperBound: 1.0,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleTap() async {
+    final action = widget.onTap;
+    if (action == null) return;
+    try {
+      await _controller.forward(from: 0);
+    } finally {
+      _controller.reverse();
+    }
+    action();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final scale = 1.0 + 0.18 * _controller.value;
+        final glowOpacity = 0.3 * _controller.value;
+        return Transform.scale(
+          scale: scale,
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.7),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.white.withOpacity(glowOpacity),
+                  blurRadius: 16,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: child,
+          ),
+        );
+      },
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: _handleTap,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Icon(
+              widget.icon,
+              size: 20,
+              color: const Color(0xFF0A2540),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -145,23 +346,37 @@ class _MobileHomeHeroState extends State<_MobileHomeHero> {
           return const SizedBox.shrink();
         }
 
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: AspectRatio(
-            aspectRatio: 16 / 9,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x14000000),
+                offset: Offset(0, 10),
+                blurRadius: 30,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color(0xFF62A8FF),
+                            Color(0xFF9ED7FF),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
                 if (isImage && url.isNotEmpty)
                   Positioned.fill(
                     child: Image.network(
@@ -183,41 +398,246 @@ class _MobileHomeHeroState extends State<_MobileHomeHero> {
                       resizeMode: 'cover',
                     ),
                   ),
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.black.withOpacity(0.45),
-                          Colors.black.withOpacity(0.1),
-                        ],
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black.withOpacity(0.35),
+                            Colors.transparent,
+                          ],
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                if (title.isNotEmpty)
-                  Positioned(
-                    left: 16,
-                    right: 16,
-                    bottom: 12,
-                    child: Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                  if (title.isNotEmpty)
+                    Positioned(
+                      left: 20,
+                      right: 20,
+                      bottom: 16,
+                      child: Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         );
       },
+    );
+  }
+}
+
+class _MobileSectionsGrid extends StatelessWidget {
+  const _MobileSectionsGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    final myCoursesProvider = context.watch<StudentOnlineCoursesProvider>();
+    final appsProvider = context.watch<StudentApplicationsProvider>();
+    final offersProvider = context.watch<StudentOffersProvider>();
+
+    final myCoursesCount = myCoursesProvider.myCourses.length;
+    final appsCount = appsProvider.applications.length;
+    final universitiesCount = offersProvider.universities.length;
+
+    final items = <_MobileSectionItem>[
+      _MobileSectionItem(
+        title: 'Mes formations',
+        subtitle: myCoursesCount > 0
+            ? '$myCoursesCount formation(s) en cours'
+            : 'Découvre les formations disponibles.',
+        icon: Icons.school_outlined,
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const StudentOnlineTrainingsTab(),
+            ),
+          );
+        },
+      ),
+      _MobileSectionItem(
+        title: 'Candidatures',
+        subtitle: appsCount > 0
+            ? '$appsCount candidature(s) en cours'
+            : 'Suis l\'état de tes candidatures.',
+        icon: Icons.assignment_outlined,
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const StudentApplicationsTab(),
+            ),
+          );
+        },
+      ),
+      _MobileSectionItem(
+        title: 'Opportunités',
+        subtitle: 'Stages, emplois et programmes.',
+        icon: Icons.work_outline,
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const StudentOpportunitiesTab(),
+            ),
+          );
+        },
+      ),
+      _MobileSectionItem(
+        title: 'Challenges',
+        subtitle: 'Missions, concours et vidéos.',
+        icon: Icons.sports_esports_outlined,
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const challenges_tab.StudentChallengesTab(),
+            ),
+          );
+        },
+      ),
+      _MobileSectionItem(
+        title: 'Universités partenaires',
+        subtitle: universitiesCount > 0
+            ? '$universitiesCount université(s) partenaire(s)'
+            : 'Découvre nos universités partenaires.',
+        icon: Icons.school,
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const partners_tab.StudentPartnersTab(),
+            ),
+          );
+        },
+      ),
+    ];
+
+    final topItems = items.take(2).toList(growable: false);
+    final bottomItems = items.skip(2).toList(growable: false);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _MobileSectionsRow(items: topItems),
+        const SizedBox(height: 16),
+        const _MobileHomeHero(),
+        const SizedBox(height: 12),
+        const _MobileHomeTicker(),
+        const SizedBox(height: 16),
+        _MobileSectionsRow(items: bottomItems),
+      ],
+    );
+  }
+}
+
+class _MobileSectionsRow extends StatelessWidget {
+  final List<_MobileSectionItem> items;
+
+  const _MobileSectionsRow({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 1.4,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return _MobileSectionCard(item: item);
+      },
+    );
+  }
+}
+
+class _MobileSectionItem {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  _MobileSectionItem({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
+}
+
+class _MobileSectionCard extends StatelessWidget {
+  final _MobileSectionItem item;
+
+  const _MobileSectionCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: item.onTap,
+      child: Ink(
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x14000000),
+              offset: Offset(0, 8),
+              blurRadius: 20,
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                item.icon,
+                color: const Color(0xFF0A2540),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                item.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF0A2540),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Expanded(
+                child: Text(
+                  item.subtitle,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF6F6F6F),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -285,12 +705,9 @@ class _MobileHomeTickerState extends State<_MobileHomeTicker> {
 
         return Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF15803D), Color(0xFF0F766E)],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.18),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: SizedBox(
             height: 32,
@@ -305,16 +722,25 @@ class _MobileHomeTickerState extends State<_MobileHomeTicker> {
                 final effectiveIndex = index % baseCount;
                 final text = texts[effectiveIndex];
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Center(
-                    child: Text(
-                      text,
-                      style: const TextStyle(
-                        color: Color(0xFFF9FAFB),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.bolt,
+                        size: 16,
+                        color: Color(0xFFFFC94A),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      Text(
+                        text,
+                        style: const TextStyle(
+                          color: Color(0xFF0A2540),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 );
               },
@@ -349,7 +775,7 @@ class _MobileProfileCard extends StatelessWidget {
             : 'Localisation non renseignée';
 
         return Card(
-          color: Colors.white,
+          color: Colors.white.withOpacity(0.9),
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
