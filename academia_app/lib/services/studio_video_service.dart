@@ -72,10 +72,17 @@ class StudioVideoService {
 
   static Future<Map<String, dynamic>> render({
     required String participationId,
+    String videoType = 'challenge',
+    String? freeVideoId,
   }) async {
     final body = <String, dynamic>{
       'participation_id': participationId,
+      'video_type': videoType,
     };
+
+    if (videoType == 'free' && freeVideoId != null && freeVideoId.trim().isNotEmpty) {
+      body['free_video_id'] = freeVideoId.trim();
+    }
 
     print(
       '[StudioVideoService] render START participation_id=$participationId',

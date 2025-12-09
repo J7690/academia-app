@@ -14,7 +14,6 @@ class StudentChallengeDetailScreen extends StatefulWidget {
   final String initialDifficulty;
   final int initialPoints;
   final bool requiresSubmission;
-  final bool requiresAdminReview;
 
   const StudentChallengeDetailScreen({
     super.key,
@@ -25,7 +24,6 @@ class StudentChallengeDetailScreen extends StatefulWidget {
     required this.initialDifficulty,
     required this.initialPoints,
     required this.requiresSubmission,
-    required this.requiresAdminReview,
   });
 
   @override
@@ -450,7 +448,7 @@ class _StudentChallengeDetailScreenState extends State<StudentChallengeDetailScr
         myStatus != 'completed' &&
         myStatus != 'won';
 
-    final canMarkCompleted = !widget.requiresAdminReview &&
+    final canMarkCompleted =
         hasParticipation &&
         myStatus != 'completed' &&
         myStatus != 'won';

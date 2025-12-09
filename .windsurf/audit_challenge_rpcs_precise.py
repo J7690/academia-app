@@ -51,7 +51,7 @@ def main() -> int:
         """,
     )
 
-    # 2) RPC publiques critiques pour le pipeline vidéo étudiant
+    # 2) RPC publiques critiques pour le pipeline vidéo étudiant (challenges)
     run_sql(
         "RPC_challenge_student_core",
         """
@@ -63,6 +63,33 @@ def main() -> int:
             'app_student_add_challenge_video',
             'app_student_set_challenge_main_video',
             'app_student_challenge_video_feed'
+          )
+        ORDER BY routine_name
+        """,
+    )
+
+    # 3) Table des vidéos libres (free_videos)
+    run_sql(
+        "TABLE_app_free_videos",
+        """
+        SELECT column_name, data_type, is_nullable
+        FROM information_schema.columns
+        WHERE table_schema = 'app'
+          AND table_name = 'free_videos'
+        ORDER BY ordinal_position
+        """,
+    )
+
+    # 4) RPC unifiées/génériques pour le feed et la création de vidéos libres
+    run_sql(
+        "RPC_free_videos_and_unified_feed",
+        """
+        SELECT routine_schema, routine_name, specific_name
+        FROM information_schema.routines
+        WHERE routine_schema = 'public'
+          AND routine_name IN (
+            'app_student_create_free_video',
+            'app_student_unified_video_feed'
           )
         ORDER BY routine_name
         """,

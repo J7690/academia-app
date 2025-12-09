@@ -67,6 +67,8 @@ class StudioAudioService {
     required String participationId,
     required List<Map<String, dynamic>> tracks,
     bool normalize = true,
+    String videoType = 'challenge',
+    String? freeVideoId,
   }) async {
     if (tracks.isEmpty) {
       throw Exception('Aucune piste audio sélectionnée.');
@@ -76,7 +78,12 @@ class StudioAudioService {
       'participation_id': participationId,
       'tracks': tracks,
       'normalize': normalize,
+      'video_type': videoType,
     };
+
+    if (videoType == 'free' && freeVideoId != null && freeVideoId.trim().isNotEmpty) {
+      body['free_video_id'] = freeVideoId.trim();
+    }
 
     return _postWithUserJwt(
       path: '/studio/audio/render',

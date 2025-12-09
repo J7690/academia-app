@@ -20,6 +20,7 @@ class StudentChallengesProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _leaderboard = [];
   List<Map<String, dynamic>> _videos = [];
   final Map<String, Map<String, dynamic>> _videoByParticipationId = {};
+  final Map<String, Map<String, dynamic>> _freeVideoById = {};
 
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
@@ -63,6 +64,106 @@ class StudentChallengesProvider extends ChangeNotifier {
         fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
     final storagePath =
         '${user.id}/challenges/$challengeId/$sanitizedFileName';
+
+    try {
+      await _client.storage.from('challenge-media').uploadBinary(
+            storagePath,
+            bytes,
+            fileOptions: FileOptions(
+              contentType: MimeTypeHelper.normalize(mimeType),
+              upsert: true,
+            ),
+          );
+    } on StorageException catch (e) {
+      final message = e.message.toLowerCase();
+      final error = (e.error ?? '').toLowerCase();
+      final statusCode = e.statusCode?.toString() ?? '';
+      final isDuplicate = statusCode == '409' ||
+          message.contains('already exists') ||
+          error.contains('duplicate');
+
+      if (!isDuplicate) {
+        _setError(e.toString());
+        return null;
+      }
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    }
+
+    final publicUrl =
+        _client.storage.from('challenge-media').getPublicUrl(storagePath);
+    return publicUrl;
+  }
+
+  Future<String?> createFreeVideo({
+    required String videoUrl,
+    Map<String, dynamic>? videoRenditions,
+    String? thumbnailUrl,
+    String? title,
+    String? description,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_create_free_video',
+        params: {
+          'p_video_url': videoUrl,
+          'p_video_renditions': videoRenditions,
+          'p_thumbnail_url': thumbnailUrl,
+          'p_title': title,
+          'p_description': description,
+        },
+      );
+
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors de la création de la vidéo libre.',
+        );
+        return null;
+      }
+
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors de la création de la vidéo libre.',
+        );
+        return null;
+      }
+
+      final rawId = response['video_id'];
+      if (rawId is String && rawId.trim().isNotEmpty) {
+        return rawId.trim();
+      }
+
+      _setError(
+        'Identifiant de vidéo libre manquant dans la réponse du serveur.',
+      );
+      return null;
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<String?> uploadFreeVideo({
+    required Uint8List bytes,
+    required String fileName,
+    String? mimeType,
+  }) async {
+    _setError(null);
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      _setError('Utilisateur non authentifié.');
+      return null;
+    }
+
+    final sanitizedFileName =
+        fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    final storagePath = '${user.id}/free_videos/$sanitizedFileName';
 
     try {
       await _client.storage.from('challenge-media').uploadBinary(
@@ -149,11 +250,10 @@ class StudentChallengesProvider extends ChangeNotifier {
     _setError(null);
     try {
       final dynamic response = await _client.rpc(
-        'app_student_challenge_video_feed',
+        'app_student_unified_video_feed',
         params: {
           'p_cursor': cursor?.toIso8601String(),
           'p_limit': limit,
-          'p_challenge_id': challengeId,
         },
       );
       if (response is! Map<String, dynamic>) {
@@ -281,6 +381,167 @@ class StudentChallengesProvider extends ChangeNotifier {
       ..._videos.sublist(index + 1),
     ];
     notifyListeners();
+  }
+
+  void _updateGenericVideoLikeState(
+    String videoType,
+    String videoId, {
+    required bool liked,
+  }) {
+    final index = _videos.indexWhere(
+      (v) =>
+          (v['video_type']?.toString() ?? '') == videoType &&
+          (v['video_id']?.toString() ?? '') == videoId,
+    );
+    if (index == -1) {
+      return;
+    }
+    final current = Map<String, dynamic>.from(_videos[index]);
+    final currentLikes = current['likes_count'] is int
+        ? current['likes_count'] as int
+        : 0;
+    current['has_liked'] = liked;
+    if (liked) {
+      current['likes_count'] = currentLikes + 1;
+    } else {
+      current['likes_count'] = currentLikes > 0 ? currentLikes - 1 : 0;
+    }
+
+    _videos = [
+      ..._videos.sublist(0, index),
+      current,
+      ..._videos.sublist(index + 1),
+    ];
+    notifyListeners();
+  }
+
+  void _incrementGenericVideoCommentsCount(String videoType, String videoId) {
+    final index = _videos.indexWhere(
+      (v) =>
+          (v['video_type']?.toString() ?? '') == videoType &&
+          (v['video_id']?.toString() ?? '') == videoId,
+    );
+    if (index == -1) {
+      return;
+    }
+    final current = Map<String, dynamic>.from(_videos[index]);
+    final currentComments = current['comments_count'] is int
+        ? current['comments_count'] as int
+        : 0;
+    current['comments_count'] = currentComments + 1;
+
+    _videos = [
+      ..._videos.sublist(0, index),
+      current,
+      ..._videos.sublist(index + 1),
+    ];
+    notifyListeners();
+  }
+
+  Future<bool> likeVideo({
+    required String videoType,
+    required String videoId,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_video_like',
+        params: {
+          'p_video_type': videoType,
+          'p_video_id': videoId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur lors du like de la vidéo.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors du like de la vidéo.',
+        );
+        return false;
+      }
+      _updateGenericVideoLikeState(videoType, videoId, liked: true);
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> updateFreeVideoOverlays({
+    required String freeVideoId,
+    required Map<String, dynamic> layers,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_update_free_video_overlays',
+        params: {
+          'p_free_video_id': freeVideoId,
+          'p_layers': layers,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur lors de la sauvegarde des overlays.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors de la sauvegarde des overlays vidéo.',
+        );
+        return false;
+      }
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> unlikeVideo({
+    required String videoType,
+    required String videoId,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_video_unlike',
+        params: {
+          'p_video_type': videoType,
+          'p_video_id': videoId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors du retrait du like.',
+        );
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors du retrait du like de la vidéo.',
+        );
+        return false;
+      }
+      _updateGenericVideoLikeState(videoType, videoId, liked: false);
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
   }
 
   Future<bool> likeChallengeVideo({required String participationId}) async {
@@ -429,6 +690,47 @@ class StudentChallengesProvider extends ChangeNotifier {
     }
   }
 
+  Future<Map<String, dynamic>?> getFreeVideoById(String freeVideoId) async {
+    final cached = _freeVideoById[freeVideoId];
+    if (cached != null) {
+      return Map<String, dynamic>.from(cached);
+    }
+
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_get_free_video',
+        params: {
+          'p_free_video_id': freeVideoId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur pour la vidéo libre.');
+        return null;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors du chargement de la vidéo libre.',
+        );
+        return null;
+      }
+      final video = response['video'];
+      if (video is Map<String, dynamic>) {
+        final normalized = Map<String, dynamic>.from(video);
+        final id = normalized['free_video_id']?.toString();
+        if (id != null && id.isNotEmpty) {
+          _freeVideoById[id] = normalized;
+        }
+        return normalized;
+      }
+      return null;
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    }
+  }
+
   Future<bool> unlikeChallengeVideo({required String participationId}) async {
     _setSaving(true);
     _setError(null);
@@ -522,6 +824,48 @@ class StudentChallengesProvider extends ChangeNotifier {
             .map((e) => Map<String, dynamic>.from(e))
             .toList(growable: false);
       }
+      return const [];
+    } catch (e) {
+      _setError(e.toString());
+      return const [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> listFreeVideoRenderJobs(
+    String freeVideoId,
+  ) async {
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_list_free_video_render_jobs',
+        params: {
+          'p_free_video_id': freeVideoId,
+        },
+      );
+
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur pour les jobs de rendu audio/vidéo.',
+        );
+        return const [];
+      }
+
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors du chargement des jobs de rendu audio/vidéo.',
+        );
+        return const [];
+      }
+
+      final data = response['jobs'];
+      if (data is List) {
+        return data
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+      }
+
       return const [];
     } catch (e) {
       _setError(e.toString());

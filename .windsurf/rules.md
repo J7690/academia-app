@@ -151,3 +151,57 @@
 - **Large Files**: Faire attention aux fichiers très volumineux
 - **Extensions**: Désactiver les extensions non utilisées
 - **Memory**: Surveiller l'utilisation de la mémoire pour les grands projets
+
+## Autosélection Obligatoire de l’Agent IA (Projet Academia)
+
+### Agents disponibles
+- Agent IA global : `cascade` (préféré, priorité haute).
+- Agents spécialisés décrits dans `intelligent_agent_selection.md` :
+  - `flutter_ui_agent` : UI Flutter, widgets, layout, vidéo côté app.
+  - `supabase_db_agent` : schémas, RPC, RLS, migrations Supabase.
+  - `integration_agent` : intégration Flutter ⇄ backend ⇄ Supabase.
+  - `system_architect_agent` : architecture globale du projet.
+  - `debug_agent` : débogage multi-systèmes, performance, logs.
+
+### Règles de sélection
+- Tâches Flutter/UI : utiliser `flutter_ui_agent` comme agent spécialisé.
+- Tâches Supabase/SQL/RPC : utiliser `supabase_db_agent`.
+- Tâches d’intégration Flutter ⇄ Backend ⇄ Supabase : utiliser `integration_agent`.
+- Tâches d’architecture globale : utiliser `system_architect_agent`.
+- Tâches de débogage transversal : utiliser `debug_agent` + un agent spécialisé approprié.
+
+Si aucun agent adapté ne peut être identifié, la tâche doit être considérée comme **interdite**.
+
+## Audit Obligatoire Avant Action
+
+Avant toute modification de code ou de schéma liée à Flutter, Supabase ou au backend :
+- produire un audit dans `.windsurf/audit/last_audit.md` contenant au minimum :
+  - fichiers impactés ;
+  - dépendances principales ;
+  - risques de régression ;
+  - plan d’action détaillé ;
+  - agent spécialisé sélectionné.
+- sans ce fichier d’audit à jour, **aucune modification ne doit être exécutée**.
+
+## Règles Supabase & RPC
+
+- Toute écriture dans la base doit passer par les RPC/admin documentées dans `.windsurf` :
+  - via `auto_supabase_import.py` (méthodes `supabase_*`), ou
+  - via `SupabaseAutoManager` et `admin_execute_sql`.
+- Aucune exécution SQL directe dans le dashboard n’est autorisée dans le flux Windsurf.
+- Les changements SQL significatifs doivent être consignés dans `.windsurf/sql_changes/change_YYYYMMDD.sql`.
+
+## Structure Requise .windsurf (Projet Academia)
+
+À respecter et enrichir progressivement :
+
+- `.windsurf/rules.md` : règles globales (ce fichier).
+- `.windsurf/intelligent_agent_selection.md` : détails de sélection d’agents.
+- `.windsurf/windsurf_mandatory_rules.json` : règles d’application automatique.
+- `.windsurf/audit/last_audit.md` : dernier audit pré-action.
+- `.windsurf/sql_changes/` : scripts SQL appliqués via RPC admin.
+- `.windsurf/logs/` : journaux d’exécutions, dont échecs vidéo (TECNO LD7, etc.).
+
+## Règle Finale
+
+Si une règle critique (autosélection d’agent, audit préalable, usage des RPC Supabase) n’est pas respectée, la tâche doit être **bloquée** et signalée comme non conforme aux règles `.windsurf` de ce projet.

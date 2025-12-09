@@ -264,7 +264,9 @@ class BobodoChatResponse(BaseModel):
 
 
 class StudioTranscriptionRequest(BaseModel):
-    participation_id: str
+    participation_id: Optional[str] = None
+    free_video_id: Optional[str] = None
+    video_type: Optional[str] = "challenge"
     language: Optional[str] = None
 
 
@@ -273,16 +275,22 @@ class StudioTranscriptionResponse(BaseModel):
     participation_id: str
     subtitles: List[Dict[str, Any]]
     overlays: Dict[str, Any]
+    video_type: Optional[str] = "challenge"
+    free_video_id: Optional[str] = None
 
 
 class StudioAnalyzeRequest(BaseModel):
-    participation_id: str
+    participation_id: Optional[str] = None
+    free_video_id: Optional[str] = None
+    video_type: Optional[str] = "challenge"
 
 
 class StudioAnalyzeResponse(BaseModel):
     success: bool
     participation_id: str
     analysis: str
+    video_type: Optional[str] = "challenge"
+    free_video_id: Optional[str] = None
 
 
 class StudioProofreadRequest(BaseModel):
@@ -303,7 +311,9 @@ class StudioAudioTrackSpec(BaseModel):
 
 
 class StudioAudioRenderRequest(BaseModel):
-    participation_id: str
+    participation_id: Optional[str] = None
+    free_video_id: Optional[str] = None
+    video_type: Optional[str] = "challenge"
     tracks: List[StudioAudioTrackSpec]
     normalize: Optional[bool] = True
 
@@ -313,10 +323,14 @@ class StudioAudioRenderResponse(BaseModel):
     participation_id: str
     video_url: str
     added_video_id: Optional[str] = None
+    video_type: Optional[str] = "challenge"
+    free_video_id: Optional[str] = None
 
 
 class StudioVideoRenderRequest(BaseModel):
-    participation_id: str
+    participation_id: Optional[str] = None
+    free_video_id: Optional[str] = None
+    video_type: Optional[str] = "challenge"
 
 
 class StudioVideoRenderResponse(BaseModel):
@@ -324,6 +338,8 @@ class StudioVideoRenderResponse(BaseModel):
     participation_id: str
     video_url: str
     added_video_id: Optional[str] = None
+    video_type: Optional[str] = "challenge"
+    free_video_id: Optional[str] = None
 
 
 class VideoPlaybackErrorIn(BaseModel):
@@ -680,6 +696,35 @@ async def get_challenge_video_for_user(jwt: str, participation_id: str) -> Dict[
         raise HTTPException(
             status_code=500,
             detail={"message": "Rponse Supabase invalide pour la vido de challenge."},
+        )
+
+    return video
+
+
+async def get_free_video_for_user(jwt: str, free_video_id: str) -> Dict[str, Any]:
+    data = await call_supabase_rpc_as_user(
+        jwt,
+        "app_student_get_free_video",
+        {"p_free_video_id": free_video_id},
+    )
+
+    if not isinstance(data, dict) or not data.get("success"):
+        error_code = None
+        if isinstance(data, dict):
+            error_code = data.get("error")
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Accès refusé pour cette vidéo libre",
+                "error": error_code or "unknown_error",
+            },
+        )
+
+    video = data.get("video")
+    if not isinstance(video, dict):
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "Réponse Supabase invalide pour la vidéo libre."},
         )
 
     return video
@@ -1249,7 +1294,10 @@ async def call_studio_video_render(
 
 
 async def create_render_job(
-    participation_id: str,
+    *,
+    video_type: str,
+    participation_id: Optional[str] = None,
+    free_video_id: Optional[str] = None,
     job_type: str,
     source_video_url: Optional[str],
     metadata: Optional[Dict[str, Any]] = None,
@@ -1257,7 +1305,15 @@ async def create_render_job(
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         return None
 
-    table_url = f"{SUPABASE_URL}/rest/v1/app.challenge_video_render_jobs"
+    vt = (video_type or "challenge").strip().lower()
+    if vt == "free":
+        if not free_video_id:
+            return None
+        table_url = f"{SUPABASE_URL}/rest/v1/app.free_video_render_jobs"
+    else:
+        if not participation_id:
+            return None
+        table_url = f"{SUPABASE_URL}/rest/v1/app.challenge_video_render_jobs"
     headers = {
         "apikey": SUPABASE_SERVICE_KEY,
         "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
@@ -1267,10 +1323,13 @@ async def create_render_job(
     }
 
     payload: Dict[str, Any] = {
-        "participation_id": participation_id,
         "job_type": job_type,
         "status": "running",
     }
+    if vt == "free":
+        payload["free_video_id"] = free_video_id
+    else:
+        payload["participation_id"] = participation_id
     if source_video_url:
         payload["source_video_url"] = source_video_url
     if metadata:
@@ -1302,6 +1361,7 @@ async def create_render_job(
 async def update_render_job(
     job_id: Optional[str],
     *,
+    video_type: str = "challenge",
     status: Optional[str] = None,
     result_video_url: Optional[str] = None,
     error_message: Optional[str] = None,
@@ -1325,7 +1385,11 @@ async def update_render_job(
     if not fields:
         return
 
-    table_url = f"{SUPABASE_URL}/rest/v1/app.challenge_video_render_jobs?id=eq.{job_id}"
+    vt = (video_type or "challenge").strip().lower()
+    if vt == "free":
+        table_url = f"{SUPABASE_URL}/rest/v1/app.free_video_render_jobs?id=eq.{job_id}"
+    else:
+        table_url = f"{SUPABASE_URL}/rest/v1/app.challenge_video_render_jobs?id=eq.{job_id}"
     headers = {
         "apikey": SUPABASE_SERVICE_KEY,
         "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
@@ -1695,11 +1759,23 @@ async def studio_audio_render(req: StudioAudioRenderRequest, request: Request) -
     if not user_jwt:
         raise HTTPException(status_code=401, detail="JWT utilisateur invalide pour le rendu audio.")
 
-    participation_id = req.participation_id.strip()
-    if not participation_id:
-        raise HTTPException(status_code=400, detail="participation_id manquant pour le rendu audio.")
+    vt = (req.video_type or "challenge").strip().lower()
+    if vt not in ("challenge", "free"):
+        vt = "challenge"
 
-    video = await get_challenge_video_for_user(user_jwt, participation_id)
+    participation_id: Optional[str] = None
+    free_video_id: Optional[str] = None
+
+    if vt == "free":
+        free_video_id = (req.free_video_id or "").strip()
+        if not free_video_id:
+            raise HTTPException(status_code=400, detail="free_video_id manquant pour le rendu audio.")
+        video = await get_free_video_for_user(user_jwt, free_video_id)
+    else:
+        participation_id = (req.participation_id or "").strip()
+        if not participation_id:
+            raise HTTPException(status_code=400, detail="participation_id manquant pour le rendu audio.")
+        video = await get_challenge_video_for_user(user_jwt, participation_id)
 
     video_url_raw = video.get("video_url")
     video_url = str(video_url_raw or "").strip()
@@ -1725,7 +1801,9 @@ async def studio_audio_render(req: StudioAudioRenderRequest, request: Request) -
         tracks_payload.append(track_dict)
 
     job_id = await create_render_job(
+        video_type=vt,
         participation_id=participation_id,
+        free_video_id=free_video_id,
         job_type="audio_mix",
         source_video_url=video_url,
         metadata={"track_count": len(tracks_payload)},
@@ -1742,45 +1820,50 @@ async def studio_audio_render(req: StudioAudioRenderRequest, request: Request) -
         msg: Optional[str] = None
         if isinstance(detail, dict):
             msg = str(detail.get("message") or "")
-        await update_render_job(job_id, status="failed", error_message=msg)
+        await update_render_job(job_id, video_type=vt, status="failed", error_message=msg)
         raise
 
-    await update_render_job(job_id, status="completed", result_video_url=rendered_url)
+    await update_render_job(job_id, video_type=vt, status="completed", result_video_url=rendered_url)
 
-    add_result = await call_supabase_rpc_as_user(
-        user_jwt,
-        "app_student_add_challenge_video",
-        {
-            "p_participation_id": participation_id,
-            "p_video_url": rendered_url,
-            "p_thumbnail_url": None,
-        },
-    )
-
-    if not isinstance(add_result, dict) or not add_result.get("success"):
-        error_code = None
-        if isinstance(add_result, dict):
-            error_code = add_result.get("error")
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "message": "Erreur lors de l'enregistrement de la vidéo mixée.",
-                "error": error_code or "unknown_error",
+    added_video_id: Optional[str] = None
+    if vt == "free":
+        # Pas de table de clips multiples pour les vidéos libres pour l'instant,
+        # on ne crée donc pas d'enregistrement supplémentaire ici.
+        add_result: Optional[Dict[str, Any]] = None
+    else:
+        add_result = await call_supabase_rpc_as_user(
+            user_jwt,
+            "app_student_add_challenge_video",
+            {
+                "p_participation_id": participation_id,
+                "p_video_url": rendered_url,
+                "p_thumbnail_url": None,
             },
         )
 
-    added_video_id = None
-    raw_id = None
-    if isinstance(add_result, dict):
-        raw_id = add_result.get("video_id")
-    if isinstance(raw_id, str):
-        added_video_id = raw_id
+        if not isinstance(add_result, dict) or not add_result.get("success"):
+            error_code = None
+            if isinstance(add_result, dict):
+                error_code = add_result.get("error")
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "message": "Erreur lors de l'enregistrement de la vidéo mixée.",
+                    "error": error_code or "unknown_error",
+                },
+            )
+
+        raw_id = add_result.get("video_id") if isinstance(add_result, dict) else None
+        if isinstance(raw_id, str):
+            added_video_id = raw_id
 
     return StudioAudioRenderResponse(
         success=True,
-        participation_id=participation_id,
+        participation_id=participation_id or (free_video_id or ""),
         video_url=rendered_url,
         added_video_id=added_video_id,
+        video_type=vt,
+        free_video_id=free_video_id,
     )
 
 
@@ -1794,11 +1877,23 @@ async def studio_video_render(req: StudioVideoRenderRequest, request: Request) -
     if not user_jwt:
         raise HTTPException(status_code=401, detail="JWT utilisateur invalide pour le rendu vidéo.")
 
-    participation_id = req.participation_id.strip()
-    if not participation_id:
-        raise HTTPException(status_code=400, detail="participation_id manquant pour le rendu vidéo.")
+    vt = (req.video_type or "challenge").strip().lower()
+    if vt not in ("challenge", "free"):
+        vt = "challenge"
 
-    video = await get_challenge_video_for_user(user_jwt, participation_id)
+    participation_id: Optional[str] = None
+    free_video_id: Optional[str] = None
+
+    if vt == "free":
+        free_video_id = (req.free_video_id or "").strip()
+        if not free_video_id:
+            raise HTTPException(status_code=400, detail="free_video_id manquant pour le rendu vidéo.")
+        video = await get_free_video_for_user(user_jwt, free_video_id)
+    else:
+        participation_id = (req.participation_id or "").strip()
+        if not participation_id:
+            raise HTTPException(status_code=400, detail="participation_id manquant pour le rendu vidéo.")
+        video = await get_challenge_video_for_user(user_jwt, participation_id)
 
     video_url_raw = video.get("video_url")
     video_url = str(video_url_raw or "").strip()
@@ -1817,24 +1912,27 @@ async def studio_video_render(req: StudioVideoRenderRequest, request: Request) -
     }
 
     job_id = await create_render_job(
+        video_type=vt,
         participation_id=participation_id,
+        free_video_id=free_video_id,
         job_type="video_edit",
         source_video_url=video_url,
         metadata=metadata,
     )
 
     try:
+        storage_id = participation_id or free_video_id or ""
         render_payload = await call_studio_video_render(
             video_url=video_url,
             overlays=overlays,
-            participation_id=participation_id,
+            participation_id=storage_id,
         )
     except HTTPException as exc:
         detail = exc.detail
         msg: Optional[str] = None
         if isinstance(detail, dict):
             msg = str(detail.get("message") or "")
-        await update_render_job(job_id, status="failed", error_message=msg)
+        await update_render_job(job_id, video_type=vt, status="failed", error_message=msg)
         raise
     rendered_url_raw: Optional[str] = None
     video_renditions: Dict[str, Any] = {}
@@ -1849,58 +1947,76 @@ async def studio_video_render(req: StudioVideoRenderRequest, request: Request) -
     rendered_url = (rendered_url_raw or "").strip()
     if not rendered_url:
         msg = "URL vidéo rendue manquante dans la réponse du service Studio vidéo."
-        await update_render_job(job_id, status="failed", error_message=msg)
+        await update_render_job(job_id, video_type=vt, status="failed", error_message=msg)
         raise HTTPException(status_code=500, detail={"message": msg})
 
-    await update_render_job(job_id, status="completed", result_video_url=rendered_url)
+    await update_render_job(job_id, video_type=vt, status="completed", result_video_url=rendered_url)
 
-    add_result = await call_supabase_rpc_as_user(
-        user_jwt,
-        "app_student_add_challenge_video",
-        {
-            "p_participation_id": participation_id,
-            "p_video_url": rendered_url,
-            "p_thumbnail_url": None,
-        },
-    )
-
-    if not isinstance(add_result, dict) or not add_result.get("success"):
-        error_code = None
-        if isinstance(add_result, dict):
-            error_code = add_result.get("error")
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "message": "Erreur lors de l'enregistrement de la vidéo montée.",
-                "error": error_code or "unknown_error",
-            },
-        )
-
-    try:
-        await call_supabase_rpc_as_user(
+    added_video_id: Optional[str] = None
+    if vt == "free":
+        # Pour les vidéos libres, on met à jour directement la vidéo principale
+        # avec l'URL et les renditions finales.
+        try:
+            await call_supabase_rpc_as_user(
+                user_jwt,
+                "app_student_set_free_video_main_renditions",
+                {
+                    "p_free_video_id": free_video_id,
+                    "p_video_url": rendered_url,
+                    "p_video_renditions": video_renditions or None,
+                },
+            )
+        except HTTPException:
+            # On ne fait pas échouer le rendu vidéo si la mise à jour en base échoue.
+            pass
+        add_result: Optional[Dict[str, Any]] = None
+    else:
+        add_result = await call_supabase_rpc_as_user(
             user_jwt,
-            "app_student_set_challenge_main_video",
+            "app_student_add_challenge_video",
             {
                 "p_participation_id": participation_id,
                 "p_video_url": rendered_url,
-                "p_video_renditions": video_renditions or None,
+                "p_thumbnail_url": None,
             },
         )
-    except HTTPException:
-        pass
 
-    added_video_id = None
-    raw_id = None
-    if isinstance(add_result, dict):
-        raw_id = add_result.get("video_id")
-    if isinstance(raw_id, str):
-        added_video_id = raw_id
+        if not isinstance(add_result, dict) or not add_result.get("success"):
+            error_code = None
+            if isinstance(add_result, dict):
+                error_code = add_result.get("error")
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "message": "Erreur lors de l'enregistrement de la vidéo montée.",
+                    "error": error_code or "unknown_error",
+                },
+            )
+
+        try:
+            await call_supabase_rpc_as_user(
+                user_jwt,
+                "app_student_set_challenge_main_video",
+                {
+                    "p_participation_id": participation_id,
+                    "p_video_url": rendered_url,
+                    "p_video_renditions": video_renditions or None,
+                },
+            )
+        except HTTPException:
+            pass
+
+        raw_id = add_result.get("video_id") if isinstance(add_result, dict) else None
+        if isinstance(raw_id, str):
+            added_video_id = raw_id
 
     return StudioVideoRenderResponse(
         success=True,
-        participation_id=participation_id,
+        participation_id=participation_id or (free_video_id or ""),
         video_url=rendered_url,
         added_video_id=added_video_id,
+        video_type=vt,
+        free_video_id=free_video_id,
     )
 
 
@@ -1998,6 +2114,7 @@ async def admin_rerender_challenge_video(participation_id: str, request: Request
     # 3) Créer un job de rendu spécifique admin pour tracer l'opération
     metadata: Dict[str, Any] = {"admin_rerender": True}
     job_id = await create_render_job(
+        video_type="challenge",
         participation_id=participation_id,
         job_type="video_edit_admin",
         source_video_url=source_video_url,
@@ -2144,11 +2261,23 @@ async def studio_ai_transcribe(req: StudioTranscriptionRequest, request: Request
     if not user_jwt:
         raise HTTPException(status_code=401, detail="JWT utilisateur invalide pour la transcription.")
 
-    participation_id = req.participation_id.strip()
-    if not participation_id:
-        raise HTTPException(status_code=400, detail="participation_id manquant pour la transcription.")
+    vt = (req.video_type or "challenge").strip().lower()
+    if vt not in ("challenge", "free"):
+        vt = "challenge"
 
-    video = await get_challenge_video_for_user(user_jwt, participation_id)
+    participation_id: Optional[str] = None
+    free_video_id: Optional[str] = None
+
+    if vt == "free":
+        free_video_id = (req.free_video_id or "").strip()
+        if not free_video_id:
+            raise HTTPException(status_code=400, detail="free_video_id manquant pour la transcription.")
+        video = await get_free_video_for_user(user_jwt, free_video_id)
+    else:
+        participation_id = (req.participation_id or "").strip()
+        if not participation_id:
+            raise HTTPException(status_code=400, detail="participation_id manquant pour la transcription.")
+        video = await get_challenge_video_for_user(user_jwt, participation_id)
 
     video_url_raw = video.get("video_url")
     video_url = str(video_url_raw or "").strip()
@@ -2189,14 +2318,24 @@ async def studio_ai_transcribe(req: StudioTranscriptionRequest, request: Request
     new_overlays["subtitles"] = subtitles
     new_overlays["stickers"] = _normalize_layer_list(overlays_dict.get("stickers"))
 
-    update_result = await call_supabase_rpc_as_user(
-        user_jwt,
-        "app_student_update_challenge_video_overlays",
-        {
-            "p_participation_id": participation_id,
-            "p_layers": new_overlays,
-        },
-    )
+    if vt == "free":
+        update_result = await call_supabase_rpc_as_user(
+            user_jwt,
+            "app_student_update_free_video_overlays",
+            {
+                "p_free_video_id": free_video_id,
+                "p_layers": new_overlays,
+            },
+        )
+    else:
+        update_result = await call_supabase_rpc_as_user(
+            user_jwt,
+            "app_student_update_challenge_video_overlays",
+            {
+                "p_participation_id": participation_id,
+                "p_layers": new_overlays,
+            },
+        )
 
     if not isinstance(update_result, dict) or not update_result.get("success"):
         error_code = None
@@ -2212,9 +2351,11 @@ async def studio_ai_transcribe(req: StudioTranscriptionRequest, request: Request
 
     return StudioTranscriptionResponse(
         success=True,
-        participation_id=participation_id,
+        participation_id=participation_id or (free_video_id or ""),
         subtitles=subtitles,
         overlays=new_overlays,
+        video_type=vt,
+        free_video_id=free_video_id,
     )
 
 
@@ -2228,11 +2369,23 @@ async def studio_ai_analyze(req: StudioAnalyzeRequest, request: Request) -> Stud
     if not user_jwt:
         raise HTTPException(status_code=401, detail="JWT utilisateur invalide pour l'analyse.")
 
-    participation_id = req.participation_id.strip()
-    if not participation_id:
-        raise HTTPException(status_code=400, detail="participation_id manquant pour l'analyse.")
+    vt = (req.video_type or "challenge").strip().lower()
+    if vt not in ("challenge", "free"):
+        vt = "challenge"
 
-    video = await get_challenge_video_for_user(user_jwt, participation_id)
+    participation_id: Optional[str] = None
+    free_video_id: Optional[str] = None
+
+    if vt == "free":
+        free_video_id = (req.free_video_id or "").strip()
+        if not free_video_id:
+            raise HTTPException(status_code=400, detail="free_video_id manquant pour l'analyse.")
+        video = await get_free_video_for_user(user_jwt, free_video_id)
+    else:
+        participation_id = (req.participation_id or "").strip()
+        if not participation_id:
+            raise HTTPException(status_code=400, detail="participation_id manquant pour l'analyse.")
+        video = await get_challenge_video_for_user(user_jwt, participation_id)
 
     overlays = video.get("overlays")
     transcript_parts: List[str] = []
@@ -2249,32 +2402,49 @@ async def studio_ai_analyze(req: StudioAnalyzeRequest, request: Request) -> Stud
     transcript = "\n".join(transcript_parts)
 
     metadata_parts: List[str] = []
-    challenge_title_raw = video.get("challenge_title")
-    if challenge_title_raw:
-        metadata_parts.append(f"Titre du challenge: {challenge_title_raw}")
-    challenge_type_raw = video.get("challenge_type")
-    if challenge_type_raw:
-        metadata_parts.append(f"Type: {challenge_type_raw}")
-    difficulty_raw = video.get("difficulty")
-    if difficulty_raw:
-        metadata_parts.append(f"Difficulté: {difficulty_raw}")
-    points_raw = video.get("points")
-    if points_raw is not None:
-        metadata_parts.append(f"Points: {points_raw}")
+    if vt == "free":
+        title_raw = video.get("title")
+        if title_raw:
+            metadata_parts.append(f"Titre de la vidéo: {title_raw}")
+        description_raw = video.get("description")
+        if description_raw:
+            metadata_parts.append(f"Description: {description_raw}")
+    else:
+        challenge_title_raw = video.get("challenge_title")
+        if challenge_title_raw:
+            metadata_parts.append(f"Titre du challenge: {challenge_title_raw}")
+        challenge_type_raw = video.get("challenge_type")
+        if challenge_type_raw:
+            metadata_parts.append(f"Type: {challenge_type_raw}")
+        difficulty_raw = video.get("difficulty")
+        if difficulty_raw:
+            metadata_parts.append(f"Difficulté: {difficulty_raw}")
+        points_raw = video.get("points")
+        if points_raw is not None:
+            metadata_parts.append(f"Points: {points_raw}")
 
     knowledge: List[Dict[str, Any]] = []
     if transcript:
         knowledge.append({"title": "transcription_video", "content": transcript})
     if metadata_parts:
-        knowledge.append({"title": "meta_challenge", "content": "\n".join(metadata_parts)})
+        knowledge.append({"title": "meta_video", "content": "\n".join(metadata_parts)})
 
-    analysis_prompt = (
-        "Analyse cette vidéo de challenge pour en extraire: "
-        "1) un résumé pédagogique clair, "
-        "2) un plan de cours en quelques points, "
-        "3) 3 à 5 questions de type quiz ou QCM pour vérifier la compréhension. "
-        "Réponds en français, dans un texte structuré avec des titres et puces simples."
-    )
+    if vt == "free":
+        analysis_prompt = (
+            "Analyse cette vidéo pour en extraire: "
+            "1) un résumé pédagogique clair, "
+            "2) un plan de cours en quelques points, "
+            "3) 3 à 5 questions de type quiz ou QCM pour vérifier la compréhension. "
+            "Réponds en français, dans un texte structuré avec des titres et puces simples."
+        )
+    else:
+        analysis_prompt = (
+            "Analyse cette vidéo de challenge pour en extraire: "
+            "1) un résumé pédagogique clair, "
+            "2) un plan de cours en quelques points, "
+            "3) 3 à 5 questions de type quiz ou QCM pour vérifier la compréhension. "
+            "Réponds en français, dans un texte structuré avec des titres et puces simples."
+        )
 
     analysis = await call_openrouter(
         analysis_prompt,
@@ -2285,8 +2455,10 @@ async def studio_ai_analyze(req: StudioAnalyzeRequest, request: Request) -> Stud
 
     return StudioAnalyzeResponse(
         success=True,
-        participation_id=participation_id,
+        participation_id=participation_id or (free_video_id or ""),
         analysis=analysis,
+        video_type=vt,
+        free_video_id=free_video_id,
     )
 
 

@@ -66,12 +66,18 @@ class StudioAiService {
   static Future<Map<String, dynamic>> transcribe({
     required String participationId,
     String? language,
+    String videoType = 'challenge',
+    String? freeVideoId,
   }) async {
     final body = <String, dynamic>{
       'participation_id': participationId,
+      'video_type': videoType,
     };
     if (language != null && language.trim().isNotEmpty) {
       body['language'] = language.trim();
+    }
+    if (videoType == 'free' && freeVideoId != null && freeVideoId.trim().isNotEmpty) {
+      body['free_video_id'] = freeVideoId.trim();
     }
     return _postWithUserJwt(
       path: '/studio/ai/transcribe',
@@ -81,11 +87,16 @@ class StudioAiService {
 
   static Future<Map<String, dynamic>> analyze({
     required String participationId,
+    String videoType = 'challenge',
+    String? freeVideoId,
   }) async {
     return _postWithUserJwt(
       path: '/studio/ai/analyze',
       body: {
         'participation_id': participationId,
+        'video_type': videoType,
+        if (videoType == 'free' && freeVideoId != null && freeVideoId.trim().isNotEmpty)
+          'free_video_id': freeVideoId.trim(),
       },
     );
   }

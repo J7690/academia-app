@@ -1,10 +1,13 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:academia_universal_video_player/academia_universal_video_player.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:video_player/video_player.dart';
@@ -101,7 +104,7 @@ class _StudentChallengesTabState extends State<StudentChallengesTab> {
                 indicatorColor: Color(0xFF1EA75C),
                 tabs: [
                   Tab(text: 'Challenges'),
-                  Tab(text: 'Vidéos de challenges'),
+                  Tab(text: 'Vidéos'),
                 ],
               ),
               Expanded(
@@ -421,8 +424,6 @@ class _StudentChallengesTabState extends State<StudentChallengesTab> {
                       initialPoints: points ?? 0,
                       requiresSubmission:
                           c['requires_submission'] == true,
-                      requiresAdminReview:
-                          c['requires_admin_review'] == true,
                     ),
                   ),
                 );
@@ -517,7 +518,6 @@ class _StudentChallengesTabState extends State<StudentChallengesTab> {
                       initialDifficulty: '',
                       initialPoints: 0,
                       requiresSubmission: false,
-                      requiresAdminReview: false,
                     ),
                   ),
                 );
@@ -899,89 +899,6 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
   }
 
   Future<void> _openCreateVideoFromFeed(BuildContext context) async {
-    final provider = context.read<StudentChallengesProvider>();
-    final participations = provider.participations;
-
-    if (participations.isEmpty) {
-      await showDialog<void>(
-        context: context,
-        builder: (dialogContext) {
-          return AlertDialog(
-            title: const Text('Aucun challenge rejoint'),
-            content: const Text(
-              'Pour créer une vidéo de challenge, tu dois d\'abord rejoindre un challenge depuis l\'onglet "Challenges".',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-      return;
-    }
-
-    final selection = await showModalBottomSheet<Map<String, String>>(
-      context: context,
-      backgroundColor: Colors.white,
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'Choisis le challenge pour ta vidéo',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: participations.length,
-                  itemBuilder: (itemContext, index) {
-                    final p = participations[index];
-                    final participationId =
-                        p['participation_id']?.toString() ??
-                            p['id']?.toString() ??
-                            '';
-                    final challengeId = p['challenge_id']?.toString() ?? '';
-                    final title = p['title']?.toString() ?? 'Challenge';
-
-                    if (participationId.isEmpty || challengeId.isEmpty) {
-                      return const SizedBox.shrink();
-                    }
-
-                    return ListTile(
-                      title: Text(title),
-                      onTap: () {
-                        Navigator.of(sheetContext).pop(<String, String>{
-                          'challenge_id': challengeId,
-                          'participation_id': participationId,
-                        });
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-
-    if (selection == null) {
-      return;
-    }
-
     if (!context.mounted) {
       return;
     }
@@ -995,22 +912,153 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
       return;
     }
 
-    final challengeId = selection['challenge_id'];
-    final participationId = selection['participation_id'];
-    if (challengeId == null || challengeId.isEmpty ||
-        participationId == null || participationId.isEmpty) {
+    if (mode == 'camera') {
+      await _createFreeVideoFromCamera(context);
+    } else if (mode == 'gallery') {
+      await _createFreeVideoFromGallery(context);
+    }
+  }
+
+  Future<void> _createFreeVideoFromCamera(BuildContext context) async {
+    final picker = ImagePicker();
+    XFile? picked;
+    try {
+      picked = await picker.pickVideo(
+        source: ImageSource.camera,
+        maxDuration: const Duration(seconds: 60),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Impossible d\'ouvrir la caméra. Vérifie les autorisations de l\'appareil.',
+          ),
+        ),
+      );
       return;
     }
 
+    if (picked == null) {
+      return;
+    }
+
+    final bytes = await picked.readAsBytes();
+    final name = picked.name.isNotEmpty ? picked.name : 'video.mp4';
+    final ext = name.contains('.') ? name.split('.').last : 'mp4';
+
+    if (!context.mounted) {
+      return;
+    }
+
+    await _handleFreeVideoUpload(
+      context: context,
+      bytes: bytes,
+      fileName: name,
+      mimeType: ext,
+    );
+  }
+
+  Future<void> _createFreeVideoFromGallery(BuildContext context) async {
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: false,
+      withData: true,
+      type: FileType.custom,
+      allowedExtensions: const ['mp4', 'mov', 'webm', 'mkv'],
+    );
+
+    if (result == null || result.files.isEmpty) {
+      return;
+    }
+
+    final file = result.files.first;
+    final bytes = file.bytes;
+    if (bytes == null) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Impossible de lire la vidéo sélectionnée.'),
+        ),
+      );
+      return;
+    }
+
+    final name = file.name.isNotEmpty ? file.name : 'video.mp4';
+    final ext = file.extension;
+
+    if (!context.mounted) {
+      return;
+    }
+
+    await _handleFreeVideoUpload(
+      context: context,
+      bytes: bytes,
+      fileName: name,
+      mimeType: ext,
+    );
+  }
+
+  Future<void> _handleFreeVideoUpload({
+    required BuildContext context,
+    required Uint8List bytes,
+    required String fileName,
+    String? mimeType,
+  }) async {
+    final provider = context.read<StudentChallengesProvider>();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Upload de ta vidéo en cours...'),
+      ),
+    );
+
+    final url = await provider.uploadFreeVideo(
+      bytes: bytes,
+      fileName: fileName,
+      mimeType: mimeType,
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    if (url == null) {
+      final error = provider.error ?? 'Erreur lors de l\'upload de la vidéo.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error)),
+      );
+      return;
+    }
+
+    final freeVideoId = await provider.createFreeVideo(
+      videoUrl: url,
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    if (freeVideoId == null || freeVideoId.isEmpty) {
+      final error =
+          provider.error ?? 'Erreur lors de la création de la vidéo libre.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error)),
+      );
+      return;
+    }
+
+    // Ouvre le Studio unifié en mode "free" pour personnaliser la vidéo.
+    // ignore: use_build_context_synchronously
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => StudentChallengeVideoEditorScreen(
-          challengeId: challengeId,
-          participationId: participationId,
-          initialMode: mode,
+          videoType: 'free',
+          freeVideoId: freeVideoId,
         ),
       ),
     );
+
+    await provider.loadChallengeVideos(limit: _pageSize);
   }
 }
 
@@ -1151,10 +1199,19 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
   @override
   Widget build(BuildContext context) {
     final video = widget.video;
-    final challengeTitle = video['challenge_title']?.toString() ?? '';
-    final challengeType = video['challenge_type']?.toString() ?? '';
-    final difficulty = video['difficulty']?.toString() ?? '';
-    final points = video['points'] is int ? video['points'] as int : null;
+    final videoType = video['video_type']?.toString() ?? 'challenge';
+    final isChallenge = videoType != 'free';
+    final challengeTitle = isChallenge
+        ? (video['challenge_title']?.toString() ?? '')
+        : (video['title']?.toString() ?? '');
+    final challengeType = isChallenge
+        ? (video['challenge_type']?.toString() ?? '')
+        : '';
+    final difficulty =
+        isChallenge ? (video['difficulty']?.toString() ?? '') : '';
+    final points = isChallenge && video['points'] is int
+        ? video['points'] as int
+        : null;
     final likesCount = video['likes_count'] is int ? video['likes_count'] as int : 0;
     final commentsCount =
         video['comments_count'] is int ? video['comments_count'] as int : 0;
@@ -1206,18 +1263,21 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
               parentParticipationId: parentParticipationId,
               context: context,
             ),
-            _buildRightActions(
-              context: context,
-              participationId: participationId,
-              likesCount: likesCount,
-              favoritesCount: favoritesCount,
-              commentsCount: commentsCount,
-              hasLiked: hasLiked,
-              hasFavorited: hasFavorited,
-              videoUrl: videoUrl,
-              parentParticipationId: parentParticipationId,
-              remixType: remixType,
-            ),
+            isChallenge
+                ? _buildRightActions(
+                    context: context,
+                    participationId: participationId,
+                    likesCount: likesCount,
+                    favoritesCount: favoritesCount,
+                    commentsCount: commentsCount,
+                    hasLiked: hasLiked,
+                    hasFavorited: hasFavorited,
+                    videoUrl: videoUrl,
+                    parentParticipationId: parentParticipationId,
+                    remixType: remixType,
+                    isChallenge: isChallenge,
+                  )
+                : Container(),
           ],
         );
       }
@@ -1254,6 +1314,7 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
             videoUrl: videoUrl,
             parentParticipationId: parentParticipationId,
             remixType: remixType,
+            isChallenge: isChallenge,
           ),
         ],
       );
@@ -1322,6 +1383,7 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
           videoUrl: videoUrl,
           parentParticipationId: parentParticipationId,
           remixType: remixType,
+          isChallenge: isChallenge,
         ),
       ],
     );
@@ -1427,6 +1489,7 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
     required String videoUrl,
     required String parentParticipationId,
     required String remixType,
+    required bool isChallenge,
   }) {
     return Positioned(
       right: 16,
@@ -1441,6 +1504,7 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
         videoUrl: videoUrl,
         parentParticipationId: parentParticipationId,
         remixType: remixType,
+        isChallenge: isChallenge,
       ),
     );
   }
@@ -1456,6 +1520,7 @@ class _ChallengeVideoActions extends StatelessWidget {
   final String videoUrl;
   final String parentParticipationId;
   final String remixType;
+  final bool isChallenge;
 
   const _ChallengeVideoActions({
     Key? key,
@@ -1468,6 +1533,7 @@ class _ChallengeVideoActions extends StatelessWidget {
     required this.videoUrl,
     required this.parentParticipationId,
     required this.remixType,
+    required this.isChallenge,
   }) : super(key: key);
 
   @override
@@ -1478,17 +1544,19 @@ class _ChallengeVideoActions extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          onPressed: () async {
-            if (hasLiked) {
-              await provider.unlikeChallengeVideo(
-                participationId: participationId,
-              );
-            } else {
-              await provider.likeChallengeVideo(
-                participationId: participationId,
-              );
-            }
-          },
+          onPressed: !isChallenge
+              ? null
+              : () async {
+                  if (hasLiked) {
+                    await provider.unlikeChallengeVideo(
+                      participationId: participationId,
+                    );
+                  } else {
+                    await provider.likeChallengeVideo(
+                      participationId: participationId,
+                    );
+                  }
+                },
           icon: Icon(
             hasLiked ? Icons.favorite : Icons.favorite_border,
             color: hasLiked ? Colors.redAccent : Colors.white,
@@ -1500,17 +1568,19 @@ class _ChallengeVideoActions extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         IconButton(
-          onPressed: () async {
-            if (hasFavorited) {
-              await provider.unfavoriteChallengeVideo(
-                participationId: participationId,
-              );
-            } else {
-              await provider.favoriteChallengeVideo(
-                participationId: participationId,
-              );
-            }
-          },
+          onPressed: !isChallenge
+              ? null
+              : () async {
+                  if (hasFavorited) {
+                    await provider.unfavoriteChallengeVideo(
+                      participationId: participationId,
+                    );
+                  } else {
+                    await provider.favoriteChallengeVideo(
+                      participationId: participationId,
+                    );
+                  }
+                },
           icon: Icon(
             hasFavorited ? Icons.star : Icons.star_border,
             color: hasFavorited ? Colors.amber : Colors.white,
@@ -1522,9 +1592,11 @@ class _ChallengeVideoActions extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         IconButton(
-          onPressed: () async {
-            await _showCommentsSheet(context, provider, participationId);
-          },
+          onPressed: !isChallenge
+              ? null
+              : () async {
+                  await _showCommentsSheet(context, provider, participationId);
+                },
           icon: const Icon(
             Icons.chat_bubble_outline,
             color: Colors.white,
@@ -1567,7 +1639,7 @@ class _ChallengeVideoActions extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         IconButton(
-          onPressed: remixType == 'duo'
+          onPressed: (!isChallenge || remixType == 'duo')
               ? null
               : () async {
                   final result = await provider.startDuoChallengeVideo(
@@ -1606,9 +1678,11 @@ class _ChallengeVideoActions extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         IconButton(
-          onPressed: () async {
-            await _showReportDialog(context, provider, participationId);
-          },
+          onPressed: !isChallenge
+              ? null
+              : () async {
+                  await _showReportDialog(context, provider, participationId);
+                },
           icon: const Icon(
             Icons.flag_outlined,
             color: Colors.white,

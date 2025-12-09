@@ -41,17 +41,21 @@ class _StudioTimelineTrack {
 }
 
 class StudentChallengeVideoEditorScreen extends StatefulWidget {
-  final String challengeId;
-  final String participationId;
+  final String? challengeId;
+  final String? participationId;
   final String? initialMode;
   final bool asAdditionalVideo;
+  final String videoType;
+  final String? freeVideoId;
 
   const StudentChallengeVideoEditorScreen({
     super.key,
-    required this.challengeId,
-    required this.participationId,
+    this.challengeId,
+    this.participationId,
     this.initialMode,
     this.asAdditionalVideo = false,
+    this.videoType = 'challenge',
+    this.freeVideoId,
   });
 
   @override
@@ -100,6 +104,32 @@ class _StudentChallengeVideoEditorScreenState
   List<String> _clipOrder = [];
   Map<String, Map<String, dynamic>> _clipEdits = {};
   final ScrollController _scrollController = ScrollController();
+
+  bool get _isFreeVideo => widget.videoType == 'free';
+
+  String get _effectiveChallengeId {
+    final id = widget.challengeId;
+    if (id == null || id.isEmpty) {
+      throw StateError('challengeId manquant pour le mode challenge.');
+    }
+    return id;
+  }
+
+  String get _effectiveParticipationId {
+    final id = widget.participationId;
+    if (id == null || id.isEmpty) {
+      throw StateError('participationId manquant pour le mode challenge.');
+    }
+    return id;
+  }
+
+  String get _effectiveFreeVideoId {
+    final id = widget.freeVideoId;
+    if (id == null || id.isEmpty) {
+      throw StateError('freeVideoId manquant pour le mode free.');
+    }
+    return id;
+  }
 
   @override
   void initState() {
@@ -372,12 +402,31 @@ class _StudentChallengeVideoEditorScreenState
       _isUploading = true;
     });
 
-    final url = await provider.uploadChallengeVideo(
-      bytes: _videoBytes!,
-      fileName: _fileName!,
-      challengeId: widget.challengeId,
-      mimeType: _mimeType,
-    );
+    String? url;
+
+    if (_isFreeVideo) {
+      // Pour les vidéos libres, le flux standard prévoit l'upload initial
+      // depuis l'onglet "Vidéos" avant d'ouvrir le Studio.
+      // On ne ré-uploade donc pas la vidéo source depuis cet écran.
+      setState(() {
+        _isUploading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Le ré-upload de la vidéo n’est pas disponible dans le Studio pour les vidéos libres.',
+          ),
+        ),
+      );
+      return;
+    } else {
+      url = await provider.uploadChallengeVideo(
+        bytes: _videoBytes!,
+        fileName: _fileName!,
+        challengeId: _effectiveChallengeId,
+        mimeType: _mimeType,
+      );
+    }
 
     if (!mounted) {
       return;
@@ -444,7 +493,11 @@ class _StudentChallengeVideoEditorScreenState
 
     Map<String, dynamic>? video;
     try {
-      video = await provider.getChallengeVideoById(widget.participationId);
+      if (_isFreeVideo) {
+        video = await provider.getFreeVideoById(_effectiveFreeVideoId);
+      } else {
+        video = await provider.getChallengeVideoById(_effectiveParticipationId);
+      }
     } catch (_) {
       // L'erreur sera exposée via provider.error si nécessaire.
     }
@@ -458,6 +511,12 @@ class _StudentChallengeVideoEditorScreenState
         _didLoadExistingOverlays = true;
       });
       return;
+    }
+
+    final rawVideoUrl = video['video_url']?.toString() ?? '';
+    if (rawVideoUrl.isNotEmpty) {
+      _uploadedUrl = rawVideoUrl;
+      await _initRemoteVideo(rawVideoUrl);
     }
 
     Map<String, dynamic>? overlaysMap;
@@ -604,7 +663,11 @@ class _StudentChallengeVideoEditorScreenState
     final provider = context.read<StudentChallengesProvider>();
     List<Map<String, dynamic>> clips = [];
     try {
-      clips = await provider.listMyChallengeVideos(widget.participationId);
+      if (_isFreeVideo) {
+        clips = const [];
+      } else {
+        clips = await provider.listMyChallengeVideos(_effectiveParticipationId);
+      }
     } catch (_) {
       // L'erreur éventuelle sera exposée via provider.error si besoin.
     }
@@ -896,7 +959,10 @@ class _StudentChallengeVideoEditorScreenState
 
     try {
       final data = await StudioAiService.transcribe(
-        participationId: widget.participationId,
+        participationId:
+            _isFreeVideo ? _effectiveFreeVideoId : _effectiveParticipationId,
+        videoType: _isFreeVideo ? 'free' : 'challenge',
+        freeVideoId: _isFreeVideo ? _effectiveFreeVideoId : null,
       );
 
       if (!mounted) {
@@ -984,7 +1050,10 @@ class _StudentChallengeVideoEditorScreenState
 
     try {
       final data = await StudioAiService.analyze(
-        participationId: widget.participationId,
+        participationId:
+            _isFreeVideo ? _effectiveFreeVideoId : _effectiveParticipationId,
+        videoType: _isFreeVideo ? 'free' : 'challenge',
+        freeVideoId: _isFreeVideo ? _effectiveFreeVideoId : null,
       );
       final analysis = data['analysis']?.toString() ?? '';
 
@@ -1733,8 +1802,11 @@ class _StudentChallengeVideoEditorScreenState
 
     try {
       await StudioAudioService.render(
-        participationId: widget.participationId,
+        participationId:
+            _isFreeVideo ? _effectiveFreeVideoId : _effectiveParticipationId,
         tracks: tracksPayload,
+        videoType: _isFreeVideo ? 'free' : 'challenge',
+        freeVideoId: _isFreeVideo ? _effectiveFreeVideoId : null,
       );
 
       if (!mounted) {
@@ -1807,10 +1879,18 @@ class _StudentChallengeVideoEditorScreenState
     });
 
     try {
-      final okOverlays = await provider.updateChallengeVideoOverlays(
-        participationId: widget.participationId,
-        layers: overlays,
-      );
+      bool okOverlays;
+      if (_isFreeVideo) {
+        okOverlays = await provider.updateFreeVideoOverlays(
+          freeVideoId: _effectiveFreeVideoId,
+          layers: overlays,
+        );
+      } else {
+        okOverlays = await provider.updateChallengeVideoOverlays(
+          participationId: _effectiveParticipationId,
+          layers: overlays,
+        );
+      }
 
       if (!mounted) {
         return;
@@ -1826,7 +1906,10 @@ class _StudentChallengeVideoEditorScreenState
       }
 
       await StudioVideoService.render(
-        participationId: widget.participationId,
+        participationId:
+            _isFreeVideo ? _effectiveFreeVideoId : _effectiveParticipationId,
+        videoType: _isFreeVideo ? 'free' : 'challenge',
+        freeVideoId: _isFreeVideo ? _effectiveFreeVideoId : null,
       );
 
       if (!mounted) {
@@ -1834,13 +1917,17 @@ class _StudentChallengeVideoEditorScreenState
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Une nouvelle vidéo montée avec tes overlays académiques a été ajoutée à ta participation.',
+            _isFreeVideo
+                ? 'Une nouvelle version montée de ta vidéo libre a été générée.'
+                : 'Une nouvelle vidéo montée avec tes overlays académiques a été ajoutée à ta participation.',
           ),
         ),
       );
-      await _loadExtraClipsIfAny();
+      if (!_isFreeVideo) {
+        await _loadExtraClipsIfAny();
+      }
     } catch (e) {
       if (!mounted) {
         return;
@@ -1864,9 +1951,15 @@ class _StudentChallengeVideoEditorScreenState
 
     List<Map<String, dynamic>> jobs = [];
     try {
-      jobs = await provider.listChallengeVideoRenderJobs(
-        widget.participationId,
-      );
+      if (_isFreeVideo) {
+        jobs = await provider.listFreeVideoRenderJobs(
+          _effectiveFreeVideoId,
+        );
+      } else {
+        jobs = await provider.listChallengeVideoRenderJobs(
+          _effectiveParticipationId,
+        );
+      }
     } catch (_) {
       // L'erreur sera exposée via provider.error si besoin.
     }
@@ -1986,8 +2079,9 @@ class _StudentChallengeVideoEditorScreenState
     if (_isUploading) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content:
-              Text('Upload de la vidéo en cours, patiente quelques secondes.'),
+          content: Text(
+            'Upload de la vidéo en cours, patiente quelques secondes.',
+          ),
         ),
       );
       return;
@@ -2016,7 +2110,7 @@ class _StudentChallengeVideoEditorScreenState
       });
 
       final okAdd = await provider.addChallengeVideo(
-        participationId: widget.participationId,
+        participationId: _effectiveParticipationId,
         videoUrl: _uploadedUrl!,
       );
 
@@ -2054,7 +2148,7 @@ class _StudentChallengeVideoEditorScreenState
     });
 
     final okOverlays = await provider.updateChallengeVideoOverlays(
-      participationId: widget.participationId,
+      participationId: _effectiveParticipationId,
       layers: overlays,
     );
 
@@ -2075,7 +2169,7 @@ class _StudentChallengeVideoEditorScreenState
     }
 
     final okSubmit = await provider.submitChallenge(
-      participationId: widget.participationId,
+      participationId: _effectiveParticipationId,
       submissionText: _descriptionController.text.trim().isEmpty
           ? null
           : _descriptionController.text.trim(),
@@ -2101,10 +2195,9 @@ class _StudentChallengeVideoEditorScreenState
 
     try {
       await StudioVideoService.render(
-        participationId: widget.participationId,
+        participationId: _effectiveParticipationId,
       );
-    } catch (_) {
-    }
+    } catch (_) {}
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -2529,8 +2622,7 @@ class _StudentChallengeVideoEditorScreenState
                                       MaterialPageRoute(
                                         builder: (_) => _ExtraClipPreviewScreen(
                                           videoUrl: url,
-                                          participationId:
-                                              widget.participationId,
+                                          participationId: _effectiveParticipationId,
                                         ),
                                       ),
                                     );

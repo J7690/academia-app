@@ -367,7 +367,6 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
     );
     String type = existing?['challenge_type']?.toString() ?? 'mission';
     bool requiresSubmission = existing?['requires_submission'] == true;
-    bool requiresAdminReview = existing?['requires_admin_review'] == true;
     bool isActive = existing == null || existing['is_active'] != false;
     bool isFeatured = existing?['is_featured'] == true;
 
@@ -481,16 +480,6 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
                       title: const Text('Nécessite une soumission (texte/lien)'),
                     ),
                     SwitchListTile(
-                      value: requiresAdminReview,
-                      onChanged: (value) {
-                        setStateDialog(() {
-                          requiresAdminReview = value;
-                        });
-                      },
-                      title:
-                          const Text('Nécessite une validation admin (notation)'),
-                    ),
-                    SwitchListTile(
                       value: isActive,
                       onChanged: (value) {
                         setStateDialog(() {
@@ -562,7 +551,6 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
       endAt: endAt,
       maxParticipants: maxParticipants,
       requiresSubmission: requiresSubmission,
-      requiresAdminReview: requiresAdminReview,
       isActive: isActive,
       isFeatured: isFeatured,
     );
