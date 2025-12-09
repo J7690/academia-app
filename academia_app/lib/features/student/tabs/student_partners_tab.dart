@@ -421,8 +421,9 @@ class _UniversityCard extends StatelessWidget {
               }).toList(),
             ],
             const Spacer(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 TextButton.icon(
                   onPressed: slug == null || slug.isEmpty

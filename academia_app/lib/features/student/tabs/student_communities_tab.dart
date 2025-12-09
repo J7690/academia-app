@@ -154,7 +154,14 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth;
-        final crossAxisCount = maxWidth > 700 ? 3 : 2;
+        int crossAxisCount;
+        if (maxWidth < 600) {
+          crossAxisCount = 1;
+        } else if (maxWidth < 1000) {
+          crossAxisCount = 2;
+        } else {
+          crossAxisCount = 3;
+        }
         final spacing = 12.0;
         final itemWidth =
             (maxWidth - (crossAxisCount - 1) * spacing) / crossAxisCount;

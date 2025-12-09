@@ -323,7 +323,14 @@ class _StudentChallengesTabState extends State<StudentChallengesTab> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth;
-        final crossAxisCount = maxWidth > 700 ? 3 : 2;
+        int crossAxisCount;
+        if (maxWidth < 600) {
+          crossAxisCount = 1;
+        } else if (maxWidth < 1000) {
+          crossAxisCount = 2;
+        } else {
+          crossAxisCount = 3;
+        }
         final spacing = 12.0;
         final itemWidth =
             (maxWidth - (crossAxisCount - 1) * spacing) / crossAxisCount;
@@ -1101,8 +1108,12 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
       return;
     }
 
-    // Android → doit utiliser une URL render (pas la vidéo brute)
-    if (!_selectedUrl.contains("/renders/")) {
+    final isAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+    // Android → doit utiliser une URL render (pas la vidéo brute).
+    // Sur le web et les autres plateformes, on autorise les URLs brutes
+    // (ex: free_videos) pour ne pas bloquer la lecture.
+    if (isAndroid && !_selectedUrl.contains("/renders/")) {
       _setError(
         "Android ne lit pas la vidéo brute. Rendition absente.\nURL : $_selectedUrl",
       );

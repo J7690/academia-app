@@ -290,17 +290,24 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
                     );
                   }
 
-                  return GridView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.9,
-                    ),
-                    itemCount: opportunities.length,
-                    itemBuilder: (context, index) {
-                      final opp = opportunities[index];
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      final width = constraints.maxWidth;
+                      final bool isMobile = width < 600;
+                      final int crossAxisCount = isMobile ? 1 : 2;
+                      final double childAspectRatio = isMobile ? 1.6 : 0.9;
+
+                      return GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: childAspectRatio,
+                        ),
+                        itemCount: opportunities.length,
+                        itemBuilder: (context, index) {
+                          final opp = opportunities[index];
                       final title = opp['title']?.toString() ?? '';
                       final org = opp['organization_name']?.toString() ?? '';
                       final type = opp['type']?.toString() ?? '';
@@ -308,18 +315,18 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
                       final country = opp['country']?.toString() ?? '';
                       final shortDesc = opp['short_description']?.toString() ?? '';
 
-                      return Card(
-                        margin: EdgeInsets.zero,
-                        color: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                          return Card(
+                            margin: EdgeInsets.zero,
+                            color: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
                               Text(
                                 title,
                                 maxLines: 2,
@@ -398,6 +405,8 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
                       );
                     },
                   );
+                },
+              );
                 },
               ),
             ),
