@@ -171,3 +171,110 @@ class HeroPlaylistItem {
     );
   }
 }
+
+class HeroTvOverlay {
+  final String id;
+  final String overlayType; // text, banner, ticker, image, shape
+  final Map<String, dynamic> config;
+  final double startAtSeconds;
+  final double endAtSeconds;
+  final int sortOrder;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  const HeroTvOverlay({
+    required this.id,
+    required this.overlayType,
+    required this.config,
+    required this.startAtSeconds,
+    required this.endAtSeconds,
+    required this.sortOrder,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  factory HeroTvOverlay.fromJson(Map<String, dynamic> json) {
+    DateTime? parseTs(dynamic value) {
+      if (value == null) return null;
+      try {
+        return DateTime.parse(value.toString());
+      } catch (_) {
+        return null;
+      }
+    }
+
+    double parseNum(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is num) return value.toDouble();
+      return double.tryParse(value.toString()) ?? 0.0;
+    }
+
+    final rawConfig = json['config'];
+    final cfg = rawConfig is Map
+        ? Map<String, dynamic>.from(rawConfig as Map)
+        : const <String, dynamic>{};
+
+    return HeroTvOverlay(
+      id: json['id']?.toString() ?? '',
+      overlayType: json['overlay_type']?.toString() ?? 'text',
+      config: cfg,
+      startAtSeconds: parseNum(json['start_at_seconds']),
+      endAtSeconds: parseNum(json['end_at_seconds']),
+      sortOrder: json['sort_order'] is int
+          ? json['sort_order'] as int
+          : int.tryParse(json['sort_order']?.toString() ?? '') ?? 0,
+      createdAt: parseTs(json['created_at']),
+      updatedAt: parseTs(json['updated_at']),
+    );
+  }
+}
+
+class HeroTvRender {
+  final String id;
+  final String playlistItemId;
+  final String status; // pending, processing, success, failed
+  final String? renderUrl;
+  final String? thumbnailUrl;
+  final String? errorMessage;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final DateTime? startedAt;
+  final DateTime? finishedAt;
+
+  const HeroTvRender({
+    required this.id,
+    required this.playlistItemId,
+    required this.status,
+    this.renderUrl,
+    this.thumbnailUrl,
+    this.errorMessage,
+    this.createdAt,
+    this.updatedAt,
+    this.startedAt,
+    this.finishedAt,
+  });
+
+  factory HeroTvRender.fromJson(Map<String, dynamic> json) {
+    DateTime? parseTs(dynamic value) {
+      if (value == null) return null;
+      try {
+        return DateTime.parse(value.toString());
+      } catch (_) {
+        return null;
+      }
+    }
+
+    return HeroTvRender(
+      id: json['id']?.toString() ?? json['render_id']?.toString() ?? '',
+      playlistItemId: json['playlist_item_id']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'pending',
+      renderUrl: json['render_url']?.toString(),
+      thumbnailUrl: json['thumbnail_url']?.toString(),
+      errorMessage: json['error_message']?.toString(),
+      createdAt: parseTs(json['created_at']),
+      updatedAt: parseTs(json['updated_at']),
+      startedAt: parseTs(json['started_at']),
+      finishedAt: parseTs(json['finished_at']),
+    );
+  }
+}

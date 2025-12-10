@@ -21,11 +21,171 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
   List<HeroPlaylistItem> _items = const <HeroPlaylistItem>[];
   HeroPlaylistItem? _selected;
   HeroRender? _currentRender;
+  String _engineMode = 'classic'; // 'classic' ou 'tv'
+  List<Map<String, dynamic>> _currentOverlays = const <Map<String, dynamic>>[];
+  List<_RenderHistoryEntry> _renderHistory = const <_RenderHistoryEntry>[];
 
   @override
   void initState() {
     super.initState();
     _loadPlaylist();
+  }
+
+  Future<void> _loadRenderHistory() async {
+    final current = _selected;
+    if (current == null) {
+      setState(() {
+        _renderHistory = const <_RenderHistoryEntry>[];
+      });
+      return;
+    }
+
+    try {
+      final classic = await HeroRenderService.getHeroRenderHistory(
+        playlistItemId: current.id,
+      );
+      final tv = await HeroRenderService.getTvRenderHistory(
+        playlistItemId: current.id,
+      );
+
+      final entries = <_RenderHistoryEntry>[
+        ...classic.map(
+          (r) => _RenderHistoryEntry(
+            engine: 'classic',
+            status: r.status,
+            renderUrl: r.renderUrl ?? '',
+            thumbnailUrl: r.thumbnailUrl ?? '',
+            createdAt: r.createdAt,
+          ),
+        ),
+        ...tv.map(
+          (r) => _RenderHistoryEntry(
+            engine: 'tv',
+            status: r.status,
+            renderUrl: r.renderUrl ?? '',
+            thumbnailUrl: r.thumbnailUrl ?? '',
+            createdAt: r.finishedAt ?? r.createdAt,
+          ),
+        ),
+      ];
+
+      entries.sort((a, b) {
+        final ad = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bd = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return bd.compareTo(ad);
+      });
+
+      setState(() {
+        _renderHistory = entries;
+      });
+    } catch (_) {
+      setState(() {
+        _renderHistory = const <_RenderHistoryEntry>[];
+      });
+    }
+  }
+
+  Future<void> _loadCurrentOverlays() async {
+    final current = _selected;
+    if (current == null) {
+      setState(() {
+        _currentOverlays = const <Map<String, dynamic>>[];
+      });
+      return;
+    }
+
+    if (_engineMode == 'classic') {
+      final layers = current.overlays?.layers ?? const <Map<String, dynamic>>[];
+      setState(() {
+        _currentOverlays = layers;
+      });
+      return;
+    }
+
+    try {
+      final tvOverlays = await HeroRenderService.getTvTimeline(
+        playlistItemId: current.id,
+      );
+      final mapped = tvOverlays
+          .map((o) => <String, dynamic>{
+                'id': o.id,
+                'type': o.overlayType,
+                'start_at_seconds': o.startAtSeconds,
+                'end_at_seconds': o.endAtSeconds,
+                'text': (o.config['text'] ?? o.config['title'] ?? '').toString(),
+                'align': (o.config['align'] ?? o.config['position'] ?? 'bottom_left')
+                    .toString(),
+                'sort_order': o.sortOrder,
+              })
+          .toList(growable: false);
+      setState(() {
+        _currentOverlays = mapped;
+      });
+    } catch (e) {
+      // ignore: avoid_print
+      print('HeroStudioScreen._loadCurrentOverlays TV error=$e');
+      setState(() {
+        _currentOverlays = const <Map<String, dynamic>>[];
+      });
+    }
+  }
+
+  Future<void> _saveOverlaysForCurrentEngine(
+    List<Map<String, dynamic>> layers,
+  ) async {
+    final current = _selected;
+    if (current == null) return;
+
+    if (_engineMode == 'classic') {
+      await HeroRenderService.saveOverlays(
+        playlistItemId: current.id,
+        overlays: HeroOverlays(layers: layers),
+      );
+      await _refreshSelectedConfig();
+      return;
+    }
+
+    // Mode TV : on synchronise chaque calque avec hero_overlays_tv
+    for (var i = 0; i < layers.length; i++) {
+      final l = layers[i];
+      final id = l['id']?.toString();
+      final type = (l['type'] ?? 'text').toString();
+      final sortOrder = (l['sort_order'] is int)
+          ? l['sort_order'] as int
+          : int.tryParse(l['sort_order']?.toString() ?? '') ?? i;
+
+      double parseSeconds(dynamic v, double fallback) {
+        if (v == null) return fallback;
+        if (v is num) return v.toDouble();
+        return double.tryParse(v.toString()) ?? fallback;
+      }
+
+      final start = parseSeconds(l['start_at_seconds'], 0.0);
+      var end = parseSeconds(l['end_at_seconds'], start + 5.0);
+      if (end <= start) {
+        end = start + 5.0;
+      }
+
+      final text = (l['text'] ?? '').toString();
+      final align = (l['align'] ?? 'bottom_left').toString();
+
+      final cfg = <String, dynamic>{
+        'text': text,
+        'align': align,
+      };
+
+      await HeroRenderService.upsertTvOverlay(
+        id: id?.isEmpty == true ? null : id,
+        playlistItemId: current.id,
+        overlayType: type,
+        config: cfg,
+        startAtSeconds: start,
+        endAtSeconds: end,
+        sortOrder: sortOrder,
+      );
+    }
+
+    await _loadCurrentOverlays();
   }
 
   Future<void> _loadPlaylist() async {
@@ -42,6 +202,222 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
           _currentRender = _selected!.lastRender;
         }
       });
+      await _loadCurrentOverlays();
+      await _loadRenderHistory();
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _startUnifiedRender() async {
+    // ignore: avoid_print
+    print(
+      'HeroStudioScreen._startUnifiedRender: engineMode=$_engineMode '
+      'playlistItemId=${_selected?.id} slot=${widget.slot}',
+    );
+    if (_engineMode == 'tv') {
+      await _startTvRender();
+    } else {
+      await _startRender();
+    }
+  }
+
+  Future<void> _openEditItemDialog({HeroPlaylistItem? existing}) async {
+    final isNew = existing == null;
+
+    final slotController = TextEditingController(
+      text: existing?.slot ?? widget.slot,
+    );
+    final mediaTypeController = TextEditingController(
+      text: existing?.mediaType ?? 'video',
+    );
+    final videoUrlController = TextEditingController(
+      text: existing?.baseVideoUrl ?? '',
+    );
+    final imageUrlController = TextEditingController(
+      text: existing?.baseImageUrl ?? '',
+    );
+    final titleController = TextEditingController(
+      text: existing?.title ?? '',
+    );
+    final subtitleController = TextEditingController(
+      text: existing?.subtitle ?? '',
+    );
+    final sortOrderController = TextEditingController(
+      text: existing?.sortOrder.toString() ?? '0',
+    );
+    bool isActive = existing?.isActive ?? true;
+    bool localIsActive = isActive;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Text(isNew ? 'Nouvel item Hero' : 'Modifier l\'item Hero'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: slotController,
+                      decoration: const InputDecoration(labelText: 'Slot'),
+                    ),
+                    TextField(
+                      controller: mediaTypeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Type de média (video/image)',
+                      ),
+                    ),
+                    TextField(
+                      controller: videoUrlController,
+                      decoration: const InputDecoration(
+                        labelText: 'URL vidéo de base',
+                      ),
+                    ),
+                    TextField(
+                      controller: imageUrlController,
+                      decoration: const InputDecoration(
+                        labelText: 'URL image de base',
+                      ),
+                    ),
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(labelText: 'Titre'),
+                    ),
+                    TextField(
+                      controller: subtitleController,
+                      decoration: const InputDecoration(labelText: 'Sous-titre'),
+                    ),
+                    TextField(
+                      controller: sortOrderController,
+                      decoration: const InputDecoration(labelText: 'Ordre'),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: localIsActive,
+                          onChanged: (v) {
+                            if (v == null) return;
+                            setStateDialog(() {
+                              localIsActive = v;
+                            });
+                          },
+                        ),
+                        const Text('Actif'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Annuler'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    isActive = localIsActive;
+                    Navigator.of(dialogContext).pop(true);
+                  },
+                  child: const Text('Enregistrer'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result != true) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final sortOrder = int.tryParse(sortOrderController.text.trim());
+      final id = await HeroRenderService.upsertPlaylistItem(
+        itemId: existing?.id,
+        slot: slotController.text.trim(),
+        mediaType: mediaTypeController.text.trim().isEmpty
+            ? (existing?.mediaType ?? 'video')
+            : mediaTypeController.text.trim(),
+        baseVideoUrl: videoUrlController.text.trim().isEmpty
+            ? existing?.baseVideoUrl
+            : videoUrlController.text.trim(),
+        baseImageUrl: imageUrlController.text.trim().isEmpty
+            ? existing?.baseImageUrl
+            : imageUrlController.text.trim(),
+        title: titleController.text.trim().isEmpty
+            ? existing?.title
+            : titleController.text.trim(),
+        subtitle: subtitleController.text.trim().isEmpty
+            ? existing?.subtitle
+            : subtitleController.text.trim(),
+        sortOrder: sortOrder,
+        isActive: isActive,
+      );
+
+      await _loadPlaylist();
+
+      setState(() {
+        if (_items.isEmpty) {
+          _selected = null;
+          _currentRender = null;
+        } else {
+          _selected = _items.firstWhere(
+            (e) => e.id == id,
+            orElse: () => _items.first,
+          );
+          _currentRender = _selected?.lastRender;
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _startTvRender() async {
+    final current = _selected;
+    if (current == null) return;
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      // ignore: avoid_print
+      print(
+        'HeroStudioScreen._startTvRender: playlistItemId=${current.id} slot=${widget.slot}',
+      );
+      await HeroRenderService.startTvRender(
+        playlistItemId: current.id,
+        slot: widget.slot,
+        meta: <String, dynamic>{'source': 'admin_ui'},
+      );
+      await _refreshSelectedConfig();
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -70,6 +446,8 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
           _items = list;
         }
       });
+      await _loadCurrentOverlays();
+      await _loadRenderHistory();
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -110,7 +488,7 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Hero Studio Télé (${widget.slot})'),
+        title: Text('Studio Hero / TV (${widget.slot})'),
       ),
       body: Row(
         children: [
@@ -124,6 +502,11 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
                     children: [
                       const Text('Playlist'),
                       const Spacer(),
+                      IconButton(
+                        onPressed: _isLoading ? null : () => _openEditItemDialog(),
+                        icon: const Icon(Icons.add),
+                        tooltip: 'Ajouter un item',
+                      ),
                       IconButton(
                         onPressed: _isLoading ? null : _loadPlaylist,
                         icon: const Icon(Icons.refresh),
@@ -153,10 +536,32 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
                   padding: const EdgeInsets.all(8),
                   child: Row(
                     children: [
+                      ToggleButtons(
+                        isSelected: [
+                          _engineMode == 'classic',
+                          _engineMode == 'tv',
+                        ],
+                        onPressed: (index) {
+                          setState(() {
+                            _engineMode = index == 0 ? 'classic' : 'tv';
+                          });
+                        },
+                        children: const [
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8),
+                            child: Text('Rendu classique'),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8),
+                            child: Text('Rendu TV'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 16),
                       ElevatedButton.icon(
-                        onPressed: _isLoading || _selected == null ? null : _startRender,
-                        icon: const Icon(Icons.movie_creation_outlined),
-                        label: const Text('Lancer le rendu Hero'),
+                        onPressed: _isLoading || _selected == null ? null : _startUnifiedRender,
+                        icon: const Icon(Icons.play_circle_outline),
+                        label: const Text('Lancer le rendu'),
                       ),
                       const SizedBox(width: 12),
                       if (_currentRender != null)
@@ -181,15 +586,9 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
                       Expanded(
                         flex: 2,
                         child: HeroOverlayEditorPanel(
-                          item: _selected,
-                          onOverlaysChanged: (ov) async {
-                            final current = _selected;
-                            if (current == null) return;
-                            await HeroRenderService.saveOverlays(
-                              playlistItemId: current.id,
-                              overlays: ov,
-                            );
-                            await _refreshSelectedConfig();
+                          overlays: _currentOverlays,
+                          onOverlaysChanged: (layers) async {
+                            await _saveOverlaysForCurrentEngine(layers);
                           },
                         ),
                       ),
@@ -199,7 +598,31 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
                 SizedBox(
                   height: 120,
                   child: HeroTimeline(
-                    item: _selected,
+                    overlays: _currentOverlays,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: Text(
+                          'Historique des rendus',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      Expanded(
+                        child: HeroRenderHistoryPanel(
+                          items: _renderHistory,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -229,11 +652,49 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
           title: Text(item.title ?? '(Sans titre)'),
           subtitle: Text('${item.mediaType} · slot=${item.slot}'),
           selected: isSelected,
+          trailing: PopupMenuButton<String>(
+            onSelected: (value) async {
+              if (value == 'edit') {
+                await _openEditItemDialog(existing: item);
+              } else if (value == 'deactivate') {
+                setState(() {
+                  _isLoading = true;
+                  _error = null;
+                });
+                try {
+                  await HeroRenderService.deactivatePlaylistItem(item);
+                  await _loadPlaylist();
+                } catch (e) {
+                  setState(() {
+                    _error = e.toString();
+                  });
+                } finally {
+                  if (mounted) {
+                    setState(() {
+                      _isLoading = false;
+                    });
+                  }
+                }
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'edit',
+                child: Text('Modifier'),
+              ),
+              PopupMenuItem(
+                value: 'deactivate',
+                child: Text('Désactiver'),
+              ),
+            ],
+          ),
           onTap: () {
             setState(() {
               _selected = item;
               _currentRender = item.lastRender;
             });
+            _loadCurrentOverlays();
+            _loadRenderHistory();
           },
         );
       },
@@ -241,14 +702,101 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
   }
 }
 
-class HeroTimeline extends StatelessWidget {
-  final HeroPlaylistItem? item;
+class _RenderHistoryEntry {
+  final String engine;
+  final String status;
+  final String renderUrl;
+  final String thumbnailUrl;
+  final DateTime? createdAt;
 
-  const HeroTimeline({super.key, required this.item});
+  const _RenderHistoryEntry({
+    required this.engine,
+    required this.status,
+    required this.renderUrl,
+    required this.thumbnailUrl,
+    required this.createdAt,
+  });
+}
+
+class HeroRenderHistoryPanel extends StatelessWidget {
+  final List<_RenderHistoryEntry> items;
+
+  const HeroRenderHistoryPanel({super.key, required this.items});
+
+  String _normalizeStatus(String status) {
+    final lower = status.toLowerCase();
+    if (lower == 'done') return 'success';
+    return lower;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final overlays = item?.overlays?.layers ?? const <Map<String, dynamic>>[];
+    if (items.isEmpty) {
+      return const Center(
+        child: Text('Aucun rendu enregistré pour cet item.'),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: ListView.separated(
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final item = items[index];
+          final statusLabel = _normalizeStatus(item.status);
+          final ts = item.createdAt?.toLocal().toString().split('.').first ?? '';
+
+          return ListTile(
+            leading: item.thumbnailUrl.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: Image.network(
+                      item.thumbnailUrl,
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, _, __) => const Icon(Icons.image_not_supported),
+                    ),
+                  )
+                : const Icon(Icons.movie_creation_outlined),
+            title: Text(
+              '${item.engine} · $statusLabel',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (ts.isNotEmpty)
+                  Text(
+                    ts,
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                if (item.renderUrl.isNotEmpty)
+                  Text(
+                    item.renderUrl,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 11),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class HeroTimeline extends StatelessWidget {
+  final List<Map<String, dynamic>> overlays;
+
+  const HeroTimeline({super.key, required this.overlays});
+
+  @override
+  Widget build(BuildContext context) {
     if (overlays.isEmpty) {
       return const Center(
         child: Text('Aucun overlay configuré pour cet item.'),
@@ -313,12 +861,13 @@ class HeroTimeline extends StatelessWidget {
 }
 
 class HeroOverlayEditorPanel extends StatefulWidget {
-  final HeroPlaylistItem? item;
-  final Future<void> Function(HeroOverlays overlays) onOverlaysChanged;
+  final List<Map<String, dynamic>> overlays;
+  final Future<void> Function(List<Map<String, dynamic>> overlays)
+      onOverlaysChanged;
 
   const HeroOverlayEditorPanel({
     super.key,
-    required this.item,
+    required this.overlays,
     required this.onOverlaysChanged,
   });
 
@@ -333,7 +882,7 @@ class _HeroOverlayEditorPanelState extends State<HeroOverlayEditorPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final overlays = widget.item?.overlays?.layers ?? const <Map<String, dynamic>>[];
+    final overlays = widget.overlays;
     if (overlays.isEmpty) {
       return const Center(
         child: Text('Aucun calque à éditer.'),
@@ -387,7 +936,7 @@ class _HeroOverlayEditorPanelState extends State<HeroOverlayEditorPanel> {
       }).toList(growable: false);
 
       await widget.onOverlaysChanged(
-        HeroOverlays(layers: updatedLayers),
+        updatedLayers,
       );
     }
 

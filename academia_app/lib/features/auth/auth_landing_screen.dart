@@ -138,27 +138,9 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
 
       if (!mounted) return;
 
-      final cfg = landing.config;
-      final urlFromConfig = (cfg?['video_url'] as String?)?.trim();
-      final hasConfigVideo =
-          (urlFromConfig != null && urlFromConfig.isNotEmpty);
+      _startTicker();
 
-      final videos = landing.videos;
       final playlist = <_HeroMediaItem>[];
-
-      if (videos.isNotEmpty) {
-        debugPrint('Landing: videos from provider (count=${videos.length})');
-        for (final v in videos) {
-          if (v['is_active'] == false) continue;
-          final url = (v['video_url'] ?? '').toString().trim();
-          if (url.isEmpty) continue;
-          debugPrint('Landing: candidate video from Supabase=' + url);
-          final rawType = (v['media_type'] ?? 'video').toString().toLowerCase();
-          final mediaType = (rawType == 'image') ? 'image' : 'video';
-          playlist.add(_HeroMediaItem(url: url, mediaType: mediaType));
-        }
-      }
-
       try {
         final client = Supabase.instance.client;
         final dynamic response = await client
@@ -203,21 +185,14 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
             }
 
             if (chosenUrl != null && chosenUrl.isNotEmpty) {
-              playlist.insert(0, _HeroMediaItem(url: chosenUrl, mediaType: mediaType));
+              debugPrint('Landing: hero item from app.hero_playlist url=' + chosenUrl);
+              playlist.add(_HeroMediaItem(url: chosenUrl, mediaType: mediaType));
             }
           }
         }
       } catch (_) {}
 
-      _startTicker();
-
-      if (playlist.isEmpty && hasConfigVideo && urlFromConfig != null) {
-        playlist.add(_HeroMediaItem(url: urlFromConfig, mediaType: 'video'));
-      }
-
       if (playlist.isNotEmpty) {
-        debugPrint('Landing: final playlist=' +
-            playlist.map((e) => '${e.mediaType}:${e.url}').join(', '));
         _mediaPlaylist = playlist;
         _goToMediaIndex(0);
       }

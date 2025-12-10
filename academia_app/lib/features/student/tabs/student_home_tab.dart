@@ -53,6 +53,8 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   List<_StudentHomeMediaItem> _mediaPlaylist = [];
   int _currentMediaIndex = 0;
 
+  String? _heroTitle;
+
   String _searchUniversityQuery = '';
   String _searchProgramQuery = '';
   String? _selectedDegreeLevel;
@@ -89,7 +91,7 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
       } catch (_) {}
 
       if (!mounted) return;
-      _setupMediaPlaylist(homeContent.videos);
+      await _setupMediaPlaylist();
       _startTicker();
     });
   }
@@ -105,16 +107,61 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
     super.dispose();
   }
 
-  void _setupMediaPlaylist(List<Map<String, dynamic>> videos) {
+  Future<void> _setupMediaPlaylist() async {
+    final client = Supabase.instance.client;
+
     final playlist = <_StudentHomeMediaItem>[];
-    for (final v in videos) {
-      if (v['is_active'] == false) continue;
-      final url = (v['video_url'] ?? '').toString().trim();
-      if (url.isEmpty) continue;
-      final rawType = (v['media_type'] ?? 'video').toString().toLowerCase();
-      final mediaType = rawType == 'image' ? 'image' : 'video';
-      playlist.add(_StudentHomeMediaItem(url: url, mediaType: mediaType));
-    }
+    String? title;
+
+    try {
+      final dynamic response = await client
+          .from('app.hero_playlist')
+          .select('base_video_url, base_image_url, media_type, sort_order, is_active, title')
+          .eq('slot', 'student_home_hero_main')
+          .eq('is_active', true)
+          .order('sort_order', ascending: true)
+          .limit(1);
+
+      if (response is List && response.isNotEmpty) {
+        final raw = response.first;
+        Map<String, dynamic>? row;
+        if (raw is Map<String, dynamic>) {
+          row = raw;
+        } else if (raw is Map) {
+          row = Map<String, dynamic>.from(raw);
+        }
+        if (row != null) {
+          final rawType = (row['media_type'] ?? 'video').toString().toLowerCase();
+          final isImage = rawType == 'image';
+          final heroVideoUrl = (row['base_video_url'] ?? '').toString().trim();
+          final heroImageUrl = (row['base_image_url'] ?? '').toString().trim();
+
+          String? chosenUrl;
+          String mediaType;
+          if (isImage && heroImageUrl.isNotEmpty) {
+            chosenUrl = heroImageUrl;
+            mediaType = 'image';
+          } else if (!isImage && heroVideoUrl.isNotEmpty) {
+            chosenUrl = heroVideoUrl;
+            mediaType = 'video';
+          } else if (heroVideoUrl.isNotEmpty) {
+            chosenUrl = heroVideoUrl;
+            mediaType = 'video';
+          } else if (heroImageUrl.isNotEmpty) {
+            chosenUrl = heroImageUrl;
+            mediaType = 'image';
+          } else {
+            chosenUrl = null;
+            mediaType = 'video';
+          }
+
+          if (chosenUrl != null && chosenUrl.isNotEmpty) {
+            playlist.add(_StudentHomeMediaItem(url: chosenUrl, mediaType: mediaType));
+            title = row['title']?.toString();
+          }
+        }
+      }
+    } catch (_) {}
 
     if (playlist.isEmpty) {
       _mediaPlaylist = [];
@@ -126,13 +173,16 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
       _currentHlsUrl = null;
       _mediaTimer?.cancel();
       if (mounted) {
-        setState(() {});
+        setState(() {
+          _heroTitle = null;
+        });
       }
       return;
     }
 
     _mediaPlaylist = playlist;
     _currentMediaIndex = 0;
+    _heroTitle = title;
     _goToMediaIndex(0);
   }
 
@@ -358,7 +408,7 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                   isHlsWeb: _isHlsWeb,
                   currentHlsUrl: _currentHlsUrl,
                   onVideoCompleted: _onVideoCompleted,
-                  videos: homeContent.videos,
+                  heroTitle: _heroTitle,
                   currentVideoUrl: () {
                     if (_mediaPlaylist.isEmpty ||
                         _currentMediaIndex < 0 ||
@@ -569,7 +619,7 @@ class _StudentHomeHero extends StatelessWidget {
   final bool isHlsWeb;
   final String? currentHlsUrl;
   final VoidCallback onVideoCompleted;
-  final List<Map<String, dynamic>> videos;
+  final String? heroTitle;
   final String? currentVideoUrl;
   final String? currentImageUrl;
 
@@ -579,24 +629,14 @@ class _StudentHomeHero extends StatelessWidget {
     required this.isHlsWeb,
     required this.currentHlsUrl,
     required this.onVideoCompleted,
-    required this.videos,
+    required this.heroTitle,
     required this.currentVideoUrl,
     required this.currentImageUrl,
   });
 
   @override
   Widget build(BuildContext context) {
-    String? title;
-    final matchUrl = currentVideoUrl ?? currentImageUrl;
-    if (matchUrl != null && videos.isNotEmpty) {
-      for (final v in videos) {
-        final url = (v['video_url'] ?? '').toString().trim();
-        if (url == matchUrl) {
-          title = v['title']?.toString();
-          break;
-        }
-      }
-    }
+    final title = heroTitle;
 
     final width = MediaQuery.of(context).size.width;
     double aspectRatio;

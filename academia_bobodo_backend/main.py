@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Optional
 from datetime import datetime, timezone
 import subprocess
 import tempfile
+import json
+import time
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -1676,6 +1678,11 @@ async def perform_hero_video_render(
     thumb_path: Optional[Path] = None
     logs_parts: List[str] = []
 
+    video_url: str = ""
+    thumbnail_url: str = ""
+    started_at = time.perf_counter()
+    error_message: Optional[str] = None
+
     overlays_dict: Dict[str, Any] = {}
     if isinstance(overlays, dict):
         overlays_dict = overlays
@@ -1744,6 +1751,9 @@ async def perform_hero_video_render(
             )
         else:
             thumbnail_url = ""
+    except Exception as exc:
+        error_message = str(exc)
+        raise
     finally:
         try:
             if input_path is not None and input_path.exists():
@@ -1760,6 +1770,24 @@ async def perform_hero_video_render(
                 thumb_path.unlink()
         except Exception:
             pass
+
+        duration_ms = int((time.perf_counter() - started_at) * 1000)
+        event = {
+            "event": "hero_video_render",
+            "engine": "classic",
+            "slot": slot,
+            "playlist_item_id": playlist_item_id,
+            "source_url": url,
+            "filters": extra_filters or "",
+            "status": "error" if error_message else "success",
+            "render_url": video_url,
+            "thumbnail_url": thumbnail_url,
+            "duration_ms": duration_ms,
+        }
+        try:
+            print("[HERO_RENDER]", json.dumps(event, ensure_ascii=False))
+        except Exception:
+            print("[HERO_RENDER]", str(event))
 
     logs_str = "\n".join(logs_parts) if logs_parts else ""
     return {"render_url": video_url, "thumbnail_url": thumbnail_url, "logs": logs_str}
@@ -1926,6 +1954,11 @@ async def perform_hero_tv_video_render(
     thumb_path: Optional[Path] = None
     logs_parts: List[str] = []
 
+    video_url: str = ""
+    thumbnail_url: str = ""
+    started_at = time.perf_counter()
+    error_message: Optional[str] = None
+
     extra_filters = _build_tv_overlays_filter(overlays or [])
     if extra_filters:
         logs_parts.append(f"tv_filters={extra_filters}")
@@ -1987,6 +2020,9 @@ async def perform_hero_tv_video_render(
             )
         else:
             thumbnail_url = ""
+    except Exception as exc:
+        error_message = str(exc)
+        raise
     finally:
         try:
             if input_path is not None and input_path.exists():
@@ -2003,6 +2039,24 @@ async def perform_hero_tv_video_render(
                 thumb_path.unlink()
         except Exception:
             pass
+
+        duration_ms = int((time.perf_counter() - started_at) * 1000)
+        event = {
+            "event": "hero_video_render",
+            "engine": "tv",
+            "slot": slot,
+            "playlist_item_id": playlist_item_id,
+            "source_url": url,
+            "filters": extra_filters or "",
+            "status": "error" if error_message else "success",
+            "render_url": video_url,
+            "thumbnail_url": thumbnail_url,
+            "duration_ms": duration_ms,
+        }
+        try:
+            print("[HERO_TV_RENDER]", json.dumps(event, ensure_ascii=False))
+        except Exception:
+            print("[HERO_TV_RENDER]", str(event))
 
     logs_str = "\n".join(logs_parts) if logs_parts else ""
     return {"render_url": video_url, "thumbnail_url": thumbnail_url, "logs": logs_str}
@@ -2021,6 +2075,21 @@ async def hero_studio_render(req: HeroStudioRenderRequest, request: Request) -> 
     playlist_item_id = (req.playlist_item_id or "").strip()
     if not playlist_item_id:
         raise HTTPException(status_code=400, detail="playlist_item_id manquant pour Hero Studio.")
+
+    try:
+        print(
+            "[HERO_STUDIO_ENDPOINT]",
+            json.dumps(
+                {
+                    "event": "hero_studio_render_request",
+                    "playlist_item_id": playlist_item_id,
+                    "slot": (req.slot or ""),
+                },
+                ensure_ascii=False,
+            ),
+        )
+    except Exception:
+        pass
 
     start_data = await call_supabase_rpc_as_user(
         user_jwt,
@@ -2203,6 +2272,22 @@ async def tv_studio_render(req: TvStudioRenderRequest, request: Request) -> TvSt
         raise HTTPException(status_code=400, detail="playlist_item_id manquant pour le Studio TV.")
 
     meta = req.meta or {}
+
+    try:
+        print(
+            "[TV_STUDIO_ENDPOINT]",
+            json.dumps(
+                {
+                    "event": "tv_studio_render_request",
+                    "playlist_item_id": playlist_item_id,
+                    "slot": (req.slot or ""),
+                    "meta_keys": sorted(list(meta.keys())) if isinstance(meta, dict) else None,
+                },
+                ensure_ascii=False,
+            ),
+        )
+    except Exception:
+        pass
 
     start_data = await call_supabase_rpc_as_user(
         user_jwt,

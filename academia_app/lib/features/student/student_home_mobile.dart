@@ -480,23 +480,12 @@ class _MobileHomeHero extends StatefulWidget {
 }
 
 class _MobileHomeHeroState extends State<_MobileHomeHero> {
-  static const Duration _slideDuration = Duration(seconds: 5);
-  Timer? _timer;
-  int _index = 0;
-
   String? _heroUrl;
   bool _heroIsImage = false;
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(_slideDuration, (_) {
-      if (!mounted) return;
-      setState(() {
-        _index++;
-      });
-    });
-
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
         final client = Supabase.instance.client;
@@ -557,223 +546,105 @@ class _MobileHomeHeroState extends State<_MobileHomeHero> {
 
   @override
   void dispose() {
-    _timer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<StudentHomeContentProvider>(
-      builder: (context, homeContent, child) {
-        final heroUrl = _heroUrl;
-        if (heroUrl != null && heroUrl.isNotEmpty) {
-          final isImage = _heroIsImage;
-          const title = '';
+    final heroUrl = _heroUrl;
+    if (heroUrl == null || heroUrl.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
-          return Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x14000000),
-                  offset: Offset(0, 10),
-                  blurRadius: 30,
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Color(0xFF62A8FF),
-                              Color(0xFF9ED7FF),
-                            ],
-                          ),
-                        ),
-                      ),
+    final isImage = _heroIsImage;
+    const title = '';
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14000000),
+            offset: Offset(0, 10),
+            blurRadius: 30,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: AspectRatio(
+          aspectRatio: 16 / 9,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0xFF62A8FF),
+                        Color(0xFF9ED7FF),
+                      ],
                     ),
-                    if (isImage)
-                      Positioned.fill(
-                        child: Image.network(
-                          heroUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, _, __) {
-                            return const SizedBox.shrink();
-                          },
-                        ),
-                      )
-                    else
-                      Positioned.fill(
-                        child: AcademiaVideoWidget(
-                          url: heroUrl,
-                          autoplay: true,
-                          loop: true,
-                          muted: true,
-                          showControls: false,
-                          resizeMode: 'cover',
-                        ),
-                      ),
-                    Positioned.fill(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.black.withOpacity(0.35),
-                              Colors.transparent,
-                            ],
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (title.isNotEmpty)
-                      Positioned(
-                        left: 20,
-                        right: 20,
-                        bottom: 16,
-                        child: Text(
-                          title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          );
-        }
-
-        final rawVideos = homeContent.videos;
-        if (rawVideos.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        final videos = rawVideos
-            .where((v) => v['is_active'] != false)
-            .map((v) => v as Map<String, dynamic>)
-            .where((v) => (v['video_url'] ?? '').toString().trim().isNotEmpty)
-            .toList(growable: false);
-
-        if (videos.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        final effectiveIndex = _index % videos.length;
-        final selected = videos[effectiveIndex];
-
-        final url = (selected['video_url'] ?? '').toString().trim();
-        final rawType = (selected['media_type'] ?? 'video').toString().toLowerCase();
-        final isImage = rawType == 'image';
-        final title = (selected['title'] ?? '').toString();
-
-        if (url.isEmpty && title.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x14000000),
-                offset: Offset(0, 10),
-                blurRadius: 30,
+              if (isImage)
+                Positioned.fill(
+                  child: Image.network(
+                    heroUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, _, __) {
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                )
+              else
+                Positioned.fill(
+                  child: AcademiaVideoWidget(
+                    url: heroUrl,
+                    autoplay: true,
+                    loop: true,
+                    muted: true,
+                    showControls: false,
+                    resizeMode: 'cover',
+                  ),
+                ),
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.black.withOpacity(0.35),
+                        Colors.transparent,
+                      ],
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                    ),
+                  ),
+                ),
               ),
+              if (title.isNotEmpty)
+                Positioned(
+                  left: 20,
+                  right: 20,
+                  bottom: 16,
+                  child: Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
             ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Color(0xFF62A8FF),
-                            Color(0xFF9ED7FF),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                if (isImage && url.isNotEmpty)
-                  Positioned.fill(
-                    child: Image.network(
-                      url,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, _, __) {
-                        return const SizedBox.shrink();
-                      },
-                    ),
-                  )
-                else if (!isImage && url.isNotEmpty)
-                  Positioned.fill(
-                    child: AcademiaVideoWidget(
-                      url: url,
-                      autoplay: true,
-                      loop: true,
-                      muted: true,
-                      showControls: false,
-                      resizeMode: 'cover',
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.black.withOpacity(0.35),
-                            Colors.transparent,
-                          ],
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (title.isNotEmpty)
-                    Positioned(
-                      left: 20,
-                      right: 20,
-                      bottom: 16,
-                      child: Text(
-                        title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
