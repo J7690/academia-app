@@ -120,6 +120,7 @@ def _run_ffmpeg_generic(
     audio_bitrate_k: int,
     label: str,
     fps: Optional[int] = None,
+    extra_filters: Optional[str] = None,
 ) -> Path:
     """Transcode une vidéo en MP4 H.264 ultra-compatible (MediaTek-friendly).
 
@@ -140,6 +141,8 @@ def _run_ffmpeg_generic(
     output_path = tmp_dir / "output.mp4"
 
     vf_filter = f"scale='min({max_width},iw)':-2,format=yuv420p"
+    if extra_filters:
+        vf_filter = f"{vf_filter},{extra_filters}"
 
     maxrate = f"{max_bitrate_k}k"
     bufsize = f"{2 * max_bitrate_k}k"

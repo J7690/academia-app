@@ -484,6 +484,9 @@ class _MobileHomeHeroState extends State<_MobileHomeHero> {
   Timer? _timer;
   int _index = 0;
 
+  String? _heroUrl;
+  bool _heroIsImage = false;
+
   @override
   void initState() {
     super.initState();
@@ -492,6 +495,63 @@ class _MobileHomeHeroState extends State<_MobileHomeHero> {
       setState(() {
         _index++;
       });
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final client = Supabase.instance.client;
+        final dynamic response = await client
+            .from('app.hero_playlist')
+            .select('base_video_url, base_image_url, media_type, sort_order, is_active')
+            .eq('slot', 'student_home_hero_main')
+            .eq('is_active', true)
+            .order('sort_order', ascending: true)
+            .limit(1);
+
+        if (!mounted) return;
+
+        if (response is List && response.isNotEmpty) {
+          final raw = response.first;
+          Map<String, dynamic>? row;
+          if (raw is Map<String, dynamic>) {
+            row = raw;
+          } else if (raw is Map) {
+            row = Map<String, dynamic>.from(raw);
+          }
+          if (row != null) {
+            final rawType = (row['media_type'] ?? 'video').toString().toLowerCase();
+            final isImage = rawType == 'image';
+            final heroVideoUrl = (row['base_video_url'] ?? '').toString().trim();
+            final heroImageUrl = (row['base_image_url'] ?? '').toString().trim();
+
+            String? chosenUrl;
+            bool chosenIsImage;
+            if (isImage && heroImageUrl.isNotEmpty) {
+              chosenUrl = heroImageUrl;
+              chosenIsImage = true;
+            } else if (!isImage && heroVideoUrl.isNotEmpty) {
+              chosenUrl = heroVideoUrl;
+              chosenIsImage = false;
+            } else if (heroVideoUrl.isNotEmpty) {
+              chosenUrl = heroVideoUrl;
+              chosenIsImage = false;
+            } else if (heroImageUrl.isNotEmpty) {
+              chosenUrl = heroImageUrl;
+              chosenIsImage = true;
+            } else {
+              chosenUrl = null;
+              chosenIsImage = false;
+            }
+
+            if (chosenUrl != null && chosenUrl.isNotEmpty) {
+              setState(() {
+                _heroUrl = chosenUrl;
+                _heroIsImage = chosenIsImage;
+              });
+            }
+          }
+        }
+      } catch (_) {}
     });
   }
 
@@ -505,6 +565,100 @@ class _MobileHomeHeroState extends State<_MobileHomeHero> {
   Widget build(BuildContext context) {
     return Consumer<StudentHomeContentProvider>(
       builder: (context, homeContent, child) {
+        final heroUrl = _heroUrl;
+        if (heroUrl != null && heroUrl.isNotEmpty) {
+          final isImage = _heroIsImage;
+          const title = '';
+
+          return Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x14000000),
+                  offset: Offset(0, 10),
+                  blurRadius: 30,
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Color(0xFF62A8FF),
+                              Color(0xFF9ED7FF),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (isImage)
+                      Positioned.fill(
+                        child: Image.network(
+                          heroUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, _, __) {
+                            return const SizedBox.shrink();
+                          },
+                        ),
+                      )
+                    else
+                      Positioned.fill(
+                        child: AcademiaVideoWidget(
+                          url: heroUrl,
+                          autoplay: true,
+                          loop: true,
+                          muted: true,
+                          showControls: false,
+                          resizeMode: 'cover',
+                        ),
+                      ),
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.black.withOpacity(0.35),
+                              Colors.transparent,
+                            ],
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (title.isNotEmpty)
+                      Positioned(
+                        left: 20,
+                        right: 20,
+                        bottom: 16,
+                        child: Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
         final rawVideos = homeContent.videos;
         if (rawVideos.isEmpty) {
           return const SizedBox.shrink();

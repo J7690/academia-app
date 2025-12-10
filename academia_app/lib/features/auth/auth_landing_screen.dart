@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../providers/landing_content_provider.dart';
 import '../../providers/student_offers_provider.dart';
@@ -157,6 +158,56 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
           playlist.add(_HeroMediaItem(url: url, mediaType: mediaType));
         }
       }
+
+      try {
+        final client = Supabase.instance.client;
+        final dynamic response = await client
+            .from('app.hero_playlist')
+            .select('base_video_url, base_image_url, media_type, sort_order, is_active')
+            .eq('slot', 'landing_hero_main')
+            .eq('is_active', true)
+            .order('sort_order', ascending: true)
+            .limit(1);
+
+        if (response is List && response.isNotEmpty) {
+          final raw = response.first;
+          Map<String, dynamic>? row;
+          if (raw is Map<String, dynamic>) {
+            row = raw;
+          } else if (raw is Map) {
+            row = Map<String, dynamic>.from(raw);
+          }
+          if (row != null) {
+            final rawType = (row['media_type'] ?? 'video').toString().toLowerCase();
+            final isImage = rawType == 'image';
+            final heroVideoUrl = (row['base_video_url'] ?? '').toString().trim();
+            final heroImageUrl = (row['base_image_url'] ?? '').toString().trim();
+
+            String? chosenUrl;
+            String mediaType;
+            if (isImage && heroImageUrl.isNotEmpty) {
+              chosenUrl = heroImageUrl;
+              mediaType = 'image';
+            } else if (!isImage && heroVideoUrl.isNotEmpty) {
+              chosenUrl = heroVideoUrl;
+              mediaType = 'video';
+            } else if (heroVideoUrl.isNotEmpty) {
+              chosenUrl = heroVideoUrl;
+              mediaType = 'video';
+            } else if (heroImageUrl.isNotEmpty) {
+              chosenUrl = heroImageUrl;
+              mediaType = 'image';
+            } else {
+              chosenUrl = null;
+              mediaType = 'video';
+            }
+
+            if (chosenUrl != null && chosenUrl.isNotEmpty) {
+              playlist.insert(0, _HeroMediaItem(url: chosenUrl, mediaType: mediaType));
+            }
+          }
+        }
+      } catch (_) {}
 
       _startTicker();
 

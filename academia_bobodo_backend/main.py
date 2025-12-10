@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timezone
 import subprocess
+import tempfile
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +18,7 @@ from studio_video_renderer import (
     _run_ffmpeg_transcode_360p,
     _run_ffmpeg_transcode_240p,
     _upload_to_supabase_storage,
+    _run_ffmpeg_generic,
 )
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -340,6 +342,35 @@ class StudioVideoRenderResponse(BaseModel):
     added_video_id: Optional[str] = None
     video_type: Optional[str] = "challenge"
     free_video_id: Optional[str] = None
+
+
+class HeroStudioRenderRequest(BaseModel):
+    playlist_item_id: str
+    slot: Optional[str] = None
+
+
+class HeroStudioRenderResponse(BaseModel):
+    success: bool
+    playlist_item_id: str
+    render_id: str
+    render_url: str
+    thumbnail_url: str
+    status: str
+
+
+class TvStudioRenderRequest(BaseModel):
+    playlist_item_id: str
+    slot: Optional[str] = None
+    meta: Optional[Dict[str, Any]] = None
+
+
+class TvStudioRenderResponse(BaseModel):
+    success: bool
+    playlist_item_id: str
+    render_id: str
+    render_url: str
+    thumbnail_url: str
+    status: str
 
 
 class VideoPlaybackErrorIn(BaseModel):
@@ -1404,619 +1435,974 @@ async def update_render_job(
             return
 
 
-async def call_openrouter(
-    message: str,
-    knowledge: List[Dict[str, Any]],
-    system_prompt: Optional[str] = None,
-    include_no_answer_sentinel: bool = True,
+async def update_tv_render_record(
+    render_id: Optional[str],
+    *,
+    status: Optional[str] = None,
+    render_url: Optional[str] = None,
+    thumbnail_url: Optional[str] = None,
+    error_message: Optional[str] = None,
+    set_started_at: bool = False,
+    set_finished_at: bool = False,
+) -> None:
+    if not render_id:
+        return
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return
+
+    fields: Dict[str, Any] = {}
+    if status:
+        fields["status"] = status
+    if render_url:
+        fields["render_url"] = render_url
+    if thumbnail_url:
+        fields["thumbnail_url"] = thumbnail_url
+    if error_message:
+        fields["error_message"] = error_message[:4000]
+
+    if set_started_at or set_finished_at:
+        now_iso = datetime.now(timezone.utc).isoformat()
+        if set_started_at:
+            fields["started_at"] = now_iso
+        if set_finished_at:
+            fields["finished_at"] = now_iso
+
+    if not fields:
+        return
+
+    table_url = f"{SUPABASE_URL}/rest/v1/app.hero_renders_tv?id=eq.{render_id}"
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            await client.patch(table_url, headers=headers, json=fields)
+        except httpx.HTTPError:
+            return
+
+
+async def _upload_hero_file_to_supabase_storage(
+    path: Path,
+    *,
+    slot: str,
+    playlist_item_id: str,
+    filename: str,
+    content_type: str,
 ) -> str:
-    """Appelle OpenRouter pour générer une réponse d'IA en français, avec contexte."""
-    if not OPENROUTER_API_KEY:
-        return (
-            "Je suis Bobodo en mode développement (clé OpenRouter manquante). "
-            "Merci de configurer OPENROUTER_API_KEY dans le fichier .env."
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "SUPABASE_URL ou SUPABASE_SERVICE_KEY manquante pour le rendu Hero Studio."},
         )
 
-    context_chunks: List[str] = []
-    for item in knowledge[:5]:
-        title = str(item.get("title") or "")
-        content = str(item.get("content") or "")
-        context_chunks.append(f"[{title}]\n{content}")
-
-    context_text = "\n\n".join(context_chunks) or "Aucune connaissance spécifique trouvée."
-
-    if system_prompt is None:
-        system_prompt = (
-            "Tu es Bobodo, un assistant IA pour le projet Academia. "
-            "Tu aides les étudiants sur les études, les candidatures, les cours et les offres. "
-            "Réponds toujours en français, de manière claire, structurée et bienveillante. "
-            "Tu dois comprendre le sens de la question même si elle est mal formulée, contient des fautes de frappe ou des tournures inhabituelles. "
-            "Si l'utilisateur pose plusieurs fois la même question, tu peux reformuler la réponse avec un style légèrement différent tout en gardant le même fond. "
-            "Quand la question concerne l'orientation des études, la formation ou l'emploi, tu peux, après ta réponse principale, proposer UNE SEULE question ouverte et courte pour mieux comprendre la situation de l'étudiant, uniquement si cela est vraiment utile. "
-            "Ne demande jamais de données personnelles sensibles (numéro de téléphone, adresse, document officiel, etc.). "
-            "Si une information n'est pas disponible, dis-le honnêtement."
-        )
-        if include_no_answer_sentinel:
-            system_prompt += (
-                f" Si tu n'as vraiment pas assez d'informations fiables pour répondre, "
-                f"réponds EXACTEMENT par {NO_ANSWER_SENTINEL} et rien d'autre."
-            )
-
-    user_prompt = (
-        f"Contexte de la base de connaissances :\n{context_text}\n\n"
-        f"Question de l'étudiant :\n{message}"
-    )
+    bucket = "challenge-media"
+    slot_clean = (slot or "default").strip() or "default"
+    object_key = f"renders/{slot_clean}/{playlist_item_id}/{filename}"
+    storage_url = f"{SUPABASE_URL}/storage/v1/object/{bucket}/{object_key}"
 
     headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json",
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": content_type,
     }
 
-    body = {
-        "model": OPENROUTER_MODEL,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "temperature": 0.7,
-        "top_p": 0.9,
-        "presence_penalty": 0.2,
-        "frequency_penalty": 0.3,
-    }
+    data = path.read_bytes()
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        try:
-            response = await client.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers=headers,
-                json=body,
-            )
-        except httpx.HTTPError as exc:
-            raise HTTPException(
-                status_code=502,
-                detail={"message": "Erreur réseau OpenRouter", "error": str(exc)},
-            )
+    async with httpx.AsyncClient(timeout=600.0) as client:
+        resp = await client.post(storage_url, headers=headers, content=data)
 
-    if response.status_code >= 400:
+    if resp.status_code >= 400:
         try:
-            error_body = response.json()
+            body = resp.json()
         except ValueError:
-            error_body = {"raw": response.text}
+            body = {"raw": resp.text}
         raise HTTPException(
             status_code=500,
             detail={
-                "message": "Erreur OpenRouter",
-                "status_code": response.status_code,
-                "error": error_body,
+                "message": "Erreur lors de l'upload Hero Studio dans Supabase Storage.",
+                "status_code": resp.status_code,
+                "error": body,
             },
         )
 
-    data = response.json()
-    try:
-        return data["choices"][0]["message"]["content"]
-    except Exception:
-        raise HTTPException(
-            status_code=500,
-            detail={"message": "Réponse OpenRouter inattendue", "raw": data},
-        )
+    public_url = f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{object_key}"
+    return public_url
 
 
-async def wrap_with_openrouter_style(base_message: str, user_message: str) -> str:
-    if not OPENROUTER_API_KEY:
-        return base_message
+async def update_hero_render_record(
+    render_id: Optional[str],
+    *,
+    status: Optional[str] = None,
+    render_url: Optional[str] = None,
+    thumbnail_url: Optional[str] = None,
+    logs: Optional[str] = None,
+) -> None:
+    if not render_id:
+        return
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return
 
-    reformulation_system_prompt = (
-        "Tu es Bobodo, un assistant IA pour le projet Academia. "
-        "On te fournit un 'message de base' dans le contexte. Ce message contient exactement le contenu factuel que tu dois transmettre à l'utilisateur. "
-        "Ta tâche est de le reformuler en français naturel, clair et bienveillant, en t'adaptant au ton et à l'humeur de l'utilisateur, mais SANS ajouter de nouveaux faits, chiffres, promesses ou spéculations. "
-        "Tu ne dois PAS inventer d'informations supplémentaires, ni élargir le sujet au-delà de ce qui est contenu dans ce message de base."
-    )
+    fields: Dict[str, Any] = {}
+    if status:
+        fields["status"] = status
+    if render_url:
+        fields["render_url"] = render_url
+    if thumbnail_url:
+        fields["thumbnail_url"] = thumbnail_url
+    if logs:
+        fields["logs"] = logs[:4000]
 
-    knowledge = [
-        {
-            "title": "message_de_base",
-            "content": base_message,
-        }
-    ]
+    if not fields:
+        return
 
-    return await call_openrouter(
-        user_message,
-        knowledge,
-        system_prompt=reformulation_system_prompt,
-        include_no_answer_sentinel=False,
-    )
-
-
-async def call_openrouter_safety_refusal(message: str) -> str:
-    if not OPENROUTER_API_KEY:
-        return (
-            "Je ne peux pas répondre à cette question car elle concerne un domaine sensible "
-            "(sécurité, terrorisme, piratage, politique, etc.). "
-            "Pour des raisons de sécurité et de conformité, Bobodo n'est pas autorisé à traiter ce type de demande."
-        )
-
-    safety_system_prompt = (
-        "Tu es Bobodo, un assistant IA pour le projet Academia. "
-        "Pour des raisons de sécurité, de conformité et d'éthique, tu dois refuser toute question liée au terrorisme, "
-        "à la violence, au piratage informatique, aux activités illégales, à la sécurité nationale, à la haine, "
-        "ou aux manipulations politiques ou sociales. "
-        "Quand une telle question est détectée, tu dois répondre en français, de manière claire et bienveillante, "
-        "que tu ne peux pas aider sur ce sujet et inviter l'utilisateur à se tourner vers les canaux officiels. "
-        "Ne fournis aucun détail technique, aucune instruction pratique et aucun conseil opérationnel."
-    )
-
-    return await call_openrouter(
-        message,
-        [],
-        system_prompt=safety_system_prompt,
-        include_no_answer_sentinel=False,
-    )
-
-
-async def generate_answer_with_fallback(
-    message: str,
-    knowledge: List[Dict[str, Any]],
-    session_id: str,
-) -> str:
-    primary_answer = await call_openrouter(
-        message,
-        knowledge,
-        system_prompt=None,
-        include_no_answer_sentinel=True,
-    )
-    if NO_ANSWER_SENTINEL not in primary_answer:
-        return primary_answer
-
-    web_results: List[Dict[str, Any]] = []
-    try:
-        web_results = await perform_web_search(message)
-    except HTTPException:
-        web_results = []
-
-    if not web_results:
-        await log_unanswered_question(
-            session_id,
-            message,
-            CATEGORY_ORIENTATION_ETUDES_EMPLOI,
-        )
-        base_message = (
-            "Je n'ai pas trouvé d'information fiable sur cette question, "
-            "ni dans la base de connaissances interne Nexiom/Academia ni via la recherche web. "
-            "Je te recommande d'écrire à l'administrateur de la plateforme Academia (via la messagerie "
-            "ou les contacts indiqués) pour exposer ta demande et voir si une solution peut être trouvée."
-        )
-        return await wrap_with_openrouter_style(base_message, message)
-
-    web_knowledge: List[Dict[str, Any]] = []
-    for item in web_results:
-        web_knowledge.append(
-            {
-                "title": item.get("title") or "",
-                "content": f"{item.get('snippet') or ''}\nSource: {item.get('url') or ''}",
-                "category": "websearch",
-            }
-        )
-
-    combined_knowledge = knowledge[:5] + web_knowledge
-    secondary_answer = await call_openrouter(
-        message,
-        combined_knowledge,
-        system_prompt=None,
-        include_no_answer_sentinel=True,
-    )
-
-    if NO_ANSWER_SENTINEL in secondary_answer:
-        await log_unanswered_question(
-            session_id,
-            message,
-            CATEGORY_ORIENTATION_ETUDES_EMPLOI,
-        )
-        base_message = (
-            "Même après consultation de sources externes, je ne dispose pas d'information "
-            "suffisamment fiable pour répondre à cette question. "
-            "Je te recommande d'écrire à l'administrateur de la plateforme Academia (via la messagerie "
-            "ou les contacts indiqués) pour exposer ta demande et voir si une solution peut être trouvée."
-        )
-        return await wrap_with_openrouter_style(base_message, message)
-
-    return secondary_answer
-
-
-async def generate_answer_for_category(
-    message: str,
-    category: str,
-    knowledge: List[Dict[str, Any]],
-    session_id: str,
-) -> str:
-    # Catégorie small talk / émotions : conversation humaine dans le cadre d'Academia
-    if category == CATEGORY_SMALL_TALK_EMOTION:
-        smalltalk_system_prompt = (
-            "Tu es Bobodo, un assistant IA pour le projet Academia. "
-            "Tu dois répondre aux salutations, remerciements, compliments et émotions des étudiants "
-            "de manière chaleureuse, respectueuse et bienveillante, tout en rappelant si nécessaire "
-            "que ton rôle principal est d'aider sur Nexiom Group, la plateforme Academia, l'orientation et l'emploi. "
-            "Ne donne pas d'avis médical, juridique ou psychologique."
-        )
-        answer = await call_openrouter(
-            message,
-            [],
-            system_prompt=smalltalk_system_prompt,
-            include_no_answer_sentinel=False,
-        )
-        return answer
-
-    # Questions internes Nexiom/Academia : base locale uniquement, pas de WebSearch
-    if category == CATEGORY_NEXIOM_ACADEMIA_INTERNE:
-        if knowledge:
-            internal_system_prompt = (
-                "Tu es Bobodo, un assistant IA pour Nexiom Group et la plateforme Academia. "
-                "Tu dois répondre UNIQUEMENT en te basant sur le contexte interne fourni (connaissance Nexiom/Academia). "
-                "Tu peux reformuler, structurer et clarifier, mais tu ne dois pas inventer d'informations ni extrapoler. "
-                "Si le contexte ne contient pas assez d'informations pour répondre précisément, "
-                f"réponds EXACTEMENT par {NO_ANSWER_SENTINEL} et rien d'autre. "
-                "Quand c'est utile pour mieux comprendre la situation de l'utilisateur dans le cadre de Nexiom/Academia, "
-                "tu peux, après ta réponse principale, proposer UNE SEULE question ouverte et courte, sans demander de données personnelles sensibles."
-            )
-            answer = await call_openrouter(
-                message,
-                knowledge,
-                system_prompt=internal_system_prompt,
-                include_no_answer_sentinel=True,
-            )
-        else:
-            answer = NO_ANSWER_SENTINEL
-
-        normalized = answer.strip()
-        if NO_ANSWER_SENTINEL in normalized:
-            await log_unanswered_question(session_id, message, CATEGORY_NEXIOM_ACADEMIA_INTERNE)
-            cleaned = normalized.replace(NO_ANSWER_SENTINEL, "").strip()
-            if cleaned:
-                return cleaned
-
-            # Contexte interne insuffisant : log + réponse neutre reformulée par OpenRouter
-            base_message = (
-                "Je n'ai pas encore suffisamment d'informations internes pour répondre précisément à cette question "
-                "sur Nexiom Group ou la plateforme Academia. Cette demande sera transmise à l'équipe en charge du contenu."
-            )
-            return await wrap_with_openrouter_style(base_message, message)
-
-        if should_append_admin_contact_hint(message):
-            suffix = (
-                "\n\nSi tu ne trouves pas une formation précise sur la plateforme Academia et qu'elle n'est pas "
-                "diplômante, tu peux écrire à l'administrateur de la plateforme Academia pour que ta demande soit "
-                "étudiée."
-            )
-            return answer.rstrip() + "\n\n" + suffix
-
-        return answer
-
-    # Orientation / études / emploi : pipeline complet local + OpenRouter + WebSearch
-    if category == CATEGORY_ORIENTATION_ETUDES_EMPLOI:
-        answer = await generate_answer_with_fallback(message, knowledge, session_id)
-        if should_append_admin_contact_hint(message):
-            suffix = (
-                "\n\nSi tu ne trouves pas une formation précise sur la plateforme Academia et qu'elle n'est pas "
-                "diplômante, tu peux écrire à l'administrateur de la plateforme Academia pour que ta demande soit "
-                "étudiée."
-            )
-            return answer.rstrip() + "\n\n" + suffix
-
-        return answer
-
-    # Université partenaire : description générale sans détails contractuels, pas de WebSearch
-    if category == CATEGORY_PARTENAIRE_UNIVERSITE_DETAILLEE:
-        if knowledge:
-            partner_system_prompt = (
-                "Tu es Bobodo, un assistant IA pour le projet Academia. "
-                "L'utilisateur pose une question détaillée sur une université ou un centre de formation partenaire. "
-                "Tu peux donner UNE DESCRIPTION GÉNÉRALE basée sur le contexte (présentation globale, localisation, type de partenariats), "
-                "mais tu NE DOIS PAS fournir de chiffres exacts (frais, durées, quotas), ni de conditions d'admission contractuelles, "
-                "ni promettre quoi que ce soit au nom de l'université. "
-                "Invite toujours l'utilisateur à consulter la section 'Universités partenaires' dans Academia "
-                "ou à poser ses questions à l'équipe lors de sa candidature."
-            )
-            return await call_openrouter(
-                message,
-                knowledge,
-                system_prompt=partner_system_prompt,
-                include_no_answer_sentinel=False,
-            )
-
-        base_message = (
-            "Pour les détails sur cette université partenaire (programmes, frais, conditions), "
-            "je t'invite à consulter la section 'Universités partenaires' dans la plateforme Academia "
-            "ou à poser tes questions à l'équipe lors du dépôt de ta candidature."
-        )
-        return await wrap_with_openrouter_style(base_message, message)
-
-    # Autre université ou entreprise (non partenaire / concurrent) : refus poli
-    if category == CATEGORY_AUTRE_UNIVERSITE_OU_ENTREPRISE:
-        base_message = (
-            "Je ne peux pas fournir d'informations détaillées ni de comparatifs sur des universités ou entreprises "
-            "spécifiques. La politique de Nexiom Group est de proposer des formations à partir de la liste de ses "
-            "universités et centres de formation partenaires. Je t'invite à consulter la section 'Universités partenaires' "
-            "et 'Centres de formation partenaires' dans la plateforme Academia, puis à regarder les offres de formation "
-            "disponibles. Si une université n'apparaît pas dans cette section, cela signifie que Nexiom Group ne peut pas "
-            "te proposer de formation via cet établissement. En revanche, tu peux toujours explorer l'ensemble des "
-            "formations disponibles sur Academia pour trouver une option qui te convient."
-        )
-    # HORS_SCOPE ou catégorie inconnue : refuser poliment car hors domaine
-    await log_unanswered_question(session_id, message, category)
-    base_message = (
-        "Je suis un assistant spécialisé pour Nexiom Group, la plateforme Academia, l'orientation et l'emploi. "
-        "Cette question sort de mon domaine de compétence, je ne peux donc pas y répondre."
-    )
-    return await wrap_with_openrouter_style(base_message, message)
-
-
-@app.post("/studio/audio/render", response_model=StudioAudioRenderResponse)
-async def studio_audio_render(req: StudioAudioRenderRequest, request: Request) -> StudioAudioRenderResponse:
-    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
-    if not auth_header or not auth_header.lower().startswith("bearer "):
-        raise HTTPException(status_code=401, detail="Authorization Bearer manquant pour le rendu audio.")
-
-    user_jwt = auth_header.split(" ", 1)[1].strip()
-    if not user_jwt:
-        raise HTTPException(status_code=401, detail="JWT utilisateur invalide pour le rendu audio.")
-
-    vt = (req.video_type or "challenge").strip().lower()
-    if vt not in ("challenge", "free"):
-        vt = "challenge"
-
-    participation_id: Optional[str] = None
-    free_video_id: Optional[str] = None
-
-    if vt == "free":
-        free_video_id = (req.free_video_id or "").strip()
-        if not free_video_id:
-            raise HTTPException(status_code=400, detail="free_video_id manquant pour le rendu audio.")
-        video = await get_free_video_for_user(user_jwt, free_video_id)
-    else:
-        participation_id = (req.participation_id or "").strip()
-        if not participation_id:
-            raise HTTPException(status_code=400, detail="participation_id manquant pour le rendu audio.")
-        video = await get_challenge_video_for_user(user_jwt, participation_id)
-
-    video_url_raw = video.get("video_url")
-    video_url = str(video_url_raw or "").strip()
-    if not video_url:
-        raise HTTPException(status_code=400, detail="Aucune URL vidéo disponible pour cette participation.")
-
-    tracks_payload: List[Dict[str, Any]] = []
-    for track in req.tracks:
-        asset_url = (track.asset_url or "").strip()
-        if not asset_url:
-            continue
-        track_dict: Dict[str, Any] = {"asset_url": asset_url}
-        if track.start_ms is not None:
-            track_dict["start_ms"] = int(track.start_ms)
-        if track.end_ms is not None:
-            track_dict["end_ms"] = int(track.end_ms)
-        if track.volume_db is not None:
-            track_dict["volume_db"] = float(track.volume_db)
-        if track.kind is not None:
-            kind_val = track.kind.strip()
-            if kind_val:
-                track_dict["kind"] = kind_val
-        tracks_payload.append(track_dict)
-
-    job_id = await create_render_job(
-        video_type=vt,
-        participation_id=participation_id,
-        free_video_id=free_video_id,
-        job_type="audio_mix",
-        source_video_url=video_url,
-        metadata={"track_count": len(tracks_payload)},
-    )
-
-    try:
-        rendered_url = await call_studio_audio_mix(
-            video_url=video_url,
-            tracks=tracks_payload,
-            normalize=req.normalize,
-        )
-    except HTTPException as exc:
-        detail = exc.detail
-        msg: Optional[str] = None
-        if isinstance(detail, dict):
-            msg = str(detail.get("message") or "")
-        await update_render_job(job_id, video_type=vt, status="failed", error_message=msg)
-        raise
-
-    await update_render_job(job_id, video_type=vt, status="completed", result_video_url=rendered_url)
-
-    added_video_id: Optional[str] = None
-    if vt == "free":
-        # Pas de table de clips multiples pour les vidéos libres pour l'instant,
-        # on ne crée donc pas d'enregistrement supplémentaire ici.
-        add_result: Optional[Dict[str, Any]] = None
-    else:
-        add_result = await call_supabase_rpc_as_user(
-            user_jwt,
-            "app_student_add_challenge_video",
-            {
-                "p_participation_id": participation_id,
-                "p_video_url": rendered_url,
-                "p_thumbnail_url": None,
-            },
-        )
-
-        if not isinstance(add_result, dict) or not add_result.get("success"):
-            error_code = None
-            if isinstance(add_result, dict):
-                error_code = add_result.get("error")
-            raise HTTPException(
-                status_code=500,
-                detail={
-                    "message": "Erreur lors de l'enregistrement de la vidéo mixée.",
-                    "error": error_code or "unknown_error",
-                },
-            )
-
-        raw_id = add_result.get("video_id") if isinstance(add_result, dict) else None
-        if isinstance(raw_id, str):
-            added_video_id = raw_id
-
-    return StudioAudioRenderResponse(
-        success=True,
-        participation_id=participation_id or (free_video_id or ""),
-        video_url=rendered_url,
-        added_video_id=added_video_id,
-        video_type=vt,
-        free_video_id=free_video_id,
-    )
-
-
-@app.post("/studio/video/render", response_model=StudioVideoRenderResponse)
-async def studio_video_render(req: StudioVideoRenderRequest, request: Request) -> StudioVideoRenderResponse:
-    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
-    if not auth_header or not auth_header.lower().startswith("bearer "):
-        raise HTTPException(status_code=401, detail="Authorization Bearer manquant pour le rendu vidéo.")
-
-    user_jwt = auth_header.split(" ", 1)[1].strip()
-    if not user_jwt:
-        raise HTTPException(status_code=401, detail="JWT utilisateur invalide pour le rendu vidéo.")
-
-    vt = (req.video_type or "challenge").strip().lower()
-    if vt not in ("challenge", "free"):
-        vt = "challenge"
-
-    participation_id: Optional[str] = None
-    free_video_id: Optional[str] = None
-
-    if vt == "free":
-        free_video_id = (req.free_video_id or "").strip()
-        if not free_video_id:
-            raise HTTPException(status_code=400, detail="free_video_id manquant pour le rendu vidéo.")
-        video = await get_free_video_for_user(user_jwt, free_video_id)
-    else:
-        participation_id = (req.participation_id or "").strip()
-        if not participation_id:
-            raise HTTPException(status_code=400, detail="participation_id manquant pour le rendu vidéo.")
-        video = await get_challenge_video_for_user(user_jwt, participation_id)
-
-    video_url_raw = video.get("video_url")
-    video_url = str(video_url_raw or "").strip()
-    if not video_url:
-        raise HTTPException(status_code=400, detail="Aucune URL vidéo disponible pour cette participation.")
-
-    overlays = video.get("overlays")
-    if not isinstance(overlays, dict):
-        overlays = {}
-
-    metadata: Dict[str, Any] = {
-        "has_layers": bool(overlays.get("layers")),
-        "has_texts": bool(overlays.get("texts")),
-        "has_subtitles": bool(overlays.get("subtitles")),
-        "has_ar_objects": bool(overlays.get("ar_objects")),
+    table_url = f"{SUPABASE_URL}/rest/v1/app.hero_renders?id=eq.{render_id}"
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
     }
 
-    job_id = await create_render_job(
-        video_type=vt,
-        participation_id=participation_id,
-        free_video_id=free_video_id,
-        job_type="video_edit",
-        source_video_url=video_url,
-        metadata=metadata,
-    )
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            await client.patch(table_url, headers=headers, json=fields)
+        except httpx.HTTPError:
+            return
+
+
+def _escape_drawtext_text(text: str) -> str:
+    text = text.replace("\\", "\\\\")
+    text = text.replace(":", "\\:")
+    text = text.replace("'", "\\'")
+    return text
+
+
+def _build_hero_overlays_filter(layers_raw: Any) -> Optional[str]:
+    if not isinstance(layers_raw, list):
+        return None
+
+    parts: List[str] = []
+    for layer in layers_raw:
+        if not isinstance(layer, dict):
+            continue
+
+        layer_type_raw = layer.get("type") or layer.get("kind")
+        layer_type = str(layer_type_raw or "").strip().lower()
+        if layer_type not in ("text", "lower_third", "ticker"):
+            continue
+
+        raw_text = layer.get("text") or layer.get("title")
+        if raw_text is None:
+            continue
+        text = str(raw_text).strip()
+        if not text:
+            continue
+
+        start = layer.get("start_at_seconds")
+        end = layer.get("end_at_seconds")
+        try:
+            start_f = float(start) if start is not None else 0.0
+        except (TypeError, ValueError):
+            start_f = 0.0
+        try:
+            end_f = float(end) if end is not None else start_f + 5.0
+        except (TypeError, ValueError):
+            end_f = start_f + 5.0
+        if end_f <= start_f:
+            end_f = start_f + 5.0
+
+        enable_expr = f"between(t,{start_f:.3f},{end_f:.3f})"
+
+        align = str(layer.get("align") or layer.get("position") or "").strip().lower()
+        if align == "top_left":
+            x_expr, y_expr = "40", "40"
+        elif align == "top_right":
+            x_expr, y_expr = "w-tw-40", "40"
+        elif align == "bottom_left":
+            x_expr, y_expr = "40", "h-th-80"
+        elif align == "bottom_right":
+            x_expr, y_expr = "w-tw-40", "h-th-80"
+        else:
+            x_val = layer.get("x")
+            y_val = layer.get("y")
+            if isinstance(x_val, (int, float)) and isinstance(y_val, (int, float)):
+                x_expr = str(int(x_val))
+                y_expr = str(int(y_val))
+            else:
+                x_expr, y_expr = "40", "h-th-80"
+
+        # Comportement spécifique pour les tickers TV : texte défilant de droite à gauche
+        if layer_type == "ticker":
+            # On fait défiler le texte à une vitesse modérée (~100 px/s),
+            # en démarrant le mouvement à partir de start_f.
+            base_t = f"{start_f:.3f}"
+            x_expr = f"w-mod((t-{base_t})*100,w+tw)"
+            y_expr = "h-th-40"
+
+        escaped_text = _escape_drawtext_text(text)
+        draw = (
+            "drawtext=text='{text}':fontcolor=white:fontsize=32:"
+            "x={x}:y={y}:box=1:boxcolor=black@0.5:boxborderw=10:enable='{enable}'"
+        ).format(text=escaped_text, x=x_expr, y=y_expr, enable=enable_expr)
+        parts.append(draw)
+
+        # On limite volontairement le nombre de calques pour garder la commande ffmpeg raisonnable.
+        if len(parts) >= 8:
+            break
+
+    if not parts:
+        return None
+
+    return ",".join(parts)
+
+
+async def perform_hero_video_render(
+    base_video_url: str,
+    *,
+    slot: str,
+    playlist_item_id: str,
+    overlays: Optional[Dict[str, Any]] = None,
+) -> Dict[str, str]:
+    url = (base_video_url or "").strip()
+    if not url:
+        raise HTTPException(status_code=400, detail={"message": "base_video_url manquant pour Hero Studio."})
+
+    input_path: Optional[Path] = None
+    output_path: Optional[Path] = None
+    thumb_path: Optional[Path] = None
+    logs_parts: List[str] = []
+
+    overlays_dict: Dict[str, Any] = {}
+    if isinstance(overlays, dict):
+        overlays_dict = overlays
+    layers_val = overlays_dict.get("layers") if overlays_dict else None
+    extra_filters = _build_hero_overlays_filter(layers_val)
+    if extra_filters:
+        logs_parts.append(f"filters={extra_filters}")
 
     try:
-        storage_id = participation_id or free_video_id or ""
-        render_payload = await call_studio_video_render(
-            video_url=video_url,
-            overlays=overlays,
-            participation_id=storage_id,
+        input_path = await _download_video_to_temp(url)
+
+        if extra_filters:
+            output_path = _run_ffmpeg_generic(
+                input_path=input_path,
+                max_width=720,
+                max_bitrate_k=900,
+                audio_bitrate_k=96,
+                label="hero_main",
+                fps=None,
+                extra_filters=extra_filters,
+            )
+        else:
+            output_path = _run_ffmpeg_transcode(input_path)
+
+        tmp_dir = Path(tempfile.mkdtemp(prefix="hero_thumb_"))
+        thumb_path = tmp_dir / "thumb.jpg"
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-i",
+            str(output_path),
+            "-ss",
+            "0",
+            "-vframes",
+            "1",
+            "-q:v",
+            "2",
+            str(thumb_path),
+        ]
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if result.returncode != 0:
+            stderr_text = result.stderr.decode("utf-8", errors="ignore")
+            logs_parts.append(f"thumb_error: {stderr_text[:1000]}")
+            thumb_path = None
+
+        video_url = await _upload_hero_file_to_supabase_storage(
+            output_path,
+            slot=slot,
+            playlist_item_id=playlist_item_id,
+            filename="final.mp4",
+            content_type="video/mp4",
+        )
+
+        if thumb_path is not None and thumb_path.exists():
+            thumbnail_url = await _upload_hero_file_to_supabase_storage(
+                thumb_path,
+                slot=slot,
+                playlist_item_id=playlist_item_id,
+                filename="thumb.jpg",
+                content_type="image/jpeg",
+            )
+        else:
+            thumbnail_url = ""
+    finally:
+        try:
+            if input_path is not None and input_path.exists():
+                input_path.unlink()
+        except Exception:
+            pass
+        try:
+            if output_path is not None and output_path.exists():
+                output_path.unlink()
+        except Exception:
+            pass
+        try:
+            if thumb_path is not None and thumb_path.exists():
+                thumb_path.unlink()
+        except Exception:
+            pass
+
+    logs_str = "\n".join(logs_parts) if logs_parts else ""
+    return {"render_url": video_url, "thumbnail_url": thumbnail_url, "logs": logs_str}
+
+
+def _build_tv_overlays_filter(overlays_raw: Any) -> Optional[str]:
+    if not isinstance(overlays_raw, list):
+        return None
+
+    parts: List[str] = []
+    for ov in overlays_raw:
+        if not isinstance(ov, dict):
+            continue
+
+        overlay_type = str(ov.get("overlay_type") or "").strip().lower()
+        if overlay_type not in ("text", "banner", "ticker"):
+            continue
+
+        cfg = ov.get("config") or {}
+        if not isinstance(cfg, dict):
+            cfg = {}
+
+        raw_text = cfg.get("text") or cfg.get("title")
+        if raw_text is None:
+            continue
+        text = str(raw_text).strip()
+        if not text:
+            continue
+
+        start = ov.get("start_at_seconds")
+        end = ov.get("end_at_seconds")
+        try:
+            start_f = float(start) if start is not None else 0.0
+        except (TypeError, ValueError):
+            start_f = 0.0
+        try:
+            end_f = float(end) if end is not None else start_f + 5.0
+        except (TypeError, ValueError):
+            end_f = start_f + 5.0
+        if end_f <= start_f:
+            end_f = start_f + 5.0
+
+        enable_expr = f"between(t,{start_f:.3f},{end_f:.3f})"
+
+        # Style broadcast basique (personnalisable via config)
+        fontcolor = str(cfg.get("fontcolor") or cfg.get("font_color") or "white").strip() or "white"
+        fontsize_raw = cfg.get("fontsize") or cfg.get("font_size")
+        try:
+            fontsize = int(fontsize_raw) if fontsize_raw is not None else 32
+        except (TypeError, ValueError):
+            fontsize = 32
+        boxcolor = str(cfg.get("boxcolor") or cfg.get("box_color") or "black@0.5").strip() or "black@0.5"
+        boxborderw_raw = cfg.get("boxborderw") or cfg.get("box_border_width")
+        try:
+            boxborderw = int(boxborderw_raw) if boxborderw_raw is not None else 10
+        except (TypeError, ValueError):
+            boxborderw = 10
+
+        align = str(cfg.get("align") or cfg.get("position") or "").strip().lower()
+        if align == "top_left":
+            x_expr, y_expr = "40", "40"
+        elif align == "top_right":
+            x_expr, y_expr = "w-tw-40", "40"
+        elif align == "top_center":
+            x_expr, y_expr = "(w-tw)/2", "40"
+        elif align == "bottom_left":
+            x_expr, y_expr = "40", "h-th-80"
+        elif align == "bottom_right":
+            x_expr, y_expr = "w-tw-40", "h-th-80"
+        elif align == "bottom_center":
+            x_expr, y_expr = "(w-tw)/2", "h-th-80"
+        elif align == "center":
+            x_expr, y_expr = "(w-tw)/2", "(h-th)/2"
+        else:
+            x_val = cfg.get("x")
+            y_val = cfg.get("y")
+            if isinstance(x_val, (int, float)) and isinstance(y_val, (int, float)):
+                x_expr = str(int(x_val))
+                y_expr = str(int(y_val))
+            else:
+                x_expr, y_expr = "40", "h-th-80"
+
+        # Animation optionnelle pour le texte fixe/banner
+        animation = str(cfg.get("animation") or "").strip().lower()
+        alpha_opt = ""
+        if animation == "fade":
+            fade_in_raw = cfg.get("fade_in_duration")
+            fade_out_raw = cfg.get("fade_out_duration")
+            try:
+                fade_in = float(fade_in_raw) if fade_in_raw is not None else 0.5
+            except (TypeError, ValueError):
+                fade_in = 0.5
+            try:
+                fade_out = float(fade_out_raw) if fade_out_raw is not None else 0.5
+            except (TypeError, ValueError):
+                fade_out = 0.5
+            # Sécuriser pour éviter des durées négatives
+            if fade_in < 0:
+                fade_in = 0.0
+            if fade_out < 0:
+                fade_out = 0.0
+            # Expression alpha : fade in puis fade out autour de start/end
+            alpha_expr = (
+                f"if(lt(t,{start_f:.3f}+{fade_in:.3f}),"
+                f" (t-{start_f:.3f})/{fade_in:.3f},"
+                f" if(lt(t,{end_f:.3f}-{fade_out:.3f}),"
+                " 1,"
+                f" max(0,({end_f:.3f}-t)/{fade_out:.3f})))"
+            )
+            alpha_opt = f":alpha='{alpha_expr}'"
+
+        # Comportement spécifique pour les tickers TV : texte défilant
+        if overlay_type == "ticker":
+            base_t = f"{start_f:.3f}"
+            speed_raw = cfg.get("speed") or cfg.get("speed_px_per_s") or cfg.get("pixels_per_second")
+            try:
+                speed = float(speed_raw) if speed_raw is not None else 100.0
+            except (TypeError, ValueError):
+                speed = 100.0
+            if speed <= 0:
+                speed = 100.0
+            x_expr = f"w-mod((t-{base_t})*{speed},w+tw)"
+            y_expr = "h-th-40"
+
+        escaped_text = _escape_drawtext_text(text)
+        draw = (
+            "drawtext=text='{text}':fontcolor={fontcolor}:fontsize={fontsize}:"
+            "x={x}:y={y}:box=1:boxcolor={boxcolor}:boxborderw={boxborderw}{alpha}:enable='{enable}'"
+        ).format(
+            text=escaped_text,
+            fontcolor=fontcolor,
+            fontsize=fontsize,
+            x=x_expr,
+            y=y_expr,
+            boxcolor=boxcolor,
+            boxborderw=boxborderw,
+            alpha=alpha_opt,
+            enable=enable_expr,
+        )
+        parts.append(draw)
+
+        if len(parts) >= 8:
+            break
+
+    if not parts:
+        return None
+
+    return ",".join(parts)
+
+
+async def perform_hero_tv_video_render(
+    base_video_url: str,
+    *,
+    slot: str,
+    playlist_item_id: str,
+    overlays: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, str]:
+    url = (base_video_url or "").strip()
+    if not url:
+        raise HTTPException(status_code=400, detail={"message": "base_video_url manquant pour Studio TV."})
+
+    input_path: Optional[Path] = None
+    output_path: Optional[Path] = None
+    thumb_path: Optional[Path] = None
+    logs_parts: List[str] = []
+
+    extra_filters = _build_tv_overlays_filter(overlays or [])
+    if extra_filters:
+        logs_parts.append(f"tv_filters={extra_filters}")
+
+    try:
+        input_path = await _download_video_to_temp(url)
+
+        output_path = _run_ffmpeg_generic(
+            input_path=input_path,
+            max_width=1280,
+            max_bitrate_k=1800,
+            audio_bitrate_k=128,
+            label="hero_tv_720p",
+            fps=None,
+            extra_filters=extra_filters,
+        )
+
+        tmp_dir = Path(tempfile.mkdtemp(prefix="hero_tv_thumb_"))
+        thumb_path = tmp_dir / "thumb.jpg"
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-i",
+            str(output_path),
+            "-ss",
+            "0",
+            "-vframes",
+            "1",
+            "-q:v",
+            "2",
+            str(thumb_path),
+        ]
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if result.returncode != 0:
+            stderr_text = result.stderr.decode("utf-8", errors="ignore")
+            logs_parts.append(f"tv_thumb_error: {stderr_text[:1000]}")
+            thumb_path = None
+
+        video_url = await _upload_hero_file_to_supabase_storage(
+            output_path,
+            slot=slot,
+            playlist_item_id=playlist_item_id,
+            filename="tv_final.mp4",
+            content_type="video/mp4",
+        )
+
+        if thumb_path is not None and thumb_path.exists():
+            thumbnail_url = await _upload_hero_file_to_supabase_storage(
+                thumb_path,
+                slot=slot,
+                playlist_item_id=playlist_item_id,
+                filename="tv_thumb.jpg",
+                content_type="image/jpeg",
+            )
+        else:
+            thumbnail_url = ""
+    finally:
+        try:
+            if input_path is not None and input_path.exists():
+                input_path.unlink()
+        except Exception:
+            pass
+        try:
+            if output_path is not None and output_path.exists():
+                output_path.unlink()
+        except Exception:
+            pass
+        try:
+            if thumb_path is not None and thumb_path.exists():
+                thumb_path.unlink()
+        except Exception:
+            pass
+
+    logs_str = "\n".join(logs_parts) if logs_parts else ""
+    return {"render_url": video_url, "thumbnail_url": thumbnail_url, "logs": logs_str}
+
+
+@app.post("/hero/studio/render", response_model=HeroStudioRenderResponse)
+async def hero_studio_render(req: HeroStudioRenderRequest, request: Request) -> HeroStudioRenderResponse:
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authorization Bearer manquant pour Hero Studio.")
+
+    user_jwt = auth_header.split(" ", 1)[1].strip()
+    if not user_jwt:
+        raise HTTPException(status_code=401, detail="JWT utilisateur invalide pour Hero Studio.")
+
+    playlist_item_id = (req.playlist_item_id or "").strip()
+    if not playlist_item_id:
+        raise HTTPException(status_code=400, detail="playlist_item_id manquant pour Hero Studio.")
+
+    start_data = await call_supabase_rpc_as_user(
+        user_jwt,
+        "app_admin_start_hero_render",
+        {"p_playlist_item_id": playlist_item_id},
+    )
+
+    if not isinstance(start_data, dict) or not start_data.get("success"):
+        error_code = None
+        if isinstance(start_data, dict):
+            error_code = start_data.get("error")
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Impossible de démarrer le rendu Hero Studio",
+                "error": error_code or "unknown_error",
+            },
+        )
+
+    render_id_raw = start_data.get("render_id") if isinstance(start_data, dict) else None
+    if not isinstance(render_id_raw, str) or not render_id_raw.strip():
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "Réponse Supabase invalide pour app_admin_start_hero_render."},
+        )
+    render_id = render_id_raw.strip()
+
+    cfg_data = await call_supabase_rpc_as_user(
+        user_jwt,
+        "app_admin_get_hero_playlist_item_config",
+        {"p_playlist_item_id": playlist_item_id},
+    )
+
+    if not isinstance(cfg_data, dict) or not cfg_data.get("success"):
+        error_code = None
+        if isinstance(cfg_data, dict):
+            error_code = cfg_data.get("error")
+        await update_hero_render_record(
+            render_id,
+            status="failed",
+            logs=f"config_error: {error_code or 'unknown_error'}",
+        )
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Impossible de lire la configuration Hero Studio",
+                "error": error_code or "unknown_error",
+            },
+        )
+
+    item = cfg_data.get("item") if isinstance(cfg_data, dict) else None
+    if not isinstance(item, dict):
+        await update_hero_render_record(
+            render_id,
+            status="failed",
+            logs="config_error: missing_item",
+        )
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "Réponse Supabase invalide pour la configuration Hero Studio."},
+        )
+
+    slot = (req.slot or str(item.get("slot") or "")).strip() or "default"
+    media_type = str(item.get("media_type") or "video").strip().lower()
+    base_video_url_raw = item.get("base_video_url")
+    base_video_url = str(base_video_url_raw or "").strip()
+
+    if media_type != "video":
+        await update_hero_render_record(
+            render_id,
+            status="failed",
+            logs=f"unsupported_media_type: {media_type}",
+        )
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "Seules les entrées vidéo sont supportées pour Hero Studio."},
+        )
+
+    if not base_video_url:
+        await update_hero_render_record(
+            render_id,
+            status="failed",
+            logs="missing_base_video_url",
+        )
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "Aucune URL vidéo de base configurée pour cet item Hero."},
+        )
+
+    overlays_val = item.get("overlays")
+    overlays_dict: Optional[Dict[str, Any]] = None
+    if isinstance(overlays_val, dict):
+        overlays_dict = overlays_val
+    elif isinstance(overlays_val, list):
+        overlays_dict = {"layers": overlays_val}
+
+    try:
+        render_payload = await perform_hero_video_render(
+            base_video_url,
+            slot=slot,
+            playlist_item_id=playlist_item_id,
+            overlays=overlays_dict,
         )
     except HTTPException as exc:
         detail = exc.detail
         msg: Optional[str] = None
         if isinstance(detail, dict):
             msg = str(detail.get("message") or "")
-        await update_render_job(job_id, video_type=vt, status="failed", error_message=msg)
+        await update_hero_render_record(
+            render_id,
+            status="failed",
+            logs=msg or "hero_render_failed",
+        )
         raise
-    rendered_url_raw: Optional[str] = None
-    video_renditions: Dict[str, Any] = {}
-    if isinstance(render_payload, dict):
-        raw = render_payload.get("video_url") or render_payload.get("rendered_url")
-        if isinstance(raw, str):
-            rendered_url_raw = raw
-        vr = render_payload.get("video_renditions")
-        if isinstance(vr, dict):
-            video_renditions = vr
 
-    rendered_url = (rendered_url_raw or "").strip()
-    if not rendered_url:
-        msg = "URL vidéo rendue manquante dans la réponse du service Studio vidéo."
-        await update_render_job(job_id, video_type=vt, status="failed", error_message=msg)
-        raise HTTPException(status_code=500, detail={"message": msg})
+    render_url = str(render_payload.get("render_url") or "").strip()
+    thumbnail_url = str(render_payload.get("thumbnail_url") or "").strip()
+    logs = str(render_payload.get("logs") or "").strip()
 
-    await update_render_job(job_id, video_type=vt, status="completed", result_video_url=rendered_url)
+    if not render_url:
+        await update_hero_render_record(
+            render_id,
+            status="failed",
+            logs=logs or "missing_render_url",
+        )
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "URL du rendu Hero Studio manquante."},
+        )
 
-    added_video_id: Optional[str] = None
-    if vt == "free":
-        # Pour les vidéos libres, on met à jour directement la vidéo principale
-        # avec l'URL et les renditions finales.
-        try:
-            await call_supabase_rpc_as_user(
-                user_jwt,
-                "app_student_set_free_video_main_renditions",
-                {
-                    "p_free_video_id": free_video_id,
-                    "p_video_url": rendered_url,
-                    "p_video_renditions": video_renditions or None,
-                },
-            )
-        except HTTPException:
-            # On ne fait pas échouer le rendu vidéo si la mise à jour en base échoue.
-            pass
-        add_result: Optional[Dict[str, Any]] = None
-    else:
-        add_result = await call_supabase_rpc_as_user(
-            user_jwt,
-            "app_student_add_challenge_video",
-            {
-                "p_participation_id": participation_id,
-                "p_video_url": rendered_url,
-                "p_thumbnail_url": None,
+    await update_hero_render_record(
+        render_id,
+        status="done",
+        render_url=render_url,
+        thumbnail_url=thumbnail_url or None,
+        logs=logs or None,
+    )
+
+    if SUPABASE_URL and SUPABASE_SERVICE_KEY and render_url:
+        table_url = f"{SUPABASE_URL}/rest/v1/app.hero_playlist?id=eq.{playlist_item_id}"
+        headers = {
+            "apikey": SUPABASE_SERVICE_KEY,
+            "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Prefer": "return=minimal",
+        }
+        payload: Dict[str, Any] = {"base_video_url": render_url}
+        if thumbnail_url:
+            payload["base_image_url"] = thumbnail_url
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            try:
+                await client.patch(table_url, headers=headers, json=payload)
+            except httpx.HTTPError:
+                pass
+
+    return HeroStudioRenderResponse(
+        success=True,
+        playlist_item_id=playlist_item_id,
+        render_id=render_id,
+        render_url=render_url,
+        thumbnail_url=thumbnail_url or "",
+        status="done",
+    )
+
+
+@app.post("/studio/tv/render", response_model=TvStudioRenderResponse)
+async def tv_studio_render(req: TvStudioRenderRequest, request: Request) -> TvStudioRenderResponse:
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authorization Bearer manquant pour le Studio TV.")
+
+    user_jwt = auth_header.split(" ", 1)[1].strip()
+    if not user_jwt:
+        raise HTTPException(status_code=401, detail="JWT utilisateur invalide pour le Studio TV.")
+
+    playlist_item_id = (req.playlist_item_id or "").strip()
+    if not playlist_item_id:
+        raise HTTPException(status_code=400, detail="playlist_item_id manquant pour le Studio TV.")
+
+    meta = req.meta or {}
+
+    start_data = await call_supabase_rpc_as_user(
+        user_jwt,
+        "app_admin_tv_request_render",
+        {"p_playlist_item_id": playlist_item_id, "p_meta": meta},
+    )
+
+    if not isinstance(start_data, dict) or not start_data.get("success"):
+        error_code = None
+        if isinstance(start_data, dict):
+            error_code = start_data.get("error")
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Impossible de démarrer le rendu Studio TV",
+                "error": error_code or "unknown_error",
             },
         )
 
-        if not isinstance(add_result, dict) or not add_result.get("success"):
-            error_code = None
-            if isinstance(add_result, dict):
-                error_code = add_result.get("error")
-            raise HTTPException(
-                status_code=500,
-                detail={
-                    "message": "Erreur lors de l'enregistrement de la vidéo montée.",
-                    "error": error_code or "unknown_error",
-                },
-            )
+    render_id_raw = start_data.get("render_id") if isinstance(start_data, dict) else None
+    if not isinstance(render_id_raw, str) or not render_id_raw.strip():
+        raise HTTPException(
+            status_code=500,
+            detail="Réponse Supabase invalide pour app_admin_tv_request_render.",
+        )
+    render_id = render_id_raw.strip()
 
-        try:
-            await call_supabase_rpc_as_user(
-                user_jwt,
-                "app_student_set_challenge_main_video",
-                {
-                    "p_participation_id": participation_id,
-                    "p_video_url": rendered_url,
-                    "p_video_renditions": video_renditions or None,
-                },
-            )
-        except HTTPException:
-            pass
+    await update_tv_render_record(
+        render_id,
+        status="processing",
+        set_started_at=True,
+    )
 
-        raw_id = add_result.get("video_id") if isinstance(add_result, dict) else None
-        if isinstance(raw_id, str):
-            added_video_id = raw_id
+    cfg_data = await call_supabase_rpc_as_user(
+        user_jwt,
+        "app_admin_get_hero_playlist_item_config",
+        {"p_playlist_item_id": playlist_item_id},
+    )
 
-    return StudioVideoRenderResponse(
+    if not isinstance(cfg_data, dict) or not cfg_data.get("success"):
+        error_code = None
+        if isinstance(cfg_data, dict):
+            error_code = cfg_data.get("error")
+        await update_tv_render_record(
+            render_id,
+            status="failed",
+            error_message=f"config_error: {error_code or 'unknown_error'}",
+            set_finished_at=True,
+        )
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Impossible de lire la configuration Hero pour Studio TV",
+                "error": error_code or "unknown_error",
+            },
+        )
+
+    item = cfg_data.get("item") if isinstance(cfg_data, dict) else None
+    if not isinstance(item, dict):
+        await update_tv_render_record(
+            render_id,
+            status="failed",
+            error_message="config_error: missing_item",
+            set_finished_at=True,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "Réponse Supabase invalide pour la configuration Hero (Studio TV)."},
+        )
+
+    slot = (req.slot or str(item.get("slot") or "")).strip() or "default"
+    media_type = str(item.get("media_type") or "video").strip().lower()
+    base_video_url_raw = item.get("base_video_url")
+    base_video_url = str(base_video_url_raw or "").strip()
+
+    if media_type != "video":
+        await update_tv_render_record(
+            render_id,
+            status="failed",
+            error_message=f"unsupported_media_type: {media_type}",
+            set_finished_at=True,
+        )
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "Seules les entrées vidéo sont supportées pour le Studio TV."},
+        )
+
+    if not base_video_url:
+        await update_tv_render_record(
+            render_id,
+            status="failed",
+            error_message="missing_base_video_url",
+            set_finished_at=True,
+        )
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "Aucune URL vidéo de base configurée pour cet item Hero (Studio TV)."},
+        )
+
+    timeline_data = await call_supabase_rpc_as_user(
+        user_jwt,
+        "app_admin_tv_get_timeline",
+        {"p_playlist_item_id": playlist_item_id},
+    )
+
+    if not isinstance(timeline_data, dict) or not timeline_data.get("success"):
+        error_code = None
+        if isinstance(timeline_data, dict):
+            error_code = timeline_data.get("error")
+        await update_tv_render_record(
+            render_id,
+            status="failed",
+            error_message=f"timeline_error: {error_code or 'unknown_error'}",
+            set_finished_at=True,
+        )
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Impossible de lire la timeline TV pour cet item Hero.",
+                "error": error_code or "unknown_error",
+            },
+        )
+
+    overlays_list_raw = timeline_data.get("overlays")
+    overlays_list: List[Dict[str, Any]] = []
+    if isinstance(overlays_list_raw, list):
+        for ov in overlays_list_raw:
+            if isinstance(ov, dict):
+                overlays_list.append(ov)
+
+    try:
+        render_payload = await perform_hero_tv_video_render(
+            base_video_url,
+            slot=slot,
+            playlist_item_id=playlist_item_id,
+            overlays=overlays_list,
+        )
+    except HTTPException as exc:
+        detail = exc.detail
+        msg: Optional[str] = None
+        if isinstance(detail, dict):
+            msg = str(detail.get("message") or "")
+        await update_tv_render_record(
+            render_id,
+            status="failed",
+            error_message=msg or "tv_render_failed",
+            set_finished_at=True,
+        )
+        raise
+
+    render_url = str(render_payload.get("render_url") or "").strip()
+    thumbnail_url = str(render_payload.get("thumbnail_url") or "").strip()
+    logs = str(render_payload.get("logs") or "").strip()
+
+    if not render_url:
+        await update_tv_render_record(
+            render_id,
+            status="failed",
+            error_message=logs or "missing_render_url",
+            set_finished_at=True,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "URL du rendu Studio TV manquante."},
+        )
+
+    await update_tv_render_record(
+        render_id,
+        status="success",
+        render_url=render_url,
+        thumbnail_url=thumbnail_url or None,
+        set_finished_at=True,
+    )
+
+    if SUPABASE_URL and SUPABASE_SERVICE_KEY and render_url:
+        table_url = f"{SUPABASE_URL}/rest/v1/app.hero_playlist?id=eq.{playlist_item_id}"
+        headers = {
+            "apikey": SUPABASE_SERVICE_KEY,
+            "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Prefer": "return=minimal",
+        }
+        payload: Dict[str, Any] = {"base_video_url": render_url}
+        if thumbnail_url:
+            payload["base_image_url"] = thumbnail_url
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            try:
+                await client.patch(table_url, headers=headers, json=payload)
+            except httpx.HTTPError:
+                pass
+
+    return TvStudioRenderResponse(
         success=True,
-        participation_id=participation_id or (free_video_id or ""),
-        video_url=rendered_url,
-        added_video_id=added_video_id,
-        video_type=vt,
-        free_video_id=free_video_id,
+        playlist_item_id=playlist_item_id,
+        render_id=render_id,
+        render_url=render_url,
+        thumbnail_url=thumbnail_url or "",
+        status="success",
     )
 
 
