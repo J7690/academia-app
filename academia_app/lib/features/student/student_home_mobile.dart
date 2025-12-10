@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../providers/student_profile_provider.dart';
 import '../../providers/student_applications_provider.dart';
@@ -9,9 +10,11 @@ import '../../providers/student_offers_provider.dart';
 import '../../providers/student_home_content_provider.dart';
 import '../../providers/online_courses_catalog_provider.dart';
 import '../../providers/student_online_courses_provider.dart';
+import '../../providers/home_formations_provider.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart';
 import '../../widgets/academia_video_widget.dart';
+import '../../widgets/notification_sound_settings_dialog.dart';
 import 'student_application_detail_screen.dart';
 import 'tabs/student_applications_tab.dart';
 import 'tabs/student_opportunities_tab.dart';
@@ -22,6 +25,7 @@ import 'student_profile_screen.dart';
 import 'online_course_detail_screen.dart';
 import 'tabs/student_online_trainings_tab.dart';
 import 'widgets/student_mobile_scaffold.dart';
+import 'widgets/formations_section.dart';
 
 class StudentHomeMobileTab extends StatefulWidget {
   const StudentHomeMobileTab({super.key});
@@ -63,16 +67,22 @@ class _StudentHomeMobileTabState extends State<StudentHomeMobileTab> {
 
   @override
   Widget build(BuildContext context) {
-    return StudentMobileScrollablePage(
-      children: [
-        const SizedBox(height: 8),
-        const _MobileTopNavBar(),
-        const SizedBox(height: 16),
-        _MobileProfileCard(),
-        const SizedBox(height: 16),
-        const _MobileSectionsGrid(),
-        const SizedBox(height: 24),
-      ],
+    return Consumer2<StudentOffersProvider, HomeFormationsProvider>(
+      builder: (context, offersProvider, formationsProvider, child) {
+        formationsProvider.syncFromHomeOffers(offersProvider.homeOffers);
+
+        return StudentMobileScrollablePage(
+          children: [
+            const SizedBox(height: 8),
+            const _MobileTopNavBar(),
+            const SizedBox(height: 16),
+            _MobileProfileCard(),
+            const SizedBox(height: 16),
+            const _MobileSectionsGrid(),
+            const SizedBox(height: 24),
+          ],
+        );
+      },
     );
   }
 }
@@ -115,6 +125,177 @@ class _MobileTopNavBarState extends State<_MobileTopNavBar>
     action();
   }
 
+  void _openSearchFormations() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        String query = '';
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final formations =
+                context.watch<HomeFormationsProvider>().formations;
+            final lowerQuery = query.toLowerCase();
+            final filtered = lowerQuery.isEmpty
+                ? formations
+                : formations.where((f) {
+                    final title = f.title.toLowerCase();
+                    final uni = f.universityName.toLowerCase();
+                    final degree = (f.degreeLevel ?? '').toLowerCase();
+                    return title.contains(lowerQuery) ||
+                        uni.contains(lowerQuery) ||
+                        degree.contains(lowerQuery);
+                  }).toList(growable: false);
+
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 12,
+                  bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 4,
+                      width: 40,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                    const Text(
+                      'Rechercher une formation',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      autofocus: true,
+                      decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.search),
+                        hintText:
+                            'Nom de la filière, université, niveau...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(24)),
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          query = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 260,
+                      child: formations.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'Les formations apparaîtront ici dès qu’elles seront disponibles.',
+                                textAlign: TextAlign.center,
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: filtered.length,
+                              itemBuilder: (context, index) {
+                                final formation = filtered[index];
+                                return ListTile(
+                                  leading: const Icon(Icons.school_rounded),
+                                  title: Text(
+                                    formation.title,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  subtitle: Text(
+                                    formation.universityName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  onTap: () {
+                                    Navigator.of(ctx).pop();
+                                    final slug = formation.universitySlug;
+                                    if (slug == null || slug.isEmpty) {
+                                      return;
+                                    }
+                                    Navigator.of(this.context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            StudentUniversitySiteScreen(
+                                          universitySlug: slug,
+                                          universityName:
+                                              formation.universityName,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _openMoreMenu() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.notifications_outlined),
+                title: const Text('Notifications'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Centre de notifications à venir.',
+                      ),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.settings),
+                title: const Text('Paramètres'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  NotificationSoundSettingsDialog.show(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('Déconnexion'),
+                onTap: () async {
+                  Navigator.of(ctx).pop();
+                  final client = Supabase.instance.client;
+                  await client.auth.signOut();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = 1.0 + 0.18 * _controller.value;
@@ -152,21 +333,26 @@ class _MobileTopNavBarState extends State<_MobileTopNavBar>
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Container(
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.6),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  alignment: Alignment.centerLeft,
-                  child: const Text(
-                    'Rechercher une opportunité, un cours...',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF6F6F6F),
+                child: GestureDetector(
+                  onTap: () => _onTapSimple(() {
+                    _openSearchFormations();
+                  }),
+                  child: Container(
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    alignment: Alignment.centerLeft,
+                    child: const Text(
+                      'Rechercher une formation, une filière...',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF6F6F6F),
+                      ),
                     ),
                   ),
                 ),
@@ -186,7 +372,7 @@ class _MobileTopNavBarState extends State<_MobileTopNavBar>
               _TopNavIconButton(
                 icon: Icons.more_horiz,
                 onTap: () => _onTapSimple(() {
-                  // Menu / paramètres plus tard.
+                  _openMoreMenu();
                 }),
               ),
             ],
@@ -445,11 +631,9 @@ class _MobileSectionsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final myCoursesProvider = context.watch<StudentOnlineCoursesProvider>();
     final appsProvider = context.watch<StudentApplicationsProvider>();
-    final offersProvider = context.watch<StudentOffersProvider>();
 
     final myCoursesCount = myCoursesProvider.myCourses.length;
     final appsCount = appsProvider.applications.length;
-    final universitiesCount = offersProvider.universities.length;
 
     final items = <_MobileSectionItem>[
       _MobileSectionItem(
@@ -480,59 +664,18 @@ class _MobileSectionsGrid extends StatelessWidget {
           );
         },
       ),
-      _MobileSectionItem(
-        title: 'Opportunités',
-        subtitle: 'Stages, emplois et programmes.',
-        icon: Icons.work_outline,
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const StudentOpportunitiesTab(),
-            ),
-          );
-        },
-      ),
-      _MobileSectionItem(
-        title: 'Challenges',
-        subtitle: 'Missions, concours et vidéos.',
-        icon: Icons.sports_esports_outlined,
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const challenges_tab.StudentChallengesTab(),
-            ),
-          );
-        },
-      ),
-      _MobileSectionItem(
-        title: 'Universités partenaires',
-        subtitle: universitiesCount > 0
-            ? '$universitiesCount université(s) partenaire(s)'
-            : 'Découvre nos universités partenaires.',
-        icon: Icons.school,
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const partners_tab.StudentPartnersTab(),
-            ),
-          );
-        },
-      ),
     ];
-
-    final topItems = items.take(2).toList(growable: false);
-    final bottomItems = items.skip(2).toList(growable: false);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _MobileSectionsRow(items: topItems),
+        _MobileSectionsRow(items: items),
         const SizedBox(height: 16),
         const _MobileHomeHero(),
         const SizedBox(height: 12),
         const _MobileHomeTicker(),
         const SizedBox(height: 16),
-        _MobileSectionsRow(items: bottomItems),
+        const StudentHomeFormationsSection(),
       ],
     );
   }

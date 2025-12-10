@@ -405,20 +405,56 @@ class _StudentChallengeVideoEditorScreenState
     String? url;
 
     if (_isFreeVideo) {
-      // Pour les vidéos libres, le flux standard prévoit l'upload initial
-      // depuis l'onglet "Vidéos" avant d'ouvrir le Studio.
-      // On ne ré-uploade donc pas la vidéo source depuis cet écran.
-      setState(() {
-        _isUploading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Le ré-upload de la vidéo n’est pas disponible dans le Studio pour les vidéos libres.',
-          ),
-        ),
+      // Vidéos libres : on uploade vers le stockage puis on met à jour
+      // la vidéo existante via la RPC app_student_set_free_video_main_renditions.
+      url = await provider.uploadFreeVideo(
+        bytes: _videoBytes!,
+        fileName: _fileName!,
+        mimeType: _mimeType,
       );
-      return;
+
+      if (!mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+        return;
+      }
+
+      if (url == null) {
+        setState(() {
+          _isUploading = false;
+        });
+        final error =
+            provider.error ?? 'Erreur lors de l\'upload de la vidéo libre.';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error)),
+        );
+        return;
+      }
+
+      final ok = await provider.updateFreeVideoMainRenditions(
+        freeVideoId: _effectiveFreeVideoId,
+        videoUrl: url,
+      );
+
+      if (!mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+        return;
+      }
+
+      if (!ok) {
+        setState(() {
+          _isUploading = false;
+        });
+        final error =
+            provider.error ?? 'Erreur lors de la mise à jour de la vidéo libre.';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error)),
+        );
+        return;
+      }
     } else {
       url = await provider.uploadChallengeVideo(
         bytes: _videoBytes!,
@@ -447,10 +483,9 @@ class _StudentChallengeVideoEditorScreenState
     setState(() {
       _uploadedUrl = url;
     });
-
-    if (kIsWeb) {
-      await _initRemoteVideo(url);
-    }
+    // Initialisation du lecteur vidéo sur toutes les plateformes pour avoir
+    // un studio plein écran (vidéo en fond + overlays).
+    await _initRemoteVideo(url);
 
     if (!kIsWeb) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -462,7 +497,68 @@ class _StudentChallengeVideoEditorScreenState
     }
   }
 
+  String _pickBestServerVideoUrl(Map<String, dynamic> video) {
+    final rawUrl = video['video_url']?.toString().trim() ?? '';
+
+    final renditionsRaw = video['video_renditions'];
+    Map<String, dynamic>? renditions;
+    if (renditionsRaw is Map) {
+      renditions = Map<String, dynamic>.from(renditionsRaw);
+    }
+
+    if (renditions == null || renditions.isEmpty) {
+      return rawUrl;
+    }
+
+    final isAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+    const androidOrder = ['360p', '240p', '480p', 'default', 'source'];
+    const otherOrder = ['480p', '360p', '240p', 'default', 'source'];
+    final order = isAndroid ? androidOrder : otherOrder;
+
+    for (final key in order) {
+      final v = renditions[key]?.toString().trim() ?? '';
+      if (v.isNotEmpty) {
+        print(
+          'ANDROID STUDIO VIDEO DEBUG :: pickBestServerVideoUrl key=$key url=$v',
+        );
+        return v;
+      }
+    }
+
+    return rawUrl;
+  }
+
+  String _pickBestClipUrl(List<Map<String, dynamic>> clips) {
+    if (clips.isEmpty) {
+      return '';
+    }
+
+    final reversed = clips.reversed;
+    for (final clip in reversed) {
+      final url = clip['video_url']?.toString().trim() ?? '';
+      if (url.isNotEmpty && url.contains('/renders/')) {
+        print(
+          'ANDROID STUDIO VIDEO DEBUG :: pickBestClipUrl renders url=$url',
+        );
+        return url;
+      }
+    }
+
+    for (final clip in reversed) {
+      final url = clip['video_url']?.toString().trim() ?? '';
+      if (url.isNotEmpty) {
+        print(
+          'ANDROID STUDIO VIDEO DEBUG :: pickBestClipUrl fallback url=$url',
+        );
+        return url;
+      }
+    }
+
+    return '';
+  }
+
   Future<void> _initRemoteVideo(String url) async {
+    print('ANDROID STUDIO VIDEO DEBUG :: initRemoteVideo url=$url');
     _videoController?.dispose();
     final controller = VideoPlayerController.networkUrl(Uri.parse(url));
     _videoController = controller;
@@ -476,7 +572,9 @@ class _StudentChallengeVideoEditorScreenState
       setState(() {
         _videoInitialized = true;
       });
-    } catch (_) {
+      print('ANDROID STUDIO VIDEO DEBUG :: controller initialized successfully');
+    } catch (e) {
+      print('ANDROID STUDIO VIDEO ERROR :: $e');
       if (!mounted) return;
       setState(() {
         _videoInitialized = false;
@@ -513,10 +611,26 @@ class _StudentChallengeVideoEditorScreenState
       return;
     }
 
-    final rawVideoUrl = video['video_url']?.toString() ?? '';
-    if (rawVideoUrl.isNotEmpty) {
-      _uploadedUrl = rawVideoUrl;
-      await _initRemoteVideo(rawVideoUrl);
+    String selectedUrl = _pickBestServerVideoUrl(video);
+
+    final isAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+    if (!_isFreeVideo && (selectedUrl.isEmpty || (isAndroid && !selectedUrl.contains('/renders/')))) {
+      List<Map<String, dynamic>> clips = [];
+      try {
+        clips = await provider.listMyChallengeVideos(_effectiveParticipationId);
+      } catch (_) {}
+
+      if (clips.isNotEmpty) {
+        final clipUrl = _pickBestClipUrl(clips);
+        if (clipUrl.isNotEmpty) {
+          selectedUrl = clipUrl;
+        }
+      }
+    }
+
+    if (selectedUrl.isNotEmpty) {
+      _uploadedUrl = selectedUrl;
+      await _initRemoteVideo(selectedUrl);
     }
 
     Map<String, dynamic>? overlaysMap;
@@ -3341,10 +3455,13 @@ class _StudentChallengeVideoEditorScreenState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     const bool showCameraButton = true;
-    final bool hasUploadedVideo =
-        kIsWeb && _uploadedUrl != null && _uploadedUrl!.isNotEmpty;
+    final bool hasController = _videoController != null;
+    final bool hasUrl = _uploadedUrl != null && _uploadedUrl!.isNotEmpty;
+    final bool hasVideo = hasController || hasUrl;
 
-    if (hasUploadedVideo) {
+    // Mode studio plein écran : vidéo en fond d'écran + actions et panneau
+    // en overlay, pour toutes les plateformes et tous les types de vidéos.
+    if (hasVideo) {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Vidéo de challenge'),
@@ -3354,7 +3471,7 @@ class _StudentChallengeVideoEditorScreenState
             Positioned.fill(
               child: Container(
                 color: Colors.black,
-                child: _videoController != null && _videoInitialized
+                child: hasController
                     ? StudentVideoPlayer(
                         controller: _videoController!,
                         overlays: _buildOverlaysPayload(),
@@ -3381,6 +3498,8 @@ class _StudentChallengeVideoEditorScreenState
       );
     }
 
+    // Fallback : écran de préparation statique quand aucune vidéo n'est
+    // encore disponible (avant capture ou sélection de média).
     return Scaffold(
       appBar: AppBar(
         title: const Text('Vidéo de challenge'),
@@ -3434,9 +3553,7 @@ class _StudentChallengeVideoEditorScreenState
                                 CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.cloud_upload),
-                    label: Text(
-                      _uploadedUrl == null ? 'Uploader' : 'Ré-uploader',
-                    ),
+                    label: const Text('Uploader'),
                   ),
                   if (_fileName != null) ...[
                     const SizedBox(height: 8),
@@ -3445,67 +3562,6 @@ class _StudentChallengeVideoEditorScreenState
                       style: theme.textTheme.bodySmall,
                     ),
                   ],
-                  const SizedBox(height: 16),
-                  if (kIsWeb && _uploadedUrl != null)
-                    Card(
-                      margin: EdgeInsets.zero,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Aperçu de la vidéo en ligne',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            if (_videoController != null &&
-                                _videoInitialized) ...[
-                              StudentVideoPlayer(
-                                controller: _videoController!,
-                                overlays: _buildOverlaysPayload(),
-                                feedMode: true,
-                              ),
-                              const SizedBox(height: 8),
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  onPressed: () {
-                                    final url = _uploadedUrl;
-                                    if (url == null || url.isEmpty) {
-                                      return;
-                                    }
-                                    final overlays = _buildOverlaysPayload();
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            StudentChallengeVideoArCombinedScreen(
-                                          videoUrl: url,
-                                          overlays: overlays,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  icon: const Icon(Icons.view_in_ar),
-                                  label:
-                                      const Text('Vidéo + AR en live'),
-                                ),
-                              ),
-                            ] else
-                              const Center(
-                                child: Padding(
-                                  padding:
-                                      EdgeInsets.symmetric(vertical: 16),
-                                  child: CircularProgressIndicator(),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
                   const SizedBox(height: 24),
                   Text(
                     'Personnalisation académique',
@@ -3594,36 +3650,6 @@ class _StudentChallengeVideoEditorScreenState
                       icon: const Icon(Icons.music_note),
                       label: const Text(
                         'Ouvrir le mixeur audio du Studio',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  TextField(
-                    controller: _descriptionController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText:
-                          'Description pour les correcteurs (optionnel)',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _isSubmitting || _isUploading
-                          ? null
-                          : _submitVideoChallenge,
-                      icon: _isSubmitting
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2),
-                            )
-                          : const Icon(Icons.check_circle_outline),
-                      label: const Text(
-                        'Publier ma vidéo de challenge',
                       ),
                     ),
                   ),

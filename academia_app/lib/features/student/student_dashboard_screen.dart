@@ -20,6 +20,7 @@ import 'tabs/student_courses_tab.dart';
 import 'tabs/student_online_trainings_tab.dart';
 import 'tabs/student_live_sessions_tab.dart';
 import 'tabs/student_bobodo_tab.dart';
+import 'student_dashboard_nav_controller.dart';
 
 /// Dashboard étudiant avec onglets principaux
 class StudentDashboardScreen extends StatefulWidget {
@@ -36,10 +37,24 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   int _lastStudentUnreadCount = 0;
   bool _studentUnreadInitialized = false;
   bool _studentHomeNotificationInitialized = false;
+  VoidCallback? _navListener;
 
   @override
   void initState() {
     super.initState();
+    StudentDashboardNavController.setIndex(_currentIndex);
+    _navListener = () {
+      final newIndex = StudentDashboardNavController.currentIndex;
+      if (newIndex != _currentIndex) {
+        setState(() {
+          _currentIndex = newIndex;
+        });
+        if (newIndex == 0) {
+          _markStudentHomeSeen();
+        }
+      }
+    };
+    StudentDashboardNavController.indexNotifier.addListener(_navListener!);
     _ensureStudentProfile();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
@@ -141,6 +156,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   @override
   void dispose() {
     _pollingTimer?.cancel();
+    if (_navListener != null) {
+      StudentDashboardNavController.indexNotifier.removeListener(_navListener!);
+    }
     super.dispose();
   }
 
@@ -151,11 +169,19 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       builder: (context, applicationsProvider, child) {
         final unread = applicationsProvider.unreadCount;
 
+        Widget? bottomNav;
+        if (isMobile) {
+          if (_currentIndex != 4) {
+            bottomNav = _buildMobileBottomNav(unread);
+          }
+        } else {
+          bottomNav = _buildDesktopBottomNav(unread);
+        }
+
         return Scaffold(
           backgroundColor: const Color(0xFFF3F4F6),
           body: _buildCurrentTabBody(isMobile),
-          bottomNavigationBar:
-              isMobile ? _buildMobileBottomNav(unread) : _buildDesktopBottomNav(unread),
+          bottomNavigationBar: bottomNav,
         );
       },
     );
@@ -179,7 +205,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           child = const StudentCommunitiesTab();
           break;
         case 4:
-          child = const StudentChallengesTab();
+          child = const StudentChallengesFeedScreen();
           break;
         case 5:
           child = const StudentPartnersTab();
@@ -222,7 +248,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           child = const StudentCommunitiesTab();
           break;
         case 4:
-          child = const StudentChallengesTab();
+          child = const StudentChallengesFeedScreen();
           break;
         case 5:
           child = const StudentPartnersTab();
@@ -250,6 +276,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     setState(() {
       _currentIndex = index;
     });
+    StudentDashboardNavController.setIndex(index);
     if (index == 0) {
       _markStudentHomeSeen();
     }

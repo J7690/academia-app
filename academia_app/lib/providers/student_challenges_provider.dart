@@ -37,6 +37,203 @@ class StudentChallengesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> addVideoComment({
+    required String videoType,
+    required String videoId,
+    required String content,
+  }) async {
+    final text = content.trim();
+    if (text.isEmpty) {
+      _setError('Le commentaire est vide.');
+      return false;
+    }
+
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_add_video_comment',
+        params: {
+          'p_video_type': videoType,
+          'p_video_id': videoId,
+          'p_content': text,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur lors de l\'ajout du commentaire.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors de l\'ajout du commentaire.',
+        );
+        return false;
+      }
+      _incrementGenericVideoCommentsCount(videoType, videoId);
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<Map<String, dynamic>?> startDuoVideo({
+    required String videoType,
+    required String videoId,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_start_duo_video',
+        params: {
+          'p_video_type': videoType,
+          'p_video_id': videoId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors de la préparation du duo.',
+        );
+        return null;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors de la préparation de la vidéo en duo.',
+        );
+        return null;
+      }
+      return Map<String, dynamic>.from(response);
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> unfavoriteVideo({
+    required String videoType,
+    required String videoId,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_video_unfavorite',
+        params: {
+          'p_video_type': videoType,
+          'p_video_id': videoId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors du retrait du favori.',
+        );
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors du retrait du favori de la vidéo.',
+        );
+        return false;
+      }
+      _updateGenericVideoFavoriteState(videoType, videoId, favorited: false);
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> favoriteVideo({
+    required String videoType,
+    required String videoId,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_video_favorite',
+        params: {
+          'p_video_type': videoType,
+          'p_video_id': videoId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors de l\'ajout du favori.',
+        );
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors de l\'ajout du favori sur la vidéo.',
+        );
+        return false;
+      }
+      _updateGenericVideoFavoriteState(videoType, videoId, favorited: true);
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> reportVideo({
+    required String videoType,
+    required String videoId,
+    required String reason,
+    String? details,
+  }) async {
+    final r = reason.trim();
+    if (r.isEmpty) {
+      _setError('Le motif du signalement est vide.');
+      return false;
+    }
+
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_report_video',
+        params: {
+          'p_video_type': videoType,
+          'p_video_id': videoId,
+          'p_reason': r,
+          'p_details': details?.trim(),
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur lors du signalement de la vidéo.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors du signalement de la vidéo.',
+        );
+        return false;
+      }
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
   void _setSaving(bool value) {
     _isSaving = value;
     notifyListeners();
@@ -330,6 +527,77 @@ class StudentChallengesProvider extends ChangeNotifier {
       ..._videos.sublist(index + 1),
     ];
     notifyListeners();
+  }
+
+  void _updateGenericVideoFavoriteState(
+    String videoType,
+    String videoId, {
+    required bool favorited,
+  }) {
+    final index = _videos.indexWhere(
+      (v) =>
+          (v['video_type']?.toString() ?? '') == videoType &&
+          (v['video_id']?.toString() ?? '') == videoId,
+    );
+    if (index == -1) {
+      return;
+    }
+    final current = Map<String, dynamic>.from(_videos[index]);
+    final currentFavorites = current['favorites_count'] is int
+        ? current['favorites_count'] as int
+        : 0;
+    current['has_favorited'] = favorited;
+    if (favorited) {
+      current['favorites_count'] = currentFavorites + 1;
+    } else {
+      current['favorites_count'] =
+          currentFavorites > 0 ? currentFavorites - 1 : 0;
+    }
+
+    _videos = [
+      ..._videos.sublist(0, index),
+      current,
+      ..._videos.sublist(index + 1),
+    ];
+    notifyListeners();
+  }
+
+  Future<List<Map<String, dynamic>>> loadVideoComments(
+    String videoType,
+    String videoId,
+  ) async {
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_list_video_comments',
+        params: {
+          'p_video_type': videoType,
+          'p_video_id': videoId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur pour les commentaires.');
+        return const [];
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors du chargement des commentaires.',
+        );
+        return const [];
+      }
+      final data = response['comments'];
+      if (data is List) {
+        return data
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+      }
+      return const [];
+    } catch (e) {
+      _setError(e.toString());
+      return const [];
+    }
   }
 
   void _updateVideoFavoriteState(
@@ -687,6 +955,44 @@ class StudentChallengesProvider extends ChangeNotifier {
     } catch (e) {
       _setError(e.toString());
       return null;
+    }
+  }
+
+  Future<bool> updateFreeVideoMainRenditions({
+    required String freeVideoId,
+    required String videoUrl,
+    Map<String, dynamic>? videoRenditions,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_set_free_video_main_renditions',
+        params: {
+          'p_free_video_id': freeVideoId,
+          'p_video_url': videoUrl,
+          'p_video_renditions': videoRenditions,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors de la mise à jour de la vidéo libre.',
+        );
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors de la mise à jour de la vidéo libre.',
+        );
+        return false;
+      }
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
     }
   }
 

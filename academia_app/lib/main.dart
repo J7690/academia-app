@@ -7,6 +7,7 @@ import 'package:provider/single_child_widget.dart';
 import 'config/supabase_config.dart';
 import 'providers/supabase_provider.dart';
 import 'providers/student_offers_provider.dart';
+import 'providers/home_formations_provider.dart';
 import 'providers/student_opportunities_provider.dart';
 import 'providers/student_communities_provider.dart';
 import 'providers/student_challenges_provider.dart';
@@ -81,6 +82,7 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => LandingContentProvider()),
       ChangeNotifierProvider(create: (_) => StudentHomeContentProvider()),
       ChangeNotifierProvider(create: (_) => StudentOffersProvider()),
+      ChangeNotifierProvider(create: (_) => HomeFormationsProvider()),
       ChangeNotifierProvider(create: (_) => StudentOpportunitiesProvider()),
       ChangeNotifierProvider(create: (_) => StudentCommunitiesProvider()),
       ChangeNotifierProvider(create: (_) => StudentChallengesProvider()),
