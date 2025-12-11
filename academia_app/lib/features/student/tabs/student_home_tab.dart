@@ -115,7 +115,8 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
 
     try {
       final dynamic response = await client
-          .from('app.hero_playlist')
+          .schema('app')
+          .from('hero_playlist')
           .select('base_video_url, base_image_url, media_type, sort_order, is_active, title')
           .eq('slot', 'student_home_hero_main')
           .eq('is_active', true)

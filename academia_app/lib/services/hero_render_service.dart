@@ -36,11 +36,6 @@ class HeroRenderService {
 
     final uri = backendBase.replace(path: path);
 
-    // Logs structurés côté client pour suivre tous les appels Hero/TV
-    // On ne logge pas le body complet pour éviter d'afficher des tokens.
-    // Seuls le path et la présence de champs critiques sont loggés.
-    // Exemple de log: "HeroRenderService._postWithUserJwt: POST /hero/studio/render"
-    //                  "bodyKeys=[playlist_item_id, slot]".
     final bodyKeys = body.keys.toList(growable: false);
     // ignore: avoid_print
     print(
@@ -62,15 +57,61 @@ class HeroRenderService {
       print(
         'HeroRenderService._postWithUserJwt: ERROR status=${response.statusCode} body=${response.body}',
       );
+
       try {
         final decoded = jsonDecode(response.body);
         if (decoded is Map<String, dynamic>) {
           final detail = decoded['detail'];
-          if (detail is Map && detail['message'] is String) {
-            throw Exception(detail['message'] as String);
+          if (detail is Map<String, dynamic>) {
+            final rawMessage = (detail['message'] ?? '').toString();
+            final statusCodeDetail = detail['status_code']?.toString();
+            final innerError = detail['error'];
+
+            var layer = 'backend';
+            final lower = rawMessage.toLowerCase();
+            if (lower.contains('base_video_url')) {
+              layer = 'playlist_validation';
+            } else if (lower.contains('upload hero studio')) {
+              layer = 'storage';
+            } else if (lower.contains('réseau') || lower.contains('network')) {
+              layer = 'network';
+            }
+
+            var message = rawMessage.isEmpty
+                ? 'Erreur Hero/TV Studio.'
+                : rawMessage;
+
+            final buffer = StringBuffer('[')
+              ..write(layer)
+              ..write('] ')
+              ..write(message);
+
+            if (statusCodeDetail != null && statusCodeDetail.isNotEmpty) {
+              buffer.write(' (status=$statusCodeDetail)');
+            }
+
+            if (innerError is Map) {
+              final innerStatus = innerError['statusCode']?.toString();
+              final innerType = innerError['error']?.toString();
+              final innerMsg = innerError['message']?.toString();
+              buffer.write(' [supabase');
+              if (innerStatus != null && innerStatus.isNotEmpty) {
+                buffer.write(' statusCode=$innerStatus');
+              }
+              if (innerType != null && innerType.isNotEmpty) {
+                buffer.write(' error=$innerType');
+              }
+              if (innerMsg != null && innerMsg.isNotEmpty) {
+                buffer.write(' message=$innerMsg');
+              }
+              buffer.write(']');
+            }
+
+            throw Exception(buffer.toString());
           }
         }
       } catch (_) {}
+
       throw Exception('Erreur Hero/TV Studio (${response.statusCode}).');
     }
 
@@ -293,10 +334,19 @@ class HeroRenderService {
       throw Exception('Réponse invalide pour app_admin_upsert_hero_playlist_item.');
     }
     if (response['success'] != true) {
-      throw Exception(
-        response['error']?.toString() ??
-            "Erreur lors de l'enregistrement de l'item Hero.",
-      );
+      final rawError = response['error']?.toString() ??
+          "Erreur lors de l'enregistrement de l'item Hero.";
+
+      var layer = 'playlist_validation';
+      var message = rawError;
+
+      if (rawError.contains('base_video_url_required_for_active_video')) {
+        message =
+            "Une vidéo active doit avoir une URL vidéo de base (base_video_url). "
+            "Importe une vidéo ou décoche 'Actif' avant d'enregistrer.";
+      }
+
+      throw Exception('[' + layer + '] ' + message);
     }
 
     final id = response['playlist_item_id']?.toString();
@@ -322,6 +372,29 @@ class HeroRenderService {
       sortOrder: item.sortOrder,
       isActive: false,
     );
+  }
+
+  static Future<void> deletePlaylistItem(String playlistItemId) async {
+    final client = Supabase.instance.client;
+    // ignore: avoid_print
+    print('HeroRenderService.deletePlaylistItem: id=$playlistItemId');
+
+    final dynamic response = await client.rpc(
+      'app_admin_delete_hero_playlist_item',
+      params: {
+        'p_item_id': playlistItemId,
+      },
+    );
+
+    if (response is! Map<String, dynamic>) {
+      throw Exception('Réponse invalide pour app_admin_delete_hero_playlist_item.');
+    }
+    if (response['success'] != true) {
+      throw Exception(
+        response['error']?.toString() ??
+            "Erreur lors de la suppression de l'item Hero.",
+      );
+    }
   }
 
   static Future<HeroPlaylistItem> getItemConfig(String playlistItemId) async {
@@ -428,7 +501,8 @@ class HeroRenderService {
     print('HeroRenderService.getHeroRenderHistory: playlistItemId=$playlistItemId');
 
     final dynamic response = await client
-        .from('app.hero_renders')
+        .schema('app')
+        .from('hero_renders')
         .select()
         .eq('playlist_item_id', playlistItemId)
         .order('created_at', ascending: false)
@@ -452,6 +526,134 @@ class HeroRenderService {
   }
 
   /// --- Studio TV (timeline + rendus) ---
+
+  static Future<List<Map<String, dynamic>>> getTvTimelineJsonOverlays({
+    required String playlistItemId,
+  }) async {
+    final client = Supabase.instance.client;
+    // ignore: avoid_print
+    print('HeroRenderService.getTvTimelineJsonOverlays: playlistItemId=$playlistItemId');
+
+    final dynamic response = await client.rpc(
+      'app_admin_tv_get_timeline_json',
+      params: {
+        'p_playlist_item_id': playlistItemId,
+      },
+    );
+
+    if (response is! Map<String, dynamic>) {
+      // ignore: avoid_print
+      print('HeroRenderService.getTvTimelineJsonOverlays: invalid response type');
+      return const <Map<String, dynamic>>[];
+    }
+    if (response['success'] != true) {
+      // ignore: avoid_print
+      print(
+        'HeroRenderService.getTvTimelineJsonOverlays: error=' +
+            (response['error']?.toString() ?? 'unknown_error'),
+      );
+      return const <Map<String, dynamic>>[];
+    }
+
+    final timeline = response['timeline'];
+    if (timeline is! Map<String, dynamic>) {
+      // ignore: avoid_print
+      print('HeroRenderService.getTvTimelineJsonOverlays: missing timeline');
+      return const <Map<String, dynamic>>[];
+    }
+
+    final overlaysRaw = timeline['overlays'];
+    if (overlaysRaw is! List) {
+      // ignore: avoid_print
+      print('HeroRenderService.getTvTimelineJsonOverlays: overlays=[]');
+      return const <Map<String, dynamic>>[];
+    }
+
+    final overlays = overlaysRaw
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList(growable: false);
+
+    // ignore: avoid_print
+    print('HeroRenderService.getTvTimelineJsonOverlays: count=${overlays.length}');
+
+    return overlays;
+  }
+
+  static Future<void> saveTvTimelineJson({
+    required String playlistItemId,
+    required List<Map<String, dynamic>> overlays,
+  }) async {
+    final client = Supabase.instance.client;
+    // ignore: avoid_print
+    print(
+      'HeroRenderService.saveTvTimelineJson: playlistItemId=$playlistItemId overlays=${overlays.length}',
+    );
+
+    double maxEnd = 0.0;
+
+    double parseSeconds(dynamic v) {
+      if (v == null) return 0.0;
+      if (v is num) return v.toDouble();
+      return double.tryParse(v.toString()) ?? 0.0;
+    }
+
+    final sanitizedOverlays = <Map<String, dynamic>>[];
+    for (var i = 0; i < overlays.length; i++) {
+      final raw = overlays[i];
+      final map = Map<String, dynamic>.from(raw);
+
+      final type = (map['type'] ?? map['overlay_type'] ?? 'text').toString();
+      map['type'] = type;
+
+      final start = parseSeconds(map['start_at_seconds']);
+      var end = parseSeconds(map['end_at_seconds']);
+      if (end <= start) {
+        end = start + 5.0;
+      }
+      map['start_at_seconds'] = start;
+      map['end_at_seconds'] = end;
+
+      final sortOrder = map['sort_order'] is int
+          ? map['sort_order'] as int
+          : int.tryParse(map['sort_order']?.toString() ?? '') ?? i;
+      map['sort_order'] = sortOrder;
+
+      if (end > maxEnd) {
+        maxEnd = end;
+      }
+
+      sanitizedOverlays.add(map);
+    }
+
+    final durationSeconds = maxEnd > 0 ? maxEnd.ceil() : 15;
+
+    final dynamic response = await client.rpc(
+      'app_admin_tv_upsert_timeline_json',
+      params: {
+        'p_playlist_item_id': playlistItemId,
+        'p_timeline': {
+          'timeline': {
+            'duration': durationSeconds,
+            'overlays': sanitizedOverlays,
+          },
+        },
+      },
+    );
+
+    if (response is! Map<String, dynamic>) {
+      throw Exception('Réponse invalide pour app_admin_tv_upsert_timeline_json.');
+    }
+    if (response['success'] != true) {
+      throw Exception(
+        response['error']?.toString() ??
+            'Erreur lors de la sauvegarde de la timeline TV.',
+      );
+    }
+
+    // ignore: avoid_print
+    print('HeroRenderService.saveTvTimelineJson: success');
+  }
 
   static Future<List<HeroTvOverlay>> getTvTimeline({
     required String playlistItemId,
@@ -623,6 +825,49 @@ class HeroRenderService {
     return tvRender;
   }
 
+  static Future<HeroTvRender> startTvProRender({
+    required String playlistItemId,
+    String? slot,
+    Map<String, dynamic>? meta,
+  }) async {
+    final body = <String, dynamic>{
+      'playlist_item_id': playlistItemId,
+    };
+    if (slot != null && slot.trim().isNotEmpty) {
+      body['slot'] = slot.trim();
+    }
+    if (meta != null && meta.isNotEmpty) {
+      body['meta'] = meta;
+    }
+
+    // ignore: avoid_print
+    print(
+      'HeroRenderService.startTvProRender: playlistItemId=$playlistItemId slot=$slot',
+    );
+
+    final result = await _postWithUserJwt(
+      path: '/studio/tv_pro/render',
+      body: body,
+    );
+
+    if (result['success'] != true) {
+      throw Exception(
+        result['error']?.toString() ?? 'Erreur lors du rendu TV PRO.',
+      );
+    }
+
+    final tvRender = HeroTvRender.fromJson(result);
+
+    // ignore: avoid_print
+    print(
+      'HeroRenderService.startTvProRender: success renderId=${tvRender.id} '
+      'status=${tvRender.status} url=${tvRender.renderUrl} '
+      'thumb=${tvRender.thumbnailUrl}',
+    );
+
+    return tvRender;
+  }
+
   static Future<List<HeroTvRender>> getTvRenderHistory({
     required String playlistItemId,
   }) async {
@@ -634,7 +879,8 @@ class HeroRenderService {
     print('HeroRenderService.getTvRenderHistory: playlistItemId=$playlistItemId');
 
     final dynamic response = await client
-        .from('app.hero_renders_tv')
+        .schema('app')
+        .from('hero_renders_tv')
         .select()
         .eq('playlist_item_id', playlistItemId)
         .order('created_at', ascending: false)

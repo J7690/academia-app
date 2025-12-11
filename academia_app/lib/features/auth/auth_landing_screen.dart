@@ -144,22 +144,26 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
       try {
         final client = Supabase.instance.client;
         final dynamic response = await client
-            .from('app.hero_playlist')
+            .schema('app')
+            .from('hero_playlist')
             .select('base_video_url, base_image_url, media_type, sort_order, is_active')
             .eq('slot', 'landing_hero_main')
             .eq('is_active', true)
             .order('sort_order', ascending: true)
-            .limit(1);
+            .limit(10);
 
         if (response is List && response.isNotEmpty) {
-          final raw = response.first;
-          Map<String, dynamic>? row;
-          if (raw is Map<String, dynamic>) {
-            row = raw;
-          } else if (raw is Map) {
-            row = Map<String, dynamic>.from(raw);
-          }
-          if (row != null) {
+          for (final raw in response) {
+            Map<String, dynamic>? row;
+            if (raw is Map<String, dynamic>) {
+              row = raw;
+            } else if (raw is Map) {
+              row = Map<String, dynamic>.from(raw);
+            }
+            if (row == null) {
+              continue;
+            }
+
             final rawType = (row['media_type'] ?? 'video').toString().toLowerCase();
             final isImage = rawType == 'image';
             final heroVideoUrl = (row['base_video_url'] ?? '').toString().trim();

@@ -3,7 +3,7 @@ import os
 import uuid
 import tempfile
 import subprocess
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request
@@ -248,6 +248,153 @@ def _run_ffmpeg_generic(
         )
 
     print(f"[FFMPEG-{label}] SUCCESS output={output_path}")
+    return output_path
+
+
+def _run_ffmpeg_tv_complex(
+    input_paths: List[Path],
+    *,
+    filter_complex: str,
+    label: str,
+    max_bitrate_k: int,
+    audio_bitrate_k: int,
+    fps: Optional[int] = None,
+) -> Path:
+    """Transcode TV avec filter_complex multi-input.
+
+    Le filter_complex doit produire un flux vidéo nommé [vout]. L'audio est
+    mappé depuis la première entrée (0:a?) lorsqu'il existe.
+    """
+
+    if not input_paths:
+        raise HTTPException(
+            status_code=400,
+            detail=f"[{label}] No input paths provided for tv_complex render",
+        )
+
+    for p in input_paths:
+        if not p.exists():
+            raise HTTPException(
+                status_code=400,
+                detail=f"[{label}] Input file does not exist: {p}",
+            )
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix=f"studio_render_{label}_"))
+    output_path = tmp_dir / "output.mp4"
+
+    maxrate = f"{max_bitrate_k}k"
+    bufsize = f"{2 * max_bitrate_k}k"
+    audio_bitrate = f"{audio_bitrate_k}k"
+
+    x264_params = (
+        "ref=1:"
+        "bframes=0:"
+        "cabac=0:"
+        "deblock=0:"
+        "weightp=0:"
+        "no-scenecut=1:"
+        "level=30:"
+        f"vbv-maxrate={max_bitrate_k}:"
+        f"vbv-bufsize={2 * max_bitrate_k}"
+    )
+
+    cmd: List[str] = [
+        "ffmpeg",
+        "-y",
+    ]
+    for p in input_paths:
+        cmd.extend(["-i", str(p)])
+
+    cmd.extend(
+        [
+            "-filter_complex",
+            filter_complex,
+            "-map",
+            "[vout]",
+            "-map",
+            "0:a?",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "veryfast",
+            "-profile:v",
+            "baseline",
+            "-level",
+            "3.0",
+            "-x264-params",
+            x264_params,
+        ]
+    )
+
+    if fps is not None:
+        cmd.extend(["-r", str(fps)])
+
+    cmd.extend(
+        [
+            "-g",
+            "30",
+            "-keyint_min",
+            "30",
+            "-pix_fmt",
+            "yuv420p",
+            "-color_primaries",
+            "bt709",
+            "-color_trc",
+            "bt709",
+            "-colorspace",
+            "bt709",
+            "-movflags",
+            "+faststart",
+            "-c:a",
+            "aac",
+            "-ac",
+            "2",
+            "-ar",
+            "44100",
+            "-b:a",
+            audio_bitrate,
+            "-maxrate",
+            maxrate,
+            "-bufsize",
+            bufsize,
+            str(output_path),
+        ]
+    )
+
+    print(f"[FFMPEG-{label}-TV] Running command: {' '.join(cmd)}")
+
+    try:
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"[{label}] Failed to start ffmpeg (tv_complex): {e}",
+        )
+
+    if result.returncode != 0:
+        stderr_text = result.stderr.decode("utf-8", errors="ignore")
+        print(f"[FFMPEG-{label}-TV] FAILED with code {result.returncode}")
+        print(f"[FFMPEG-{label}-TV] STDERR:\n{stderr_text[:4000]}")
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"[{label}] ffmpeg error (tv_complex, code {result.returncode}): "
+                f"{stderr_text[:4000]}"
+            ),
+        )
+
+    if not output_path.exists():
+        raise HTTPException(
+            status_code=500,
+            detail=f"[{label}] ffmpeg succeeded (tv_complex) but output file is missing",
+        )
+
+    print(f"[FFMPEG-{label}-TV] SUCCESS output={output_path}")
     return output_path
 
 

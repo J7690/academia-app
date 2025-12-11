@@ -22,6 +22,8 @@ from studio_video_renderer import (
     _upload_to_supabase_storage,
     _run_ffmpeg_generic,
 )
+from studio_video_renderer_pro import run_ffmpeg_tv_pro
+from tv_pro_filter_builder import build_tv_pro_filtergraph
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
@@ -1447,6 +1449,179 @@ async def update_render_job(
             return
 
 
+async def perform_tv_pro_video_render(
+    base_video_url: str,
+    *,
+    slot: str,
+    playlist_item_id: str,
+    timeline: Dict[str, Any],
+    preview: bool = False,
+) -> Dict[str, str]:
+    url = (base_video_url or "").strip()
+    if not url:
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "base_video_url manquant pour Studio TV PRO."},
+        )
+
+    input_base_path: Optional[Path] = None
+    overlay_paths: List[Path] = []
+    output_path: Optional[Path] = None
+    thumb_path: Optional[Path] = None
+    logs_parts: List[str] = []
+    video_url: str = ""
+    thumbnail_url: str = ""
+    started_at = time.perf_counter()
+    error_message: Optional[str] = None
+    filter_complex: str = ""
+    overlay_source_urls: List[str] = []
+
+    try:
+        try:
+            builder_result = build_tv_pro_filtergraph(timeline or {})
+        except Exception as exc:
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "message": "Erreur lors de la construction du filtergraph TV PRO.",
+                    "error": str(exc),
+                },
+            )
+
+        overlay_source_urls_raw = builder_result.get("overlay_source_urls")
+        if isinstance(overlay_source_urls_raw, list):
+            for u in overlay_source_urls_raw:
+                if isinstance(u, str):
+                    cleaned = u.strip()
+                    if cleaned:
+                        overlay_source_urls.append(cleaned)
+
+        fc_val = builder_result.get("filter_complex")
+        if not isinstance(fc_val, str) or not fc_val.strip():
+            raise HTTPException(
+                status_code=500,
+                detail={"message": "filter_complex TV PRO manquant ou invalide."},
+            )
+        filter_complex = fc_val.strip()
+
+        logs_parts.append(f"tv_pro_filter={filter_complex[:1000]}")
+        if overlay_source_urls:
+            logs_parts.append(f"tv_pro_overlay_inputs={len(overlay_source_urls)}")
+
+        input_base_path = await _download_video_to_temp(url)
+        input_paths: List[Path] = [input_base_path]
+
+        for src_url in overlay_source_urls:
+            p = await _download_video_to_temp(src_url)
+            overlay_paths.append(p)
+            input_paths.append(p)
+
+        if preview:
+            label = "hero_tv_pro_preview"
+            max_bitrate_k = 1200
+            audio_bitrate_k = 96
+        else:
+            label = "hero_tv_pro_final"
+            max_bitrate_k = 1800
+            audio_bitrate_k = 128
+
+        output_path = run_ffmpeg_tv_pro(
+            input_paths,
+            filter_complex=filter_complex,
+            label=label,
+            max_bitrate_k=max_bitrate_k,
+            audio_bitrate_k=audio_bitrate_k,
+            fps=None,
+            map_audio_from=0,
+        )
+
+        tmp_dir = Path(tempfile.mkdtemp(prefix="hero_tv_pro_thumb_"))
+        thumb_path = tmp_dir / "thumb.jpg"
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-i",
+            str(output_path),
+            "-ss",
+            "0",
+            "-vframes",
+            "1",
+            "-q:v",
+            "2",
+            str(thumb_path),
+        ]
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if result.returncode != 0:
+            stderr_text = result.stderr.decode("utf-8", errors="ignore")
+            logs_parts.append(f"tv_pro_thumb_error: {stderr_text[:1000]}")
+            thumb_path = None
+
+        video_filename = "tv_pro_final.mp4" if not preview else "tv_pro_preview_540p.mp4"
+        thumb_filename = "tv_pro_thumb.jpg" if not preview else "tv_pro_preview_thumb.jpg"
+
+        video_url = await _upload_hero_file_to_supabase_storage(
+            output_path,
+            slot=slot,
+            playlist_item_id=playlist_item_id,
+            filename=video_filename,
+            content_type="video/mp4",
+        )
+
+        if thumb_path is not None and thumb_path.exists():
+            thumbnail_url = await _upload_hero_file_to_supabase_storage(
+                thumb_path,
+                slot=slot,
+                playlist_item_id=playlist_item_id,
+                filename=thumb_filename,
+                content_type="image/jpeg",
+            )
+        else:
+            thumbnail_url = ""
+    except Exception as exc:
+        error_message = str(exc)
+        raise
+    finally:
+        for p in overlay_paths:
+            try:
+                if p.exists():
+                    p.unlink()
+            except Exception:
+                pass
+        for p in (input_base_path, output_path, thumb_path):
+            try:
+                if p is not None and p.exists():
+                    p.unlink()
+            except Exception:
+                pass
+
+        duration_ms = int((time.perf_counter() - started_at) * 1000)
+        event = {
+            "event": "hero_tv_pro_render",
+            "engine": "tv_pro_preview" if preview else "tv_pro",
+            "slot": slot,
+            "playlist_item_id": playlist_item_id,
+            "source_url": url,
+            "filter_complex": filter_complex,
+            "overlay_input_count": len(overlay_source_urls),
+            "status": "error" if error_message else "success",
+            "render_url": video_url,
+            "thumbnail_url": thumbnail_url,
+            "duration_ms": duration_ms,
+        }
+        try:
+            print("[HERO_TV_PRO_RENDER]", json.dumps(event, ensure_ascii=False))
+        except Exception:
+            print("[HERO_TV_PRO_RENDER]", str(event))
+
+    logs_str = "\n".join(logs_parts) if logs_parts else ""
+    return {"render_url": video_url, "thumbnail_url": thumbnail_url, "logs": logs_str}
+
+
 async def update_tv_render_record(
     render_id: Optional[str],
     *,
@@ -2004,6 +2179,7 @@ async def perform_hero_tv_video_render(
     slot: str,
     playlist_item_id: str,
     overlays: Optional[List[Dict[str, Any]]] = None,
+    preview: bool = False,
 ) -> Dict[str, str]:
     url = (base_video_url or "").strip()
     if not url:
@@ -2026,15 +2202,27 @@ async def perform_hero_tv_video_render(
     try:
         input_path = await _download_video_to_temp(url)
 
-        output_path = _run_ffmpeg_generic(
-            input_path=input_path,
-            max_width=1280,
-            max_bitrate_k=1800,
-            audio_bitrate_k=128,
-            label="hero_tv_720p",
-            fps=None,
-            extra_filters=extra_filters,
-        )
+        # Choix du profil de rendu : preview 540p (léger) vs rendu TV final 720p.
+        if preview:
+            output_path = _run_ffmpeg_generic(
+                input_path=input_path,
+                max_width=960,
+                max_bitrate_k=1200,
+                audio_bitrate_k=96,
+                label="hero_tv_preview_540p",
+                fps=None,
+                extra_filters=extra_filters,
+            )
+        else:
+            output_path = _run_ffmpeg_generic(
+                input_path=input_path,
+                max_width=1280,
+                max_bitrate_k=1800,
+                audio_bitrate_k=128,
+                label="hero_tv_720p",
+                fps=None,
+                extra_filters=extra_filters,
+            )
 
         tmp_dir = Path(tempfile.mkdtemp(prefix="hero_tv_thumb_"))
         thumb_path = tmp_dir / "thumb.jpg"
@@ -2062,11 +2250,14 @@ async def perform_hero_tv_video_render(
             logs_parts.append(f"tv_thumb_error: {stderr_text[:1000]}")
             thumb_path = None
 
+        video_filename = "tv_final.mp4" if not preview else "tv_preview_540p.mp4"
+        thumb_filename = "tv_thumb.jpg" if not preview else "tv_preview_thumb.jpg"
+
         video_url = await _upload_hero_file_to_supabase_storage(
             output_path,
             slot=slot,
             playlist_item_id=playlist_item_id,
-            filename="tv_final.mp4",
+            filename=video_filename,
             content_type="video/mp4",
         )
 
@@ -2075,7 +2266,7 @@ async def perform_hero_tv_video_render(
                 thumb_path,
                 slot=slot,
                 playlist_item_id=playlist_item_id,
-                filename="tv_thumb.jpg",
+                filename=thumb_filename,
                 content_type="image/jpeg",
             )
         else:
@@ -2103,7 +2294,7 @@ async def perform_hero_tv_video_render(
         duration_ms = int((time.perf_counter() - started_at) * 1000)
         event = {
             "event": "hero_video_render",
-            "engine": "tv",
+            "engine": "tv_preview" if preview else "tv",
             "slot": slot,
             "playlist_item_id": playlist_item_id,
             "source_url": url,
@@ -2332,6 +2523,13 @@ async def tv_studio_render(req: TvStudioRenderRequest, request: Request) -> TvSt
         raise HTTPException(status_code=400, detail="playlist_item_id manquant pour le Studio TV.")
 
     meta = req.meta or {}
+    is_preview = False
+    if isinstance(meta, dict):
+        mode_val = str(meta.get("mode") or "").strip().lower()
+        if mode_val == "preview":
+            is_preview = True
+        elif meta.get("preview") is True:
+            is_preview = True
 
     try:
         print(
@@ -2447,36 +2645,86 @@ async def tv_studio_render(req: TvStudioRenderRequest, request: Request) -> TvSt
             detail={"message": "Aucune URL vidéo de base configurée pour cet item Hero (Studio TV)."},
         )
 
-    timeline_data = await call_supabase_rpc_as_user(
-        user_jwt,
-        "app_admin_tv_get_timeline",
-        {"p_playlist_item_id": playlist_item_id},
-    )
-
-    if not isinstance(timeline_data, dict) or not timeline_data.get("success"):
-        error_code = None
-        if isinstance(timeline_data, dict):
-            error_code = timeline_data.get("error")
-        await update_tv_render_record(
-            render_id,
-            status="failed",
-            error_message=f"timeline_error: {error_code or 'unknown_error'}",
-            set_finished_at=True,
-        )
-        raise HTTPException(
-            status_code=403,
-            detail={
-                "message": "Impossible de lire la timeline TV pour cet item Hero.",
-                "error": error_code or "unknown_error",
-            },
-        )
-
-    overlays_list_raw = timeline_data.get("overlays")
     overlays_list: List[Dict[str, Any]] = []
-    if isinstance(overlays_list_raw, list):
-        for ov in overlays_list_raw:
-            if isinstance(ov, dict):
-                overlays_list.append(ov)
+
+    # 1) Essayer d'abord de récupérer la timeline TV au format JSON
+    timeline_json_data: Any = None
+    try:
+        timeline_json_data = await call_supabase_rpc_as_user(
+            user_jwt,
+            "app_admin_tv_get_timeline_json",
+            {"p_playlist_item_id": playlist_item_id},
+        )
+    except HTTPException:
+        timeline_json_data = None
+
+    if isinstance(timeline_json_data, dict) and timeline_json_data.get("success"):
+        timeline_obj = timeline_json_data.get("timeline")
+        if isinstance(timeline_obj, dict):
+            overlays_raw = timeline_obj.get("overlays")
+            if isinstance(overlays_raw, list):
+                for ov in overlays_raw:
+                    if not isinstance(ov, dict):
+                        continue
+
+                    ov_type_raw = ov.get("type")
+                    ov_type = str(ov_type_raw or "").strip().lower()
+                    if ov_type == "logo":
+                        overlay_type = "image"
+                    elif ov_type == "lower_third":
+                        overlay_type = "banner"
+                    elif ov_type in ("text", "image", "banner", "ticker", "shape"):
+                        overlay_type = ov_type
+                    else:
+                        overlay_type = "shape"
+
+                    cfg = {
+                        k: v
+                        for k, v in ov.items()
+                        if k not in ("id", "type", "start_at_seconds", "end_at_seconds", "sort_order")
+                    }
+
+                    overlays_list.append(
+                        {
+                            "overlay_type": overlay_type,
+                            "config": cfg,
+                            "start_at_seconds": ov.get("start_at_seconds"),
+                            "end_at_seconds": ov.get("end_at_seconds"),
+                            "sort_order": ov.get("sort_order"),
+                        }
+                    )
+
+    # 2) Fallback : ancienne RPC app_admin_tv_get_timeline si aucune overlay JSON exploitable
+    if not overlays_list:
+        timeline_data = await call_supabase_rpc_as_user(
+            user_jwt,
+            "app_admin_tv_get_timeline",
+            {"p_playlist_item_id": playlist_item_id},
+        )
+
+        if not isinstance(timeline_data, dict) or not timeline_data.get("success"):
+            error_code = None
+            if isinstance(timeline_data, dict):
+                error_code = timeline_data.get("error")
+            await update_tv_render_record(
+                render_id,
+                status="failed",
+                error_message=f"timeline_error: {error_code or 'unknown_error'}",
+                set_finished_at=True,
+            )
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "message": "Impossible de lire la timeline TV pour cet item Hero.",
+                    "error": error_code or "unknown_error",
+                },
+            )
+
+        overlays_list_raw = timeline_data.get("overlays")
+        if isinstance(overlays_list_raw, list):
+            for ov in overlays_list_raw:
+                if isinstance(ov, dict):
+                    overlays_list.append(ov)
 
     try:
         render_payload = await perform_hero_tv_video_render(
@@ -2484,6 +2732,7 @@ async def tv_studio_render(req: TvStudioRenderRequest, request: Request) -> TvSt
             slot=slot,
             playlist_item_id=playlist_item_id,
             overlays=overlays_list,
+            preview=is_preview,
         )
     except HTTPException as exc:
         detail = exc.detail
@@ -2522,7 +2771,265 @@ async def tv_studio_render(req: TvStudioRenderRequest, request: Request) -> TvSt
         set_finished_at=True,
     )
 
-    if SUPABASE_URL and SUPABASE_SERVICE_KEY and render_url:
+    # En mode prévisualisation, on ne modifie pas la playlist principale.
+    if not is_preview and SUPABASE_URL and SUPABASE_SERVICE_KEY and render_url:
+        table_url = f"{SUPABASE_URL}/rest/v1/app.hero_playlist?id=eq.{playlist_item_id}"
+        headers = {
+            "apikey": SUPABASE_SERVICE_KEY,
+            "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Prefer": "return=minimal",
+        }
+        payload: Dict[str, Any] = {"base_video_url": render_url}
+        if thumbnail_url:
+            payload["base_image_url"] = thumbnail_url
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            try:
+                await client.patch(table_url, headers=headers, json=payload)
+            except httpx.HTTPError:
+                pass
+
+    return TvStudioRenderResponse(
+        success=True,
+        playlist_item_id=playlist_item_id,
+        render_id=render_id,
+        render_url=render_url,
+        thumbnail_url=thumbnail_url or "",
+        status="success",
+    )
+
+
+@app.post("/studio/tv_pro/render", response_model=TvStudioRenderResponse)
+async def tv_studio_render_pro(req: TvStudioRenderRequest, request: Request) -> TvStudioRenderResponse:
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authorization Bearer manquant pour le Studio TV PRO.")
+
+    user_jwt = auth_header.split(" ", 1)[1].strip()
+    if not user_jwt:
+        raise HTTPException(status_code=401, detail="JWT utilisateur invalide pour le Studio TV PRO.")
+
+    playlist_item_id = (req.playlist_item_id or "").strip()
+    if not playlist_item_id:
+        raise HTTPException(status_code=400, detail="playlist_item_id manquant pour le Studio TV PRO.")
+
+    raw_meta = req.meta or {}
+    if isinstance(raw_meta, dict):
+        meta: Dict[str, Any] = dict(raw_meta)
+    else:
+        meta = {}
+
+    is_preview = False
+    if isinstance(meta, dict):
+        mode_val = str(meta.get("mode") or "").strip().lower()
+        if mode_val == "preview" or meta.get("preview") is True:
+            is_preview = True
+
+    # Forcer le moteur PRO dans la meta, sans écraser si déjà renseigné
+    if "engine" not in meta:
+        meta["engine"] = "tv_pro"
+
+    try:
+        print(
+            "[TV_STUDIO_PRO_ENDPOINT]",
+            json.dumps(
+                {
+                    "event": "tv_studio_pro_render_request",
+                    "playlist_item_id": playlist_item_id,
+                    "slot": (req.slot or ""),
+                    "meta_keys": sorted(list(meta.keys())) if isinstance(meta, dict) else None,
+                },
+                ensure_ascii=False,
+            ),
+        )
+    except Exception:
+        pass
+
+    start_data = await call_supabase_rpc_as_user(
+        user_jwt,
+        "app_admin_tv_request_render",
+        {"p_playlist_item_id": playlist_item_id, "p_meta": meta},
+    )
+
+    if not isinstance(start_data, dict) or not start_data.get("success"):
+        error_code = None
+        if isinstance(start_data, dict):
+            error_code = start_data.get("error")
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Impossible de démarrer le rendu Studio TV PRO",
+                "error": error_code or "unknown_error",
+            },
+        )
+
+    render_id_raw = start_data.get("render_id") if isinstance(start_data, dict) else None
+    if not isinstance(render_id_raw, str) or not render_id_raw.strip():
+        raise HTTPException(
+            status_code=500,
+            detail="Réponse Supabase invalide pour app_admin_tv_request_render (TV PRO).",
+        )
+    render_id = render_id_raw.strip()
+
+    await update_tv_render_record(
+        render_id,
+        status="processing",
+        set_started_at=True,
+    )
+
+    cfg_data = await call_supabase_rpc_as_user(
+        user_jwt,
+        "app_admin_get_hero_playlist_item_config",
+        {"p_playlist_item_id": playlist_item_id},
+    )
+
+    if not isinstance(cfg_data, dict) or not cfg_data.get("success"):
+        error_code = None
+        if isinstance(cfg_data, dict):
+            error_code = cfg_data.get("error")
+        await update_tv_render_record(
+            render_id,
+            status="failed",
+            error_message=f"config_error: {error_code or 'unknown_error'}",
+            set_finished_at=True,
+        )
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Impossible de lire la configuration Hero pour Studio TV PRO",
+                "error": error_code or "unknown_error",
+            },
+        )
+
+    item = cfg_data.get("item") if isinstance(cfg_data, dict) else None
+    if not isinstance(item, dict):
+        await update_tv_render_record(
+            render_id,
+            status="failed",
+            error_message="config_error: missing_item",
+            set_finished_at=True,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "Réponse Supabase invalide pour la configuration Hero (Studio TV PRO)."},
+        )
+
+    slot = (req.slot or str(item.get("slot") or "")).strip() or "default"
+    media_type = str(item.get("media_type") or "video").strip().lower()
+    base_video_url_raw = item.get("base_video_url")
+    base_video_url = str(base_video_url_raw or "").strip()
+
+    if media_type != "video":
+        await update_tv_render_record(
+            render_id,
+            status="failed",
+            error_message=f"unsupported_media_type: {media_type}",
+            set_finished_at=True,
+        )
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "Seules les entrées vidéo sont supportées pour le Studio TV PRO."},
+        )
+
+    if not base_video_url:
+        await update_tv_render_record(
+            render_id,
+            status="failed",
+            error_message="missing_base_video_url",
+            set_finished_at=True,
+        )
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "Aucune URL vidéo de base configurée pour cet item Hero (Studio TV PRO)."},
+        )
+
+    # Timeline JSON obligatoire pour TV PRO
+    timeline_json_data = await call_supabase_rpc_as_user(
+        user_jwt,
+        "app_admin_tv_get_timeline_json",
+        {"p_playlist_item_id": playlist_item_id},
+    )
+
+    if not isinstance(timeline_json_data, dict) or not timeline_json_data.get("success"):
+        error_code = None
+        if isinstance(timeline_json_data, dict):
+            error_code = timeline_json_data.get("error")
+        await update_tv_render_record(
+            render_id,
+            status="failed",
+            error_message=f"timeline_json_error: {error_code or 'unknown_error'}",
+            set_finished_at=True,
+        )
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Impossible de lire la timeline TV JSON pour cet item Hero (TV PRO).",
+                "error": error_code or "unknown_error",
+            },
+        )
+
+    timeline_obj = timeline_json_data.get("timeline")
+    if not isinstance(timeline_obj, dict):
+        await update_tv_render_record(
+            render_id,
+            status="failed",
+            error_message="timeline_json_error: invalid_timeline_object",
+            set_finished_at=True,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "Réponse Supabase invalide pour la timeline TV JSON (TV PRO)."},
+        )
+
+    try:
+        render_payload = await perform_tv_pro_video_render(
+            base_video_url,
+            slot=slot,
+            playlist_item_id=playlist_item_id,
+            timeline=timeline_obj,
+            preview=is_preview,
+        )
+    except HTTPException as exc:
+        detail = exc.detail
+        msg: Optional[str] = None
+        if isinstance(detail, dict):
+            msg = str(detail.get("message") or detail.get("error") or "")
+        await update_tv_render_record(
+            render_id,
+            status="failed",
+            error_message=msg or "tv_pro_render_failed",
+            set_finished_at=True,
+        )
+        raise
+
+    render_url = str(render_payload.get("render_url") or "").strip()
+    thumbnail_url = str(render_payload.get("thumbnail_url") or "").strip()
+    logs = str(render_payload.get("logs") or "").strip()
+
+    if not render_url:
+        await update_tv_render_record(
+            render_id,
+            status="failed",
+            error_message=logs or "missing_render_url",
+            set_finished_at=True,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "URL du rendu Studio TV PRO manquante."},
+        )
+
+    await update_tv_render_record(
+        render_id,
+        status="success",
+        render_url=render_url,
+        thumbnail_url=thumbnail_url or None,
+        set_finished_at=True,
+    )
+
+    # En mode prévisualisation, on ne modifie pas la playlist principale.
+    if not is_preview and SUPABASE_URL and SUPABASE_SERVICE_KEY and render_url:
         table_url = f"{SUPABASE_URL}/rest/v1/app.hero_playlist?id=eq.{playlist_item_id}"
         headers = {
             "apikey": SUPABASE_SERVICE_KEY,

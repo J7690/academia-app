@@ -196,6 +196,16 @@ BEGIN
         RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_media_type');
     END IF;
 
+    -- Validation forte: une vidéo active doit obligatoirement avoir une base_video_url
+    IF v_media_type_trim = 'video' AND COALESCE(p_is_active, TRUE) = TRUE THEN
+        IF p_base_video_url IS NULL OR LENGTH(TRIM(p_base_video_url)) = 0 THEN
+            RETURN JSONB_BUILD_OBJECT(
+                'success', FALSE,
+                'error', 'base_video_url_required_for_active_video'
+            );
+        END IF;
+    END IF;
+
     IF p_item_id IS NULL THEN
         INSERT INTO app.hero_playlist (
             slot,
@@ -369,3 +379,44 @@ $$;
 
 GRANT EXECUTE ON FUNCTION app_admin_get_hero_playlist_item_config(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION app_admin_get_hero_playlist_item_config(UUID) TO service_role;
+
+
+-- 8) RPC ADMIN - SUPPRESSION D'UN ITEM HERO PLAYLIST
+
+CREATE OR REPLACE FUNCTION app_admin_delete_hero_playlist_item(
+    p_item_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    IF p_item_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'item_id_required');
+    END IF;
+
+    DELETE FROM app.hero_playlist
+    WHERE id = p_item_id;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_delete_hero_playlist_item(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_delete_hero_playlist_item(UUID) TO service_role;

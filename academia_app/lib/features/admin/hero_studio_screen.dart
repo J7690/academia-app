@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/hero_render_service.dart';
 import 'hero_studio_models.dart';
+import 'hero_tv_templates_catalog.dart';
 
 class HeroStudioScreen extends StatefulWidget {
   final String slot;
@@ -25,6 +26,7 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
   HeroPlaylistItem? _selected;
   HeroRender? _currentRender;
   String _engineMode = 'classic'; // 'classic' ou 'tv'
+  String _tvMode = 'classic'; // 'classic' ou 'pro' lorsque _engineMode == 'tv'
   List<Map<String, dynamic>> _currentOverlays = const <Map<String, dynamic>>[];
   List<_RenderHistoryEntry> _renderHistory = const <_RenderHistoryEntry>[];
 
@@ -64,15 +66,26 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
             createdAt: r.createdAt,
           ),
         ),
-        ...tv.map(
-          (r) => _RenderHistoryEntry(
-            engine: 'tv',
+        ...tv.map((r) {
+          final url = r.renderUrl ?? '';
+          String engineLabel;
+          if (url.contains('tv_pro_preview_540p')) {
+            engineLabel = 'tv_pro_preview';
+          } else if (url.contains('tv_pro_final.mp4') || url.contains('tv_pro')) {
+            engineLabel = 'tv_pro';
+          } else if (url.contains('tv_preview_540p')) {
+            engineLabel = 'tv_preview';
+          } else {
+            engineLabel = 'tv';
+          }
+          return _RenderHistoryEntry(
+            engine: engineLabel,
             status: r.status,
-            renderUrl: r.renderUrl ?? '',
+            renderUrl: url,
             thumbnailUrl: r.thumbnailUrl ?? '',
             createdAt: r.finishedAt ?? r.createdAt,
-          ),
-        ),
+          );
+        }),
       ];
 
       entries.sort((a, b) {
@@ -120,21 +133,68 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
     }
 
     try {
-      final tvOverlays = await HeroRenderService.getTvTimeline(
+      // 1) Timeline TV au format JSON (nouvelle API)
+      final jsonOverlays = await HeroRenderService.getTvTimelineJsonOverlays(
         playlistItemId: current.id,
       );
-      final mapped = tvOverlays
-          .map((o) => <String, dynamic>{
-                'id': o.id,
-                'type': o.overlayType,
-                'start_at_seconds': o.startAtSeconds,
-                'end_at_seconds': o.endAtSeconds,
-                'text': (o.config['text'] ?? o.config['title'] ?? '').toString(),
-                'align': (o.config['align'] ?? o.config['position'] ?? 'bottom_left')
-                    .toString(),
-                'sort_order': o.sortOrder,
-              })
-          .toList(growable: false);
+
+      List<Map<String, dynamic>> mapped;
+
+      if (jsonOverlays.isNotEmpty) {
+        mapped = jsonOverlays
+            .map((raw) {
+              final map = Map<String, dynamic>.from(raw);
+              final id = map['id']?.toString();
+              final type = (map['type'] ?? map['overlay_type'] ?? 'text').toString();
+
+              double parseSeconds(dynamic v, double fallback) {
+                if (v == null) return fallback;
+                if (v is num) return v.toDouble();
+                return double.tryParse(v.toString()) ?? fallback;
+              }
+
+              final start = parseSeconds(map['start_at_seconds'], 0.0);
+              var end = parseSeconds(map['end_at_seconds'], start + 5.0);
+              if (end <= start) {
+                end = start + 5.0;
+              }
+
+              final text = (map['text'] ?? map['title'] ?? '').toString();
+              final align = (map['align'] ?? map['position'] ?? 'bottom_left').toString();
+
+              final sortOrder = map['sort_order'] is int
+                  ? map['sort_order'] as int
+                  : int.tryParse(map['sort_order']?.toString() ?? '') ?? 0;
+
+              map['id'] = id;
+              map['type'] = type;
+              map['start_at_seconds'] = start;
+              map['end_at_seconds'] = end;
+              map['text'] = text;
+              map['align'] = align;
+              map['sort_order'] = sortOrder;
+
+              return map;
+            })
+            .toList(growable: false);
+      } else {
+        // 2) Fallback : ancienne timeline TV basée sur hero_overlays_tv
+        final tvOverlays = await HeroRenderService.getTvTimeline(
+          playlistItemId: current.id,
+        );
+        mapped = tvOverlays
+            .map((o) => <String, dynamic>{
+                  'id': o.id,
+                  'type': o.overlayType,
+                  'start_at_seconds': o.startAtSeconds,
+                  'end_at_seconds': o.endAtSeconds,
+                  'text': (o.config['text'] ?? o.config['title'] ?? '').toString(),
+                  'align': (o.config['align'] ?? o.config['position'] ?? 'bottom_left')
+                      .toString(),
+                  'sort_order': o.sortOrder,
+                })
+            .toList(growable: false);
+      }
       if (!mounted) {
         return;
       }
@@ -168,47 +228,43 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
       return;
     }
 
-    // Mode TV : on synchronise chaque calque avec hero_overlays_tv
-    for (var i = 0; i < layers.length; i++) {
-      final l = layers[i];
-      final id = l['id']?.toString();
-      final type = (l['type'] ?? 'text').toString();
-      final sortOrder = (l['sort_order'] is int)
-          ? l['sort_order'] as int
-          : int.tryParse(l['sort_order']?.toString() ?? '') ?? i;
-
-      double parseSeconds(dynamic v, double fallback) {
-        if (v == null) return fallback;
-        if (v is num) return v.toDouble();
-        return double.tryParse(v.toString()) ?? fallback;
-      }
-
-      final start = parseSeconds(l['start_at_seconds'], 0.0);
-      var end = parseSeconds(l['end_at_seconds'], start + 5.0);
-      if (end <= start) {
-        end = start + 5.0;
-      }
-
-      final text = (l['text'] ?? '').toString();
-      final align = (l['align'] ?? 'bottom_left').toString();
-
-      final cfg = <String, dynamic>{
-        'text': text,
-        'align': align,
-      };
-
-      await HeroRenderService.upsertTvOverlay(
-        id: id?.isEmpty == true ? null : id,
-        playlistItemId: current.id,
-        overlayType: type,
-        config: cfg,
-        startAtSeconds: start,
-        endAtSeconds: end,
-        sortOrder: sortOrder,
-      );
-    }
+    // Mode TV : on sauvegarde la timeline complète en JSON (nouvelle API)
+    await HeroRenderService.saveTvTimelineJson(
+      playlistItemId: current.id,
+      overlays: layers,
+    );
 
     await _loadCurrentOverlays();
+  }
+
+  Future<void> _applyTvTemplateByCode(String code) async {
+    if (_engineMode != 'tv') {
+      return;
+    }
+    final current = _selected;
+    if (current == null) {
+      return;
+    }
+    if (current.mediaType.toLowerCase() != 'video') {
+      return;
+    }
+
+    HeroTvTemplate? template;
+    for (final t in kHeroTvTemplates) {
+      if (t.code == code) {
+        template = t;
+        break;
+      }
+    }
+    if (template == null) {
+      return;
+    }
+
+    final layers = template.overlays
+        .map((layer) => Map<String, dynamic>.from(layer))
+        .toList(growable: false);
+
+    await _saveOverlaysForCurrentEngine(layers);
   }
 
   Future<void> _loadPlaylist() async {
@@ -247,13 +303,33 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
   }
 
   Future<void> _startUnifiedRender() async {
+    final current = _selected;
+    if (current == null) return;
+
+    final hasBaseVideo = (current.baseVideoUrl != null &&
+        current.baseVideoUrl!.trim().isNotEmpty);
+    final isVideo = current.mediaType.toLowerCase() == 'video';
+
+    if (!isVideo || !hasBaseVideo) {
+      if (!mounted) return;
+      setState(() {
+        _error =
+            'Impossible de lancer un rendu : cet item Hero n\'a pas de vidéo de base configurée.';
+      });
+      return;
+    }
+
     // ignore: avoid_print
     print(
       'HeroStudioScreen._startUnifiedRender: engineMode=$_engineMode '
-      'playlistItemId=${_selected?.id} slot=${widget.slot}',
+      'playlistItemId=${current.id} slot=${widget.slot}',
     );
     if (_engineMode == 'tv') {
-      await _startTvRender();
+      if (_tvMode == 'pro') {
+        await _startTvProRender();
+      } else {
+        await _startTvRender();
+      }
     } else {
       await _startRender();
     }
@@ -471,6 +547,36 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
     if (result != true) {
       return;
     }
+    final finalMediaType = (mediaTypeController.text.trim().isEmpty
+            ? (existing?.mediaType ?? 'video')
+            : mediaTypeController.text.trim())
+        .toLowerCase();
+    final willBeActive = isActive;
+    final hasExistingVideo = (() {
+      final url = existing?.baseVideoUrl;
+      if (url == null) return false;
+      return url.trim().isNotEmpty;
+    })();
+    final willUploadVideo =
+        pickedVideoBytes != null && pickedVideoFileName != null;
+
+    if (finalMediaType == 'video' && willBeActive && !willUploadVideo && !hasExistingVideo) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Pour un item vidéo actif, une vidéo doit être importée ou conservée.',
+          ),
+        ),
+      );
+      setState(() {
+        _error =
+            "[playlist_validation] Une vidéo active doit avoir une URL vidéo de base (base_video_url). Importez une vidéo ou décochez 'Actif' avant d'enregistrer.";
+      });
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -554,7 +660,7 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
     }
   }
 
-  Future<void> _startTvRender() async {
+  Future<void> _startTvRender({bool preview = false}) async {
     final current = _selected;
     if (current == null) return;
     setState(() {
@@ -564,12 +670,65 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
     try {
       // ignore: avoid_print
       print(
-        'HeroStudioScreen._startTvRender: playlistItemId=${current.id} slot=${widget.slot}',
+        'HeroStudioScreen._startTvRender: playlistItemId=${current.id} slot=${widget.slot} preview=$preview',
       );
+      final meta = <String, dynamic>{'source': 'admin_ui'};
+      if (preview) {
+        meta['mode'] = 'preview';
+      }
       await HeroRenderService.startTvRender(
         playlistItemId: current.id,
         slot: widget.slot,
-        meta: <String, dynamic>{'source': 'admin_ui'},
+        meta: meta,
+      );
+      await _refreshSelectedConfig();
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _error = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _startTvPreviewRender() async {
+    if (_tvMode == 'pro') {
+      await _startTvProRender(preview: true);
+    } else {
+      await _startTvRender(preview: true);
+    }
+  }
+
+  Future<void> _startTvProRender({bool preview = false}) async {
+    final current = _selected;
+    if (current == null) return;
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      // ignore: avoid_print
+      print(
+        'HeroStudioScreen._startTvProRender: playlistItemId=${current.id} slot=${widget.slot} preview=$preview',
+      );
+      final meta = <String, dynamic>{
+        'source': 'admin_ui',
+        'engine': 'tv_pro',
+      };
+      if (preview) {
+        meta['mode'] = 'preview';
+      }
+      await HeroRenderService.startTvProRender(
+        playlistItemId: current.id,
+        slot: widget.slot,
+        meta: meta,
       );
       await _refreshSelectedConfig();
     } catch (e) {
@@ -724,6 +883,9 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
                   onPressed: (index) {
                     setState(() {
                       _engineMode = index == 0 ? 'classic' : 'tv';
+                      if (_engineMode != 'tv') {
+                        _tvMode = 'classic';
+                      }
                     });
                   },
                   children: const [
@@ -737,15 +899,80 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
                     ),
                   ],
                 ),
+                if (_engineMode == 'tv') ...[
+                  const SizedBox(width: 8),
+                  ToggleButtons(
+                    isSelected: [
+                      _tvMode == 'classic',
+                      _tvMode == 'pro',
+                    ],
+                    onPressed: (index) {
+                      setState(() {
+                        _tvMode = index == 0 ? 'classic' : 'pro';
+                      });
+                    },
+                    children: const [
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: Text('TV Classic'),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: Text('TV PRO'),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(width: 8),
+                if (_engineMode == 'tv')
+                  PopupMenuButton<String>(
+                    tooltip: 'Appliquer un template TV',
+                    icon: const Icon(Icons.movie_filter),
+                    onSelected: (code) async {
+                      await _applyTvTemplateByCode(code);
+                    },
+                    itemBuilder: (context) {
+                      return kHeroTvTemplates
+                          .map(
+                            (t) => PopupMenuItem<String>(
+                              value: t.code,
+                              child: Text(t.label),
+                            ),
+                          )
+                          .toList(growable: false);
+                    },
+                  ),
                 Expanded(
                   child: Align(
                     alignment: Alignment.centerRight,
-                    child: ElevatedButton.icon(
-                      onPressed:
-                          _isLoading || _selected == null ? null : _startUnifiedRender,
-                      icon: const Icon(Icons.play_circle_outline),
-                      label: const Text('Lancer le rendu'),
+                    child: Builder(
+                      builder: (context) {
+                        final current = _selected;
+                        final canRender = !_isLoading &&
+                            current != null &&
+                            current.mediaType.toLowerCase() == 'video' &&
+                            (current.baseVideoUrl != null &&
+                                current.baseVideoUrl!.trim().isNotEmpty);
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (_engineMode == 'tv')
+                              Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: OutlinedButton.icon(
+                                  onPressed: canRender ? _startTvPreviewRender : null,
+                                  icon: const Icon(Icons.visibility),
+                                  label: const Text('Prévisualisation TV (540p)'),
+                                ),
+                              ),
+                            ElevatedButton.icon(
+                              onPressed: canRender ? _startUnifiedRender : null,
+                              icon: const Icon(Icons.play_circle_outline),
+                              label: const Text('Lancer le rendu'),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -774,6 +1001,9 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
               onOverlaysChanged: (layers) async {
                 await _saveOverlaysForCurrentEngine(layers);
               },
+              isTvPro: _engineMode == 'tv' && _tvMode == 'pro',
+              slot: widget.slot,
+              playlistItemId: _selected?.id,
             ),
           ),
           SizedBox(
@@ -858,6 +1088,9 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
                       onPressed: (index) {
                         setState(() {
                           _engineMode = index == 0 ? 'classic' : 'tv';
+                          if (_engineMode != 'tv') {
+                            _tvMode = 'classic';
+                          }
                         });
                       },
                       children: const [
@@ -871,12 +1104,76 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
                         ),
                       ],
                     ),
+                    if (_engineMode == 'tv') ...[
+                      const SizedBox(width: 8),
+                      ToggleButtons(
+                        isSelected: [
+                          _tvMode == 'classic',
+                          _tvMode == 'pro',
+                        ],
+                        onPressed: (index) {
+                          setState(() {
+                            _tvMode = index == 0 ? 'classic' : 'pro';
+                          });
+                        },
+                        children: const [
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8),
+                            child: Text('TV Classic'),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8),
+                            child: Text('TV PRO'),
+                          ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(width: 16),
-                    ElevatedButton.icon(
-                      onPressed:
-                          _isLoading || _selected == null ? null : _startUnifiedRender,
-                      icon: const Icon(Icons.play_circle_outline),
-                      label: const Text('Lancer le rendu'),
+                    if (_engineMode == 'tv')
+                      PopupMenuButton<String>(
+                        tooltip: 'Appliquer un template TV',
+                        icon: const Icon(Icons.movie_filter),
+                        onSelected: (code) async {
+                          await _applyTvTemplateByCode(code);
+                        },
+                        itemBuilder: (context) {
+                          return kHeroTvTemplates
+                              .map(
+                                (t) => PopupMenuItem<String>(
+                                  value: t.code,
+                                  child: Text(t.label),
+                                ),
+                              )
+                              .toList(growable: false);
+                        },
+                      ),
+                    Builder(
+                      builder: (context) {
+                        final current = _selected;
+                        final canRender = !_isLoading &&
+                            current != null &&
+                            current.mediaType.toLowerCase() == 'video' &&
+                            (current.baseVideoUrl != null &&
+                                current.baseVideoUrl!.trim().isNotEmpty);
+                        return Row(
+                          children: [
+                            if (_engineMode == 'tv')
+                              Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: OutlinedButton.icon(
+                                  onPressed: canRender ? _startTvPreviewRender : null,
+                                  icon: const Icon(Icons.visibility),
+                                  label: const Text('Prévisualisation TV (540p)'),
+                                ),
+                              ),
+                            ElevatedButton.icon(
+                              onPressed: canRender ? _startUnifiedRender : null,
+                              icon: const Icon(Icons.play_circle_outline),
+                              label: const Text('Lancer le rendu'),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(width: 12),
                     if (_currentRender != null)
@@ -905,6 +1202,9 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
                         onOverlaysChanged: (layers) async {
                           await _saveOverlaysForCurrentEngine(layers);
                         },
+                        isTvPro: _engineMode == 'tv' && _tvMode == 'pro',
+                        slot: widget.slot,
+                        playlistItemId: _selected?.id,
                       ),
                     ),
                   ],
@@ -989,6 +1289,25 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
                     });
                   }
                 }
+              } else if (value == 'delete') {
+                setState(() {
+                  _isLoading = true;
+                  _error = null;
+                });
+                try {
+                  await HeroRenderService.deletePlaylistItem(item.id);
+                  await _loadPlaylist();
+                } catch (e) {
+                  setState(() {
+                    _error = e.toString();
+                  });
+                } finally {
+                  if (mounted) {
+                    setState(() {
+                      _isLoading = false;
+                    });
+                  }
+                }
               }
             },
             itemBuilder: (context) => const [
@@ -999,6 +1318,10 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
               PopupMenuItem(
                 value: 'deactivate',
                 child: Text('Désactiver'),
+              ),
+              PopupMenuItem(
+                value: 'delete',
+                child: Text('Supprimer'),
               ),
             ],
           ),
@@ -1178,11 +1501,17 @@ class HeroOverlayEditorPanel extends StatefulWidget {
   final List<Map<String, dynamic>> overlays;
   final Future<void> Function(List<Map<String, dynamic>> overlays)
       onOverlaysChanged;
+  final bool isTvPro;
+  final String? slot;
+  final String? playlistItemId;
 
   const HeroOverlayEditorPanel({
     super.key,
     required this.overlays,
     required this.onOverlaysChanged,
+    this.isTvPro = false,
+    this.slot,
+    this.playlistItemId,
   });
 
   @override
@@ -1212,6 +1541,38 @@ class _HeroOverlayEditorPanelState extends State<HeroOverlayEditorPanel> {
     final end = (layer['end_at_seconds'] ?? 0).toString();
     final rawText = (layer['text'] ?? layer['title'] ?? '').toString();
 
+    final sourceUrl = (layer['source_url'] ?? layer['url'] ?? layer['src'] ?? '').toString();
+    final xValue = layer['x']?.toString() ?? '';
+    final yValue = layer['y']?.toString() ?? '';
+    final transform = layer['transform'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(layer['transform'] as Map)
+        : <String, dynamic>{};
+    final opacityValue = (transform['opacity'] ?? layer['opacity'])?.toString() ?? '';
+    final animation = layer['animation'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(layer['animation'] as Map)
+        : <String, dynamic>{};
+    final animationModeValue = (animation['mode'] ?? '').toString();
+    final transformScaleValue = transform['scale']?.toString() ?? '';
+    final transformRotateValue = transform['rotate']?.toString() ?? '';
+    final backgroundModeValue = (layer['background_mode'] ?? '').toString().toLowerCase();
+    final colorizeCurves = layer['colorize_curves'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(layer['colorize_curves'] as Map)
+        : <String, dynamic>{};
+    final colorizeR = (colorizeCurves['r'] ?? '').toString();
+    final colorizeG = (colorizeCurves['g'] ?? '').toString();
+    final colorizeB = (colorizeCurves['b'] ?? '').toString();
+    final pipOptions = layer['pip_options'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(layer['pip_options'] as Map)
+        : <String, dynamic>{};
+    final pipScaleValue = pipOptions['scale']?.toString() ?? '';
+    final pipBorderWidthValue = pipOptions['border_width']?.toString() ?? '';
+    final pipBorderColorValue = pipOptions['border_color']?.toString() ?? '';
+    final pipCornerRadiusValue = pipOptions['corner_radius']?.toString() ?? '';
+    final pipRoundedValue = (pipOptions['rounded_corners']?.toString() ?? '');
+    final pipShadowValue = (pipOptions['shadow']?.toString() ?? '');
+    final pipShadowDxValue = pipOptions['shadow_dx']?.toString() ?? '';
+    final pipShadowDyValue = pipOptions['shadow_dy']?.toString() ?? '';
+
     final currentType = (() {
       final base = (_selectedType ?? (layer['type'] ?? 'text')).toString();
       return base.isEmpty ? 'text' : base;
@@ -1225,6 +1586,25 @@ class _HeroOverlayEditorPanelState extends State<HeroOverlayEditorPanel> {
     final startController = TextEditingController(text: start);
     final endController = TextEditingController(text: end);
     final textController = TextEditingController(text: rawText);
+    final sourceUrlController = TextEditingController(text: sourceUrl);
+    final xController = TextEditingController(text: xValue);
+    final yController = TextEditingController(text: yValue);
+    final opacityController = TextEditingController(text: opacityValue);
+    final animationModeController = TextEditingController(text: animationModeValue);
+    final transformScaleController = TextEditingController(text: transformScaleValue);
+    final transformRotateController = TextEditingController(text: transformRotateValue);
+    final backgroundModeController = TextEditingController(text: backgroundModeValue);
+    final colorizeRController = TextEditingController(text: colorizeR);
+    final colorizeGController = TextEditingController(text: colorizeG);
+    final colorizeBController = TextEditingController(text: colorizeB);
+    final pipScaleController = TextEditingController(text: pipScaleValue);
+    final pipBorderWidthController = TextEditingController(text: pipBorderWidthValue);
+    final pipBorderColorController = TextEditingController(text: pipBorderColorValue);
+    final pipCornerRadiusController = TextEditingController(text: pipCornerRadiusValue);
+    final pipRoundedController = TextEditingController(text: pipRoundedValue);
+    final pipShadowController = TextEditingController(text: pipShadowValue);
+    final pipShadowDxController = TextEditingController(text: pipShadowDxValue);
+    final pipShadowDyController = TextEditingController(text: pipShadowDyValue);
 
     Future<void> applyChanges() async {
       final s = int.tryParse(startController.text.trim()) ?? 0;
@@ -1233,6 +1613,37 @@ class _HeroOverlayEditorPanelState extends State<HeroOverlayEditorPanel> {
       final type = currentType;
       final align = currentAlign;
       final text = textController.text.trim();
+
+      final srcText = sourceUrlController.text.trim();
+      final xText = xController.text.trim();
+      final yText = yController.text.trim();
+      final opacityText = opacityController.text.trim();
+      final animModeText = animationModeController.text.trim();
+      final scaleText = transformScaleController.text.trim();
+      final rotateText = transformRotateController.text.trim();
+      final bgModeText = backgroundModeController.text.trim();
+      final colorizeRText = colorizeRController.text.trim();
+      final colorizeGText = colorizeGController.text.trim();
+      final colorizeBText = colorizeBController.text.trim();
+      final pipScaleText = pipScaleController.text.trim();
+      final pipBorderWidthText = pipBorderWidthController.text.trim();
+      final pipBorderColorText = pipBorderColorController.text.trim();
+      final pipCornerRadiusText = pipCornerRadiusController.text.trim();
+      final pipRoundedText = pipRoundedController.text.trim();
+      final pipShadowText = pipShadowController.text.trim();
+      final pipShadowDxText = pipShadowDxController.text.trim();
+      final pipShadowDyText = pipShadowDyController.text.trim();
+
+      final xParsed = double.tryParse(xText);
+      final yParsed = double.tryParse(yText);
+      final opacityParsed = double.tryParse(opacityText);
+      final scaleParsed = double.tryParse(scaleText);
+      final rotateParsed = double.tryParse(rotateText);
+      final pipScaleParsed = double.tryParse(pipScaleText);
+      final pipBorderWidthParsed = double.tryParse(pipBorderWidthText);
+      final pipCornerRadiusParsed = double.tryParse(pipCornerRadiusText);
+      final pipShadowDxParsed = double.tryParse(pipShadowDxText);
+      final pipShadowDyParsed = double.tryParse(pipShadowDyText);
 
       final updatedLayers = overlays.map<Map<String, dynamic>>((l) {
         if (identical(l, layer)) {
@@ -1244,6 +1655,134 @@ class _HeroOverlayEditorPanelState extends State<HeroOverlayEditorPanel> {
           if (text.isNotEmpty) {
             copy['text'] = text;
           }
+
+          if (widget.isTvPro) {
+            if (srcText.isNotEmpty) {
+              copy['source_url'] = srcText;
+            } else {
+              copy.remove('source_url');
+            }
+
+            if (xParsed != null && yParsed != null) {
+              copy['x'] = xParsed;
+              copy['y'] = yParsed;
+            } else {
+              copy.remove('x');
+              copy.remove('y');
+            }
+
+            final transformMap = copy['transform'] is Map<String, dynamic>
+                ? Map<String, dynamic>.from(copy['transform'] as Map)
+                : <String, dynamic>{};
+            if (scaleParsed != null) {
+              transformMap['scale'] = scaleParsed;
+            } else {
+              transformMap.remove('scale');
+            }
+            if (rotateParsed != null) {
+              transformMap['rotate'] = rotateParsed;
+            } else {
+              transformMap.remove('rotate');
+            }
+            if (opacityParsed != null) {
+              transformMap['opacity'] = opacityParsed;
+            } else {
+              transformMap.remove('opacity');
+            }
+            if (transformMap.isEmpty) {
+              copy.remove('transform');
+            } else {
+              copy['transform'] = transformMap;
+            }
+            copy.remove('opacity');
+
+            if (animModeText.isNotEmpty) {
+              copy['animation'] = <String, dynamic>{
+                'mode': animModeText,
+              };
+            } else {
+              copy.remove('animation');
+            }
+
+            if (type == 'background') {
+              if (bgModeText.isNotEmpty) {
+                copy['background_mode'] = bgModeText.toLowerCase();
+              } else {
+                copy.remove('background_mode');
+              }
+
+              final curves = <String, dynamic>{};
+              if (colorizeRText.isNotEmpty) {
+                curves['r'] = colorizeRText;
+              }
+              if (colorizeGText.isNotEmpty) {
+                curves['g'] = colorizeGText;
+              }
+              if (colorizeBText.isNotEmpty) {
+                curves['b'] = colorizeBText;
+              }
+              if (curves.isEmpty) {
+                copy.remove('colorize_curves');
+              } else {
+                copy['colorize_curves'] = curves;
+              }
+            }
+
+            if (type == 'pip') {
+              final pip = copy['pip_options'] is Map<String, dynamic>
+                  ? Map<String, dynamic>.from(copy['pip_options'] as Map)
+                  : <String, dynamic>{};
+              if (pipScaleParsed != null) {
+                pip['scale'] = pipScaleParsed;
+              } else {
+                pip.remove('scale');
+              }
+              if (pipBorderWidthParsed != null) {
+                pip['border_width'] = pipBorderWidthParsed;
+              } else {
+                pip.remove('border_width');
+              }
+              if (pipBorderColorText.isNotEmpty) {
+                pip['border_color'] = pipBorderColorText;
+              } else {
+                pip.remove('border_color');
+              }
+              if (pipCornerRadiusParsed != null) {
+                pip['corner_radius'] = pipCornerRadiusParsed;
+              } else {
+                pip.remove('corner_radius');
+              }
+              if (pipRoundedText.isNotEmpty) {
+                final v = pipRoundedText.toLowerCase();
+                final b = v == 'true' || v == '1' || v == 'yes';
+                pip['rounded_corners'] = b;
+              } else {
+                pip.remove('rounded_corners');
+              }
+              if (pipShadowText.isNotEmpty) {
+                final v = pipShadowText.toLowerCase();
+                final b = v == 'true' || v == '1' || v == 'yes';
+                pip['shadow'] = b;
+              } else {
+                pip.remove('shadow');
+              }
+              if (pipShadowDxParsed != null) {
+                pip['shadow_dx'] = pipShadowDxParsed;
+              } else {
+                pip.remove('shadow_dx');
+              }
+              if (pipShadowDyParsed != null) {
+                pip['shadow_dy'] = pipShadowDyParsed;
+              } else {
+                pip.remove('shadow_dy');
+              }
+              if (pip.isEmpty) {
+                copy.remove('pip_options');
+              } else {
+                copy['pip_options'] = pip;
+              }
+            }
+          }
           return copy;
         }
         return Map<String, dynamic>.from(l);
@@ -1254,11 +1793,12 @@ class _HeroOverlayEditorPanelState extends State<HeroOverlayEditorPanel> {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           DropdownButton<int>(
             value: _selectedIndex,
             items: List.generate(overlays.length, (index) {
@@ -1284,11 +1824,21 @@ class _HeroOverlayEditorPanelState extends State<HeroOverlayEditorPanel> {
               Expanded(
                 child: DropdownButton<String>(
                   value: currentType,
-                  items: const [
-                    DropdownMenuItem(value: 'text', child: Text('Texte')), 
-                    DropdownMenuItem(value: 'lower_third', child: Text('Bandeau bas')), 
-                    DropdownMenuItem(value: 'ticker', child: Text('Ticker TV')), 
-                  ],
+                  items: widget.isTvPro
+                      ? const [
+                          DropdownMenuItem(value: 'text', child: Text('Texte')),
+                          DropdownMenuItem(value: 'lower_third', child: Text('Bandeau bas')),
+                          DropdownMenuItem(value: 'ticker', child: Text('Ticker TV')),
+                          DropdownMenuItem(value: 'background', child: Text('Background')),
+                          DropdownMenuItem(value: 'image', child: Text('Image')),
+                          DropdownMenuItem(value: 'video', child: Text('Vidéo')),
+                          DropdownMenuItem(value: 'pip', child: Text('PIP')),
+                        ]
+                      : const [
+                          DropdownMenuItem(value: 'text', child: Text('Texte')),
+                          DropdownMenuItem(value: 'lower_third', child: Text('Bandeau bas')),
+                          DropdownMenuItem(value: 'ticker', child: Text('Ticker TV')),
+                        ],
                   onChanged: (value) {
                     if (value == null) return;
                     setState(() {
@@ -1341,6 +1891,134 @@ class _HeroOverlayEditorPanelState extends State<HeroOverlayEditorPanel> {
               labelText: 'Fin (s)',
             ),
           ),
+          if (widget.isTvPro) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: sourceUrlController,
+                    decoration: const InputDecoration(
+                      labelText: 'URL média (source_url)',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: widget.playlistItemId == null
+                      ? null
+                      : () async {
+                          final playlistItemId = widget.playlistItemId;
+                          final slot = widget.slot;
+                          if (playlistItemId == null) {
+                            return;
+                          }
+                          final result = await FilePicker.platform.pickFiles(
+                            allowMultiple: false,
+                            withData: true,
+                            type: FileType.custom,
+                            allowedExtensions: const [
+                              'mp4',
+                              'mov',
+                              'webm',
+                              'jpg',
+                              'jpeg',
+                              'png',
+                            ],
+                          );
+                          if (result == null || result.files.isEmpty) {
+                            return;
+                          }
+                          final file = result.files.first;
+                          final bytes = file.bytes;
+                          if (bytes == null) {
+                            if (!context.mounted) {
+                              return;
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Impossible de lire le fichier sélectionné.'),
+                              ),
+                            );
+                            return;
+                          }
+                          try {
+                            final uploaded = await HeroRenderService.uploadHeroMediaFile(
+                              bytes: Uint8List.fromList(bytes),
+                              fileName: file.name,
+                              mimeType: file.extension,
+                              folder: 'tv_pro_overlays',
+                              playlistItemId: playlistItemId,
+                              slot: slot,
+                            );
+                            if (uploaded == null || uploaded.isEmpty) {
+                              return;
+                            }
+                            final currentOverlays = widget.overlays;
+                            if (_selectedIndex >= currentOverlays.length) {
+                              return;
+                            }
+                            final target = currentOverlays[_selectedIndex];
+                            final updatedLayers = currentOverlays
+                                .map<Map<String, dynamic>>((l) {
+                                  if (identical(l, target)) {
+                                    final copy = Map<String, dynamic>.from(l);
+                                    copy['source_url'] = uploaded;
+                                    return copy;
+                                  }
+                                  return Map<String, dynamic>.from(l);
+                                })
+                                .toList(growable: false);
+                            await widget.onOverlaysChanged(updatedLayers);
+                          } catch (e) {
+                            if (!context.mounted) {
+                              return;
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(e.toString()),
+                              ),
+                            );
+                          }
+                        },
+                  icon: const Icon(Icons.upload_file),
+                  label: const Text('Importer'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: xController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Position X',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: yController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Position Y',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: opacityController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Opacité (0-1)',
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerRight,
@@ -1350,6 +2028,7 @@ class _HeroOverlayEditorPanelState extends State<HeroOverlayEditorPanel> {
             ),
           ),
         ],
+        ),
       ),
     );
   }

@@ -208,15 +208,23 @@ def supabase_update_data(table_name: str, data: Dict[str, Any], condition: str) 
         url, headers = _build_table_request(table_name)
         url = f"{url}?{condition}"
         response = requests.patch(url, headers=headers, json=data, timeout=10)
-        if response.status_code == 200:
+        if response.status_code in (200, 204):
+            payload: Any
+            if response.status_code == 200:
+                try:
+                    payload = response.json()
+                except Exception:
+                    payload = []
+            else:  # 204 No Content
+                payload = []
             return {
                 "success": True,
-                "data": response.json(),
-                "method": "api_update"
+                "data": payload,
+                "method": "api_update",
             }
     except Exception as e:
         pass
-    
+
     return {"success": False, "error": "Data update failed", "method": "api_update"}
 
 def supabase_delete_data(table_name: str, condition: str) -> Dict[str, Any]:

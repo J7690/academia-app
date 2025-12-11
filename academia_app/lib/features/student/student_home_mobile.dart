@@ -479,9 +479,21 @@ class _MobileHomeHero extends StatefulWidget {
   State<_MobileHomeHero> createState() => _MobileHomeHeroState();
 }
 
+class _HomeHeroMediaItem {
+  final String url;
+  final bool isImage;
+
+  const _HomeHeroMediaItem({required this.url, required this.isImage});
+}
+
 class _MobileHomeHeroState extends State<_MobileHomeHero> {
   String? _heroUrl;
   bool _heroIsImage = false;
+  final List<_HomeHeroMediaItem> _playlist = <_HomeHeroMediaItem>[];
+  int _currentIndex = 0;
+  Timer? _rotationTimer;
+
+  static const Duration _slideDuration = Duration(seconds: 8);
 
   @override
   void initState() {
@@ -490,28 +502,35 @@ class _MobileHomeHeroState extends State<_MobileHomeHero> {
       try {
         final client = Supabase.instance.client;
         final dynamic response = await client
-            .from('app.hero_playlist')
-            .select('base_video_url, base_image_url, media_type, sort_order, is_active')
+            .schema('app')
+            .from('hero_playlist')
+            .select(
+                'base_video_url, base_image_url, media_type, sort_order, is_active')
             .eq('slot', 'student_home_hero_main')
             .eq('is_active', true)
             .order('sort_order', ascending: true)
-            .limit(1);
+            .limit(10);
 
         if (!mounted) return;
 
         if (response is List && response.isNotEmpty) {
-          final raw = response.first;
-          Map<String, dynamic>? row;
-          if (raw is Map<String, dynamic>) {
-            row = raw;
-          } else if (raw is Map) {
-            row = Map<String, dynamic>.from(raw);
-          }
-          if (row != null) {
-            final rawType = (row['media_type'] ?? 'video').toString().toLowerCase();
+          for (final raw in response) {
+            Map<String, dynamic>? row;
+            if (raw is Map<String, dynamic>) {
+              row = raw;
+            } else if (raw is Map) {
+              row = Map<String, dynamic>.from(raw);
+            }
+            if (row == null) continue;
+
+            final rawType = (row['media_type'] ?? 'video')
+                .toString()
+                .toLowerCase();
             final isImage = rawType == 'image';
-            final heroVideoUrl = (row['base_video_url'] ?? '').toString().trim();
-            final heroImageUrl = (row['base_image_url'] ?? '').toString().trim();
+            final heroVideoUrl =
+                (row['base_video_url'] ?? '').toString().trim();
+            final heroImageUrl =
+                (row['base_image_url'] ?? '').toString().trim();
 
             String? chosenUrl;
             bool chosenIsImage;
@@ -533,19 +552,42 @@ class _MobileHomeHeroState extends State<_MobileHomeHero> {
             }
 
             if (chosenUrl != null && chosenUrl.isNotEmpty) {
-              setState(() {
-                _heroUrl = chosenUrl;
-                _heroIsImage = chosenIsImage;
-              });
+              _playlist.add(
+                _HomeHeroMediaItem(url: chosenUrl, isImage: chosenIsImage),
+              );
             }
           }
+        }
+
+        if (_playlist.isNotEmpty && mounted) {
+          _goToIndex(0);
         }
       } catch (_) {}
     });
   }
 
+  void _goToIndex(int index) {
+    if (!mounted || _playlist.isEmpty) return;
+    _rotationTimer?.cancel();
+
+    _currentIndex = index % _playlist.length;
+    final item = _playlist[_currentIndex];
+
+    setState(() {
+      _heroUrl = item.url;
+      _heroIsImage = item.isImage;
+    });
+
+    _rotationTimer = Timer(_slideDuration, () {
+      if (!mounted || _playlist.isEmpty) return;
+      final nextIndex = (_currentIndex + 1) % _playlist.length;
+      _goToIndex(nextIndex);
+    });
+  }
+
   @override
   void dispose() {
+    _rotationTimer?.cancel();
     super.dispose();
   }
 
