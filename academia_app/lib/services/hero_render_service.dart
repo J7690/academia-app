@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/supabase_config.dart';
 import '../features/admin/hero_studio_models.dart';
+import '../utils/mime_type_helper.dart';
 
 class HeroRenderService {
   HeroRenderService._();
@@ -178,6 +180,79 @@ class HeroRenderService {
     print('HeroRenderService.getPlaylist: items=${items.length}');
 
     return items;
+  }
+
+  static Future<String?> uploadHeroMediaFile({
+    required Uint8List bytes,
+    required String fileName,
+    String? mimeType,
+    String folder = 'generic',
+    String? playlistItemId,
+    String? slot,
+  }) async {
+    final client = Supabase.instance.client;
+    final user = client.auth.currentUser;
+    if (user == null) {
+      throw Exception('Utilisateur non authentifié.');
+    }
+
+    final sanitizedFileName =
+        fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+
+    final key = (playlistItemId != null && playlistItemId.trim().isNotEmpty)
+        ? playlistItemId.trim()
+        : ((slot != null && slot.trim().isNotEmpty)
+            ? slot.trim()
+            : 'generic');
+
+    final storagePath =
+        '${user.id}/hero-studio/$key/$folder/$sanitizedFileName';
+
+    // ignore: avoid_print
+    print(
+      'HeroRenderService.uploadHeroMediaFile: bucket=landing-media path=$storagePath mimeType=$mimeType',
+    );
+
+    try {
+      await client.storage.from('landing-media').uploadBinary(
+            storagePath,
+            bytes,
+            fileOptions: FileOptions(
+              contentType: MimeTypeHelper.normalize(mimeType),
+              upsert: true,
+            ),
+          );
+    } on StorageException catch (e) {
+      final message = e.message.toLowerCase();
+      final error = (e.error ?? '').toLowerCase();
+      final statusCode = e.statusCode?.toString() ?? '';
+      final isDuplicate = statusCode == '409' ||
+          message.contains('already exists') ||
+          error.contains('duplicate');
+
+      if (!isDuplicate) {
+        // ignore: avoid_print
+        print('HeroRenderService.uploadHeroMediaFile: storage exception=$e');
+        throw Exception(e.toString());
+      }
+
+      // ignore: avoid_print
+      print(
+        'HeroRenderService.uploadHeroMediaFile: file already exists, reusing $storagePath',
+      );
+    } catch (e) {
+      // ignore: avoid_print
+      print('HeroRenderService.uploadHeroMediaFile: exception=$e');
+      throw Exception(e.toString());
+    }
+
+    final publicUrl =
+        client.storage.from('landing-media').getPublicUrl(storagePath);
+
+    // ignore: avoid_print
+    print('HeroRenderService.uploadHeroMediaFile: success url=$publicUrl');
+
+    return publicUrl;
   }
 
   static Future<String> upsertPlaylistItem({

@@ -1501,15 +1501,35 @@ async def _upload_hero_file_to_supabase_storage(
             detail={"message": "SUPABASE_URL ou SUPABASE_SERVICE_KEY manquante pour le rendu Hero Studio."},
         )
 
-    bucket = "challenge-media"
+    bucket = "landing-media"
     slot_clean = (slot or "default").strip() or "default"
-    object_key = f"renders/{slot_clean}/{playlist_item_id}/{filename}"
+    object_key = f"hero-renders/{slot_clean}/{playlist_item_id}/{filename}"
     storage_url = f"{SUPABASE_URL}/storage/v1/object/{bucket}/{object_key}"
+
+    try:
+        print(
+            "[HERO-STUDIO-UPLOAD]",
+            json.dumps(
+                {
+                    "bucket": bucket,
+                    "object_key": object_key,
+                    "slot": slot_clean,
+                    "playlist_item_id": playlist_item_id,
+                    "content_type": content_type,
+                },
+                ensure_ascii=False,
+            ),
+        )
+    except Exception:
+        pass
 
     headers = {
         "apikey": SUPABASE_SERVICE_KEY,
         "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
         "Content-Type": content_type,
+        # On autorise explicitement la réécriture d'un fichier existant
+        # pour que les rerenders Hero/TV puissent écraser final.mp4 / thumb.jpg
+        "x-upsert": "true",
     }
 
     data = path.read_bytes()
@@ -1517,11 +1537,42 @@ async def _upload_hero_file_to_supabase_storage(
     async with httpx.AsyncClient(timeout=600.0) as client:
         resp = await client.post(storage_url, headers=headers, content=data)
 
+    try:
+        print(
+            "[HERO-STUDIO-UPLOAD-RESULT]",
+            json.dumps(
+                {
+                    "bucket": bucket,
+                    "object_key": object_key,
+                    "status_code": resp.status_code,
+                },
+                ensure_ascii=False,
+            ),
+        )
+    except Exception:
+        pass
+
+    public_url = f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{object_key}"
+
     if resp.status_code >= 400:
+        # Cas particulier : Supabase renvoie parfois une erreur Duplicate/409
+        # lorsqu'un objet existe déjà. Avec x-upsert=true, cela ne devrait
+        # plus se produire, mais on garde un garde-fou pour traiter ce cas
+        # comme un succès silencieux.
+        body: Dict[str, Any]
         try:
             body = resp.json()
         except ValueError:
             body = {"raw": resp.text}
+
+        status_code_str = str(body.get("statusCode") or body.get("status_code") or "")
+        error_str = str(body.get("error") or "").lower()
+        message_str = str(body.get("message") or "").lower()
+        is_duplicate = status_code_str == "409" or "duplicate" in error_str or "already exists" in message_str
+
+        if is_duplicate:
+            return public_url
+
         raise HTTPException(
             status_code=500,
             detail={
@@ -1531,7 +1582,6 @@ async def _upload_hero_file_to_supabase_storage(
             },
         )
 
-    public_url = f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{object_key}"
     return public_url
 
 

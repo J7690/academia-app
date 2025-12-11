@@ -1,13 +1,13 @@
 -- RPC ADMIN pour gérer la timeline TV (overlays) et les rendus TV
 
 -- 1. Liste complète de la timeline d’un élément de playlist
-create or replace function app.app_admin_tv_get_timeline(
+create or replace function public.app_admin_tv_get_timeline(
   p_playlist_item_id uuid
 )
 returns jsonb
 language plpgsql
 security definer
-set search_path = app, public
+set search_path = public
 as $$
 declare
   v_overlays jsonb;
@@ -50,9 +50,11 @@ begin
 end;
 $$;
 
+grant execute on function public.app_admin_tv_get_timeline(uuid) to authenticated;
+grant execute on function public.app_admin_tv_get_timeline(uuid) to service_role;
 
 -- 2. Création / mise à jour d’un overlay TV
-create or replace function app.app_admin_tv_upsert_overlay(
+create or replace function public.app_admin_tv_upsert_overlay(
   p_id uuid,
   p_playlist_item_id uuid,
   p_overlay_type text,
@@ -64,7 +66,7 @@ create or replace function app.app_admin_tv_upsert_overlay(
 returns jsonb
 language plpgsql
 security definer
-set search_path = app, public
+set search_path = public
 as $$
 declare
   v_id uuid;
@@ -137,15 +139,33 @@ begin
 end;
 $$;
 
+grant execute on function public.app_admin_tv_upsert_overlay(
+  uuid,
+  uuid,
+  text,
+  jsonb,
+  numeric,
+  numeric,
+  integer
+) to authenticated;
+grant execute on function public.app_admin_tv_upsert_overlay(
+  uuid,
+  uuid,
+  text,
+  jsonb,
+  numeric,
+  numeric,
+  integer
+) to service_role;
 
 -- 3. Suppression d’un overlay TV
-create or replace function app.app_admin_tv_delete_overlay(
+create or replace function public.app_admin_tv_delete_overlay(
   p_id uuid
 )
 returns jsonb
 language plpgsql
 security definer
-set search_path = app, public
+set search_path = public
 as $$
 begin
   if not exists (
@@ -167,16 +187,18 @@ begin
 end;
 $$;
 
+grant execute on function public.app_admin_tv_delete_overlay(uuid) to authenticated;
+grant execute on function public.app_admin_tv_delete_overlay(uuid) to service_role;
 
 -- 4. Créer un job de rendu TV pour un élément de playlist
-create or replace function app.app_admin_tv_request_render(
+create or replace function public.app_admin_tv_request_render(
   p_playlist_item_id uuid,
   p_meta jsonb default '{}'::jsonb
 )
 returns jsonb
 language plpgsql
 security definer
-set search_path = app, public
+set search_path = public
 as $$
 declare
   v_id uuid;
@@ -209,3 +231,6 @@ begin
   );
 end;
 $$;
+
+grant execute on function public.app_admin_tv_request_render(uuid, jsonb) to authenticated;
+grant execute on function public.app_admin_tv_request_render(uuid, jsonb) to service_role;

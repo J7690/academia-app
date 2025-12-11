@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/hero_render_service.dart';
@@ -34,6 +37,9 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
   Future<void> _loadRenderHistory() async {
     final current = _selected;
     if (current == null) {
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _renderHistory = const <_RenderHistoryEntry>[];
       });
@@ -74,11 +80,16 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
         final bd = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
         return bd.compareTo(ad);
       });
-
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _renderHistory = entries;
       });
     } catch (_) {
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _renderHistory = const <_RenderHistoryEntry>[];
       });
@@ -88,6 +99,9 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
   Future<void> _loadCurrentOverlays() async {
     final current = _selected;
     if (current == null) {
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _currentOverlays = const <Map<String, dynamic>>[];
       });
@@ -96,6 +110,9 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
 
     if (_engineMode == 'classic') {
       final layers = current.overlays?.layers ?? const <Map<String, dynamic>>[];
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _currentOverlays = layers;
       });
@@ -118,12 +135,18 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
                 'sort_order': o.sortOrder,
               })
           .toList(growable: false);
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _currentOverlays = mapped;
       });
     } catch (e) {
       // ignore: avoid_print
       print('HeroStudioScreen._loadCurrentOverlays TV error=$e');
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _currentOverlays = const <Map<String, dynamic>>[];
       });
@@ -195,6 +218,9 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
     });
     try {
       final items = await HeroRenderService.getPlaylist(slot: widget.slot);
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _items = items;
         if (_items.isNotEmpty) {
@@ -205,6 +231,9 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
       await _loadCurrentOverlays();
       await _loadRenderHistory();
     } catch (e) {
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _error = e.toString();
       });
@@ -239,12 +268,6 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
     final mediaTypeController = TextEditingController(
       text: existing?.mediaType ?? 'video',
     );
-    final videoUrlController = TextEditingController(
-      text: existing?.baseVideoUrl ?? '',
-    );
-    final imageUrlController = TextEditingController(
-      text: existing?.baseImageUrl ?? '',
-    );
     final titleController = TextEditingController(
       text: existing?.title ?? '',
     );
@@ -256,6 +279,13 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
     );
     bool isActive = existing?.isActive ?? true;
     bool localIsActive = isActive;
+
+    Uint8List? pickedVideoBytes;
+    String? pickedVideoFileName;
+    String? pickedVideoMimeType;
+    Uint8List? pickedImageBytes;
+    String? pickedImageFileName;
+    String? pickedImageMimeType;
 
     final result = await showDialog<bool>(
       context: context,
@@ -278,16 +308,114 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
                         labelText: 'Type de média (video/image)',
                       ),
                     ),
-                    TextField(
-                      controller: videoUrlController,
-                      decoration: const InputDecoration(
-                        labelText: 'URL vidéo de base',
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final result = await FilePicker.platform.pickFiles(
+                            allowMultiple: false,
+                            withData: true,
+                            type: FileType.custom,
+                            allowedExtensions: const ['mp4', 'mov', 'webm'],
+                          );
+
+                          if (result == null || result.files.isEmpty) {
+                            return;
+                          }
+
+                          final file = result.files.first;
+                          final bytes = file.bytes;
+                          if (bytes == null) {
+                            if (!context.mounted) {
+                              return;
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Impossible de lire le contenu du fichier vidéo.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          setStateDialog(() {
+                            pickedVideoBytes = Uint8List.fromList(bytes);
+                            pickedVideoFileName = file.name;
+                            pickedVideoMimeType = file.extension;
+                          });
+                        },
+                        icon: const Icon(Icons.upload_file),
+                        label: const Text('Importer la vidéo'),
                       ),
                     ),
-                    TextField(
-                      controller: imageUrlController,
-                      decoration: const InputDecoration(
-                        labelText: 'URL image de base',
+                    const SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        pickedVideoFileName != null
+                            ? 'Vidéo sélectionnée : $pickedVideoFileName'
+                            : (existing?.baseVideoUrl != null &&
+                                    existing!.baseVideoUrl!.isNotEmpty
+                                ? 'Vidéo existante conservée.'
+                                : 'Aucune vidéo sélectionnée.'),
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final result = await FilePicker.platform.pickFiles(
+                            allowMultiple: false,
+                            withData: true,
+                            type: FileType.custom,
+                            allowedExtensions: const ['jpg', 'jpeg', 'png'],
+                          );
+
+                          if (result == null || result.files.isEmpty) {
+                            return;
+                          }
+
+                          final file = result.files.first;
+                          final bytes = file.bytes;
+                          if (bytes == null) {
+                            if (!context.mounted) {
+                              return;
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Impossible de lire le contenu du fichier image.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          setStateDialog(() {
+                            pickedImageBytes = Uint8List.fromList(bytes);
+                            pickedImageFileName = file.name;
+                            pickedImageMimeType = file.extension;
+                          });
+                        },
+                        icon: const Icon(Icons.upload_file),
+                        label: const Text('Importer l’image'),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        pickedImageFileName != null
+                            ? 'Image sélectionnée : $pickedImageFileName'
+                            : (existing?.baseImageUrl != null &&
+                                    existing!.baseImageUrl!.isNotEmpty
+                                ? 'Image existante conservée.'
+                                : 'Aucune image sélectionnée.'),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     TextField(
@@ -351,18 +479,41 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
 
     try {
       final sortOrder = int.tryParse(sortOrderController.text.trim());
+      String? baseVideoUrl = existing?.baseVideoUrl;
+      String? baseImageUrl = existing?.baseImageUrl;
+
+      if (pickedVideoBytes != null && pickedVideoFileName != null) {
+        final uploaded = await HeroRenderService.uploadHeroMediaFile(
+          bytes: pickedVideoBytes!,
+          fileName: pickedVideoFileName!,
+          mimeType: pickedVideoMimeType,
+          folder: 'videos',
+          playlistItemId: existing?.id,
+          slot: slotController.text.trim(),
+        );
+        baseVideoUrl = uploaded ?? baseVideoUrl;
+      }
+
+      if (pickedImageBytes != null && pickedImageFileName != null) {
+        final uploaded = await HeroRenderService.uploadHeroMediaFile(
+          bytes: pickedImageBytes!,
+          fileName: pickedImageFileName!,
+          mimeType: pickedImageMimeType,
+          folder: 'images',
+          playlistItemId: existing?.id,
+          slot: slotController.text.trim(),
+        );
+        baseImageUrl = uploaded ?? baseImageUrl;
+      }
+
       final id = await HeroRenderService.upsertPlaylistItem(
         itemId: existing?.id,
         slot: slotController.text.trim(),
         mediaType: mediaTypeController.text.trim().isEmpty
             ? (existing?.mediaType ?? 'video')
             : mediaTypeController.text.trim(),
-        baseVideoUrl: videoUrlController.text.trim().isEmpty
-            ? existing?.baseVideoUrl
-            : videoUrlController.text.trim(),
-        baseImageUrl: imageUrlController.text.trim().isEmpty
-            ? existing?.baseImageUrl
-            : imageUrlController.text.trim(),
+        baseVideoUrl: baseVideoUrl,
+        baseImageUrl: baseImageUrl,
         title: titleController.text.trim().isEmpty
             ? existing?.title
             : titleController.text.trim(),
@@ -388,6 +539,9 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
         }
       });
     } catch (e) {
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _error = e.toString();
       });
@@ -419,6 +573,9 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
       );
       await _refreshSelectedConfig();
     } catch (e) {
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _error = e.toString();
       });
@@ -436,6 +593,9 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
     if (current == null) return;
     try {
       final updated = await HeroRenderService.getItemConfig(current.id);
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _selected = updated;
         _currentRender = updated.lastRender;
@@ -449,6 +609,9 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
       await _loadCurrentOverlays();
       await _loadRenderHistory();
     } catch (e) {
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _error = e.toString();
       });
@@ -467,11 +630,17 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
         playlistItemId: current.id,
         slot: widget.slot,
       );
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _currentRender = render;
       });
       await _refreshSelectedConfig();
     } catch (e) {
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _error = e.toString();
       });
@@ -490,10 +659,25 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
       appBar: AppBar(
         title: Text('Studio Hero / TV (${widget.slot})'),
       ),
-      body: Row(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isMobile = constraints.maxWidth < 700;
+          if (isMobile) {
+            return _buildMobileLayout();
+          }
+          return _buildDesktopLayout();
+        },
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
-            width: 280,
+            height: 280,
             child: Column(
               children: [
                 Padding(
@@ -520,116 +704,246 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
               ],
             ),
           ),
-          const VerticalDivider(width: 1),
-          Expanded(
-            child: Column(
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text(
+                _error!,
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
               children: [
-                if (_error != null)
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Text(
-                      _error!,
-                      style: const TextStyle(color: Colors.red),
+                ToggleButtons(
+                  isSelected: [
+                    _engineMode == 'classic',
+                    _engineMode == 'tv',
+                  ],
+                  onPressed: (index) {
+                    setState(() {
+                      _engineMode = index == 0 ? 'classic' : 'tv';
+                    });
+                  },
+                  children: const [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Text('Rendu classique'),
                     ),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Row(
-                    children: [
-                      ToggleButtons(
-                        isSelected: [
-                          _engineMode == 'classic',
-                          _engineMode == 'tv',
-                        ],
-                        onPressed: (index) {
-                          setState(() {
-                            _engineMode = index == 0 ? 'classic' : 'tv';
-                          });
-                        },
-                        children: const [
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            child: Text('Rendu classique'),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            child: Text('Rendu TV'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 16),
-                      ElevatedButton.icon(
-                        onPressed: _isLoading || _selected == null ? null : _startUnifiedRender,
-                        icon: const Icon(Icons.play_circle_outline),
-                        label: const Text('Lancer le rendu'),
-                      ),
-                      const SizedBox(width: 12),
-                      if (_currentRender != null)
-                        Text(
-                          'Dernier rendu: ${_currentRender!.status}',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                    ],
-                  ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Text('Rendu TV'),
+                    ),
+                  ],
                 ),
+                const SizedBox(width: 8),
                 Expanded(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: HeroPreviewPlayer(
-                          item: _selected,
-                          render: _currentRender,
-                        ),
-                      ),
-                      const VerticalDivider(width: 1),
-                      Expanded(
-                        flex: 2,
-                        child: HeroOverlayEditorPanel(
-                          overlays: _currentOverlays,
-                          onOverlaysChanged: (layers) async {
-                            await _saveOverlaysForCurrentEngine(layers);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  height: 120,
-                  child: HeroTimeline(
-                    overlays: _currentOverlays,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        child: Text(
-                          'Historique des rendus',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                      const Divider(height: 1),
-                      Expanded(
-                        child: HeroRenderHistoryPanel(
-                          items: _renderHistory,
-                        ),
-                      ),
-                    ],
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton.icon(
+                      onPressed:
+                          _isLoading || _selected == null ? null : _startUnifiedRender,
+                      icon: const Icon(Icons.play_circle_outline),
+                      label: const Text('Lancer le rendu'),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
+          if (_currentRender != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Text(
+                'Dernier rendu: ${_currentRender!.status}',
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
+          SizedBox(
+            height: 220,
+            child: HeroPreviewPlayer(
+              item: _selected,
+              render: _currentRender,
+            ),
+          ),
+          SizedBox(
+            height: 260,
+            child: HeroOverlayEditorPanel(
+              overlays: _currentOverlays,
+              onOverlaysChanged: (layers) async {
+                await _saveOverlaysForCurrentEngine(layers);
+              },
+            ),
+          ),
+          SizedBox(
+            height: 120,
+            child: HeroTimeline(
+              overlays: _currentOverlays,
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Text(
+              'Historique des rendus',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 240,
+            child: HeroRenderHistoryPanel(
+              items: _renderHistory,
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDesktopLayout() {
+    return Row(
+      children: [
+        SizedBox(
+          width: 280,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Row(
+                  children: [
+                    const Text('Playlist'),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: _isLoading ? null : () => _openEditItemDialog(),
+                      icon: const Icon(Icons.add),
+                      tooltip: 'Ajouter un item',
+                    ),
+                    IconButton(
+                      onPressed: _isLoading ? null : _loadPlaylist,
+                      icon: const Icon(Icons.refresh),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: _buildPlaylistList(),
+              ),
+            ],
+          ),
+        ),
+        const VerticalDivider(width: 1),
+        Expanded(
+          child: Column(
+            children: [
+              if (_error != null)
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Text(
+                    _error!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Row(
+                  children: [
+                    ToggleButtons(
+                      isSelected: [
+                        _engineMode == 'classic',
+                        _engineMode == 'tv',
+                      ],
+                      onPressed: (index) {
+                        setState(() {
+                          _engineMode = index == 0 ? 'classic' : 'tv';
+                        });
+                      },
+                      children: const [
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          child: Text('Rendu classique'),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          child: Text('Rendu TV'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 16),
+                    ElevatedButton.icon(
+                      onPressed:
+                          _isLoading || _selected == null ? null : _startUnifiedRender,
+                      icon: const Icon(Icons.play_circle_outline),
+                      label: const Text('Lancer le rendu'),
+                    ),
+                    const SizedBox(width: 12),
+                    if (_currentRender != null)
+                      Text(
+                        'Dernier rendu: ${_currentRender!.status}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: HeroPreviewPlayer(
+                        item: _selected,
+                        render: _currentRender,
+                      ),
+                    ),
+                    const VerticalDivider(width: 1),
+                    Expanded(
+                      flex: 2,
+                      child: HeroOverlayEditorPanel(
+                        overlays: _currentOverlays,
+                        onOverlaysChanged: (layers) async {
+                          await _saveOverlaysForCurrentEngine(layers);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: 120,
+                child: HeroTimeline(
+                  overlays: _currentOverlays,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      child: Text(
+                        'Historique des rendus',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: HeroRenderHistoryPanel(
+                        items: _renderHistory,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

@@ -72,15 +72,15 @@ def main() -> int:
             """,
         )
 
-    # 3) Lister les fonctions TV
+    # 3) Lister les fonctions TV (schémas app et public)
     execute_sql(
         "RPC_app_admin_tv_functions",
         """
         SELECT routine_schema, routine_name, specific_name
         FROM information_schema.routines
-        WHERE routine_schema = 'app'
-          AND routine_name ILIKE 'app_admin_tv%%'
-        ORDER BY routine_name
+        WHERE routine_schema IN ('app', 'public')
+          AND routine_name ILIKE 'app_admin_tv%'
+        ORDER BY routine_schema, routine_name
         """,
     )
 
@@ -88,14 +88,14 @@ def main() -> int:
     execute_sql(
         "TEST_app_admin_tv_get_timeline",
         """
-        SELECT app.app_admin_tv_get_timeline('00000000-0000-0000-0000-000000000000') AS result;
+        SELECT public.app_admin_tv_get_timeline('00000000-0000-0000-0000-000000000000') AS result;
         """,
     )
 
     execute_sql(
         "TEST_app_admin_tv_request_render",
         """
-        SELECT app.app_admin_tv_request_render('00000000-0000-0000-0000-000000000000') AS result;
+        SELECT public.app_admin_tv_request_render('00000000-0000-0000-0000-000000000000') AS result;
         """,
     )
 
