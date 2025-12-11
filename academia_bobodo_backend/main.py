@@ -217,6 +217,16 @@ async def supabase_proxy(full_path: str, request: Request) -> Response:
     if accept:
         outgoing_headers["accept"] = accept
 
+    # Propager également les en-têtes de profil de schéma utilisés par Supabase
+    # (nécessaires pour les appels .schema('app') côté client Flutter).
+    accept_profile = request.headers.get("accept-profile")
+    if accept_profile:
+        outgoing_headers["Accept-Profile"] = accept_profile
+
+    content_profile = request.headers.get("content-profile")
+    if content_profile:
+        outgoing_headers["Content-Profile"] = content_profile
+
     range_header = request.headers.get("range")
     if range_header:
         outgoing_headers["range"] = range_header
