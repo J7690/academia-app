@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../providers/admin_prep_concours_provider.dart';
+import '../../../providers/prep_concours_provider.dart';
 import '../../../services/prep_ai_service.dart';
 
 class AdminPrepConcoursScreen extends StatefulWidget {
@@ -12,6 +13,10 @@ class AdminPrepConcoursScreen extends StatefulWidget {
 }
 
 class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
+  String? _selectedSubjectId;
+  String? _docStatus;
+  String? _genStatus;
+
   @override
   void initState() {
     super.initState();
@@ -19,7 +24,17 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
       final provider = context.read<AdminPrepConcoursProvider>();
       provider.loadSourceDocuments();
       provider.loadAiGenerations();
+
+      context.read<PrepConcoursProvider>().loadSubjects();
     });
+  }
+
+  Future<void> _reload() async {
+    final admin = context.read<AdminPrepConcoursProvider>();
+    await Future.wait([
+      admin.loadSourceDocuments(subjectId: _selectedSubjectId, status: _docStatus),
+      admin.loadAiGenerations(subjectId: _selectedSubjectId, status: _genStatus),
+    ]);
   }
 
   Future<void> _openGenerationDetail(AdminPrepAiGeneration gen) async {
@@ -72,25 +87,48 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
   }
 
   Future<void> _openGenerateDialog() async {
-    final subjectIdController = TextEditingController();
+    final subjectIdController = TextEditingController(text: _selectedSubjectId ?? '');
     final promptController = TextEditingController();
     final numController = TextEditingController(text: '10');
+    String selectedSubjectId = _selectedSubjectId ?? '';
 
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
+        final subjects = context.read<PrepConcoursProvider>().subjects;
+
         return AlertDialog(
-          title: const Text('Générer QCM (IA)'),
+          title: const Text('Générer des questions'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
-                  controller: subjectIdController,
-                  decoration: const InputDecoration(
-                    labelText: 'Subject ID (UUID) *',
+                if (subjects.isNotEmpty)
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedSubjectId.isNotEmpty ? selectedSubjectId : null,
+                    items: subjects
+                        .map(
+                          (s) => DropdownMenuItem(
+                            value: s.id,
+                            child: Text(s.title),
+                          ),
+                        )
+                        .toList(growable: false),
+                    onChanged: (value) {
+                      selectedSubjectId = value ?? '';
+                      subjectIdController.text = selectedSubjectId;
+                    },
+                    decoration: const InputDecoration(
+                      labelText: 'Matière *',
+                    ),
+                  )
+                else
+                  TextField(
+                    controller: subjectIdController,
+                    decoration: const InputDecoration(
+                      labelText: 'Identifiant matière (technique)',
+                    ),
                   ),
-                ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: numController,
@@ -104,7 +142,7 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
                   controller: promptController,
                   maxLines: 4,
                   decoration: const InputDecoration(
-                    labelText: 'Contexte (optionnel)',
+                    labelText: 'Instructions (optionnel)',
                   ),
                 ),
               ],
@@ -145,6 +183,11 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
                       ),
                     ),
                   );
+
+                  setState(() {
+                    _selectedSubjectId = subjectId;
+                  });
+                  await _reload();
                 } catch (e) {
                   if (!context.mounted) return;
                   messenger.showSnackBar(
@@ -153,6 +196,95 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
                 }
               },
               child: const Text('Générer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _openCreateSubjectDialog() async {
+    final titleController = TextEditingController();
+    final slugController = TextEditingController();
+    final descriptionController = TextEditingController();
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Créer une matière'),
+          content: SizedBox(
+            width: 520,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nom de la matière *',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: descriptionController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Description (optionnel)',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: slugController,
+                    decoration: const InputDecoration(
+                      labelText: 'Code (optionnel) — ex: culture-generale',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final title = titleController.text.trim();
+                if (title.isEmpty) return;
+
+                final provider = context.read<PrepConcoursProvider>();
+                final messenger = ScaffoldMessenger.of(context);
+
+                Navigator.of(dialogContext).pop();
+                final id = await provider.createSubject(
+                  title: title,
+                  slug: slugController.text.trim().isEmpty ? null : slugController.text.trim(),
+                  description: descriptionController.text.trim().isEmpty
+                      ? null
+                      : descriptionController.text.trim(),
+                );
+
+                if (!context.mounted) return;
+
+                if (id == null || id.isEmpty) {
+                  messenger.showSnackBar(
+                    SnackBar(content: Text(provider.error ?? 'Création impossible.')),
+                  );
+                  return;
+                }
+
+                messenger.showSnackBar(
+                  const SnackBar(content: Text('Matière créée.')),
+                );
+
+                setState(() {
+                  _selectedSubjectId = id;
+                });
+                await _reload();
+              },
+              child: const Text('Créer'),
             ),
           ],
         );
@@ -211,8 +343,16 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
                   ? null
                   : () async {
                       final messenger = ScaffoldMessenger.of(context);
+                      final subjectId = (_selectedSubjectId ?? '').trim();
+                      if (subjectId.isEmpty) {
+                        messenger.showSnackBar(
+                          const SnackBar(content: Text('Choisis une matière avant de créer un document.')),
+                        );
+                        return;
+                      }
                       final year = int.tryParse(yearController.text.trim());
                       final ok = await provider.upsertSourceDocument(
+                        subjectId: subjectId,
                         year: year,
                         docType: docTypeController.text.trim().isEmpty
                             ? null
@@ -377,6 +517,9 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final subjects = context.watch<PrepConcoursProvider>().subjects;
+    final hasSubjectSelected = (_selectedSubjectId ?? '').trim().isNotEmpty;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
@@ -395,19 +538,19 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
         ),
         actions: [
           IconButton(
-            onPressed: context.read<AdminPrepConcoursProvider>().loadSourceDocuments,
+            onPressed: _reload,
             icon: const Icon(Icons.refresh),
             tooltip: 'Recharger',
           ),
           IconButton(
-            onPressed: _openGenerateDialog,
+            onPressed: hasSubjectSelected ? _openGenerateDialog : null,
             icon: const Icon(Icons.auto_awesome),
-            tooltip: 'Générer (IA)',
+            tooltip: 'Générer des questions',
           ),
           IconButton(
-            onPressed: _openCreateDialog,
+            onPressed: hasSubjectSelected ? _openCreateDialog : null,
             icon: const Icon(Icons.add),
-            tooltip: 'Ajouter',
+            tooltip: 'Ajouter un document',
           ),
         ],
       ),
@@ -434,33 +577,165 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
           }
 
           final docs = provider.documents;
-          if (docs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('Aucun document source.'),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: _openCreateDialog,
-                    child: const Text('Créer un premier document'),
-                  ),
-                ],
-              ),
-            );
-          }
-
           final generations = provider.generations;
 
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              if (generations.isNotEmpty) ...[
-                const Text(
-                  'Générations IA',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              Card(
+                elevation: 0,
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(height: 8),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Pilotage',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: _selectedSubjectId,
+                        items: subjects
+                            .map(
+                              (s) => DropdownMenuItem(
+                                value: s.id,
+                                child: Text(s.title),
+                              ),
+                            )
+                            .toList(growable: false),
+                        onChanged: (value) async {
+                          setState(() {
+                            _selectedSubjectId = value;
+                          });
+                          await _reload();
+                        },
+                        decoration: const InputDecoration(
+                          labelText: 'Matière',
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: OutlinedButton.icon(
+                          onPressed: _openCreateSubjectDialog,
+                          icon: const Icon(Icons.add),
+                          label: const Text('Créer une matière'),
+                        ),
+                      ),
+                      if (!hasSubjectSelected) ...[
+                        const SizedBox(height: 8),
+                        const Text(
+                          "Sélectionne (ou crée) une matière pour pouvoir ajouter des documents et générer des questions.",
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _docStatus,
+                              items: const [
+                                DropdownMenuItem(value: null, child: Text('Tous (docs)')),
+                                DropdownMenuItem(value: 'received', child: Text('received')),
+                                DropdownMenuItem(value: 'extracted', child: Text('extracted')),
+                                DropdownMenuItem(value: 'indexed', child: Text('indexed')),
+                                DropdownMenuItem(value: 'validated', child: Text('validated')),
+                                DropdownMenuItem(value: 'published', child: Text('published')),
+                                DropdownMenuItem(value: 'rejected', child: Text('rejected')),
+                              ],
+                              onChanged: (value) async {
+                                setState(() {
+                                  _docStatus = value;
+                                });
+                                await _reload();
+                              },
+                              decoration: const InputDecoration(
+                                labelText: 'Statut documents',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _genStatus,
+                              items: const [
+                                DropdownMenuItem(value: null, child: Text('Tous (IA)')),
+                                DropdownMenuItem(value: 'proposed', child: Text('proposed')),
+                                DropdownMenuItem(value: 'validated', child: Text('validated')),
+                                DropdownMenuItem(value: 'published', child: Text('published')),
+                                DropdownMenuItem(value: 'failed', child: Text('failed')),
+                              ],
+                              onChanged: (value) async {
+                                setState(() {
+                                  _genStatus = value;
+                                });
+                                await _reload();
+                              },
+                              decoration: const InputDecoration(
+                                labelText: 'Statut générations',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        alignment: WrapAlignment.end,
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: hasSubjectSelected ? _openCreateDialog : null,
+                            icon: const Icon(Icons.upload_file),
+                            label: const Text('Ajouter un document'),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: hasSubjectSelected ? _openGenerateDialog : null,
+                            icon: const Icon(Icons.auto_awesome),
+                            label: const Text('Générer des questions'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Docs: ${docs.length} • Générations: ${generations.length}',
+                        style: const TextStyle(color: Colors.grey),
+                        textAlign: TextAlign.right,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Générations IA',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (generations.isEmpty)
+                const Card(
+                  elevation: 0,
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text('Aucune génération pour le filtre courant.'),
+                  ),
+                )
+              else
                 for (final g in generations.take(10))
                   Card(
                     margin: const EdgeInsets.only(bottom: 8),
@@ -497,6 +772,7 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
                                           ),
                                         ),
                                       );
+                                      await _reload();
                                     },
                               child: const Text('Publier'),
                             ),
@@ -506,39 +782,73 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
                       onTap: () => _openGenerationDetail(g),
                     ),
                   ),
-                const SizedBox(height: 16),
-              ],
-              const Text(
-                'Documents sources',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Documents sources',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
-              for (final d in docs) ...[
+              if (docs.isEmpty)
                 Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  color: Colors.white,
                   elevation: 0,
+                  color: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: ListTile(
-                    title: Text('Document ${d.id.substring(0, 8)}…'),
-                    subtitle: Text(() {
-                      final subtitleParts = <String>[];
-                      if (d.docType != null && d.docType!.isNotEmpty) {
-                        subtitleParts.add(d.docType!);
-                      }
-                      if (d.year != null) {
-                        subtitleParts.add(d.year.toString());
-                      }
-                      subtitleParts.add('status: ${d.status}');
-                      return subtitleParts.join(' • ');
-                    }()),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _openDetail(d),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text('Aucun document source pour le filtre courant.'),
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton(
+                            onPressed: _openCreateDialog,
+                            child: const Text('Créer un document'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                )
+              else
+                for (final d in docs) ...[
+                  Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    color: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ListTile(
+                      title: Text('Document ${d.id.substring(0, 8)}…'),
+                      subtitle: Text(() {
+                        final subtitleParts = <String>[];
+                        if (d.docType != null && d.docType!.isNotEmpty) {
+                          subtitleParts.add(d.docType!);
+                        }
+                        if (d.year != null) {
+                          subtitleParts.add(d.year.toString());
+                        }
+                        subtitleParts.add('status: ${d.status}');
+                        return subtitleParts.join(' • ');
+                      }()),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _openDetail(d),
+                    ),
+                  ),
+                ],
             ],
           );
         },

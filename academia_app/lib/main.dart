@@ -59,6 +59,8 @@ import 'providers/admin_online_course_messages_provider.dart';
 import 'providers/admin_opportunities_provider.dart';
 import 'providers/admin_communities_provider.dart';
 import 'providers/admin_challenges_provider.dart';
+import 'providers/admin_prep_concours_provider.dart';
+import 'providers/prep_concours_provider.dart';
 import 'features/auth/auth_wrapper.dart';
 
 void main() async {
@@ -109,6 +111,7 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => AdminOpportunitiesProvider()),
       ChangeNotifierProvider(create: (_) => AdminCommunitiesProvider()),
       ChangeNotifierProvider(create: (_) => AdminChallengesProvider()),
+      ChangeNotifierProvider(create: (_) => AdminPrepConcoursProvider()),
       ChangeNotifierProvider(create: (_) => AdminCoursesProvider()),
       ChangeNotifierProvider(create: (_) => AdminCourseLibraryProvider()),
       ChangeNotifierProvider(create: (_) => AdminOnlineCoursesProvider()),
@@ -132,6 +135,7 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => UniversityProgramsProvider()),
       ChangeNotifierProvider(create: (_) => UniversitySiteProvider()),
       ChangeNotifierProvider(create: (_) => BobodoProvider()),
+      ChangeNotifierProvider(create: (_) => PrepConcoursProvider()),
     ];
 
     if (kDebugMode) {

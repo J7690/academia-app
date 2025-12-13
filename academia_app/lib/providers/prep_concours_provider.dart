@@ -283,6 +283,56 @@ class PrepConcoursProvider extends ChangeNotifier {
     }
   }
 
+  Future<String?> createSubject({
+    required String title,
+    String? slug,
+    String? description,
+    int? sortOrder,
+    bool isActive = true,
+    bool reloadAfter = true,
+  }) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final res = await _client.rpc(
+        'app_admin_prep_create_subject',
+        params: {
+          'p_title': title,
+          'p_slug': slug,
+          'p_description': description,
+          'p_sort_order': sortOrder,
+          'p_is_active': isActive,
+        },
+      );
+
+      if (res is! Map) {
+        _setError('Réponse invalide du serveur.');
+        return null;
+      }
+
+      final map = Map<String, dynamic>.from(res);
+      if (map['success'] != true) {
+        _setError(map['error']?.toString() ?? 'Erreur lors de la création.');
+        return null;
+      }
+
+      final subject = map['subject'];
+      String? id;
+      if (subject is Map) {
+        id = (subject['id'] ?? '').toString().trim();
+      }
+      if (reloadAfter) {
+        await loadSubjects();
+      }
+      return id;
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   List<PrepChapter> getChaptersForSubject(String subjectId) {
     return _chaptersBySubject[subjectId] ?? const [];
   }

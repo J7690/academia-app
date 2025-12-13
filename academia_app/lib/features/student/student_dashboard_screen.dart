@@ -20,6 +20,7 @@ import 'tabs/student_courses_tab.dart';
 import 'tabs/student_online_trainings_tab.dart';
 import 'tabs/student_live_sessions_tab.dart';
 import 'tabs/student_bobodo_tab.dart';
+import 'prep_concours/prep_concours_home_screen.dart';
 import 'student_dashboard_nav_controller.dart';
 
 /// Dashboard étudiant avec onglets principaux
@@ -222,6 +223,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         case 9:
           child = const StudentBobodoTab();
           break;
+        case 10:
+          child = const PrepConcoursHomeScreen();
+          break;
         default:
           child = const StudentHomeMobileTab();
       }
@@ -264,6 +268,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           break;
         case 9:
           child = const StudentBobodoTab();
+          break;
+        case 10:
+          child = const PrepConcoursHomeScreen();
           break;
         default:
           child = const StudentHomeTab();
@@ -360,6 +367,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             icon: Icon(Icons.smart_toy_outlined),
             selectedIcon: Icon(Icons.smart_toy),
             label: 'Bobodo',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.school_outlined),
+            selectedIcon: Icon(Icons.school),
+            label: 'Concours',
           ),
         ],
       ),
@@ -467,6 +479,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                           label: 'Bobodo',
                           icon: const Icon(Icons.smart_toy_outlined),
                           selectedIcon: const Icon(Icons.smart_toy),
+                        ),
+                        _buildMobileNavItem(
+                          index: 10,
+                          label: 'Concours',
+                          icon: const Icon(Icons.school_outlined),
+                          selectedIcon: const Icon(Icons.school),
                         ),
                       ],
                     ),

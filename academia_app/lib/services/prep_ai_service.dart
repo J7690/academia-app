@@ -53,16 +53,57 @@ class PrepAiService {
     );
 
     if (response.statusCode >= 400) {
+      String? message;
       try {
         final decoded = jsonDecode(response.body);
         if (decoded is Map<String, dynamic>) {
           final detail = decoded['detail'];
-          if (detail is Map && detail['message'] is String) {
-            throw Exception(detail['message'] as String);
+          if (detail is String && detail.trim().isNotEmpty) {
+            message = detail.trim();
+          } else if (detail is Map) {
+            final msg = detail['message'];
+            if (msg is String && msg.trim().isNotEmpty) {
+              message = msg.trim();
+            }
+
+            final rpc = detail['rpc'];
+            if (rpc is String && rpc.trim().isNotEmpty) {
+              message = message == null ? 'RPC: ${rpc.trim()}' : '$message • RPC: ${rpc.trim()}';
+            }
+
+            final errObj = detail['error'];
+            if (errObj != null) {
+              final errText = errObj.toString().trim();
+              if (errText.isNotEmpty) {
+                message = message == null ? errText : '$message • $errText';
+              }
+            }
+
+            final err = detail['error'];
+            if (message == null && err is String && err.trim().isNotEmpty) {
+              message = err.trim();
+            }
+            final statusCode = detail['status_code'];
+            if (message != null && statusCode != null) {
+              message = '$message (upstream: $statusCode)';
+            }
+          }
+
+          final msg = decoded['message'];
+          if (message == null && msg is String && msg.trim().isNotEmpty) {
+            message = msg.trim();
           }
         }
       } catch (_) {}
-      throw Exception('Erreur IA (${response.statusCode}).');
+
+      final body = response.body.trim();
+      if (message == null && body.isNotEmpty) {
+        message = body.length > 600 ? body.substring(0, 600) : body;
+      }
+
+      throw Exception(message == null
+          ? 'Erreur IA (${response.statusCode}).'
+          : 'Erreur IA (${response.statusCode}): $message');
     }
 
     final decoded = jsonDecode(response.body);

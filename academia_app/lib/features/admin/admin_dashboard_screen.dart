@@ -17,6 +17,7 @@ import 'admin_online_courses_screen.dart';
 import 'admin_short_trainings_screen.dart';
 import 'admin_university_sites_screen.dart';
 import 'admin_bobodo_screen.dart';
+import 'prep_concours/admin_prep_concours_screen.dart';
 import 'admin_landing_screen.dart';
 import 'admin_student_home_screen.dart';
 import 'admin_hero_accueil_screen.dart';
@@ -153,7 +154,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 15,
+      length: 16,
       child: Consumer<AdminApplicationsProvider>(
         builder: (context, applicationsProvider, child) {
           final unread = applicationsProvider.unreadCount;
@@ -227,6 +228,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                   ),
                   const Tab(text: 'Bobodo'),
+                  const Tab(text: 'Prépa concours'),
                   const Tab(text: 'Accueil étudiant'),
                   const Tab(text: 'Landing'),
                   const Tab(text: 'Hero / Accueil TV'),
@@ -247,6 +249,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 AdminShortTrainingsScreen(),
                 AdminUniversitySitesScreen(),
                 AdminBobodoScreen(),
+                AdminPrepConcoursScreen(),
                 AdminStudentHomeScreen(),
                 AdminLandingScreen(),
                 AdminHeroAccueilScreen(),

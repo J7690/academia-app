@@ -8,6 +8,10 @@ pubspec.lock
 .idea/
 android/.gradle/
 
+# Windsurf / Python cache
+.windsurf/__pycache__/
+*.pyc
+
 # Sensitive files
 *.env
 .env
