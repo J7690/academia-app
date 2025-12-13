@@ -6,6 +6,9 @@ import subprocess
 import tempfile
 import json
 import time
+import uuid
+import hashlib
+import logging
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,8 +28,12 @@ from studio_video_renderer import (
 from studio_video_renderer_pro import run_ffmpeg_tv_pro
 from tv_pro_filter_builder import build_tv_pro_filtergraph
 
+logger = logging.getLogger("academia")
+if not logging.getLogger().handlers:
+    logging.basicConfig(level=logging.INFO)
+
 BASE_DIR = Path(__file__).resolve().parent
-load_dotenv(BASE_DIR / ".env")
+load_dotenv(BASE_DIR / ".env", override=True)
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
@@ -358,6 +365,16 @@ class StudioVideoRenderResponse(BaseModel):
     free_video_id: Optional[str] = None
 
 
+class StudioVideoPreviewRequest(BaseModel):
+    participation_id: str
+    video_url: str
+
+
+class StudioVideoPreviewResponse(BaseModel):
+    video_url: str
+    video_renditions: Dict[str, str]
+
+
 class HeroStudioRenderRequest(BaseModel):
     playlist_item_id: str
     slot: Optional[str] = None
@@ -385,6 +402,19 @@ class TvStudioRenderResponse(BaseModel):
     render_url: str
     thumbnail_url: str
     status: str
+
+
+class AiPrepGenerateRequest(BaseModel):
+    subject_id: str
+    generation_type: Optional[str] = "mcq"
+    prompt: Optional[str] = None
+    num_questions: Optional[int] = 10
+
+
+class AiPrepGenerateResponse(BaseModel):
+    success: bool
+    generation_id: str
+    output_json: Dict[str, Any]
 
 
 class VideoPlaybackErrorIn(BaseModel):
@@ -439,6 +469,123 @@ async def call_supabase_rpc(function: str, payload: Dict[str, Any]) -> Any:
         return response.json()
     except ValueError:
         return response.text
+
+
+async def call_openrouter(
+    prompt: str,
+    knowledge: List[Dict[str, Any]],
+    system_prompt: Optional[str] = None,
+    include_no_answer_sentinel: bool = True,
+) -> str:
+    if not OPENROUTER_API_KEY:
+        raise HTTPException(status_code=500, detail={"message": "OPENROUTER_API_KEY manquante"})
+
+    base_prompt = (prompt or "").strip()
+    if not base_prompt:
+        raise HTTPException(status_code=400, detail="Prompt vide")
+
+    knowledge_parts: List[str] = []
+    for item in knowledge or []:
+        if not isinstance(item, dict):
+            continue
+        title = str(item.get("title") or "").strip()
+        content = str(item.get("content") or "").strip()
+        if not content:
+            continue
+        if title:
+            knowledge_parts.append(f"### {title}\n{content}")
+        else:
+            knowledge_parts.append(content)
+    knowledge_text = "\n\n".join(knowledge_parts)
+
+    final_user_prompt = base_prompt
+    if knowledge_text:
+        final_user_prompt = f"{base_prompt}\n\nContexte (RAG):\n{knowledge_text}"
+
+    if include_no_answer_sentinel:
+        final_user_prompt = (
+            final_user_prompt
+            + "\n\nSi tu ne peux pas répondre de façon fiable, réponds exactement par: "
+            + NO_ANSWER_SENTINEL
+        )
+
+    messages: List[Dict[str, str]] = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": final_user_prompt})
+
+    payload = {
+        "model": OPENROUTER_MODEL,
+        "messages": messages,
+        "temperature": 0.2,
+    }
+
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        try:
+            resp = await client.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers=headers,
+                json=payload,
+            )
+        except httpx.HTTPError as exc:
+            raise HTTPException(
+                status_code=502,
+                detail={"message": "Erreur réseau OpenRouter", "error": str(exc)},
+            )
+
+    if resp.status_code >= 400:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Erreur OpenRouter",
+                "status_code": resp.status_code,
+                "error": resp.text[:1000],
+            },
+        )
+
+    try:
+        data = resp.json()
+    except ValueError:
+        raise HTTPException(status_code=500, detail={"message": "Erreur OpenRouter", "error": resp.text[:1000]})
+
+    choices = data.get("choices") if isinstance(data, dict) else None
+    if not isinstance(choices, list) or not choices:
+        raise HTTPException(status_code=500, detail={"message": "Erreur OpenRouter", "error": "choices manquants"})
+
+    first = choices[0]
+    if not isinstance(first, dict):
+        raise HTTPException(status_code=500, detail={"message": "Erreur OpenRouter", "error": "choices invalides"})
+
+    message = first.get("message")
+    if not isinstance(message, dict):
+        raise HTTPException(status_code=500, detail={"message": "Erreur OpenRouter", "error": "message manquant"})
+
+    content = str(message.get("content") or "").strip()
+    if not content:
+        raise HTTPException(status_code=500, detail={"message": "Erreur OpenRouter", "error": "content vide"})
+
+    return content
+
+
+async def call_openrouter_safety_refusal(message: str) -> str:
+    system_prompt = (
+        "Tu es un assistant IA pour la plateforme Academia. "
+        "L'utilisateur demande un contenu sensible ou dangereux. "
+        "Tu dois refuser poliment en français, expliquer brièvement que tu ne peux pas aider, "
+        "et proposer une alternative sûre (conseils généraux, prévention, orientation vers un professionnel)."
+    )
+    return await call_openrouter(
+        message,
+        [],
+        system_prompt=system_prompt,
+        include_no_answer_sentinel=False,
+    )
 
 
 async def call_supabase_rpc_as_user(jwt: str, function: str, payload: Dict[str, Any]) -> Any:
@@ -576,6 +723,434 @@ async def get_livekit_token(req: LivekitTokenRequest, request: Request) -> Livek
         identity=identity,
         role=role,
     )
+
+
+@app.post("/ai/prep/generate", response_model=AiPrepGenerateResponse)
+async def ai_prep_generate(req: AiPrepGenerateRequest, request: Request) -> AiPrepGenerateResponse:
+    t0 = time.perf_counter()
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authorization Bearer manquant pour AI prep.")
+
+    admin_jwt = auth_header.split(" ", 1)[1].strip()
+    if not admin_jwt:
+        raise HTTPException(status_code=401, detail="JWT invalide pour AI prep.")
+
+    subject_id = (req.subject_id or "").strip()
+    if not subject_id:
+        raise HTTPException(status_code=400, detail="subject_id manquant")
+
+    generation_type = (req.generation_type or "mcq").strip().lower()
+    prompt = (req.prompt or "").strip()
+    num_questions = req.num_questions if isinstance(req.num_questions, int) else 10
+    if num_questions <= 0:
+        num_questions = 10
+    if num_questions > 30:
+        num_questions = 30
+
+    input_params = {
+        "subject_id": subject_id,
+        "generation_type": generation_type,
+        "num_questions": num_questions,
+        "prompt": prompt or None,
+    }
+
+    canonical_params = json.dumps(input_params, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    input_hash = hashlib.sha256(canonical_params.encode("utf-8")).hexdigest()
+    input_params["input_hash"] = input_hash
+
+    # Rate-limit (anti-piratage V1) + log usage (best-effort)
+    try:
+        rl = await call_supabase_rpc_as_user(
+            admin_jwt,
+            "app_prep_ai_check_rate_limit",
+            {
+                "p_endpoint": "ai/prep/generate",
+                "p_window_seconds": 3600,
+                "p_max_calls": 20,
+            },
+        )
+        if isinstance(rl, dict) and rl.get("success") is True:
+            allowed = rl.get("allowed") is True
+            if not allowed:
+                try:
+                    await call_supabase_rpc_as_user(
+                        admin_jwt,
+                        "app_prep_ai_log_usage",
+                        {
+                            "p_generation_id": None,
+                            "p_subject_id": subject_id,
+                            "p_input_hash": input_hash,
+                            "p_endpoint": "ai/prep/generate",
+                            "p_status": "blocked_rate_limit",
+                            "p_duration_ms": int((time.perf_counter() - t0) * 1000),
+                            "p_metadata": {
+                                "count": rl.get("count"),
+                                "max": rl.get("max"),
+                                "window_seconds": rl.get("window_seconds"),
+                                "reset_in_seconds": rl.get("reset_in_seconds"),
+                            },
+                        },
+                    )
+                except Exception:
+                    pass
+
+                raise HTTPException(
+                    status_code=429,
+                    detail={
+                        "message": "Trop de générations IA. Réessaie plus tard.",
+                        "reset_in_seconds": rl.get("reset_in_seconds"),
+                    },
+                )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.warning(
+            "ai_prep_generate rate_limit_check_failed",
+            extra={
+                "subject_id": subject_id,
+                "generation_type": generation_type,
+                "input_hash": input_hash,
+                "error": str(exc)[:300],
+            },
+        )
+
+    # Anti-duplication (best-effort):
+    # - si une génération VALIDATED existe avec même input_hash => on la renvoie
+    # - si une génération PROPOSED existe avec même input_hash => on renvoie 409 (déjà en cours)
+    try:
+        existing_validated = await call_supabase_rpc_as_user(
+            admin_jwt,
+            "app_admin_prep_list_ai_generations",
+            {"p_subject_id": subject_id, "p_status": "validated"},
+        )
+        if isinstance(existing_validated, dict) and existing_validated.get("success") is True:
+            gens = existing_validated.get("generations")
+            if isinstance(gens, list):
+                for g in gens:
+                    if not isinstance(g, dict):
+                        continue
+                    ip = g.get("input_params")
+                    if isinstance(ip, dict) and ip.get("input_hash") == input_hash:
+                        out = g.get("output_json")
+                        if isinstance(out, dict):
+                            generation_id = str(g.get("id") or "").strip()
+                            try:
+                                await call_supabase_rpc_as_user(
+                                    admin_jwt,
+                                    "app_prep_ai_log_usage",
+                                    {
+                                        "p_generation_id": generation_id,
+                                        "p_subject_id": subject_id,
+                                        "p_input_hash": input_hash,
+                                        "p_endpoint": "ai/prep/generate",
+                                        "p_status": "dedup_hit_validated",
+                                        "p_duration_ms": int((time.perf_counter() - t0) * 1000),
+                                        "p_metadata": {"generation_type": generation_type},
+                                    },
+                                )
+                            except Exception:
+                                pass
+                            logger.info(
+                                "ai_prep_generate dedup_hit_validated",
+                                extra={
+                                    "generation_id": generation_id,
+                                    "subject_id": subject_id,
+                                    "generation_type": generation_type,
+                                    "input_hash": input_hash,
+                                },
+                            )
+                            return AiPrepGenerateResponse(success=True, generation_id=generation_id, output_json=out)
+
+        existing_proposed = await call_supabase_rpc_as_user(
+            admin_jwt,
+            "app_admin_prep_list_ai_generations",
+            {"p_subject_id": subject_id, "p_status": "proposed"},
+        )
+        if isinstance(existing_proposed, dict) and existing_proposed.get("success") is True:
+            gens = existing_proposed.get("generations")
+            if isinstance(gens, list):
+                for g in gens:
+                    if not isinstance(g, dict):
+                        continue
+                    ip = g.get("input_params")
+                    if isinstance(ip, dict) and ip.get("input_hash") == input_hash:
+                        generation_id = str(g.get("id") or "").strip()
+                        try:
+                            await call_supabase_rpc_as_user(
+                                admin_jwt,
+                                "app_prep_ai_log_usage",
+                                {
+                                    "p_generation_id": generation_id,
+                                    "p_subject_id": subject_id,
+                                    "p_input_hash": input_hash,
+                                    "p_endpoint": "ai/prep/generate",
+                                    "p_status": "dedup_hit_in_progress",
+                                    "p_duration_ms": int((time.perf_counter() - t0) * 1000),
+                                    "p_metadata": {"generation_type": generation_type},
+                                },
+                            )
+                        except Exception:
+                            pass
+                        logger.info(
+                            "ai_prep_generate dedup_hit_in_progress",
+                            extra={
+                                "generation_id": generation_id,
+                                "subject_id": subject_id,
+                                "generation_type": generation_type,
+                                "input_hash": input_hash,
+                            },
+                        )
+                        raise HTTPException(
+                            status_code=409,
+                            detail={
+                                "message": "Une génération identique est déjà en cours.",
+                                "generation_id": generation_id,
+                            },
+                        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        # On ne bloque pas la génération si la déduplication échoue.
+        logger.warning(
+            "ai_prep_generate dedup_check_failed",
+            extra={
+                "subject_id": subject_id,
+                "generation_type": generation_type,
+                "input_hash": input_hash,
+                "error": str(exc)[:300],
+            },
+        )
+
+    gen_create = await call_supabase_rpc_as_user(
+        admin_jwt,
+        "app_admin_prep_create_ai_generation",
+        {
+            "p_subject_id": subject_id,
+            "p_generation_type": generation_type,
+            "p_input_params": input_params,
+        },
+    )
+
+    if not isinstance(gen_create, dict) or not gen_create.get("success"):
+        error_code = None
+        if isinstance(gen_create, dict):
+            error_code = gen_create.get("error")
+        raise HTTPException(
+            status_code=403,
+            detail={"message": "Création génération impossible", "error": error_code or "unknown_error"},
+        )
+
+    generation_id = str(gen_create.get("generation_id") or "").strip()
+    if not generation_id:
+        raise HTTPException(status_code=500, detail="generation_id manquant")
+
+    try:
+        await call_supabase_rpc_as_user(
+            admin_jwt,
+            "app_prep_ai_log_usage",
+            {
+                "p_generation_id": generation_id,
+                "p_subject_id": subject_id,
+                "p_input_hash": input_hash,
+                "p_endpoint": "ai/prep/generate",
+                "p_status": "started",
+                "p_duration_ms": None,
+                "p_metadata": {
+                    "generation_type": generation_type,
+                    "num_questions": num_questions,
+                },
+            },
+        )
+    except Exception:
+        pass
+
+    logger.info(
+        "ai_prep_generate started",
+        extra={
+            "generation_id": generation_id,
+            "subject_id": subject_id,
+            "generation_type": generation_type,
+            "input_hash": input_hash,
+        },
+    )
+
+    system_prompt = (
+        "Tu es un assistant pédagogique pour la plateforme Academia. "
+        "Tu dois générer un QCM de préparation concours. "
+        "Réponds STRICTEMENT en JSON valide, sans texte autour. "
+        "Format attendu: {\"questions\":[{\"question\":string,\"choices\":[string,string,string,string],\"correct_index\":0-3,\"explanation\":string}]} "
+        "Pas de markdown, pas de commentaires."
+    )
+
+    user_prompt = (
+        f"Génère {num_questions} questions ({generation_type}) pour la matière {subject_id}. "
+        + (f"Contexte additionnel: {prompt}" if prompt else "")
+    )
+
+    # RAG Prépa concours (indépendant): récupère des chunks via RPC dédiée.
+    knowledge: List[Dict[str, Any]] = []
+    try:
+        rag = await call_supabase_rpc_as_user(
+            admin_jwt,
+            "app_prep_get_rag_chunks",
+            {
+                "p_subject_id": subject_id,
+                "p_limit": 12,
+                "p_max_chars": 6000,
+            },
+        )
+        if isinstance(rag, dict) and rag.get("success") is True:
+            chunks = rag.get("chunks")
+            if isinstance(chunks, list):
+                for item in chunks:
+                    if isinstance(item, dict):
+                        title = str(item.get("title") or "").strip()
+                        content = str(item.get("content") or "").strip()
+                        if content:
+                            knowledge.append({"title": title, "content": content})
+    except Exception as exc:
+        logger.warning(
+            "ai_prep_generate rag_fetch_failed",
+            extra={
+                "subject_id": subject_id,
+                "generation_type": generation_type,
+                "input_hash": input_hash,
+                "error": str(exc)[:300],
+            },
+        )
+
+    output_raw = await call_openrouter(
+        user_prompt,
+        knowledge,
+        system_prompt=system_prompt,
+        include_no_answer_sentinel=False,
+    )
+
+    output_json: Dict[str, Any]
+    try:
+        output_json = json.loads(output_raw)
+    except Exception as exc:
+        await call_supabase_rpc_as_user(
+            admin_jwt,
+            "app_admin_prep_set_ai_generation_status",
+            {
+                "p_generation_id": generation_id,
+                "p_status": "error",
+                "p_output_json": None,
+                "p_error_message": f"invalid_json: {str(exc)[:200]}" ,
+            },
+        )
+        logger.info(
+            "ai_prep_generate invalid_json",
+            extra={
+                "generation_id": generation_id,
+                "subject_id": subject_id,
+                "generation_type": generation_type,
+                "input_hash": input_hash,
+                "duration_ms": int((time.perf_counter() - t0) * 1000),
+            },
+        )
+        try:
+            await call_supabase_rpc_as_user(
+                admin_jwt,
+                "app_prep_ai_log_usage",
+                {
+                    "p_generation_id": generation_id,
+                    "p_subject_id": subject_id,
+                    "p_input_hash": input_hash,
+                    "p_endpoint": "ai/prep/generate",
+                    "p_status": "invalid_json",
+                    "p_duration_ms": int((time.perf_counter() - t0) * 1000),
+                    "p_metadata": {"generation_type": generation_type},
+                },
+            )
+        except Exception:
+            pass
+        raise HTTPException(status_code=500, detail={"message": "IA JSON invalide", "raw": output_raw[:800]})
+
+    if not isinstance(output_json, dict) or not isinstance(output_json.get("questions"), list):
+        await call_supabase_rpc_as_user(
+            admin_jwt,
+            "app_admin_prep_set_ai_generation_status",
+            {
+                "p_generation_id": generation_id,
+                "p_status": "error",
+                "p_output_json": output_json if isinstance(output_json, dict) else None,
+                "p_error_message": "invalid_schema",
+            },
+        )
+        logger.info(
+            "ai_prep_generate invalid_schema",
+            extra={
+                "generation_id": generation_id,
+                "subject_id": subject_id,
+                "generation_type": generation_type,
+                "input_hash": input_hash,
+                "duration_ms": int((time.perf_counter() - t0) * 1000),
+            },
+        )
+        try:
+            await call_supabase_rpc_as_user(
+                admin_jwt,
+                "app_prep_ai_log_usage",
+                {
+                    "p_generation_id": generation_id,
+                    "p_subject_id": subject_id,
+                    "p_input_hash": input_hash,
+                    "p_endpoint": "ai/prep/generate",
+                    "p_status": "invalid_schema",
+                    "p_duration_ms": int((time.perf_counter() - t0) * 1000),
+                    "p_metadata": {"generation_type": generation_type},
+                },
+            )
+        except Exception:
+            pass
+        raise HTTPException(status_code=500, detail={"message": "IA schema invalide", "output": output_json})
+
+    await call_supabase_rpc_as_user(
+        admin_jwt,
+        "app_admin_prep_set_ai_generation_status",
+        {
+            "p_generation_id": generation_id,
+            "p_status": "validated",
+            "p_output_json": output_json,
+            "p_error_message": None,
+        },
+    )
+
+    logger.info(
+        "ai_prep_generate validated",
+        extra={
+            "generation_id": generation_id,
+            "subject_id": subject_id,
+            "generation_type": generation_type,
+            "input_hash": input_hash,
+            "duration_ms": int((time.perf_counter() - t0) * 1000),
+        },
+    )
+
+    try:
+        await call_supabase_rpc_as_user(
+            admin_jwt,
+            "app_prep_ai_log_usage",
+            {
+                "p_generation_id": generation_id,
+                "p_subject_id": subject_id,
+                "p_input_hash": input_hash,
+                "p_endpoint": "ai/prep/generate",
+                "p_status": "validated",
+                "p_duration_ms": int((time.perf_counter() - t0) * 1000),
+                "p_metadata": {
+                    "generation_type": generation_type,
+                    "num_questions": num_questions,
+                },
+            },
+        )
+    except Exception:
+        pass
+
+    return AiPrepGenerateResponse(success=True, generation_id=generation_id, output_json=output_json)
 
 
 class LivekitAdminKickRequest(BaseModel):
@@ -1525,15 +2100,90 @@ async def perform_tv_pro_video_render(
             max_bitrate_k = 1800
             audio_bitrate_k = 128
 
-        output_path = run_ffmpeg_tv_pro(
-            input_paths,
-            filter_complex=filter_complex,
-            label=label,
-            max_bitrate_k=max_bitrate_k,
-            audio_bitrate_k=audio_bitrate_k,
-            fps=None,
-            map_audio_from=0,
-        )
+        try:
+            output_path = run_ffmpeg_tv_pro(
+                input_paths,
+                filter_complex=filter_complex,
+                label=label,
+                max_bitrate_k=max_bitrate_k,
+                audio_bitrate_k=audio_bitrate_k,
+                fps=None,
+                map_audio_from=0,
+            )
+        except HTTPException as exc:
+            detail = exc.detail
+            try:
+                snippet = (
+                    str(detail.get("error") or detail.get("message") or "")
+                    if isinstance(detail, dict)
+                    else str(detail)
+                )
+            except Exception:
+                snippet = str(exc)
+            logs_parts.append(f"tv_pro_primary_ffmpeg_error={snippet[:400]}")
+
+            overlays_fb: List[Dict[str, Any]] = []
+            overlays_raw_fb = (timeline or {}).get("overlays") or []
+            if isinstance(overlays_raw_fb, list):
+                for ov in overlays_raw_fb:
+                    if not isinstance(ov, dict):
+                        continue
+                    ov_type_fb = str(
+                        (ov.get("type") or ov.get("overlay_type") or "")
+                    ).strip().lower()
+                    if ov_type_fb in ("text", "banner", "lower_third", "ticker"):
+                        overlays_fb.append(ov)
+
+            if not overlays_fb:
+                raise
+
+            fallback_timeline: Dict[str, Any] = dict(timeline or {})
+            fallback_timeline["overlays"] = overlays_fb
+
+            try:
+                fb_builder_result = build_tv_pro_filtergraph(fallback_timeline)
+            except Exception as fb_exc:  # pragma: no cover - cas rare
+                raise HTTPException(
+                    status_code=500,
+                    detail={
+                        "message": "TV PRO fallback filtergraph failed",
+                        "error": str(fb_exc),
+                        "primary_error": str(detail),
+                    },
+                ) from exc
+
+            overlay_source_urls_fb: List[str] = []
+            overlay_source_urls_raw_fb = fb_builder_result.get("overlay_source_urls")
+            if isinstance(overlay_source_urls_raw_fb, list):
+                for u in overlay_source_urls_raw_fb:
+                    if isinstance(u, str):
+                        cleaned = u.strip()
+                        if cleaned:
+                            overlay_source_urls_fb.append(cleaned)
+
+            fc_fb = fb_builder_result.get("filter_complex")
+            if not isinstance(fc_fb, str) or not fc_fb.strip():
+                raise HTTPException(
+                    status_code=500,
+                    detail={"message": "filter_complex TV PRO fallback manquant ou invalide."},
+                )
+            filter_complex = fc_fb.strip()
+
+            for src_url in overlay_source_urls_fb:
+                p_fb = await _download_video_to_temp(src_url)
+                overlay_paths.append(p_fb)
+                input_paths.append(p_fb)
+
+            output_path = run_ffmpeg_tv_pro(
+                input_paths,
+                filter_complex=filter_complex,
+                label=f"{label}_fallback",
+                max_bitrate_k=max_bitrate_k,
+                audio_bitrate_k=audio_bitrate_k,
+                fps=None,
+                map_audio_from=0,
+            )
+            logs_parts.append("tv_pro_fallback_used=1")
 
         tmp_dir = Path(tempfile.mkdtemp(prefix="hero_tv_pro_thumb_"))
         thumb_path = tmp_dir / "thumb.jpg"
@@ -3287,6 +3937,69 @@ async def telemetry_video_playback_error(payload: VideoPlaybackErrorIn) -> Dict[
         )
 
     return {"success": True}
+
+
+@app.post("/studio/video/render_preview", response_model=StudioVideoPreviewResponse)
+async def studio_video_render_preview(
+    req: StudioVideoPreviewRequest,
+    request: Request,
+) -> StudioVideoPreviewResponse:
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Authorization Bearer manquant pour le rendu vido preview.",
+        )
+
+    participation_id = (req.participation_id or "").strip()
+    video_url = (req.video_url or "").strip()
+
+    if not participation_id:
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "participation_id manquant pour le rendu vido preview."},
+        )
+    if not video_url:
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "video_url manquant pour le rendu vido preview."},
+        )
+
+    render_payload = await call_studio_video_render_preview(
+        video_url=video_url,
+        participation_id=participation_id,
+    )
+
+    rendered_url_raw: Optional[str] = None
+    video_renditions: Dict[str, str] = {}
+
+    if isinstance(render_payload, dict):
+        raw = render_payload.get("video_url")
+        if isinstance(raw, str):
+            rendered_url_raw = raw
+        vr = render_payload.get("video_renditions")
+        if isinstance(vr, dict):
+            cleaned: Dict[str, str] = {}
+            for k, v in vr.items():
+                key = str(k)
+                val = str(v)
+                if key and val:
+                    cleaned[key] = val
+            video_renditions = cleaned
+
+    rendered_url = (rendered_url_raw or "").strip()
+    if not rendered_url:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "URL vido preview rendue manquante dans la rponse du service Studio vido.",
+            },
+        )
+
+    return StudioVideoPreviewResponse(
+        video_url=rendered_url,
+        video_renditions=video_renditions,
+    )
 
 
 @app.post("/studio/ai/transcribe", response_model=StudioTranscriptionResponse)
