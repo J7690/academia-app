@@ -543,11 +543,21 @@ async def call_openrouter(
             )
 
     if resp.status_code >= 400:
+        upstream_status = resp.status_code
+        if 400 <= upstream_status < 500:
+            raise HTTPException(
+                status_code=upstream_status,
+                detail={
+                    "message": "Erreur OpenRouter",
+                    "status_code": upstream_status,
+                    "error": resp.text[:1000],
+                },
+            )
         raise HTTPException(
-            status_code=500,
+            status_code=502,
             detail={
                 "message": "Erreur OpenRouter",
-                "status_code": resp.status_code,
+                "status_code": upstream_status,
                 "error": resp.text[:1000],
             },
         )
