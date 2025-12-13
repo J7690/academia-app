@@ -622,12 +622,26 @@ async def call_supabase_rpc_as_user(jwt: str, function: str, payload: Dict[str, 
             error_body = response.json()
         except ValueError:
             error_body = {"raw": response.text}
+        status = response.status_code
+        upstream_status = status
+        # Supabase peut répondre 4xx pour des erreurs de paramétrage, auth, permissions, RPC inexistante, etc.
+        # On propage ces codes pour éviter de masquer en 500 côté backend.
+        if 400 <= status < 500:
+            raise HTTPException(
+                status_code=status,
+                detail={
+                    "message": "Erreur RPC Supabase (user)",
+                    "rpc": function,
+                    "status_code": upstream_status,
+                    "error": error_body,
+                },
+            )
         raise HTTPException(
-            status_code=500,
+            status_code=502,
             detail={
                 "message": "Erreur RPC Supabase (user)",
                 "rpc": function,
-                "status_code": response.status_code,
+                "status_code": upstream_status,
                 "error": error_body,
             },
         )
@@ -739,6 +753,12 @@ async def ai_prep_generate(req: AiPrepGenerateRequest, request: Request) -> AiPr
     subject_id = (req.subject_id or "").strip()
     if not subject_id:
         raise HTTPException(status_code=400, detail="subject_id manquant")
+
+    try:
+        # Validation stricte: évite de faire remonter un 400 Supabase (invalid uuid) masqué.
+        uuid.UUID(subject_id)
+    except Exception:
+        raise HTTPException(status_code=422, detail={"message": "subject_id invalide (UUID attendu)", "subject_id": subject_id})
 
     generation_type = (req.generation_type or "mcq").strip().lower()
     prompt = (req.prompt or "").strip()
