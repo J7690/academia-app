@@ -7,11 +7,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:video_player/video_player.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../providers/student_challenges_provider.dart';
-import '../../widgets/student_video_player.dart';
+import '../../video/academia_playback_engine.dart';
+import '../../widgets/video_overlays_layer.dart';
 import 'challenge_camera_capture_screen.dart';
 import 'student_challenge_video_overlays.dart';
 import '../../services/studio_ai_service.dart';
@@ -69,6 +69,8 @@ class _StudentChallengeVideoEditorScreenState
   String? _fileName;
   String? _mimeType;
   String? _uploadedUrl;
+  String? _pendingChallengeVideoAssetId;
+  Map<String, dynamic>? _pendingChallengePlayback;
 
   bool _isUploading = false;
   bool _isSubmitting = false;
@@ -82,7 +84,6 @@ class _StudentChallengeVideoEditorScreenState
   String _selectedFilter = 'none'; // none, warm, cool, bw
   String _selectedSticker = 'none'; // none, star, heart, idea
 
-  VideoPlayerController? _videoController;
   bool _videoInitialized = false;
 
   bool _isTranscribing = false;
@@ -154,7 +155,6 @@ class _StudentChallengeVideoEditorScreenState
     _overlayTextController.dispose();
     _equationController.dispose();
     _subtitleController.dispose();
-    _videoController?.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -201,8 +201,6 @@ class _StudentChallengeVideoEditorScreenState
         _mimeType = ext;
         _uploadedUrl = null;
         _videoInitialized = false;
-        _videoController?.dispose();
-        _videoController = null;
       });
 
       await _uploadVideo();
@@ -343,8 +341,6 @@ class _StudentChallengeVideoEditorScreenState
       _mimeType = ext;
       _uploadedUrl = null;
       _videoInitialized = false;
-      _videoController?.dispose();
-      _videoController = null;
     });
   }
 
@@ -377,8 +373,6 @@ class _StudentChallengeVideoEditorScreenState
       _mimeType = file.extension;
       _uploadedUrl = null;
       _videoInitialized = false;
-      _videoController?.dispose();
-      _videoController = null;
     });
 
     if (!mounted) {
@@ -404,76 +398,151 @@ class _StudentChallengeVideoEditorScreenState
 
     String? url;
 
-    if (_isFreeVideo) {
-      // Vidéos libres : on uploade vers le stockage puis on met à jour
-      // la vidéo existante via la RPC app_student_set_free_video_main_renditions.
-      url = await provider.uploadFreeVideo(
-        bytes: _videoBytes!,
-        fileName: _fileName!,
-        mimeType: _mimeType,
-      );
-
-      if (!mounted) {
-        setState(() {
-          _isUploading = false;
-        });
-        return;
-      }
-
-      if (url == null) {
-        setState(() {
-          _isUploading = false;
-        });
-        final error =
-            provider.error ?? 'Erreur lors de l\'upload de la vidéo libre.';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error)),
+    try {
+      if (_isFreeVideo) {
+        // Upload de la vidéo libre vers le bucket existant.
+        final uploadUrl = await provider.uploadFreeVideo(
+          bytes: _videoBytes!,
+          fileName: _fileName!,
+          mimeType: _mimeType,
         );
-        return;
-      }
 
-      final ok = await provider.updateFreeVideoMainRenditions(
-        freeVideoId: _effectiveFreeVideoId,
-        videoUrl: url,
-      );
+        if (!mounted) {
+          return;
+        }
 
-      if (!mounted) {
-        setState(() {
-          _isUploading = false;
-        });
-        return;
-      }
+        if (uploadUrl == null) {
+          final error =
+              provider.error ?? 'Erreur lors de l\'upload de la vidéo libre.';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error)),
+          );
+          return;
+        }
 
-      if (!ok) {
-        setState(() {
-          _isUploading = false;
-        });
-        final error =
-            provider.error ?? 'Erreur lors de la mise à jour de la vidéo libre.';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error)),
+        // Résolution de l'URL directe en VideoAsset + playback canonique.
+        final manifest = await provider.fetchPlaybackForDirectUrl(uploadUrl);
+
+        if (!mounted) {
+          return;
+        }
+
+        if (manifest == null) {
+          final error = provider.error ??
+              'Erreur lors de la récupération du playback de la vidéo libre.';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error)),
+          );
+          return;
+        }
+
+        final videoAssetId = manifest['video_asset_id']?.toString() ?? '';
+        final playback = manifest['playback'];
+
+        if (videoAssetId.isEmpty || playback is! Map<String, dynamic>) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content:
+                  Text('Playback vidéo invalide retourné par le serveur.'),
+            ),
+          );
+          return;
+        }
+
+        final ok = await provider.updateFreeVideoMainRenditions(
+          freeVideoId: _effectiveFreeVideoId,
+          videoAssetId: videoAssetId,
+          playback: Map<String, dynamic>.from(playback),
         );
-        return;
+
+        if (!mounted) {
+          return;
+        }
+
+        if (!ok) {
+          final error = provider.error ??
+              'Erreur lors de la mise à jour de la vidéo libre.';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error)),
+          );
+          return;
+        }
+
+        // On garde l'URL de lecture principale pour l'aperçu studio.
+        url = Map<String, dynamic>.from(playback)['best_url']?.toString();
+      } else {
+        // Upload de la vidéo de challenge.
+        final uploadUrl = await provider.uploadChallengeVideo(
+          bytes: _videoBytes!,
+          fileName: _fileName!,
+          challengeId: _effectiveChallengeId,
+          mimeType: _mimeType,
+        );
+
+        if (!mounted) {
+          return;
+        }
+
+        if (uploadUrl == null) {
+          final error =
+              provider.error ?? 'Erreur lors de l\'upload de la vidéo.';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error)),
+          );
+          return;
+        }
+
+        // Résolution de l'URL directe en VideoAsset + playback canonique.
+        final manifest = await provider.fetchPlaybackForDirectUrl(uploadUrl);
+
+        if (!mounted) {
+          return;
+        }
+
+        if (manifest == null) {
+          final error = provider.error ??
+              'Erreur lors de la récupération du playback de la vidéo.';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error)),
+          );
+          return;
+        }
+
+        final videoAssetId = manifest['video_asset_id']?.toString() ?? '';
+        final playback = manifest['playback'];
+
+        if (videoAssetId.isEmpty || playback is! Map<String, dynamic>) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content:
+                  Text('Playback vidéo invalide retourné par le serveur.'),
+            ),
+          );
+          return;
+        }
+
+        // On mémorise pour la soumission éventuelle en "vidéo additionnelle".
+        _pendingChallengeVideoAssetId = videoAssetId;
+        _pendingChallengePlayback =
+            Map<String, dynamic>.from(playback as Map<String, dynamic>);
+
+        url = _pendingChallengePlayback?['best_url']?.toString();
       }
-    } else {
-      url = await provider.uploadChallengeVideo(
-        bytes: _videoBytes!,
-        fileName: _fileName!,
-        challengeId: _effectiveChallengeId,
-        mimeType: _mimeType,
-      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
     }
 
     if (!mounted) {
       return;
     }
 
-    setState(() {
-      _isUploading = false;
-    });
-
-    if (url == null) {
-      final error = provider.error ?? 'Erreur lors de l\'upload de la vidéo.';
+    if (url == null || url.isEmpty) {
+      final error = provider.error ??
+          'Erreur lors de l\'initialisation de la vidéo.';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error)),
       );
@@ -498,34 +567,16 @@ class _StudentChallengeVideoEditorScreenState
   }
 
   String _pickBestServerVideoUrl(Map<String, dynamic> video) {
-    final rawUrl = video['video_url']?.toString().trim() ?? '';
-
-    final renditionsRaw = video['video_renditions'];
-    Map<String, dynamic>? renditions;
-    if (renditionsRaw is Map) {
-      renditions = Map<String, dynamic>.from(renditionsRaw);
-    }
-
-    if (renditions == null || renditions.isEmpty) {
-      return rawUrl;
-    }
-
-    final isAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
-    const androidOrder = ['360p', '240p', '480p', 'default', 'source'];
-    const otherOrder = ['480p', '360p', '240p', 'default', 'source'];
-    final order = isAndroid ? androidOrder : otherOrder;
-
-    for (final key in order) {
-      final v = renditions[key]?.toString().trim() ?? '';
-      if (v.isNotEmpty) {
-        print(
-          'ANDROID STUDIO VIDEO DEBUG :: pickBestServerVideoUrl key=$key url=$v',
-        );
-        return v;
+    final playback = video['playback'];
+    if (playback is Map) {
+      final playbackMap = Map<String, dynamic>.from(playback);
+      final best = playbackMap['best_url']?.toString().trim() ?? '';
+      if (best.isNotEmpty) {
+        return best;
       }
     }
 
-    return rawUrl;
+    return '';
   }
 
   String _pickBestClipUrl(List<Map<String, dynamic>> clips) {
@@ -535,22 +586,30 @@ class _StudentChallengeVideoEditorScreenState
 
     final reversed = clips.reversed;
     for (final clip in reversed) {
-      final url = clip['video_url']?.toString().trim() ?? '';
-      if (url.isNotEmpty && url.contains('/renders/')) {
-        print(
-          'ANDROID STUDIO VIDEO DEBUG :: pickBestClipUrl renders url=$url',
-        );
-        return url;
+      final playback = clip['playback'];
+      if (playback is Map) {
+        final playbackMap = Map<String, dynamic>.from(playback);
+        final url = playbackMap['best_url']?.toString().trim() ?? '';
+        if (url.isNotEmpty && url.contains('/renders/')) {
+          print(
+            'ANDROID STUDIO VIDEO DEBUG :: pickBestClipUrl renders url=$url',
+          );
+          return url;
+        }
       }
     }
 
     for (final clip in reversed) {
-      final url = clip['video_url']?.toString().trim() ?? '';
-      if (url.isNotEmpty) {
-        print(
-          'ANDROID STUDIO VIDEO DEBUG :: pickBestClipUrl fallback url=$url',
-        );
-        return url;
+      final playback = clip['playback'];
+      if (playback is Map) {
+        final playbackMap = Map<String, dynamic>.from(playback);
+        final url = playbackMap['best_url']?.toString().trim() ?? '';
+        if (url.isNotEmpty) {
+          print(
+            'ANDROID STUDIO VIDEO DEBUG :: pickBestClipUrl fallback url=$url',
+          );
+          return url;
+        }
       }
     }
 
@@ -559,27 +618,10 @@ class _StudentChallengeVideoEditorScreenState
 
   Future<void> _initRemoteVideo(String url) async {
     print('ANDROID STUDIO VIDEO DEBUG :: initRemoteVideo url=$url');
-    _videoController?.dispose();
-    final controller = VideoPlayerController.networkUrl(Uri.parse(url));
-    _videoController = controller;
-    try {
-      await controller.initialize();
-      if (!mounted) {
-        return;
-      }
-      controller.setLooping(true);
-      controller.play();
-      setState(() {
-        _videoInitialized = true;
-      });
-      print('ANDROID STUDIO VIDEO DEBUG :: controller initialized successfully');
-    } catch (e) {
-      print('ANDROID STUDIO VIDEO ERROR :: $e');
-      if (!mounted) return;
-      setState(() {
-        _videoInitialized = false;
-      });
-    }
+    if (!mounted) return;
+    setState(() {
+      _videoInitialized = true;
+    });
   }
 
   Future<void> _loadExistingOverlaysIfAny() async {
@@ -819,19 +861,7 @@ class _StudentChallengeVideoEditorScreenState
   }
 
   double _getTimelineDurationSeconds() {
-    final controller = _videoController;
-    if (controller == null) {
-      return 30.0;
-    }
-    final value = controller.value;
-    if (!value.isInitialized) {
-      return 30.0;
-    }
-    final seconds = value.duration.inSeconds;
-    if (seconds <= 0) {
-      return 30.0;
-    }
-    return seconds.toDouble();
+    return 30.0;
   }
 
   void _scrollToStudioSection() {
@@ -1025,8 +1055,13 @@ class _StudentChallengeVideoEditorScreenState
       for (var i = 0; i < orderedIds.length; i++) {
         final id = orderedIds[i];
         final clip = clipsById[id]!;
-        final videoUrl = clip['video_url']?.toString();
-        if (videoUrl == null || videoUrl.isEmpty) {
+        final playback = clip['playback'];
+        String? bestUrl;
+        if (playback is Map) {
+          final playbackMap = Map<String, dynamic>.from(playback);
+          bestUrl = playbackMap['best_url']?.toString();
+        }
+        if (bestUrl == null || bestUrl.isEmpty) {
           continue;
         }
         final edit = _clipEdits[id];
@@ -1046,7 +1081,7 @@ class _StudentChallengeVideoEditorScreenState
         }
         clips.add({
           'clip_id': id,
-          'video_url': videoUrl,
+          'video_url': bestUrl,
           'order': i,
           'start_ms': startMs,
           'end_ms': endMs,
@@ -2223,9 +2258,53 @@ class _StudentChallengeVideoEditorScreenState
         _isSubmitting = true;
       });
 
+      // Si la vidéo additionnelle vient d'être uploadée dans cette session,
+      // on a déjà résolu videoAssetId + playback via _uploadVideo.
+      // Sinon (cas d'une URL existante), on résout à la volée.
+      String? videoAssetId = _pendingChallengeVideoAssetId;
+      Map<String, dynamic>? playback = _pendingChallengePlayback;
+
+      if (videoAssetId == null || playback == null) {
+        final manifest = await provider.fetchPlaybackForDirectUrl(_uploadedUrl!);
+        if (!mounted) {
+          return;
+        }
+
+        if (manifest == null) {
+          setState(() {
+            _isSubmitting = false;
+          });
+          final error = provider.error ??
+              'Erreur lors de la résolution de la vidéo de challenge.';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error)),
+          );
+          return;
+        }
+
+        videoAssetId = manifest['video_asset_id']?.toString();
+        final rawPlayback = manifest['playback'];
+        if (videoAssetId == null || videoAssetId.isEmpty ||
+            rawPlayback is! Map<String, dynamic>) {
+          setState(() {
+            _isSubmitting = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content:
+                  Text('Playback vidéo invalide retourné par le serveur.'),
+            ),
+          );
+          return;
+        }
+
+        playback = Map<String, dynamic>.from(rawPlayback);
+      }
+
       final okAdd = await provider.addChallengeVideo(
         participationId: _effectiveParticipationId,
-        videoUrl: _uploadedUrl!,
+        videoAssetId: videoAssetId!,
+        playback: playback!,
       );
 
       if (!mounted) {
@@ -2570,7 +2649,9 @@ class _StudentChallengeVideoEditorScreenState
                               continue;
                             }
 
-                            final seg = Map<String, dynamic>.from(segments[i]);
+                            final seg = Map<String, dynamic>.from(
+                              segments[i],
+                            );
 
                             final rawStart = startControllers[i].text.trim();
                             final rawEnd = endControllers[i].text.trim();
@@ -3425,7 +3506,11 @@ class _StudentChallengeVideoEditorScreenState
                   onPressed:
                       _isUploading || _isSubmitting ? null : _pickVideo,
                   icon: const Icon(Icons.video_file),
-                  label: const Text('Changer de vidéo'),
+                  label: Text(
+                    _fileName == null
+                        ? 'Sélectionner une vidéo depuis l\'appareil'
+                        : 'Changer de vidéo',
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -3438,7 +3523,8 @@ class _StudentChallengeVideoEditorScreenState
                       ? const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child:
+                              CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.check_circle_outline),
                   label: const Text('Publier ma vidéo'),
@@ -3455,9 +3541,8 @@ class _StudentChallengeVideoEditorScreenState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     const bool showCameraButton = true;
-    final bool hasController = _videoController != null;
     final bool hasUrl = _uploadedUrl != null && _uploadedUrl!.isNotEmpty;
-    final bool hasVideo = hasController || hasUrl;
+    final bool hasVideo = hasUrl;
 
     // Mode studio plein écran : vidéo en fond d'écran + actions et panneau
     // en overlay, pour toutes les plateformes et tous les types de vidéos.
@@ -3471,11 +3556,27 @@ class _StudentChallengeVideoEditorScreenState
             Positioned.fill(
               child: Container(
                 color: Colors.black,
-                child: hasController
-                    ? StudentVideoPlayer(
-                        controller: _videoController!,
-                        overlays: _buildOverlaysPayload(),
-                        feedMode: true,
+                child: _uploadedUrl != null && _uploadedUrl!.isNotEmpty
+                    ? Stack(
+                        children: [
+                          Positioned.fill(
+                            child: AcademiaPlaybackEngine.view(
+                              url: _uploadedUrl!,
+                              autoplay: true,
+                              looping: true,
+                              muted: false,
+                              showControls: false,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              child: VideoOverlaysLayer(
+                                overlays: _buildOverlaysPayload(),
+                              ),
+                            ),
+                          ),
+                        ],
                       )
                     : const Center(
                         child: CircularProgressIndicator(),
@@ -3680,7 +3781,6 @@ class _RenderJobVideoPreviewScreen extends StatefulWidget {
 
 class _RenderJobVideoPreviewScreenState
     extends State<_RenderJobVideoPreviewScreen> {
-  VideoPlayerController? _controller;
   bool _initialized = false;
 
   @override
@@ -3690,27 +3790,9 @@ class _RenderJobVideoPreviewScreenState
     if (url.isEmpty) {
       return;
     }
-    final controller = VideoPlayerController.networkUrl(Uri.parse(url));
-    _controller = controller;
-    controller.initialize().then((_) {
-      if (!mounted) return;
-      controller.setLooping(true);
-      controller.play();
-      setState(() {
-        _initialized = true;
-      });
-    }).catchError((_) {
-      if (!mounted) return;
-      setState(() {
-        _initialized = false;
-      });
+    setState(() {
+      _initialized = true;
     });
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
   }
 
   @override
@@ -3719,13 +3801,20 @@ class _RenderJobVideoPreviewScreenState
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: const Text('Prévisualisation du rendu Studio'),
+        title: const Text('Prévisualisation du rendu'),
       ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: _controller != null && _initialized
-              ? StudentVideoPlayer(controller: _controller!)
+          child: _initialized && widget.videoUrl.trim().isNotEmpty
+              ? AcademiaPlaybackEngine.view(
+                  url: widget.videoUrl.trim(),
+                  autoplay: true,
+                  looping: true,
+                  muted: false,
+                  showControls: true,
+                  fit: BoxFit.contain,
+                )
               : const CircularProgressIndicator(),
         ),
       ),
@@ -3748,7 +3837,6 @@ class _ExtraClipPreviewScreen extends StatefulWidget {
 }
 
 class _ExtraClipPreviewScreenState extends State<_ExtraClipPreviewScreen> {
-  VideoPlayerController? _controller;
   bool _initialized = false;
   Map<String, dynamic>? _overlays;
 
@@ -3759,29 +3847,10 @@ class _ExtraClipPreviewScreenState extends State<_ExtraClipPreviewScreen> {
     if (url.isEmpty) {
       return;
     }
-    final controller = VideoPlayerController.networkUrl(Uri.parse(url));
-    _controller = controller;
-    controller.initialize().then((_) {
-      if (!mounted) return;
-      controller.setLooping(true);
-      controller.play();
-      setState(() {
-        _initialized = true;
-      });
-    }).catchError((_) {
-      if (!mounted) return;
-      setState(() {
-        _initialized = false;
-      });
+    setState(() {
+      _initialized = true;
     });
-
     _loadOverlays();
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
   }
 
   Future<void> _loadOverlays() async {
@@ -3829,10 +3898,25 @@ class _ExtraClipPreviewScreenState extends State<_ExtraClipPreviewScreen> {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: _controller != null && _initialized
-              ? StudentVideoPlayer(
-                  controller: _controller!,
-                  overlays: _overlays,
+          child: _initialized && widget.videoUrl.trim().isNotEmpty
+              ? Stack(
+                  children: [
+                    Positioned.fill(
+                      child: AcademiaPlaybackEngine.view(
+                        url: widget.videoUrl.trim(),
+                        autoplay: true,
+                        looping: true,
+                        muted: false,
+                        showControls: true,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: VideoOverlaysLayer(overlays: _overlays),
+                      ),
+                    ),
+                  ],
                 )
               : const CircularProgressIndicator(),
         ),

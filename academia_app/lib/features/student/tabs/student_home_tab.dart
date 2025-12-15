@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:video_player/video_player.dart';
 
 import '../student_profile_screen.dart';
 import '../student_university_site_screen.dart';
@@ -17,9 +16,7 @@ import '../../../providers/online_courses_catalog_provider.dart';
 import '../../../providers/student_online_courses_provider.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
-import '../../../widgets/hls_web_stub.dart'
-    if (dart.library.html) '../../../widgets/hls_web.dart';
-import '../../../widgets/academia_video_widget.dart';
+import '../../../video/academia_playback_engine.dart';
 import '../../../widgets/notification_sound_settings_dialog.dart';
 import '../widgets/student_short_trainings_section.dart';
 import '../widgets/student_home_online_courses_section.dart';
@@ -39,10 +36,8 @@ class StudentHomeTab extends StatefulWidget {
 }
 
 class _StudentHomeTabState extends State<StudentHomeTab> {
-  VideoPlayerController? _videoController;
   bool _videoReady = false;
-  bool _isHlsWeb = false;
-  String? _currentHlsUrl;
+  String? _currentVideoUrl;
 
   late final ScrollController _tickerController;
   Timer? _tickerTimer;
@@ -103,7 +98,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
     _universitySearchController.dispose();
     _programSearchController.dispose();
     _mediaTimer?.cancel();
-    _videoController?.dispose();
     super.dispose();
   }
 
@@ -167,11 +161,8 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
     if (playlist.isEmpty) {
       _mediaPlaylist = [];
       _currentMediaIndex = 0;
-      _videoController?.dispose();
-      _videoController = null;
       _videoReady = false;
-      _isHlsWeb = false;
-      _currentHlsUrl = null;
+      _currentVideoUrl = null;
       _mediaTimer?.cancel();
       if (mounted) {
         setState(() {
@@ -195,10 +186,7 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
     final item = _mediaPlaylist[_currentMediaIndex];
 
     if (item.mediaType == 'image') {
-      _videoController?.dispose();
-      _videoController = null;
-      _isHlsWeb = false;
-      _currentHlsUrl = null;
+      _currentVideoUrl = null;
       _videoReady = true;
       if (mounted) {
         setState(() {});
@@ -210,82 +198,17 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   }
 
   Future<void> _initVideo(String url) async {
-    _videoController?.dispose();
     _videoReady = false;
-    _isHlsWeb = false;
-    _currentHlsUrl = null;
+    _currentVideoUrl = null;
     if (mounted) {
       setState(() {});
     }
 
-    final lowerUrl = url.toLowerCase();
-    final isHls = lowerUrl.contains('.m3u8');
-
-    if (kIsWeb && isHls) {
-      setState(() {
-        _videoController = null;
-        _isHlsWeb = true;
-        _currentHlsUrl = url;
-        _videoReady = true;
-      });
-      return;
-    }
-
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      setState(() {
-        _videoController = null;
-        _videoReady = true;
-        _isHlsWeb = false;
-        _currentHlsUrl = null;
-      });
-      return;
-    }
-
-    try {
-      final controller = VideoPlayerController.networkUrl(Uri.parse(url));
-      await controller.initialize();
-
-      var hasCompleted = false;
-      controller.addListener(() {
-        final value = controller.value;
-        if (!mounted) return;
-        if (!value.isInitialized) return;
-        final duration = value.duration;
-        if (duration == Duration.zero) return;
-        if (!value.isPlaying && value.position >= duration && !hasCompleted) {
-          hasCompleted = true;
-          _onVideoCompleted();
-        }
-      });
-
-      controller
-        ..setLooping(false)
-        ..setVolume(0)
-        ..play();
-
-      if (!mounted) {
-        controller.dispose();
-        return;
-      }
-
-      setState(() {
-        _videoController = controller;
-        _videoReady = true;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _videoController = null;
-        _videoReady = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Impossible de lire cette vidéo. Utilise un lien direct vers un fichier vidéo (mp4, webm, …) ou un flux HLS public.',
-          ),
-        ),
-      );
-    }
+    if (!mounted) return;
+    setState(() {
+      _currentVideoUrl = url;
+      _videoReady = true;
+    });
   }
 
   void _onVideoCompleted() {
@@ -405,9 +328,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
               SliverToBoxAdapter(
                 child: _StudentHomeHero(
                   videoReady: _videoReady,
-                  videoController: _videoController,
-                  isHlsWeb: _isHlsWeb,
-                  currentHlsUrl: _currentHlsUrl,
                   onVideoCompleted: _onVideoCompleted,
                   heroTitle: _heroTitle,
                   currentVideoUrl: () {
@@ -616,9 +536,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
 
 class _StudentHomeHero extends StatelessWidget {
   final bool videoReady;
-  final VideoPlayerController? videoController;
-  final bool isHlsWeb;
-  final String? currentHlsUrl;
   final VoidCallback onVideoCompleted;
   final String? heroTitle;
   final String? currentVideoUrl;
@@ -626,9 +543,6 @@ class _StudentHomeHero extends StatelessWidget {
 
   const _StudentHomeHero({
     required this.videoReady,
-    required this.videoController,
-    required this.isHlsWeb,
-    required this.currentHlsUrl,
     required this.onVideoCompleted,
     required this.heroTitle,
     required this.currentVideoUrl,
@@ -677,33 +591,16 @@ class _StudentHomeHero extends StatelessWidget {
                     );
                   }
 
-                  if (videoReady &&
-                      !kIsWeb &&
-                      defaultTargetPlatform == TargetPlatform.android &&
-                      currentVideoUrl != null) {
-                    return AcademiaVideoWidget(
+                  if (videoReady && currentVideoUrl != null) {
+                    return AcademiaPlaybackEngine.view(
                       url: currentVideoUrl!,
                       autoplay: true,
-                      loop: true,
-                      muted: true,
+                      looping: true,
+                      muted: false,
                       showControls: false,
-                      resizeMode: 'cover',
-                    );
-                  }
-
-                  if (videoReady && videoController != null) {
-                    return FittedBox(
                       fit: BoxFit.cover,
-                      child: SizedBox(
-                        width: videoController!.value.size.width,
-                        height: videoController!.value.size.height,
-                        child: VideoPlayer(videoController!),
-                      ),
+                      onCompleted: onVideoCompleted,
                     );
-                  }
-
-                  if (videoReady && isHlsWeb && kIsWeb && currentHlsUrl != null) {
-                    return const SizedBox.shrink();
                   }
 
                   return Container(
@@ -717,16 +614,6 @@ class _StudentHomeHero extends StatelessWidget {
                   );
                 }(),
               ),
-              if (videoReady && isHlsWeb && kIsWeb && currentHlsUrl != null)
-                Positioned.fill(
-                  child: HlsWebVideoPlayer(
-                    url: currentHlsUrl!,
-                    autoplay: true,
-                    loop: false,
-                    muted: true,
-                    onEnded: onVideoCompleted,
-                  ),
-                ),
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(

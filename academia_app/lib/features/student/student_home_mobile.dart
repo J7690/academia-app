@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../video/academia_playback_engine.dart';
 import '../../providers/student_profile_provider.dart';
 import '../../providers/student_applications_provider.dart';
 import '../../providers/student_offers_provider.dart';
@@ -13,7 +14,6 @@ import '../../providers/student_online_courses_provider.dart';
 import '../../providers/home_formations_provider.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart';
-import '../../widgets/academia_video_widget.dart';
 import '../../widgets/notification_sound_settings_dialog.dart';
 import 'student_application_detail_screen.dart';
 import 'tabs/student_applications_tab.dart';
@@ -644,13 +644,13 @@ class _MobileHomeHeroState extends State<_MobileHomeHero> {
                 )
               else
                 Positioned.fill(
-                  child: AcademiaVideoWidget(
+                  child: AcademiaPlaybackEngine.view(
                     url: heroUrl,
                     autoplay: true,
-                    loop: true,
+                    looping: true,
                     muted: true,
                     showControls: false,
-                    resizeMode: 'cover',
+                    fit: BoxFit.cover,
                   ),
                 ),
               Positioned.fill(

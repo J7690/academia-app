@@ -1,12 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:video_player/video_player.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-import '../../widgets/hls_web_stub.dart'
-    if (dart.library.html) '../../widgets/hls_web.dart';
-import '../../widgets/academia_video_widget.dart';
+import '../../video/academia_playback_engine.dart';
 
 class MiniSiteMediaViewerScreen extends StatefulWidget {
   final Map<String, dynamic> media;
@@ -23,9 +17,6 @@ class _MiniSiteMediaViewerScreenState extends State<MiniSiteMediaViewerScreen> {
   String? _error;
   bool _isLoading = true;
   bool _isVideo = false;
-  bool _isHlsWeb = false;
-  String? _hlsUrl;
-  VideoPlayerController? _videoController;
 
   @override
   void initState() {
@@ -61,36 +52,11 @@ class _MiniSiteMediaViewerScreenState extends State<MiniSiteMediaViewerScreen> {
 
       _resolvedUrl = resolvedUrl;
 
-      final isHls = resolvedUrl.toLowerCase().contains('.m3u8');
-
-      if (isVideo && kIsWeb && isHls) {
+      if (isVideo) {
         setState(() {
           _isVideo = true;
-          _isHlsWeb = true;
-          _hlsUrl = resolvedUrl;
           _isLoading = false;
         });
-        return;
-      }
-
-      if (isVideo) {
-        if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-          setState(() {
-            _videoController = null;
-            _isVideo = true;
-            _isLoading = false;
-          });
-        } else {
-          final controller = VideoPlayerController.networkUrl(Uri.parse(resolvedUrl));
-          await controller.initialize();
-          controller.setLooping(true);
-          controller.play();
-          setState(() {
-            _videoController = controller;
-            _isVideo = true;
-            _isLoading = false;
-          });
-        }
       } else {
         setState(() {
           _url = resolvedUrl;
@@ -108,7 +74,6 @@ class _MiniSiteMediaViewerScreenState extends State<MiniSiteMediaViewerScreen> {
 
   @override
   void dispose() {
-    _videoController?.dispose();
     super.dispose();
   }
 
@@ -136,74 +101,20 @@ class _MiniSiteMediaViewerScreenState extends State<MiniSiteMediaViewerScreen> {
       );
     }
     if (_isVideo) {
-      if (_isHlsWeb && kIsWeb) {
-        final url = _hlsUrl;
-        if (url == null || url.isEmpty) {
-          return const SizedBox.shrink();
-        }
-        return AspectRatio(
-          aspectRatio: 16 / 9,
-          child: HlsWebVideoPlayer(
-            url: url,
-            autoplay: true,
-            loop: true,
-            muted: false,
-            showControls: true,
-          ),
-        );
-      }
-      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-        final url = _resolvedUrl;
-        if (url == null || url.isEmpty) {
-          return const SizedBox.shrink();
-        }
-        return AspectRatio(
-          aspectRatio: 16 / 9,
-          child: AcademiaVideoWidget(
-            url: url,
-            autoplay: true,
-            loop: true,
-            muted: false,
-            showControls: true,
-            resizeMode: 'contain',
-          ),
-        );
-      }
-
-      final controller = _videoController;
-      if (controller == null) {
+      final url = _resolvedUrl;
+      if (url == null || url.isEmpty) {
         return const SizedBox.shrink();
       }
-      final aspectRatio = controller.value.aspectRatio == 0
-          ? 16 / 9
-          : controller.value.aspectRatio;
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          AspectRatio(
-            aspectRatio: aspectRatio,
-            child: VideoPlayer(controller),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                onPressed: () {
-                  if (controller.value.isPlaying) {
-                    controller.pause();
-                  } else {
-                    controller.play();
-                  }
-                  setState(() {});
-                },
-                icon: Icon(
-                  controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-                ),
-              ),
-            ],
-          ),
-        ],
+      return AspectRatio(
+        aspectRatio: 16 / 9,
+        child: AcademiaPlaybackEngine.view(
+          url: url,
+          autoplay: true,
+          looping: true,
+          muted: false,
+          showControls: true,
+          fit: BoxFit.contain,
+        ),
       );
     }
     final url = _url;

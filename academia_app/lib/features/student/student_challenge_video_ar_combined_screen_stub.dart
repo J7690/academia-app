@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
 
-import '../../widgets/student_video_player.dart';
+import '../../video/academia_playback_engine.dart';
+import '../../widgets/video_overlays_layer.dart';
 
 class StudentChallengeVideoArCombinedScreen extends StatefulWidget {
   final String videoUrl;
@@ -20,42 +20,9 @@ class StudentChallengeVideoArCombinedScreen extends StatefulWidget {
 
 class _StudentChallengeVideoArCombinedScreenState
     extends State<StudentChallengeVideoArCombinedScreen> {
-  VideoPlayerController? _videoController;
-  bool _videoInitialized = false;
-
   @override
   void initState() {
     super.initState();
-    _initVideo();
-  }
-
-  Future<void> _initVideo() async {
-    final url = widget.videoUrl.trim();
-    if (url.isEmpty) {
-      return;
-    }
-    final controller = VideoPlayerController.networkUrl(Uri.parse(url));
-    _videoController = controller;
-    try {
-      await controller.initialize();
-      if (!mounted) return;
-      controller.setLooping(true);
-      controller.play();
-      setState(() {
-        _videoInitialized = true;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _videoInitialized = false;
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _videoController?.dispose();
-    super.dispose();
   }
 
   @override
@@ -71,12 +38,32 @@ class _StudentChallengeVideoArCombinedScreenState
               color: Colors.black,
               padding: const EdgeInsets.all(12.0),
               child: Center(
-                child: _videoController != null && _videoInitialized
-                    ? StudentVideoPlayer(
-                        controller: _videoController!,
-                        overlays: widget.overlays,
+                child: widget.videoUrl.trim().isNotEmpty
+                    ? Stack(
+                        children: [
+                          Positioned.fill(
+                            child: AcademiaPlaybackEngine.view(
+                              url: widget.videoUrl.trim(),
+                              autoplay: true,
+                              looping: true,
+                              muted: false,
+                              showControls: true,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              child: VideoOverlaysLayer(
+                                overlays: widget.overlays,
+                              ),
+                            ),
+                          ),
+                        ],
                       )
-                    : const CircularProgressIndicator(),
+                    : const Text(
+                        'Vidéo indisponible.',
+                        style: TextStyle(color: Colors.white),
+                      ),
               ),
             ),
           ),

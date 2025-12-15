@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:video_player/video_player.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../providers/landing_content_provider.dart';
@@ -13,9 +12,7 @@ import '../../providers/student_offers_provider.dart';
 import '../debug/network_diagnostic_screen.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
-import '../../widgets/hls_web_stub.dart'
-    if (dart.library.html) '../../widgets/hls_web.dart';
-import '../../widgets/academia_video_widget.dart';
+import '../../video/academia_playback_engine.dart';
 
 class _HeroMediaItem {
   final String url;
@@ -101,10 +98,7 @@ class _MarketingLandingView extends StatefulWidget {
 }
 
 class _MarketingLandingViewState extends State<_MarketingLandingView> {
-  VideoPlayerController? _videoController;
   bool _videoReady = false;
-  bool _isHlsWeb = false;
-  String? _currentHlsUrl;
 
   late final ScrollController _tickerController;
   Timer? _tickerTimer;
@@ -212,10 +206,6 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
 
     if (item.mediaType == 'image') {
       debugPrint('Landing: displaying image media url=' + item.url);
-      _videoController?.dispose();
-      _videoController = null;
-      _isHlsWeb = false;
-      _currentHlsUrl = null;
       _videoReady = true;
       if (mounted) {
         setState(() {});
@@ -228,89 +218,15 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
 
   Future<void> _initVideo(String url) async {
     debugPrint('Landing: _initVideo(url=' + url + ')');
-    _videoController?.dispose();
     _videoReady = false;
-    _isHlsWeb = false;
-    _currentHlsUrl = null;
     if (mounted) {
       setState(() {});
     }
 
-    final lowerUrl = url.toLowerCase();
-    final isHls = lowerUrl.contains('.m3u8');
-
-    debugPrint('Landing: _initVideo kIsWeb=' + kIsWeb.toString() +
-        ' isHls=' + isHls.toString());
-
-    if (kIsWeb && isHls) {
-      debugPrint('Landing: using HLS web player for URL=' + url);
-      setState(() {
-        _videoController = null;
-        _isHlsWeb = true;
-        _currentHlsUrl = url;
-        _videoReady = true;
-      });
-      return;
-    }
-
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      debugPrint('Landing: using Android custom video widget for URL=' + url);
-      setState(() {
-        _videoController = null;
-        _videoReady = true;
-        _isHlsWeb = false;
-        _currentHlsUrl = null;
-      });
-      return;
-    }
-
-    try {
-      debugPrint('Landing: using VideoPlayer for URL=' + url);
-      final controller = VideoPlayerController.networkUrl(Uri.parse(url));
-      await controller.initialize();
-
-      var hasCompleted = false;
-      controller.addListener(() {
-        final value = controller.value;
-        if (!mounted) return;
-        if (!value.isInitialized) return;
-        final duration = value.duration;
-        if (duration == Duration.zero) return;
-        if (!value.isPlaying && value.position >= duration && !hasCompleted) {
-          hasCompleted = true;
-          _onVideoCompleted();
-        }
-      });
-
-      controller
-        ..setLooping(false)
-        ..setVolume(0)
-        ..play();
-
-      if (!mounted) {
-        controller.dispose();
-        return;
-      }
-
-      setState(() {
-        _videoController = controller;
-        _videoReady = true;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _videoController = null;
-        _videoReady = false;
-      });
-      debugPrint('Landing: _initVideo error for URL=' + url);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Impossible de lire cette vidéo. Utilise un lien direct vers un fichier vidéo (mp4, webm, …) accessible publiquement.',
-          ),
-        ),
-      );
-    }
+    if (!mounted) return;
+    setState(() {
+      _videoReady = true;
+    });
   }
 
   void _onVideoCompleted() {
@@ -358,9 +274,8 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
   @override
   void dispose() {
     _tickerTimer?.cancel();
-    _mediaTimer?.cancel();
     _tickerController.dispose();
-    _videoController?.dispose();
+    _mediaTimer?.cancel();
     super.dispose();
   }
 
@@ -647,36 +562,16 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                               );
                             }
 
-                            if (_videoReady &&
-                                !kIsWeb &&
-                                defaultTargetPlatform == TargetPlatform.android &&
-                                currentVideoUrl != null) {
-                              return AcademiaVideoWidget(
+                            if (_videoReady && currentVideoUrl != null) {
+                              return AcademiaPlaybackEngine.view(
                                 url: currentVideoUrl,
                                 autoplay: true,
-                                loop: true,
-                                muted: true,
+                                looping: true,
+                                muted: false,
                                 showControls: false,
-                                resizeMode: 'cover',
-                              );
-                            }
-
-                            if (_videoReady && _videoController != null) {
-                              return FittedBox(
                                 fit: BoxFit.cover,
-                                child: SizedBox(
-                                  width: _videoController!.value.size.width,
-                                  height: _videoController!.value.size.height,
-                                  child: VideoPlayer(_videoController!),
-                                ),
+                                onCompleted: _onVideoCompleted,
                               );
-                            }
-
-                            if (_videoReady &&
-                                _isHlsWeb &&
-                                kIsWeb &&
-                                _currentHlsUrl != null) {
-                              return const SizedBox.shrink();
                             }
 
                             return Container(
@@ -690,16 +585,6 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                             );
                           }(),
                         ),
-                        if (_videoReady && _isHlsWeb && kIsWeb && _currentHlsUrl != null)
-                          Positioned.fill(
-                            child: HlsWebVideoPlayer(
-                              url: _currentHlsUrl!,
-                              autoplay: true,
-                              loop: false,
-                              muted: true,
-                              onEnded: _onVideoCompleted,
-                            ),
-                          ),
                         Positioned.fill(
                           child: Container(
                             decoration: BoxDecoration(

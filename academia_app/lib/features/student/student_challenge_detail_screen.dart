@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:video_player/video_player.dart';
 
 import '../../providers/student_challenges_provider.dart';
-import '../../widgets/student_video_player.dart';
+import '../../video/academia_playback_engine.dart';
+import '../../widgets/video_overlays_layer.dart';
 import 'student_challenge_video_editor_screen.dart';
 
 class StudentChallengeDetailScreen extends StatefulWidget {
@@ -313,8 +313,27 @@ class _StudentChallengeDetailScreenState extends State<StudentChallengeDetailScr
                 separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final v = _participationVideos[index];
-                  final videoUrl = v['video_url']?.toString() ?? '';
-                  final thumbnailUrl = v['thumbnail_url']?.toString() ?? '';
+
+                  String videoUrl = '';
+                  String thumbnailUrl = '';
+
+                  final playback = v['playback'];
+                  if (playback is Map) {
+                    final playbackMap = Map<String, dynamic>.from(playback);
+                    videoUrl =
+                        playbackMap['best_url']?.toString().trim() ?? '';
+                    thumbnailUrl =
+                        playbackMap['poster_url']?.toString().trim() ?? '';
+                  }
+
+                  if (videoUrl.isEmpty) {
+                    videoUrl = v['video_url']?.toString().trim() ?? '';
+                  }
+                  if (thumbnailUrl.isEmpty) {
+                    thumbnailUrl =
+                        v['thumbnail_url']?.toString().trim() ?? '';
+                  }
+
                   final createdAtRaw = v['created_at']?.toString() ?? '';
                   String subtitle = '';
                   if (createdAtRaw.isNotEmpty) {
@@ -724,40 +743,12 @@ class _ParticipationVideoPreviewScreen extends StatefulWidget {
 }
 
 class _ParticipationVideoPreviewScreenState extends State<_ParticipationVideoPreviewScreen> {
-  VideoPlayerController? _controller;
-  bool _initialized = false;
   Map<String, dynamic>? _overlays;
 
   @override
   void initState() {
     super.initState();
-    final url = widget.videoUrl;
-    if (url.isEmpty) {
-      return;
-    }
-    final controller = VideoPlayerController.networkUrl(Uri.parse(url));
-    _controller = controller;
-    controller.initialize().then((_) {
-      if (!mounted) return;
-      controller.setLooping(true);
-      controller.play();
-      setState(() {
-        _initialized = true;
-      });
-    }).catchError((_) {
-      if (!mounted) return;
-      setState(() {
-        _initialized = false;
-      });
-    });
-
     _loadOverlays();
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
   }
 
   Future<void> _loadOverlays() async {
@@ -795,6 +786,7 @@ class _ParticipationVideoPreviewScreenState extends State<_ParticipationVideoPre
 
   @override
   Widget build(BuildContext context) {
+    final url = widget.videoUrl;
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -804,12 +796,30 @@ class _ParticipationVideoPreviewScreenState extends State<_ParticipationVideoPre
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: _controller != null && _initialized
-              ? StudentVideoPlayer(
-                  controller: _controller!,
-                  overlays: _overlays,
+          child: url.isNotEmpty
+              ? Stack(
+                  children: [
+                    Positioned.fill(
+                      child: AcademiaPlaybackEngine.view(
+                        url: url,
+                        autoplay: true,
+                        looping: true,
+                        muted: false,
+                        showControls: true,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: VideoOverlaysLayer(overlays: _overlays),
+                      ),
+                    ),
+                  ],
                 )
-              : const CircularProgressIndicator(),
+              : const Text(
+                  'Vidéo indisponible.',
+                  style: TextStyle(color: Colors.white),
+                ),
         ),
       ),
     );

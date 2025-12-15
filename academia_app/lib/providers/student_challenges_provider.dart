@@ -80,6 +80,44 @@ class StudentChallengesProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> addChallengeVideo({
+    required String participationId,
+    required String videoAssetId,
+    required Map<String, dynamic> playback,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_add_challenge_video',
+        params: {
+          'p_participation_id': participationId,
+          'p_video_asset_id': videoAssetId,
+          'p_playback': playback,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors de l\'ajout de la vidéo de challenge.',
+        );
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors de l\'ajout de la vidéo de challenge.',
+        );
+        return false;
+      }
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
   Future<Map<String, dynamic>?> startDuoVideo({
     required String videoType,
     required String videoId,
@@ -293,10 +331,50 @@ class StudentChallengesProvider extends ChangeNotifier {
     return publicUrl;
   }
 
+  Future<Map<String, dynamic>?> fetchPlaybackForDirectUrl(String url) async {
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_videoasset_get_playback_for_direct_url',
+        params: {
+          'p_direct_url': url,
+        },
+      );
+
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors de la résolution du playback vidéo.',
+        );
+        return null;
+      }
+
+      if (response['success'] != true) {
+        _setError(
+          'Erreur lors de la résolution du playback vidéo.',
+        );
+        return null;
+      }
+
+      final manifest = response['manifest'];
+      if (manifest is! Map<String, dynamic>) {
+        _setError(
+          'Manifest de playback manquant ou invalide dans la réponse serveur.',
+        );
+        return null;
+      }
+
+      return Map<String, dynamic>.from(manifest);
+    } catch (e) {
+      _setError(
+        'Erreur lors de la résolution du playback vidéo.',
+      );
+      return null;
+    }
+  }
+
   Future<String?> createFreeVideo({
-    required String videoUrl,
-    Map<String, dynamic>? videoRenditions,
-    String? thumbnailUrl,
+    required String videoAssetId,
+    required Map<String, dynamic> playback,
     String? title,
     String? description,
   }) async {
@@ -306,9 +384,8 @@ class StudentChallengesProvider extends ChangeNotifier {
       final dynamic response = await _client.rpc(
         'app_student_create_free_video',
         params: {
-          'p_video_url': videoUrl,
-          'p_video_renditions': videoRenditions,
-          'p_thumbnail_url': thumbnailUrl,
+          'p_video_asset_id': videoAssetId,
+          'p_playback': playback,
           'p_title': title,
           'p_description': description,
         },
@@ -960,8 +1037,8 @@ class StudentChallengesProvider extends ChangeNotifier {
 
   Future<bool> updateFreeVideoMainRenditions({
     required String freeVideoId,
-    required String videoUrl,
-    Map<String, dynamic>? videoRenditions,
+    required String videoAssetId,
+    required Map<String, dynamic> playback,
   }) async {
     _setSaving(true);
     _setError(null);
@@ -970,8 +1047,8 @@ class StudentChallengesProvider extends ChangeNotifier {
         'app_student_set_free_video_main_renditions',
         params: {
           'p_free_video_id': freeVideoId,
-          'p_video_url': videoUrl,
-          'p_video_renditions': videoRenditions,
+          'p_video_asset_id': videoAssetId,
+          'p_playback': playback,
         },
       );
       if (response is! Map<String, dynamic>) {
@@ -1303,45 +1380,6 @@ class StudentChallengesProvider extends ChangeNotifier {
       _setSaving(false);
     }
   }
-
-  Future<bool> addChallengeVideo({
-    required String participationId,
-    required String videoUrl,
-    String? thumbnailUrl,
-  }) async {
-    _setSaving(true);
-    _setError(null);
-    try {
-      final dynamic response = await _client.rpc(
-        'app_student_add_challenge_video',
-        params: {
-          'p_participation_id': participationId,
-          'p_video_url': videoUrl,
-          'p_thumbnail_url': thumbnailUrl,
-        },
-      );
-      if (response is! Map<String, dynamic>) {
-        _setError(
-          'Réponse invalide du serveur lors de l\'ajout de la vidéo de challenge.',
-        );
-        return false;
-      }
-      if (response['success'] != true) {
-        _setError(
-          response['error']?.toString() ??
-              'Erreur lors de l\'ajout de la vidéo de challenge.',
-        );
-        return false;
-      }
-      return true;
-    } catch (e) {
-      _setError(e.toString());
-      return false;
-    } finally {
-      _setSaving(false);
-    }
-  }
-
   Future<List<Map<String, dynamic>>> listMyChallengeVideos(
     String participationId,
   ) async {

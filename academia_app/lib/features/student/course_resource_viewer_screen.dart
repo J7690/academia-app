@@ -2,14 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:video_player/video_player.dart';
 
-import '../../widgets/hls_web_stub.dart'
-    if (dart.library.html) '../../widgets/hls_web.dart';
 import '../../widgets/pdf_viewer_stub.dart'
     if (dart.library.html) '../../widgets/pdf_viewer_web.dart';
-import '../../widgets/student_video_player.dart';
-import '../../widgets/academia_video_widget.dart';
+import '../../video/academia_playback_engine.dart';
 
 class CourseResourceViewerScreen extends StatefulWidget {
   final Map<String, dynamic> resource;
@@ -27,10 +23,7 @@ class _CourseResourceViewerScreenState extends State<CourseResourceViewerScreen>
   bool _isLoading = true;
   bool _isVideo = false;
   bool _isAudio = false;
-  bool _isHlsWeb = false;
   bool _isPdf = false;
-  String? _hlsUrl;
-  VideoPlayerController? _videoController;
 
   @override
   void initState() {
@@ -125,41 +118,13 @@ class _CourseResourceViewerScreenState extends State<CourseResourceViewerScreen>
         'isVideo=$isVideo isAudio=$isAudio isHls=$isHls kIsWeb=$kIsWeb',
       );
 
-      if ((isVideo || isAudio) && kIsWeb && isHls) {
+      if (isVideo || isAudio) {
         setState(() {
           _isVideo = isVideo;
           _isAudio = isAudio;
-          _isHlsWeb = true;
-          _hlsUrl = resolvedUrl;
           _isPdf = false;
           _isLoading = false;
         });
-        return;
-      }
-
-      if (isVideo || isAudio) {
-        if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android && isVideo) {
-          setState(() {
-            _videoController = null;
-            _isVideo = isVideo;
-            _isAudio = isAudio;
-            _isPdf = false;
-            _isLoading = false;
-          });
-        } else {
-          final controller =
-              VideoPlayerController.networkUrl(Uri.parse(resolvedUrl));
-          await controller.initialize();
-          controller.setLooping(isAudio);
-          controller.play();
-          setState(() {
-            _videoController = controller;
-            _isVideo = isVideo;
-            _isAudio = isAudio;
-            _isPdf = false;
-            _isLoading = false;
-          });
-        }
       } else {
         setState(() {
           _url = resolvedUrl;
@@ -179,7 +144,6 @@ class _CourseResourceViewerScreenState extends State<CourseResourceViewerScreen>
 
   @override
   void dispose() {
-    _videoController?.dispose();
     super.dispose();
   }
 
@@ -212,48 +176,17 @@ class _CourseResourceViewerScreenState extends State<CourseResourceViewerScreen>
       );
     }
     if (_isVideo || _isAudio) {
-      if (_isHlsWeb && kIsWeb) {
-        final url = _hlsUrl;
-        if (url == null || url.isEmpty) {
-          return const SizedBox.shrink();
-        }
-        return AspectRatio(
-          aspectRatio: 16 / 9,
-          child: HlsWebVideoPlayer(
-            url: url,
-            autoplay: true,
-            loop: _isAudio,
-            muted: false,
-            showControls: true,
-          ),
-        );
-      }
-
-      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android && _isVideo) {
-        final url = _resolvedUrl;
-        if (url == null || url.isEmpty) {
-          return const SizedBox.shrink();
-        }
-        return AspectRatio(
-          aspectRatio: 16 / 9,
-          child: AcademiaVideoWidget(
-            url: url,
-            autoplay: true,
-            loop: false,
-            muted: false,
-            showControls: true,
-            resizeMode: 'contain',
-          ),
-        );
-      }
-
-      final controller = _videoController;
-      if (controller == null) {
+      final url = _resolvedUrl;
+      if (url == null || url.isEmpty) {
         return const SizedBox.shrink();
       }
-      return StudentVideoPlayer(
-        controller: controller,
-        isAudio: _isAudio,
+      return AcademiaPlaybackEngine.view(
+        url: url,
+        autoplay: true,
+        looping: true,
+        muted: _isAudio,
+        showControls: true,
+        fit: BoxFit.contain,
       );
     }
     if (_isPdf) {

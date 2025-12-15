@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:video_player/video_player.dart';
 
 import '../../providers/admin_challenges_provider.dart';
-import '../../widgets/student_video_player.dart';
+import '../../video/academia_playback_engine.dart';
 
 class AdminChallengesScreen extends StatefulWidget {
   const AdminChallengesScreen({super.key});
@@ -1395,27 +1394,6 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
   ) async {
     if (videoUrl.isEmpty) return;
 
-    final controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
-    try {
-      await controller.initialize();
-      controller.setLooping(true);
-      controller.play();
-    } catch (_) {
-      controller.dispose();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Impossible de lire la vidéo.'),
-        ),
-      );
-      return;
-    }
-
-    if (!mounted) {
-      controller.dispose();
-      return;
-    }
-
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -1423,7 +1401,14 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
           title: const Text('Prévisualisation de la vidéo'),
           content: SizedBox(
             width: 480,
-            child: StudentVideoPlayer(controller: controller),
+            child: AcademiaPlaybackEngine.view(
+              url: videoUrl,
+              autoplay: true,
+              looping: true,
+              muted: false,
+              showControls: true,
+              fit: BoxFit.contain,
+            ),
           ),
           actions: [
             TextButton(
@@ -1434,8 +1419,6 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
         );
       },
     );
-
-    controller.dispose();
   }
 
   Future<void> _openReportsDialog(
