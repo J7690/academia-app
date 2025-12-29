@@ -76,7 +76,7 @@ Future<void> _checkWebVersion() async {
   }
 
   try {
-    final uri = Uri.parse('/version.json');
+    final uri = Uri.parse('/app_version.json');
     final response = await http.get(uri).timeout(
           const Duration(seconds: 5),
         );
@@ -92,7 +92,7 @@ Future<void> _checkWebVersion() async {
 
     final remoteVersion =
         (decoded['version'] ?? '').toString().trim();
-    final required = decoded['required'] == true;
+    final required = decoded['required'] != false;
 
     if (remoteVersion.isEmpty) {
       return;
