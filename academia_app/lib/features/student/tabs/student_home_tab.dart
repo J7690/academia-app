@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../student_profile_screen.dart';
@@ -66,10 +68,53 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
     'Accompagnement personnalisé',
   ];
 
+  static const String _studentHomeHeroCacheKey = 'student_home_hero_playlist_v1';
+
+  Future<void> _loadHeroPlaylistFromCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_studentHomeHeroCacheKey);
+      if (raw == null || raw.isEmpty) return;
+
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return;
+
+      final map = Map<String, dynamic>.from(decoded as Map);
+      final itemsRaw = map['items'];
+      final cached = <_StudentHomeMediaItem>[];
+
+      if (itemsRaw is List) {
+        for (final item in itemsRaw) {
+          if (item is! Map) continue;
+          final m = Map<String, dynamic>.from(item as Map);
+          final url = (m['url'] ?? '').toString().trim();
+          if (url.isEmpty) continue;
+          final mediaType = (m['mediaType'] ?? 'video').toString();
+          cached.add(
+            _StudentHomeMediaItem(url: url, mediaType: mediaType),
+          );
+        }
+      }
+
+      if (cached.isEmpty || !mounted) return;
+
+      final cachedTitle = map['title']?.toString();
+
+      setState(() {
+        _mediaPlaylist = cached;
+        _currentMediaIndex = 0;
+        _heroTitle = cachedTitle;
+      });
+
+      _goToMediaIndex(0);
+    } catch (_) {}
+  }
+
   @override
   void initState() {
     super.initState();
     _tickerController = ScrollController();
+    _loadHeroPlaylistFromCache();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       context.read<StudentOffersProvider>().loadHomeOffers();
       context.read<StudentProfileProvider>().loadProfile();
@@ -187,6 +232,23 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
     _currentMediaIndex = 0;
     _heroTitle = title;
     _goToMediaIndex(0);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final data = <String, dynamic>{
+        'title': _heroTitle,
+        'items': playlist
+            .map((e) => {
+                  'url': e.url,
+                  'mediaType': e.mediaType,
+                })
+            .toList(),
+      };
+      await prefs.setString(
+        _studentHomeHeroCacheKey,
+        jsonEncode(data),
+      );
+    } catch (_) {}
   }
 
   void _goToMediaIndex(int index) {

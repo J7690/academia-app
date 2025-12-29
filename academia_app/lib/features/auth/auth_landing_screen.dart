@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -109,6 +111,121 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
   List<_HeroMediaItem> _mediaPlaylist = [];
   int _currentMediaIndex = 0;
 
+  static const String _landingHeroCacheKey = 'landing_hero_playlist_v1';
+
+  Future<void> _loadHeroPlaylistFromCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_landingHeroCacheKey);
+      if (raw == null || raw.isEmpty) return;
+
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return;
+
+      final cached = <_HeroMediaItem>[];
+      for (final item in decoded) {
+        if (item is! Map) continue;
+        final map = Map<String, dynamic>.from(item as Map);
+        final url = (map['url'] ?? '').toString().trim();
+        if (url.isEmpty) continue;
+        final mediaType = (map['mediaType'] ?? 'video').toString();
+        cached.add(_HeroMediaItem(url: url, mediaType: mediaType));
+      }
+
+      if (cached.isEmpty || !mounted) return;
+
+      setState(() {
+        _mediaPlaylist = cached;
+      });
+      _goToMediaIndex(0);
+    } catch (_) {}
+  }
+
+  Future<void> _refreshHeroPlaylistFromRemote() async {
+    final playlist = <_HeroMediaItem>[];
+    try {
+      final client = Supabase.instance.client;
+      final dynamic response = await client
+          .schema('app')
+          .from('hero_playlist')
+          .select(
+              'base_video_url, base_image_url, media_type, sort_order, is_active')
+          .eq('slot', 'landing_hero_main')
+          .eq('is_active', true)
+          .order('sort_order', ascending: true)
+          .limit(10);
+
+      if (response is List && response.isNotEmpty) {
+        for (final raw in response) {
+          Map<String, dynamic>? row;
+          if (raw is Map<String, dynamic>) {
+            row = raw;
+          } else if (raw is Map) {
+            row = Map<String, dynamic>.from(raw);
+          }
+          if (row == null) {
+            continue;
+          }
+
+          final rawType =
+              (row['media_type'] ?? 'video').toString().toLowerCase();
+          final isImage = rawType == 'image';
+          final heroVideoUrl =
+              (row['base_video_url'] ?? '').toString().trim();
+          final heroImageUrl =
+              (row['base_image_url'] ?? '').toString().trim();
+
+          String? chosenUrl;
+          String mediaType;
+          if (isImage && heroImageUrl.isNotEmpty) {
+            chosenUrl = heroImageUrl;
+            mediaType = 'image';
+          } else if (!isImage && heroVideoUrl.isNotEmpty) {
+            chosenUrl = heroVideoUrl;
+            mediaType = 'video';
+          } else if (heroVideoUrl.isNotEmpty) {
+            chosenUrl = heroVideoUrl;
+            mediaType = 'video';
+          } else if (heroImageUrl.isNotEmpty) {
+            chosenUrl = heroImageUrl;
+            mediaType = 'image';
+          } else {
+            chosenUrl = null;
+            mediaType = 'video';
+          }
+
+          if (chosenUrl != null && chosenUrl.isNotEmpty) {
+            debugPrint(
+              'Landing: hero item from app.hero_playlist url=' + chosenUrl,
+            );
+            playlist
+                .add(_HeroMediaItem(url: chosenUrl, mediaType: mediaType));
+          }
+        }
+      }
+    } catch (_) {}
+
+    if (!mounted || playlist.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _mediaPlaylist = playlist;
+    });
+    _goToMediaIndex(0);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final data = playlist
+          .map((e) => {
+                'url': e.url,
+                'mediaType': e.mediaType,
+              })
+          .toList();
+      await prefs.setString(_landingHeroCacheKey, jsonEncode(data));
+    } catch (_) {}
+  }
+
   static const List<String> _fallbackAnnouncements = [
     'Ouverture des candidatures 2025',
     'Bourses pour étudiants internationaux',
@@ -120,6 +237,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
   void initState() {
     super.initState();
     _tickerController = ScrollController();
+    _loadHeroPlaylistFromCache();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final landing = context.read<LandingContentProvider>();
       final offers = context.read<StudentOffersProvider>();
@@ -135,66 +253,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
 
       _startTicker();
 
-      final playlist = <_HeroMediaItem>[];
-      try {
-        final client = Supabase.instance.client;
-        final dynamic response = await client
-            .schema('app')
-            .from('hero_playlist')
-            .select('base_video_url, base_image_url, media_type, sort_order, is_active')
-            .eq('slot', 'landing_hero_main')
-            .eq('is_active', true)
-            .order('sort_order', ascending: true)
-            .limit(10);
-
-        if (response is List && response.isNotEmpty) {
-          for (final raw in response) {
-            Map<String, dynamic>? row;
-            if (raw is Map<String, dynamic>) {
-              row = raw;
-            } else if (raw is Map) {
-              row = Map<String, dynamic>.from(raw);
-            }
-            if (row == null) {
-              continue;
-            }
-
-            final rawType = (row['media_type'] ?? 'video').toString().toLowerCase();
-            final isImage = rawType == 'image';
-            final heroVideoUrl = (row['base_video_url'] ?? '').toString().trim();
-            final heroImageUrl = (row['base_image_url'] ?? '').toString().trim();
-
-            String? chosenUrl;
-            String mediaType;
-            if (isImage && heroImageUrl.isNotEmpty) {
-              chosenUrl = heroImageUrl;
-              mediaType = 'image';
-            } else if (!isImage && heroVideoUrl.isNotEmpty) {
-              chosenUrl = heroVideoUrl;
-              mediaType = 'video';
-            } else if (heroVideoUrl.isNotEmpty) {
-              chosenUrl = heroVideoUrl;
-              mediaType = 'video';
-            } else if (heroImageUrl.isNotEmpty) {
-              chosenUrl = heroImageUrl;
-              mediaType = 'image';
-            } else {
-              chosenUrl = null;
-              mediaType = 'video';
-            }
-
-            if (chosenUrl != null && chosenUrl.isNotEmpty) {
-              debugPrint('Landing: hero item from app.hero_playlist url=' + chosenUrl);
-              playlist.add(_HeroMediaItem(url: chosenUrl, mediaType: mediaType));
-            }
-          }
-        }
-      } catch (_) {}
-
-      if (playlist.isNotEmpty) {
-        _mediaPlaylist = playlist;
-        _goToMediaIndex(0);
-      }
+      await _refreshHeroPlaylistFromRemote();
     });
   }
 
