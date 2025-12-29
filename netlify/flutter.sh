@@ -9,4 +9,4 @@ flutter doctor
 
 cd academia_app
 
-flutter build web
+flutter build web --web-renderer html

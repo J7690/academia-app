@@ -32,6 +32,55 @@
   <title>academia_app</title>
   <link rel="manifest" href="manifest.json">
 
+  <style>
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #7bc96f, #e8f5e9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #1b5e20;
+      z-index: 9999;
+    }
+
+    .loader-logo {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      margin-bottom: 16px;
+    }
+
+    .loader-subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 24px;
+    }
+
+    .loader-spinner {
+      width: 36px;
+      height: 36px;
+      border: 4px solid #c8e6c9;
+      border-top-color: #2e7d32;
+      border-radius: 50%;
+      animation: loader-spin 1s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    .loader-text {
+      font-size: 13px;
+      opacity: 0.85;
+    }
+
+    @keyframes loader-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.12/hls.min.js"></script>
   <script>
     window.createHlsVideo = function(video, url, autoplay, loop, muted) {
@@ -112,6 +161,22 @@
   </script>
 </head>
 <body>
+  <div id="loader">
+    <div class="loader-logo">Academia</div>
+    <div class="loader-subtitle">Plateforme d'orientation & admissions</div>
+    <div class="loader-spinner"></div>
+    <div class="loader-text">Préparation de votre espace étudiant…</div>
+  </div>
+
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var loader = document.getElementById('loader');
+      if (loader) {
+        loader.remove();
+      }
+    });
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
