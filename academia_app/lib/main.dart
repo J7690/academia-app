@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
+import 'package:http/http.dart' as http;
+
+import 'web_update_stub.dart' if (dart.library.html) 'web_update_html.dart' as web_update;
 
 import 'config/supabase_config.dart';
 import 'providers/supabase_provider.dart';
@@ -63,9 +68,49 @@ import 'providers/admin_prep_concours_provider.dart';
 import 'providers/prep_concours_provider.dart';
 import 'features/auth/auth_wrapper.dart';
 
+const String kAppVersion = '1.0.0';
+
+Future<void> _checkWebVersion() async {
+  if (!kIsWeb) {
+    return;
+  }
+
+  try {
+    final uri = Uri.parse('/version.json');
+    final response = await http.get(uri).timeout(
+          const Duration(seconds: 5),
+        );
+
+    if (response.statusCode != 200) {
+      return;
+    }
+
+    final dynamic decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      return;
+    }
+
+    final remoteVersion =
+        (decoded['version'] ?? '').toString().trim();
+    final required = decoded['required'] == true;
+
+    if (remoteVersion.isEmpty) {
+      return;
+    }
+
+    if (remoteVersion != kAppVersion && required) {
+      await web_update.showUpdateAndReload();
+    }
+  } catch (_) {
+    // En cas d'erreur réseau ou de parsing, on laisse l'application démarrer normalement.
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  await _checkWebVersion();
+
   // Initialisation Supabase avec configuration validée
   await Supabase.initialize(
     url: SupabaseConfig.url,
