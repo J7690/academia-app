@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../config/supabase_config.dart';
+
 /// Provider Bobodo
 /// Gère la session courante et les messages côté Flutter
 /// L'appel à l'IA OpenRouter doit se faire via un backend sécurisé (non géré ici).
@@ -104,14 +106,19 @@ class BobodoProvider extends ChangeNotifier {
     });
     notifyListeners();
 
-    // 3) Appeler le backend Bobodo complet (FastAPI) qui se charge de :
-    //    - enregistrer le message étudiant via RPC
-    //    - interroger la base de connaissances Supabase + OpenRouter
-    //    - enregistrer la réponse IA via RPC
+    // 3) Appeler la future Edge Function Supabase `bobodo-chat` qui se charge de :
+    //    - enregistrer le message étudiant via RPC,
+    //    - interroger la base de connaissances Supabase + IA,
+    //    - enregistrer la réponse IA via RPC.
     _setLoading(true);
     var backendOk = true;
     try {
-      final uri = Uri.parse('https://academia-app-production.up.railway.app/bobodo/chat');
+      final session = _client.auth.currentSession;
+      if (session == null || session.accessToken.isEmpty) {
+        throw Exception('Utilisateur non authentifié pour Bobodo.');
+      }
+
+      final uri = Uri.parse('${SupabaseConfig.url}/functions/v1/bobodo-chat');
       final body = jsonEncode({
         'session_id': sessionId,
         'message': content,
@@ -119,17 +126,32 @@ class BobodoProvider extends ChangeNotifier {
 
       final finalResponse = await http.post(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Authorization': 'Bearer ${session.accessToken}',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'apikey': SupabaseConfig.anonKey,
+        },
         body: body,
       );
 
       if (finalResponse.statusCode >= 400) {
         backendOk = false;
-        _setError('Erreur backend Bobodo: ${finalResponse.body}');
+        String message = 'Erreur backend Bobodo (${finalResponse.statusCode}).';
+        try {
+          final decoded = jsonDecode(finalResponse.body);
+          if (decoded is Map<String, dynamic>) {
+            final detail = decoded['error'] ?? decoded['message'] ?? decoded['detail'];
+            if (detail is String && detail.trim().isNotEmpty) {
+              message = detail;
+            }
+          }
+        } catch (_) {}
+        _setError(message);
       }
     } catch (e) {
       backendOk = false;
-      _setError('Erreur lors de l\'appel à Bobodo: $e');
+      _setError('Erreur lors de l\'appel Bobodo (Edge Function): $e');
     } finally {
       _setLoading(false);
     }

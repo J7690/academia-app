@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../providers/landing_content_provider.dart';
 import '../../providers/student_offers_provider.dart';
+import '../../utils/responsive.dart';
 import '../debug/network_diagnostic_screen.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
@@ -103,7 +104,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
   late final ScrollController _tickerController;
   Timer? _tickerTimer;
 
-  static const Duration _imageSlideDuration = Duration(seconds: 5);
+  static const Duration _imageSlideDuration = Duration(seconds: 8);
   Timer? _mediaTimer;
   List<_HeroMediaItem> _mediaPlaylist = [];
   int _currentMediaIndex = 0;
@@ -531,180 +532,200 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final firstHeight = constraints.maxHeight;
-        return SingleChildScrollView(
-          child: Column(
-            children: [
-              SizedBox(
-                height: firstHeight,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: () {
-                            if (currentImageUrl != null) {
-                              return Image.network(
-                                currentImageUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, _, __) {
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [primaryColor, secondaryColor],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            }
-
-                            if (_videoReady && currentVideoUrl != null) {
-                              return AcademiaPlaybackEngine.view(
-                                url: currentVideoUrl,
-                                autoplay: true,
-                                looping: true,
-                                muted: false,
-                                showControls: false,
-                                fit: BoxFit.cover,
-                                onCompleted: _onVideoCompleted,
-                              );
-                            }
-
-                            return Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [primaryColor, secondaryColor],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                              ),
-                            );
-                          }(),
-                        ),
-                        Positioned.fill(
-                          child: Container(
+        final width = constraints.maxWidth;
+        final bool isMobile = width < AppBreakpoints.mobile;
+        final double heroBadgeSpacing = isMobile ? 12.0 : 16.0;
+        final double heroTitleSpacing = isMobile ? 8.0 : 10.0;
+        final double heroSubtitleSpacing = isMobile ? 14.0 : 18.0;
+        final double sectionSpacing = isMobile ? 16.0 : 24.0;
+        final double partnersSpacing = isMobile ? 20.0 : 24.0;
+        final double bottomSpacing = isMobile ? 16.0 : 24.0;
+        final hero = Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: () {
+                    if (currentImageUrl != null) {
+                      return Image.network(
+                        currentImageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, _, __) {
+                          return Container(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [
-                                  primaryColor.withOpacity(0.75),
-                                  primaryColor.withOpacity(0.4),
-                                  secondaryColor.withOpacity(0.05),
-                                ],
-                                stops: const [0.0, 0.45, 1.0],
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
+                                colors: [primaryColor, secondaryColor],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
                             ),
-                          ),
+                          );
+                        },
+                      );
+                    }
+
+                    if (_videoReady && currentVideoUrl != null) {
+                      return AcademiaPlaybackEngine.view(
+                        url: currentVideoUrl,
+                        autoplay: true,
+                        looping: false,
+                        muted: kIsWeb,
+                        showControls: false,
+                        fit: BoxFit.cover,
+                        onCompleted: _onVideoCompleted,
+                        showErrorText: false,
+                      );
+                    }
+
+                    return Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [primaryColor, secondaryColor],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 520),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.18),
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                    child: Text(
-                                      heroBadge,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    heroTitle,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    heroSubtitle,
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 18),
-                                  Row(
-                                    children: [
-                                      ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: accentColor,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 22,
-                                            vertical: 12,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(999),
-                                          ),
-                                        ),
-                                        onPressed: () {
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (_) => const SignupScreen(),
-                                            ),
-                                          );
-                                        },
-                                        child: const Text('Créer un compte'),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      OutlinedButton(
-                                        style: OutlinedButton.styleFrom(
-                                          side: const BorderSide(color: Colors.white),
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 20,
-                                            vertical: 10,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(999),
-                                          ),
-                                        ),
-                                        onPressed: () {
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (_) => const LoginScreen(),
-                                            ),
-                                          );
-                                        },
-                                        child: const Text('Se connecter'),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
+                    );
+                  }(),
+                ),
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          primaryColor.withOpacity(0.75),
+                          primaryColor.withOpacity(0.4),
+                          secondaryColor.withOpacity(0.05),
+                        ],
+                        stops: const [0.0, 0.45, 1.0],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    24,
+                    isMobile ? 12 : 16,
+                    24,
+                    isMobile ? 20 : 32,
+                  ),
+                  child: Align(
+                    alignment:
+                        isMobile ? Alignment.bottomLeft : Alignment.centerLeft,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 520),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.18),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              heroBadge,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: heroBadgeSpacing),
+                          Text(
+                            heroTitle,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: isMobile ? 22 : 24,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          SizedBox(height: heroTitleSpacing),
+                          Text(
+                            heroSubtitle,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                          SizedBox(height: heroSubtitleSpacing),
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 8,
+                            children: [
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: accentColor,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 22,
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const SignupScreen(),
+                                    ),
+                                  );
+                                },
+                                child: const Text('Créer un compte'),
+                              ),
+                              OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Colors.white),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 10,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const LoginScreen(),
+                                    ),
+                                  );
+                                },
+                                child: const Text('Se connecter'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              if (isMobile)
+                hero
+              else
+                SizedBox(
+                  height: firstHeight,
+                  child: hero,
+                ),
+              SizedBox(height: sectionSpacing),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
@@ -793,7 +814,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: sectionSpacing),
               if (whyCards.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -862,7 +883,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                   ),
                 ),
               if (partners.isNotEmpty) ...[
-                const SizedBox(height: 24),
+                SizedBox(height: partnersSpacing),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
@@ -933,7 +954,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                   ),
                 ),
               ],
-              const SizedBox(height: 24),
+              SizedBox(height: sectionSpacing),
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 0),
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -993,7 +1014,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: bottomSpacing),
             ],
           ),
         );

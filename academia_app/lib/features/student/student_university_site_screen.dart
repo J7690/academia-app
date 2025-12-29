@@ -131,6 +131,16 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                   ? mission
                   : vision);
 
+          // Ne pas ré-afficher sous forme de carte le média utilisé comme poster du hero.
+          final List<Map<String, dynamic>> mediaForStrip;
+          if (heroPosterMediaId != null && heroPosterMediaId.trim().isNotEmpty) {
+            mediaForStrip = media
+                .where((m) => m['id']?.toString() != heroPosterMediaId)
+                .toList(growable: false);
+          } else {
+            mediaForStrip = media;
+          }
+
           return Container(
             color: const Color(0xFFF3F4F6),
             child: SingleChildScrollView(
@@ -180,7 +190,7 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                           heroPosterMediaId: heroPosterMediaId,
                         ),
                         const SizedBox(height: 16),
-                        if ((media.length > 1) || topBanners.isNotEmpty) ...[
+                        if (mediaForStrip.isNotEmpty || topBanners.isNotEmpty) ...[
                           const Text(
                             'Médias / ambiance du campus',
                             style: TextStyle(
@@ -198,7 +208,7 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(12.0),
-                              child: _MediaStrip(media: media),
+                              child: _MediaStrip(media: mediaForStrip),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -884,13 +894,32 @@ class _ProgramsGrid extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final width = MediaQuery.of(context).size.width;
-    int crossAxisCount;
+    // Sur mobile : une seule colonne, hauteur libre (ListView) pour éviter tout overflow.
     if (width < 600) {
-      crossAxisCount = 1;
-    } else if (width < 1000) {
+      return ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: programs.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final program = programs[index];
+          return _ProgramCard(
+            program: program,
+            courses: courses,
+          );
+        },
+      );
+    }
+
+    // Sur écrans plus larges : grille réactive avec cartes compactes.
+    int crossAxisCount;
+    double childAspectRatio;
+    if (width < 1000) {
       crossAxisCount = 2;
+      childAspectRatio = 1.6;
     } else {
       crossAxisCount = 3;
+      childAspectRatio = 1.8;
     }
 
     return GridView.builder(
@@ -900,7 +929,7 @@ class _ProgramsGrid extends StatelessWidget {
         crossAxisCount: crossAxisCount,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 3 / 2,
+        childAspectRatio: childAspectRatio,
       ),
       itemCount: programs.length,
       itemBuilder: (context, index) {
@@ -960,8 +989,9 @@ class _ProgramCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 TextButton.icon(
                   onPressed: programId == null || programCourses.isEmpty
@@ -980,6 +1010,13 @@ class _ProgramCard extends StatelessWidget {
                         },
                   icon: const Icon(Icons.menu_book_outlined),
                   label: const Text('Voir les cours'),
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    minimumSize: const Size(0, 36),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    textStyle: const TextStyle(fontSize: 13),
+                  ),
                 ),
                 TextButton.icon(
                   onPressed: programId == null
@@ -1029,6 +1066,13 @@ class _ProgramCard extends StatelessWidget {
                         },
                   icon: const Icon(Icons.send),
                   label: const Text('Candidater'),
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    minimumSize: const Size(0, 36),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    textStyle: const TextStyle(fontSize: 13),
+                  ),
                 ),
               ],
             ),

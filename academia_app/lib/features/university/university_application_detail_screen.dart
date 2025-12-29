@@ -6,6 +6,7 @@ import '../../providers/university_application_messages_provider.dart';
 import '../../providers/university_application_detail_provider.dart';
 import '../../providers/university_programs_provider.dart';
 import '../../providers/university_applications_provider.dart';
+import '../../providers/university_application_payments_provider.dart';
 
 enum UniversityDetailTab {
   dossier,
@@ -92,6 +93,14 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadForCurrentApplication();
       context.read<UniversityProgramsProvider>().loadPrograms();
+      final appId = widget.application['id']?.toString();
+      if (appId != null && appId.isNotEmpty) {
+        try {
+          context
+              .read<UniversityApplicationPaymentsProvider>()
+              .loadPaymentsForApplication(appId);
+        } catch (_) {}
+      }
     });
   }
 
@@ -103,6 +112,14 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
       _messagesLoaded = false;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _loadForCurrentApplication();
+        final appId = widget.application['id']?.toString();
+        if (appId != null && appId.isNotEmpty) {
+          try {
+            context
+                .read<UniversityApplicationPaymentsProvider>()
+                .loadPaymentsForApplication(appId);
+          } catch (_) {}
+        }
       });
     }
   }

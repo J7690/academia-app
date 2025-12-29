@@ -30,23 +30,52 @@ def split_sql_script(script: str) -> List[str]:
 
     - Respecte les blocs $$ ... $$ des fonctions PL/pgSQL
     - Utilise ';' comme séparateur uniquement hors des blocs $$
+    - Ne split pas dans les commentaires SQL (--) ou (/* */)
     """
     statements: List[str] = []
     current: List[str] = []
     in_dollar = False
+    in_line_comment = False
+    in_block_comment = False
     i = 0
     length = len(script)
 
     while i < length:
-        # Détection des blocs $$
-        if script[i : i + 2] == "$$":
+        # Détection des blocs $$ (prioritaire)
+        if not in_line_comment and not in_block_comment and script[i : i + 2] == "$$":
             in_dollar = not in_dollar
             current.append("$$")
             i += 2
             continue
 
+        # Détection commentaires (hors $$)
+        if not in_dollar and not in_block_comment and not in_line_comment and script[i : i + 2] == "--":
+            in_line_comment = True
+            current.append("--")
+            i += 2
+            continue
+
+        if not in_dollar and not in_line_comment and not in_block_comment and script[i : i + 2] == "/*":
+            in_block_comment = True
+            current.append("/*")
+            i += 2
+            continue
+
+        if in_block_comment and script[i : i + 2] == "*/":
+            in_block_comment = False
+            current.append("*/")
+            i += 2
+            continue
+
         ch = script[i]
-        if ch == ";" and not in_dollar:
+
+        if in_line_comment and ch == "\n":
+            in_line_comment = False
+            current.append(ch)
+            i += 1
+            continue
+
+        if ch == ";" and not in_dollar and not in_line_comment and not in_block_comment:
             stmt = "".join(current).strip()
             if stmt:
                 statements.append(stmt)

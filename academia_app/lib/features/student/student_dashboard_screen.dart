@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../providers/student_applications_provider.dart';
 import '../../providers/student_opportunities_provider.dart';
+import '../../providers/student_application_payments_provider.dart';
 import '../../services/notification_sound_service.dart';
 import '../../utils/responsive.dart';
 import 'student_home_mobile.dart';
@@ -22,6 +23,7 @@ import 'tabs/student_live_sessions_tab.dart';
 import 'tabs/student_bobodo_tab.dart';
 import 'prep_concours/prep_concours_home_screen.dart';
 import 'student_dashboard_nav_controller.dart';
+import 'student_payments_screen.dart';
 
 /// Dashboard étudiant avec onglets principaux
 class StudentDashboardScreen extends StatefulWidget {
@@ -226,6 +228,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         case 10:
           child = const PrepConcoursHomeScreen();
           break;
+        case 11:
+          child = ChangeNotifierProvider(
+            create: (_) => StudentApplicationPaymentsProvider(),
+            child: const StudentPaymentsScreen(),
+          );
+          break;
         default:
           child = const StudentHomeMobileTab();
       }
@@ -271,6 +279,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           break;
         case 10:
           child = const PrepConcoursHomeScreen();
+          break;
+        case 11:
+          child = ChangeNotifierProvider(
+            create: (_) => StudentApplicationPaymentsProvider(),
+            child: const StudentPaymentsScreen(),
+          );
           break;
         default:
           child = const StudentHomeTab();
@@ -372,6 +386,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             icon: Icon(Icons.school_outlined),
             selectedIcon: Icon(Icons.school),
             label: 'Concours',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.payments_outlined),
+            selectedIcon: Icon(Icons.payments),
+            label: 'Paiements',
           ),
         ],
       ),
@@ -485,6 +504,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                           label: 'Concours',
                           icon: const Icon(Icons.school_outlined),
                           selectedIcon: const Icon(Icons.school),
+                        ),
+                        _buildMobileNavItem(
+                          index: 11,
+                          label: 'Paiements',
+                          icon: const Icon(Icons.payments_outlined),
+                          selectedIcon: const Icon(Icons.payments),
                         ),
                       ],
                     ),

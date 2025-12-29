@@ -128,6 +128,47 @@ class LandingContentProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<Map<String, dynamic>?> fetchPlaybackForDirectUrl(String url) async {
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_videoasset_get_playback_for_direct_url',
+        params: {
+          'p_direct_url': url,
+        },
+      );
+
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors de la résolution du playback vidéo.',
+        );
+        return null;
+      }
+
+      if (response['success'] != true) {
+        _setError(
+          'Erreur lors de la résolution du playback vidéo.',
+        );
+        return null;
+      }
+
+      final manifest = response['manifest'];
+      if (manifest is! Map<String, dynamic>) {
+        _setError(
+          'Manifest de playback manquant ou invalide dans la réponse serveur.',
+        );
+        return null;
+      }
+
+      return Map<String, dynamic>.from(manifest);
+    } catch (e) {
+      _setError(
+        'Erreur lors de la résolution du playback vidéo.',
+      );
+      return null;
+    }
+  }
+
   Future<bool> upsertConfig({
     String? configId,
     String? heroBadgeText,
@@ -143,6 +184,35 @@ class LandingContentProvider extends ChangeNotifier {
     try {
       debugPrint('LandingContentProvider.upsertConfig: start configId='
           '$configId videoUrl=$videoUrl');
+
+      String? trimmedVideoUrl = videoUrl?.trim();
+      if (trimmedVideoUrl != null && trimmedVideoUrl.isEmpty) {
+        trimmedVideoUrl = null;
+      }
+
+      String? videoAssetId;
+      Map<String, dynamic>? playback;
+
+      if (trimmedVideoUrl != null) {
+        final manifest = await fetchPlaybackForDirectUrl(trimmedVideoUrl);
+        if (manifest == null) {
+          return false;
+        }
+
+        final rawVideoAssetId = manifest['video_asset_id']?.toString();
+        final rawPlayback = manifest['playback'];
+
+        if (rawVideoAssetId != null && rawVideoAssetId.trim().isNotEmpty &&
+            rawPlayback is Map<String, dynamic>) {
+          videoAssetId = rawVideoAssetId.trim();
+          playback = Map<String, dynamic>.from(rawPlayback);
+        } else {
+          debugPrint(
+            'LandingContentProvider.upsertConfig: manifest sans video_asset_id ou playback invalide, on continue sans VideoAsset.',
+          );
+        }
+      }
+
       final dynamic response = await _client.rpc(
         'app_admin_upsert_landing_config',
         params: {
@@ -150,7 +220,8 @@ class LandingContentProvider extends ChangeNotifier {
           'p_hero_badge_text': heroBadgeText,
           'p_hero_title': heroTitle,
           'p_hero_subtitle': heroSubtitle,
-          'p_video_url': videoUrl,
+          'p_video_asset_id': videoAssetId,
+          'p_playback': playback,
           'p_primary_color': primaryColor,
           'p_secondary_color': secondaryColor,
           'p_accent_color': accentColor,
@@ -392,20 +463,59 @@ class LandingContentProvider extends ChangeNotifier {
 
   Future<bool> upsertVideo({
     String? videoId,
-    required String videoUrl,
+    String? videoUrl,
     String? title,
     int? sortOrder,
     bool? isActive,
     String mediaType = 'video',
+    String? videoAssetId,
+    Map<String, dynamic>? playback,
   }) async {
     _setSaving(true);
     _setError(null);
     try {
+      final trimmedUrl = videoUrl?.trim() ?? '';
+
+      String? effectiveVideoAssetId = videoAssetId;
+      Map<String, dynamic>? effectivePlayback = playback;
+
+      if (mediaType == 'video' &&
+          (effectiveVideoAssetId == null || effectiveVideoAssetId.isEmpty)) {
+        if (trimmedUrl.isEmpty) {
+          _setError('URL vidéo manquante pour la landing.');
+          return false;
+        }
+
+        final manifest = await fetchPlaybackForDirectUrl(trimmedUrl);
+        if (manifest == null) {
+          return false;
+        }
+
+        final rawVideoAssetId = manifest['video_asset_id']?.toString();
+        final rawPlayback = manifest['playback'];
+
+        if (rawVideoAssetId == null || rawVideoAssetId.trim().isEmpty ||
+            rawPlayback is! Map<String, dynamic>) {
+          _setError('Playback vidéo invalide ou incomplet pour la landing.');
+          return false;
+        }
+
+        effectiveVideoAssetId = rawVideoAssetId.trim();
+        effectivePlayback = Map<String, dynamic>.from(rawPlayback);
+      }
+
+      if (mediaType == 'video' &&
+          (effectiveVideoAssetId == null || effectiveVideoAssetId.isEmpty)) {
+        _setError('VideoAsset manquant pour la vidéo de la landing.');
+        return false;
+      }
+
       final dynamic response = await _client.rpc(
         'app_admin_upsert_landing_video',
         params: {
           'p_video_id': videoId,
-          'p_video_url': videoUrl,
+          'p_video_asset_id': effectiveVideoAssetId,
+          'p_playback': effectivePlayback,
           'p_title': title,
           'p_sort_order': sortOrder,
           'p_is_active': isActive,

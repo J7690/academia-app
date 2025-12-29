@@ -265,7 +265,6 @@ DECLARE
     v_user_id UUID := auth.uid();
     v_role TEXT;
     v_config_id UUID;
-    v_video_url_trim TEXT;
 BEGIN
     IF v_user_id IS NULL THEN
         RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
@@ -280,12 +279,13 @@ BEGIN
         RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
     END IF;
 
+    -- p_video_url est accepté pour compatibilité mais ignoré :
+    -- on ne lit/écrit plus de colonne video_url dans app.landing_config
     IF p_config_id IS NULL THEN
         INSERT INTO app.landing_config (
             hero_badge_text,
             hero_title,
             hero_subtitle,
-            video_url,
             primary_color,
             secondary_color,
             accent_color
@@ -294,7 +294,6 @@ BEGIN
             p_hero_badge_text,
             p_hero_title,
             p_hero_subtitle,
-            p_video_url,
             p_primary_color,
             p_secondary_color,
             p_accent_color
@@ -306,7 +305,6 @@ BEGIN
             hero_badge_text = p_hero_badge_text,
             hero_title = p_hero_title,
             hero_subtitle = p_hero_subtitle,
-            video_url = p_video_url,
             primary_color = p_primary_color,
             secondary_color = p_secondary_color,
             accent_color = p_accent_color,

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart';
 
-import '../../services/livekit_token_service.dart';
-
 class LivekitRoomScreen extends StatefulWidget {
   final String sessionId;
 
@@ -27,47 +25,9 @@ class _LivekitRoomScreenState extends State<LivekitRoomScreen> {
 
   Future<void> _connect() async {
     setState(() {
-      _connecting = true;
-      _error = null;
+      _connecting = false;
+      _error = 'Les sessions live sont temporairement désactivées.';
     });
-    try {
-      final data = await LivekitTokenService.getTokenForSession(widget.sessionId);
-      final host = (data['host'] ?? '').toString();
-      final token = (data['token'] ?? '').toString();
-      if (host.isEmpty || token.isEmpty) {
-        throw Exception('Données LiveKit invalides.');
-      }
-
-      final uri = Uri.parse(host);
-      final wsUri = uri.scheme == 'wss' || uri.scheme == 'ws'
-          ? uri
-          : uri.replace(scheme: uri.scheme == 'https' ? 'wss' : 'ws');
-
-      final room = Room();
-      await room.connect(
-        wsUri.toString(),
-        token,
-        roomOptions: const RoomOptions(),
-        connectOptions: const ConnectOptions(),
-      );
-
-      await room.localParticipant?.setCameraEnabled(true);
-      await room.localParticipant?.setMicrophoneEnabled(true);
-
-      room.addListener(_onRoomChanged);
-
-      setState(() {
-        _room = room;
-        _connecting = false;
-        _micEnabled = true;
-        _cameraEnabled = true;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _connecting = false;
-      });
-    }
   }
 
   @override

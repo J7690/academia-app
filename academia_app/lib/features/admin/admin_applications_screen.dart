@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/admin_applications_provider.dart';
+import '../../providers/admin_application_payments_provider.dart';
 import 'admin_application_detail_screen.dart';
 
 class AdminApplicationsScreen extends StatefulWidget {
@@ -113,8 +114,12 @@ class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {
                         if (!context.mounted) return;
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) =>
-                                AdminApplicationDetailScreen(application: app),
+                            builder: (_) => ChangeNotifierProvider(
+                              create: (_) => AdminApplicationPaymentsProvider(),
+                              child: AdminApplicationDetailScreen(
+                                application: app,
+                              ),
+                            ),
                           ),
                         );
                       },

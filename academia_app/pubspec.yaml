@@ -54,6 +54,9 @@ dependencies:
   academia_universal_video_player:
     path: ../packages/academia_universal_video_player
 
+  pdf: ^3.10.4
+  printing: ^5.11.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

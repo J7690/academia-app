@@ -35,6 +35,25 @@ BEGIN
   LIMIT 1;
 
   IF v_video_asset_id IS NULL THEN
+    -- Best-effort fallback: pour les URLs publiques Supabase Storage (challenge-media,
+    -- video-assets, etc.), on retourne un manifest minimal basé directement sur l'URL
+    -- fournie. Ceci évite de bloquer le Studio juste après un enregistrement lorsque
+    -- les renditions VideoAsset ne sont pas encore prêtes, tout en conservant le
+    -- chemin VideoAsset dès qu'il existe.
+    IF POSITION('/storage/v1/object/public/' IN v_url) > 0 THEN
+      RETURN JSONB_BUILD_OBJECT(
+        'success', TRUE,
+        'manifest', JSONB_BUILD_OBJECT(
+          'video_asset_id', NULL,
+          'playback', JSONB_BUILD_OBJECT(
+            'best_url',   v_url,
+            'poster_url', NULL,
+            'renditions', JSONB_BUILD_OBJECT()
+          )
+        )
+      );
+    END IF;
+
     RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'rendition_not_found');
   END IF;
 

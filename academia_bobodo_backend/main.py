@@ -2612,18 +2612,25 @@ async def perform_hero_video_render(
     try:
         input_path = await _download_video_to_temp(url)
 
+        # Pour maximiser la compatibilité sur les appareils Android d'entrée de gamme
+        # (dont certains modèles Tecno/MediaTek), on force désormais un rendu Hero
+        # en profil "360p" plutôt que 720p.
+        #
+        # - Sans overlays, on réutilise directement le preset 360p générique.
+        # - Avec overlays, on applique les mêmes paramètres (max_width, bitrate,
+        #   audio) via _run_ffmpeg_generic, en conservant les filtres.
         if extra_filters:
             output_path = _run_ffmpeg_generic(
                 input_path=input_path,
-                max_width=720,
-                max_bitrate_k=900,
-                audio_bitrate_k=96,
-                label="hero_main",
-                fps=None,
+                max_width=360,
+                max_bitrate_k=450,
+                audio_bitrate_k=80,
+                label="hero_360p",
+                fps=30,
                 extra_filters=extra_filters,
             )
         else:
-            output_path = _run_ffmpeg_transcode(input_path)
+            output_path = _run_ffmpeg_transcode_360p(input_path)
 
         tmp_dir = Path(tempfile.mkdtemp(prefix="hero_thumb_"))
         thumb_path = tmp_dir / "thumb.jpg"

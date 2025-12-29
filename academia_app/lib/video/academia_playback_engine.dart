@@ -13,6 +13,7 @@ class AcademiaPlaybackEngine {
     bool showControls = false,
     BoxFit fit = BoxFit.cover,
     VoidCallback? onCompleted,
+    bool showErrorText = true,
   }) {
     return AcademiaPlaybackView(
       url: url,
@@ -22,6 +23,7 @@ class AcademiaPlaybackEngine {
       showControls: showControls,
       fit: fit,
       onCompleted: onCompleted,
+      showErrorText: showErrorText,
     );
   }
 }

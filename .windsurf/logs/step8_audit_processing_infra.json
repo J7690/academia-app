@@ -1,0 +1,302 @@
+{
+  "STORAGE_BUCKETS": {
+    "label": "STORAGE_BUCKETS",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "id": "application-files",
+        "name": "application-files",
+        "public": false,
+        "created_at": "2025-11-19T08:58:15.032772+00:00",
+        "updated_at": "2025-11-19T08:58:15.032772+00:00"
+      },
+      {
+        "id": "challenge-media",
+        "name": "challenge-media",
+        "public": true,
+        "created_at": "2025-11-30T11:02:28.237745+00:00",
+        "updated_at": "2025-11-30T11:02:28.237745+00:00"
+      },
+      {
+        "id": "landing-media",
+        "name": "landing-media",
+        "public": true,
+        "created_at": "2025-11-19T11:36:20.001896+00:00",
+        "updated_at": "2025-11-19T11:36:20.001896+00:00"
+      },
+      {
+        "id": "university-media",
+        "name": "university-media",
+        "public": true,
+        "created_at": "2025-11-19T11:36:15.176381+00:00",
+        "updated_at": "2025-11-19T11:36:15.176381+00:00"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "STORAGE_OBJECT_POLICIES": {
+    "label": "STORAGE_OBJECT_POLICIES",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "cmd": "DELETE",
+        "qual": "(bucket_id = 'landing-media'::text)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_delete_landing_media",
+        "schemaname": "storage",
+        "with_check": null
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "(bucket_id = 'university-media'::text)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_delete_university_media",
+        "schemaname": "storage",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_insert_landing_media",
+        "schemaname": "storage",
+        "with_check": "(bucket_id = 'landing-media'::text)"
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_insert_university_media",
+        "schemaname": "storage",
+        "with_check": "(bucket_id = 'university-media'::text)"
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "(bucket_id = 'landing-media'::text)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_update_landing_media",
+        "schemaname": "storage",
+        "with_check": "(bucket_id = 'landing-media'::text)"
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "(bucket_id = 'university-media'::text)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_update_university_media",
+        "schemaname": "storage",
+        "with_check": "(bucket_id = 'university-media'::text)"
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "(bucket_id = 'challenge-media'::text)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_write_challenge_media_delete",
+        "schemaname": "storage",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_write_challenge_media_insert",
+        "schemaname": "storage",
+        "with_check": "(bucket_id = 'challenge-media'::text)"
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "(bucket_id = 'challenge-media'::text)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_write_challenge_media_update",
+        "schemaname": "storage",
+        "with_check": "(bucket_id = 'challenge-media'::text)"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(bucket_id = 'landing-media'::text)",
+        "roles": [
+          "anon",
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "landing_media_select",
+        "schemaname": "storage",
+        "with_check": null
+      },
+      {
+        "cmd": "ALL",
+        "qual": "(bucket_id = 'landing-media'::text)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "landing_media_write",
+        "schemaname": "storage",
+        "with_check": "(bucket_id = 'landing-media'::text)"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(bucket_id = 'challenge-media'::text)",
+        "roles": [
+          "anon",
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "public_read_challenge_media",
+        "schemaname": "storage",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(bucket_id = 'landing-media'::text)",
+        "roles": [
+          "anon",
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "public_read_landing_media",
+        "schemaname": "storage",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(bucket_id = 'university-media'::text)",
+        "roles": [
+          "anon",
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "public_read_university_media",
+        "schemaname": "storage",
+        "with_check": null
+      },
+      {
+        "cmd": "ALL",
+        "qual": "(bucket_id = 'application-files'::text)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "students_manage_own_application_files",
+        "schemaname": "storage",
+        "with_check": "(bucket_id = 'application-files'::text)"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(bucket_id = 'university-media'::text)",
+        "roles": [
+          "anon",
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "university_media_select",
+        "schemaname": "storage",
+        "with_check": null
+      },
+      {
+        "cmd": "ALL",
+        "qual": "(bucket_id = 'university-media'::text)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "university_media_write",
+        "schemaname": "storage",
+        "with_check": "(bucket_id = 'university-media'::text)"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "VIDEO_ASSETS_STATUS_COUNTS": {
+    "label": "VIDEO_ASSETS_STATUS_COUNTS",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "n": 35,
+        "status": "ready"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "VIDEO_JOBS_STATUS_COUNTS": {
+    "label": "VIDEO_JOBS_STATUS_COUNTS",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows": [],
+    "error": null,
+    "sqlstate": null
+  },
+  "VIDEO_RENDITIONS_KIND_COUNTS": {
+    "label": "VIDEO_RENDITIONS_KIND_COUNTS",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "n": 35,
+        "kind": "mp4",
+        "status": "ready"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "VIDEO_RPCS_EXISTING": {
+    "label": "VIDEO_RPCS_EXISTING",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "routine_name": "app_videoasset_create_upload_intent",
+        "routine_type": "FUNCTION"
+      },
+      {
+        "routine_name": "app_videoasset_get_playback_manifest",
+        "routine_type": "FUNCTION"
+      },
+      {
+        "routine_name": "app_videoasset_register_uploaded_source",
+        "routine_type": "FUNCTION"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  }
+}

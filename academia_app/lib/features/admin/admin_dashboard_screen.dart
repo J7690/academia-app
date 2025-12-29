@@ -8,6 +8,8 @@ import '../../providers/admin_applications_provider.dart';
 import '../../services/notification_sound_service.dart';
 import '../../widgets/notification_sound_settings_dialog.dart';
 import 'admin_applications_screen.dart';
+import 'admin_payments_screen.dart';
+import 'admin_payment_receipts_screen.dart';
 import 'admin_programs_screen.dart';
 import 'admin_opportunities_screen.dart';
 import 'admin_communities_screen.dart';
@@ -154,7 +156,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 16,
+      length: 18,
       child: Consumer<AdminApplicationsProvider>(
         builder: (context, applicationsProvider, child) {
           final unread = applicationsProvider.unreadCount;
@@ -200,14 +202,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 labelColor: Colors.white,
                 unselectedLabelColor: Colors.white.withOpacity(0.85),
                 onTap: (index) {
-                  if (index == 8) {
+                  if (index == 9) {
                     _markAdminShortTrainingsSeen();
-                  } else if (index == 9) {
+                  } else if (index == 10) {
                     _markAdminUniversityContentSeen();
                   }
                 },
                 tabs: [
                   Tab(child: _AdminTabLabel(text: 'Candidatures', count: unread)),
+                  const Tab(text: 'Paiements'),
+                  const Tab(text: 'Reçus'),
                   const Tab(text: 'Programmes'),
                   const Tab(text: 'Opportunités'),
                   const Tab(text: 'Communautés'),
@@ -239,6 +243,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             body: const TabBarView(
               children: [
                 AdminApplicationsScreen(),
+                AdminPaymentsScreen(),
+                AdminPaymentReceiptsScreen(),
                 AdminProgramsScreen(),
                 AdminOpportunitiesScreen(),
                 AdminCommunitiesScreen(),

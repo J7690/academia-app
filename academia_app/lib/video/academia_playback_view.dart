@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+import '../utils/url_normalizer.dart';
+
 class AcademiaPlaybackView extends StatefulWidget {
   final String url;
   final bool autoplay;
@@ -10,6 +12,7 @@ class AcademiaPlaybackView extends StatefulWidget {
   final bool showControls;
   final BoxFit fit;
   final VoidCallback? onCompleted;
+  final bool showErrorText;
 
   const AcademiaPlaybackView({
     super.key,
@@ -20,6 +23,7 @@ class AcademiaPlaybackView extends StatefulWidget {
     this.showControls = false,
     this.fit = BoxFit.cover,
     this.onCompleted,
+    this.showErrorText = true,
   });
 
   @override
@@ -31,6 +35,7 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
   bool _initializing = false;
   Object? _error;
   bool _hasCompleted = false;
+  bool _loggedFirstPlay = false;
 
   @override
   void initState() {
@@ -51,43 +56,69 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
   }
 
   Future<void> _init() async {
-    final url = widget.url.trim();
-    if (url.isEmpty) {
+    final original = widget.url.trim();
+    if (original.isEmpty) {
       setState(() {
         _error = 'empty_url';
       });
       return;
     }
 
+    final url = UrlNormalizer.normalize(original);
+
     setState(() {
       _initializing = true;
       _error = null;
+      _loggedFirstPlay = false;
     });
 
     try {
+      // Debug interne pour diagnostiquer les soucis de lecture vidéo sur certains appareils.
+      // Ne change rien à l'UI utilisateur, mais permet de tracer l'URL exacte utilisée.
+      debugPrint('[AcademiaPlaybackView] init url=$url');
       final controller = VideoPlayerController.networkUrl(Uri.parse(url));
       _controller = controller;
       await controller.initialize();
       await controller.setLooping(widget.looping);
       await controller.setVolume(widget.muted ? 0.0 : 1.0);
 
+      final v0 = controller.value;
+      debugPrint(
+        '[AcademiaPlaybackView] initialized isWeb=$kIsWeb duration=${v0.duration} '
+        'aspectRatio=${v0.aspectRatio} muted=${widget.muted} looping=${widget.looping}',
+      );
+
       controller.addListener(() {
         final c = _controller;
         if (c == null) return;
         if (!mounted) return;
-        if (widget.looping) return;
         final v = c.value;
+
+        if (v.isInitialized && v.isPlaying && !_loggedFirstPlay) {
+          _loggedFirstPlay = true;
+          debugPrint(
+            '[AcademiaPlaybackView] playing isWeb=$kIsWeb '
+            'position=${v.position} duration=${v.duration}',
+          );
+        }
+
+        if (widget.looping) return;
         if (!v.isInitialized) return;
         final d = v.duration;
         if (d == Duration.zero) return;
         if (!v.isPlaying && v.position >= d && !_hasCompleted) {
           _hasCompleted = true;
+          debugPrint(
+            '[AcademiaPlaybackView] completed isWeb=$kIsWeb '
+            'position=${v.position} duration=$d',
+          );
           widget.onCompleted?.call();
         }
       });
 
       if (widget.autoplay) {
         await controller.play();
+        debugPrint('[AcademiaPlaybackView] autoplay play() requested isWeb=$kIsWeb');
       }
       if (!mounted) {
         await controller.dispose();
@@ -98,6 +129,7 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
       });
     } catch (e) {
       if (!mounted) return;
+      debugPrint('[AcademiaPlaybackView] init error=$e url=$url');
       setState(() {
         _initializing = false;
         _error = e;
@@ -137,6 +169,11 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
     final controller = _controller;
 
     if (_error != null) {
+      if (!widget.showErrorText) {
+        return Container(
+          color: Colors.black,
+        );
+      }
       String message;
       if (_error == 'empty_url') {
         message = 'Vidéo indisponible.';
@@ -200,6 +237,33 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
               ),
           ],
         ),
+      );
+    }
+
+    if (kDebugMode && kIsWeb) {
+      content = Stack(
+        children: [
+          Positioned.fill(child: content),
+          Positioned(
+            left: 8,
+            top: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.6),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'VIDEO',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
       );
     }
 

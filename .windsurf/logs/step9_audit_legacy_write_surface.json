@@ -1,0 +1,148 @@
+{
+  "LEGACY_COLUMNS_IN_APP_SCHEMA": {
+    "label": "LEGACY_COLUMNS_IN_APP_SCHEMA",
+    "http": 200,
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "text",
+        "table_name": "challenge_participation_videos",
+        "column_name": "thumbnail_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "challenge_participation_videos",
+        "column_name": "video_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "challenge_participations",
+        "column_name": "submission_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "challenge_participations",
+        "column_name": "thumbnail_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "jsonb",
+        "table_name": "challenge_participations",
+        "column_name": "video_renditions",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "challenge_participations",
+        "column_name": "video_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "challenge_video_render_jobs",
+        "column_name": "result_video_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "challenge_video_render_jobs",
+        "column_name": "source_video_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "challenge_videos",
+        "column_name": "thumbnail_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "jsonb",
+        "table_name": "challenge_videos",
+        "column_name": "video_renditions",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "challenge_videos",
+        "column_name": "video_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "free_video_render_jobs",
+        "column_name": "result_video_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "free_video_render_jobs",
+        "column_name": "source_video_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "free_videos",
+        "column_name": "thumbnail_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "jsonb",
+        "table_name": "free_videos",
+        "column_name": "video_renditions",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "free_videos",
+        "column_name": "video_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "hero_renders",
+        "column_name": "thumbnail_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "hero_renders_tv",
+        "column_name": "thumbnail_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "landing_config",
+        "column_name": "video_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "landing_videos",
+        "column_name": "video_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "student_home_videos",
+        "column_name": "video_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "university_media",
+        "column_name": "thumbnail_url",
+        "table_schema": "app"
+      },
+      {
+        "data_type": "text",
+        "table_name": "video_playback_errors",
+        "column_name": "video_url",
+        "table_schema": "app"
+      }
+    ],
+    "data": null
+  }
+}

@@ -269,7 +269,34 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
   ) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isWide = constraints.maxWidth >= 900;
+        final maxWidth = constraints.maxWidth;
+
+        // Sur mobile : une seule colonne, hauteur libre (ListView) pour éviter tout overflow.
+        if (maxWidth < 600) {
+          return ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: universities.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final uni = universities[index];
+              final id = uni['id']?.toString();
+              final uniPrograms = id == null
+                  ? <Map<String, dynamic>>[]
+                  : offers
+                      .where((offer) =>
+                          offer['university_id']?.toString() == id)
+                      .toList(growable: false);
+              return _UniversityCard(
+                university: uni,
+                programs: uniPrograms,
+              );
+            },
+          );
+        }
+
+        // Sur écrans plus larges : grille avec cartes compactes.
+        final isWide = maxWidth >= 900;
         final crossAxisCount = isWide ? 2 : 1;
         return GridView.builder(
           shrinkWrap: true,
@@ -278,7 +305,7 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: isWide ? 1.6 : 1.1,
+            childAspectRatio: isWide ? 1.8 : 1.4,
           ),
           itemCount: universities.length,
           itemBuilder: (context, index) {
@@ -420,7 +447,7 @@ class _UniversityCard extends StatelessWidget {
                 );
               }).toList(),
             ],
-            const Spacer(),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -441,6 +468,13 @@ class _UniversityCard extends StatelessWidget {
                         },
                   icon: const Icon(Icons.public),
                   label: const Text('Voir le mini-site'),
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    minimumSize: const Size(0, 36),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    textStyle: const TextStyle(fontSize: 13),
+                  ),
                 ),
                 TextButton(
                   onPressed: programs.isEmpty
@@ -556,6 +590,13 @@ class _UniversityCard extends StatelessWidget {
                           );
                         },
                   child: const Text('Voir les programmes'),
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    minimumSize: const Size(0, 36),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    textStyle: const TextStyle(fontSize: 13),
+                  ),
                 ),
               ],
             ),

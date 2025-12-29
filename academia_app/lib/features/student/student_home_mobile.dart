@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -25,6 +26,8 @@ import 'student_profile_screen.dart';
 import 'online_course_detail_screen.dart';
 import 'tabs/student_online_trainings_tab.dart';
 import 'widgets/student_mobile_scaffold.dart';
+import '../../providers/student_application_payments_provider.dart';
+import 'student_payments_screen.dart';
 import 'widgets/formations_section.dart';
 
 class StudentHomeMobileTab extends StatefulWidget {
@@ -69,7 +72,9 @@ class _StudentHomeMobileTabState extends State<StudentHomeMobileTab> {
   Widget build(BuildContext context) {
     return Consumer2<StudentOffersProvider, HomeFormationsProvider>(
       builder: (context, offersProvider, formationsProvider, child) {
-        formationsProvider.syncFromHomeOffers(offersProvider.homeOffers);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          formationsProvider.syncFromHomeOffers(offersProvider.homeOffers);
+        });
 
         return StudentMobileScrollablePage(
           children: [
@@ -299,6 +304,8 @@ class _MobileTopNavBarState extends State<_MobileTopNavBar>
   @override
   Widget build(BuildContext context) {
     final scale = 1.0 + 0.18 * _controller.value;
+    final containerWidth = MediaQuery.of(context).size.width * 0.9;
+    final isCompact = containerWidth < 260;
 
     return Center(
       child: AnimatedBuilder(
@@ -310,7 +317,7 @@ class _MobileTopNavBarState extends State<_MobileTopNavBar>
           );
         },
         child: Container(
-          width: MediaQuery.of(context).size.width * 0.9,
+          width: containerWidth,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.22),
@@ -325,13 +332,14 @@ class _MobileTopNavBarState extends State<_MobileTopNavBar>
           ),
           child: Row(
             children: [
-              _TopNavIconButton(
-                icon: Icons.notifications_none,
-                onTap: () => _onTapSimple(() {
-                  // Navigation future vers notifications si besoin.
-                }),
-              ),
-              const SizedBox(width: 8),
+              if (!isCompact)
+                _TopNavIconButton(
+                  icon: Icons.notifications_none,
+                  onTap: () => _onTapSimple(() {
+                    // Navigation future vers notifications si besoin.
+                  }),
+                ),
+              if (!isCompact) const SizedBox(width: 8),
               Expanded(
                 child: GestureDetector(
                   onTap: () => _onTapSimple(() {
@@ -357,24 +365,26 @@ class _MobileTopNavBarState extends State<_MobileTopNavBar>
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              _TopNavIconButton(
-                icon: Icons.person_outline,
-                onTap: () => _onTapSimple(() {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const StudentProfileScreen(),
-                    ),
-                  );
-                }),
-              ),
-              const SizedBox(width: 4),
-              _TopNavIconButton(
-                icon: Icons.more_horiz,
-                onTap: () => _onTapSimple(() {
-                  _openMoreMenu();
-                }),
-              ),
+              if (!isCompact) const SizedBox(width: 8),
+              if (!isCompact)
+                _TopNavIconButton(
+                  icon: Icons.person_outline,
+                  onTap: () => _onTapSimple(() {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const StudentProfileScreen(),
+                      ),
+                    );
+                  }),
+                ),
+              if (!isCompact) const SizedBox(width: 4),
+              if (!isCompact)
+                _TopNavIconButton(
+                  icon: Icons.more_horiz,
+                  onTap: () => _onTapSimple(() {
+                    _openMoreMenu();
+                  }),
+                ),
             ],
           ),
         ),
@@ -647,8 +657,8 @@ class _MobileHomeHeroState extends State<_MobileHomeHero> {
                   child: AcademiaPlaybackEngine.view(
                     url: heroUrl,
                     autoplay: true,
-                    looping: true,
-                    muted: true,
+                    looping: false,
+                    muted: kIsWeb,
                     showControls: false,
                     fit: BoxFit.cover,
                   ),
@@ -727,6 +737,21 @@ class _MobileSectionsGrid extends StatelessWidget {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => const StudentApplicationsTab(),
+            ),
+          );
+        },
+      ),
+      _MobileSectionItem(
+        title: 'Mes paiements',
+        subtitle: 'Voir et gérer tes paiements.',
+        icon: Icons.payments_outlined,
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ChangeNotifierProvider(
+                create: (_) => StudentApplicationPaymentsProvider(),
+                child: const StudentPaymentsScreen(),
+              ),
             ),
           );
         },

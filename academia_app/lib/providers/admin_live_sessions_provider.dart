@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../services/livekit_admin_service.dart';
-
 class AdminLiveSessionsProvider extends ChangeNotifier {
   final SupabaseClient _client = Supabase.instance.client;
 
@@ -149,22 +147,10 @@ class AdminLiveSessionsProvider extends ChangeNotifier {
   Future<bool> banUser({required String sessionId, required String userId}) async {
     _setSaving(true);
     _setError(null);
-    try {
-      final ok = await LivekitAdminService.kickParticipant(
-        sessionId: sessionId,
-        userId: userId,
-      );
-      if (!ok) {
-        _setError('Bannissement LiveKit non confirmé.');
-        return false;
-      }
-      await loadParticipants(sessionId);
-      return true;
-    } catch (e) {
-      _setError(e.toString());
-      return false;
-    } finally {
-      _setSaving(false);
-    }
+    _setError(
+      'La gestion temps réel des participants LiveKit est temporairement désactivée.',
+    );
+    _setSaving(false);
+    return false;
   }
 }

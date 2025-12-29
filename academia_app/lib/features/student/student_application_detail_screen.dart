@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../providers/student_application_files_provider.dart';
 import '../../providers/student_application_messages_provider.dart';
 import '../../providers/student_applications_provider.dart';
+import '../../providers/student_application_payments_provider.dart';
 
 class StudentApplicationDetailScreen extends StatefulWidget {
   final Map<String, dynamic> application;
@@ -31,6 +32,9 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
       final appId = widget.application['id']?.toString();
       if (appId != null && appId.isNotEmpty) {
         context.read<StudentApplicationFilesProvider>().loadFiles(appId);
+        try {
+          context.read<StudentApplicationPaymentsProvider>().loadPayments(appId);
+        } catch (_) {}
       }
     });
   }
@@ -112,6 +116,207 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
     }
   }
 
+  void _showDeclarePaymentSheet(BuildContext context) {
+    final appId = widget.application['id']?.toString();
+    if (appId == null || appId.isEmpty) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        final amountController = TextEditingController();
+        final referenceController = TextEditingController();
+        final noteController = TextEditingController();
+        String? selectedChannel;
+        bool isSubmitting = false;
+
+        Future<void> submit() async {
+          if (isSubmitting) return;
+
+          final rawAmount = amountController.text.trim().replaceAll(',', '.');
+          final amount = double.tryParse(rawAmount);
+          if (amount == null || amount <= 0) {
+            ScaffoldMessenger.of(ctx).showSnackBar(
+              const SnackBar(
+                content: Text('Veuillez saisir un montant valide.'),
+              ),
+            );
+            return;
+          }
+
+          if (selectedChannel == null || selectedChannel!.isEmpty) {
+            ScaffoldMessenger.of(ctx).showSnackBar(
+              const SnackBar(
+                content: Text('Veuillez sélectionner un canal de paiement.'),
+              ),
+            );
+            return;
+          }
+
+          isSubmitting = true;
+          final paymentsProvider =
+              context.read<StudentApplicationPaymentsProvider>();
+          final ok = await paymentsProvider.createAndDeclarePayment(
+            applicationId: appId,
+            paymentReason: 'application_fee',
+            channel: selectedChannel!,
+            amount: amount,
+            externalReference: referenceController.text.trim().isEmpty
+                ? null
+                : referenceController.text.trim(),
+            studentNote: noteController.text.trim().isEmpty
+                ? null
+                : noteController.text.trim(),
+          );
+
+          if (!ctx.mounted) return;
+
+          if (ok) {
+            Navigator.of(ctx).pop();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Paiement déclaré, en attente de vérification.'),
+              ),
+            );
+          } else {
+            final err = paymentsProvider.error ??
+                'Erreur lors de la déclaration du paiement.';
+            ScaffoldMessenger.of(ctx).showSnackBar(
+              SnackBar(content: Text(err)),
+            );
+            isSubmitting = false;
+          }
+        }
+
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+          ),
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Déclarer un paiement',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Choisissez le canal utilisé et indiquez le montant réellement payé.'
+                      '\nLe paiement se fait en dehors de la plateforme, ici vous enregistrez seulement la preuve.',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Canal de paiement',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                    RadioListTile<String>(
+                      title: const Text('Espèces (cash)'),
+                      value: 'cash',
+                      groupValue: selectedChannel,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedChannel = value;
+                        });
+                      },
+                    ),
+                    RadioListTile<String>(
+                      title: const Text('Orange Money'),
+                      value: 'orange_money',
+                      groupValue: selectedChannel,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedChannel = value;
+                        });
+                      },
+                    ),
+                    RadioListTile<String>(
+                      title: const Text('Moov Money'),
+                      value: 'moov_money',
+                      groupValue: selectedChannel,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedChannel = value;
+                        });
+                      },
+                    ),
+                    RadioListTile<String>(
+                      title: const Text('Telecel Money'),
+                      value: 'telecel_money',
+                      groupValue: selectedChannel,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedChannel = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: amountController,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: 'Montant payé (XOF)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: referenceController,
+                      decoration: const InputDecoration(
+                        labelText: 'Référence transaction / reçu (optionnel)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: noteController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Note pour l\'administration (optionnel)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: ElevatedButton.icon(
+                        onPressed: isSubmitting ? null : submit,
+                        icon: const Icon(Icons.check),
+                        label: const Text('Valider la déclaration'),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final app = widget.application;
@@ -165,6 +370,86 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                       ],
                     ],
                   ),
+                ),
+                Consumer<StudentApplicationPaymentsProvider>(
+                  builder: (context, paymentsProvider, child) {
+                    final payments = paymentsProvider.payments;
+                    Widget content;
+                    if (paymentsProvider.isLoading && payments.isEmpty) {
+                      content = const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        child: LinearProgressIndicator(minHeight: 2),
+                      );
+                    } else if (paymentsProvider.error != null) {
+                      content = Text(
+                        'Erreur paiement : ${paymentsProvider.error}',
+                        style: const TextStyle(fontSize: 12, color: Colors.red),
+                      );
+                    } else if (payments.isEmpty) {
+                      content = const Text(
+                        'Aucun paiement n\'a encore été déclaré pour cette candidature.',
+                        style: TextStyle(fontSize: 13),
+                      );
+                    } else {
+                      final p = payments.first;
+                      final amountDue = p['amount_due']?.toString() ?? '';
+                      final amountPaid = p['amount_paid']?.toString() ?? '';
+                      final channel = p['channel']?.toString() ?? '';
+                      final payStatus = p['status']?.toString() ?? '';
+                      final ref = p['reference_code']?.toString() ?? '';
+
+                      content = Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (amountDue.isNotEmpty)
+                            Text('Montant à payer : $amountDue XOF'),
+                          if (amountPaid.isNotEmpty)
+                            Text('Montant déclaré : $amountPaid XOF'),
+                          if (channel.isNotEmpty)
+                            Text('Canal : $channel'),
+                          if (payStatus.isNotEmpty)
+                            Text('Statut paiement : $payStatus'),
+                          if (ref.isNotEmpty)
+                            Text(
+                              'Référence : $ref',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                        ],
+                      );
+                    }
+
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Paiement de la candidature',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                TextButton.icon(
+                                  onPressed: appId.isEmpty
+                                      ? null
+                                      : () => _showDeclarePaymentSheet(context),
+                                  icon: const Icon(Icons.payment),
+                                  label: const Text('Déclarer un paiement'),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            content,
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 const Divider(),
                 Padding(

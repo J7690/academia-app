@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../../../providers/admin_prep_concours_provider.dart';
 import '../../../providers/prep_concours_provider.dart';
-import '../../../services/prep_ai_service.dart';
 
 class AdminPrepConcoursScreen extends StatefulWidget {
   const AdminPrepConcoursScreen({super.key});
@@ -158,42 +157,15 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
                 final messenger = ScaffoldMessenger.of(context);
                 final subjectId = subjectIdController.text.trim();
                 if (subjectId.isEmpty) return;
-
-                final num = int.tryParse(numController.text.trim()) ?? 10;
-
                 Navigator.of(dialogContext).pop();
 
-                try {
-                  final res = await PrepAiService.generatePrepQcm(
-                    subjectId: subjectId,
-                    generationType: 'mcq',
-                    prompt: promptController.text.trim().isEmpty
-                        ? null
-                        : promptController.text.trim(),
-                    numQuestions: num,
-                  );
-                  if (!context.mounted) return;
-                  final generationId = (res['generation_id'] ?? '').toString();
-                  messenger.showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        generationId.isEmpty
-                            ? 'Génération terminée.'
-                            : 'Génération terminée: $generationId',
-                      ),
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'La génération IA de QCM est en cours de développement et est temporairement désactivée.',
                     ),
-                  );
-
-                  setState(() {
-                    _selectedSubjectId = subjectId;
-                  });
-                  await _reload();
-                } catch (e) {
-                  if (!context.mounted) return;
-                  messenger.showSnackBar(
-                    SnackBar(content: Text(e.toString())),
-                  );
-                }
+                  ),
+                );
               },
               child: const Text('Générer'),
             ),

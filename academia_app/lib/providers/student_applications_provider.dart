@@ -30,11 +30,28 @@ class StudentApplicationsProvider extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      final data = await _client.rpc('app_list_student_applications') as List<dynamic>? ?? [];
+      final user = _client.auth.currentUser;
+      debugPrint(
+        '[StudentApplicationsProvider] loadApplications start userId=${user?.id} email=${user?.email}',
+      );
+
+      final raw = await _client.rpc('app_list_student_applications');
+      debugPrint(
+        '[StudentApplicationsProvider] RPC app_list_student_applications rawType=${raw.runtimeType}',
+      );
+
+      final data = raw as List<dynamic>? ?? [];
+      debugPrint(
+        '[StudentApplicationsProvider] parsed applications length=${data.length}',
+      );
+
       _applications = data.cast<Map<String, dynamic>>();
       _sortApplicationsByActivity();
       notifyListeners();
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint(
+        '[StudentApplicationsProvider] loadApplications error=$e stack=$st',
+      );
       _setError(e.toString());
     } finally {
       _setLoading(false);

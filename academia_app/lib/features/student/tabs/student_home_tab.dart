@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../student_profile_screen.dart';
 import '../student_university_site_screen.dart';
 import '../application_request_dialog.dart';
+import '../student_payments_screen.dart';
 import '../../../providers/student_profile_provider.dart';
 import '../../../providers/student_offers_provider.dart';
 import '../../../providers/student_applications_provider.dart';
@@ -20,6 +21,7 @@ import '../../../video/academia_playback_engine.dart';
 import '../../../widgets/notification_sound_settings_dialog.dart';
 import '../widgets/student_short_trainings_section.dart';
 import '../widgets/student_home_online_courses_section.dart';
+import '../../../providers/student_application_payments_provider.dart';
 
 class _StudentHomeMediaItem {
   final String url;
@@ -111,21 +113,25 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
       final dynamic response = await client
           .schema('app')
           .from('hero_playlist')
-          .select('base_video_url, base_image_url, media_type, sort_order, is_active, title')
+          .select(
+              'base_video_url, base_image_url, media_type, sort_order, is_active, title')
           .eq('slot', 'student_home_hero_main')
           .eq('is_active', true)
           .order('sort_order', ascending: true)
-          .limit(1);
+          .limit(10);
 
       if (response is List && response.isNotEmpty) {
-        final raw = response.first;
-        Map<String, dynamic>? row;
-        if (raw is Map<String, dynamic>) {
-          row = raw;
-        } else if (raw is Map) {
-          row = Map<String, dynamic>.from(raw);
-        }
-        if (row != null) {
+        for (final raw in response) {
+          Map<String, dynamic>? row;
+          if (raw is Map<String, dynamic>) {
+            row = raw;
+          } else if (raw is Map) {
+            row = Map<String, dynamic>.from(raw);
+          }
+          if (row == null) {
+            continue;
+          }
+
           final rawType = (row['media_type'] ?? 'video').toString().toLowerCase();
           final isImage = rawType == 'image';
           final heroVideoUrl = (row['base_video_url'] ?? '').toString().trim();
@@ -151,8 +157,13 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
           }
 
           if (chosenUrl != null && chosenUrl.isNotEmpty) {
-            playlist.add(_StudentHomeMediaItem(url: chosenUrl, mediaType: mediaType));
-            title = row['title']?.toString();
+            debugPrint(
+              'StudentHome: hero item from app.hero_playlist type=$mediaType url=$chosenUrl',
+            );
+            playlist.add(
+              _StudentHomeMediaItem(url: chosenUrl, mediaType: mediaType),
+            );
+            title ??= row['title']?.toString();
           }
         }
       }
@@ -185,6 +196,10 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
     _currentMediaIndex = index % _mediaPlaylist.length;
     final item = _mediaPlaylist[_currentMediaIndex];
 
+    debugPrint(
+      'StudentHome: _goToMediaIndex index=$_currentMediaIndex type=${item.mediaType} url=${item.url}',
+    );
+
     if (item.mediaType == 'image') {
       _currentVideoUrl = null;
       _videoReady = true;
@@ -198,6 +213,7 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   }
 
   Future<void> _initVideo(String url) async {
+    debugPrint('StudentHome: _initVideo url=' + url);
     _videoReady = false;
     _currentVideoUrl = null;
     if (mounted) {
@@ -218,6 +234,8 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   void _onMediaCompleted() {
     if (_mediaPlaylist.isEmpty) return;
     final nextIndex = (_currentMediaIndex + 1) % _mediaPlaylist.length;
+    final nextItem = _mediaPlaylist[nextIndex];
+    debugPrint('StudentHome: _onMediaCompleted -> next=${nextItem.mediaType}');
     _goToMediaIndex(nextIndex);
   }
 
@@ -595,8 +613,8 @@ class _StudentHomeHero extends StatelessWidget {
                     return AcademiaPlaybackEngine.view(
                       url: currentVideoUrl!,
                       autoplay: true,
-                      looping: true,
-                      muted: false,
+                      looping: false,
+                      muted: kIsWeb,
                       showControls: false,
                       fit: BoxFit.cover,
                       onCompleted: onVideoCompleted,
@@ -840,6 +858,21 @@ class _ProfileHeader extends StatelessWidget {
                     },
                     icon: const Icon(Icons.person_outline),
                     label: const Text('Mon profil'),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ChangeNotifierProvider(
+                            create: (_) => StudentApplicationPaymentsProvider(),
+                            child: const StudentPaymentsScreen(),
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.payments_outlined),
+                    label: const Text('Mes paiements'),
                   ),
                   IconButton(
                     tooltip: 'Paramètres',

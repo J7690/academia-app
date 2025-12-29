@@ -10,6 +10,9 @@ import '../../providers/university_applications_provider.dart';
 import '../../providers/selected_university_application_provider.dart';
 import '../../providers/university_site_provider.dart';
 import '../../providers/university_programs_provider.dart';
+import '../../providers/university_application_messages_provider.dart';
+import '../../providers/university_application_detail_provider.dart';
+import '../../providers/university_application_payments_provider.dart';
 import '../../widgets/mini_site_hero_video.dart';
 import 'university_application_detail_screen.dart';
 import '../../services/notification_sound_service.dart';
@@ -1598,8 +1601,11 @@ class _UniversityApplicationsBucket extends StatelessWidget {
             const Divider(height: 1),
             Expanded(
               flex: 2,
-              child: UniversityApplicationDetailPanel(
-                application: effectiveSelected,
+              child: ChangeNotifierProvider(
+                create: (_) => UniversityApplicationPaymentsProvider(),
+                child: UniversityApplicationDetailPanel(
+                  application: effectiveSelected,
+                ),
               ),
             ),
           ],

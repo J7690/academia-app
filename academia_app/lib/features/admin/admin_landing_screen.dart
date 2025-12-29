@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/landing_content_provider.dart';
+import '../../services/hero_render_service.dart';
+import '../../services/videoasset_upload_service.dart';
+import 'hero_studio_models.dart';
 
 class AdminLandingScreen extends StatefulWidget {
   const AdminLandingScreen({super.key});
@@ -24,11 +27,16 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
 
   bool _initializedFromConfig = false;
 
+  bool _heroLoading = false;
+  String? _heroError;
+  List<HeroPlaylistItem> _heroItems = const <HeroPlaylistItem>[];
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<LandingContentProvider>().loadAdminLandingContent();
+      _loadHeroPlaylist();
     });
   }
 
@@ -56,6 +64,34 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
     _primaryColorController.text = config['primary_color']?.toString() ?? '';
     _secondaryColorController.text = config['secondary_color']?.toString() ?? '';
     _accentColorController.text = config['accent_color']?.toString() ?? '';
+  }
+
+  Future<void> _loadHeroPlaylist() async {
+    setState(() {
+      _heroLoading = true;
+      _heroError = null;
+    });
+    try {
+      final items = await HeroRenderService.getPlaylist(
+        slot: 'landing_hero_main',
+      );
+      if (!mounted) return;
+      setState(() {
+        _heroItems = items;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _heroError = e.toString();
+        _heroItems = const <HeroPlaylistItem>[];
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _heroLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _saveConfig(LandingContentProvider provider) async {
@@ -162,19 +198,21 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
 
   Future<void> _showVideoDialog(
     LandingContentProvider provider, {
-    Map<String, dynamic>? existing,
+    HeroPlaylistItem? existing,
   }) async {
-    String uploadedUrl = existing?['video_url']?.toString() ?? '';
+    final existingItem = existing;
+
+    String? uploadedVideoAssetId;
+    String uploadedUrl = existingItem?.baseVideoUrl ??
+        existingItem?.baseImageUrl ??
+        '';
     final titleController =
-        TextEditingController(text: existing?['title']?.toString() ?? '');
+        TextEditingController(text: existingItem?.title ?? '');
     final sortController = TextEditingController(
-      text: existing?['sort_order']?.toString() ?? '',
+      text: existingItem?.sortOrder.toString() ?? '',
     );
-    bool isActive = existing == null || existing['is_active'] != false;
-    String mediaType = ((existing?['media_type'] ?? 'video')
-                .toString()
-                .toLowerCase() ==
-            'image')
+    bool isActive = existingItem?.isActive ?? true;
+    String mediaType = (existingItem?.mediaType.toLowerCase() == 'image')
         ? 'image'
         : 'video';
 
@@ -185,7 +223,7 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
           builder: (context, setStateDialog) {
             return AlertDialog(
               title: Text(
-                existing == null
+                existingItem == null
                     ? 'Nouveau média (playlist hero)'
                     : 'Modifier le média',
               ),
@@ -264,30 +302,62 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
                             return;
                           }
 
-                          final publicUrl = await provider.uploadLandingFile(
-                            bytes: Uint8List.fromList(bytes),
-                            fileName: file.name,
-                            mimeType: file.extension,
-                            folder: 'playlist-videos',
-                          );
-
-                          if (!context.mounted) return;
-
-                          if (publicUrl == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  provider.error ??
-                                      'Erreur lors de l\'upload du média de playlist.',
-                                ),
-                              ),
+                          if (isImage) {
+                            final publicUrl = await provider.uploadLandingFile(
+                              bytes: Uint8List.fromList(bytes),
+                              fileName: file.name,
+                              mimeType: file.extension,
+                              folder: 'playlist-videos',
                             );
-                            return;
-                          }
 
-                          setStateDialog(() {
-                            uploadedUrl = publicUrl;
-                          });
+                            if (!context.mounted) return;
+
+                            if (publicUrl == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    provider.error ??
+                                        'Erreur lors de l\'upload du média de playlist.',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+
+                            setStateDialog(() {
+                              uploadedVideoAssetId = null;
+                              uploadedUrl = publicUrl;
+                            });
+                          } else {
+                            try {
+                              final videoAssetId =
+                                  await VideoAssetUploadService.ingestVideoFromBytes(
+                                bytes: Uint8List.fromList(bytes),
+                                fileName: file.name,
+                                mimeType: file.extension,
+                                origin: 'admin_landing_hero_playlist',
+                                contextType: null,
+                                contextId: null,
+                                fileSizeBytes: file.size,
+                              );
+
+                              if (!context.mounted) return;
+
+                              setStateDialog(() {
+                                uploadedVideoAssetId = videoAssetId;
+                                uploadedUrl = 'video_asset:' + videoAssetId;
+                              });
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    e.toString(),
+                                  ),
+                                ),
+                              );
+                            }
+                          }
                         },
                         icon: const Icon(Icons.upload_file),
                         label:
@@ -299,6 +369,247 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         uploadedUrl.isNotEmpty
+                            ? (mediaType == 'image'
+                                ? 'Image sélectionnée.'
+                                : 'Vidéo sélectionnée.')
+                            : 'Aucun média sélectionné.',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Titre (facultatif)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: sortController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Ordre (optionnel)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Text('Active'),
+                        const Spacer(),
+                        Switch(
+                          value: isActive,
+                          onChanged: (v) {
+                            setStateDialog(() {
+                              isActive = v;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Annuler'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Enregistrer'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result != true) return;
+    if (mediaType == 'video') {
+      final assetId = uploadedVideoAssetId?.trim() ?? '';
+      if (assetId.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Une vidéo doit être uploadée pour la playlist hero.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+    } else {
+      final url = uploadedUrl.trim();
+      if (url.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Un média doit être uploadé pour la playlist hero.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    final sortOrder = int.tryParse(sortController.text.trim());
+
+    try {
+      String id;
+      if (mediaType == 'video') {
+        id = await HeroRenderService.upsertPlaylistItemWithVideoAsset(
+          itemId: existingItem?.id,
+          slot: 'landing_hero_main',
+          videoAssetId: uploadedVideoAssetId!,
+          title: titleController.text.trim().isEmpty
+              ? null
+              : titleController.text.trim(),
+          subtitle: null,
+          sortOrder: sortOrder,
+          isActive: isActive,
+        );
+      } else {
+        final url = uploadedUrl.trim();
+        id = await HeroRenderService.upsertPlaylistItemFromUrl(
+          itemId: existingItem?.id,
+          slot: 'landing_hero_main',
+          mediaType: mediaType,
+          url: url,
+          title: titleController.text.trim().isEmpty
+              ? null
+              : titleController.text.trim(),
+          subtitle: null,
+          sortOrder: sortOrder,
+          isActive: isActive,
+        );
+      }
+
+      // ignore: avoid_print
+      print('AdminLanding: hero playlist item saved id=$id');
+      await _loadHeroPlaylist();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
+    }
+  }
+
+  Future<void> _showLandingCarouselVideoDialog(
+    LandingContentProvider provider, {
+    Map<String, dynamic>? existing,
+  }) async {
+    String? uploadedVideoAssetId;
+    final existingVideoAssetId = existing?['video_asset_id']?.toString();
+
+    final titleController =
+        TextEditingController(text: existing?['title']?.toString() ?? '');
+    final sortController = TextEditingController(
+      text: existing?['sort_order']?.toString() ?? '',
+    );
+    bool isActive = existing == null || existing['is_active'] != false;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Text(
+                existing == null
+                    ? 'Nouvelle vidéo (carrousel landing)'
+                    : 'Modifier la vidéo',
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final result = await FilePicker.platform.pickFiles(
+                            allowMultiple: false,
+                            withData: true,
+                            type: FileType.custom,
+                            allowedExtensions: const ['mp4', 'mov', 'webm'],
+                          );
+
+                          if (result == null || result.files.isEmpty) {
+                            return;
+                          }
+
+                          final file = result.files.first;
+                          final bytes = file.bytes;
+                          const maxSizeBytes = 200 * 1024 * 1024;
+                          if (file.size > maxSizeBytes) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Fichier trop volumineux (max 200 Mo).',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          if (bytes == null) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Impossible de lire le contenu du fichier.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          try {
+                            final videoAssetId =
+                                await VideoAssetUploadService.ingestVideoFromBytes(
+                              bytes: Uint8List.fromList(bytes),
+                              fileName: file.name,
+                              mimeType: file.extension,
+                              origin: 'admin_landing_carousel_video',
+                              contextType: 'landing_video',
+                              contextId: existing?['id']?.toString(),
+                              fileSizeBytes: file.size,
+                            );
+
+                            if (!context.mounted) return;
+
+                            setStateDialog(() {
+                              uploadedVideoAssetId = videoAssetId;
+                            });
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(e.toString()),
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.upload_file),
+                        label: const Text('Uploader une vidéo (VideoAsset)'),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        (uploadedVideoAssetId ?? existingVideoAssetId) != null &&
+                                (uploadedVideoAssetId ??
+                                        existingVideoAssetId)!
+                                    .toString()
+                                    .isNotEmpty
                             ? 'Vidéo sélectionnée.'
                             : 'Aucune vidéo sélectionnée.',
                         style: const TextStyle(fontSize: 12),
@@ -354,13 +665,17 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
     );
 
     if (result != true) return;
-    final url = uploadedUrl.trim();
-    if (url.isEmpty) {
+
+    final sortOrder = int.tryParse(sortController.text.trim());
+    final effectiveVideoAssetId =
+        (uploadedVideoAssetId ?? existingVideoAssetId)?.trim() ?? '';
+
+    if (effectiveVideoAssetId.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Un média doit être uploadé pour la playlist hero.',
+              'Une vidéo doit être uploadée pour le carrousel landing.',
             ),
           ),
         );
@@ -368,15 +683,15 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
       return;
     }
 
-    final sortOrder = int.tryParse(sortController.text.trim());
     await provider.upsertVideo(
       videoId: existing?['id']?.toString(),
-      videoUrl: url,
-      title:
-          titleController.text.trim().isEmpty ? null : titleController.text.trim(),
+      videoAssetId: effectiveVideoAssetId,
+      title: titleController.text.trim().isEmpty
+          ? null
+          : titleController.text.trim(),
       sortOrder: sortOrder,
       isActive: isActive,
-      mediaType: mediaType,
+      mediaType: 'video',
     );
   }
 
@@ -886,7 +1201,7 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
                             ),
                           ),
                           TextButton.icon(
-                            onPressed: provider.isSaving
+                            onPressed: provider.isSaving || _heroLoading
                                 ? null
                                 : () => _showVideoDialog(provider),
                             icon: const Icon(Icons.add),
@@ -895,12 +1210,168 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
                         ],
                       ),
                       const SizedBox(height: 8),
+                      if (_heroLoading)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                          child: SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      else ...[
+                        if (_heroError != null) ...[
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              _heroError!,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ],
+                        if (_heroItems.isEmpty)
+                          const Text('Aucun média configuré pour le hero.')
+                        else
+                          Column(
+                            children: _heroItems.map((item) {
+                              final isImage =
+                                  item.mediaType.toLowerCase() == 'image';
+                              final url = isImage
+                                  ? (item.baseImageUrl ?? '')
+                                  : (item.baseVideoUrl ?? '');
+                              final title = item.title ?? '';
+                              final active = item.isActive;
+                              final sortOrder = item.sortOrder;
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                child: ListTile(
+                                  title: Text(
+                                    title.isNotEmpty ? title : url,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  subtitle: Text(
+                                    'Type: ' +
+                                        (isImage ? 'Image' : 'Vidéo') +
+                                        '\nURL: $url\nOrdre: ${sortOrder}  •  ' +
+                                        (active ? 'Active' : 'Inactive'),
+                                  ),
+                                  isThreeLine: true,
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit),
+                                        onPressed: provider.isSaving || _heroLoading
+                                            ? null
+                                            : () => _showVideoDialog(
+                                                  provider,
+                                                  existing: item,
+                                                ),
+                                      ),
+                                      IconButton(
+                                        icon:
+                                            const Icon(Icons.delete_outline),
+                                        onPressed:
+                                            provider.isSaving || _heroLoading
+                                                ? null
+                                                : () async {
+                                                    final confirm =
+                                                        await showDialog<bool>(
+                                                      context: context,
+                                                      builder: (context) {
+                                                        return AlertDialog(
+                                                          title: const Text(
+                                                              'Supprimer le média ?'),
+                                                          content: const Text(
+                                                              'Cette action supprimera cet item de la playlist hero.'),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.of(
+                                                                          context)
+                                                                      .pop(
+                                                                          false),
+                                                              child: const Text(
+                                                                  'Annuler'),
+                                                            ),
+                                                            ElevatedButton(
+                                                              onPressed: () =>
+                                                                  Navigator.of(
+                                                                          context)
+                                                                      .pop(
+                                                                          true),
+                                                              child: const Text(
+                                                                  'Supprimer'),
+                                                            ),
+                                                          ],
+                                                        );
+                                                      },
+                                                    );
+                                                    if (confirm != true) {
+                                                      return;
+                                                    }
+                                                    try {
+                                                      await HeroRenderService
+                                                          .deletePlaylistItem(
+                                                        item.id,
+                                                      );
+                                                      await _loadHeroPlaylist();
+                                                    } catch (e) {
+                                                      if (!mounted) return;
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            e.toString(),
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }
+                                                  },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                      ],
+                      const SizedBox(height: 24),
+                      Divider(color: Colors.grey.shade300),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Vidéos du carrousel landing',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: provider.isSaving
+                                ? null
+                                : () => _showLandingCarouselVideoDialog(provider),
+                            icon: const Icon(Icons.add),
+                            label: const Text('Ajouter'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
                       if (provider.videos.isEmpty)
-                        const Text('Aucune vidéo configurée.')
+                        const Text(
+                          'Aucune vidéo configurée pour le carrousel landing.',
+                        )
                       else
                         Column(
                           children: provider.videos.map((v) {
-                            final url = (v['video_url'] ?? '').toString();
                             final title = (v['title'] ?? '').toString();
                             final active = v['is_active'] == true;
                             final sortOrder = v['sort_order'];
@@ -908,15 +1379,14 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
                               margin: const EdgeInsets.only(bottom: 8),
                               child: ListTile(
                                 title: Text(
-                                  title.isNotEmpty ? title : url,
+                                  title.isNotEmpty ? title : '(Sans titre)',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 subtitle: Text(
-                                  'URL: $url\nOrdre: ${sortOrder ?? '-'}  •  ' +
+                                  'Ordre: ${sortOrder ?? '-'}  •  ' +
                                       (active ? 'Active' : 'Inactive'),
                                 ),
-                                isThreeLine: true,
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -924,7 +1394,7 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
                                       icon: const Icon(Icons.edit),
                                       onPressed: provider.isSaving
                                           ? null
-                                          : () => _showVideoDialog(
+                                          : () => _showLandingCarouselVideoDialog(
                                                 provider,
                                                 existing: v,
                                               ),
@@ -933,9 +1403,62 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
                                       icon: const Icon(Icons.delete_outline),
                                       onPressed: provider.isSaving
                                           ? null
-                                          : () => provider.deleteVideo(
-                                                v['id']?.toString() ?? '',
-                                              ),
+                                          : () async {
+                                              final confirm =
+                                                  await showDialog<bool>(
+                                                context: context,
+                                                builder: (context) {
+                                                  return AlertDialog(
+                                                    title: const Text(
+                                                        'Supprimer la vidéo ?'),
+                                                    content: const Text(
+                                                      'Cette action supprimera cette vidéo du carrousel landing.',
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop(false),
+                                                        child: const Text(
+                                                            'Annuler'),
+                                                      ),
+                                                      ElevatedButton(
+                                                        onPressed: () =>
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop(true),
+                                                        child: const Text(
+                                                            'Supprimer'),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              );
+                                              if (confirm != true) {
+                                                return;
+                                              }
+                                              final id =
+                                                  v['id']?.toString() ?? '';
+                                              if (id.isEmpty) {
+                                                return;
+                                              }
+                                              final ok =
+                                                  await provider.deleteVideo(
+                                                id,
+                                              );
+                                              if (!mounted) return;
+                                              if (!ok && provider.error != null) {
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      provider.error!,
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            },
                                     ),
                                   ],
                                 ),

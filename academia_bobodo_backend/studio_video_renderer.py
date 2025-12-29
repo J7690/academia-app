@@ -455,19 +455,55 @@ async def render_video(req: RenderRequest, request: Request) -> RenderResponse:
     input_path: Optional[Path] = None
     output_path_default: Optional[Path] = None
     output_path_480p: Optional[Path] = None
+    output_path_360p: Optional[Path] = None
+    output_path_240p: Optional[Path] = None
+
+    url_default: Optional[str] = None
+    url_480p: Optional[str] = None
+    url_360p: Optional[str] = None
+    url_240p: Optional[str] = None
 
     try:
         input_path = await _download_video_to_temp(video_url)
+
+        # Génère plusieurs renditions MP4 "ultra-compatibles" pour le Studio :
+        # - 480p pour les appareils suffisamment puissants
+        # - 360p comme profil par défaut, ciblant les téléphones d'entrée de gamme
+        # - 240p comme dernier recours pour les très vieux appareils
+        # On conserve également une rendition "source légère" (preset par défaut)
+        # afin de disposer d'une qualité supérieure lorsque c'est possible.
         output_path_default = _run_ffmpeg_transcode(input_path)
         output_path_480p = _run_ffmpeg_transcode_480p(input_path)
-        url_default = await _upload_to_supabase_storage(output_path_default, req.participation_id)
-        url_480p = await _upload_to_supabase_storage(output_path_480p, req.participation_id)
-        default_url = url_480p or url_default
+        output_path_360p = _run_ffmpeg_transcode_360p(input_path)
+        output_path_240p = _run_ffmpeg_transcode_240p(input_path)
+
+        if output_path_default is not None:
+            url_default = await _upload_to_supabase_storage(output_path_default, req.participation_id)
+        if output_path_480p is not None:
+            url_480p = await _upload_to_supabase_storage(output_path_480p, req.participation_id)
+        if output_path_360p is not None:
+            url_360p = await _upload_to_supabase_storage(output_path_360p, req.participation_id)
+        if output_path_240p is not None:
+            url_240p = await _upload_to_supabase_storage(output_path_240p, req.participation_id)
+
+        # Priorité de lecture par défaut : 360p -> 480p -> source -> 240p
+        default_url = (
+            (url_360p or "").strip()
+            or (url_480p or "").strip()
+            or (url_default or "").strip()
+            or (url_240p or "").strip()
+        )
+
         if not default_url:
             raise HTTPException(status_code=500, detail="Aucune URL vidéo rendue disponible.")
+
         video_renditions: Dict[str, str] = {"default": default_url}
         if url_480p:
             video_renditions["480p"] = url_480p
+        if url_360p:
+            video_renditions["360p"] = url_360p
+        if url_240p:
+            video_renditions["240p"] = url_240p
         if url_default and url_default != default_url:
             video_renditions["source"] = url_default
     finally:
@@ -484,6 +520,16 @@ async def render_video(req: RenderRequest, request: Request) -> RenderResponse:
         try:
             if output_path_480p and output_path_480p.exists():
                 output_path_480p.unlink()
+        except Exception:
+            pass
+        try:
+            if output_path_360p and output_path_360p.exists():
+                output_path_360p.unlink()
+        except Exception:
+            pass
+        try:
+            if output_path_240p and output_path_240p.exists():
+                output_path_240p.unlink()
         except Exception:
             pass
 

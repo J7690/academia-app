@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/admin_application_messages_provider.dart';
 import '../../providers/admin_applications_provider.dart';
+import '../../providers/admin_application_payments_provider.dart';
 
 class AdminApplicationDetailScreen extends StatefulWidget {
   final Map<String, dynamic> application;
@@ -24,6 +25,11 @@ class _AdminApplicationDetailScreenState extends State<AdminApplicationDetailScr
       final appId = widget.application['id']?.toString();
       if (appId != null && appId.isNotEmpty) {
         context.read<AdminApplicationMessagesProvider>().loadMessages(appId);
+        try {
+          context
+              .read<AdminApplicationPaymentsProvider>()
+              .loadPaymentsForApplication(appId);
+        } catch (_) {}
       }
     });
   }
@@ -240,6 +246,206 @@ class _AdminApplicationDetailScreenState extends State<AdminApplicationDetailScr
                           ? "Transmise à l'université le $sentToUniversityAt"
                           : "Transmise à l'université")
                       : "Pas encore transmise à l'université",
+                ),
+                const SizedBox(height: 12),
+                Consumer<AdminApplicationPaymentsProvider>(
+                  builder: (context, paymentsProvider, child) {
+                    final appId = app['id']?.toString();
+                    final payments = paymentsProvider.payments;
+
+                    Widget content;
+                    if (paymentsProvider.isLoading && payments.isEmpty) {
+                      content = const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        child: LinearProgressIndicator(minHeight: 2),
+                      );
+                    } else if (paymentsProvider.error != null) {
+                      content = Text(
+                        'Erreur paiements : ${paymentsProvider.error}',
+                        style: const TextStyle(fontSize: 12, color: Colors.red),
+                      );
+                    } else if (payments.isEmpty) {
+                      content = const Text(
+                        'Aucun paiement enregistré pour cette candidature.',
+                        style: TextStyle(fontSize: 13),
+                      );
+                    } else {
+                      content = Column(
+                        children: payments.map((p) {
+                          final amountDue = p['amount_due']?.toString() ?? '';
+                          final amountPaid = p['amount_paid']?.toString() ?? '';
+                          final channel = p['channel']?.toString() ?? '';
+                          final payStatus = p['status']?.toString() ?? '';
+                          final ref = p['reference_code']?.toString() ?? '';
+                          final extRef = p['external_reference']?.toString() ?? '';
+                          final payId = p['id']?.toString() ?? '';
+
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Paiement ${payId.isNotEmpty ? payId.substring(0, 8) : ''}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      Text(
+                                        payStatus,
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  if (amountDue.isNotEmpty)
+                                    Text('Montant dû : $amountDue XOF'),
+                                  if (amountPaid.isNotEmpty)
+                                    Text('Montant payé déclaré : $amountPaid XOF'),
+                                  if (channel.isNotEmpty)
+                                    Text('Canal : $channel'),
+                                  if (ref.isNotEmpty)
+                                    Text('Référence plateforme : $ref'),
+                                  if (extRef.isNotEmpty)
+                                    Text('Référence externe : $extRef'),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      OutlinedButton.icon(
+                                        onPressed: appId == null ||
+                                                appId.isEmpty ||
+                                                payId.isEmpty
+                                            ? null
+                                            : () async {
+                                                final ok = await paymentsProvider
+                                                    .verifyPayment(
+                                                  paymentId: payId,
+                                                  decision: 'valid',
+                                                  comment: null,
+                                                  applicationId: appId,
+                                                );
+                                                if (!mounted) return;
+                                                if (!ok) {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        paymentsProvider
+                                                                .error ??
+                                                            'Erreur lors de la validation du paiement.',
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                              },
+                                        icon: const Icon(Icons.verified),
+                                        label: const Text('Valider'),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      OutlinedButton.icon(
+                                        onPressed: appId == null ||
+                                                appId.isEmpty ||
+                                                payId.isEmpty
+                                            ? null
+                                            : () async {
+                                                final ok = await paymentsProvider
+                                                    .verifyPayment(
+                                                  paymentId: payId,
+                                                  decision: 'invalid',
+                                                  comment: null,
+                                                  applicationId: appId,
+                                                );
+                                                if (!mounted) return;
+                                                if (!ok) {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        paymentsProvider
+                                                                .error ??
+                                                            'Erreur lors du rejet du paiement.',
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                              },
+                                        icon: const Icon(Icons.clear),
+                                        label: const Text('Rejeter'),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      ElevatedButton.icon(
+                                        onPressed: appId == null ||
+                                                appId.isEmpty ||
+                                                payId.isEmpty
+                                            ? null
+                                            : () async {
+                                                final ok = await paymentsProvider
+                                                    .confirmPayment(
+                                                  paymentId: payId,
+                                                  applicationId: appId,
+                                                );
+                                                if (!mounted) return;
+                                                if (ok) {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text(
+                                                        'Paiement confirmé et reçu généré.',
+                                                      ),
+                                                    ),
+                                                  );
+                                                } else {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        paymentsProvider
+                                                                .error ??
+                                                            'Erreur lors de la confirmation du paiement.',
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                              },
+                                        icon: const Icon(Icons.receipt_long),
+                                        label: const Text('Confirmer + reçu'),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    }
+
+                    return Card(
+                      margin: const EdgeInsets.only(top: 8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Paiements liés à la candidature',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            content,
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 if (hasPreferencesSection) ...[
                   const SizedBox(height: 12),

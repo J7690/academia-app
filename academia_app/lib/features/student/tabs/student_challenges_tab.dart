@@ -1344,24 +1344,12 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
     String? renditionKey,
     required String errorMessage,
   }) async {
-    try {
-      final uri = Uri.parse(
-        'https://academia-app-production.up.railway.app/telemetry/video_playback_error',
+    if (kDebugMode) {
+      debugPrint(
+        '[VideoPlaybackError] url=$videoUrl rendition=$renditionKey error=$errorMessage',
       );
-      final payload = <String, dynamic>{
-        'video_url': videoUrl,
-        'rendition_key': renditionKey,
-        'error_message': errorMessage,
-        'platform': kIsWeb ? 'web' : defaultTargetPlatform.toString(),
-      };
-      await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(payload),
-      );
-    } catch (_) {
-      // on ignore les erreurs de télémétrie
     }
+    // on ignore les erreurs de télémétrie
   }
 
   void _setError(String msg) {

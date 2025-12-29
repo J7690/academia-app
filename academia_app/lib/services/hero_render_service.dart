@@ -223,6 +223,137 @@ class HeroRenderService {
     return items;
   }
 
+  static Future<String> upsertPlaylistItemFromUrl({
+    String? itemId,
+    required String slot,
+    required String mediaType,
+    required String url,
+    String? title,
+    String? subtitle,
+    int? sortOrder,
+    bool? isActive,
+  }) async {
+    final client = Supabase.instance.client;
+
+    final trimmedUrl = url.trim();
+    if (trimmedUrl.isEmpty) {
+      throw Exception(
+        "[playlist_validation] L'URL du média Hero est vide. Upload requis avant sauvegarde.",
+      );
+    }
+
+    // ignore: avoid_print
+    print(
+      'HeroRenderService.upsertPlaylistItemFromUrl: '
+      'id=$itemId slot=$slot mediaType=$mediaType '
+      'isActive=$isActive sortOrder=$sortOrder',
+    );
+
+    final dynamic response = await client.rpc(
+      'app_admin_upsert_hero_playlist_item_from_url',
+      params: {
+        'p_item_id': itemId,
+        'p_slot': slot,
+        'p_media_type': mediaType,
+        'p_url': trimmedUrl,
+        'p_title': title,
+        'p_subtitle': subtitle,
+        'p_sort_order': sortOrder,
+        'p_is_active': isActive,
+      },
+    );
+
+    if (response is! Map<String, dynamic>) {
+      throw Exception(
+        'Réponse invalide pour app_admin_upsert_hero_playlist_item_from_url.',
+      );
+    }
+    if (response['success'] != true) {
+      final rawError = response['error']?.toString() ??
+          "Erreur lors de l'enregistrement de l'item Hero (via URL).";
+
+      var layer = 'playlist_validation';
+      var message = rawError;
+
+      if (rawError.contains('url_required_for_active_item')) {
+        message =
+            "Un média actif doit avoir une URL. Importe une image/vidéo ou décoche 'Actif' avant d'enregistrer.";
+      }
+
+      throw Exception('[' + layer + '] ' + message);
+    }
+
+    final id = response['playlist_item_id']?.toString();
+    if (id == null || id.isEmpty) {
+      throw Exception(
+        'playlist_item_id manquant dans la réponse de upsert_from_url.',
+      );
+    }
+
+    // ignore: avoid_print
+    print('HeroRenderService.upsertPlaylistItemFromUrl: success id=$id');
+
+    return id;
+  }
+
+  static Future<String> upsertPlaylistItemWithVideoAsset({
+    String? itemId,
+    required String slot,
+    required String videoAssetId,
+    String? title,
+    String? subtitle,
+    int? sortOrder,
+    bool? isActive,
+  }) async {
+    final client = Supabase.instance.client;
+
+    final trimmedAssetId = videoAssetId.trim();
+    if (trimmedAssetId.isEmpty) {
+      throw Exception(
+        "[playlist_validation] VideoAsset manquant pour l'item Hero.",
+      );
+    }
+
+    final dynamic response = await client.rpc(
+      'app_admin_upsert_hero_playlist_item',
+      params: {
+        'p_item_id': itemId,
+        'p_slot': slot,
+        'p_media_type': 'video',
+        'p_video_asset_id': trimmedAssetId,
+        'p_playback': null,
+        'p_title': title,
+        'p_subtitle': subtitle,
+        'p_sort_order': sortOrder,
+        'p_is_active': isActive,
+      },
+    );
+
+    if (response is! Map<String, dynamic>) {
+      throw Exception(
+        'Réponse invalide pour app_admin_upsert_hero_playlist_item (VideoAsset).',
+      );
+    }
+    if (response['success'] != true) {
+      final rawError = response['error']?.toString() ??
+          "Erreur lors de l'enregistrement de l'item Hero (VideoAsset).";
+
+      throw Exception('[playlist_validation] ' + rawError);
+    }
+
+    final id = response['playlist_item_id']?.toString();
+    if (id == null || id.isEmpty) {
+      throw Exception(
+        'playlist_item_id manquant dans la réponse de upsert (VideoAsset).',
+      );
+    }
+
+    // ignore: avoid_print
+    print('HeroRenderService.upsertPlaylistItemWithVideoAsset: success id=$id');
+
+    return id;
+  }
+
   static Future<String?> uploadHeroMediaFile({
     required Uint8List bytes,
     required String fileName,

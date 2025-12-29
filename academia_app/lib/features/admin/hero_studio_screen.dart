@@ -660,91 +660,37 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
     }
   }
 
-  Future<void> _startTvRender({bool preview = false}) async {
-    final current = _selected;
-    if (current == null) return;
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-    try {
-      // ignore: avoid_print
-      print(
-        'HeroStudioScreen._startTvRender: playlistItemId=${current.id} slot=${widget.slot} preview=$preview',
-      );
-      final meta = <String, dynamic>{'source': 'admin_ui'};
-      if (preview) {
-        meta['mode'] = 'preview';
-      }
-      await HeroRenderService.startTvRender(
-        playlistItemId: current.id,
-        slot: widget.slot,
-        meta: meta,
-      );
-      await _refreshSelectedConfig();
-    } catch (e) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _error = e.toString();
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+  Future<void> _startTvRender() async {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Le rendu TV Hero Studio est en cours de développement et est temporairement désactivé.',
+        ),
+      ),
+    );
   }
 
   Future<void> _startTvPreviewRender() async {
-    if (_tvMode == 'pro') {
-      await _startTvProRender(preview: true);
-    } else {
-      await _startTvRender(preview: true);
-    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Le rendu de prévisualisation TV Hero est en cours de développement et est temporairement désactivé.',
+        ),
+      ),
+    );
   }
 
-  Future<void> _startTvProRender({bool preview = false}) async {
-    final current = _selected;
-    if (current == null) return;
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-    try {
-      // ignore: avoid_print
-      print(
-        'HeroStudioScreen._startTvProRender: playlistItemId=${current.id} slot=${widget.slot} preview=$preview',
-      );
-      final meta = <String, dynamic>{
-        'source': 'admin_ui',
-        'engine': 'tv_pro',
-      };
-      if (preview) {
-        meta['mode'] = 'preview';
-      }
-      await HeroRenderService.startTvProRender(
-        playlistItemId: current.id,
-        slot: widget.slot,
-        meta: meta,
-      );
-      await _refreshSelectedConfig();
-    } catch (e) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _error = e.toString();
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+  Future<void> _startTvProRender() async {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Le rendu TV Pro Hero Studio est en cours de développement et est temporairement désactivé.',
+        ),
+      ),
+    );
   }
 
   Future<void> _refreshSelectedConfig() async {
@@ -778,38 +724,14 @@ class _HeroStudioScreenState extends State<HeroStudioScreen> {
   }
 
   Future<void> _startRender() async {
-    final current = _selected;
-    if (current == null) return;
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-    try {
-      final render = await HeroRenderService.startRender(
-        playlistItemId: current.id,
-        slot: widget.slot,
-      );
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _currentRender = render;
-      });
-      await _refreshSelectedConfig();
-    } catch (e) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _error = e.toString();
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Le rendu Hero Studio est en cours de développement et est temporairement désactivé.',
+        ),
+      ),
+    );
   }
 
   @override

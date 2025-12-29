@@ -14,9 +14,6 @@ import '../../video/academia_playback_engine.dart';
 import '../../widgets/video_overlays_layer.dart';
 import 'challenge_camera_capture_screen.dart';
 import 'student_challenge_video_overlays.dart';
-import '../../services/studio_ai_service.dart';
-import '../../services/studio_audio_service.dart';
-import '../../services/studio_video_service.dart';
 import 'student_challenge_video_ar_screen.dart'
     if (dart.library.html) 'student_challenge_video_ar_screen_stub.dart';
 import 'student_challenge_video_ar_combined_screen.dart'
@@ -1102,90 +1099,14 @@ class _StudentChallengeVideoEditorScreenState
       return;
     }
 
-    setState(() {
-      _isTranscribing = true;
-    });
-
-    try {
-      final data = await StudioAiService.transcribe(
-        participationId:
-            _isFreeVideo ? _effectiveFreeVideoId : _effectiveParticipationId,
-        videoType: _isFreeVideo ? 'free' : 'challenge',
-        freeVideoId: _isFreeVideo ? _effectiveFreeVideoId : null,
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      final rawSubtitles = data['subtitles'];
-      if (rawSubtitles is! List) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Transcription IA vide ou invalide pour cette vidéo.',
-            ),
-          ),
-        );
-        return;
-      }
-
-      final segments = <Map<String, dynamic>>[];
-      for (final item in rawSubtitles) {
-        if (item is Map<String, dynamic>) {
-          segments.add(Map<String, dynamic>.from(item));
-        } else if (item is Map) {
-          segments.add(Map<String, dynamic>.from(item));
-        }
-      }
-
-      if (segments.isEmpty) {
-        setState(() {
-          _aiSubtitles = null;
-          _subtitleController.clear();
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Aucun sous-titre n’a pu être généré pour cette vidéo.',
-            ),
-          ),
-        );
-        return;
-      }
-
-      setState(() {
-        _aiSubtitles = segments;
-        final texts = segments
-            .map((e) => e['text']?.toString() ?? '')
-            .where((t) => t.trim().isNotEmpty)
-            .toList(growable: false);
-        if (texts.isNotEmpty) {
-          _subtitleController.text = texts.join(' ');
-        }
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Sous-titres générés par l’IA pour cette vidéo.'),
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'La transcription IA est en cours de développement et est temporairement désactivée.',
         ),
-      );
-    } catch (e) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur lors de la transcription IA de la vidéo: $e'),
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isTranscribing = false;
-        });
-      }
-    }
+      ),
+    );
+    return;
   }
 
   Future<void> _runAnalysis() async {
@@ -1193,67 +1114,14 @@ class _StudentChallengeVideoEditorScreenState
       return;
     }
 
-    setState(() {
-      _isAnalyzing = true;
-    });
-
-    try {
-      final data = await StudioAiService.analyze(
-        participationId:
-            _isFreeVideo ? _effectiveFreeVideoId : _effectiveParticipationId,
-        videoType: _isFreeVideo ? 'free' : 'challenge',
-        freeVideoId: _isFreeVideo ? _effectiveFreeVideoId : null,
-      );
-      final analysis = data['analysis']?.toString() ?? '';
-
-      if (!mounted) {
-        return;
-      }
-
-      if (analysis.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Analyse IA vide ou invalide pour cette vidéo.',
-            ),
-          ),
-        );
-        return;
-      }
-
-      await showDialog<void>(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Analyse pédagogique de la vidéo'),
-            content: SingleChildScrollView(
-              child: Text(analysis),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Fermer'),
-              ),
-            ],
-          );
-        },
-      );
-    } catch (e) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur lors de l’analyse IA de la vidéo: $e'),
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'L’analyse IA est en cours de développement et est temporairement désactivée.',
         ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isAnalyzing = false;
-        });
-      }
-    }
+      ),
+    );
+    return;
   }
 
   Future<void> _runProofreadOverlayText() async {
@@ -1271,37 +1139,14 @@ class _StudentChallengeVideoEditorScreenState
       return;
     }
 
-    setState(() {
-      _isProofreading = true;
-    });
-
-    try {
-      final corrected = await StudioAiService.proofread(text: text);
-      if (!mounted) {
-        return;
-      }
-      _overlayTextController.text = corrected;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Texte corrigé par l’IA.'),
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'La relecture IA est en cours de développement et est temporairement désactivée.',
         ),
-      );
-    } catch (e) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur lors de la relecture IA: $e'),
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProofreading = false;
-        });
-      }
-    }
+      ),
+    );
+    return;
   }
 
   Future<void> _openAcademicPersonalizationSheet() async {
@@ -1945,47 +1790,14 @@ class _StudentChallengeVideoEditorScreenState
       return;
     }
 
-    setState(() {
-      _isRenderingAudio = true;
-    });
-
-    try {
-      await StudioAudioService.render(
-        participationId:
-            _isFreeVideo ? _effectiveFreeVideoId : _effectiveParticipationId,
-        tracks: tracksPayload,
-        videoType: _isFreeVideo ? 'free' : 'challenge',
-        freeVideoId: _isFreeVideo ? _effectiveFreeVideoId : null,
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Une nouvelle vidéo mixée avec les pistes audio sélectionnées a été ajoutée à ta participation.',
-          ),
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Le rendu audio serveur du Studio est en cours de développement et est temporairement désactivé.',
         ),
-      );
-      await _loadExtraClipsIfAny();
-    } catch (e) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur lors du rendu audio du Studio: $e'),
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isRenderingAudio = false;
-        });
-      }
-    }
+      ),
+    );
+    return;
   }
 
   Future<void> _runVideoRender() async {
@@ -2027,72 +1839,47 @@ class _StudentChallengeVideoEditorScreenState
       _isRenderingVideo = true;
     });
 
-    try {
-      bool okOverlays;
-      if (_isFreeVideo) {
-        okOverlays = await provider.updateFreeVideoOverlays(
-          freeVideoId: _effectiveFreeVideoId,
-          layers: overlays,
-        );
-      } else {
-        okOverlays = await provider.updateChallengeVideoOverlays(
-          participationId: _effectiveParticipationId,
-          layers: overlays,
-        );
-      }
-
-      if (!mounted) {
-        return;
-      }
-
-      if (!okOverlays) {
-        final error = provider.error ??
-            'Erreur lors de la sauvegarde des éléments académiques de la vidéo.';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error)),
-        );
-        return;
-      }
-
-      await StudioVideoService.render(
-        participationId:
-            _isFreeVideo ? _effectiveFreeVideoId : _effectiveParticipationId,
-        videoType: _isFreeVideo ? 'free' : 'challenge',
-        freeVideoId: _isFreeVideo ? _effectiveFreeVideoId : null,
+    bool okOverlays;
+    if (_isFreeVideo) {
+      okOverlays = await provider.updateFreeVideoOverlays(
+        freeVideoId: _effectiveFreeVideoId,
+        layers: overlays,
       );
-
-      if (!mounted) {
-        return;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _isFreeVideo
-                ? 'Une nouvelle version montée de ta vidéo libre a été générée.'
-                : 'Une nouvelle vidéo montée avec tes overlays académiques a été ajoutée à ta participation.',
-          ),
-        ),
+    } else {
+      okOverlays = await provider.updateChallengeVideoOverlays(
+        participationId: _effectiveParticipationId,
+        layers: overlays,
       );
-      if (!_isFreeVideo) {
-        await _loadExtraClipsIfAny();
-      }
-    } catch (e) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur lors du rendu vidéo du Studio: $e'),
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isRenderingVideo = false;
-        });
-      }
     }
+
+    if (!mounted) {
+      return;
+    }
+
+    if (!okOverlays) {
+      final error = provider.error ??
+          'Erreur lors de la sauvegarde des éléments académiques de la vidéo.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error)),
+      );
+      setState(() {
+        _isRenderingVideo = false;
+      });
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Les éléments académiques de la vidéo ont été sauvegardés. Le rendu vidéo serveur est temporairement désactivé.',
+        ),
+      ),
+    );
+
+    setState(() {
+      _isRenderingVideo = false;
+    });
+    return;
   }
 
   Future<void> _openRenderJobsDialog() async {
@@ -2385,12 +2172,6 @@ class _StudentChallengeVideoEditorScreenState
       );
       return;
     }
-
-    try {
-      await StudioVideoService.render(
-        participationId: _effectiveParticipationId,
-      );
-    } catch (_) {}
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
