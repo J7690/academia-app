@@ -45,22 +45,32 @@ class AuthLandingScreen extends StatelessWidget {
             ),
           ),
         ),
-        leadingWidth: 140,
+        leadingWidth: 150,
         leading: Padding(
-          padding: const EdgeInsets.only(left: 8),
+          padding: const EdgeInsets.only(left: 12),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: TextButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                );
-              },
-              child: const Text(
-                'Connexion',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
+            child: SizedBox(
+              height: 40,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.white, width: 1.5),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                },
+                child: const Text(
+                  'Connexion',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -75,22 +85,25 @@ class AuthLandingScreen extends StatelessWidget {
             );
           },
           child: SizedBox(
-            height: 64,
-            child: Image.asset(
-              'assets/images/nexiom.png',
-              fit: BoxFit.contain,
+            height: 72,
+            child: FittedBox(
+              fit: BoxFit.fitHeight,
+              child: Image.asset(
+                'assets/images/nexiom.png',
+              ),
             ),
           ),
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: 12),
             child: SizedBox(
               height: 40,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFF3B30),
                   foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(999),
                   ),
