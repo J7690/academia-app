@@ -68,7 +68,7 @@ import 'providers/admin_prep_concours_provider.dart';
 import 'providers/prep_concours_provider.dart';
 import 'features/auth/auth_wrapper.dart';
 
-const String kAppVersion = '1.0.0';
+const String kAppVersion = '1.0.1';
 
 Future<void> _checkWebVersion() async {
   if (!kIsWeb) {
