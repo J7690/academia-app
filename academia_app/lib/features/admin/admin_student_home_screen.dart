@@ -778,14 +778,34 @@ class _AdminStudentHomeScreenState extends State<AdminStudentHomeScreen> {
                         else
                           Column(
                             children: _heroItems.map((item) {
-                              final isImage =
-                                  item.mediaType.toLowerCase() == 'image';
-                              final url = isImage
-                                  ? (item.baseImageUrl ?? '')
-                                  : (item.baseVideoUrl ?? '');
+                              final mediaTypeLower =
+                                  item.mediaType.toLowerCase();
+                              final isImage = mediaTypeLower == 'image';
+                              final url = (isImage
+                                      ? (item.baseImageUrl ?? '')
+                                      : (item.baseVideoUrl ?? ''))
+                                  .trim();
                               final title = item.title ?? '';
                               final active = item.isActive;
                               final sortOrder = item.sortOrder;
+                              final urlIsEmpty = url.isEmpty;
+                              final urlLooksHttp = url.startsWith('http://') ||
+                                  url.startsWith('https://');
+                              final unsupported = urlIsEmpty ||
+                                  (mediaTypeLower == 'video' && !urlLooksHttp);
+
+                              final subtitleBuffer = StringBuffer()
+                                ..writeln('Type: ' +
+                                    (isImage ? 'Image' : 'Vidéo'))
+                                ..writeln('URL: ${url.isEmpty ? '(vide)' : url}')
+                                ..write('Ordre: ${sortOrder}  •  ' +
+                                    (active ? 'Active' : 'Inactive'));
+                              if (unsupported) {
+                                subtitleBuffer.writeln(
+                                  '\n[!] Média potentiellement non supporté (URL vide ou invalide)',
+                                );
+                              }
+
                               return Card(
                                 margin: const EdgeInsets.only(bottom: 8),
                                 child: ListTile(
@@ -795,10 +815,7 @@ class _AdminStudentHomeScreenState extends State<AdminStudentHomeScreen> {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   subtitle: Text(
-                                    'Type: ' +
-                                        (isImage ? 'Image' : 'Vidéo') +
-                                        '\nURL: $url\nOrdre: ${sortOrder}  •  ' +
-                                        (active ? 'Active' : 'Inactive'),
+                                    subtitleBuffer.toString(),
                                   ),
                                   isThreeLine: true,
                                   trailing: Row(
