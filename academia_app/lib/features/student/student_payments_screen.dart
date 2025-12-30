@@ -80,6 +80,29 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
           );
         },
       ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1EA75C),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              child: const Text('Retour'),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -1092,6 +1115,29 @@ class _PaymentsHistorySection extends StatelessWidget {
       );
     }
 
+    final sortedPayments = [...payments];
+
+    DateTime _parseDate(Map<String, dynamic> row, String key) {
+      final value = row[key];
+      if (value == null) {
+        return DateTime.fromMillisecondsSinceEpoch(0);
+      }
+      return DateTime.tryParse(value.toString()) ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+    }
+
+    sortedPayments.sort((a, b) {
+      final aCreated = _parseDate(a, 'created_at');
+      final bCreated = _parseDate(b, 'created_at');
+      final aUpdated = _parseDate(a, 'updated_at');
+      final bUpdated = _parseDate(b, 'updated_at');
+
+      final aKey = aUpdated.isAfter(aCreated) ? aUpdated : aCreated;
+      final bKey = bUpdated.isAfter(bCreated) ? bUpdated : bCreated;
+
+      return bKey.compareTo(aKey);
+    });
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1106,10 +1152,10 @@ class _PaymentsHistorySection extends StatelessWidget {
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: payments.length,
+          itemCount: sortedPayments.length,
           separatorBuilder: (_, __) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
-            final p = payments[index];
+            final p = sortedPayments[index];
             final reason = p['payment_reason']?.toString() ?? '';
             final status = p['status']?.toString() ?? '';
             final amountDue = p['amount_due']?.toString() ?? '';

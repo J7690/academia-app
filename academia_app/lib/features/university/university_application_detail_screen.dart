@@ -154,7 +154,7 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
           TabBar(
             onTap: _handleTabTap,
             tabs: [
-              const Tab(text: 'Dossier'),
+              const Tab(text: 'Synthèse'),
               const Tab(text: 'Documents'),
               Tab(
                 child: Row(
@@ -168,7 +168,7 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
                   ],
                 ),
               ),
-              const Tab(text: 'Offres & mini-site'),
+              const Tab(text: 'Programmes & mini-site'),
             ],
           ),
           const Divider(height: 1),

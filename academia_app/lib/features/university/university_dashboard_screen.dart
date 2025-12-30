@@ -75,7 +75,6 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
   Widget build(BuildContext context) {
     final user = Supabase.instance.client.auth.currentUser;
     final email = user?.email ?? '';
-    final metadata = user?.userMetadata ?? <String, dynamic>{};
 
     return DefaultTabController(
       length: 2,
@@ -150,9 +149,42 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Email: $email', style: const TextStyle(fontSize: 12)),
+                        const Text(
+                          'Compte université',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         const SizedBox(height: 4),
-                        Text('Metadata: ${metadata.toString()}', style: const TextStyle(fontSize: 12)),
+                        Row(
+                          children: [
+                            const Icon(Icons.email_outlined, size: 14),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                email,
+                                style: const TextStyle(fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.mark_unread_chat_alt,
+                              size: 14,
+                              color: Color(0xFF1EA75C),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '$unread candidature(s) avec nouveautés',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -1525,11 +1557,12 @@ class _UniversityApplicationsBucket extends StatelessWidget {
           });
         }
 
-        return Column(
-          children: [
-            Expanded(
-              flex: 1,
-              child: ListView.builder(
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 900;
+
+            Widget buildList() {
+              return ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: apps.length,
                 itemBuilder: (context, index) {
@@ -1596,19 +1629,48 @@ class _UniversityApplicationsBucket extends StatelessWidget {
                     ),
                   );
                 },
-              ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              flex: 2,
-              child: ChangeNotifierProvider(
+              );
+            }
+
+            Widget buildDetail() {
+              return ChangeNotifierProvider(
                 create: (_) => UniversityApplicationPaymentsProvider(),
                 child: UniversityApplicationDetailPanel(
                   application: effectiveSelected,
                 ),
-              ),
-            ),
-          ],
+              );
+            }
+
+            if (isWide) {
+              return Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: buildList(),
+                  ),
+                  const VerticalDivider(width: 1),
+                  Expanded(
+                    flex: 3,
+                    child: buildDetail(),
+                  ),
+                ],
+              );
+            }
+
+            return Column(
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: buildList(),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  flex: 2,
+                  child: buildDetail(),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -2122,7 +2184,7 @@ class _UniversitySiteWorkspaceState extends State<_UniversitySiteWorkspace> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 8,
+      length: 2,
       child: Column(
         children: [
           TabBar(
@@ -2138,13 +2200,7 @@ class _UniversitySiteWorkspaceState extends State<_UniversitySiteWorkspace> {
             unselectedLabelColor: Colors.black87,
             tabs: const [
               Tab(text: 'Aperçu'),
-              Tab(text: 'Configuration'),
-              Tab(text: 'Contenus'),
-              Tab(text: 'Médias'),
-              Tab(text: 'Programmes'),
-              Tab(text: 'Événements'),
-              Tab(text: 'Actualités'),
-              Tab(text: 'Équipe'),
+              Tab(text: 'Configurer le mini-site'),
             ],
           ),
           const Divider(height: 1),
@@ -2152,6 +2208,70 @@ class _UniversitySiteWorkspaceState extends State<_UniversitySiteWorkspace> {
             child: TabBarView(
               children: const [
                 _UniversitySitePreview(),
+                _UniversitySiteEditorWorkspace(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UniversitySiteEditorWorkspace extends StatelessWidget {
+  const _UniversitySiteEditorWorkspace();
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 7,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'Configurer le mini-site',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Avancez étape par étape pour renseigner l\'identité, les contenus, les médias, les programmes, les événements, les actualités et l\'équipe de votre université.',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          TabBar(
+            isScrollable: true,
+            indicator: BoxDecoration(
+              color: const Color(0xFF1EA75C),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            indicatorPadding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.black87,
+            tabs: const [
+              Tab(text: 'Identité & contact'),
+              Tab(text: 'Pages & contenus'),
+              Tab(text: 'Médias & ambiance'),
+              Tab(text: 'Programmes & formations'),
+              Tab(text: 'Événements'),
+              Tab(text: 'Actualités'),
+              Tab(text: 'Équipe'),
+            ],
+          ),
+          const Divider(height: 1),
+          const Expanded(
+            child: TabBarView(
+              children: [
                 _UniversitySiteConfigTab(),
                 _UniversitySiteBlocksTab(),
                 _UniversitySiteMediaTab(),
@@ -2385,7 +2505,7 @@ class _UniversitySitePreview extends StatelessWidget {
                             ),
                             TextButton.icon(
                               onPressed: () {
-                                DefaultTabController.of(context).animateTo(3);
+                                DefaultTabController.of(context).animateTo(1);
                               },
                               icon: const Icon(Icons.photo_library_outlined, size: 16),
                               label: const Text('Gérer les médias'),
@@ -2420,10 +2540,10 @@ class _UniversitySitePreview extends StatelessWidget {
                           ),
                           TextButton.icon(
                             onPressed: () {
-                              _showEditConfigDialog(context, siteProvider);
+                              DefaultTabController.of(context).animateTo(1);
                             },
                             icon: const Icon(Icons.edit, size: 16),
-                            label: const Text('Modifier la présentation'),
+                            label: const Text('Configurer'),
                           ),
                         ],
                       ),
@@ -2507,7 +2627,7 @@ class _UniversitySitePreview extends StatelessWidget {
                             ),
                             TextButton.icon(
                               onPressed: () {
-                                DefaultTabController.of(context).animateTo(4);
+                                DefaultTabController.of(context).animateTo(1);
                               },
                               icon: const Icon(Icons.school_outlined, size: 16),
                               label: const Text('Gérer les programmes'),
@@ -2566,7 +2686,7 @@ class _UniversitySitePreview extends StatelessWidget {
                             ),
                             TextButton.icon(
                               onPressed: () {
-                                DefaultTabController.of(context).animateTo(5);
+                                DefaultTabController.of(context).animateTo(1);
                               },
                               icon: const Icon(Icons.event, size: 16),
                               label: const Text('Gérer les événements'),
@@ -2602,7 +2722,7 @@ class _UniversitySitePreview extends StatelessWidget {
                             ),
                             TextButton.icon(
                               onPressed: () {
-                                DefaultTabController.of(context).animateTo(6);
+                                DefaultTabController.of(context).animateTo(1);
                               },
                               icon: const Icon(Icons.article_outlined, size: 16),
                               label: const Text('Gérer les actualités'),
@@ -2662,7 +2782,7 @@ class _UniversitySitePreview extends StatelessWidget {
                             ),
                             TextButton.icon(
                               onPressed: () {
-                                DefaultTabController.of(context).animateTo(2);
+                                DefaultTabController.of(context).animateTo(1);
                               },
                               icon: const Icon(Icons.notes, size: 16),
                               label: const Text('Gérer les contenus'),
@@ -2698,7 +2818,7 @@ class _UniversitySitePreview extends StatelessWidget {
                             ),
                             TextButton.icon(
                               onPressed: () {
-                                DefaultTabController.of(context).animateTo(7);
+                                DefaultTabController.of(context).animateTo(1);
                               },
                               icon: const Icon(Icons.group_outlined, size: 16),
                               label: const Text('Gérer l\'équipe'),

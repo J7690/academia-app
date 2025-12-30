@@ -15,11 +15,7 @@ import 'tabs/student_home_tab.dart';
 import 'tabs/student_applications_tab.dart';
 import 'tabs/student_opportunities_tab.dart';
 import 'tabs/student_communities_tab.dart';
-import 'tabs/student_challenges_tab.dart';
 import 'tabs/student_partners_tab.dart';
-import 'tabs/student_courses_tab.dart';
-import 'tabs/student_online_trainings_tab.dart';
-import 'tabs/student_live_sessions_tab.dart';
 import 'tabs/student_bobodo_tab.dart';
 import 'prep_concours/prep_concours_home_screen.dart';
 import 'student_dashboard_nav_controller.dart';
@@ -36,6 +32,15 @@ class StudentDashboardScreen extends StatefulWidget {
 class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   int _currentIndex = 0;
   bool _hasNewHomeContent = false;
+  bool _hasNewChallenges = false;
+  bool _hasNewCourses = false;
+  bool _hasNewTrainings = false;
+  bool _hasNewLives = false;
+  bool _hasNewPayments = false;
+  int _studentPaymentsCount = 0;
+  bool _hasNewCommunities = false;
+  bool _hasNewPartners = false;
+  bool _hasNewBobodo = false;
   Timer? _pollingTimer;
   int _lastStudentUnreadCount = 0;
   bool _studentUnreadInitialized = false;
@@ -96,27 +101,82 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       if (response['success'] != true) return;
       final summary = response['summary'];
       if (summary is! Map) return;
+      debugPrint('[StudentDashboard] notification summary keys: ' +
+          summary.keys.map((e) => e.toString()).toList().toString());
+      debugPrint('[StudentDashboard] student_payments summary: ' +
+          (summary['student_payments']?.toString() ?? 'null'));
       final home = summary['student_home'];
       final shortTrainings = summary['short_trainings'];
+      final challenges = summary['student_challenges'];
+      final courses = summary['student_courses'];
+      final trainings = summary['student_online_trainings'];
+      final lives = summary['student_lives'];
+      final payments = summary['student_payments'];
+
       final hasNewHome = home is Map && home['has_new'] == true;
-      final hasNewShortTrainings = shortTrainings is Map && shortTrainings['has_new'] == true;
-      final hasNew = hasNewHome || hasNewShortTrainings;
+      final hasNewShortTrainings =
+          shortTrainings is Map && shortTrainings['has_new'] == true;
+      final hasNewChallenges = challenges is Map && challenges['has_new'] == true;
+      final hasNewCourses = courses is Map && courses['has_new'] == true;
+      final hasNewTrainings = trainings is Map && trainings['has_new'] == true;
+      final hasNewLives = lives is Map && lives['has_new'] == true;
+      final backendHasNewPayments =
+          payments is Map && payments['has_new'] == true;
+
+      int paymentsCount = 0;
+      if (payments is Map) {
+        final rawCount = payments['new_count'] ??
+            payments['unseen_count'] ??
+            payments['unread_count'] ??
+            payments['count'];
+        if (rawCount is int) {
+          paymentsCount = rawCount;
+        } else if (rawCount is String) {
+          paymentsCount = int.tryParse(rawCount) ?? 0;
+        }
+      }
+
+      if (backendHasNewPayments && paymentsCount == 0) {
+        paymentsCount = 1;
+      }
+
+      final hasNewPayments = backendHasNewPayments || paymentsCount > 0;
+
+      final hasNewHomeOrShort = hasNewHome || hasNewShortTrainings;
+      final hasNewAny = hasNewHomeOrShort ||
+          hasNewChallenges ||
+          hasNewCourses ||
+          hasNewTrainings ||
+          hasNewLives ||
+          hasNewPayments;
       if (!mounted) return;
       if (!_studentHomeNotificationInitialized) {
         _studentHomeNotificationInitialized = true;
         setState(() {
-          _hasNewHomeContent = hasNew;
+          _hasNewHomeContent = hasNewAny;
+          _hasNewChallenges = hasNewChallenges;
+          _hasNewCourses = hasNewCourses;
+          _hasNewTrainings = hasNewTrainings;
+          _hasNewLives = hasNewLives;
+          _hasNewPayments = hasNewPayments;
+          _studentPaymentsCount = paymentsCount;
         });
         return;
       }
       final previous = _hasNewHomeContent;
-      if (!previous && hasNew) {
+      if (!previous && hasNewAny) {
         try {
           await NotificationSoundService.instance.playIfEnabled();
         } catch (_) {}
       }
       setState(() {
-        _hasNewHomeContent = hasNew;
+        _hasNewHomeContent = hasNewAny;
+        _hasNewChallenges = hasNewChallenges;
+        _hasNewCourses = hasNewCourses;
+        _hasNewTrainings = hasNewTrainings;
+        _hasNewLives = hasNewLives;
+        _hasNewPayments = hasNewPayments;
+        _studentPaymentsCount = paymentsCount;
       });
     } catch (_) {}
   }
@@ -134,6 +194,19 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     if (!mounted) return;
     setState(() {
       _hasNewHomeContent = false;
+    });
+  }
+
+  Future<void> _markStudentPaymentsSeen() async {
+    final client = Supabase.instance.client;
+    try {
+      await client.rpc('app_mark_domain_seen', params: {
+        'p_domain': 'student_payments',
+      });
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _hasNewPayments = false;
     });
   }
 
@@ -174,9 +247,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
 
         Widget? bottomNav;
         if (isMobile) {
-          if (_currentIndex != 4) {
-            bottomNav = _buildMobileBottomNav(unread);
-          }
+          bottomNav = _buildMobileBottomNav(unread);
         } else {
           bottomNav = _buildDesktopBottomNav(unread);
         }
@@ -208,31 +279,31 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           child = const StudentCommunitiesTab();
           break;
         case 4:
-          child = const StudentChallengesFeedScreen();
-          break;
-        case 5:
           child = const StudentPartnersTab();
           break;
-        case 6:
-          child = const StudentCoursesTab();
-          break;
-        case 7:
-          child = const StudentOnlineTrainingsTab();
-          break;
-        case 8:
-          child = const StudentLiveSessionsTab();
-          break;
-        case 9:
+        case 5:
           child = const StudentBobodoTab();
           break;
-        case 10:
+        case 6:
           child = const PrepConcoursHomeScreen();
           break;
-        case 11:
+        case 7:
           child = ChangeNotifierProvider(
             create: (_) => StudentApplicationPaymentsProvider(),
             child: const StudentPaymentsScreen(),
           );
+          break;
+        case 8:
+          child = const _FeatureComingSoonTab(title: 'Challenges');
+          break;
+        case 9:
+          child = const _FeatureComingSoonTab(title: 'Cours');
+          break;
+        case 10:
+          child = const _FeatureComingSoonTab(title: 'Formations');
+          break;
+        case 11:
+          child = const _FeatureComingSoonTab(title: 'Lives');
           break;
         default:
           child = const StudentHomeMobileTab();
@@ -260,31 +331,31 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           child = const StudentCommunitiesTab();
           break;
         case 4:
-          child = const StudentChallengesFeedScreen();
-          break;
-        case 5:
           child = const StudentPartnersTab();
           break;
-        case 6:
-          child = const StudentCoursesTab();
-          break;
-        case 7:
-          child = const StudentOnlineTrainingsTab();
-          break;
-        case 8:
-          child = const StudentLiveSessionsTab();
-          break;
-        case 9:
+        case 5:
           child = const StudentBobodoTab();
           break;
-        case 10:
+        case 6:
           child = const PrepConcoursHomeScreen();
           break;
-        case 11:
+        case 7:
           child = ChangeNotifierProvider(
             create: (_) => StudentApplicationPaymentsProvider(),
             child: const StudentPaymentsScreen(),
           );
+          break;
+        case 8:
+          child = const _FeatureComingSoonTab(title: 'Challenges');
+          break;
+        case 9:
+          child = const _FeatureComingSoonTab(title: 'Cours');
+          break;
+        case 10:
+          child = const _FeatureComingSoonTab(title: 'Formations');
+          break;
+        case 11:
+          child = const _FeatureComingSoonTab(title: 'Lives');
           break;
         default:
           child = const StudentHomeTab();
@@ -300,6 +371,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     StudentDashboardNavController.setIndex(index);
     if (index == 0) {
       _markStudentHomeSeen();
+    } else if (index == 7) {
+      _markStudentPaymentsSeen();
     }
   }
 
@@ -347,39 +420,37 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             selectedIcon: Icon(Icons.work),
             label: 'Opportunités',
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.groups_outlined),
-            selectedIcon: Icon(Icons.groups),
+          NavigationDestination(
+            icon: _HomeNavIcon(
+              icon: Icons.groups_outlined,
+              hasNew: _hasNewCommunities,
+            ),
+            selectedIcon: _HomeNavIcon(
+              icon: Icons.groups,
+              hasNew: _hasNewCommunities,
+            ),
             label: 'Communautés',
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.emoji_events_outlined),
-            selectedIcon: Icon(Icons.emoji_events),
-            label: 'Challenges',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.apartment_outlined),
-            selectedIcon: Icon(Icons.apartment),
+          NavigationDestination(
+            icon: _HomeNavIcon(
+              icon: Icons.apartment_outlined,
+              hasNew: _hasNewPartners,
+            ),
+            selectedIcon: _HomeNavIcon(
+              icon: Icons.apartment,
+              hasNew: _hasNewPartners,
+            ),
             label: 'Universités',
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.menu_book_outlined),
-            selectedIcon: Icon(Icons.menu_book),
-            label: 'Cours',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.play_circle_outline),
-            selectedIcon: Icon(Icons.play_circle),
-            label: 'Formations',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.videocam_outlined),
-            selectedIcon: Icon(Icons.videocam),
-            label: 'Lives',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.smart_toy_outlined),
-            selectedIcon: Icon(Icons.smart_toy),
+          NavigationDestination(
+            icon: _HomeNavIcon(
+              icon: Icons.smart_toy_outlined,
+              hasNew: _hasNewBobodo,
+            ),
+            selectedIcon: _HomeNavIcon(
+              icon: Icons.smart_toy,
+              hasNew: _hasNewBobodo,
+            ),
             label: 'Bobodo',
           ),
           const NavigationDestination(
@@ -387,10 +458,60 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             selectedIcon: Icon(Icons.school),
             label: 'Concours',
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.payments_outlined),
-            selectedIcon: Icon(Icons.payments),
+          NavigationDestination(
+            icon: _NavBadgeIcon(
+              icon: Icons.payments_outlined,
+              count: _studentPaymentsCount,
+            ),
+            selectedIcon: _NavBadgeIcon(
+              icon: Icons.payments,
+              count: _studentPaymentsCount,
+            ),
             label: 'Paiements',
+          ),
+          NavigationDestination(
+            icon: _HomeNavIcon(
+              icon: Icons.emoji_events_outlined,
+              hasNew: _hasNewChallenges,
+            ),
+            selectedIcon: _HomeNavIcon(
+              icon: Icons.emoji_events,
+              hasNew: _hasNewChallenges,
+            ),
+            label: 'Challenges',
+          ),
+          NavigationDestination(
+            icon: _HomeNavIcon(
+              icon: Icons.menu_book_outlined,
+              hasNew: _hasNewCourses,
+            ),
+            selectedIcon: _HomeNavIcon(
+              icon: Icons.menu_book,
+              hasNew: _hasNewCourses,
+            ),
+            label: 'Cours',
+          ),
+          NavigationDestination(
+            icon: _HomeNavIcon(
+              icon: Icons.play_circle_outline,
+              hasNew: _hasNewTrainings,
+            ),
+            selectedIcon: _HomeNavIcon(
+              icon: Icons.play_circle,
+              hasNew: _hasNewTrainings,
+            ),
+            label: 'Formations',
+          ),
+          NavigationDestination(
+            icon: _HomeNavIcon(
+              icon: Icons.videocam_outlined,
+              hasNew: _hasNewLives,
+            ),
+            selectedIcon: _HomeNavIcon(
+              icon: Icons.videocam,
+              hasNew: _hasNewLives,
+            ),
+            label: 'Lives',
           ),
         ],
       ),
@@ -465,51 +586,81 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                         ),
                         _buildMobileNavItem(
                           index: 4,
-                          label: 'Challenges',
-                          icon: const Icon(Icons.emoji_events_outlined),
-                          selectedIcon: const Icon(Icons.emoji_events),
-                        ),
-                        _buildMobileNavItem(
-                          index: 5,
                           label: 'Universités',
                           icon: const Icon(Icons.apartment_outlined),
                           selectedIcon: const Icon(Icons.apartment),
                         ),
                         _buildMobileNavItem(
-                          index: 6,
-                          label: 'Cours',
-                          icon: const Icon(Icons.menu_book_outlined),
-                          selectedIcon: const Icon(Icons.menu_book),
-                        ),
-                        _buildMobileNavItem(
-                          index: 7,
-                          label: 'Formations',
-                          icon: const Icon(Icons.play_circle_outline),
-                          selectedIcon: const Icon(Icons.play_circle),
-                        ),
-                        _buildMobileNavItem(
-                          index: 8,
-                          label: 'Lives',
-                          icon: const Icon(Icons.videocam_outlined),
-                          selectedIcon: const Icon(Icons.videocam),
-                        ),
-                        _buildMobileNavItem(
-                          index: 9,
+                          index: 5,
                           label: 'Bobodo',
                           icon: const Icon(Icons.smart_toy_outlined),
                           selectedIcon: const Icon(Icons.smart_toy),
                         ),
                         _buildMobileNavItem(
-                          index: 10,
+                          index: 6,
                           label: 'Concours',
                           icon: const Icon(Icons.school_outlined),
                           selectedIcon: const Icon(Icons.school),
                         ),
                         _buildMobileNavItem(
-                          index: 11,
+                          index: 7,
                           label: 'Paiements',
-                          icon: const Icon(Icons.payments_outlined),
-                          selectedIcon: const Icon(Icons.payments),
+                          icon: _NavBadgeIcon(
+                            icon: Icons.payments_outlined,
+                            count: _studentPaymentsCount,
+                          ),
+                          selectedIcon: _NavBadgeIcon(
+                            icon: Icons.payments,
+                            count: _studentPaymentsCount,
+                          ),
+                        ),
+                        _buildMobileNavItem(
+                          index: 8,
+                          label: 'Challenges',
+                          icon: _HomeNavIcon(
+                            icon: Icons.emoji_events_outlined,
+                            hasNew: _hasNewChallenges,
+                          ),
+                          selectedIcon: _HomeNavIcon(
+                            icon: Icons.emoji_events,
+                            hasNew: _hasNewChallenges,
+                          ),
+                        ),
+                        _buildMobileNavItem(
+                          index: 9,
+                          label: 'Cours',
+                          icon: _HomeNavIcon(
+                            icon: Icons.menu_book_outlined,
+                            hasNew: _hasNewCourses,
+                          ),
+                          selectedIcon: _HomeNavIcon(
+                            icon: Icons.menu_book,
+                            hasNew: _hasNewCourses,
+                          ),
+                        ),
+                        _buildMobileNavItem(
+                          index: 10,
+                          label: 'Formations',
+                          icon: _HomeNavIcon(
+                            icon: Icons.play_circle_outline,
+                            hasNew: _hasNewTrainings,
+                          ),
+                          selectedIcon: _HomeNavIcon(
+                            icon: Icons.play_circle,
+                            hasNew: _hasNewTrainings,
+                          ),
+                        ),
+                        _buildMobileNavItem(
+                          index: 11,
+                          label: 'Lives',
+                          icon: _HomeNavIcon(
+                            icon: Icons.videocam_outlined,
+                            hasNew: _hasNewLives,
+                          ),
+                          selectedIcon: _HomeNavIcon(
+                            icon: Icons.videocam,
+                            hasNew: _hasNewLives,
+                          ),
                         ),
                       ],
                     ),
@@ -623,6 +774,67 @@ class _NavBadgeIcon extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _FeatureComingSoonTab extends StatelessWidget {
+  final String title;
+
+  const _FeatureComingSoonTab({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF3F4F6),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Cette fonctionnalité est en cours de développement.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF4B5563),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    StudentDashboardNavController.setIndex(0);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF16A34A),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  child: const Text("Retour à l'accueil"),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

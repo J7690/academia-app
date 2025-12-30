@@ -45,7 +45,8 @@ class _AdminPaymentsBodyState extends State<_AdminPaymentsBody> {
         final error = paymentsProvider.error;
         final all = paymentsProvider.payments;
 
-        List<Map<String, dynamic>> filtered = all;
+        List<Map<String, dynamic>> filtered =
+            List<Map<String, dynamic>>.from(all);
         final q = _query.trim().toLowerCase();
         if (q.isNotEmpty) {
           filtered = all.where((p) {
@@ -61,8 +62,29 @@ class _AdminPaymentsBodyState extends State<_AdminPaymentsBody> {
                 contains(p['reference_code']) ||
                 contains(p['program_title']) ||
                 contains(p['university_name']);
-          }).toList(growable: false);
+          }).toList();
         }
+
+        DateTime _parseDate(Map<String, dynamic> row, String key) {
+          final value = row[key];
+          if (value == null) {
+            return DateTime.fromMillisecondsSinceEpoch(0);
+          }
+          return DateTime.tryParse(value.toString()) ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+        }
+
+        filtered.sort((a, b) {
+          final aCreated = _parseDate(a, 'created_at');
+          final bCreated = _parseDate(b, 'created_at');
+          final aUpdated = _parseDate(a, 'updated_at');
+          final bUpdated = _parseDate(b, 'updated_at');
+
+          final aKey = aUpdated.isAfter(aCreated) ? aUpdated : aCreated;
+          final bKey = bUpdated.isAfter(bCreated) ? bUpdated : bCreated;
+
+          return bKey.compareTo(aKey);
+        });
 
         return Column(
           children: [

@@ -94,7 +94,7 @@ BEGIN
     END IF;
 
     -- ========================================
-    -- Etudiant : contenu accueil + offres + formations courtes Nexium
+    -- Etudiant : contenu accueil + offres + formations courtes Nexium + paiements
     -- ========================================
     IF v_role = 'student' THEN
         SELECT last_seen_at
@@ -167,8 +167,43 @@ BEGIN
             )
         );
 
+        -- Paiements côté étudiant
+        SELECT last_seen_at
+        INTO v_last_seen
+        FROM app.user_notification_state
+        WHERE user_id = v_user_id
+          AND domain = 'student_payments';
+
+        SELECT COALESCE(MAX(updated_at), TO_TIMESTAMP(0))
+        INTO v_max_updated
+        FROM app.application_payments
+        WHERE student_id = v_user_id;
+
+        IF v_last_seen IS NULL THEN
+            v_has_new := FALSE;
+            v_new_count := 0;
+        ELSE
+            v_has_new := v_max_updated > v_last_seen;
+            IF v_has_new THEN
+                SELECT COUNT(*)
+                INTO v_new_count
+                FROM app.application_payments
+                WHERE student_id = v_user_id
+                  AND updated_at > v_last_seen;
+            ELSE
+                v_new_count := 0;
+            END IF;
+        END IF;
+
+        v_summary := v_summary || JSONB_BUILD_OBJECT(
+            'student_payments', JSONB_BUILD_OBJECT(
+                'has_new', v_has_new,
+                'new_count', v_new_count
+            )
+        );
+
     -- ========================================
-    -- Admin : contenu programmes + mini-sites + formations courtes
+    -- Admin : contenu programmes + mini-sites + formations courtes + paiements
     -- ========================================
     ELSIF v_role = 'admin' THEN
         -- Contenu mini-sites / universités
@@ -238,6 +273,39 @@ BEGIN
 
         v_summary := v_summary || JSONB_BUILD_OBJECT(
             'admin_short_trainings', JSONB_BUILD_OBJECT(
+                'has_new', v_has_new,
+                'new_count', v_new_count
+            )
+        );
+
+        -- Paiements côté admin
+        SELECT last_seen_at
+        INTO v_last_seen
+        FROM app.user_notification_state
+        WHERE user_id = v_user_id
+          AND domain = 'admin_payments';
+
+        SELECT COALESCE(MAX(updated_at), TO_TIMESTAMP(0))
+        INTO v_max_updated
+        FROM app.application_payments;
+
+        IF v_last_seen IS NULL THEN
+            v_has_new := FALSE;
+            v_new_count := 0;
+        ELSE
+            v_has_new := v_max_updated > v_last_seen;
+            IF v_has_new THEN
+                SELECT COUNT(*)
+                INTO v_new_count
+                FROM app.application_payments
+                WHERE updated_at > v_last_seen;
+            ELSE
+                v_new_count := 0;
+            END IF;
+        END IF;
+
+        v_summary := v_summary || JSONB_BUILD_OBJECT(
+            'admin_payments', JSONB_BUILD_OBJECT(
                 'has_new', v_has_new,
                 'new_count', v_new_count
             )

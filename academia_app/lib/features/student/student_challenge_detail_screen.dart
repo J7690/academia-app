@@ -130,9 +130,9 @@ class _StudentChallengeDetailScreenState extends State<StudentChallengeDetailScr
           appBar: AppBar(
             elevation: 0,
             centerTitle: false,
-            title: Text(widget.initialTitle.isEmpty
-                ? 'Challenge'
-                : widget.initialTitle),
+            title: Text(
+              widget.initialTitle.isEmpty ? 'Challenge' : widget.initialTitle,
+            ),
             foregroundColor: Colors.white,
             flexibleSpace: Container(
               decoration: const BoxDecoration(
@@ -157,6 +157,29 @@ class _StudentChallengeDetailScreenState extends State<StudentChallengeDetailScr
                 const SizedBox(height: 24),
                 _buildLeaderboardSection(provider),
               ],
+            ),
+          ),
+          bottomNavigationBar: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1EA75C),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  child: const Text('Retour'),
+                ),
+              ),
             ),
           ),
         );

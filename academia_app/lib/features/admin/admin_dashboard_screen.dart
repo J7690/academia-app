@@ -36,6 +36,7 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   bool _hasNewUniversityContent = false;
   bool _hasNewShortTrainings = false;
+  bool _hasNewPayments = false;
   Timer? _pollingTimer;
   int _lastAdminUnreadCount = 0;
   bool _adminUnreadInitialized = false;
@@ -70,26 +71,37 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       if (response['success'] != true) return;
       final summary = response['summary'];
       if (summary is! Map) return;
+      debugPrint('[AdminDashboard] notification summary keys: ' +
+          summary.keys.map((e) => e.toString()).toList().toString());
+      debugPrint('[AdminDashboard] admin_payments summary: ' +
+          (summary['admin_payments']?.toString() ?? 'null'));
       final adminContent = summary['admin_university_content'];
       final adminShortTrainings = summary['admin_short_trainings'];
+      final adminPayments = summary['admin_payments'];
+
       final hasNewUniversity =
           adminContent is Map && adminContent['has_new'] == true;
       final hasNewShort =
           adminShortTrainings is Map && adminShortTrainings['has_new'] == true;
+      final hasNewPayments =
+          adminPayments is Map && adminPayments['has_new'] == true;
       if (!mounted) return;
       if (!_adminContentNotificationInitialized) {
         _adminContentNotificationInitialized = true;
         setState(() {
           _hasNewUniversityContent = hasNewUniversity;
           _hasNewShortTrainings = hasNewShort;
+          _hasNewPayments = hasNewPayments;
         });
         return;
       }
       final previousUniversity = _hasNewUniversityContent;
       final previousShort = _hasNewShortTrainings;
+      final previousPayments = _hasNewPayments;
       final willPlaySound =
           (!previousUniversity && hasNewUniversity) ||
-          (!previousShort && hasNewShort);
+          (!previousShort && hasNewShort) ||
+          (!previousPayments && hasNewPayments);
       if (willPlaySound) {
         try {
           await NotificationSoundService.instance.playIfEnabled();
@@ -98,6 +110,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       setState(() {
         _hasNewUniversityContent = hasNewUniversity;
         _hasNewShortTrainings = hasNewShort;
+        _hasNewPayments = hasNewPayments;
       });
     } catch (_) {}
   }
@@ -125,6 +138,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     if (!mounted) return;
     setState(() {
       _hasNewShortTrainings = false;
+    });
+  }
+
+  Future<void> _markAdminPaymentsSeen() async {
+    final client = Supabase.instance.client;
+    try {
+      await client.rpc('app_mark_domain_seen', params: {
+        'p_domain': 'admin_payments',
+      });
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _hasNewPayments = false;
     });
   }
 
@@ -202,15 +228,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 labelColor: Colors.white,
                 unselectedLabelColor: Colors.white.withOpacity(0.85),
                 onTap: (index) {
-                  if (index == 9) {
-                    _markAdminShortTrainingsSeen();
+                  if (index == 1) {
+                    _markAdminPaymentsSeen();
                   } else if (index == 10) {
+                    _markAdminShortTrainingsSeen();
+                  } else if (index == 11) {
                     _markAdminUniversityContentSeen();
                   }
                 },
                 tabs: [
                   Tab(child: _AdminTabLabel(text: 'Candidatures', count: unread)),
-                  const Tab(text: 'Paiements'),
+                  Tab(
+                    child: _AdminDotLabel(
+                      text: 'Paiements',
+                      hasNew: _hasNewPayments,
+                    ),
+                  ),
                   const Tab(text: 'Reçus'),
                   const Tab(text: 'Programmes'),
                   const Tab(text: 'Opportunités'),
