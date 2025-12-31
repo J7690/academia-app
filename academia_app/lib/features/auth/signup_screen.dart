@@ -114,7 +114,7 @@ class _SignupScreenState extends State<SignupScreen> {
           Positioned.fill(
             child: Center(
               child: Opacity(
-                opacity: 0.07,
+                opacity: 0.14,
                 child: FractionallySizedBox(
                   widthFactor: 0.8,
                   child: Image.asset(
@@ -132,7 +132,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 constraints: const BoxConstraints(maxWidth: 400),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withOpacity(0.82),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: const [
                       BoxShadow(
