@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/admin_user_invitations_provider.dart';
 import '../../providers/admin_universities_provider.dart';
+import '../../providers/admin_users_overview_provider.dart';
 
 class AdminUserInvitationsScreen extends StatefulWidget {
   const AdminUserInvitationsScreen({super.key});
@@ -25,6 +26,7 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AdminUserInvitationsProvider>().loadInvitations();
       context.read<AdminUniversitiesProvider>().loadUniversities();
+      context.read<AdminUsersOverviewProvider>().loadUsers();
     });
   }
 
@@ -112,7 +114,7 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
       appBar: AppBar(
         elevation: 0,
         centerTitle: false,
-        title: const Text('Invitations utilisateurs - Admin'),
+        title: const Text('Gestion des comptes utilisateurs'),
         foregroundColor: Colors.white,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -126,15 +128,354 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
       ),
       body: Consumer2<AdminUserInvitationsProvider, AdminUniversitiesProvider>(
         builder: (context, invitationsProvider, universitiesProvider, child) {
+          final usersProvider = context.watch<AdminUsersOverviewProvider>();
           final universities = universitiesProvider.universities;
           final isLoading = invitationsProvider.isLoading;
           final isSaving = invitationsProvider.isSaving;
           final invitations = invitationsProvider.invitations;
+          final users = usersProvider.users;
 
-          return Column(
-            children: [
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Comptes utilisateurs',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: usersProvider.isLoading
+                                  ? null
+                                  : () {
+                                      usersProvider.refresh();
+                                    },
+                              icon: const Icon(Icons.refresh),
+                              tooltip: 'Actualiser les comptes',
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        if (usersProvider.isLoading && users.isEmpty)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        else if (usersProvider.error != null)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Text(
+                              usersProvider.error!,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          )
+                        else if (users.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Text(
+                              'Aucun compte utilisateur détecté pour le moment.',
+                              style: TextStyle(fontSize: 13),
+                            ),
+                          )
+                        else ...[
+                          const SizedBox(height: 4),
+                          ...users.map((user) {
+                            final email = user['email']?.toString() ?? '';
+                            final role = user['role']?.toString() ?? '';
+                            final fullName = user['full_name']?.toString();
+                            final createdAt =
+                                user['created_at']?.toString() ?? '';
+                            final lastActivity =
+                                user['last_activity_at']?.toString() ?? '';
+                            final isOnline = user['is_online'] == true;
+                            final isSuspended = user['is_suspended'] == true;
+                            final suspendedReason =
+                                user['suspended_reason']?.toString();
+                            final title =
+                                (fullName != null && fullName.isNotEmpty)
+                                    ? fullName
+                                    : email;
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: Icon(
+                                Icons.circle,
+                                size: 10,
+                                color:
+                                    isOnline ? const Color(0xFF16A34A) : Colors.grey,
+                              ),
+                              title: Text(title),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (email.isNotEmpty)
+                                    Text(
+                                      email,
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  Text(
+                                    'Rôle : ${role.isEmpty ? '–' : role}',
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  Text(
+                                    isSuspended
+                                        ? 'Compte : suspendu'
+                                        : 'Compte : actif',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: isSuspended
+                                          ? Colors.red
+                                          : const Color(0xFF16A34A),
+                                    ),
+                                  ),
+                                  Text(
+                                    isOnline ? 'Statut : en ligne' : 'Statut : hors ligne',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: isOnline
+                                          ? const Color(0xFF16A34A)
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                  if (createdAt.isNotEmpty)
+                                    Text(
+                                      'Créé le : $createdAt',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  if (lastActivity.isNotEmpty)
+                                    Text(
+                                      'Dernière activité : $lastActivity',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  if (isSuspended &&
+                                      suspendedReason != null &&
+                                      suspendedReason.isNotEmpty)
+                                    Text(
+                                      'Raison suspension : $suspendedReason',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              trailing: Wrap(
+                                spacing: 8,
+                                children: [
+                                  TextButton(
+                                    onPressed: usersProvider.isUpdating
+                                        ? null
+                                        : () async {
+                                            final targetId =
+                                                user['id']?.toString();
+                                            if (targetId == null ||
+                                                targetId.isEmpty) {
+                                              return;
+                                            }
+                                            final suspend = !isSuspended;
+                                            final ok = await usersProvider
+                                                .updateUserStatus(
+                                              userId: targetId,
+                                              suspend: suspend,
+                                            );
+                                            if (!context.mounted) return;
+                                            if (!ok) {
+                                              final error = usersProvider
+                                                      .error ??
+                                                  'Action admin échouée.';
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                SnackBar(
+                                                  content: Text(error),
+                                                ),
+                                              );
+                                            } else {
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    suspend
+                                                        ? 'Compte suspendu.'
+                                                        : 'Compte réactivé.',
+                                                  ),
+                                                ),
+                                              );
+                                            }
+                                          },
+                                    child: Text(
+                                      isSuspended
+                                          ? 'Réactiver'
+                                          : 'Suspendre',
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      final targetId =
+                                          user['id']?.toString();
+                                      if (targetId == null ||
+                                          targetId.isEmpty) {
+                                        return;
+                                      }
+                                      if (!context.mounted) return;
+                                      showDialog(
+                                        context: context,
+                                        builder: (dialogContext) {
+                                          return AlertDialog(
+                                            title: const Text(
+                                                'Historique des actions'),
+                                            content: FutureBuilder<
+                                                List<Map<String, dynamic>>>(
+                                              future:
+                                                  usersProvider.fetchUserActionLogs(
+                                                targetId,
+                                              ),
+                                              builder: (context, snapshot) {
+                                                if (snapshot.connectionState ==
+                                                    ConnectionState.waiting) {
+                                                  return const SizedBox(
+                                                    height: 60,
+                                                    child: Center(
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                                if (snapshot.hasError) {
+                                                  return Text(
+                                                    snapshot.error
+                                                            ?.toString() ??
+                                                        'Erreur lors du chargement de l\'historique.',
+                                                    style: const TextStyle(
+                                                      color: Colors.red,
+                                                    ),
+                                                  );
+                                                }
+                                                final logs =
+                                                    snapshot.data ?? const [];
+                                                if (logs.isEmpty) {
+                                                  return const Text(
+                                                    'Aucune action admin enregistrée pour ce compte.',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                    ),
+                                                  );
+                                                }
+                                                return SizedBox(
+                                                  width: 400,
+                                                  height: 240,
+                                                  child: ListView.builder(
+                                                    itemCount: logs.length,
+                                                    itemBuilder:
+                                                        (context, index) {
+                                                      final log = logs[index];
+                                                      final action = log['action']
+                                                              ?.toString() ??
+                                                          '';
+                                                      final reason = log['reason']
+                                                              ?.toString() ??
+                                                          '';
+                                                      final createdAt = log[
+                                                                  'created_at']
+                                                              ?.toString() ??
+                                                          '';
+                                                      return ListTile(
+                                                        contentPadding:
+                                                            EdgeInsets.zero,
+                                                        title: Text(
+                                                          'Action : $action',
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 13,
+                                                          ),
+                                                        ),
+                                                        subtitle: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            if (reason
+                                                                .isNotEmpty)
+                                                              Text(
+                                                                'Raison : $reason',
+                                                                style:
+                                                                    const TextStyle(
+                                                                  fontSize: 12,
+                                                                ),
+                                                              ),
+                                                            if (createdAt
+                                                                .isNotEmpty)
+                                                              Text(
+                                                                'Le : $createdAt',
+                                                                style:
+                                                                    const TextStyle(
+                                                                  fontSize: 11,
+                                                                  color: Colors
+                                                                      .grey,
+                                                                ),
+                                                              ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(dialogContext)
+                                                      .pop();
+                                                },
+                                                child: const Text('Fermer'),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    },
+                                    child: const Text('Historique'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Card(
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -255,21 +596,23 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                   ),
                 ),
               ),
-              Expanded(
-                child: isLoading && invitations.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
-                    : invitations.isEmpty
-                        ? const Center(
-                            child:
-                                Text('Aucune invitation créée pour le moment.'),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            itemCount: invitations.length,
-                            itemBuilder: (context, index) {
+              const SizedBox(height: 16),
+              if (isLoading && invitations.isEmpty)
+                const Center(child: CircularProgressIndicator())
+              else if (invitations.isEmpty)
+                const Center(
+                  child: Text('Aucune invitation créée pour le moment.'),
+                )
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  itemCount: invitations.length,
+                  itemBuilder: (context, index) {
                               final inv = invitations[index];
                               final email = inv['email']?.toString() ?? '';
                               final role = inv['role']?.toString() ?? '';
@@ -475,8 +818,9 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                               );
                             },
                           ),
+                ],
               ),
-            ],
+            ),
           );
         },
       ),

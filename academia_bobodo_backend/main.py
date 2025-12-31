@@ -9,8 +9,10 @@ import time
 import uuid
 import hashlib
 import logging
+import math
+import shutil
 
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
@@ -50,6 +52,13 @@ STUDIO_AUDIO_MIX_API_KEY = os.getenv("STUDIO_AUDIO_MIX_API_KEY")
 
 STUDIO_VIDEO_RENDER_URL = os.getenv("STUDIO_VIDEO_RENDER_URL")
 STUDIO_VIDEO_RENDER_API_KEY = os.getenv("STUDIO_VIDEO_RENDER_API_KEY")
+
+# Hero Video Studio (admin-only, segments Hero)
+HERO_BUCKET_ID = "hero_videos"
+# Limite de taille par segment en octets (par défaut ~50 Mo)
+HERO_MAX_PART_BYTES = int(os.getenv("HERO_MAX_PART_BYTES") or "52428800")
+# Durée minimale d'un segment en secondes pour éviter les découpes trop fines
+HERO_SEGMENT_MIN_SECONDS = 5
 
 LIVEKIT_HOST = os.getenv("LIVEKIT_HOST")
 LIVEKIT_API_KEY = os.getenv("LIVEKIT_API_KEY")
@@ -405,6 +414,36 @@ class TvStudioRenderResponse(BaseModel):
     render_url: str
     thumbnail_url: str
     status: str
+
+
+class HeroVideoEncoderJobCreateResponse(BaseModel):
+    job_id: str
+    hero_video_id: Optional[str] = None
+    status: str
+
+
+class HeroVideoEncoderJobStatusResponse(BaseModel):
+    id: str
+    context: str
+    status: str
+    source_filename: Optional[str] = None
+    source_size_bytes: Optional[int] = None
+    hero_video_id: Optional[str] = None
+    log: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+class HeroVideoLinkRequest(BaseModel):
+    hero_video_id: str
+    playlist_item_id: str
+
+
+class HeroVideoLinkResponse(BaseModel):
+    success: bool
+    hero_video_id: str
+    playlist_item_id: str
+    base_video_url: str
 
 
 class AiPrepGenerateRequest(BaseModel):
@@ -1470,76 +1509,7 @@ async def search_knowledge(query: str) -> List[Dict[str, Any]]:
             )
         except HTTPException:
             continue
-        combined.extend(_extract_list(data_term))
-
     return combined
-
-
-async def log_unanswered_question(session_id: str, question: str, category: str) -> None:
-    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        return
-    try:
-        await call_supabase_rpc(
-            "app_log_bobodo_unanswered_question",
-            {
-                "p_session_id": session_id,
-                "p_question_text": question,
-                "p_category": category,
-            },
-        )
-    except HTTPException:
-        return
-
-
-async def log_detected_need(session_id: str, question: str, category: str) -> None:
-    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        return
-
-    # Ne logger que les catégories utiles pour l'analyse des besoins
-    if category not in {
-        CATEGORY_NEXIOM_ACADEMIA_INTERNE,
-        CATEGORY_ORIENTATION_ETUDES_EMPLOI,
-        CATEGORY_PARTENAIRE_UNIVERSITE_DETAILLEE,
-        CATEGORY_AUTRE_UNIVERSITE_OU_ENTREPRISE,
-    }:
-        return
-
-    need_summary = question.strip()
-
-    if OPENROUTER_API_KEY:
-        need_system_prompt = (
-            "Tu es Bobodo, assistant IA pour la plateforme Academia. "
-            "On te fournit une question posée par un utilisateur. Ta tâche est de résumer en UNE ou DEUX phrases "
-            "le BESOIN principal exprimé, en français simple, sans citer de nom propre ni inclure de données personnelles, "
-            "et sans promettre de résultat. Concentre-toi sur le type de formation, d'orientation ou de service recherché."
-        )
-
-        try:
-            raw_summary = await call_openrouter(
-                question,
-                [],
-                system_prompt=need_system_prompt,
-                include_no_answer_sentinel=False,
-            )
-            cleaned = raw_summary.strip()
-            if cleaned:
-                need_summary = cleaned[:1000]
-        except HTTPException:
-            # En cas d'échec OpenRouter, on garde la question brute comme résumé
-            pass
-
-    try:
-        await call_supabase_rpc(
-            "app_log_bobodo_detected_need",
-            {
-                "p_session_id": session_id,
-                "p_question_text": question,
-                "p_category": category,
-                "p_need_summary": need_summary,
-            },
-        )
-    except HTTPException:
-        return
 
 
 def classify_query_with_rules(message: str) -> str:
@@ -2453,6 +2423,567 @@ async def _upload_hero_file_to_supabase_storage(
     return public_url
 
 
+async def _hero_storage_upload(path: Path, object_key: str, content_type: str) -> str:
+    """Upload un fichier dans le bucket hero_videos avec la service_role key.
+
+    Utilisé uniquement par le Hero Video Studio (admin-only).
+    """
+
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "SUPABASE_URL ou SUPABASE_SERVICE_KEY manquante pour Hero Video Studio."},
+        )
+
+    bucket = HERO_BUCKET_ID
+    storage_url = f"{SUPABASE_URL}/storage/v1/object/{bucket}/{object_key}"
+
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": content_type,
+        # On autorise la réécriture pour reruns éventuels
+        "x-upsert": "true",
+    }
+
+    data = path.read_bytes()
+
+    async with httpx.AsyncClient(timeout=600.0) as client:
+        resp = await client.post(storage_url, headers=headers, content=data)
+
+    public_url = f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{object_key}"
+
+    if resp.status_code >= 400:
+        try:
+            body = resp.json()
+        except ValueError:
+            body = {"raw": resp.text}
+
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Erreur lors de l'upload Hero Video Studio dans Supabase Storage.",
+                "status_code": resp.status_code,
+                "error": body,
+            },
+        )
+
+    return public_url
+
+
+async def _hero_insert_job(context: str, source_filename: Optional[str], source_size_bytes: int) -> Optional[str]:
+    """Crée une entrée dans app.hero_video_jobs (best-effort).
+
+    Retourne l'id du job ou None en cas d'erreur douce.
+    """
+
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return None
+
+    table_url = f"{SUPABASE_URL}/rest/v1/app.hero_video_jobs"
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Prefer": "return=representation",
+    }
+
+    row: Dict[str, Any] = {
+        "context": context,
+        "status": "pending",
+        "source_filename": source_filename,
+        "source_size_bytes": source_size_bytes,
+    }
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.post(table_url, headers=headers, json=row)
+        except httpx.HTTPError:
+            return None
+
+    if resp.status_code >= 400:
+        return None
+
+    try:
+        data = resp.json()
+    except ValueError:
+        return None
+
+    if isinstance(data, list) and data and isinstance(data[0], dict):
+        job_id = data[0].get("id")
+        if isinstance(job_id, str) and job_id.strip():
+            return job_id.strip()
+
+    return None
+
+
+async def _hero_update_job(
+    job_id: Optional[str],
+    *,
+    status: Optional[str] = None,
+    hero_video_id: Optional[str] = None,
+    log_append: Optional[str] = None,
+) -> None:
+    """Met à jour une entrée hero_video_jobs (best-effort).
+
+    - status : met à jour le statut si fourni
+    - hero_video_id : associe la vidéo finale
+    - log_append : concatène un message dans le champ log
+    """
+
+    if not job_id:
+        return
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return
+
+    table_base = f"{SUPABASE_URL}/rest/v1/app.hero_video_jobs"
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    current_log: Optional[str] = None
+    if log_append:
+        url_get = f"{table_base}?id=eq.{job_id}&select=log&limit=1"
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            try:
+                resp_get = await client.get(url_get, headers=headers)
+            except httpx.HTTPError:
+                resp_get = None  # type: ignore[assignment]
+        if resp_get is not None and hasattr(resp_get, "status_code") and resp_get.status_code < 400:  # type: ignore[truthy-function]
+            try:
+                data_get = resp_get.json()  # type: ignore[union-attr]
+            except ValueError:
+                data_get = []  # type: ignore[assignment]
+            if isinstance(data_get, list) and data_get and isinstance(data_get[0], dict):
+                val = data_get[0].get("log")
+                if isinstance(val, str):
+                    current_log = val
+
+    fields: Dict[str, Any] = {}
+    if status:
+        fields["status"] = status
+    if hero_video_id:
+        fields["hero_video_id"] = hero_video_id
+    if log_append:
+        snippet = log_append.strip()
+        if snippet:
+            base = current_log or ""
+            if base:
+                base = f"{base}\n{snippet}"
+            else:
+                base = snippet
+            # On évite que le log dépasse une taille déraisonnable
+            fields["log"] = base[-4000:]
+
+    if not fields:
+        return
+
+    fields["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    url_patch = f"{table_base}?id=eq.{job_id}"
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            await client.patch(url_patch, headers=headers, json=fields)
+        except httpx.HTTPError:
+            return
+
+
+def _hero_probe_video_stream_info(path: Path) -> Dict[str, Any]:
+    """Récupère (best-effort) durée, résolution et fps via ffprobe.
+
+    Retourne un dict avec les clés: duration (float), width (int), height (int), fps (int).
+    """
+
+    info: Dict[str, Any] = {"duration": None, "width": None, "height": None, "fps": None}
+
+    if not shutil.which("ffprobe"):
+        return info
+
+    cmd = [
+        "ffprobe",
+        "-v",
+        "error",
+        "-select_streams",
+        "v:0",
+        "-show_entries",
+        "stream=width,height,r_frame_rate",
+        "-show_entries",
+        "format=duration",
+        "-of",
+        "json",
+        str(path),
+    ]
+
+    try:
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+    except Exception:
+        return info
+
+    if result.returncode != 0:
+        return info
+
+    try:
+        data = json.loads(result.stdout.decode("utf-8", errors="ignore"))
+    except Exception:
+        return info
+
+    try:
+        fmt = data.get("format") or {}
+        dur_raw = fmt.get("duration")
+        if dur_raw is not None:
+            info["duration"] = float(dur_raw)
+    except Exception:
+        pass
+
+    try:
+        streams = data.get("streams") or []
+        if streams:
+            v0 = streams[0]
+            w = v0.get("width")
+            h = v0.get("height")
+            if isinstance(w, int) and isinstance(h, int):
+                info["width"] = w
+                info["height"] = h
+            fr = v0.get("r_frame_rate")
+            if isinstance(fr, str) and "/" in fr:
+                num_str, den_str = fr.split("/", 1)
+                try:
+                    num = float(num_str)
+                    den = float(den_str)
+                    if den != 0:
+                        fps_val = num / den
+                        if fps_val > 0:
+                            info["fps"] = int(round(fps_val))
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    return info
+
+
+async def _hero_insert_video_record(
+    *,
+    hero_video_id: str,
+    context: str,
+    duration: Optional[float],
+    resolution: Optional[str],
+    fps: Optional[int],
+    codec: str,
+    audio_codec: str,
+    parts_urls: List[str],
+    total_size_bytes: int,
+) -> str:
+    """Insère une entrée dans app.hero_videos."""
+
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "SUPABASE_URL ou SUPABASE_SERVICE_KEY manquante pour Hero Video Studio."},
+        )
+
+    table_url = f"{SUPABASE_URL}/rest/v1/app.hero_videos"
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    row: Dict[str, Any] = {
+        "id": hero_video_id,
+        "context": context,
+        "duration": duration,
+        "resolution": resolution,
+        "fps": fps,
+        "codec": codec,
+        "audio_codec": audio_codec,
+        "parts_count": len(parts_urls),
+        "parts_urls": parts_urls,
+        "total_size_bytes": total_size_bytes,
+    }
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp = await client.post(table_url, headers=headers, json=row)
+
+    if resp.status_code >= 400:
+        try:
+            body = resp.json()
+        except ValueError:
+            body = {"raw": resp.text}
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Erreur lors de l'insertion de hero_videos.",
+                "status_code": resp.status_code,
+                "error": body,
+            },
+        )
+
+    return hero_video_id
+
+
+async def _hero_segment_and_upload_master(
+    context: str,
+    master_path: Path,
+    *,
+    job_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Découpe hero_master.mp4 en segments, les uploade et crée hero_videos.
+
+    Retourne un dict contenant hero_video_id, parts_count, total_size_bytes, duration, resolution, fps.
+    """
+
+    if not master_path.exists():
+        raise HTTPException(status_code=500, detail={"message": "hero_master.mp4 introuvable."})
+
+    size_bytes = master_path.stat().st_size
+    info = _hero_probe_video_stream_info(master_path)
+    duration = info.get("duration")
+    width = info.get("width")
+    height = info.get("height")
+    fps_val = info.get("fps")
+
+    approx_parts = 1
+    if HERO_MAX_PART_BYTES > 0 and size_bytes > HERO_MAX_PART_BYTES:
+        approx_parts = max(1, int(math.ceil(size_bytes / float(HERO_MAX_PART_BYTES * 0.8))))
+
+    if isinstance(duration, (int, float)) and duration > 0:
+        segment_time = max(float(HERO_SEGMENT_MIN_SECONDS), float(duration) / float(approx_parts))
+    else:
+        segment_time = float(HERO_SEGMENT_MIN_SECONDS * max(1, approx_parts))
+
+    await _hero_update_job(job_id, log_append=f"segment_time={segment_time:.2f}s, approx_parts={approx_parts}")
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="hero_segments_"))
+    pattern = tmp_dir / "part_%03d.mp4"
+
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(master_path),
+        "-c",
+        "copy",
+        "-map",
+        "0",
+        "-f",
+        "segment",
+        "-segment_time",
+        f"{segment_time:.3f}",
+        "-reset_timestamps",
+        "1",
+        "-start_number",
+        "1",
+        str(pattern),
+    ]
+
+    try:
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+    except Exception as exc:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        await _hero_update_job(job_id, log_append=f"ffmpeg_segment_error: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail={"message": "Erreur ffmpeg lors du découpage Hero."})
+
+    if result.returncode != 0:
+        stderr_text = result.stderr.decode("utf-8", errors="ignore")
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        await _hero_update_job(job_id, log_append=f"ffmpeg_segment_error_code={result.returncode}")
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "ffmpeg a échoué lors du découpage Hero.", "stderr": stderr_text[:1000]},
+        )
+
+    segment_paths = sorted(tmp_dir.glob("part_*.mp4"))
+    if not segment_paths:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        raise HTTPException(status_code=500, detail={"message": "Aucun segment généré pour Hero Video Studio."})
+
+    hero_video_id = str(uuid.uuid4())
+    parts_urls: List[str] = []
+    total_size_bytes = 0
+
+    for part_path in segment_paths:
+        part_size = part_path.stat().st_size
+        total_size_bytes += part_size
+        object_key = f"hero_{hero_video_id}/{part_path.name}"
+        url = await _hero_storage_upload(part_path, object_key, "video/mp4")
+        parts_urls.append(url)
+
+    duration_val: Optional[float] = None
+    if isinstance(duration, (int, float)) and duration > 0:
+        duration_val = float(duration)
+
+    resolution_str: Optional[str] = None
+    if isinstance(width, int) and isinstance(height, int) and width > 0 and height > 0:
+        resolution_str = f"{width}x{height}"
+
+    fps_int: Optional[int] = None
+    if isinstance(fps_val, int) and fps_val > 0:
+        fps_int = fps_val
+
+    await _hero_insert_video_record(
+        hero_video_id=hero_video_id,
+        context=context,
+        duration=duration_val,
+        resolution=resolution_str,
+        fps=fps_int,
+        codec="h264",
+        audio_codec="aac",
+        parts_urls=parts_urls,
+        total_size_bytes=total_size_bytes,
+    )
+
+    # Génère et uploade meta.json (best-effort)
+    try:
+        meta = {
+            "id": hero_video_id,
+            "context": context,
+            "duration": duration_val,
+            "resolution": resolution_str,
+            "fps": fps_int,
+            "codec": "h264",
+            "audio_codec": "aac",
+            "parts_count": len(parts_urls),
+            "parts": [],
+        }
+        for idx, part_path in enumerate(segment_paths):
+            meta["parts"].append(
+                {
+                    "index": idx,
+                    "filename": part_path.name,
+                    "size_bytes": part_path.stat().st_size,
+                }
+            )
+        meta_path = tmp_dir / "meta.json"
+        meta_path.write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
+        await _hero_storage_upload(meta_path, f"hero_{hero_video_id}/meta.json", "application/json")
+    except Exception:
+        # On ne bloque pas le pipeline si meta.json échoue
+        pass
+
+    shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    return {
+        "hero_video_id": hero_video_id,
+        "parts_count": len(parts_urls),
+        "total_size_bytes": total_size_bytes,
+        "duration": duration_val,
+        "resolution": resolution_str,
+        "fps": fps_int,
+    }
+
+
+async def _hero_process_video_for_hero(
+    context: str,
+    source_path: Path,
+    *,
+    job_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Pipeline complet Hero Video Studio pour une vidéo source unique.
+
+    1) Transcode source -> hero_master.mp4 (MP4 H.264 baseline, yuv420p, <= 1280x720, ~24 fps, AAC).
+    2) Découpe hero_master.mp4 en segments.
+    3) Uploade les segments + meta.json et crée une entrée hero_videos.
+    """
+
+    if not shutil.which("ffmpeg"):
+        raise HTTPException(status_code=500, detail={"message": "ffmpeg introuvable pour Hero Video Studio."})
+
+    await _hero_update_job(job_id, log_append="transcode_start")
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="hero_master_"))
+    master_path = tmp_dir / "hero_master.mp4"
+
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(source_path),
+        "-vf",
+        "scale='min(1280,iw)':-2",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "veryfast",
+        "-profile:v",
+        "baseline",
+        "-pix_fmt",
+        "yuv420p",
+        "-movflags",
+        "+faststart",
+        "-r",
+        "24",
+        "-c:a",
+        "aac",
+        "-ac",
+        "2",
+        "-ar",
+        "44100",
+        "-b:a",
+        "128k",
+        str(master_path),
+    ]
+
+    try:
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+    except Exception as exc:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        await _hero_update_job(job_id, status="error", log_append=f"ffmpeg_start_error: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail={"message": "Erreur lors du transcodage Hero."})
+
+    if result.returncode != 0 or not master_path.exists():
+        stderr_text = result.stderr.decode("utf-8", errors="ignore")
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        await _hero_update_job(
+            job_id,
+            status="error",
+            log_append=f"ffmpeg_transcode_error_code={result.returncode}",
+        )
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "ffmpeg a échoué pour Hero Video Studio.", "stderr": stderr_text[:1000]},
+        )
+
+    await _hero_update_job(job_id, log_append="transcode_ok")
+
+    try:
+        info = await _hero_segment_and_upload_master(context, master_path, job_id=job_id)
+
+        hero_video_id = str(info.get("hero_video_id") or "").strip() or None
+        if hero_video_id:
+            try:
+                master_key = f"hero_{hero_video_id}/master.mp4"
+                master_url = await _hero_storage_upload(master_path, master_key, "video/mp4")
+                info["master_url"] = master_url
+            except Exception:
+                # Best-effort : l'échec de l'upload du master ne doit pas casser tout le pipeline
+                pass
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    return info
+
+
 async def update_hero_render_record(
     render_id: Optional[str],
     *,
@@ -3001,6 +3532,228 @@ async def perform_hero_tv_video_render(
 
     logs_str = "\n".join(logs_parts) if logs_parts else ""
     return {"render_url": video_url, "thumbnail_url": thumbnail_url, "logs": logs_str}
+
+
+@app.post("/services/hero_video_encoder/jobs", response_model=HeroVideoEncoderJobCreateResponse)
+async def hero_video_encoder_create_job(request: Request, file: UploadFile = File(...), context: str = Form("")) -> HeroVideoEncoderJobCreateResponse:
+    """Crée un job Hero Video Encoder et lance le traitement sur la requête courante.
+
+    Admin-only (JWT admin dans Authorization: Bearer ...).
+    """
+
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authorization Bearer manquant pour Hero Video Encoder.")
+
+    admin_jwt = auth_header.split(" ", 1)[1].strip()
+    if not admin_jwt:
+        raise HTTPException(status_code=401, detail="JWT admin invalide pour Hero Video Encoder.")
+
+    original_filename = file.filename or "upload.mp4"
+    tmp_dir = Path(tempfile.mkdtemp(prefix="hero_encoder_"))
+    src_path = tmp_dir / original_filename
+
+    try:
+        with src_path.open("wb") as out:
+            shutil.copyfileobj(file.file, out)
+        size_bytes = src_path.stat().st_size
+
+        ctx = (context or "").strip() or original_filename
+        job_id = await _hero_insert_job(ctx, original_filename, size_bytes)
+
+        if job_id is None:
+            raise HTTPException(status_code=500, detail={"message": "Impossible de créer le job Hero Video Studio."})
+
+        await _hero_update_job(job_id, status="processing", log_append="job_created_and_processing")
+
+        try:
+            info = await _hero_process_video_for_hero(ctx, src_path, job_id=job_id)
+        except HTTPException as exc:
+            await _hero_update_job(job_id, status="error")
+            raise exc
+
+        hero_video_id = str(info.get("hero_video_id") or "").strip() or None
+        if hero_video_id:
+            await _hero_update_job(job_id, status="done", hero_video_id=hero_video_id, log_append="pipeline_done")
+        else:
+            await _hero_update_job(job_id, status="error", log_append="missing_hero_video_id")
+
+        return HeroVideoEncoderJobCreateResponse(job_id=job_id, hero_video_id=hero_video_id, status="done" if hero_video_id else "error")
+
+    finally:
+        try:
+            if src_path.exists():
+                src_path.unlink()
+        except Exception:
+            pass
+        try:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+        except Exception:
+            pass
+
+
+@app.get("/services/hero_video_encoder/jobs/{job_id}", response_model=HeroVideoEncoderJobStatusResponse)
+async def hero_video_encoder_get_job(job_id: str, request: Request) -> HeroVideoEncoderJobStatusResponse:
+    """Retourne le statut d'un job Hero Video Encoder.
+
+    Admin-only logique (Authorization Bearer) + lecture dans app.hero_video_jobs avec la service_role key.
+    """
+
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authorization Bearer manquant pour Hero Video Encoder.")
+
+    job_id_clean = (job_id or "").strip()
+    if not job_id_clean:
+        raise HTTPException(status_code=400, detail="job_id manquant")
+
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(status_code=500, detail="SUPABASE_URL ou SUPABASE_SERVICE_KEY non configurée côté backend.")
+
+    table_url = f"{SUPABASE_URL}/rest/v1/app.hero_video_jobs?id=eq.{job_id_clean}&limit=1"
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Accept": "application/json",
+    }
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.get(table_url, headers=headers)
+        except httpx.HTTPError as exc:
+            raise HTTPException(status_code=502, detail={"message": "Erreur réseau Supabase", "error": str(exc)})
+
+    if resp.status_code >= 400:
+        try:
+            body = resp.json()
+        except ValueError:
+            body = {"raw": resp.text}
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Erreur lors de la lecture du job Hero Video Studio.",
+                "status_code": resp.status_code,
+                "error": body,
+            },
+        )
+
+    try:
+        data = resp.json()
+    except ValueError:
+        data = []
+
+    if not isinstance(data, list) or not data or not isinstance(data[0], dict):
+        raise HTTPException(status_code=404, detail="Job Hero Video Studio introuvable.")
+
+    row = data[0]
+    return HeroVideoEncoderJobStatusResponse(
+        id=str(row.get("id") or ""),
+        context=str(row.get("context") or ""),
+        status=str(row.get("status") or ""),
+        source_filename=row.get("source_filename"),
+        source_size_bytes=row.get("source_size_bytes"),
+        hero_video_id=row.get("hero_video_id"),
+        log=row.get("log"),
+        created_at=row.get("created_at"),
+        updated_at=row.get("updated_at"),
+    )
+
+
+@app.post("/services/hero_video_encoder/link", response_model=HeroVideoLinkResponse)
+async def hero_video_encoder_link_to_playlist(req: HeroVideoLinkRequest, request: Request) -> HeroVideoLinkResponse:
+    """Lie une vidéo Hero encodée (hero_videos) à un item existant de app.hero_playlist.
+
+    Admin-only logique (Authorization Bearer) + écriture directe dans app.hero_playlist via la service_role key.
+    """
+
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authorization Bearer manquant pour Hero Video Encoder.")
+
+    hero_video_id = (req.hero_video_id or "").strip()
+    playlist_item_id = (req.playlist_item_id or "").strip()
+
+    if not hero_video_id:
+        raise HTTPException(status_code=400, detail="hero_video_id manquant")
+    if not playlist_item_id:
+        raise HTTPException(status_code=400, detail="playlist_item_id manquant")
+
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "SUPABASE_URL ou SUPABASE_SERVICE_KEY manquante pour Hero Video Encoder."},
+        )
+
+    # Vérifie que la vidéo existe
+    videos_url = f"{SUPABASE_URL}/rest/v1/app.hero_videos?id=eq.{hero_video_id}&limit=1"
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Accept": "application/json",
+    }
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp = await client.get(videos_url, headers=headers)
+
+    if resp.status_code >= 400:
+        try:
+            body = resp.json()
+        except ValueError:
+            body = {"raw": resp.text}
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Erreur lors de la lecture de hero_videos.",
+                "status_code": resp.status_code,
+                "error": body,
+            },
+        )
+
+    try:
+        rows = resp.json()
+    except ValueError:
+        rows = []
+
+    if not isinstance(rows, list) or not rows:
+        raise HTTPException(status_code=404, detail="hero_video introuvable")
+
+    # Construit l'URL du master MP4 Hero à partir de l'id
+    master_key = f"hero_{hero_video_id}/master.mp4"
+    base_video_url = f"{SUPABASE_URL}/storage/v1/object/public/{HERO_BUCKET_ID}/{master_key}"
+
+    playlist_url = f"{SUPABASE_URL}/rest/v1/app.hero_playlist?id=eq.{playlist_item_id}"
+    playlist_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Prefer": "return=minimal",
+    }
+    payload: Dict[str, Any] = {"base_video_url": base_video_url}
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp2 = await client.patch(playlist_url, headers=playlist_headers, json=payload)
+
+    if resp2.status_code >= 400:
+        try:
+            body2 = resp2.json()
+        except ValueError:
+            body2 = {"raw": resp2.text}
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Erreur lors de la mise à jour de hero_playlist avec l'URL Hero Video.",
+                "status_code": resp2.status_code,
+                "error": body2,
+            },
+        )
+
+    return HeroVideoLinkResponse(
+        success=True,
+        hero_video_id=hero_video_id,
+        playlist_item_id=playlist_item_id,
+        base_video_url=base_video_url,
+    )
 
 
 @app.post("/hero/studio/render", response_model=HeroStudioRenderResponse)

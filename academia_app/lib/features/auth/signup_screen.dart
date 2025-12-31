@@ -16,6 +16,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _invitationCodeController = TextEditingController();
   bool _isLoading = false;
   String? _error;
+  bool _isPasswordVisible = false;
 
   @override
   void dispose() {
@@ -107,72 +108,117 @@ class _SignupScreenState extends State<SignupScreen> {
       appBar: AppBar(
         title: const Text('Inscription'),
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextField(
-                  controller: _lastNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nom',
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned.fill(
+            child: Center(
+              child: Opacity(
+                opacity: 0.07,
+                child: FractionallySizedBox(
+                  widthFactor: 0.8,
+                  child: Image.asset(
+                    'assets/images/nexiom.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _firstNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Prnoms',
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Mot de passe',
-                  ),
-                  obscureText: true,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _invitationCodeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Code d\'invitation (optionnel)',
-                  ),
-                ),
-                const SizedBox(height: 24),
-                if (_error != null) ...[
-                  Text(
-                    _error!,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                SizedBox(
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _submit,
-                    child: _isLoading
-                        ? const CircularProgressIndicator(strokeWidth: 2)
-                        : const Text('Créer le compte'),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 16,
+                        offset: Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextField(
+                        controller: _lastNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Nom',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _firstNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Prnoms',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _emailController,
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _passwordController,
+                        decoration: InputDecoration(
+                          labelText: 'Mot de passe',
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isPasswordVisible
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isPasswordVisible = !_isPasswordVisible;
+                              });
+                            },
+                          ),
+                        ),
+                        obscureText: !_isPasswordVisible,
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _invitationCodeController,
+                        decoration: const InputDecoration(
+                          labelText: 'Code d\'invitation (optionnel)',
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      if (_error != null) ...[
+                        Text(
+                          _error!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      SizedBox(
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _submit,
+                          child: _isLoading
+                              ? const CircularProgressIndicator(strokeWidth: 2)
+                              : const Text('Créer le compte'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

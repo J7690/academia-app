@@ -43,6 +43,7 @@ import 'providers/instructor_online_course_live_sessions_provider.dart';
 import 'providers/instructor_online_course_forum_provider.dart';
 import 'providers/admin_universities_provider.dart';
 import 'providers/admin_user_invitations_provider.dart';
+import 'providers/admin_users_overview_provider.dart';
 import 'providers/admin_university_site_provider.dart';
 import 'providers/admin_bobodo_conversations_provider.dart';
 import 'providers/admin_bobodo_needs_provider.dart';
@@ -167,6 +168,7 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => InstructorOnlineCourseForumProvider()),
       ChangeNotifierProvider(create: (_) => AdminUniversitiesProvider()),
       ChangeNotifierProvider(create: (_) => AdminUserInvitationsProvider()),
+      ChangeNotifierProvider(create: (_) => AdminUsersOverviewProvider()),
       ChangeNotifierProvider(create: (_) => AdminUniversitySiteProvider()),
       ChangeNotifierProvider(create: (_) => AdminShortTrainingsProvider()),
       ChangeNotifierProvider(create: (_) => AdminShortTrainingMessagesProvider()),

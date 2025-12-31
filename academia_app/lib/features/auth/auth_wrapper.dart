@@ -28,13 +28,41 @@ class _AuthWrapperState extends State<AuthWrapper> {
       if (mounted) {
         setState(() {});
       }
+      _startActivityTracking();
     });
+    _startActivityTracking();
   }
 
   @override
   void dispose() {
+    _activityTimer?.cancel();
     _authSub?.cancel();
     super.dispose();
+  }
+
+  Timer? _activityTimer;
+
+  void _startActivityTracking() {
+    _activityTimer?.cancel();
+    final session = _client.auth.currentSession;
+    if (session == null) {
+      return;
+    }
+
+    // Enregistrer une activité immédiate puis périodiquement.
+    _trackActivity();
+    _activityTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      _trackActivity();
+    });
+  }
+
+  Future<void> _trackActivity() async {
+    try {
+      await _client.rpc('app_track_user_activity');
+    } catch (_) {
+      // On ignore les erreurs réseau ici : la présence sera mise à jour
+      // au prochain appel réussi.
+    }
   }
 
   @override
