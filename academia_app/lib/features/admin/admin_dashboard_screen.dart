@@ -38,6 +38,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   bool _hasNewUniversityContent = false;
   bool _hasNewShortTrainings = false;
   bool _hasNewPayments = false;
+  bool _hasNewOpportunities = false;
+  bool _hasNewCommunities = false;
+  bool _hasNewBobodo = false;
+  bool _hasNewPrepConcours = false;
   Timer? _pollingTimer;
   int _lastAdminUnreadCount = 0;
   bool _adminUnreadInitialized = false;
@@ -79,6 +83,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       final adminContent = summary['admin_university_content'];
       final adminShortTrainings = summary['admin_short_trainings'];
       final adminPayments = summary['admin_payments'];
+      final adminOpportunities = summary['admin_opportunities'];
+      final adminCommunities = summary['admin_communities'];
+      final adminBobodo = summary['admin_bobodo'];
+      final adminPrepConcours = summary['admin_prep_concours'];
 
       final hasNewUniversity =
           adminContent is Map && adminContent['has_new'] == true;
@@ -86,6 +94,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           adminShortTrainings is Map && adminShortTrainings['has_new'] == true;
       final hasNewPayments =
           adminPayments is Map && adminPayments['has_new'] == true;
+      final hasNewOpportunities =
+          adminOpportunities is Map && adminOpportunities['has_new'] == true;
+      final hasNewCommunities =
+          adminCommunities is Map && adminCommunities['has_new'] == true;
+      final hasNewBobodo =
+          adminBobodo is Map && adminBobodo['has_new'] == true;
+      final hasNewPrepConcours =
+          adminPrepConcours is Map && adminPrepConcours['has_new'] == true;
       if (!mounted) return;
       if (!_adminContentNotificationInitialized) {
         _adminContentNotificationInitialized = true;
@@ -93,16 +109,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _hasNewUniversityContent = hasNewUniversity;
           _hasNewShortTrainings = hasNewShort;
           _hasNewPayments = hasNewPayments;
+          _hasNewOpportunities = hasNewOpportunities;
+          _hasNewCommunities = hasNewCommunities;
+          _hasNewBobodo = hasNewBobodo;
+          _hasNewPrepConcours = hasNewPrepConcours;
         });
         return;
       }
       final previousUniversity = _hasNewUniversityContent;
       final previousShort = _hasNewShortTrainings;
       final previousPayments = _hasNewPayments;
+      final previousOpportunities = _hasNewOpportunities;
+      final previousCommunities = _hasNewCommunities;
+      final previousBobodo = _hasNewBobodo;
+      final previousPrepConcours = _hasNewPrepConcours;
       final willPlaySound =
           (!previousUniversity && hasNewUniversity) ||
           (!previousShort && hasNewShort) ||
-          (!previousPayments && hasNewPayments);
+          (!previousPayments && hasNewPayments) ||
+          (!previousOpportunities && hasNewOpportunities) ||
+          (!previousCommunities && hasNewCommunities) ||
+          (!previousBobodo && hasNewBobodo) ||
+          (!previousPrepConcours && hasNewPrepConcours);
       if (willPlaySound) {
         try {
           await NotificationSoundService.instance.playIfEnabled();
@@ -112,6 +140,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         _hasNewUniversityContent = hasNewUniversity;
         _hasNewShortTrainings = hasNewShort;
         _hasNewPayments = hasNewPayments;
+         _hasNewOpportunities = hasNewOpportunities;
+         _hasNewCommunities = hasNewCommunities;
+         _hasNewBobodo = hasNewBobodo;
+         _hasNewPrepConcours = hasNewPrepConcours;
       });
     } catch (_) {}
   }
@@ -152,6 +184,58 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     if (!mounted) return;
     setState(() {
       _hasNewPayments = false;
+    });
+  }
+
+  Future<void> _markAdminOpportunitiesSeen() async {
+    final client = Supabase.instance.client;
+    try {
+      await client.rpc('app_mark_domain_seen', params: {
+        'p_domain': 'admin_opportunities',
+      });
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _hasNewOpportunities = false;
+    });
+  }
+
+  Future<void> _markAdminCommunitiesSeen() async {
+    final client = Supabase.instance.client;
+    try {
+      await client.rpc('app_mark_domain_seen', params: {
+        'p_domain': 'admin_communities',
+      });
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _hasNewCommunities = false;
+    });
+  }
+
+  Future<void> _markAdminBobodoSeen() async {
+    final client = Supabase.instance.client;
+    try {
+      await client.rpc('app_mark_domain_seen', params: {
+        'p_domain': 'admin_bobodo',
+      });
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _hasNewBobodo = false;
+    });
+  }
+
+  Future<void> _markAdminPrepConcoursSeen() async {
+    final client = Supabase.instance.client;
+    try {
+      await client.rpc('app_mark_domain_seen', params: {
+        'p_domain': 'admin_prep_concours',
+      });
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _hasNewPrepConcours = false;
     });
   }
 
@@ -231,10 +315,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 onTap: (index) {
                   if (index == 1) {
                     _markAdminPaymentsSeen();
+                  } else if (index == 4) {
+                    _markAdminOpportunitiesSeen();
+                  } else if (index == 5) {
+                    _markAdminCommunitiesSeen();
                   } else if (index == 10) {
                     _markAdminShortTrainingsSeen();
                   } else if (index == 11) {
                     _markAdminUniversityContentSeen();
+                  } else if (index == 12) {
+                    _markAdminBobodoSeen();
+                  } else if (index == 13) {
+                    _markAdminPrepConcoursSeen();
                   }
                 },
                 tabs: [
@@ -247,8 +339,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                   const Tab(text: 'Reçus'),
                   const Tab(text: 'Programmes'),
-                  const Tab(text: 'Opportunités'),
-                  const Tab(text: 'Communautés'),
+                  Tab(
+                    child: _AdminDotLabel(
+                      text: 'Opportunités',
+                      hasNew: _hasNewOpportunities,
+                    ),
+                  ),
+                  Tab(
+                    child: _AdminDotLabel(
+                      text: 'Communautés',
+                      hasNew: _hasNewCommunities,
+                    ),
+                  ),
                   const Tab(text: 'Challenges'),
                   const Tab(text: 'Bibliothèque de cours'),
                   const Tab(text: 'Cours en ligne'),
@@ -265,8 +367,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       hasNew: _hasNewUniversityContent,
                     ),
                   ),
-                  const Tab(text: 'Bobodo'),
-                  const Tab(text: 'Prépa concours'),
+                  Tab(
+                    child: _AdminDotLabel(
+                      text: 'Bobodo',
+                      hasNew: _hasNewBobodo,
+                    ),
+                  ),
+                  Tab(
+                    child: _AdminDotLabel(
+                      text: 'Prépa concours',
+                      hasNew: _hasNewPrepConcours,
+                    ),
+                  ),
                   const Tab(text: 'Accueil étudiant'),
                   const Tab(text: 'Landing'),
                   const Tab(text: 'Hero / Accueil TV'),

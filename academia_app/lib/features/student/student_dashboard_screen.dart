@@ -112,6 +112,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       final trainings = summary['student_online_trainings'];
       final lives = summary['student_lives'];
       final payments = summary['student_payments'];
+      final communities = summary['student_communities'];
+      final partners = summary['student_universities'];
+      final bobodo = summary['student_bobodo'];
+      final prepConcours = summary['student_prep_concours'];
 
       final hasNewHome = home is Map && home['has_new'] == true;
       final hasNewShortTrainings =
@@ -120,6 +124,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       final hasNewCourses = courses is Map && courses['has_new'] == true;
       final hasNewTrainings = trainings is Map && trainings['has_new'] == true;
       final hasNewLives = lives is Map && lives['has_new'] == true;
+      final hasNewCommunities =
+          communities is Map && communities['has_new'] == true;
+      final hasNewPartners = partners is Map && partners['has_new'] == true;
+      final hasNewBobodo = bobodo is Map && bobodo['has_new'] == true;
+      final hasNewPrepConcours =
+          prepConcours is Map && prepConcours['has_new'] == true;
       final backendHasNewPayments =
           payments is Map && payments['has_new'] == true;
 
@@ -148,7 +158,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           hasNewCourses ||
           hasNewTrainings ||
           hasNewLives ||
-          hasNewPayments;
+          hasNewPayments ||
+          hasNewCommunities ||
+          hasNewPartners ||
+          hasNewBobodo ||
+          hasNewPrepConcours;
       if (!mounted) return;
       if (!_studentHomeNotificationInitialized) {
         _studentHomeNotificationInitialized = true;
@@ -159,6 +173,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           _hasNewTrainings = hasNewTrainings;
           _hasNewLives = hasNewLives;
           _hasNewPayments = hasNewPayments;
+          _hasNewCommunities = hasNewCommunities;
+          _hasNewPartners = hasNewPartners;
+          _hasNewBobodo = hasNewBobodo;
           _studentPaymentsCount = paymentsCount;
         });
         return;
@@ -176,6 +193,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         _hasNewTrainings = hasNewTrainings;
         _hasNewLives = hasNewLives;
         _hasNewPayments = hasNewPayments;
+        _hasNewCommunities = hasNewCommunities;
+        _hasNewPartners = hasNewPartners;
+        _hasNewBobodo = hasNewBobodo;
         _studentPaymentsCount = paymentsCount;
       });
     } catch (_) {}
@@ -208,6 +228,55 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     setState(() {
       _hasNewPayments = false;
     });
+  }
+
+  Future<void> _markStudentCommunitiesSeen() async {
+    final client = Supabase.instance.client;
+    try {
+      await client.rpc('app_mark_domain_seen', params: {
+        'p_domain': 'student_communities',
+      });
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _hasNewCommunities = false;
+    });
+  }
+
+  Future<void> _markStudentPartnersSeen() async {
+    final client = Supabase.instance.client;
+    try {
+      await client.rpc('app_mark_domain_seen', params: {
+        'p_domain': 'student_universities',
+      });
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _hasNewPartners = false;
+    });
+  }
+
+  Future<void> _markStudentBobodoSeen() async {
+    final client = Supabase.instance.client;
+    try {
+      await client.rpc('app_mark_domain_seen', params: {
+        'p_domain': 'student_bobodo',
+      });
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _hasNewBobodo = false;
+    });
+  }
+
+  Future<void> _markStudentPrepConcoursSeen() async {
+    final client = Supabase.instance.client;
+    try {
+      await client.rpc('app_mark_domain_seen', params: {
+        'p_domain': 'student_prep_concours',
+      });
+    } catch (_) {}
+    // Pas de booléen dédié pour concours dans la barre, rien à mettre à jour ici.
   }
 
   Future<void> _checkStudentUnreadChange() async {
@@ -371,6 +440,14 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     StudentDashboardNavController.setIndex(index);
     if (index == 0) {
       _markStudentHomeSeen();
+    } else if (index == 3) {
+      _markStudentCommunitiesSeen();
+    } else if (index == 4) {
+      _markStudentPartnersSeen();
+    } else if (index == 5) {
+      _markStudentBobodoSeen();
+    } else if (index == 6) {
+      _markStudentPrepConcoursSeen();
     } else if (index == 7) {
       _markStudentPaymentsSeen();
     }

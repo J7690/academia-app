@@ -17,6 +17,9 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
   final _emailController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _notesController = TextEditingController();
+  final _universityEmailController = TextEditingController();
+  final _universityPasswordController = TextEditingController();
+  final _universityNameController = TextEditingController();
   String _selectedRole = 'instructor';
   String? _selectedUniversityId;
 
@@ -35,6 +38,9 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
     _emailController.dispose();
     _fullNameController.dispose();
     _notesController.dispose();
+    _universityEmailController.dispose();
+    _universityPasswordController.dispose();
+    _universityNameController.dispose();
     super.dispose();
   }
 
@@ -92,6 +98,67 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
         const SnackBar(content: Text('Invitation créée.')),
       );
     }
+  }
+
+  Future<void> _createUniversityAccountDirect(BuildContext context) async {
+    final email = _universityEmailController.text.trim();
+    final password = _universityPasswordController.text;
+    final universityName = _universityNameController.text.trim();
+
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez renseigner un email.'),
+        ),
+      );
+      return;
+    }
+
+    if (password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez renseigner un mot de passe temporaire.'),
+        ),
+      );
+      return;
+    }
+
+    if (universityName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez renseigner le nom de l\'université.'),
+        ),
+      );
+      return;
+    }
+
+    final provider = context.read<AdminUserInvitationsProvider>();
+    final response = await provider.createUniversityAccountDirect(
+      email: email,
+      password: password,
+      universityName: universityName,
+    );
+
+    if (!mounted) return;
+
+    if (response == null) {
+      final error =
+          provider.error ?? 'Erreur lors de la création du compte université.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error)),
+      );
+      return;
+    }
+
+    _universityEmailController.clear();
+    _universityPasswordController.clear();
+    _universityNameController.clear();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Compte université créé avec succès.'),
+      ),
+    );
   }
 
   String? _universityNameForId(
@@ -487,6 +554,72 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
+                          'Créer un compte université',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _universityEmailController,
+                          decoration: const InputDecoration(
+                            labelText: 'Email du compte université',
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _universityPasswordController,
+                          decoration: const InputDecoration(
+                            labelText: 'Mot de passe temporaire',
+                          ),
+                          obscureText: true,
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _universityNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Nom de l\'université',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 44,
+                          child: ElevatedButton(
+                            onPressed: isSaving
+                                ? null
+                                : () => _createUniversityAccountDirect(context),
+                            child: isSaving
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text('Créer le compte université'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
                           'Créer une nouvelle invitation',
                           style: TextStyle(
                             fontSize: 16,
@@ -518,10 +651,6 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                             DropdownMenuItem(
                               value: 'instructor',
                               child: Text('Formateur / CI'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'university',
-                              child: Text('Université'),
                             ),
                             DropdownMenuItem(
                               value: 'admin',

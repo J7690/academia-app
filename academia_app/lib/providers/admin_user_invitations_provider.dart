@@ -106,6 +106,49 @@ class AdminUserInvitationsProvider extends ChangeNotifier {
     }
   }
 
+  Future<Map<String, dynamic>?> createUniversityAccountDirect({
+    required String email,
+    required String password,
+    required String universityName,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final response = await _client.functions.invoke(
+        'admin-create-university-account',
+        body: <String, dynamic>{
+          'email': email.trim(),
+          'password': password,
+          'university_name': universityName.trim(),
+        },
+      );
+
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors de la création du compte université.',
+        );
+        return null;
+      }
+
+      if (data['success'] != true) {
+        _setError(
+          data['error']?.toString() ??
+              'Erreur lors de la création du compte université.',
+        );
+        return null;
+      }
+
+      await loadInvitations();
+      return data;
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
   Future<bool> cancelInvitation(String invitationId) async {
     _setSaving(true);
     _setError(null);
