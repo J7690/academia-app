@@ -12,6 +12,8 @@ class StudentCommunitiesProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _communities = [];
   List<Map<String, dynamic>> _myCommunities = [];
   List<Map<String, dynamic>> _posts = [];
+  RealtimeChannel? _postsChannel;
+  final Map<String, int> _unreadByCommunityId = {};
 
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
@@ -19,6 +21,7 @@ class StudentCommunitiesProvider extends ChangeNotifier {
   List<Map<String, dynamic>> get communities => _communities;
   List<Map<String, dynamic>> get myCommunities => _myCommunities;
   List<Map<String, dynamic>> get posts => _posts;
+  Map<String, int> get unreadByCommunityId => _unreadByCommunityId;
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -67,6 +70,46 @@ class StudentCommunitiesProvider extends ChangeNotifier {
             .toList(growable: false);
       } else {
         _communities = [];
+      }
+      notifyListeners();
+    } catch (e) {
+      _setError(e.toString());
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> loadMyCommunitiesActivity() async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_list_my_communities_activity',
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          "Réponse invalide du serveur lors du chargement de l'activité de mes communautés.",
+        );
+        return;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              "Erreur lors du chargement de l'activité de mes communautés.",
+        );
+        return;
+      }
+      final data = response['communities'];
+      _unreadByCommunityId.clear();
+      if (data is List) {
+        for (final item in data.whereType<Map>()) {
+          final id = item['community_id']?.toString();
+          final unread = item['unread_count'];
+          if (id == null) continue;
+          if (unread is int && unread > 0) {
+            _unreadByCommunityId[id] = unread;
+          }
+        }
       }
       notifyListeners();
     } catch (e) {
@@ -244,6 +287,73 @@ class StudentCommunitiesProvider extends ChangeNotifier {
       return false;
     } finally {
       _setSaving(false);
+    }
+  }
+
+  void subscribeToCommunityPosts(String communityId) {
+    if (_postsChannel != null) {
+      _client.removeChannel(_postsChannel!);
+      _postsChannel = null;
+    }
+
+    final channel = _client.channel('app:community_posts:$communityId');
+
+    channel.onPostgresChanges(
+      event: PostgresChangeEvent.insert,
+      schema: 'app',
+      table: 'community_posts',
+      filter: PostgresChangeFilter(
+        type: PostgresChangeFilterType.eq,
+        column: 'community_id',
+        value: communityId,
+      ),
+      callback: (payload) {
+        final newRow = payload.newRecord;
+        if (newRow == null) {
+          return;
+        }
+
+        final row = Map<String, dynamic>.from(newRow);
+        final rowCommunityId = row['community_id']?.toString();
+        if (rowCommunityId != communityId) {
+          return;
+        }
+
+        final newPostId = row['id'];
+        if (newPostId != null && _posts.any((p) => p['id'] == newPostId)) {
+          return;
+        }
+
+        _posts = [
+          ..._posts,
+          row,
+        ];
+        notifyListeners();
+      },
+    );
+
+    channel.subscribe();
+    _postsChannel = channel;
+  }
+
+  void unsubscribeFromCommunityPosts() {
+    if (_postsChannel != null) {
+      _client.removeChannel(_postsChannel!);
+      _postsChannel = null;
+    }
+  }
+
+  Future<void> markCommunityRead(String communityId) async {
+    try {
+      await _client.rpc(
+        'app_student_mark_community_read',
+        params: {
+          'p_community_id': communityId,
+        },
+      );
+      await loadMyCommunitiesActivity();
+    } catch (e) {
+      _setError(e.toString());
     }
   }
 }

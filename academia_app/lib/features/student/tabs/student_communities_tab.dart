@@ -40,6 +40,7 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
       search: _searchQuery.isEmpty ? null : _searchQuery,
     );
     await provider.loadMyCommunities();
+    await provider.loadMyCommunitiesActivity();
   }
 
   @override
@@ -63,7 +64,7 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Rejoins des groupes d\'intérêt, clubs et espaces d\'échange avec d\'autres étudiants.',
+                    'Un endroit pour discuter, poser des questions et réviser avec d\'autres étudiants.',
                     style: TextStyle(fontSize: 14),
                   ),
                   const SizedBox(height: 12),
@@ -106,9 +107,39 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
                   }
 
                   final all = provider.communities;
+                  final unreadById = provider.unreadByCommunityId;
+
+                  // Construire un index des dates de jointure à partir de la RPC "mes communautés"
+                  final joinedAtById = <String, DateTime>{};
+                  for (final mc in provider.myCommunities) {
+                    final id = mc['community_id']?.toString();
+                    final joinedAtRaw = mc['joined_at']?.toString();
+                    if (id == null || joinedAtRaw == null) continue;
+                    final parsed = DateTime.tryParse(joinedAtRaw);
+                    if (parsed != null) {
+                      joinedAtById[id] = parsed;
+                    }
+                  }
+
                   final my = all
                       .where((c) => c['is_member'] == true)
-                      .toList(growable: false);
+                      .toList(growable: true);
+
+                  // Trier les communautés de l'étudiant par date de jointure (les plus récentes en premier)
+                  my.sort((a, b) {
+                    final idA = a['id']?.toString();
+                    final idB = b['id']?.toString();
+                    final dateA =
+                        idA != null ? joinedAtById[idA] : null;
+                    final dateB =
+                        idB != null ? joinedAtById[idB] : null;
+
+                    if (dateA == null && dateB == null) return 0;
+                    if (dateA == null) return 1;
+                    if (dateB == null) return -1;
+                    return dateB.compareTo(dateA);
+                  });
+
                   final discover = all
                       .where((c) => c['is_member'] != true)
                       .toList(growable: false);
@@ -120,15 +151,15 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
                       children: [
                         _buildSection(
                           context: context,
-                          title: 'Mes communautés',
+                          title: 'Mes discussions actives',
                           emptyText:
-                              'Tu n\'as encore rejoint aucune communauté. Parcours le catalogue ci-dessous pour en découvrir.',
+                              'Tu n\'as encore rejoint aucune communauté. Rejoins un groupe ci-dessous pour commencer à échanger.',
                           communities: my,
                         ),
                         const SizedBox(height: 16),
                         _buildSection(
                           context: context,
-                          title: 'Découvrir des communautés',
+                          title: 'Découvrir par centres d\'intérêt',
                           emptyText:
                               'Aucune communauté ne correspond à ta recherche pour le moment.',
                           communities: discover,
@@ -216,6 +247,10 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
     final description = c['description']?.toString() ?? '';
     final category = c['category']?.toString() ?? '';
     final isMember = c['is_member'] == true;
+    final unreadCount = context
+        .read<StudentCommunitiesProvider>()
+        .unreadByCommunityId[id] ??
+        0;
     final membersCount = c['members_count'] is int ? c['members_count'] as int : null;
 
     final subtitleParts = <String>[];
@@ -272,6 +307,34 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
                 Text(
                   subtitleParts.join(' • '),
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+              if (isMember && unreadCount > 0) ...[
+                const SizedBox(height: 4),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1EA75C),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '$unreadCount message${unreadCount > 1 ? 's' : ''} non lus',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+              if (isMember) ...[
+                const SizedBox(height: 4),
+                const Text(
+                  'Tu es membre de ce groupe. Appuie pour reprendre la discussion.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.black87,
+                  ),
                 ),
               ],
               const Spacer(),

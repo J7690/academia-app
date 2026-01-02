@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/student_communities_provider.dart';
 
@@ -27,12 +28,17 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final provider = context.read<StudentCommunitiesProvider>();
       await _loadPosts();
+      provider.subscribeToCommunityPosts(widget.communityId);
+      await provider.markCommunityRead(widget.communityId);
     });
   }
 
   @override
   void dispose() {
+    final provider = context.read<StudentCommunitiesProvider>();
+    provider.unsubscribeFromCommunityPosts();
     _messageController.dispose();
     super.dispose();
   }
@@ -65,6 +71,84 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
       return;
     }
     _messageController.clear();
+  }
+
+  Widget _buildPostContent(Map<String, dynamic> p) {
+    final type = (p['type'] ?? 'text').toString();
+    final content = (p['content'] ?? '').toString();
+    final mediaUrl = (p['media_url'] ?? '').toString();
+
+    // Cas texte simple (comportement existant)
+    if (type == 'text' || mediaUrl.isEmpty) {
+      return Text(
+        content,
+        style: const TextStyle(fontSize: 14),
+      );
+    }
+
+    // Cas image
+    if (type == 'image' && mediaUrl.isNotEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              mediaUrl,
+              fit: BoxFit.cover,
+            ),
+          ),
+          if (content.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              content,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ],
+        ],
+      );
+    }
+
+    // Autres types (audio, fichier, etc.) : afficher comme pièce jointe cliquable
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () async {
+            final uri = Uri.tryParse(mediaUrl);
+            if (uri != null) {
+              await launchUrl(uri);
+            }
+          },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.attach_file, size: 18),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  mediaUrl,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    decoration: TextDecoration.underline,
+                    color: Colors.blue,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (content.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            content,
+            style: const TextStyle(fontSize: 14),
+          ),
+        ],
+      ],
+    );
   }
 
   @override
@@ -133,7 +217,6 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
                             itemCount: posts.length,
                             itemBuilder: (context, index) {
                               final p = posts[index];
-                              final content = (p['content'] ?? '').toString();
                               final createdAt = (p['created_at'] ?? '').toString();
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 8),
@@ -148,10 +231,7 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      content,
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
+                                    _buildPostContent(p),
                                     if (createdAt.isNotEmpty) ...[
                                       const SizedBox(height: 4),
                                       Text(

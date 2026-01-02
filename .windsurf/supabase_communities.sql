@@ -83,6 +83,12 @@ CREATE TABLE IF NOT EXISTS app.community_posts (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Extension progressive pour supporter les messages enrichis (images, fichiers, réponses)
+ALTER TABLE app.community_posts
+    ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'text',
+    ADD COLUMN IF NOT EXISTS media_url TEXT,
+    ADD COLUMN IF NOT EXISTS reply_to_post_id UUID REFERENCES app.community_posts (id);
+
 ALTER TABLE app.community_posts ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS member_select_community_posts ON app.community_posts;
@@ -365,6 +371,9 @@ BEGIN
                 'community_id', p.community_id,
                 'author_id', p.author_id,
                 'content', p.content,
+                'type', p.type,
+                'media_url', p.media_url,
+                'reply_to_post_id', p.reply_to_post_id,
                 'is_pinned', p.is_pinned,
                 'is_deleted', p.is_deleted,
                 'created_at', p.created_at,
@@ -803,3 +812,137 @@ $$;
 
 GRANT EXECUTE ON FUNCTION app_admin_ban_user_from_community(UUID, UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION app_admin_ban_user_from_community(UUID, UUID) TO service_role;
+
+-- ========================================
+-- 10) TABLE & RPC ÉTUDIANT - ÉTAT DE LECTURE (NON-LUS)
+-- ========================================
+
+CREATE TABLE IF NOT EXISTS app.community_read_states (
+    community_id UUID NOT NULL REFERENCES app.communities (id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+    last_read_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (community_id, user_id)
+);
+
+ALTER TABLE app.community_read_states ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS student_select_own_read_states ON app.community_read_states;
+CREATE POLICY student_select_own_read_states
+ON app.community_read_states FOR SELECT
+USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS student_upsert_own_read_states ON app.community_read_states;
+CREATE POLICY student_insert_own_read_states
+ON app.community_read_states FOR INSERT
+WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY student_update_own_read_states
+ON app.community_read_states FOR UPDATE
+USING (user_id = auth.uid())
+WITH CHECK (user_id = auth.uid());
+
+GRANT SELECT, INSERT, UPDATE ON app.community_read_states TO authenticated;
+GRANT ALL ON app.community_read_states TO service_role;
+
+-- RPC étudiant pour marquer une communauté comme lue
+CREATE OR REPLACE FUNCTION app_student_mark_community_read(
+    p_community_id UUID,
+    p_last_read_at TIMESTAMPTZ DEFAULT NOW()
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    -- Vérifier que la communauté existe et est active
+    PERFORM 1
+    FROM app.communities c
+    WHERE c.id = p_community_id
+      AND c.is_active = TRUE;
+    IF NOT FOUND THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'community_not_found');
+    END IF;
+
+    INSERT INTO app.community_read_states (community_id, user_id, last_read_at)
+    VALUES (p_community_id, v_user_id, p_last_read_at)
+    ON CONFLICT (community_id, user_id) DO UPDATE
+        SET last_read_at = GREATEST(app.community_read_states.last_read_at, EXCLUDED.last_read_at)
+    RETURNING community_id INTO v_id;
+
+    IF v_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'update_failed');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'community_id', v_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_student_mark_community_read(UUID, TIMESTAMPTZ) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_student_mark_community_read(UUID, TIMESTAMPTZ) TO service_role;
+
+-- RPC étudiant pour récupérer l'activité et les non-lus sur ses communautés
+CREATE OR REPLACE FUNCTION app_student_list_my_communities_activity()
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_result JSONB;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT COALESCE(
+        JSONB_AGG(
+            JSONB_BUILD_OBJECT(
+                'community_id', c.id,
+                'slug', c.slug,
+                'name', c.name,
+                'description', c.description,
+                'category', c.category,
+                'visibility', c.visibility,
+                'is_active', c.is_active,
+                'is_featured', c.is_featured,
+                'joined_at', m.joined_at,
+                'last_post_at', stats.last_post_at,
+                'last_read_at', rs.last_read_at,
+                'unread_count', COALESCE(stats.unread_count, 0)
+            )
+            ORDER BY COALESCE(stats.last_post_at, m.joined_at) DESC
+        ),
+        '[]'::JSONB
+    ) INTO v_result
+    FROM app.community_memberships m
+    JOIN app.communities c ON c.id = m.community_id
+    LEFT JOIN app.community_read_states rs
+      ON rs.community_id = m.community_id
+     AND rs.user_id = v_user_id
+    LEFT JOIN LATERAL (
+        SELECT
+            MAX(p.created_at) AS last_post_at,
+            COUNT(*) FILTER (
+                WHERE p.created_at > COALESCE(rs.last_read_at, m.joined_at)
+            ) AS unread_count
+        FROM app.community_posts p
+        WHERE p.community_id = m.community_id
+          AND p.is_deleted = FALSE
+    ) AS stats ON TRUE
+    WHERE m.user_id = v_user_id
+      AND m.is_active = TRUE
+      AND c.is_active = TRUE;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'communities', v_result);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_student_list_my_communities_activity() TO authenticated;
+GRANT EXECUTE ON FUNCTION app_student_list_my_communities_activity() TO service_role;
