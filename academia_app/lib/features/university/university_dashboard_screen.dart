@@ -103,7 +103,14 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                     NotificationSoundSettingsDialog.show(context);
                   },
                   icon: const Icon(Icons.settings),
-                  tooltip: 'Paramètres',
+                  tooltip: 'Paramètres des notifications',
+                ),
+                IconButton(
+                  onPressed: () {
+                    _showChangePasswordDialog(context);
+                  },
+                  icon: const Icon(Icons.lock_outline),
+                  tooltip: 'Changer le mot de passe',
                 ),
                 IconButton(
                   onPressed: _signOut,
@@ -201,6 +208,169 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+Future<void> _showChangePasswordDialog(BuildContext context) async {
+  final client = Supabase.instance.client;
+  final user = client.auth.currentUser;
+  final email = user?.email;
+
+  if (email == null || email.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Session expirée. Veuillez vous reconnecter.'),
+      ),
+    );
+    return;
+  }
+
+  final currentPasswordController = TextEditingController();
+  final newPasswordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
+
+  final updated = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      String? errorMessage;
+      bool isLoading = false;
+
+      Future<void> submit() async {
+        final current = currentPasswordController.text.trim();
+        final next = newPasswordController.text.trim();
+        final confirm = confirmPasswordController.text.trim();
+
+        if (current.isEmpty || next.isEmpty || confirm.isEmpty) {
+          errorMessage = 'Merci de remplir tous les champs.';
+          (dialogContext as Element).markNeedsBuild();
+          return;
+        }
+
+        if (next.length < 8) {
+          errorMessage = 'Le nouveau mot de passe doit contenir au moins 8 caractères.';
+          (dialogContext as Element).markNeedsBuild();
+          return;
+        }
+
+        if (next != confirm) {
+          errorMessage = 'La confirmation ne correspond pas au nouveau mot de passe.';
+          (dialogContext as Element).markNeedsBuild();
+          return;
+        }
+
+        isLoading = true;
+        errorMessage = null;
+        (dialogContext as Element).markNeedsBuild();
+
+        try {
+          await client.auth.signInWithPassword(email: email, password: current);
+        } on AuthException {
+          isLoading = false;
+          errorMessage = 'Mot de passe actuel incorrect.';
+          (dialogContext as Element).markNeedsBuild();
+          return;
+        } catch (_) {
+          isLoading = false;
+          errorMessage = 'Erreur réseau. Veuillez réessayer.';
+          (dialogContext as Element).markNeedsBuild();
+          return;
+        }
+
+        try {
+          await client.auth.updateUser(UserAttributes(password: next));
+          if (Navigator.of(dialogContext).canPop()) {
+            Navigator.of(dialogContext).pop(true);
+          }
+        } on AuthException catch (e) {
+          isLoading = false;
+          errorMessage = e.message ?? 'Impossible de mettre à jour le mot de passe.';
+          (dialogContext as Element).markNeedsBuild();
+        } catch (_) {
+          isLoading = false;
+          errorMessage = 'Erreur inattendue. Veuillez réessayer.';
+          (dialogContext as Element).markNeedsBuild();
+        }
+      }
+
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Changer le mot de passe'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: currentPasswordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Mot de passe actuel',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: newPasswordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Nouveau mot de passe',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: confirmPasswordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Confirmer le nouveau mot de passe',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (errorMessage != null) ...[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        errorMessage!,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isLoading
+                    ? null
+                    : () {
+                        Navigator.of(dialogContext).pop(false);
+                      },
+                child: const Text('Annuler'),
+              ),
+              TextButton(
+                onPressed: isLoading ? null : submit,
+                child: isLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Mettre à jour'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+
+  if (updated == true) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Mot de passe mis à jour avec succès.'),
       ),
     );
   }
