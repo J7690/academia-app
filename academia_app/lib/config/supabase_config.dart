@@ -9,4 +9,7 @@ class SupabaseConfig {
 
   // Clé SERVICE ROLE (secrète, réservée au backend et à certaines opérations admin)
   static const String serviceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoZXZkZmN3bGNxemRveWJmdmdzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzA1NjU2MCwiZXhwIjoyMDc4NjMyNTYwfQ.U0xz7oHnUISnxzAG8ehm_gRzoOlQPucj61i2f-1FjgM';
+
+  static const String frontendBaseUrl = 'https://amazing-boba-9a75a7.netlify.app';
+  static const String authCallbackUrl = '${frontendBaseUrl}/auth/callback';
 }

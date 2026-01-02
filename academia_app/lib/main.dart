@@ -68,6 +68,7 @@ import 'providers/admin_challenges_provider.dart';
 import 'providers/admin_prep_concours_provider.dart';
 import 'providers/prep_concours_provider.dart';
 import 'features/auth/auth_wrapper.dart';
+import 'features/auth/auth_callback_screen.dart';
 
 const String kAppVersion = '1.0.1';
 
@@ -199,6 +200,9 @@ class AcademiaApp extends StatelessWidget {
           useMaterial3: true,
         ),
         home: const AuthWrapper(),
+        routes: {
+          '/auth/callback': (_) => const AuthCallbackScreen(),
+        },
       ),
     );
   }

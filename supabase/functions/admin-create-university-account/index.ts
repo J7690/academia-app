@@ -124,21 +124,33 @@ serve(async (req) => {
 
     const slug = slugifyName(universityName);
 
+    // On utilise un upsert sur le slug pour rendre l'opération idempotente.
+    // Si l'université existe déjà avec le même slug, on met simplement à jour
+    // quelques champs de base et on réutilise cette entrée.
     const { data: uniRow, error: uniError } = await supabaseService
-      .from('app.universities')
-      .insert({
-        name: universityName,
-        slug,
-        contact_email: email,
-        is_active: true,
-      })
+      .schema('app')
+      .from('universities')
+      .upsert(
+        {
+          name: universityName,
+          slug,
+          contact_email: email,
+          is_active: true,
+        },
+        { onConflict: 'slug' },
+      )
       .select()
       .single();
 
     if (uniError || !uniRow) {
-      console.error('Error inserting university', uniError?.message ?? uniError);
+      const raw = uniError as any;
+      const errMsg =
+        (raw && typeof raw.message === 'string' && raw.message) ||
+        (typeof raw === 'string' ? raw : JSON.stringify(raw ?? {}));
+
+      console.error('Error upserting university', errMsg);
       return new Response(
-        JSON.stringify({ error: 'university_insert_failed' }),
+        JSON.stringify({ error: `university_insert_failed: ${errMsg}` }),
         { status: 500, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
       );
     }
@@ -179,7 +191,11 @@ serve(async (req) => {
     // Envoyer un email de réinitialisation de mot de passe via Supabase
     // afin que le partenaire définisse lui-même son mot de passe.
     try {
-      const redirectTo = Deno.env.get('AUTH_PASSWORD_RESET_REDIRECT_URL') ?? undefined;
+      const redirectTo =
+        Deno.env.get('AUTH_REDIRECT_URL') ??
+        Deno.env.get('AUTH_PASSWORD_RESET_REDIRECT_URL') ??
+        undefined;
+
       const { error: resetError } = await supabaseService.auth.resetPasswordForEmail(
         email,
         redirectTo ? { redirectTo } : undefined,
