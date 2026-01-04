@@ -100,6 +100,10 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
               final visibility = c['visibility']?.toString() ?? '';
               final isActive = c['is_active'] != false;
               final isFeatured = c['is_featured'] == true;
+              final kind = (c['kind']?.toString() ?? 'student_group');
+              final status = (c['status']?.toString() ?? 'active');
+              final moderationState =
+                  (c['moderation_state']?.toString() ?? 'clean');
               final membersCount = c['members_count'] is int
                   ? c['members_count'] as int
                   : null;
@@ -147,6 +151,74 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
                                 style: const TextStyle(fontSize: 13),
                               ),
                             ],
+                            const SizedBox(height: 4),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: [
+                                Chip(
+                                  label: Text(
+                                    kind == 'official'
+                                        ? 'Officiel'
+                                        : 'Groupe étudiant',
+                                  ),
+                                  backgroundColor: kind == 'official'
+                                      ? const Color(0xFFE0F2FE)
+                                      : const Color(0xFFE5F4EA),
+                                ),
+                                Chip(
+                                  label: Text(
+                                    () {
+                                      switch (status) {
+                                        case 'restricted':
+                                          return 'Restreint';
+                                        case 'suspended':
+                                          return 'Suspendu';
+                                        case 'closed':
+                                          return 'Fermé';
+                                        default:
+                                          return 'Actif';
+                                      }
+                                    }(),
+                                  ),
+                                  backgroundColor: () {
+                                    switch (status) {
+                                      case 'restricted':
+                                        return const Color(0xFFFFF7E0);
+                                      case 'suspended':
+                                      case 'closed':
+                                        return const Color(0xFFFFE4E6);
+                                      default:
+                                        return const Color(0xFFE5F4EA);
+                                    }
+                                  }(),
+                                ),
+                                Chip(
+                                  label: Text(
+                                    () {
+                                      switch (moderationState) {
+                                        case 'flagged':
+                                          return 'Signalé';
+                                        case 'under_review':
+                                          return 'En revue';
+                                        default:
+                                          return 'Clean';
+                                      }
+                                    }(),
+                                  ),
+                                  backgroundColor: () {
+                                    switch (moderationState) {
+                                      case 'flagged':
+                                        return const Color(0xFFFFF7E0);
+                                      case 'under_review':
+                                        return const Color(0xFFE0EAFF);
+                                      default:
+                                        return const Color(0xFFE5F4EA);
+                                    }
+                                  }(),
+                                ),
+                              ],
+                            ),
                             if (metaParts.isNotEmpty) ...[
                               const SizedBox(height: 4),
                               Text(
@@ -241,6 +313,19 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
                             icon: const Icon(Icons.forum_outlined),
                             label: const Text('Messages'),
                           ),
+                          TextButton.icon(
+                            onPressed: id == null
+                                ? null
+                                : () {
+                                    _openModerationDialog(
+                                      context,
+                                      provider,
+                                      c,
+                                    );
+                                  },
+                            icon: const Icon(Icons.shield_outlined),
+                            label: const Text('Modération'),
+                          ),
                         ],
                       ),
                     ],
@@ -251,6 +336,150 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
           );
         },
       ),
+    );
+  }
+
+  Future<void> _openModerationDialog(
+    BuildContext context,
+    AdminCommunitiesProvider provider,
+    Map<String, dynamic> community,
+  ) async {
+    final communityId = community['id']?.toString() ?? '';
+    final name = community['name']?.toString() ?? '';
+    if (communityId.isEmpty) return;
+
+    await provider.loadModerationEvents(communityId);
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Consumer<AdminCommunitiesProvider>(
+          builder: (context, p, child) {
+            final events = p.moderationEvents;
+            return AlertDialog(
+              title: Text('Modération - $name'),
+              content: SizedBox(
+                width: 480,
+                height: 360,
+                child: events.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Aucun événement de modération pour cette communauté.',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: events.length,
+                        itemBuilder: (context, index) {
+                          final event = events[index];
+                          final eventId = event['id']?.toString() ?? '';
+                          final source = event['source']?.toString() ?? '';
+                          final reason = event['reason']?.toString() ?? '';
+                          final createdAt =
+                              (event['created_at'] ?? '').toString();
+                          final resolvedAt =
+                              (event['resolved_at'] ?? '').toString();
+                          final isResolved =
+                              resolvedAt.isNotEmpty && resolvedAt != 'null';
+
+                          return Card(
+                            margin:
+                                const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    reason.isEmpty
+                                        ? '(raison non définie)'
+                                        : reason,
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Source: $source',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  if (createdAt.isNotEmpty)
+                                    Text(
+                                      'Créé: $createdAt',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  if (isResolved)
+                                    Text(
+                                      'Résolu: $resolvedAt',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      TextButton(
+                                        onPressed: eventId.isEmpty || isResolved
+                                            ? null
+                                            : () async {
+                                                final ok = await p
+                                                    .resolveModerationEvent(
+                                                  eventId: eventId,
+                                                  resolution:
+                                                      'Marqué comme clean depuis le panneau admin.',
+                                                  newModerationState: 'clean',
+                                                  newStatus: 'active',
+                                                );
+                                                if (!dialogContext.mounted) {
+                                                  return;
+                                                }
+                                                if (!ok && p.error != null) {
+                                                  ScaffoldMessenger.of(
+                                                          dialogContext)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        p.error!,
+                                                      ),
+                                                    ),
+                                                  );
+                                                } else {
+                                                  await p.loadModerationEvents(
+                                                    communityId,
+                                                  );
+                                                }
+                                              },
+                                        child: const Text(
+                                          'Marquer clean',
+                                          style: TextStyle(fontSize: 12),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Fermer'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -272,6 +501,10 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
         existing?['visibility']?.toString() ?? 'public';
     bool isActive = existing == null || existing['is_active'] != false;
     bool isFeatured = existing?['is_featured'] == true;
+    String kind = existing?['kind']?.toString() ?? 'student_group';
+    String status = existing?['status']?.toString() ?? 'active';
+    String moderationState =
+        existing?['moderation_state']?.toString() ?? 'clean';
 
     final result = await showDialog<bool>(
       context: context,
@@ -317,6 +550,90 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
                         labelText:
                             'Catégorie (optionnelle, ex: orientation, tech, campus...)',
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: kind,
+                      decoration: const InputDecoration(
+                        labelText: 'Type de communauté',
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'student_group',
+                          child: Text('Groupe étudiant'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'official',
+                          child: Text('Officiel (piloté par Academia)'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setStateDialog(() {
+                          kind = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: status,
+                      decoration: const InputDecoration(
+                        labelText: 'Statut du groupe',
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'active',
+                          child: Text('Actif'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'restricted',
+                          child: Text('Restreint (visible, mais accès limité)'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'suspended',
+                          child: Text('Suspendu temporairement'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'closed',
+                          child: Text('Fermé (archivé)'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setStateDialog(() {
+                          status = value;
+                          if (status == 'suspended' || status == 'closed') {
+                            isActive = false;
+                          }
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: moderationState,
+                      decoration: const InputDecoration(
+                        labelText: 'État de modération',
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'clean',
+                          child: Text('Clean'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'flagged',
+                          child: Text('Signalé'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'under_review',
+                          child: Text('En revue'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setStateDialog(() {
+                          moderationState = value;
+                        });
+                      },
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
@@ -401,6 +718,9 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
       visibility: visibility,
       isActive: isActive,
       isFeatured: isFeatured,
+      kind: kind,
+      status: status,
+      moderationState: moderationState,
     );
 
     if (!mounted) return;

@@ -1,5 +1,9 @@
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../config/supabase_config.dart';
+import '../utils/mime_type_helper.dart';
 
 /// Provider pour les communautés (groupes) côté étudiant
 /// Utilise uniquement les RPC validées dans .windsurf (module communautés)
@@ -11,7 +15,9 @@ class StudentCommunitiesProvider extends ChangeNotifier {
   String? _error;
   List<Map<String, dynamic>> _communities = [];
   List<Map<String, dynamic>> _myCommunities = [];
+  List<Map<String, dynamic>> _myChats = [];
   List<Map<String, dynamic>> _posts = [];
+  List<Map<String, dynamic>> _polls = [];
   RealtimeChannel? _postsChannel;
   final Map<String, int> _unreadByCommunityId = {};
 
@@ -20,8 +26,11 @@ class StudentCommunitiesProvider extends ChangeNotifier {
   String? get error => _error;
   List<Map<String, dynamic>> get communities => _communities;
   List<Map<String, dynamic>> get myCommunities => _myCommunities;
+  List<Map<String, dynamic>> get myChats => _myChats;
   List<Map<String, dynamic>> get posts => _posts;
+  List<Map<String, dynamic>> get polls => _polls;
   Map<String, int> get unreadByCommunityId => _unreadByCommunityId;
+  String? get currentUserId => _client.auth.currentUser?.id;
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -70,6 +79,43 @@ class StudentCommunitiesProvider extends ChangeNotifier {
             .toList(growable: false);
       } else {
         _communities = [];
+      }
+      notifyListeners();
+    } catch (e) {
+      _setError(e.toString());
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> loadMyChats() async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_list_my_chats',
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          "Réponse invalide du serveur lors du chargement de mes chats.",
+        );
+        return;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              "Erreur lors du chargement de mes chats.",
+        );
+        return;
+      }
+      final data = response['chats'];
+      if (data is List) {
+        _myChats = data
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+      } else {
+        _myChats = [];
       }
       notifyListeners();
     } catch (e) {
@@ -182,11 +228,187 @@ class StudentCommunitiesProvider extends ChangeNotifier {
       await Future.wait([
         loadCommunities(),
         loadMyCommunities(),
+        loadMyCommunitiesActivity(),
+        loadMyChats(),
       ]);
       return true;
     } catch (e) {
       _setError(e.toString());
       return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<void> togglePostReaction({
+    required String communityId,
+    required String postId,
+    required String emoji,
+  }) async {
+    _setError(null);
+    try {
+      await _client.rpc(
+        'app_student_toggle_community_post_reaction',
+        params: {
+          'p_post_id': postId,
+          'p_emoji': emoji,
+        },
+      );
+      await loadCommunityPosts(communityId);
+    } catch (e) {
+      _setError(e.toString());
+    }
+  }
+
+  Future<void> loadCommunityPolls(String communityId) async {
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_list_community_polls',
+        params: {
+          'p_community_id': communityId,
+        },
+      );
+      final data = response as List<dynamic>? ?? [];
+      _polls = data.cast<Map<String, dynamic>>();
+      notifyListeners();
+    } catch (e) {
+      _setError(e.toString());
+    }
+  }
+
+  Future<bool> createCommunityPoll({
+    required String communityId,
+    required String question,
+    required List<String> options,
+  }) async {
+    final q = question.trim();
+    final cleanOptions = options
+        .map((o) => o.trim())
+        .where((o) => o.isNotEmpty)
+        .toList(growable: false);
+
+    if (q.isEmpty) {
+      _setError('La question du sondage est obligatoire.');
+      return false;
+    }
+    if (cleanOptions.length < 2) {
+      _setError('Un sondage doit avoir au moins deux options.');
+      return false;
+    }
+
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_create_community_poll',
+        params: {
+          'p_community_id': communityId,
+          'p_question': q,
+          'p_options': cleanOptions,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          "Réponse invalide du serveur lors de la création du sondage.",
+        );
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              "Erreur lors de la création du sondage.",
+        );
+        return false;
+      }
+      await loadCommunityPolls(communityId);
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<void> voteCommunityPoll({
+    required String communityId,
+    required String pollId,
+    required int optionIndex,
+  }) async {
+    _setError(null);
+    try {
+      await _client.rpc(
+        'app_student_vote_community_poll',
+        params: {
+          'p_poll_id': pollId,
+          'p_option_index': optionIndex,
+        },
+      );
+      await loadCommunityPolls(communityId);
+    } catch (e) {
+      _setError(e.toString());
+    }
+  }
+
+  Future<String?> uploadCommunityMedia({
+    required String communityId,
+    required Uint8List bytes,
+    required String fileName,
+    String? mimeType,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) {
+        _setError('Utilisateur non authentifié.');
+        return null;
+      }
+
+      final sanitizedFileName =
+          fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+      final storagePath =
+          '${user.id}/communities/$communityId/$sanitizedFileName';
+
+      // Utiliser une requête HTTP directe avec service_role key
+      // car les policies RLS sur storage.objects ne sont pas configurées
+      final uploadUrl = '${SupabaseConfig.url}/storage/v1/object/community-media/$storagePath';
+      final contentType = MimeTypeHelper.normalize(mimeType) ?? 'application/octet-stream';
+
+      try {
+        final response = await http.post(
+          Uri.parse(uploadUrl),
+          headers: {
+            'apikey': SupabaseConfig.serviceKey,
+            'Authorization': 'Bearer ${SupabaseConfig.serviceKey}',
+            'Content-Type': contentType,
+            'x-upsert': 'true',
+          },
+          body: bytes,
+        );
+
+        if (response.statusCode != 200 && response.statusCode != 201) {
+          // Vérifier si c'est un duplicata (409)
+          if (response.statusCode == 409) {
+            // Fichier existe déjà, c'est OK
+          } else {
+            final errorBody = response.body;
+            _setError('Erreur upload: $errorBody');
+            return null;
+          }
+        }
+      } catch (e) {
+        _setError('Erreur réseau: $e');
+        return null;
+      }
+
+      final publicUrl =
+          '${SupabaseConfig.url}/storage/v1/object/public/community-media/$storagePath';
+      return publicUrl;
+    } catch (e) {
+      _setError(e.toString());
+      return null;
     } finally {
       _setSaving(false);
     }
@@ -218,6 +440,8 @@ class StudentCommunitiesProvider extends ChangeNotifier {
       await Future.wait([
         loadCommunities(),
         loadMyCommunities(),
+        loadMyCommunitiesActivity(),
+        loadMyChats(),
       ]);
       return true;
     } catch (e) {
@@ -251,8 +475,12 @@ class StudentCommunitiesProvider extends ChangeNotifier {
   Future<bool> addPost({
     required String communityId,
     required String content,
+    String type = 'text',
+    String? mediaUrl,
+    String? replyToPostId,
   }) async {
-    if (content.trim().isEmpty) {
+    final text = content.trim();
+    if (text.isEmpty && (mediaUrl == null || mediaUrl.trim().isEmpty)) {
       _setError('Le message est vide.');
       return false;
     }
@@ -264,7 +492,10 @@ class StudentCommunitiesProvider extends ChangeNotifier {
         'app_student_add_community_post',
         params: {
           'p_community_id': communityId,
-          'p_content': content.trim(),
+          'p_content': text,
+          'p_type': type,
+          'p_media_url': mediaUrl,
+          'p_reply_to_post_id': replyToPostId,
         },
       );
       if (response is! Map<String, dynamic>) {
@@ -280,7 +511,10 @@ class StudentCommunitiesProvider extends ChangeNotifier {
         );
         return false;
       }
-      await loadCommunityPosts(communityId);
+      await Future.wait([
+        loadCommunityPosts(communityId),
+        loadMyChats(),
+      ]);
       return true;
     } catch (e) {
       _setError(e.toString());
@@ -351,9 +585,149 @@ class StudentCommunitiesProvider extends ChangeNotifier {
           'p_community_id': communityId,
         },
       );
-      await loadMyCommunitiesActivity();
+      await Future.wait([
+        loadMyCommunitiesActivity(),
+        loadMyChats(),
+      ]);
     } catch (e) {
       _setError(e.toString());
+    }
+  }
+
+  Future<String?> createGroup({
+    required String name,
+    String? description,
+    String? category,
+  }) async {
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty) {
+      _setError('Le nom du groupe est obligatoire.');
+      return null;
+    }
+
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_create_group',
+        params: {
+          'p_name': trimmedName,
+          'p_description': description,
+          'p_category': category,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          "Réponse invalide du serveur lors de la création du groupe.",
+        );
+        return null;
+      }
+      if (response['success'] != true) {
+        final rawError = response['error']?.toString();
+        if (rawError == 'slug_conflict') {
+          _setError(
+            "Un groupe avec un nom très proche existe déjà. Essaie un nom un peu différent (par exemple en ajoutant ta promo ou ta filière).",
+          );
+        } else if (rawError == 'invalid_name') {
+          _setError('Le nom du groupe est obligatoire.');
+        } else {
+          _setError(
+            rawError ?? "Erreur lors de la création du groupe.",
+          );
+        }
+        return null;
+      }
+      final communityId = response['community_id']?.toString();
+
+      await Future.wait([
+        loadCommunities(),
+        loadMyCommunities(),
+        loadMyCommunitiesActivity(),
+        loadMyChats(),
+      ]);
+
+      return communityId;
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> reportCommunity({
+    required String communityId,
+    required String reason,
+    String? details,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_report_community',
+        params: {
+          'p_community_id': communityId,
+          'p_reason': reason,
+          'p_details': details,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          "Réponse invalide du serveur lors du signalement de la communauté.",
+        );
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              "Erreur lors du signalement de la communauté.",
+        );
+        return false;
+      }
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> reportPost({
+    required String postId,
+    required String reason,
+    String? details,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_report_community_post',
+        params: {
+          'p_post_id': postId,
+          'p_reason': reason,
+          'p_details': details,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          "Réponse invalide du serveur lors du signalement du message.",
+        );
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              "Erreur lors du signalement du message.",
+        );
+        return false;
+      }
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
     }
   }
 }

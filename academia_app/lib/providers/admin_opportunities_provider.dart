@@ -285,4 +285,116 @@ class AdminOpportunitiesProvider extends ChangeNotifier {
       return null;
     }
   }
+
+  /// Met à jour le statut d'une candidature (pending, submitted, accepted, rejected)
+  Future<bool> updateApplicationStatus({
+    required String applicationId,
+    required String status,
+    String? adminNotes,
+    String? opportunityId,
+  }) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(
+        'app_admin_update_application_status',
+        params: {
+          'p_application_id': applicationId,
+          'p_status': status,
+          'p_admin_notes': adminNotes,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors de la mise à jour du statut.',
+        );
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ??
+            'Erreur lors de la mise à jour du statut de la candidature.');
+        return false;
+      }
+      // Recharger les candidatures si on a l'ID de l'opportunité
+      if (opportunityId != null) {
+        await loadApplicationsForOpportunity(opportunityId);
+      }
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Met à jour une opportunité avec le nouveau champ price
+  Future<bool> upsertOpportunityWithPrice({
+    String? opportunityId,
+    required String title,
+    required String shortDescription,
+    String? description,
+    required String type,
+    String? category,
+    required String organizationName,
+    String? organizationLogoUrl,
+    required String country,
+    required String city,
+    bool? isRemotePossible,
+    String? contractType,
+    int? durationMonths,
+    DateTime? startDate,
+    DateTime? applicationDeadline,
+    String? status,
+    bool? isFeatured,
+    bool? isActive,
+    double? price,
+  }) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(
+        'app_admin_upsert_opportunity',
+        params: {
+          'p_opportunity_id': opportunityId,
+          'p_title': title,
+          'p_short_description': shortDescription,
+          'p_description': description,
+          'p_type': type,
+          'p_category': category,
+          'p_organization_name': organizationName,
+          'p_organization_logo_url': organizationLogoUrl,
+          'p_country': country,
+          'p_city': city,
+          'p_is_remote_possible': isRemotePossible,
+          'p_contract_type': contractType,
+          'p_duration_months': durationMonths,
+          'p_start_date': startDate?.toIso8601String(),
+          'p_application_deadline': applicationDeadline?.toIso8601String(),
+          'p_status': status,
+          'p_is_featured': isFeatured,
+          'p_is_active': isActive,
+          'p_price': price,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors de la sauvegarde de l\'opportunité.',
+        );
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ??
+            "Erreur lors de la sauvegarde de l'opportunité.");
+        return false;
+      }
+      await loadOpportunities();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
 }

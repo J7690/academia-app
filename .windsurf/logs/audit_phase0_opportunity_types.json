@@ -1,0 +1,442 @@
+{
+  "OPPORTUNITY_TYPES_STRUCTURE": {
+    "label": "OPPORTUNITY_TYPES_STRUCTURE",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 7,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "text",
+        "column_name": "code",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "label",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "sort_order",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "OPPORTUNITY_TYPES_DATA": {
+    "label": "OPPORTUNITY_TYPES_DATA",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 3,
+    "rows": [
+      {
+        "id": "761e4086-e6d2-45f9-8861-2cf752a108e6",
+        "code": "job",
+        "label": "Emploi / Stage",
+        "is_active": true,
+        "created_at": "2025-11-29T16:44:28.858213+00:00",
+        "sort_order": 1
+      },
+      {
+        "id": "cee94d8b-da60-49eb-a591-552855d5c3a5",
+        "code": "service",
+        "label": "Service",
+        "is_active": true,
+        "created_at": "2026-01-04T17:39:34.083032+00:00",
+        "sort_order": 2
+      },
+      {
+        "id": "3818a763-c4ff-4cf4-8fed-daa36ec3c35e",
+        "code": "product",
+        "label": "Bien à vendre",
+        "is_active": true,
+        "created_at": "2026-01-04T17:39:35.392325+00:00",
+        "sort_order": 3
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "OPPORTUNITIES_STRUCTURE": {
+    "label": "OPPORTUNITIES_STRUCTURE",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 21,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "short_description",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "type",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "category",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "organization_name",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "organization_logo_url",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "country",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "city",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_remote_possible",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "text",
+        "column_name": "contract_type",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "duration_months",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "date",
+        "column_name": "start_date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "date",
+        "column_name": "application_deadline",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'draft'::text"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_featured",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "created_by_user_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "OPPORTUNITIES_TYPE_VALUES": {
+    "label": "OPPORTUNITIES_TYPE_VALUES",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 1,
+    "rows": [
+      {
+        "type": "job",
+        "count": 1
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "OPPORTUNITIES_DATA": {
+    "label": "OPPORTUNITIES_DATA",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 1,
+    "rows": [
+      {
+        "id": "d4c9af3a-5f43-421e-811f-8bee360d8f09",
+        "city": "bobo",
+        "type": "job",
+        "title": "stage a nexiom group",
+        "status": "published",
+        "country": "Burkina",
+        "is_active": true,
+        "organization_name": "nexiom group"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "OPPORTUNITY_APPLICATIONS_STRUCTURE": {
+    "label": "OPPORTUNITY_APPLICATIONS_STRUCTURE",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 9,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "opportunity_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "student_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "message",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "cv_url",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "extra_data",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'submitted'::text"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "OPPORTUNITIES_COUNTS": {
+    "label": "OPPORTUNITIES_COUNTS",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 1,
+    "rows": [
+      {
+        "types_count": 3,
+        "applications_count": 2,
+        "opportunities_count": 1
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "OPPORTUNITY_RPCS": {
+    "label": "OPPORTUNITY_RPCS",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 12,
+    "rows": [
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_admin_list_opportunities"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_admin_list_opportunity_applications"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_admin_list_opportunity_types"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_admin_update_opportunity_status"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_admin_upsert_opportunity"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_admin_upsert_opportunity_type"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_list_opportunity_types"
+      },
+      {
+        "data_type": "trigger",
+        "routine_name": "app_notify_opportunity_change"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_student_apply_for_opportunity"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_student_get_opportunity_detail"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_student_list_my_opportunity_applications"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_student_list_opportunities"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "OPPORTUNITY_POLICIES": {
+    "label": "OPPORTUNITY_POLICIES",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 4,
+    "rows": [
+      {
+        "cmd": "SELECT",
+        "qual": "((is_active = true) AND (status = 'published'::text) AND ((application_deadline IS NULL) OR (application_deadline >= CURRENT_DATE)))",
+        "tablename": "opportunities",
+        "policyname": "public_select_published_opportunities",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "tablename": "opportunity_applications",
+        "policyname": "student_insert_own_opportunity_applications",
+        "with_check": "(student_id = auth.uid())"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(student_id = auth.uid())",
+        "tablename": "opportunity_applications",
+        "policyname": "student_select_own_opportunity_applications",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(is_active = true)",
+        "tablename": "opportunity_types",
+        "policyname": "public_select_active_opportunity_types",
+        "with_check": null
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  }
+}

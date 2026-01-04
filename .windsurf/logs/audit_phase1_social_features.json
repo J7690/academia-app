@@ -1,0 +1,371 @@
+{
+  "OPPORTUNITIES_NEW_COLUMNS": {
+    "label": "OPPORTUNITIES_NEW_COLUMNS",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 3,
+    "rows": [
+      {
+        "data_type": "integer",
+        "column_name": "comments_count",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "price",
+        "is_nullable": "YES",
+        "column_default": "NULL::numeric"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "reactions_count",
+        "is_nullable": "NO",
+        "column_default": "0"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "APPLICATIONS_NEW_COLUMNS": {
+    "label": "APPLICATIONS_NEW_COLUMNS",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 3,
+    "rows": [
+      {
+        "data_type": "text",
+        "column_name": "admin_notes",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "reviewed_at",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "reviewed_by",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "REACTIONS_TABLE_EXISTS": {
+    "label": "REACTIONS_TABLE_EXISTS",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 1,
+    "rows": [
+      {
+        "table_name": "opportunity_reactions",
+        "table_type": "BASE TABLE"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "REACTIONS_TABLE_STRUCTURE": {
+    "label": "REACTIONS_TABLE_STRUCTURE",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 5,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "opportunity_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "reaction_type",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "COMMENTS_TABLE_EXISTS": {
+    "label": "COMMENTS_TABLE_EXISTS",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 1,
+    "rows": [
+      {
+        "table_name": "opportunity_comments",
+        "table_type": "BASE TABLE"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "COMMENTS_TABLE_STRUCTURE": {
+    "label": "COMMENTS_TABLE_STRUCTURE",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 5,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "opportunity_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "content",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "NEW_RPCS": {
+    "label": "NEW_RPCS",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 7,
+    "rows": [
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_admin_update_application_status"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_opportunity_add_comment"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_opportunity_delete_comment"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_opportunity_get_my_reaction"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_opportunity_get_reactions"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_opportunity_list_comments"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_opportunity_toggle_reaction"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "ALL_OPPORTUNITY_RPCS": {
+    "label": "ALL_OPPORTUNITY_RPCS",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 20,
+    "rows": [
+      {
+        "routine_name": "app_admin_list_opportunities"
+      },
+      {
+        "routine_name": "app_admin_list_opportunity_applications"
+      },
+      {
+        "routine_name": "app_admin_list_opportunity_types"
+      },
+      {
+        "routine_name": "app_admin_update_opportunity_status"
+      },
+      {
+        "routine_name": "app_admin_upsert_opportunity"
+      },
+      {
+        "routine_name": "app_admin_upsert_opportunity"
+      },
+      {
+        "routine_name": "app_admin_upsert_opportunity_type"
+      },
+      {
+        "routine_name": "app_list_opportunity_types"
+      },
+      {
+        "routine_name": "app_notify_opportunity_change"
+      },
+      {
+        "routine_name": "app_opportunity_add_comment"
+      },
+      {
+        "routine_name": "app_opportunity_delete_comment"
+      },
+      {
+        "routine_name": "app_opportunity_get_my_reaction"
+      },
+      {
+        "routine_name": "app_opportunity_get_reactions"
+      },
+      {
+        "routine_name": "app_opportunity_list_comments"
+      },
+      {
+        "routine_name": "app_opportunity_toggle_reaction"
+      },
+      {
+        "routine_name": "app_student_apply_for_opportunity"
+      },
+      {
+        "routine_name": "app_student_get_opportunity_detail"
+      },
+      {
+        "routine_name": "app_student_list_my_opportunity_applications"
+      },
+      {
+        "routine_name": "app_student_list_opportunities"
+      },
+      {
+        "routine_name": "app_student_list_opportunities"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "NEW_TABLES_POLICIES": {
+    "label": "NEW_TABLES_POLICIES",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 5,
+    "rows": [
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "tablename": "opportunity_comments",
+        "policyname": "authenticated_insert_comments",
+        "with_check": "((auth.uid() IS NOT NULL) AND (user_id = auth.uid()))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "true",
+        "tablename": "opportunity_comments",
+        "policyname": "public_select_opportunity_comments",
+        "with_check": null
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "(user_id = auth.uid())",
+        "tablename": "opportunity_comments",
+        "policyname": "user_delete_own_comments",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "true",
+        "tablename": "opportunity_reactions",
+        "policyname": "public_select_opportunity_reactions",
+        "with_check": null
+      },
+      {
+        "cmd": "ALL",
+        "qual": "(user_id = auth.uid())",
+        "tablename": "opportunity_reactions",
+        "policyname": "user_manage_own_reactions",
+        "with_check": "(user_id = auth.uid())"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "NEW_TABLES_INDEXES": {
+    "label": "NEW_TABLES_INDEXES",
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 8,
+    "rows": [
+      {
+        "indexname": "idx_opportunity_comments_created",
+        "tablename": "opportunity_comments"
+      },
+      {
+        "indexname": "idx_opportunity_comments_opportunity",
+        "tablename": "opportunity_comments"
+      },
+      {
+        "indexname": "idx_opportunity_comments_user",
+        "tablename": "opportunity_comments"
+      },
+      {
+        "indexname": "opportunity_comments_pkey",
+        "tablename": "opportunity_comments"
+      },
+      {
+        "indexname": "idx_opportunity_reactions_opportunity",
+        "tablename": "opportunity_reactions"
+      },
+      {
+        "indexname": "idx_opportunity_reactions_user",
+        "tablename": "opportunity_reactions"
+      },
+      {
+        "indexname": "opportunity_reactions_opportunity_id_user_id_key",
+        "tablename": "opportunity_reactions"
+      },
+      {
+        "indexname": "opportunity_reactions_pkey",
+        "tablename": "opportunity_reactions"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  }
+}

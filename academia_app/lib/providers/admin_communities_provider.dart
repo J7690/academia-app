@@ -9,12 +9,15 @@ class AdminCommunitiesProvider extends ChangeNotifier {
   String? _error;
   List<Map<String, dynamic>> _communities = [];
   List<Map<String, dynamic>> _posts = [];
+  List<Map<String, dynamic>> _moderationEvents = [];
 
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
   String? get error => _error;
   List<Map<String, dynamic>> get communities => List.unmodifiable(_communities);
   List<Map<String, dynamic>> get posts => List.unmodifiable(_posts);
+  List<Map<String, dynamic>> get moderationEvents =>
+      List.unmodifiable(_moderationEvents);
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -64,6 +67,46 @@ class AdminCommunitiesProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> loadModerationEvents(String communityId) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(
+        'app_admin_list_community_moderation_events',
+        params: {
+          'p_community_id': communityId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur pour les événements de modération.',
+        );
+        return;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              "Erreur lors du chargement des événements de modération.",
+        );
+        return;
+      }
+      final data = response['events'];
+      if (data is List) {
+        _moderationEvents = data
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+      } else {
+        _moderationEvents = [];
+      }
+      notifyListeners();
+    } catch (e) {
+      _setError(e.toString());
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   Future<bool> upsertCommunity({
     String? communityId,
     String? slug,
@@ -73,6 +116,9 @@ class AdminCommunitiesProvider extends ChangeNotifier {
     String? visibility,
     bool? isActive,
     bool? isFeatured,
+    String? kind,
+    String? status,
+    String? moderationState,
   }) async {
     _setSaving(true);
     _setError(null);
@@ -88,6 +134,9 @@ class AdminCommunitiesProvider extends ChangeNotifier {
           'p_visibility': visibility,
           'p_is_active': isActive,
           'p_is_featured': isFeatured,
+          'p_kind': kind,
+          'p_status': status,
+          'p_moderation_state': moderationState,
         },
       );
       if (response is! Map<String, dynamic>) {
@@ -246,6 +295,46 @@ class AdminCommunitiesProvider extends ChangeNotifier {
         _setError(
           response['error']?.toString() ??
               "Erreur lors du bannissement de l\'utilisateur de la communauté.",
+        );
+        return false;
+      }
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> resolveModerationEvent({
+    required String eventId,
+    required String resolution,
+    String? newModerationState,
+    String? newStatus,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(
+        'app_admin_resolve_moderation_event',
+        params: {
+          'p_event_id': eventId,
+          'p_resolution': resolution,
+          'p_new_moderation_state': newModerationState,
+          'p_new_status': newStatus,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors de la résolution de l\'événement.',
+        );
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              "Erreur lors de la résolution de l\'événement de modération.",
         );
         return false;
       }

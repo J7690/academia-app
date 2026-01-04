@@ -63,7 +63,7 @@
     "http": 200,
     "ok": true,
     "mode": "select",
-    "rows_count": 1108,
+    "rows_count": 1111,
     "sample_rows": [
       {
         "data_type": "uuid",

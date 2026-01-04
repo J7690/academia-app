@@ -5,20 +5,39 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Provider pour les opportunités (stages, emplois, autres) côté étudiant
 /// Utilise uniquement les RPC validées dans .windsurf (module opportunités)
+/// Supporte la pagination et les interactions sociales (réactions, commentaires)
 class StudentOpportunitiesProvider extends ChangeNotifier {
   final SupabaseClient _client = Supabase.instance.client;
 
   bool _isLoading = false;
+  bool _isLoadingMore = false;
   String? _error;
   List<Map<String, dynamic>> _opportunities = [];
   List<Map<String, dynamic>> _applications = [];
   List<Map<String, dynamic>> _types = [];
 
+  // Pagination
+  int _total = 0;
+  bool _hasMore = true;
+  int _currentOffset = 0;
+  static const int _pageSize = 20;
+
+  // Filtres actuels (pour refresh)
+  String? _currentType;
+  String? _currentSearch;
+
   bool get isLoading => _isLoading;
+  bool get isLoadingMore => _isLoadingMore;
   String? get error => _error;
   List<Map<String, dynamic>> get opportunities => _opportunities;
   List<Map<String, dynamic>> get applications => _applications;
   List<Map<String, dynamic>> get types => _types;
+  int get total => _total;
+  bool get hasMore => _hasMore;
+
+  // Badge notifications
+  int _newCount = 0;
+  int get newCount => _newCount;
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -30,24 +49,131 @@ class StudentOpportunitiesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> loadOpportunities({String? type, String? search}) async {
-    _setLoading(true);
+  /// Charge les opportunités avec pagination
+  /// Si refresh=true, recharge depuis le début
+  Future<void> loadOpportunities({
+    String? type,
+    String? search,
+    bool refresh = true,
+  }) async {
+    if (refresh) {
+      _currentOffset = 0;
+      _hasMore = true;
+      _currentType = type;
+      _currentSearch = search;
+      _setLoading(true);
+    } else {
+      if (!_hasMore || _isLoadingMore) return;
+      _isLoadingMore = true;
+      notifyListeners();
+    }
+
     _setError(null);
     try {
       final dynamic response = await _client.rpc(
         'app_student_list_opportunities',
         params: {
-          'p_type': type,
-          'p_search': search,
+          'p_type': type ?? _currentType,
+          'p_search': search ?? _currentSearch,
+          'p_limit': _pageSize,
+          'p_offset': _currentOffset,
         },
       );
-      final data = response as List<dynamic>? ?? [];
-      _opportunities = data.cast<Map<String, dynamic>>();
+
+      if (response is Map<String, dynamic> && response['success'] == true) {
+        final data = (response['opportunities'] as List<dynamic>? ?? [])
+            .cast<Map<String, dynamic>>();
+        _total = response['total'] as int? ?? 0;
+        _hasMore = response['has_more'] as bool? ?? false;
+
+        if (refresh) {
+          _opportunities = data;
+        } else {
+          _opportunities = [..._opportunities, ...data];
+        }
+        _currentOffset += data.length;
+      } else if (response is List<dynamic>) {
+        // Fallback pour ancienne version de la RPC
+        final data = response.cast<Map<String, dynamic>>();
+        if (refresh) {
+          _opportunities = data;
+        } else {
+          _opportunities = [..._opportunities, ...data];
+        }
+        _hasMore = false;
+      }
       notifyListeners();
     } catch (e) {
       _setError(e.toString());
     } finally {
       _setLoading(false);
+      _isLoadingMore = false;
+    }
+  }
+
+  /// Charge plus d'opportunités (pagination)
+  Future<void> loadMore() async {
+    await loadOpportunities(
+      type: _currentType,
+      search: _currentSearch,
+      refresh: false,
+    );
+  }
+
+  /// Rafraîchit le feed (pull-to-refresh)
+  Future<void> refreshFeed() async {
+    await loadOpportunities(
+      type: _currentType,
+      search: _currentSearch,
+      refresh: true,
+    );
+  }
+
+  /// Met à jour les compteurs d'une opportunité localement
+  /// (appelé après une réaction ou un commentaire)
+  void updateOpportunityCounters(String opportunityId, {
+    int? reactionsCount,
+    int? commentsCount,
+    String? myReaction,
+  }) {
+    final index = _opportunities.indexWhere((o) => o['id'] == opportunityId);
+    if (index != -1) {
+      final updated = Map<String, dynamic>.from(_opportunities[index]);
+      if (reactionsCount != null) {
+        updated['reactions_count'] = reactionsCount;
+      }
+      if (commentsCount != null) {
+        updated['comments_count'] = commentsCount;
+      }
+      if (myReaction != null) {
+        updated['my_reaction'] = myReaction;
+      }
+      _opportunities[index] = updated;
+      notifyListeners();
+    }
+  }
+
+  /// Charge le nombre de nouvelles opportunités (pour badge)
+  Future<void> loadNewCount() async {
+    try {
+      final response = await _client.rpc('app_opportunity_count_new');
+      if (response is Map<String, dynamic> && response['success'] == true) {
+        _newCount = response['count'] as int? ?? 0;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('[StudentOpportunitiesProvider] loadNewCount error: $e');
+    }
+  }
+
+  /// Marque les opportunités comme vues (reset le badge)
+  Future<void> markAsViewed() async {
+    try {
+      await _client.rpc('app_opportunity_mark_viewed');
+      _newCount = 0;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[StudentOpportunitiesProvider] markAsViewed error: $e');
     }
   }
 
@@ -103,10 +229,20 @@ class StudentOpportunitiesProvider extends ChangeNotifier {
         return false;
       }
       if (response['success'] != true) {
-        _setError(
-          response['error']?.toString() ??
-              "Erreur lors de la création de la candidature à l'opportunité.",
-        );
+        final errorCode = response['error']?.toString() ?? '';
+        String errorMessage;
+        if (errorCode == 'already_applied') {
+          errorMessage = 'Vous avez déjà postulé à cette opportunité.';
+        } else if (errorCode == 'opportunity_not_found') {
+          errorMessage = 'Cette opportunité n\'existe plus.';
+        } else if (errorCode == 'opportunity_closed') {
+          errorMessage = 'Cette opportunité n\'accepte plus de candidatures.';
+        } else {
+          errorMessage = errorCode.isNotEmpty 
+              ? errorCode 
+              : "Erreur lors de la création de la candidature.";
+        }
+        _setError(errorMessage);
         return false;
       }
       await loadMyApplications();
@@ -140,6 +276,7 @@ class StudentOpportunitiesProvider extends ChangeNotifier {
             bytes,
             fileOptions: FileOptions(
               contentType: _normalizeMimeType(mimeType),
+              upsert: true,
             ),
           );
 

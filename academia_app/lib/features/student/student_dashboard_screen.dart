@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/student_applications_provider.dart';
 import '../../providers/student_opportunities_provider.dart';
 import '../../providers/student_application_payments_provider.dart';
+import '../../providers/student_communities_provider.dart';
 import '../../services/notification_sound_service.dart';
 import '../../utils/responsive.dart';
 import 'student_home_mobile.dart';
@@ -442,6 +443,18 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       _markStudentHomeSeen();
     } else if (index == 3) {
       _markStudentCommunitiesSeen();
+      // Recharger l'état des communautés à chaque ouverture de l'onglet
+      // pour que les nouveaux groupes / chats soient bien visibles.
+      try {
+        final communitiesProvider =
+            context.read<StudentCommunitiesProvider>();
+        communitiesProvider.loadCommunities();
+        communitiesProvider.loadMyCommunities();
+        communitiesProvider.loadMyCommunitiesActivity();
+        communitiesProvider.loadMyChats();
+      } catch (_) {
+        // En cas d'erreur ponctuelle, on ne casse pas la navigation.
+      }
     } else if (index == 4) {
       _markStudentPartnersSeen();
     } else if (index == 5) {

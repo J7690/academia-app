@@ -57,6 +57,10 @@ dependencies:
   pdf: ^3.10.4
   printing: ^5.11.0
 
+  record: ^6.1.2
+
+  audioplayers: ^6.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

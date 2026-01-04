@@ -197,10 +197,10 @@ class _AdminOpportunitiesScreenState extends State<AdminOpportunitiesScreen> {
 
   Future<void> _showApplicationsDialog(Map<String, dynamic> opportunity) async {
     final provider = context.read<AdminOpportunitiesProvider>();
-    final id = opportunity['id']?.toString();
-    if (id == null) return;
+    final opportunityId = opportunity['id']?.toString();
+    if (opportunityId == null) return;
 
-    await provider.loadApplicationsForOpportunity(id);
+    await provider.loadApplicationsForOpportunity(opportunityId);
     if (!mounted) return;
 
     await showDialog<void>(
@@ -213,8 +213,8 @@ class _AdminOpportunitiesScreenState extends State<AdminOpportunitiesScreen> {
             return AlertDialog(
               title: Text('Candidatures - $title'),
               content: SizedBox(
-                width: 400,
-                height: 360,
+                width: 500,
+                height: 450,
                 child: applications.isEmpty
                     ? const Center(
                         child: Text('Aucune candidature pour cette opportunité.'),
@@ -223,85 +223,156 @@ class _AdminOpportunitiesScreenState extends State<AdminOpportunitiesScreen> {
                         itemCount: applications.length,
                         itemBuilder: (context, index) {
                           final app = applications[index];
+                          final applicationId = app['application_id']?.toString() ?? app['id']?.toString() ?? '';
                           final studentId = app['student_id']?.toString() ?? '';
-                          final status = app['status']?.toString() ?? '';
+                          final status = app['status']?.toString() ?? 'submitted';
                           final message = app['message']?.toString() ?? '';
                           final createdAt = app['created_at']?.toString() ?? '';
                           final cvUrl = app['cv_url']?.toString() ?? '';
+                          final adminNotes = app['admin_notes']?.toString() ?? '';
 
-                          return ListTile(
-                            leading: const Icon(Icons.person_outline),
-                            title: Text(
-                              studentId.isNotEmpty
-                                  ? 'Étudiant: $studentId'
-                                  : 'Étudiant inconnu',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (status.isNotEmpty)
-                                  Text('Statut: $status'),
-                                if (createdAt.isNotEmpty)
-                                  Text('Créée le: $createdAt'),
-                                if (message.isNotEmpty) ...[
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    message,
-                                    maxLines: 3,
-                                    overflow: TextOverflow.ellipsis,
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.person_outline, size: 20),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          studentId.isNotEmpty
+                                              ? 'Étudiant: ${studentId.substring(0, 8)}...'
+                                              : 'Étudiant inconnu',
+                                          style: const TextStyle(fontWeight: FontWeight.w600),
+                                        ),
+                                      ),
+                                      _ApplicationStatusBadge(status: status),
+                                    ],
                                   ),
-                                ],
-                              ],
-                            ),
-                            trailing: cvUrl.isNotEmpty
-                                ? IconButton(
-                                    tooltip: 'Voir le CV',
-                                    icon: const Icon(Icons.visibility),
-                                    onPressed: () async {
-                                      final signedUrl =
-                                          await provider.createCvSignedUrl(cvUrl);
-                                      if (!context.mounted) return;
-                                      if (signedUrl == null) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              provider.error ??
-                                                  'Impossible d\'ouvrir le CV.',
+                                  if (createdAt.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Soumise le: ${_formatDate(createdAt)}',
+                                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                    ),
+                                  ],
+                                  if (message.isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      message,
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ],
+                                  if (adminNotes.isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.amber.shade50,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.note, size: 14, color: Colors.amber),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              adminNotes,
+                                              style: const TextStyle(fontSize: 12),
                                             ),
                                           ),
-                                        );
-                                        return;
-                                      }
-                                      final uri = Uri.tryParse(signedUrl);
-                                      if (uri == null) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content:
-                                                Text('URL de CV invalide retournée.'),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: DropdownButtonFormField<String>(
+                                          value: status,
+                                          decoration: const InputDecoration(
+                                            labelText: 'Statut',
+                                            isDense: true,
+                                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                           ),
-                                        );
-                                        return;
-                                      }
-                                      try {
-                                        await launchUrl(
-                                          uri,
-                                          mode: LaunchMode.externalApplication,
-                                        );
-                                      } catch (_) {
-                                        if (!context.mounted) return;
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content:
-                                                Text('Erreur lors de l\'ouverture du CV.'),
-                                          ),
-                                        );
-                                      }
-                                    },
-                                  )
-                                : null,
+                                          items: const [
+                                            DropdownMenuItem(value: 'submitted', child: Text('Soumise')),
+                                            DropdownMenuItem(value: 'pending', child: Text('En attente')),
+                                            DropdownMenuItem(value: 'accepted', child: Text('Acceptée')),
+                                            DropdownMenuItem(value: 'rejected', child: Text('Refusée')),
+                                          ],
+                                          onChanged: (newStatus) async {
+                                            if (newStatus == null || newStatus == status) return;
+                                            final success = await provider.updateApplicationStatus(
+                                              applicationId: applicationId,
+                                              status: newStatus,
+                                              opportunityId: opportunityId,
+                                            );
+                                            if (!context.mounted) return;
+                                            if (success) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Statut mis à jour')),
+                                              );
+                                            } else {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text(provider.error ?? 'Erreur')),
+                                              );
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      if (cvUrl.isNotEmpty)
+                                        IconButton(
+                                          tooltip: 'Voir le CV',
+                                          icon: const Icon(Icons.description),
+                                          onPressed: () async {
+                                            final signedUrl = await provider.createCvSignedUrl(cvUrl);
+                                            if (!context.mounted) return;
+                                            if (signedUrl == null) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(provider.error ?? 'Impossible d\'ouvrir le CV.'),
+                                                ),
+                                              );
+                                              return;
+                                            }
+                                            final uri = Uri.tryParse(signedUrl);
+                                            if (uri == null) return;
+                                            try {
+                                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                            } catch (_) {
+                                              if (!context.mounted) return;
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Erreur lors de l\'ouverture du CV.')),
+                                              );
+                                            }
+                                          },
+                                        ),
+                                      IconButton(
+                                        tooltip: 'Ajouter une note',
+                                        icon: const Icon(Icons.edit_note),
+                                        onPressed: () => _showAddNoteDialog(
+                                          context,
+                                          provider,
+                                          applicationId,
+                                          opportunityId,
+                                          status,
+                                          adminNotes,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
                           );
                         },
                       ),
@@ -319,6 +390,68 @@ class _AdminOpportunitiesScreenState extends State<AdminOpportunitiesScreen> {
         );
       },
     );
+  }
+
+  Future<void> _showAddNoteDialog(
+    BuildContext context,
+    AdminOpportunitiesProvider provider,
+    String applicationId,
+    String opportunityId,
+    String currentStatus,
+    String currentNotes,
+  ) async {
+    final notesController = TextEditingController(text: currentNotes);
+    
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Note admin'),
+          content: TextField(
+            controller: notesController,
+            decoration: const InputDecoration(
+              labelText: 'Notes (visibles uniquement par les admins)',
+              hintText: 'Ajouter une note sur cette candidature...',
+            ),
+            maxLines: 3,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final success = await provider.updateApplicationStatus(
+                  applicationId: applicationId,
+                  status: currentStatus,
+                  adminNotes: notesController.text.trim(),
+                  opportunityId: opportunityId,
+                );
+                if (!context.mounted) return;
+                Navigator.pop(context);
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Note enregistrée')),
+                  );
+                }
+              },
+              child: const Text('Enregistrer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return '';
+    try {
+      final date = DateTime.parse(dateStr);
+      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+    } catch (_) {
+      return dateStr;
+    }
   }
 
   Future<void> _showOpportunityDialog({Map<String, dynamic>? existing}) async {
@@ -745,4 +878,78 @@ class _AdminOpportunitiesScreenState extends State<AdminOpportunitiesScreen> {
       ),
     );
   }
+}
+
+/// Badge coloré pour le statut d'une candidature
+class _ApplicationStatusBadge extends StatelessWidget {
+  final String status;
+
+  const _ApplicationStatusBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final config = _getStatusConfig(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: config.bgColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        config.label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: config.textColor,
+        ),
+      ),
+    );
+  }
+
+  _StatusConfig _getStatusConfig(String status) {
+    switch (status.toLowerCase()) {
+      case 'submitted':
+        return _StatusConfig(
+          label: 'Soumise',
+          bgColor: const Color(0xFFE0F2FE),
+          textColor: const Color(0xFF0369A1),
+        );
+      case 'pending':
+        return _StatusConfig(
+          label: 'En attente',
+          bgColor: const Color(0xFFFEF3C7),
+          textColor: const Color(0xFFD97706),
+        );
+      case 'accepted':
+        return _StatusConfig(
+          label: 'Acceptée',
+          bgColor: const Color(0xFFD1FAE5),
+          textColor: const Color(0xFF059669),
+        );
+      case 'rejected':
+        return _StatusConfig(
+          label: 'Refusée',
+          bgColor: const Color(0xFFFEE2E2),
+          textColor: const Color(0xFFDC2626),
+        );
+      default:
+        return _StatusConfig(
+          label: status,
+          bgColor: const Color(0xFFF3F4F6),
+          textColor: const Color(0xFF6B7280),
+        );
+    }
+  }
+}
+
+class _StatusConfig {
+  final String label;
+  final Color bgColor;
+  final Color textColor;
+
+  _StatusConfig({
+    required this.label,
+    required this.bgColor,
+    required this.textColor,
+  });
 }

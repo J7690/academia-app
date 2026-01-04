@@ -63,6 +63,8 @@ import 'providers/admin_short_trainings_provider.dart';
 import 'providers/admin_short_training_messages_provider.dart';
 import 'providers/admin_online_course_messages_provider.dart';
 import 'providers/admin_opportunities_provider.dart';
+import 'providers/opportunity_reactions_provider.dart';
+import 'providers/opportunity_comments_provider.dart';
 import 'providers/admin_communities_provider.dart';
 import 'providers/admin_challenges_provider.dart';
 import 'providers/admin_prep_concours_provider.dart';
@@ -133,6 +135,8 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => StudentOffersProvider()),
       ChangeNotifierProvider(create: (_) => HomeFormationsProvider()),
       ChangeNotifierProvider(create: (_) => StudentOpportunitiesProvider()),
+      ChangeNotifierProvider(create: (_) => OpportunityReactionsProvider()),
+      ChangeNotifierProvider(create: (_) => OpportunityCommentsProvider()),
       ChangeNotifierProvider(create: (_) => StudentCommunitiesProvider()),
       ChangeNotifierProvider(create: (_) => StudentChallengesProvider()),
       ChangeNotifierProvider(create: (_) => StudentApplicationsProvider()),
