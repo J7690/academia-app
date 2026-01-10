@@ -20,6 +20,9 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
   final _universityEmailController = TextEditingController();
   final _universityPasswordController = TextEditingController();
   final _universityNameController = TextEditingController();
+  final _adminEmailController = TextEditingController();
+  final _adminPasswordController = TextEditingController();
+  final _adminFullNameController = TextEditingController();
   String _selectedRole = 'instructor';
   String? _selectedUniversityId;
 
@@ -41,6 +44,9 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
     _universityEmailController.dispose();
     _universityPasswordController.dispose();
     _universityNameController.dispose();
+    _adminEmailController.dispose();
+    _adminPasswordController.dispose();
+    _adminFullNameController.dispose();
     super.dispose();
   }
 
@@ -161,6 +167,187 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
     );
   }
 
+  Future<void> _createAdminAccountDirect(BuildContext context) async {
+    final email = _adminEmailController.text.trim();
+    final password = _adminPasswordController.text;
+    final fullName = _adminFullNameController.text.trim();
+
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez renseigner un email.'),
+        ),
+      );
+      return;
+    }
+
+    if (password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez renseigner un mot de passe temporaire.'),
+        ),
+      );
+      return;
+    }
+
+    final provider = context.read<AdminUserInvitationsProvider>();
+    final response = await provider.createAdminAccountDirect(
+      email: email,
+      password: password,
+      fullName: fullName.isEmpty ? null : fullName,
+    );
+
+    if (!mounted) return;
+
+    if (response == null) {
+      final error = provider.error ??
+          'Erreur lors de la création du compte administrateur.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error)),
+      );
+      return;
+    }
+
+    _adminEmailController.clear();
+    _adminPasswordController.clear();
+    _adminFullNameController.clear();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Compte administrateur créé avec succès.'),
+      ),
+    );
+  }
+
+  Future<void> _promoteUserToAdmin(BuildContext context, String userId) async {
+    final usersProvider = context.read<AdminUsersOverviewProvider>();
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Promouvoir en administrateur'),
+          content: const Text(
+            'Ce compte passera au rôle administrateur. Voulez-vous continuer ?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              child: const Text('Valider'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) {
+      return;
+    }
+
+    final ok = await usersProvider.promoteUserRole(
+      userId: userId,
+      targetRole: 'admin',
+    );
+
+    if (!mounted) return;
+
+    if (!ok) {
+      final error = usersProvider.error ??
+          'Promotion en administrateur échouée.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Compte promu en administrateur.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _promoteUserToUniversity(
+    BuildContext context,
+    String userId,
+  ) async {
+    final nameController = TextEditingController();
+
+    final universityName = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Promouvoir en université'),
+          content: TextField(
+            controller: nameController,
+            decoration: const InputDecoration(
+              labelText: 'Nom de l\'université',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(nameController.text.trim());
+              },
+              child: const Text('Valider'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (universityName == null || universityName.trim().isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Nom de l\'université requis pour la promotion.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final usersProvider = context.read<AdminUsersOverviewProvider>();
+    final ok = await usersProvider.promoteUserRole(
+      userId: userId,
+      targetRole: 'university',
+      universityName: universityName.trim(),
+    );
+
+    if (!mounted) return;
+
+    if (!ok) {
+      final error = usersProvider.error ??
+          'Promotion en université échouée.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Compte promu en université.'),
+        ),
+      );
+    }
+  }
+
   String? _universityNameForId(
     List<Map<String, dynamic>> universities,
     String? id,
@@ -279,6 +466,9 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                             final isSuspended = user['is_suspended'] == true;
                             final suspendedReason =
                                 user['suspended_reason']?.toString();
+                            final isDeleted = user['is_deleted'] == true;
+                            final deletedReason =
+                                user['deleted_reason']?.toString();
                             final title =
                                 (fullName != null && fullName.isNotEmpty)
                                     ? fullName
@@ -305,14 +495,18 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                                     style: const TextStyle(fontSize: 12),
                                   ),
                                   Text(
-                                    isSuspended
-                                        ? 'Compte : suspendu'
-                                        : 'Compte : actif',
+                                    isDeleted
+                                        ? 'Compte : supprimé'
+                                        : (isSuspended
+                                            ? 'Compte : suspendu'
+                                            : 'Compte : actif'),
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: isSuspended
+                                      color: isDeleted
                                           ? Colors.red
-                                          : const Color(0xFF16A34A),
+                                          : (isSuspended
+                                              ? Colors.red
+                                              : const Color(0xFF16A34A)),
                                     ),
                                   ),
                                   Text(
@@ -350,13 +544,23 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                                         color: Colors.grey,
                                       ),
                                     ),
+                                  if (isDeleted &&
+                                      deletedReason != null &&
+                                      deletedReason.isNotEmpty)
+                                    Text(
+                                      'Raison suppression : $deletedReason',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
                                 ],
                               ),
                               trailing: Wrap(
                                 spacing: 8,
                                 children: [
                                   TextButton(
-                                    onPressed: usersProvider.isUpdating
+                                    onPressed: usersProvider.isUpdating || isDeleted
                                         ? null
                                         : () async {
                                             final targetId =
@@ -400,6 +604,105 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                                           ? 'Réactiver'
                                           : 'Suspendre',
                                     ),
+                                  ),
+                                  if (!isDeleted && role == 'student')
+                                    TextButton(
+                                      onPressed: usersProvider.isUpdating
+                                          ? null
+                                          : () async {
+                                              final targetId =
+                                                  user['id']?.toString();
+                                              if (targetId == null ||
+                                                  targetId.isEmpty) {
+                                                return;
+                                              }
+                                              await _promoteUserToAdmin(
+                                                context,
+                                                targetId,
+                                              );
+                                            },
+                                      child: const Text('Rendre admin'),
+                                    ),
+                                  if (!isDeleted && role == 'student')
+                                    TextButton(
+                                      onPressed: usersProvider.isUpdating
+                                          ? null
+                                          : () async {
+                                              final targetId =
+                                                  user['id']?.toString();
+                                              if (targetId == null ||
+                                                  targetId.isEmpty) {
+                                                return;
+                                              }
+                                              await _promoteUserToUniversity(
+                                                context,
+                                                targetId,
+                                              );
+                                            },
+                                      child: const Text('Rendre université'),
+                                    ),
+                                  TextButton(
+                                    onPressed: usersProvider.isUpdating || isDeleted
+                                        ? null
+                                        : () async {
+                                            final targetId =
+                                                user['id']?.toString();
+                                            if (targetId == null ||
+                                                targetId.isEmpty) {
+                                              return;
+                                            }
+                                            if (!context.mounted) {
+                                              return;
+                                            }
+                                            final confirm = await showDialog<bool>(
+                                              context: context,
+                                              builder: (dialogContext) {
+                                                return AlertDialog(
+                                                  title: const Text('Supprimer le compte utilisateur'),
+                                                  content: const Text(
+                                                    'Cette action marque le compte comme supprimé et suspend l\'accès. Voulez-vous continuer ?',
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator.of(dialogContext).pop(false);
+                                                      },
+                                                      child: const Text('Annuler'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator.of(dialogContext).pop(true);
+                                                      },
+                                                      child: const Text('Supprimer'),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                            if (confirm != true) {
+                                              return;
+                                            }
+                                            final ok = await usersProvider.deleteUserAccount(
+                                              userId: targetId,
+                                            );
+                                            if (!context.mounted) return;
+                                            if (!ok) {
+                                              final error = usersProvider.error ??
+                                                  'Suppression du compte échouée.';
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(error),
+                                                ),
+                                              );
+                                            } else {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text('Compte utilisateur supprimé.'),
+                                                ),
+                                              );
+                                            }
+                                          },
+                                    child: const Text('Supprimer'),
                                   ),
                                   TextButton(
                                     onPressed: () async {
@@ -620,6 +923,72 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
+                          'Créer un compte administrateur',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _adminEmailController,
+                          decoration: const InputDecoration(
+                            labelText: 'Email du compte administrateur',
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _adminFullNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Nom complet (optionnel)',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _adminPasswordController,
+                          decoration: const InputDecoration(
+                            labelText: 'Mot de passe temporaire',
+                          ),
+                          obscureText: true,
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 44,
+                          child: ElevatedButton(
+                            onPressed: isSaving
+                                ? null
+                                : () => _createAdminAccountDirect(context),
+                            child: isSaving
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text('Créer le compte administrateur'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
                           'Créer une nouvelle invitation',
                           style: TextStyle(
                             fontSize: 16,
@@ -651,10 +1020,6 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                             DropdownMenuItem(
                               value: 'instructor',
                               child: Text('Formateur / CI'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'admin',
-                              child: Text('Admin'),
                             ),
                           ],
                           onChanged: (value) {

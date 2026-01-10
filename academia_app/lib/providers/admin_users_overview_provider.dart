@@ -102,6 +102,48 @@ class AdminUsersOverviewProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> promoteUserRole({
+    required String userId,
+    required String targetRole,
+    String? universityName,
+  }) async {
+    _setUpdating(true);
+    _setError(null);
+    try {
+      final response = await _client.functions.invoke(
+        'admin-promote-user-role',
+        body: <String, dynamic>{
+          'target_user_id': userId,
+          'target_role': targetRole,
+          if (universityName != null && universityName.trim().isNotEmpty)
+            'university_name': universityName.trim(),
+        },
+      );
+
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur pour la promotion du compte.',
+        );
+        return false;
+      }
+      if (data['success'] != true) {
+        _setError(
+          data['error']?.toString() ??
+              'Erreur lors de la promotion du compte utilisateur.',
+        );
+        return false;
+      }
+      await loadUsers();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setUpdating(false);
+    }
+  }
+
   Future<List<Map<String, dynamic>>> fetchUserActionLogs(String userId) async {
     try {
       final response = await _client.rpc(
@@ -128,6 +170,41 @@ class AdminUsersOverviewProvider extends ChangeNotifier {
       return const [];
     } catch (e) {
       rethrow;
+    }
+  }
+
+  Future<bool> deleteUserAccount({
+    required String userId,
+    String? reason,
+  }) async {
+    _setUpdating(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(
+        'app_admin_delete_user_account',
+        params: {
+          'p_target_user_id': userId,
+          'p_reason': reason,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur pour la suppression du compte.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors de la suppression du compte utilisateur.',
+        );
+        return false;
+      }
+      await loadUsers();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setUpdating(false);
     }
   }
 

@@ -98,6 +98,30 @@ def main() -> int:
     tables_result = manager.execute_sql_auto(sql)
     print(json.dumps(tables_result, indent=2, ensure_ascii=False))
 
+    # Détail de la structure des tables (colonnes, types, nullabilité, défauts)
+    print("\n=== STRUCTURE TABLES UTILISATEURS (app.*) ===")
+    sql_columns = """
+    SELECT
+      table_schema,
+      table_name,
+      column_name,
+      data_type,
+      is_nullable,
+      column_default
+    FROM information_schema.columns
+    WHERE table_schema = 'app'
+      AND table_name IN (
+        'user_invitations',
+        'user_presence',
+        'user_admin_status',
+        'admin_user_action_logs'
+      )
+    ORDER BY table_name, ordinal_position;
+    """
+
+    columns_result = manager.execute_sql_auto(sql_columns)
+    print(json.dumps(columns_result, indent=2, ensure_ascii=False))
+
     # Audit des RPC liées à la gestion des comptes utilisateurs
     print("\n=== AUDIT RPC UTILISATEURS ===")
 
@@ -146,6 +170,34 @@ def main() -> int:
         for name, payload in rpc_definitions.items()
     ]
     print(json.dumps(rpc_results, indent=2, ensure_ascii=False))
+
+    # Structure SQL des fonctions (signature, type de retour, security definer)
+    print("\n=== STRUCTURE FONCTIONS ADMIN UTILISATEURS ===")
+    sql_functions = """
+    SELECT
+      n.nspname AS schema,
+      p.proname AS name,
+      pg_get_function_identity_arguments(p.oid) AS arguments,
+      pg_get_function_result(p.oid) AS result_type,
+      p.prosecdef AS security_definer
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname IN (
+        'app_admin_list_user_invitations',
+        'app_admin_create_user_invitation',
+        'app_admin_cancel_user_invitation',
+        'app_accept_user_invitation',
+        'app_admin_list_users_overview',
+        'app_admin_update_user_status',
+        'app_admin_list_user_action_logs',
+        'app_track_user_activity'
+      )
+    ORDER BY name;
+    """
+
+    functions_result = manager.execute_sql_auto(sql_functions)
+    print(json.dumps(functions_result, indent=2, ensure_ascii=False))
 
     return 0
 

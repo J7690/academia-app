@@ -106,6 +106,50 @@ class AdminUserInvitationsProvider extends ChangeNotifier {
     }
   }
 
+  Future<Map<String, dynamic>?> createAdminAccountDirect({
+    required String email,
+    required String password,
+    String? fullName,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final response = await _client.functions.invoke(
+        'admin-create-admin-account',
+        body: <String, dynamic>{
+          'email': email.trim(),
+          'password': password,
+          if (fullName != null && fullName.trim().isNotEmpty)
+            'full_name': fullName.trim(),
+        },
+      );
+
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors de la création du compte administrateur.',
+        );
+        return null;
+      }
+
+      if (data['success'] != true) {
+        _setError(
+          data['error']?.toString() ??
+              'Erreur lors de la création du compte administrateur.',
+        );
+        return null;
+      }
+
+      await loadInvitations();
+      return data;
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
   Future<Map<String, dynamic>?> createUniversityAccountDirect({
     required String email,
     required String password,

@@ -486,3 +486,76 @@ SELECT
   'offers_module_status' AS check_name,
   (SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'app' AND table_name = 'universities')) AS universities_table_exists,
   (SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'app' AND table_name = 'programs')) AS programs_table_exists;
+
+CREATE OR REPLACE FUNCTION app_admin_update_university_status(
+    p_university_id UUID,
+    p_is_active BOOLEAN,
+    p_reason TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_university_id UUID;
+    v_university_exists BOOLEAN;
+    v_target_user_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    IF p_university_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_university_id');
+    END IF;
+
+    SELECT id
+    INTO v_university_id
+    FROM app.universities
+    WHERE id = p_university_id;
+
+    IF v_university_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'university_not_found');
+    END IF;
+
+    UPDATE app.universities
+    SET is_active = COALESCE(p_is_active, is_active),
+        updated_at = NOW()
+    WHERE id = v_university_id;
+
+    IF p_is_active IS FALSE THEN
+        FOR v_target_user_id IN
+            SELECT u.id
+            FROM auth.users u
+            WHERE u.raw_user_meta_data->>'role' = 'university'
+              AND (u.raw_user_meta_data->>'university_id')::UUID = v_university_id
+        LOOP
+            PERFORM app_admin_update_user_status(
+                v_target_user_id,
+                'suspend',
+                COALESCE(p_reason, 'university_deactivated')
+            );
+        END LOOP;
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT(
+        'success', TRUE,
+        'university_id', v_university_id,
+        'is_active', p_is_active
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_update_university_status(UUID, BOOLEAN, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_update_university_status(UUID, BOOLEAN, TEXT) TO service_role;

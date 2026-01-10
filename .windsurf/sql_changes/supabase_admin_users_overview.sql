@@ -43,7 +43,9 @@ BEGIN
           ELSE FALSE
         END,
         'is_suspended', COALESCE(s.is_suspended, FALSE),
-        'suspended_reason', s.suspended_reason
+        'suspended_reason', s.suspended_reason,
+        'is_deleted', COALESCE(s.is_deleted, FALSE),
+        'deleted_reason', s.deleted_reason
       )
       ORDER BY u.created_at DESC
     ),
