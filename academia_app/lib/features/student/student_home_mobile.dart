@@ -764,9 +764,9 @@ class _MobileShortTrainingsRowState extends State<_MobileShortTrainingsRow> {
       if (maxScroll <= 0) return;
 
       final current = _controller.offset;
-      double next = current + _step;
-      if (next >= maxScroll) {
-        next = 0;
+      double next = current - _step;
+      if (next <= 0) {
+        next = maxScroll;
       }
 
       _controller.animateTo(
@@ -826,7 +826,7 @@ class _MobileShortTrainingsRowState extends State<_MobileShortTrainingsRow> {
 
         if (provider.isLoading && sessions.isEmpty) {
           return const SizedBox(
-            height: 170,
+            height: 130,
             child: Center(
               child: CircularProgressIndicator(),
             ),
@@ -868,7 +868,7 @@ class _MobileShortTrainingsRowState extends State<_MobileShortTrainingsRow> {
             ),
             const SizedBox(height: 8),
             SizedBox(
-              height: 170,
+              height: 130,
               child: ListView.builder(
                 controller: _controller,
                 scrollDirection: Axis.horizontal,
@@ -925,60 +925,118 @@ class _ShortTrainingMobileCard extends StatelessWidget {
     if (modality.isNotEmpty) metaParts.add(modality);
     if (location.isNotEmpty) metaParts.add(location);
     if (startAt.isNotEmpty) metaParts.add(startAt);
+    final metaText = metaParts.take(3).join(' • ');
 
     final screenWidth = MediaQuery.of(context).size.width;
-    double cardWidth = screenWidth * 0.75;
-    if (cardWidth < 220) {
-      cardWidth = 220;
-    } else if (cardWidth > 360) {
-      cardWidth = 360;
+    double cardWidth = screenWidth * 0.68;
+    if (cardWidth < 200) {
+      cardWidth = 200;
+    } else if (cardWidth > 320) {
+      cardWidth = 320;
     }
 
     return SizedBox(
       width: cardWidth,
       child: Card(
-        color: Colors.white,
-        elevation: 0,
+        elevation: 1,
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFFF7E6), Color(0xFFFFFFFF)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+          ),
+          child: Row(
             children: [
-              Text(
-                title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+              Container(
+                width: 4,
+                height: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFFC94A),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    bottomLeft: Radius.circular(16),
+                  ),
                 ),
               ),
-              if (metaParts.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  metaParts.join(' · '),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.black54,
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (metaText.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              metaText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      if (priceText != null) ...[
+                        const SizedBox(height: 6),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE0ECFF),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              'Frais : $priceText',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF2563EB),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-              ],
-              if (priceText != null) ...[
-                const SizedBox(height: 6),
-                Text(
-                  'Frais : $priceText',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF2563EB),
-                  ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Icon(
+                  Icons.bolt,
+                  size: 28,
+                  color: const Color(0xFFFFC94A).withOpacity(0.35),
                 ),
-              ],
+              ),
             ],
           ),
         ),
@@ -1076,7 +1134,7 @@ class _MobileOnlineCoursesRowState extends State<_MobileOnlineCoursesRow> {
 
         if (catalog.isLoading && courses.isEmpty) {
           return const SizedBox(
-            height: 190,
+            height: 130,
             child: Center(
               child: CircularProgressIndicator(),
             ),
@@ -1123,7 +1181,7 @@ class _MobileOnlineCoursesRowState extends State<_MobileOnlineCoursesRow> {
             ),
             const SizedBox(height: 8),
             SizedBox(
-              height: 190,
+              height: 130,
               child: ListView.builder(
                 controller: _controller,
                 scrollDirection: Axis.horizontal,
@@ -1169,11 +1227,11 @@ class _OnlineCourseMobileCard extends StatelessWidget {
     final shortDescription = (course['short_description'] ?? '').toString();
     final level = (course['level'] ?? '').toString();
     final category = (course['category'] ?? '').toString();
-    final courseId = (course['id'] ?? '').toString();
 
     final metaParts = <String>[];
     if (category.isNotEmpty) metaParts.add(category);
     if (level.isNotEmpty) metaParts.add(level);
+    final metaText = metaParts.take(2).join(' • ');
 
     final dynamic rawPrice = course['price'];
     num? priceValue;
@@ -1195,97 +1253,150 @@ class _OnlineCourseMobileCard extends StatelessWidget {
     final contactWebsite =
         (course['contact_website'] ?? '').toString().trim();
 
-    final contactParts = <String>[];
-    if (contactPhone.isNotEmpty) {
-      contactParts.add('Tél: $contactPhone');
-    }
-    if (contactWhatsapp.isNotEmpty) {
-      contactParts.add('WhatsApp: $contactWhatsapp');
-    }
-    if (contactEmail.isNotEmpty) {
-      contactParts.add(contactEmail);
-    }
-    if (contactWebsite.isNotEmpty) {
-      contactParts.add(contactWebsite);
-    }
-    final contactSummary = contactParts.isEmpty
-        ? ''
-        : contactParts.take(2).join(' • ');
-
     final screenWidth = MediaQuery.of(context).size.width;
-    double cardWidth = screenWidth * 0.75;
-    if (cardWidth < 220) {
-      cardWidth = 220;
-    } else if (cardWidth > 360) {
-      cardWidth = 360;
+    double cardWidth = screenWidth * 0.68;
+    if (cardWidth < 200) {
+      cardWidth = 200;
+    } else if (cardWidth > 320) {
+      cardWidth = 320;
     }
 
     return SizedBox(
       width: cardWidth,
       child: Card(
-        color: Colors.white,
-        elevation: 0,
+        elevation: 1,
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFE8F0FF), Color(0xFFF5F3FF)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+          ),
+          child: Row(
             children: [
-              Text(
-                title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+              Container(
+                width: 4,
+                height: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF2563EB),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    bottomLeft: Radius.circular(16),
+                  ),
                 ),
               ),
-              if (shortDescription.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  shortDescription,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ],
-              if (metaParts.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  metaParts.join(' • '),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey,
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (shortDescription.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              shortDescription,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                          if (metaText.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              metaText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          if (alreadyEnrolled) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE0F7EC),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: const Text(
+                                'Inscrit',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF047857),
+                                ),
+                              ),
+                            ),
+                          ] else ...[
+                            const SizedBox.shrink(),
+                          ],
+                          if (priceText != null) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE0ECFF),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                'Tarif : $priceText',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF2563EB),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ],
-              if (priceText != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  'Tarif : $priceText',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF2563EB),
-                  ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Icon(
+                  Icons.play_circle_fill,
+                  size: 30,
+                  color: const Color(0xFF2563EB).withOpacity(0.25),
                 ),
-              ],
-              if (contactSummary.isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Text(
-                  'Contacts : $contactSummary',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
+              ),
             ],
           ),
         ),
