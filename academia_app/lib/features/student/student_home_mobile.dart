@@ -4,15 +4,18 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../video/academia_playback_engine.dart';
 import '../../providers/student_profile_provider.dart';
 import '../../providers/student_applications_provider.dart';
 import '../../providers/student_offers_provider.dart';
 import '../../providers/student_home_content_provider.dart';
+import '../../providers/student_home_slots_provider.dart';
 import '../../providers/online_courses_catalog_provider.dart';
 import '../../providers/student_online_courses_provider.dart';
 import '../../providers/home_formations_provider.dart';
+import '../../providers/student_short_trainings_provider.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart';
 import '../../widgets/notification_sound_settings_dialog.dart';
@@ -64,6 +67,17 @@ class _StudentHomeMobileTabState extends State<StudentHomeMobileTab> {
       } catch (_) {}
       try {
         context.read<StudentOnlineCoursesProvider>().loadMyCourses();
+      } catch (_) {}
+      try {
+        final shortTrainingsProvider =
+            context.read<StudentShortTrainingsProvider>();
+        await shortTrainingsProvider.loadPublicSessions();
+        await shortTrainingsProvider.loadMyTrainings();
+      } catch (_) {}
+      try {
+        final slotsProvider = context.read<StudentHomeSlotsProvider>();
+        await slotsProvider.loadSlotItems('mobile_row_short_trainings');
+        await slotsProvider.loadSlotItems('mobile_row_online_courses');
       } catch (_) {}
     });
   }
@@ -706,62 +720,12 @@ class _MobileSectionsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final myCoursesProvider = context.watch<StudentOnlineCoursesProvider>();
-    final appsProvider = context.watch<StudentApplicationsProvider>();
-
-    final myCoursesCount = myCoursesProvider.myCourses.length;
-    final appsCount = appsProvider.applications.length;
-
-    final items = <_MobileSectionItem>[
-      _MobileSectionItem(
-        title: 'Mes formations',
-        subtitle: myCoursesCount > 0
-            ? '$myCoursesCount formation(s) en cours'
-            : 'Découvre les formations disponibles.',
-        icon: Icons.school_outlined,
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const StudentOnlineTrainingsTab(),
-            ),
-          );
-        },
-      ),
-      _MobileSectionItem(
-        title: 'Candidatures',
-        subtitle: appsCount > 0
-            ? '$appsCount candidature(s) en cours'
-            : 'Suis l\'état de tes candidatures.',
-        icon: Icons.assignment_outlined,
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const StudentApplicationsTab(),
-            ),
-          );
-        },
-      ),
-      _MobileSectionItem(
-        title: 'Mes paiements',
-        subtitle: 'Voir et gérer tes paiements.',
-        icon: Icons.payments_outlined,
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ChangeNotifierProvider(
-                create: (_) => StudentApplicationPaymentsProvider(),
-                child: const StudentPaymentsScreen(),
-              ),
-            ),
-          );
-        },
-      ),
-    ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _MobileSectionsRow(items: items),
+        const _MobileShortTrainingsRow(),
+        const SizedBox(height: 16),
+        const _MobileOnlineCoursesRow(),
         const SizedBox(height: 16),
         const _MobileHomeHero(),
         const SizedBox(height: 12),
@@ -773,102 +737,555 @@ class _MobileSectionsGrid extends StatelessWidget {
   }
 }
 
-class _MobileSectionsRow extends StatelessWidget {
-  final List<_MobileSectionItem> items;
+class _MobileShortTrainingsRow extends StatefulWidget {
+  const _MobileShortTrainingsRow();
 
-  const _MobileSectionsRow({required this.items});
+  @override
+  State<_MobileShortTrainingsRow> createState() => _MobileShortTrainingsRowState();
+}
+
+class _MobileShortTrainingsRowState extends State<_MobileShortTrainingsRow> {
+  final ScrollController _controller = ScrollController();
+  static const double _step = 1.0;
+  static const Duration _tick = Duration(milliseconds: 80);
+  static const Duration _animDuration = Duration(milliseconds: 80);
+  Timer? _timer;
+  static const String _prefsKeyOffset = 'student_home_short_trainings_offset';
+  bool _offsetRestored = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(_tick, (_) {
+      if (!_controller.hasClients) return;
+      final position = _controller.position;
+      if (!position.haveDimensions) return;
+      final maxScroll = position.maxScrollExtent;
+      if (maxScroll <= 0) return;
+
+      final current = _controller.offset;
+      double next = current + _step;
+      if (next >= maxScroll) {
+        next = 0;
+      }
+
+      _controller.animateTo(
+        next,
+        duration: _animDuration,
+        curve: Curves.linear,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _saveOffset();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _restoreOffset() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getDouble(_prefsKeyOffset);
+    if (!mounted || saved == null || saved <= 0) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_controller.hasClients) return;
+      final maxScroll = _controller.position.maxScrollExtent;
+      if (maxScroll <= 0) return;
+      final target = saved > maxScroll ? maxScroll : saved;
+      _controller.jumpTo(target);
+    });
+  }
+
+  Future<void> _saveOffset() async {
+    if (!_controller.hasClients) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_prefsKeyOffset, _controller.offset);
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.4,
-      ),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return _MobileSectionCard(item: item);
+    return Consumer<StudentShortTrainingsProvider>(
+      builder: (context, provider, child) {
+        final slotsProvider = context.watch<StudentHomeSlotsProvider>();
+        final slotItems =
+            slotsProvider.getItemsForSlot('mobile_row_short_trainings');
+
+        List<Map<String, dynamic>> sessions;
+        if (slotItems.isNotEmpty) {
+          sessions = slotItems
+              .map((item) => item['short_training_session'])
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList(growable: false);
+        } else {
+          sessions = provider.publicSessions;
+        }
+
+        if (provider.isLoading && sessions.isEmpty) {
+          return const SizedBox(
+            height: 170,
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if (provider.error != null && sessions.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        if (sessions.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        if (!_offsetRestored) {
+          _offsetRestored = true;
+          _restoreOffset();
+        }
+
+        final items = sessions.take(10).toList(growable: false);
+        if (items.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final effectiveItemCount = items.length * 10;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Formations courtes Nexium Group',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 170,
+              child: ListView.builder(
+                controller: _controller,
+                scrollDirection: Axis.horizontal,
+                itemCount: effectiveItemCount,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemBuilder: (context, index) {
+                  if (items.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  final session = items[index % items.length];
+                  final isLast = index == effectiveItemCount - 1;
+                  return Padding(
+                    padding: EdgeInsets.only(right: isLast ? 0 : 12),
+                    child: _ShortTrainingMobileCard(session: session),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
       },
     );
   }
 }
 
-class _MobileSectionItem {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final VoidCallback onTap;
+class _ShortTrainingMobileCard extends StatelessWidget {
+  final Map<String, dynamic> session;
 
-  _MobileSectionItem({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.onTap,
-  });
-}
-
-class _MobileSectionCard extends StatelessWidget {
-  final _MobileSectionItem item;
-
-  const _MobileSectionCard({required this.item});
+  const _ShortTrainingMobileCard({required this.session});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: item.onTap,
-      child: Ink(
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x14000000),
-              offset: Offset(0, 8),
-              blurRadius: 20,
-            ),
-          ],
+    final title = session['title']?.toString() ?? '';
+    final category = session['category']?.toString() ?? '';
+    final modality = session['modality']?.toString() ?? '';
+    final location = session['location']?.toString() ?? '';
+    final startAt = session['start_at']?.toString() ?? '';
+
+    final dynamic rawPrice = session['price'];
+    num? priceValue;
+    if (rawPrice is num) {
+      priceValue = rawPrice;
+    }
+    String? priceText;
+    if (priceValue != null) {
+      final bool isInt = priceValue % 1 == 0;
+      final formatted =
+          isInt ? priceValue.toInt().toString() : priceValue.toString();
+      priceText = '$formatted FCFA';
+    }
+
+    final metaParts = <String>[];
+    if (category.isNotEmpty) metaParts.add(category);
+    if (modality.isNotEmpty) metaParts.add(modality);
+    if (location.isNotEmpty) metaParts.add(location);
+    if (startAt.isNotEmpty) metaParts.add(startAt);
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    double cardWidth = screenWidth * 0.75;
+    if (cardWidth < 220) {
+      cardWidth = 220;
+    } else if (cardWidth > 360) {
+      cardWidth = 360;
+    }
+
+    return SizedBox(
+      width: cardWidth,
+      child: Card(
+        color: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                item.icon,
-                color: const Color(0xFF0A2540),
-              ),
-              const SizedBox(height: 8),
               Text(
-                item.title,
+                title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF0A2540),
                 ),
               ),
-              const SizedBox(height: 4),
-              Expanded(
-                child: Text(
-                  item.subtitle,
-                  maxLines: 3,
+              if (metaParts.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  metaParts.join(' · '),
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF6F6F6F),
+                    fontSize: 11,
+                    color: Colors.black54,
                   ),
                 ),
+              ],
+              if (priceText != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'Frais : $priceText',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF2563EB),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MobileOnlineCoursesRow extends StatefulWidget {
+  const _MobileOnlineCoursesRow();
+
+  @override
+  State<_MobileOnlineCoursesRow> createState() => _MobileOnlineCoursesRowState();
+}
+
+class _MobileOnlineCoursesRowState extends State<_MobileOnlineCoursesRow> {
+  final ScrollController _controller = ScrollController();
+  static const double _step = 1.0;
+  static const Duration _tick = Duration(milliseconds: 80);
+  static const Duration _animDuration = Duration(milliseconds: 80);
+  Timer? _timer;
+  static const String _prefsKeyOffset = 'student_home_online_courses_offset';
+  bool _offsetRestored = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(_tick, (_) {
+      if (!_controller.hasClients) return;
+      final position = _controller.position;
+      if (!position.haveDimensions) return;
+      final maxScroll = position.maxScrollExtent;
+      if (maxScroll <= 0) return;
+
+      final current = _controller.offset;
+      double next = current + _step;
+      if (next >= maxScroll) {
+        next = 0;
+      }
+
+      _controller.animateTo(
+        next,
+        duration: _animDuration,
+        curve: Curves.linear,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _saveOffset();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _restoreOffset() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getDouble(_prefsKeyOffset);
+    if (!mounted || saved == null || saved <= 0) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_controller.hasClients) return;
+      final maxScroll = _controller.position.maxScrollExtent;
+      if (maxScroll <= 0) return;
+      final target = saved > maxScroll ? maxScroll : saved;
+      _controller.jumpTo(target);
+    });
+  }
+
+  Future<void> _saveOffset() async {
+    if (!_controller.hasClients) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_prefsKeyOffset, _controller.offset);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer2<OnlineCoursesCatalogProvider, StudentOnlineCoursesProvider>(
+      builder: (context, catalog, myCoursesProvider, child) {
+        final slotsProvider = context.watch<StudentHomeSlotsProvider>();
+        final slotItems =
+            slotsProvider.getItemsForSlot('mobile_row_online_courses');
+
+        List<Map<String, dynamic>> courses;
+        if (slotItems.isNotEmpty) {
+          courses = slotItems
+              .map((item) => item['online_course'])
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList(growable: false);
+        } else {
+          courses = catalog.courses;
+        }
+
+        if (catalog.isLoading && courses.isEmpty) {
+          return const SizedBox(
+            height: 190,
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if (catalog.error != null && courses.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        if (courses.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        if (!_offsetRestored) {
+          _offsetRestored = true;
+          _restoreOffset();
+        }
+
+        final enrolledIds = myCoursesProvider.myCourses
+            .map((c) => c['course_id']?.toString())
+            .whereType<String>()
+            .toSet();
+
+        final items = courses.take(10).toList(growable: false);
+        if (items.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final effectiveItemCount = items.length * 10;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Formations en ligne',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 190,
+              child: ListView.builder(
+                controller: _controller,
+                scrollDirection: Axis.horizontal,
+                itemCount: effectiveItemCount,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemBuilder: (context, index) {
+                  if (items.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  final course = items[index % items.length];
+                  final isLast = index == effectiveItemCount - 1;
+                  final alreadyEnrolled =
+                      enrolledIds.contains(course['id']?.toString());
+                  return Padding(
+                    padding: EdgeInsets.only(right: isLast ? 0 : 12),
+                    child: _OnlineCourseMobileCard(
+                      course: course,
+                      alreadyEnrolled: alreadyEnrolled,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _OnlineCourseMobileCard extends StatelessWidget {
+  final Map<String, dynamic> course;
+  final bool alreadyEnrolled;
+
+  const _OnlineCourseMobileCard({
+    required this.course,
+    required this.alreadyEnrolled,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final title = (course['title'] ?? '').toString();
+    final shortDescription = (course['short_description'] ?? '').toString();
+    final level = (course['level'] ?? '').toString();
+    final category = (course['category'] ?? '').toString();
+    final courseId = (course['id'] ?? '').toString();
+
+    final metaParts = <String>[];
+    if (category.isNotEmpty) metaParts.add(category);
+    if (level.isNotEmpty) metaParts.add(level);
+
+    final dynamic rawPrice = course['price'];
+    num? priceValue;
+    if (rawPrice is num) {
+      priceValue = rawPrice;
+    }
+    String? priceText;
+    if (priceValue != null) {
+      final bool isInt = priceValue % 1 == 0;
+      final formatted =
+          isInt ? priceValue.toInt().toString() : priceValue.toString();
+      priceText = '$formatted FCFA';
+    }
+
+    final contactPhone = (course['contact_phone'] ?? '').toString().trim();
+    final contactWhatsapp =
+        (course['contact_whatsapp'] ?? '').toString().trim();
+    final contactEmail = (course['contact_email'] ?? '').toString().trim();
+    final contactWebsite =
+        (course['contact_website'] ?? '').toString().trim();
+
+    final contactParts = <String>[];
+    if (contactPhone.isNotEmpty) {
+      contactParts.add('Tél: $contactPhone');
+    }
+    if (contactWhatsapp.isNotEmpty) {
+      contactParts.add('WhatsApp: $contactWhatsapp');
+    }
+    if (contactEmail.isNotEmpty) {
+      contactParts.add(contactEmail);
+    }
+    if (contactWebsite.isNotEmpty) {
+      contactParts.add(contactWebsite);
+    }
+    final contactSummary = contactParts.isEmpty
+        ? ''
+        : contactParts.take(2).join(' • ');
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    double cardWidth = screenWidth * 0.75;
+    if (cardWidth < 220) {
+      cardWidth = 220;
+    } else if (cardWidth > 360) {
+      cardWidth = 360;
+    }
+
+    return SizedBox(
+      width: cardWidth,
+      child: Card(
+        color: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (shortDescription.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  shortDescription,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ],
+              if (metaParts.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  metaParts.join(' • '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+              if (priceText != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Tarif : $priceText',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF2563EB),
+                  ),
+                ),
+              ],
+              if (contactSummary.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  'Contacts : $contactSummary',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../providers/student_short_trainings_provider.dart';
 import '../../../providers/student_profile_provider.dart';
 import '../../../providers/student_short_training_messages_provider.dart';
+import '../../../providers/student_home_slots_provider.dart';
 
 class StudentShortTrainingsSection extends StatefulWidget {
   const StudentShortTrainingsSection({super.key});
@@ -396,15 +397,30 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
       builder: (context, constraints) {
         return Consumer<StudentShortTrainingsProvider>(
           builder: (context, provider, child) {
-            if (provider.isLoading && provider.publicSessions.isEmpty) {
+            final slotsProvider = context.watch<StudentHomeSlotsProvider>();
+            final slotItems =
+                slotsProvider.getItemsForSlot('desktop_short_trainings');
+
+            List<Map<String, dynamic>> sessions;
+            if (slotItems.isNotEmpty) {
+              sessions = slotItems
+                  .map((item) => item['short_training_session'])
+                  .whereType<Map>()
+                  .map((e) => Map<String, dynamic>.from(e))
+                  .toList(growable: false);
+            } else {
+              sessions = provider.publicSessions;
+            }
+
+            if (provider.isLoading && sessions.isEmpty) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (provider.error != null && provider.publicSessions.isEmpty) {
+            if (provider.error != null && sessions.isEmpty) {
               return Center(child: Text(provider.error!));
             }
 
-            if (provider.publicSessions.isEmpty) {
+            if (sessions.isEmpty) {
               return const SizedBox.shrink();
             }
 
@@ -433,7 +449,7 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
                 Wrap(
                   spacing: spacing,
                   runSpacing: spacing,
-                  children: provider.publicSessions.take(5).map((session) {
+                  children: sessions.take(5).map((session) {
                     final title = session['title']?.toString() ?? '';
                     final category = session['category']?.toString() ?? '';
                     final modality = session['modality']?.toString() ?? '';

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../providers/online_courses_catalog_provider.dart';
 import '../../../providers/student_online_courses_provider.dart';
+import '../../../providers/student_home_slots_provider.dart';
 import '../online_course_detail_screen.dart';
 
 class StudentHomeOnlineCoursesSection extends StatelessWidget {
@@ -12,7 +13,20 @@ class StudentHomeOnlineCoursesSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer2<OnlineCoursesCatalogProvider, StudentOnlineCoursesProvider>(
       builder: (context, catalog, myCoursesProvider, child) {
-        final catalogCourses = catalog.courses;
+        final slotsProvider = context.watch<StudentHomeSlotsProvider>();
+        final slotItems =
+            slotsProvider.getItemsForSlot('desktop_online_courses');
+
+        List<Map<String, dynamic>> catalogCourses;
+        if (slotItems.isNotEmpty) {
+          catalogCourses = slotItems
+              .map((item) => item['online_course'])
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList(growable: false);
+        } else {
+          catalogCourses = catalog.courses;
+        }
         final isLoadingCatalog = catalog.isLoading;
         final error = catalog.error;
 

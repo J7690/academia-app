@@ -56,6 +56,7 @@ import 'providers/university_programs_provider.dart';
 import 'providers/bobodo_provider.dart';
 import 'providers/landing_content_provider.dart';
 import 'providers/student_home_content_provider.dart';
+import 'providers/student_home_slots_provider.dart';
 import 'providers/student_short_trainings_provider.dart';
 import 'providers/student_short_training_messages_provider.dart';
 import 'providers/student_online_course_messages_provider.dart';
@@ -63,6 +64,7 @@ import 'providers/admin_short_trainings_provider.dart';
 import 'providers/admin_short_training_messages_provider.dart';
 import 'providers/admin_online_course_messages_provider.dart';
 import 'providers/admin_opportunities_provider.dart';
+import 'providers/admin_student_home_slots_provider.dart';
 import 'providers/opportunity_reactions_provider.dart';
 import 'providers/opportunity_comments_provider.dart';
 import 'providers/admin_communities_provider.dart';
@@ -132,6 +134,7 @@ class AcademiaApp extends StatelessWidget {
     final providers = <SingleChildWidget>[
       ChangeNotifierProvider(create: (_) => LandingContentProvider()),
       ChangeNotifierProvider(create: (_) => StudentHomeContentProvider()),
+      ChangeNotifierProvider(create: (_) => StudentHomeSlotsProvider()),
       ChangeNotifierProvider(create: (_) => StudentOffersProvider()),
       ChangeNotifierProvider(create: (_) => HomeFormationsProvider()),
       ChangeNotifierProvider(create: (_) => StudentOpportunitiesProvider()),
@@ -160,6 +163,7 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => AdminApplicationMessagesProvider()),
       ChangeNotifierProvider(create: (_) => AdminProgramsProvider()),
       ChangeNotifierProvider(create: (_) => AdminOpportunitiesProvider()),
+      ChangeNotifierProvider(create: (_) => AdminStudentHomeSlotsProvider()),
       ChangeNotifierProvider(create: (_) => AdminCommunitiesProvider()),
       ChangeNotifierProvider(create: (_) => AdminChallengesProvider()),
       ChangeNotifierProvider(create: (_) => AdminPrepConcoursProvider()),

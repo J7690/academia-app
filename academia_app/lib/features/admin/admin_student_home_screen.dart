@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/student_home_content_provider.dart';
+import '../../providers/admin_student_home_slots_provider.dart';
 import '../../services/hero_render_service.dart';
 import '../../services/videoasset_upload_service.dart';
 import 'hero_studio_models.dart';
@@ -26,6 +27,7 @@ class _AdminStudentHomeScreenState extends State<AdminStudentHomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<StudentHomeContentProvider>().loadAdminStudentHomeContent();
+      context.read<AdminStudentHomeSlotsProvider>().loadSlots();
       _loadHeroPlaylist();
     });
   }
@@ -679,10 +681,216 @@ class _AdminStudentHomeScreenState extends State<AdminStudentHomeScreen> {
     );
   }
 
+  Future<void> _showSlotDialog(
+    AdminStudentHomeSlotsProvider slotsProvider, {
+    Map<String, dynamic>? existing,
+  }) async {
+    final domainOptions = const [
+      'program',
+      'short_training_session',
+      'online_course',
+      'opportunity',
+    ];
+
+    String domain = existing != null
+        ? (existing['domain']?.toString() ?? 'short_training_session')
+        : 'short_training_session';
+    final objectIdController = TextEditingController(
+      text: existing?['object_id']?.toString() ?? '',
+    );
+    final slotNameController = TextEditingController(
+      text: existing?['slot']?.toString() ?? '',
+    );
+    final sortOrderController = TextEditingController(
+      text: existing?['sort_order']?.toString() ?? '',
+    );
+    bool isActive = existing == null || existing['is_active'] != false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Text(
+                existing == null
+                    ? "Nouveau slot d'accueil étudiant"
+                    : "Modifier le slot d'accueil",
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      value: domainOptions.contains(domain)
+                          ? domain
+                          : 'short_training_session',
+                      decoration: const InputDecoration(
+                        labelText: 'Type de contenu',
+                      ),
+                      items: domainOptions
+                          .map(
+                            (d) => DropdownMenuItem<String>(
+                              value: d,
+                              child: Text(d),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setStateDialog(() {
+                          domain = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: objectIdController,
+                      decoration: const InputDecoration(
+                        labelText: 'ID de l\'objet (UUID)',
+                        hintText:
+                            'Coller ici l\'ID du programme, de la session, du cours en ligne ou de l\'opportunité',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: slotNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nom du slot',
+                        hintText:
+                            'Ex: mobile_row_short_trainings, mobile_row_online_courses, desktop_short_trainings... ',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: sortOrderController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Ordre (optionnel)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Text('Actif'),
+                        const Spacer(),
+                        Switch(
+                          value: isActive,
+                          onChanged: (v) {
+                            setStateDialog(() {
+                              isActive = v;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Annuler'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final objectId = objectIdController.text.trim();
+                    final slotName = slotNameController.text.trim();
+                    final sortOrderText = sortOrderController.text.trim();
+                    final sortOrder =
+                        sortOrderText.isEmpty ? null : int.tryParse(sortOrderText);
+
+                    if (objectId.isEmpty || slotName.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Merci de renseigner au minimum le type, l\'ID objet et le nom de slot.',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+
+                    final ok = await slotsProvider.upsertSlot(
+                      slotId: existing?['id']?.toString(),
+                      domain: domain,
+                      objectId: objectId,
+                      slot: slotName,
+                      sortOrder: sortOrder,
+                      isActive: isActive,
+                    );
+                    if (!mounted) return;
+                    if (ok) {
+                      Navigator.of(dialogContext).pop();
+                    } else if (slotsProvider.error != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(slotsProvider.error!),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Enregistrer'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmDeleteSlot(
+    AdminStudentHomeSlotsProvider slotsProvider,
+    Map<String, dynamic> slot,
+  ) async {
+    final slotId = slot['id']?.toString() ?? '';
+    if (slotId.isEmpty) {
+      return;
+    }
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Supprimer ce slot ?'),
+          content: const Text(
+            'Cette action supprimera ce slot d\'accueil étudiant. Les offres resteront inchangées.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Supprimer'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) {
+      return;
+    }
+
+    final ok = await slotsProvider.deleteSlot(slotId);
+    if (!mounted) return;
+    if (!ok && slotsProvider.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(slotsProvider.error!),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Consumer<StudentHomeContentProvider>(
-      builder: (context, provider, child) {
+    return Consumer2<StudentHomeContentProvider, AdminStudentHomeSlotsProvider>(
+      builder: (context, provider, slotsProvider, child) {
         return Scaffold(
           backgroundColor: const Color(0xFFF3F4F6),
           appBar: AppBar(
@@ -709,7 +917,8 @@ class _AdminStudentHomeScreenState extends State<AdminStudentHomeScreen> {
           ),
           body: provider.isLoading &&
                   _heroItems.isEmpty &&
-                  provider.announcements.isEmpty
+                  provider.announcements.isEmpty &&
+                  slotsProvider.slots.isEmpty
               ? const Center(child: CircularProgressIndicator())
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(16),

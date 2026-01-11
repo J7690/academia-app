@@ -169,23 +169,6 @@ serve(async (req) => {
         );
       }
 
-      try {
-        const redirectTo =
-          Deno.env.get('AUTH_REDIRECT_URL') ??
-          Deno.env.get('AUTH_PASSWORD_RESET_REDIRECT_URL') ??
-          undefined;
-
-        const { error: resetError } = await supabaseService.auth.resetPasswordForEmail(
-          email,
-          redirectTo ? { redirectTo } : undefined,
-        );
-        if (resetError) {
-          console.error('Error sending password reset email after admin promotion', resetError.message ?? resetError);
-        }
-      } catch (e) {
-        console.error('Unexpected error while sending password reset email after admin promotion', e);
-      }
-
       return new Response(
         JSON.stringify({ success: true, user_id: targetUserId, previous_role: currentRole, new_role: 'admin' }),
         { status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
@@ -251,23 +234,6 @@ serve(async (req) => {
         JSON.stringify({ error: 'promotion_failed' }),
         { status: 500, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
       );
-    }
-
-    try {
-      const redirectTo =
-        Deno.env.get('AUTH_REDIRECT_URL') ??
-        Deno.env.get('AUTH_PASSWORD_RESET_REDIRECT_URL') ??
-        undefined;
-
-      const { error: resetError2 } = await supabaseService.auth.resetPasswordForEmail(
-        email,
-        redirectTo ? { redirectTo } : undefined,
-      );
-      if (resetError2) {
-        console.error('Error sending password reset email after university promotion', resetError2.message ?? resetError2);
-      }
-    } catch (e) {
-      console.error('Unexpected error while sending password reset email after university promotion', e);
     }
 
     return new Response(

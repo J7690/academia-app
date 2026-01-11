@@ -407,509 +407,659 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Comptes utilisateurs',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: usersProvider.isLoading
+                                      ? null
+                                      : () {
+                                          usersProvider.refresh();
+                                        },
+                                  icon: const Icon(Icons.refresh),
+                                  tooltip: 'Actualiser les comptes',
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            if (usersProvider.isLoading && users.isEmpty)
+                              const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              )
+                            else if (usersProvider.error != null)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                child: Text(
+                                  usersProvider.error!,
+                                  style: const TextStyle(color: Colors.red),
+                                ),
+                              )
+                            else if (users.isEmpty)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8),
+                                child: Text(
+                                  'Aucun compte utilisateur détecté pour le moment.',
+                                  style: TextStyle(fontSize: 13),
+                                ),
+                              )
+                            else
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final minWidth = constraints.maxWidth < 700
+                                      ? 700.0
+                                      : constraints.maxWidth;
+
+                                  return SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        minWidth: minWidth,
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          const SizedBox(height: 4),
+                                          ...users.map((user) {
+                                            final email = user['email']?.toString() ?? '';
+                                            final role = user['role']?.toString() ?? '';
+                                            final fullName = user['full_name']?.toString();
+                                            final createdAt =
+                                                user['created_at']?.toString() ?? '';
+                                            final lastActivity =
+                                                user['last_activity_at']?.toString() ?? '';
+                                            final isOnline = user['is_online'] == true;
+                                            final isSuspended =
+                                                user['is_suspended'] == true;
+                                            final suspendedReason =
+                                                user['suspended_reason']?.toString();
+                                            final isDeleted = user['is_deleted'] == true;
+                                            final deletedReason =
+                                                user['deleted_reason']?.toString();
+                                            final title =
+                                                (fullName != null && fullName.isNotEmpty)
+                                                    ? fullName
+                                                    : email;
+
+                                            return ListTile(
+                                              contentPadding: EdgeInsets.zero,
+                                              leading: Icon(
+                                                Icons.circle,
+                                                size: 10,
+                                                color: isOnline
+                                                    ? const Color(0xFF16A34A)
+                                                    : Colors.grey,
+                                              ),
+                                              title: Text(title),
+                                              subtitle: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  if (email.isNotEmpty)
+                                                    Text(
+                                                      email,
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                  Text(
+                                                    'Rôle : ${role.isEmpty ? '–' : role}',
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    isDeleted
+                                                        ? 'Compte : supprimé'
+                                                        : (isSuspended
+                                                            ? 'Compte : suspendu'
+                                                            : 'Compte : actif'),
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      color: isDeleted
+                                                          ? Colors.red
+                                                          : (isSuspended
+                                                              ? Colors.red
+                                                              : const Color(
+                                                                  0xFF16A34A,
+                                                                )),
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    isOnline
+                                                        ? 'Statut : en ligne'
+                                                        : 'Statut : hors ligne',
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      color: isOnline
+                                                          ? const Color(0xFF16A34A)
+                                                          : Colors.grey,
+                                                    ),
+                                                  ),
+                                                  if (createdAt.isNotEmpty)
+                                                    Text(
+                                                      'Créé le : $createdAt',
+                                                      style: const TextStyle(
+                                                        fontSize: 11,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
+                                                  if (lastActivity.isNotEmpty)
+                                                    Text(
+                                                      'Dernière activité : $lastActivity',
+                                                      style: const TextStyle(
+                                                        fontSize: 11,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
+                                                  if (isSuspended &&
+                                                      suspendedReason != null &&
+                                                      suspendedReason.isNotEmpty)
+                                                    Text(
+                                                      'Raison suspension : $suspendedReason',
+                                                      style: const TextStyle(
+                                                        fontSize: 11,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
+                                                  if (isDeleted &&
+                                                      deletedReason != null &&
+                                                      deletedReason.isNotEmpty)
+                                                    Text(
+                                                      'Raison suppression : $deletedReason',
+                                                      style: const TextStyle(
+                                                        fontSize: 11,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                              trailing: Wrap(
+                                                spacing: 8,
+                                                children: [
+                                                  TextButton(
+                                                    onPressed: usersProvider
+                                                                .isUpdating ||
+                                                            isDeleted
+                                                        ? null
+                                                        : () async {
+                                                            final targetId =
+                                                                user['id']
+                                                                    ?.toString();
+                                                            if (targetId ==
+                                                                    null ||
+                                                                targetId
+                                                                    .isEmpty) {
+                                                              return;
+                                                            }
+
+                                                            final suspend =
+                                                                !isSuspended;
+                                                            final ok = await usersProvider
+                                                                .updateUserStatus(
+                                                              userId: targetId,
+                                                              suspend: suspend,
+                                                            );
+                                                            if (!context
+                                                                .mounted) {
+                                                              return;
+                                                            }
+                                                            if (!ok) {
+                                                              final error =
+                                                                  usersProvider
+                                                                          .error ??
+                                                                      'Action admin échouée.';
+                                                              ScaffoldMessenger
+                                                                      .of(context)
+                                                                  .showSnackBar(
+                                                                SnackBar(
+                                                                  content: Text(
+                                                                    error,
+                                                                  ),
+                                                                ),
+                                                              );
+                                                            } else {
+                                                              ScaffoldMessenger
+                                                                      .of(context)
+                                                                  .showSnackBar(
+                                                                SnackBar(
+                                                                  content: Text(
+                                                                    suspend
+                                                                        ? 'Compte suspendu.'
+                                                                        : 'Compte réactivé.',
+                                                                  ),
+                                                                ),
+                                                              );
+                                                            }
+                                                          },
+                                                    child: Text(
+                                                      isSuspended
+                                                          ? 'Réactiver'
+                                                          : 'Suspendre',
+                                                    ),
+                                                  ),
+                                                  if (!isDeleted &&
+                                                      role == 'student')
+                                                    TextButton(
+                                                      onPressed: usersProvider
+                                                              .isUpdating
+                                                          ? null
+                                                          : () async {
+                                                              final targetId =
+                                                                  user['id']
+                                                                      ?.toString();
+                                                              if (targetId ==
+                                                                      null ||
+                                                                  targetId
+                                                                      .isEmpty) {
+                                                                return;
+                                                              }
+                                                              await _promoteUserToAdmin(
+                                                                context,
+                                                                targetId,
+                                                              );
+                                                            },
+                                                      child: const Text(
+                                                        'Rendre admin',
+                                                      ),
+                                                    ),
+                                                  if (!isDeleted &&
+                                                      role == 'student')
+                                                    TextButton(
+                                                      onPressed: usersProvider
+                                                              .isUpdating
+                                                          ? null
+                                                          : () async {
+                                                              final targetId =
+                                                                  user['id']
+                                                                      ?.toString();
+                                                              if (targetId ==
+                                                                      null ||
+                                                                  targetId
+                                                                      .isEmpty) {
+                                                                return;
+                                                              }
+                                                              await _promoteUserToUniversity(
+                                                                context,
+                                                                targetId,
+                                                              );
+                                                            },
+                                                      child: const Text(
+                                                        'Rendre université',
+                                                      ),
+                                                    ),
+                                                  TextButton(
+                                                    onPressed: usersProvider
+                                                                .isUpdating ||
+                                                            isDeleted
+                                                        ? null
+                                                        : () async {
+                                                            final targetId =
+                                                                user['id']
+                                                                    ?.toString();
+                                                            if (targetId ==
+                                                                    null ||
+                                                                targetId
+                                                                    .isEmpty) {
+                                                              return;
+                                                            }
+                                                            if (!context
+                                                                .mounted) {
+                                                              return;
+                                                            }
+
+                                                            final confirm =
+                                                                await showDialog<
+                                                                    bool>(
+                                                              context: context,
+                                                              builder:
+                                                                  (dialogContext) {
+                                                                return AlertDialog(
+                                                                  title:
+                                                                      const Text(
+                                                                    'Supprimer le compte utilisateur',
+                                                                  ),
+                                                                  content:
+                                                                      const Text(
+                                                                    'Cette action marque le compte comme supprimé et suspend l\'accès. Voulez-vous continuer ?',
+                                                                  ),
+                                                                  actions: [
+                                                                    TextButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        Navigator.of(
+                                                                                dialogContext)
+                                                                            .pop(
+                                                                          false,
+                                                                        );
+                                                                      },
+                                                                      child:
+                                                                          const Text(
+                                                                        'Annuler',
+                                                                      ),
+                                                                    ),
+                                                                    TextButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        Navigator.of(
+                                                                                dialogContext)
+                                                                            .pop(
+                                                                          true,
+                                                                        );
+                                                                      },
+                                                                      child:
+                                                                          const Text(
+                                                                        'Supprimer',
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                );
+                                                              },
+                                                            );
+
+                                                            if (confirm !=
+                                                                true) {
+                                                              return;
+                                                            }
+
+                                                            final ok = await usersProvider
+                                                                .deleteUserAccount(
+                                                              userId: targetId,
+                                                            );
+                                                            if (!context
+                                                                .mounted) {
+                                                              return;
+                                                            }
+                                                            if (!ok) {
+                                                              final error =
+                                                                  usersProvider
+                                                                          .error ??
+                                                                      'Suppression du compte échouée.';
+                                                              ScaffoldMessenger
+                                                                      .of(context)
+                                                                  .showSnackBar(
+                                                                SnackBar(
+                                                                  content: Text(
+                                                                    error,
+                                                                  ),
+                                                                ),
+                                                              );
+                                                            } else {
+                                                              ScaffoldMessenger
+                                                                      .of(context)
+                                                                  .showSnackBar(
+                                                                const SnackBar(
+                                                                  content: Text(
+                                                                    'Compte utilisateur supprimé.',
+                                                                  ),
+                                                                ),
+                                                              );
+                                                            }
+                                                          },
+                                                    child: const Text(
+                                                      'Supprimer',
+                                                    ),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () async {
+                                                      final targetId =
+                                                          user['id']
+                                                              ?.toString();
+                                                      if (targetId == null ||
+                                                          targetId.isEmpty) {
+                                                        return;
+                                                      }
+                                                      if (!context.mounted) {
+                                                        return;
+                                                      }
+
+                                                      showDialog(
+                                                        context: context,
+                                                        builder:
+                                                            (dialogContext) {
+                                                          return AlertDialog(
+                                                            title:
+                                                                const Text(
+                                                              'Historique des actions',
+                                                            ),
+                                                            content: FutureBuilder<
+                                                                List<
+                                                                    Map<String,
+                                                                        dynamic>>>(
+                                                              future: usersProvider
+                                                                  .fetchUserActionLogs(
+                                                                targetId,
+                                                              ),
+                                                              builder: (context,
+                                                                  snapshot) {
+                                                                if (snapshot
+                                                                        .connectionState ==
+                                                                    ConnectionState
+                                                                        .waiting) {
+                                                                  return const SizedBox(
+                                                                    height: 60,
+                                                                    child: Center(
+                                                                      child:
+                                                                          CircularProgressIndicator(
+                                                                        strokeWidth:
+                                                                            2,
+                                                                      ),
+                                                                    ),
+                                                                  );
+                                                                }
+                                                                if (snapshot
+                                                                    .hasError) {
+                                                                  return Text(
+                                                                    snapshot.error?.toString() ??
+                                                                        'Erreur lors du chargement de l\'historique.',
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      color: Colors
+                                                                          .red,
+                                                                    ),
+                                                                  );
+                                                                }
+
+                                                                final logs =
+                                                                    snapshot.data ??
+                                                                        const [];
+                                                                if (logs
+                                                                    .isEmpty) {
+                                                                  return const Text(
+                                                                    'Aucune action admin enregistrée pour ce compte.',
+                                                                    style: TextStyle(
+                                                                      fontSize:
+                                                                          13,
+                                                                    ),
+                                                                  );
+                                                                }
+
+                                                                return SizedBox(
+                                                                  width: 400,
+                                                                  height: 240,
+                                                                  child:
+                                                                      ListView.builder(
+                                                                    itemCount:
+                                                                        logs.length,
+                                                                    itemBuilder:
+                                                                        (context,
+                                                                            index) {
+                                                                      final log =
+                                                                          logs[index];
+                                                                      final action =
+                                                                          log['action']
+                                                                                  ?.toString() ??
+                                                                              '';
+                                                                      final reason =
+                                                                          log['reason']
+                                                                                  ?.toString() ??
+                                                                              '';
+                                                                      final createdAt =
+                                                                          log['created_at']
+                                                                                  ?.toString() ??
+                                                                              '';
+                                                                      return ListTile(
+                                                                        contentPadding:
+                                                                            EdgeInsets.zero,
+                                                                        title:
+                                                                            Text(
+                                                                          'Action : $action',
+                                                                          style:
+                                                                              const TextStyle(
+                                                                            fontSize:
+                                                                                13,
+                                                                          ),
+                                                                        ),
+                                                                        subtitle:
+                                                                            Column(
+                                                                          crossAxisAlignment:
+                                                                              CrossAxisAlignment.start,
+                                                                          children:
+                                                                              [
+                                                                            if (reason
+                                                                                .isNotEmpty)
+                                                                              Text(
+                                                                                'Raison : $reason',
+                                                                                style:
+                                                                                    const TextStyle(
+                                                                                  fontSize:
+                                                                                      12,
+                                                                                ),
+                                                                              ),
+                                                                            if (createdAt
+                                                                                .isNotEmpty)
+                                                                              Text(
+                                                                                'Le : $createdAt',
+                                                                                style:
+                                                                                    const TextStyle(
+                                                                                  fontSize:
+                                                                                      11,
+                                                                                  color:
+                                                                                      Colors.grey,
+                                                                                ),
+                                                                              ),
+                                                                          ],
+                                                                        ),
+                                                                      );
+                                                                    },
+                                                                  ),
+                                                                );
+                                                              },
+                                                            ),
+                                                            actions: [
+                                                              TextButton(
+                                                                onPressed: () {
+                                                                  Navigator.of(
+                                                                          dialogContext)
+                                                                      .pop();
+                                                                },
+                                                                child:
+                                                                    const Text(
+                                                                  'Fermer',
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          );
+                                                        },
+                                                      );
+                                                    },
+                                                    child: const Text(
+                                                      'Historique',
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Comptes utilisateurs',
+                              'Créer un compte université',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            IconButton(
-                              onPressed: usersProvider.isLoading
-                                  ? null
-                                  : () {
-                                      usersProvider.refresh();
-                                    },
-                              icon: const Icon(Icons.refresh),
-                              tooltip: 'Actualiser les comptes',
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _universityEmailController,
+                              decoration: const InputDecoration(
+                                labelText: 'Email du compte université',
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _universityPasswordController,
+                              decoration: const InputDecoration(
+                                labelText: 'Mot de passe temporaire',
+                              ),
+                              obscureText: true,
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _universityNameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Nom de l\'université',
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 44,
+                              child: ElevatedButton(
+                                onPressed: isSaving
+                                    ? null
+                                    : () => _createUniversityAccountDirect(
+                                          context,
+                                        ),
+                                child: isSaving
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text('Créer le compte université'),
+                              ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        if (usersProvider.isLoading && users.isEmpty)
-                          const Center(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: 12),
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          )
-                        else if (usersProvider.error != null)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Text(
-                              usersProvider.error!,
-                              style: const TextStyle(color: Colors.red),
-                            ),
-                          )
-                        else if (users.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8),
-                            child: Text(
-                              'Aucun compte utilisateur détecté pour le moment.',
-                              style: TextStyle(fontSize: 13),
-                            ),
-                          )
-                        else ...[
-                          const SizedBox(height: 4),
-                          ...users.map((user) {
-                            final email = user['email']?.toString() ?? '';
-                            final role = user['role']?.toString() ?? '';
-                            final fullName = user['full_name']?.toString();
-                            final createdAt =
-                                user['created_at']?.toString() ?? '';
-                            final lastActivity =
-                                user['last_activity_at']?.toString() ?? '';
-                            final isOnline = user['is_online'] == true;
-                            final isSuspended = user['is_suspended'] == true;
-                            final suspendedReason =
-                                user['suspended_reason']?.toString();
-                            final isDeleted = user['is_deleted'] == true;
-                            final deletedReason =
-                                user['deleted_reason']?.toString();
-                            final title =
-                                (fullName != null && fullName.isNotEmpty)
-                                    ? fullName
-                                    : email;
-                            return ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              leading: Icon(
-                                Icons.circle,
-                                size: 10,
-                                color:
-                                    isOnline ? const Color(0xFF16A34A) : Colors.grey,
-                              ),
-                              title: Text(title),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (email.isNotEmpty)
-                                    Text(
-                                      email,
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  Text(
-                                    'Rôle : ${role.isEmpty ? '–' : role}',
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                  Text(
-                                    isDeleted
-                                        ? 'Compte : supprimé'
-                                        : (isSuspended
-                                            ? 'Compte : suspendu'
-                                            : 'Compte : actif'),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: isDeleted
-                                          ? Colors.red
-                                          : (isSuspended
-                                              ? Colors.red
-                                              : const Color(0xFF16A34A)),
-                                    ),
-                                  ),
-                                  Text(
-                                    isOnline ? 'Statut : en ligne' : 'Statut : hors ligne',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: isOnline
-                                          ? const Color(0xFF16A34A)
-                                          : Colors.grey,
-                                    ),
-                                  ),
-                                  if (createdAt.isNotEmpty)
-                                    Text(
-                                      'Créé le : $createdAt',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  if (lastActivity.isNotEmpty)
-                                    Text(
-                                      'Dernière activité : $lastActivity',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  if (isSuspended &&
-                                      suspendedReason != null &&
-                                      suspendedReason.isNotEmpty)
-                                    Text(
-                                      'Raison suspension : $suspendedReason',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  if (isDeleted &&
-                                      deletedReason != null &&
-                                      deletedReason.isNotEmpty)
-                                    Text(
-                                      'Raison suppression : $deletedReason',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              trailing: Wrap(
-                                spacing: 8,
-                                children: [
-                                  TextButton(
-                                    onPressed: usersProvider.isUpdating || isDeleted
-                                        ? null
-                                        : () async {
-                                            final targetId =
-                                                user['id']?.toString();
-                                            if (targetId == null ||
-                                                targetId.isEmpty) {
-                                              return;
-                                            }
-                                            final suspend = !isSuspended;
-                                            final ok = await usersProvider
-                                                .updateUserStatus(
-                                              userId: targetId,
-                                              suspend: suspend,
-                                            );
-                                            if (!context.mounted) return;
-                                            if (!ok) {
-                                              final error = usersProvider
-                                                      .error ??
-                                                  'Action admin échouée.';
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                SnackBar(
-                                                  content: Text(error),
-                                                ),
-                                              );
-                                            } else {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    suspend
-                                                        ? 'Compte suspendu.'
-                                                        : 'Compte réactivé.',
-                                                  ),
-                                                ),
-                                              );
-                                            }
-                                          },
-                                    child: Text(
-                                      isSuspended
-                                          ? 'Réactiver'
-                                          : 'Suspendre',
-                                    ),
-                                  ),
-                                  if (!isDeleted && role == 'student')
-                                    TextButton(
-                                      onPressed: usersProvider.isUpdating
-                                          ? null
-                                          : () async {
-                                              final targetId =
-                                                  user['id']?.toString();
-                                              if (targetId == null ||
-                                                  targetId.isEmpty) {
-                                                return;
-                                              }
-                                              await _promoteUserToAdmin(
-                                                context,
-                                                targetId,
-                                              );
-                                            },
-                                      child: const Text('Rendre admin'),
-                                    ),
-                                  if (!isDeleted && role == 'student')
-                                    TextButton(
-                                      onPressed: usersProvider.isUpdating
-                                          ? null
-                                          : () async {
-                                              final targetId =
-                                                  user['id']?.toString();
-                                              if (targetId == null ||
-                                                  targetId.isEmpty) {
-                                                return;
-                                              }
-                                              await _promoteUserToUniversity(
-                                                context,
-                                                targetId,
-                                              );
-                                            },
-                                      child: const Text('Rendre université'),
-                                    ),
-                                  TextButton(
-                                    onPressed: usersProvider.isUpdating || isDeleted
-                                        ? null
-                                        : () async {
-                                            final targetId =
-                                                user['id']?.toString();
-                                            if (targetId == null ||
-                                                targetId.isEmpty) {
-                                              return;
-                                            }
-                                            if (!context.mounted) {
-                                              return;
-                                            }
-                                            final confirm = await showDialog<bool>(
-                                              context: context,
-                                              builder: (dialogContext) {
-                                                return AlertDialog(
-                                                  title: const Text('Supprimer le compte utilisateur'),
-                                                  content: const Text(
-                                                    'Cette action marque le compte comme supprimé et suspend l\'accès. Voulez-vous continuer ?',
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        Navigator.of(dialogContext).pop(false);
-                                                      },
-                                                      child: const Text('Annuler'),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        Navigator.of(dialogContext).pop(true);
-                                                      },
-                                                      child: const Text('Supprimer'),
-                                                    ),
-                                                  ],
-                                                );
-                                              },
-                                            );
-                                            if (confirm != true) {
-                                              return;
-                                            }
-                                            final ok = await usersProvider.deleteUserAccount(
-                                              userId: targetId,
-                                            );
-                                            if (!context.mounted) return;
-                                            if (!ok) {
-                                              final error = usersProvider.error ??
-                                                  'Suppression du compte échouée.';
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  content: Text(error),
-                                                ),
-                                              );
-                                            } else {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text('Compte utilisateur supprimé.'),
-                                                ),
-                                              );
-                                            }
-                                          },
-                                    child: const Text('Supprimer'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () async {
-                                      final targetId =
-                                          user['id']?.toString();
-                                      if (targetId == null ||
-                                          targetId.isEmpty) {
-                                        return;
-                                      }
-                                      if (!context.mounted) return;
-                                      showDialog(
-                                        context: context,
-                                        builder: (dialogContext) {
-                                          return AlertDialog(
-                                            title: const Text(
-                                                'Historique des actions'),
-                                            content: FutureBuilder<
-                                                List<Map<String, dynamic>>>(
-                                              future:
-                                                  usersProvider.fetchUserActionLogs(
-                                                targetId,
-                                              ),
-                                              builder: (context, snapshot) {
-                                                if (snapshot.connectionState ==
-                                                    ConnectionState.waiting) {
-                                                  return const SizedBox(
-                                                    height: 60,
-                                                    child: Center(
-                                                      child:
-                                                          CircularProgressIndicator(
-                                                        strokeWidth: 2,
-                                                      ),
-                                                    ),
-                                                  );
-                                                }
-                                                if (snapshot.hasError) {
-                                                  return Text(
-                                                    snapshot.error
-                                                            ?.toString() ??
-                                                        'Erreur lors du chargement de l\'historique.',
-                                                    style: const TextStyle(
-                                                      color: Colors.red,
-                                                    ),
-                                                  );
-                                                }
-                                                final logs =
-                                                    snapshot.data ?? const [];
-                                                if (logs.isEmpty) {
-                                                  return const Text(
-                                                    'Aucune action admin enregistrée pour ce compte.',
-                                                    style: TextStyle(
-                                                      fontSize: 13,
-                                                    ),
-                                                  );
-                                                }
-                                                return SizedBox(
-                                                  width: 400,
-                                                  height: 240,
-                                                  child: ListView.builder(
-                                                    itemCount: logs.length,
-                                                    itemBuilder:
-                                                        (context, index) {
-                                                      final log = logs[index];
-                                                      final action = log['action']
-                                                              ?.toString() ??
-                                                          '';
-                                                      final reason = log['reason']
-                                                              ?.toString() ??
-                                                          '';
-                                                      final createdAt = log[
-                                                                  'created_at']
-                                                              ?.toString() ??
-                                                          '';
-                                                      return ListTile(
-                                                        contentPadding:
-                                                            EdgeInsets.zero,
-                                                        title: Text(
-                                                          'Action : $action',
-                                                          style:
-                                                              const TextStyle(
-                                                            fontSize: 13,
-                                                          ),
-                                                        ),
-                                                        subtitle: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            if (reason
-                                                                .isNotEmpty)
-                                                              Text(
-                                                                'Raison : $reason',
-                                                                style:
-                                                                    const TextStyle(
-                                                                  fontSize: 12,
-                                                                ),
-                                                              ),
-                                                            if (createdAt
-                                                                .isNotEmpty)
-                                                              Text(
-                                                                'Le : $createdAt',
-                                                                style:
-                                                                    const TextStyle(
-                                                                  fontSize: 11,
-                                                                  color: Colors
-                                                                      .grey,
-                                                                ),
-                                                              ),
-                                                          ],
-                                                        ),
-                                                      );
-                                                    },
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () {
-                                                  Navigator.of(dialogContext)
-                                                      .pop();
-                                                },
-                                                child: const Text('Fermer'),
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    },
-                                    child: const Text('Historique'),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }),
-                        ],
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Créer un compte université',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _universityEmailController,
-                          decoration: const InputDecoration(
-                            labelText: 'Email du compte université',
-                          ),
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _universityPasswordController,
-                          decoration: const InputDecoration(
-                            labelText: 'Mot de passe temporaire',
-                          ),
-                          obscureText: true,
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _universityNameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Nom de l\'université',
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 44,
-                          child: ElevatedButton(
-                            onPressed: isSaving
-                                ? null
-                                : () => _createUniversityAccountDirect(context),
-                            child: isSaving
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text('Créer le compte université'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Card(

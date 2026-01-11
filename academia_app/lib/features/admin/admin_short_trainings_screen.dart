@@ -615,13 +615,30 @@ class _AdminShortTrainingsScreenState extends State<AdminShortTrainingsScreen> {
                                   subtitleParts.join(' · '),
                                   style: const TextStyle(fontSize: 12),
                                 ),
-                                trailing: TextButton(
-                                  onPressed: sessionId.isEmpty
-                                      ? null
-                                      : () {
-                                          _openRegistrationsDialog(sessionId);
-                                        },
-                                  child: const Text('Inscriptions'),
+                                trailing: Wrap(
+                                  spacing: 8,
+                                  children: [
+                                    TextButton(
+                                      onPressed: sessionId.isEmpty
+                                          ? null
+                                          : () {
+                                              _openRegistrationsDialog(sessionId);
+                                            },
+                                      child: const Text('Inscriptions'),
+                                    ),
+                                    TextButton(
+                                      onPressed: trainingId.isEmpty
+                                          ? null
+                                          : () {
+                                              Navigator.of(sheetContext).pop();
+                                              _openSessionDialog(
+                                                trainingId,
+                                                session: s,
+                                              );
+                                            },
+                                      child: const Text('Modifier'),
+                                    ),
+                                  ],
                                 ),
                               ),
                             );
@@ -636,14 +653,26 @@ class _AdminShortTrainingsScreenState extends State<AdminShortTrainingsScreen> {
     );
   }
 
-  Future<void> _openSessionDialog(String trainingId) async {
+  Future<void> _openSessionDialog(
+    String trainingId, {
+    Map<String, dynamic>? session,
+  }) async {
     final provider = context.read<AdminShortTrainingsProvider>();
-    final startAtController = TextEditingController();
-    final endAtController = TextEditingController();
-    final locationController = TextEditingController();
-    final capacityController = TextEditingController();
-    String status = 'open';
-    bool isActive = true;
+    final startAtController = TextEditingController(
+      text: session?['start_at']?.toString() ?? '',
+    );
+    final endAtController = TextEditingController(
+      text: session?['end_at']?.toString() ?? '',
+    );
+    final locationController = TextEditingController(
+      text: session?['location']?.toString() ?? '',
+    );
+    final capacityController = TextEditingController(
+      text: session?['capacity']?.toString() ?? '',
+    );
+    String status = session?['status']?.toString() ?? 'open';
+    bool isActive = session == null ? true : session['is_active'] != false;
+    final String? sessionId = session?['id']?.toString();
 
     await showDialog<void>(
       context: context,
@@ -651,7 +680,7 @@ class _AdminShortTrainingsScreenState extends State<AdminShortTrainingsScreen> {
         return StatefulBuilder(
           builder: (dialogContext, setStateDialog) {
             return AlertDialog(
-              title: const Text('Nouvelle session'),
+              title: Text(sessionId == null ? 'Nouvelle session' : 'Modifier la session'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -779,6 +808,7 @@ class _AdminShortTrainingsScreenState extends State<AdminShortTrainingsScreen> {
                         : int.tryParse(capacityText);
 
                     final ok = await provider.upsertSession(
+                      sessionId: sessionId,
                       trainingId: trainingId,
                       startAt: startAt,
                       endAt: endAt,
@@ -918,15 +948,25 @@ class _AdminShortTrainingsScreenState extends State<AdminShortTrainingsScreen> {
                                   style: const TextStyle(fontSize: 12),
                                 ),
                               const SizedBox(height: 8),
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: TextButton.icon(
-                                  onPressed: () {
-                                    _openSessionsSheet(training);
-                                  },
-                                  icon: const Icon(Icons.event),
-                                  label: Text('Sessions (${sessions.length})'),
-                                ),
+                              Row(
+                                children: [
+                                  TextButton.icon(
+                                    onPressed: () {
+                                      _openTrainingDialog(training: training);
+                                    },
+                                    icon: const Icon(Icons.edit),
+                                    label: const Text('Modifier la formation'),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  TextButton.icon(
+                                    onPressed: () {
+                                      _openSessionsSheet(training);
+                                    },
+                                    icon: const Icon(Icons.event),
+                                    label:
+                                        Text('Sessions (${sessions.length})'),
+                                  ),
+                                ],
                               ),
                             ],
                           ),

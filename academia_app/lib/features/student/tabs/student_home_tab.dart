@@ -15,6 +15,7 @@ import '../../../providers/student_profile_provider.dart';
 import '../../../providers/student_offers_provider.dart';
 import '../../../providers/student_applications_provider.dart';
 import '../../../providers/student_home_content_provider.dart';
+import '../../../providers/student_home_slots_provider.dart';
 import '../../../providers/online_courses_catalog_provider.dart';
 import '../../../providers/student_online_courses_provider.dart';
 import '../../../widgets/loading_widget.dart';
@@ -130,6 +131,11 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
       } catch (_) {}
       try {
         await context.read<StudentOnlineCoursesProvider>().loadMyCourses();
+      } catch (_) {}
+      try {
+        final slotsProvider = context.read<StudentHomeSlotsProvider>();
+        await slotsProvider.loadSlotItems('desktop_short_trainings');
+        await slotsProvider.loadSlotItems('desktop_online_courses');
       } catch (_) {}
 
       if (!mounted) return;
