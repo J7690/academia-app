@@ -764,9 +764,9 @@ class _MobileShortTrainingsRowState extends State<_MobileShortTrainingsRow> {
       if (maxScroll <= 0) return;
 
       final current = _controller.offset;
-      double next = current - _step;
-      if (next <= 0) {
-        next = maxScroll;
+      double next = current + _step;
+      if (next >= maxScroll) {
+        next = 0;
       }
 
       _controller.animateTo(
@@ -853,6 +853,22 @@ class _MobileShortTrainingsRowState extends State<_MobileShortTrainingsRow> {
 
         final effectiveItemCount = items.length * 10;
 
+        bool hasRichContent = items.any((session) {
+          final title = (session['title'] ?? '').toString();
+          final category = (session['category'] ?? '').toString();
+          final modality = (session['modality'] ?? '').toString();
+          final location = (session['location'] ?? '').toString();
+          final startAt = (session['start_at'] ?? '').toString();
+          final totalLength = title.length +
+              category.length +
+              modality.length +
+              location.length +
+              startAt.length;
+          return totalLength > 80;
+        });
+        final bool compact = !hasRichContent;
+        final double rowHeight = compact ? 115 : 130;
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -868,7 +884,7 @@ class _MobileShortTrainingsRowState extends State<_MobileShortTrainingsRow> {
             ),
             const SizedBox(height: 8),
             SizedBox(
-              height: 130,
+              height: rowHeight,
               child: ListView.builder(
                 controller: _controller,
                 scrollDirection: Axis.horizontal,
@@ -882,7 +898,10 @@ class _MobileShortTrainingsRowState extends State<_MobileShortTrainingsRow> {
                   final isLast = index == effectiveItemCount - 1;
                   return Padding(
                     padding: EdgeInsets.only(right: isLast ? 0 : 12),
-                    child: _ShortTrainingMobileCard(session: session),
+                    child: _ShortTrainingMobileCard(
+                      session: session,
+                      compact: compact,
+                    ),
                   );
                 },
               ),
@@ -896,8 +915,12 @@ class _MobileShortTrainingsRowState extends State<_MobileShortTrainingsRow> {
 
 class _ShortTrainingMobileCard extends StatelessWidget {
   final Map<String, dynamic> session;
+  final bool compact;
 
-  const _ShortTrainingMobileCard({required this.session});
+  const _ShortTrainingMobileCard({
+    required this.session,
+    this.compact = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -928,11 +951,11 @@ class _ShortTrainingMobileCard extends StatelessWidget {
     final metaText = metaParts.take(3).join(' • ');
 
     final screenWidth = MediaQuery.of(context).size.width;
-    double cardWidth = screenWidth * 0.68;
-    if (cardWidth < 200) {
-      cardWidth = 200;
-    } else if (cardWidth > 320) {
-      cardWidth = 320;
+    double cardWidth = screenWidth * (compact ? 0.60 : 0.68);
+    if (cardWidth < (compact ? 180 : 200)) {
+      cardWidth = compact ? 180 : 200;
+    } else if (cardWidth > (compact ? 280 : 320)) {
+      cardWidth = compact ? 280 : 320;
     }
 
     return SizedBox(
@@ -967,9 +990,9 @@ class _ShortTrainingMobileCard extends StatelessWidget {
               ),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: 12,
-                    vertical: 10,
+                    vertical: compact ? 8 : 10,
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1072,9 +1095,9 @@ class _MobileOnlineCoursesRowState extends State<_MobileOnlineCoursesRow> {
       if (maxScroll <= 0) return;
 
       final current = _controller.offset;
-      double next = current + _step;
-      if (next >= maxScroll) {
-        next = 0;
+      double next = current - _step;
+      if (next <= 0) {
+        next = maxScroll;
       }
 
       _controller.animateTo(
@@ -1166,6 +1189,21 @@ class _MobileOnlineCoursesRowState extends State<_MobileOnlineCoursesRow> {
 
         final effectiveItemCount = items.length * 10;
 
+        bool hasRichContent = items.any((course) {
+          final title = (course['title'] ?? '').toString();
+          final shortDescription =
+              (course['short_description'] ?? '').toString();
+          final category = (course['category'] ?? '').toString();
+          final level = (course['level'] ?? '').toString();
+          final totalLength = title.length +
+              shortDescription.length +
+              category.length +
+              level.length;
+          return totalLength > 100;
+        });
+        final bool compact = !hasRichContent;
+        final double rowHeight = compact ? 115 : 130;
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1200,6 +1238,7 @@ class _MobileOnlineCoursesRowState extends State<_MobileOnlineCoursesRow> {
                     child: _OnlineCourseMobileCard(
                       course: course,
                       alreadyEnrolled: alreadyEnrolled,
+                      compact: compact,
                     ),
                   );
                 },
@@ -1215,10 +1254,12 @@ class _MobileOnlineCoursesRowState extends State<_MobileOnlineCoursesRow> {
 class _OnlineCourseMobileCard extends StatelessWidget {
   final Map<String, dynamic> course;
   final bool alreadyEnrolled;
+  final bool compact;
 
   const _OnlineCourseMobileCard({
     required this.course,
     required this.alreadyEnrolled,
+    this.compact = false,
   });
 
   @override
@@ -1254,11 +1295,11 @@ class _OnlineCourseMobileCard extends StatelessWidget {
         (course['contact_website'] ?? '').toString().trim();
 
     final screenWidth = MediaQuery.of(context).size.width;
-    double cardWidth = screenWidth * 0.68;
-    if (cardWidth < 200) {
-      cardWidth = 200;
-    } else if (cardWidth > 320) {
-      cardWidth = 320;
+    double cardWidth = screenWidth * (compact ? 0.60 : 0.68);
+    if (cardWidth < (compact ? 180 : 200)) {
+      cardWidth = compact ? 180 : 200;
+    } else if (cardWidth > (compact ? 280 : 320)) {
+      cardWidth = compact ? 280 : 320;
     }
 
     return SizedBox(

@@ -457,15 +457,19 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                             else
                               LayoutBuilder(
                                 builder: (context, constraints) {
-                                  final minWidth = constraints.maxWidth < 700
-                                      ? 700.0
-                                      : constraints.maxWidth;
+                                  // Largeurs adaptatives :
+                                  // - Sur desktop / grands écrans : on garde la largeur disponible (table pleine largeur)
+                                  // - Sur mobile : on reste plus large que l'écran pour autoriser un scroll horizontal,
+                                  //   mais sans largeur fixe rigide de 700px.
+                                  final double maxWidth = constraints.maxWidth;
+                                  final double targetMinWidth =
+                                      maxWidth < 700 ? (maxWidth * 1.3) : maxWidth;
 
                                   return SingleChildScrollView(
                                     scrollDirection: Axis.horizontal,
                                     child: ConstrainedBox(
                                       constraints: BoxConstraints(
-                                        minWidth: minWidth,
+                                        minWidth: targetMinWidth,
                                       ),
                                       child: Column(
                                         children: [
