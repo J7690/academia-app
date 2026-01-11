@@ -467,10 +467,7 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
 
                                   return SingleChildScrollView(
                                     scrollDirection: Axis.horizontal,
-                                    child: ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                        minWidth: targetMinWidth,
-                                      ),
+                                    child: IntrinsicWidth(
                                       child: Column(
                                         children: [
                                           const SizedBox(height: 4),

@@ -958,6 +958,8 @@ class _ShortTrainingMobileCard extends StatelessWidget {
       cardWidth = compact ? 280 : 320;
     }
 
+    final bool isCompact = compact;
+
     return SizedBox(
       width: cardWidth,
       child: Card(
@@ -1076,31 +1078,53 @@ class _MobileOnlineCoursesRow extends StatefulWidget {
 }
 
 class _MobileOnlineCoursesRowState extends State<_MobileOnlineCoursesRow> {
-  final ScrollController _controller = ScrollController();
+  final ScrollController _topController = ScrollController();
+  final ScrollController _bottomController = ScrollController();
   static const double _step = 1.0;
   static const Duration _tick = Duration(milliseconds: 80);
   static const Duration _animDuration = Duration(milliseconds: 80);
-  Timer? _timer;
+  Timer? _topTimer;
+  Timer? _bottomTimer;
   static const String _prefsKeyOffset = 'student_home_online_courses_offset';
   bool _offsetRestored = false;
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(_tick, (_) {
-      if (!_controller.hasClients) return;
-      final position = _controller.position;
+    _topTimer = Timer.periodic(_tick, (_) {
+      if (!_topController.hasClients) return;
+      final position = _topController.position;
       if (!position.haveDimensions) return;
       final maxScroll = position.maxScrollExtent;
       if (maxScroll <= 0) return;
 
-      final current = _controller.offset;
+      final current = _topController.offset;
       double next = current - _step;
       if (next <= 0) {
         next = maxScroll;
       }
 
-      _controller.animateTo(
+      _topController.animateTo(
+        next,
+        duration: _animDuration,
+        curve: Curves.linear,
+      );
+    });
+
+    _bottomTimer = Timer.periodic(_tick, (_) {
+      if (!_bottomController.hasClients) return;
+      final position = _bottomController.position;
+      if (!position.haveDimensions) return;
+      final maxScroll = position.maxScrollExtent;
+      if (maxScroll <= 0) return;
+
+      final current = _bottomController.offset;
+      double next = current + _step;
+      if (next >= maxScroll) {
+        next = 0;
+      }
+
+      _bottomController.animateTo(
         next,
         duration: _animDuration,
         curve: Curves.linear,
@@ -1110,9 +1134,11 @@ class _MobileOnlineCoursesRowState extends State<_MobileOnlineCoursesRow> {
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _topTimer?.cancel();
+    _bottomTimer?.cancel();
     _saveOffset();
-    _controller.dispose();
+    _topController.dispose();
+    _bottomController.dispose();
     super.dispose();
   }
 
@@ -1122,18 +1148,18 @@ class _MobileOnlineCoursesRowState extends State<_MobileOnlineCoursesRow> {
     if (!mounted || saved == null || saved <= 0) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_controller.hasClients) return;
-      final maxScroll = _controller.position.maxScrollExtent;
+      if (!_topController.hasClients) return;
+      final maxScroll = _topController.position.maxScrollExtent;
       if (maxScroll <= 0) return;
       final target = saved > maxScroll ? maxScroll : saved;
-      _controller.jumpTo(target);
+      _topController.jumpTo(target);
     });
   }
 
   Future<void> _saveOffset() async {
-    if (!_controller.hasClients) return;
+    if (!_topController.hasClients) return;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble(_prefsKeyOffset, _controller.offset);
+    await prefs.setDouble(_prefsKeyOffset, _topController.offset);
   }
 
   @override
@@ -1219,9 +1245,36 @@ class _MobileOnlineCoursesRowState extends State<_MobileOnlineCoursesRow> {
             ),
             const SizedBox(height: 8),
             SizedBox(
-              height: 130,
+              height: rowHeight,
               child: ListView.builder(
-                controller: _controller,
+                controller: _topController,
+                scrollDirection: Axis.horizontal,
+                itemCount: effectiveItemCount,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemBuilder: (context, index) {
+                  if (items.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  final course = items[index % items.length];
+                  final isLast = index == effectiveItemCount - 1;
+                  final alreadyEnrolled =
+                      enrolledIds.contains(course['id']?.toString());
+                  return Padding(
+                    padding: EdgeInsets.only(right: isLast ? 0 : 12),
+                    child: _OnlineCourseMobileCard(
+                      course: course,
+                      alreadyEnrolled: alreadyEnrolled,
+                      compact: compact,
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: rowHeight,
+              child: ListView.builder(
+                controller: _bottomController,
                 scrollDirection: Axis.horizontal,
                 itemCount: effectiveItemCount,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1301,6 +1354,7 @@ class _OnlineCourseMobileCard extends StatelessWidget {
     } else if (cardWidth > (compact ? 280 : 320)) {
       cardWidth = compact ? 280 : 320;
     }
+    final bool isCompact = compact;
 
     return SizedBox(
       width: cardWidth,
@@ -1334,12 +1388,11 @@ class _OnlineCourseMobileCard extends StatelessWidget {
               ),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: 12,
-                    vertical: 10,
+                    vertical: isCompact ? 8 : 12,
                   ),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Column(
@@ -1379,6 +1432,7 @@ class _OnlineCourseMobileCard extends StatelessWidget {
                           ],
                         ],
                       ),
+                      SizedBox(height: isCompact ? 6 : 10),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
