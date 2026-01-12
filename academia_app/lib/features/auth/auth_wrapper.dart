@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../services/push_notification_service.dart';
 import '../student/student_dashboard_screen.dart';
 import '../university/university_dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
@@ -19,6 +20,7 @@ class AuthWrapper extends StatefulWidget {
 class _AuthWrapperState extends State<AuthWrapper> {
   late final SupabaseClient _client;
   StreamSubscription<AuthState>? _authSub;
+  String? _pendingApplicationIdFromNotification;
 
   @override
   void initState() {
@@ -31,6 +33,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
       _startActivityTracking();
     });
     _startActivityTracking();
+
+    // Brancher le handler de notifications push pour les candidatures étudiant.
+    PushNotificationService.instance
+        .setOnApplicationNotification(_handleApplicationNotification);
   }
 
   @override
@@ -65,6 +71,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
     }
   }
 
+  void _handleApplicationNotification(String applicationId) {
+    setState(() {
+      _pendingApplicationIdFromNotification = applicationId;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = _client.auth.currentSession;
@@ -79,7 +91,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     switch (role) {
       case 'student':
-        return const StudentDashboardScreen();
+        return StudentDashboardScreen(
+          initialApplicationId: _pendingApplicationIdFromNotification,
+        );
       case 'instructor':
         return const InstructorDashboardScreen();
       case 'university':

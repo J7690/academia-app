@@ -28,6 +28,7 @@ ALTER TABLE app.communities
     ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'student_group', -- student_group | official
     ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active',       -- active | restricted | suspended | closed
     ADD COLUMN IF NOT EXISTS moderation_state TEXT NOT NULL DEFAULT 'clean', -- clean | flagged | under_review
+    ADD COLUMN IF NOT EXISTS join_policy TEXT NOT NULL DEFAULT 'open', -- open | request | invite_only
     ADD COLUMN IF NOT EXISTS last_message_at TIMESTAMPTZ;
 
 ALTER TABLE app.communities ENABLE ROW LEVEL SECURITY;
@@ -84,6 +85,193 @@ WITH CHECK (user_id = auth.uid());
 
 GRANT SELECT, INSERT ON app.community_memberships TO authenticated;
 GRANT ALL ON app.community_memberships TO service_role;
+
+-- ========================================
+-- 2bis) TABLE DEMANDES D'ADHÉSION AUX COMMUNAUTÉS
+-- ========================================
+
+CREATE TABLE IF NOT EXISTS app.community_join_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    community_id UUID NOT NULL REFERENCES app.communities (id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'pending', -- pending | accepted | rejected
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    handled_at TIMESTAMPTZ,
+    handled_by_user_id UUID REFERENCES auth.users (id) ON DELETE SET NULL,
+    UNIQUE (community_id, user_id)
+);
+
+ALTER TABLE app.community_join_requests ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS student_select_own_community_join_requests ON app.community_join_requests;
+CREATE POLICY student_select_own_community_join_requests
+ON app.community_join_requests FOR SELECT
+USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS student_insert_own_community_join_requests ON app.community_join_requests;
+CREATE POLICY student_insert_own_community_join_requests
+ON app.community_join_requests FOR INSERT
+WITH CHECK (user_id = auth.uid());
+
+GRANT SELECT, INSERT ON app.community_join_requests TO authenticated;
+GRANT ALL ON app.community_join_requests TO service_role;
+
+-- RPC ADMIN - LISTE DES DEMANDES D'ADHÉSION D'UNE COMMUNAUTÉ
+
+CREATE OR REPLACE FUNCTION app_admin_list_community_join_requests(
+    p_community_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_result JSONB;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    SELECT COALESCE(
+        JSONB_AGG(
+            JSONB_BUILD_OBJECT(
+                'id', r.id,
+                'user_id', r.user_id,
+                'status', r.status,
+                'created_at', r.created_at,
+                'handled_at', r.handled_at,
+                'user_email', u.email,
+                'user_display_name', COALESCE(
+                    u.raw_user_meta_data->>'full_name',
+                    split_part(u.email, '@', 1)
+                )
+            )
+            ORDER BY r.created_at ASC
+        ),
+        '[]'::JSONB
+    ) INTO v_result
+    FROM app.community_join_requests r
+    JOIN auth.users u ON u.id = r.user_id
+    WHERE r.community_id = p_community_id
+      AND r.status = 'pending';
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'requests', v_result);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_list_community_join_requests(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_list_community_join_requests(UUID) TO service_role;
+
+-- RPC ADMIN - TRAITER UNE DEMANDE D'ADHÉSION
+
+CREATE OR REPLACE FUNCTION app_admin_handle_community_join_request(
+    p_request_id UUID,
+    p_action TEXT,
+    p_role TEXT DEFAULT 'member'
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_admin_id UUID := auth.uid();
+    v_role TEXT;
+    v_community_id UUID;
+    v_user_id UUID;
+    v_status TEXT;
+    v_membership_id UUID;
+BEGIN
+    IF v_admin_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_admin_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    p_action := LOWER(TRIM(COALESCE(p_action, '')));
+    IF p_action NOT IN ('accept', 'reject') THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_action');
+    END IF;
+
+    SELECT
+        community_id,
+        user_id,
+        status
+    INTO v_community_id, v_user_id, v_status
+    FROM app.community_join_requests
+    WHERE id = p_request_id;
+
+    IF v_community_id IS NULL OR v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'request_not_found');
+    END IF;
+
+    IF v_status <> 'pending' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'request_not_pending');
+    END IF;
+
+    IF p_action = 'reject' THEN
+        UPDATE app.community_join_requests
+        SET status = 'rejected',
+            handled_at = NOW(),
+            handled_by_user_id = v_admin_id
+        WHERE id = p_request_id;
+
+        RETURN JSONB_BUILD_OBJECT('success', TRUE, 'action', 'rejected');
+    END IF;
+
+    -- Acceptation : créer / réactiver l'adhésion
+    INSERT INTO app.community_memberships (
+        community_id,
+        user_id,
+        role,
+        joined_at,
+        is_active,
+        is_banned
+    )
+    VALUES (
+        v_community_id,
+        v_user_id,
+        COALESCE(NULLIF(TRIM(p_role), ''), 'member'),
+        NOW(),
+        TRUE,
+        FALSE
+    )
+    ON CONFLICT (community_id, user_id) DO UPDATE
+        SET is_active = TRUE,
+            is_banned = FALSE,
+            role = COALESCE(EXCLUDED.role, app.community_memberships.role),
+            joined_at = COALESCE(app.community_memberships.joined_at, NOW())
+    RETURNING id INTO v_membership_id;
+
+    UPDATE app.community_join_requests
+    SET status = 'accepted',
+        handled_at = NOW(),
+        handled_by_user_id = v_admin_id
+    WHERE id = p_request_id;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'action', 'accepted', 'membership_id', v_membership_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_handle_community_join_request(UUID, TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_handle_community_join_request(UUID, TEXT, TEXT) TO service_role;
 
 -- ========================================
 -- 3) TABLE MESSAGES DES COMMUNAUTÉS
@@ -170,6 +358,7 @@ BEGIN
                 'visibility', c.visibility,
                 'is_active', c.is_active,
                 'is_featured', c.is_featured,
+                'join_policy', c.join_policy,
                 'created_at', c.created_at,
                 'updated_at', c.updated_at,
                 'members_count', COALESCE(
@@ -187,6 +376,13 @@ BEGIN
                     WHERE m2.community_id = c.id
                       AND m2.user_id = v_user_id
                       AND m2.is_active = TRUE
+                ),
+                'has_pending_request', EXISTS (
+                    SELECT 1
+                    FROM app.community_join_requests r
+                    WHERE r.community_id = c.id
+                      AND r.user_id = v_user_id
+                      AND r.status = 'pending'
                 )
             )
             ORDER BY c.is_featured DESC, c.created_at DESC
@@ -436,6 +632,93 @@ $$;
 GRANT EXECUTE ON FUNCTION app_student_leave_community(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION app_student_leave_community(UUID) TO service_role;
 
+-- RPC ÉTUDIANT - DEMANDE D'ADHÉSION À UNE COMMUNAUTÉ (POUR LES GROUPES À VALIDATION)
+
+CREATE OR REPLACE FUNCTION app_student_request_join_community(
+    p_community_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_visibility TEXT;
+    v_join_policy TEXT;
+    v_is_banned BOOLEAN;
+    v_request_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT
+        c.visibility,
+        COALESCE(c.join_policy, 'open')
+    INTO v_visibility, v_join_policy
+    FROM app.communities c
+    WHERE c.id = p_community_id
+      AND c.is_active = TRUE;
+
+    IF NOT FOUND THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'community_not_found');
+    END IF;
+
+    IF v_visibility <> 'public' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'community_not_joinable');
+    END IF;
+
+    -- Si la politique est "open", on délègue au RPC de join direct existant
+    IF v_join_policy = 'open' THEN
+        RETURN app_student_join_community(p_community_id);
+    END IF;
+
+    SELECT is_banned
+    INTO v_is_banned
+    FROM app.community_memberships
+    WHERE community_id = p_community_id
+      AND user_id = v_user_id
+    LIMIT 1;
+
+    IF COALESCE(v_is_banned, FALSE) THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'banned_from_community');
+    END IF;
+
+    -- Déjà membre actif
+    IF EXISTS (
+        SELECT 1
+        FROM app.community_memberships m
+        WHERE m.community_id = p_community_id
+          AND m.user_id = v_user_id
+          AND m.is_active = TRUE
+    ) THEN
+        RETURN JSONB_BUILD_OBJECT('success', TRUE, 'already_member', TRUE);
+    END IF;
+
+    INSERT INTO app.community_join_requests (
+        community_id,
+        user_id,
+        status
+    )
+    VALUES (
+        p_community_id,
+        v_user_id,
+        'pending'
+    )
+    ON CONFLICT (community_id, user_id) DO UPDATE
+        SET status = 'pending',
+            created_at = NOW(),
+            handled_at = NULL,
+            handled_by_user_id = NULL
+    RETURNING id INTO v_request_id;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'request_id', v_request_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_student_request_join_community(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_student_request_join_community(UUID) TO service_role;
+
 -- ========================================
 -- 7) RPC ÉTUDIANT - MESSAGES D'UNE COMMUNAUTÉ
 -- ========================================
@@ -593,6 +876,42 @@ $$;
 GRANT EXECUTE ON FUNCTION app_student_add_community_post(UUID, TEXT, TEXT, TEXT, UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION app_student_add_community_post(UUID, TEXT, TEXT, TEXT, UUID) TO service_role;
 
+-- RPC ÉTUDIANT - SUPPRIMER SON PROPRE MESSAGE DE COMMUNAUTÉ
+
+CREATE OR REPLACE FUNCTION app_student_delete_own_community_post(
+    p_post_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_post_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    UPDATE app.community_posts
+    SET is_deleted = TRUE,
+        updated_at = NOW()
+    WHERE id = p_post_id
+      AND author_id = v_user_id
+      AND is_deleted = FALSE
+    RETURNING id INTO v_post_id;
+
+    IF v_post_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'post_not_found_or_not_author');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'post_id', v_post_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_student_delete_own_community_post(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_student_delete_own_community_post(UUID) TO service_role;
+
 -- ========================================
 -- 8) RPC ADMIN - GESTION DES COMMUNAUTÉS
 -- ========================================
@@ -674,6 +993,62 @@ $$;
 
 GRANT EXECUTE ON FUNCTION app_admin_list_communities() TO authenticated;
 GRANT EXECUTE ON FUNCTION app_admin_list_communities() TO service_role;
+
+-- RPC ADMIN - LISTE DES MEMBRES D'UNE COMMUNAUTÉ
+
+CREATE OR REPLACE FUNCTION app_admin_list_community_members(
+    p_community_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_result JSONB;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    SELECT COALESCE(
+        JSONB_AGG(
+            JSONB_BUILD_OBJECT(
+                'user_id', m.user_id,
+                'role', m.role,
+                'joined_at', m.joined_at,
+                'is_active', m.is_active,
+                'is_banned', m.is_banned,
+                'user_email', u.email,
+                'user_display_name', COALESCE(
+                    u.raw_user_meta_data->>'full_name',
+                    split_part(u.email, '@', 1)
+                )
+            )
+            ORDER BY m.joined_at DESC
+        ),
+        '[]'::JSONB
+    ) INTO v_result
+    FROM app.community_memberships m
+    JOIN auth.users u ON u.id = m.user_id
+    WHERE m.community_id = p_community_id;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'members', v_result);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_list_community_members(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_list_community_members(UUID) TO service_role;
 
 CREATE OR REPLACE FUNCTION app_admin_upsert_community(
     p_community_id UUID,
@@ -858,6 +1233,46 @@ $$;
 
 GRANT EXECUTE ON FUNCTION app_admin_update_community_status(UUID, BOOLEAN, BOOLEAN) TO authenticated;
 GRANT EXECUTE ON FUNCTION app_admin_update_community_status(UUID, BOOLEAN, BOOLEAN) TO service_role;
+
+CREATE OR REPLACE FUNCTION app_admin_delete_community(
+    p_community_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    DELETE FROM app.communities
+    WHERE id = p_community_id
+    RETURNING id INTO v_id;
+
+    IF v_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'community_not_found');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'community_id', v_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_delete_community(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_delete_community(UUID) TO service_role;
 
 -- ========================================
 -- 9) RPC ADMIN - MODÉRATION DES MESSAGES & BANNISSEMENT
@@ -1066,6 +1481,49 @@ $$;
 
 GRANT EXECUTE ON FUNCTION app_admin_delete_community_post(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION app_admin_delete_community_post(UUID) TO service_role;
+
+CREATE OR REPLACE FUNCTION app_admin_pin_community_post(
+    p_post_id UUID,
+    p_is_pinned BOOLEAN
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_role TEXT;
+    v_id UUID;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+    END IF;
+
+    SELECT raw_user_meta_data->>'role'
+    INTO v_role
+    FROM auth.users
+    WHERE id = v_user_id;
+
+    IF v_role <> 'admin' THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+    END IF;
+
+    UPDATE app.community_posts
+    SET is_pinned = COALESCE(p_is_pinned, FALSE),
+        updated_at = NOW()
+    WHERE id = p_post_id
+    RETURNING id INTO v_id;
+
+    IF v_id IS NULL THEN
+        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'post_not_found');
+    END IF;
+
+    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'post_id', v_id, 'is_pinned', p_is_pinned);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION app_admin_pin_community_post(UUID, BOOLEAN) TO authenticated;
+GRANT EXECUTE ON FUNCTION app_admin_pin_community_post(UUID, BOOLEAN) TO service_role;
 
 CREATE OR REPLACE FUNCTION app_admin_ban_user_from_community(
     p_community_id UUID,

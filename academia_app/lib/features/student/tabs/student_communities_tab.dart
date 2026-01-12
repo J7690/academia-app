@@ -18,6 +18,7 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
   String _searchQuery = '';
 
   final TextEditingController _searchController = TextEditingController();
+  final GlobalKey _myGroupsSectionKey = GlobalKey();
 
   @override
   void initState() {
@@ -45,6 +46,16 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
     await provider.loadMyCommunities();
     await provider.loadMyCommunitiesActivity();
     await provider.loadMyChats();
+  }
+
+  void _scrollToMyGroupsSection() {
+    final ctx = _myGroupsSectionKey.currentContext;
+    if (ctx == null) return;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
@@ -159,19 +170,33 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       children: [
+                        _buildIntroCard(
+                          context,
+                          all,
+                          chats,
+                          onSeeMyGroups: _scrollToMyGroupsSection,
+                        ),
+                        const SizedBox(height: 16),
                         _buildChatsSection(context, chats),
                         const SizedBox(height: 16),
-                        _buildSection(
-                          context: context,
-                          title: 'Mes discussions actives',
-                          emptyText:
-                              'Tu n\'as encore rejoint aucune communauté. Rejoins un groupe ci-dessous pour commencer à échanger.',
-                          communities: my,
+                        KeyedSubtree(
+                          key: _myGroupsSectionKey,
+                          child: _buildSection(
+                            context: context,
+                            title: 'Mes discussions actives',
+                            subtitle:
+                                'Les groupes dont tu fais déjà partie, classés par activité.',
+                            emptyText:
+                                'Tu n\'as encore rejoint aucune communauté. Rejoins un groupe ci-dessous pour commencer à échanger.',
+                            communities: my,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         _buildSection(
                           context: context,
                           title: 'Découvrir par centres d\'intérêt',
+                          subtitle:
+                              'Des communautés à explorer selon tes matières et tes passions.',
                           emptyText:
                               'Aucune communauté ne correspond à ta recherche pour le moment.',
                           communities: discover,
@@ -185,6 +210,127 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildIntroCard(
+    BuildContext context,
+    List<Map<String, dynamic>> allCommunities,
+    List<Map<String, dynamic>> chats, {
+    VoidCallback? onSeeMyGroups,
+  }) {
+    final hasActivity = allCommunities.isNotEmpty || chats.isNotEmpty;
+    return Card(
+      elevation: 0,
+      color: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1EA75C), Color(0xFF34B7F1)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        padding: const EdgeInsets.all(18),
+        child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Tes communautés d\'études',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        hasActivity
+                            ? 'Retrouve rapidement tes groupes actifs et continue la discussion avec ta promo.'
+                            : 'Crée ton premier groupe ou rejoins une communauté pour réviser ensemble.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: _openCreateGroupSheet,
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: const Color(0xFF075E54),
+                              backgroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              elevation: 0,
+                            ),
+                            icon: const Icon(Icons.add, size: 18),
+                            label: const Text(
+                              'Créer un groupe',
+                              style: TextStyle(fontSize: 13),
+                            ),
+                          ),
+                          if (hasActivity)
+                            OutlinedButton(
+                              onPressed: onSeeMyGroups,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                side: BorderSide(
+                                  color: Colors.white.withOpacity(0.6),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                              ),
+                              child: const Text(
+                                'Voir mes groupes',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: onSeeMyGroups,
+                  child: Container(
+                    width: 68,
+                    height: 68,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.forum_rounded,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
     );
   }
 
@@ -217,26 +363,52 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
     BuildContext context,
     List<Map<String, dynamic>> chats,
   ) {
-    // Style WhatsApp : fond blanc, pas de card arrondie
-    return Container(
+    return Card(
       color: Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (chats.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                'Crée ton premier groupe ou rejoins une communauté pour commencer à discuter.',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: Row(
+                children: const [
+                  Icon(
+                    Icons.chat_bubble_outline,
+                    size: 18,
+                    color: Color(0xFF1EA75C),
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'Mes discussions récentes',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
-            )
-          else
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: chats.length,
-              itemBuilder: (context, index) {
+            ),
+            const Divider(height: 1, color: Color(0xFFE5E7EB)),
+            if (chats.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  'Crée ton premier groupe ou rejoins une communauté pour commencer à discuter.',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: chats.length,
+                itemBuilder: (context, index) {
                 final chat = chats[index];
                 final communityId = chat['community_id']?.toString() ?? '';
                 final name = chat['name']?.toString() ?? '';
@@ -279,7 +451,8 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
                           );
                         },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
@@ -292,7 +465,7 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
                       children: [
                         // Avatar style WhatsApp (plus grand, 50px)
                         CircleAvatar(
-                          radius: 25,
+                          radius: 24,
                           backgroundColor: _getAvatarColor(name),
                           child: Text(
                             name.isNotEmpty ? name[0].toUpperCase() : '?',
@@ -383,7 +556,8 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
                 );
               },
             ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -517,6 +691,7 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
   Widget _buildSection({
     required BuildContext context,
     required String title,
+    String? subtitle,
     required String emptyText,
     required List<Map<String, dynamic>> communities,
   }) {
@@ -553,7 +728,18 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 8),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ] else
+                  const SizedBox(height: 8),
                 if (communities.isEmpty)
                   Text(
                     emptyText,
@@ -585,6 +771,8 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
     final description = c['description']?.toString() ?? '';
     final category = c['category']?.toString() ?? '';
     final isMember = c['is_member'] == true;
+    final joinPolicy = (c['join_policy']?.toString() ?? 'open').toLowerCase();
+    final hasPendingRequest = c['has_pending_request'] == true;
     final unreadCount = context
         .read<StudentCommunitiesProvider>()
         .unreadByCommunityId[id] ??
@@ -596,6 +784,8 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
     if (membersCount != null) {
       subtitleParts.add('$membersCount membre${membersCount > 1 ? 's' : ''}');
     }
+
+    final headerColor = _getAvatarColor(name);
 
     return Card(
       color: Colors.white,
@@ -618,70 +808,92 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
                   ),
                 );
               },
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Bandeau coloré en haut, dérivé du nom
+            Container(
+              height: 4,
+              decoration: BoxDecoration(
+                color: headerColor.withOpacity(0.85),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
                 ),
               ),
-              const SizedBox(height: 4),
-              if (description.isNotEmpty)
-                Text(
-                  description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13),
-                ),
-              if (subtitleParts.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  subtitleParts.join(' • '),
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ],
-              if (isMember && unreadCount > 0) ...[
-                const SizedBox(height: 4),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1EA75C),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    '$unreadCount message${unreadCount > 1 ? 's' : ''} non lus',
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 11,
-                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ),
-              ],
-              if (isMember) ...[
-                const SizedBox(height: 4),
-                const Text(
-                  'Tu es membre de ce groupe. Appuie pour reprendre la discussion.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.black87,
+              const SizedBox(height: 4),
+                  if (description.isNotEmpty)
+                    Text(
+                      description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  if (subtitleParts.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitleParts.join(' • '),
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                  if (isMember && unreadCount > 0) ...[
+                    const SizedBox(height: 4),
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1EA75C),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        '$unreadCount message${unreadCount > 1 ? 's' : ''} non lus',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (isMember) ...[
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Tu es membre de ce groupe. Appuie pour reprendre la discussion.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: _buildMembershipButton(
+                      context,
+                      id,
+                      isMember: isMember,
+                      joinPolicy: joinPolicy,
+                      hasPendingRequest: hasPendingRequest,
+                    ),
                   ),
-                ),
-              ],
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: _buildMembershipButton(context, id, isMember),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -689,9 +901,11 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
 
   Widget _buildMembershipButton(
     BuildContext context,
-    String communityId,
-    bool isMember,
-  ) {
+    String communityId, {
+    required bool isMember,
+    required String joinPolicy,
+    required bool hasPendingRequest,
+  }) {
     final provider = context.read<StudentCommunitiesProvider>();
     if (provider.isSaving) {
       return const SizedBox(
@@ -701,22 +915,58 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
       );
     }
 
+    String label;
+    VoidCallback? onPressed;
+
+    if (communityId.isEmpty) {
+      label = 'Indisponible';
+      onPressed = null;
+    } else if (isMember) {
+      label = 'Quitter';
+      onPressed = () async {
+        final ok = await provider.leaveCommunity(communityId: communityId);
+        if (!mounted) return;
+        if (!ok && provider.error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(provider.error!)),
+          );
+        }
+      };
+    } else if (hasPendingRequest) {
+      label = 'Demande envoyée';
+      onPressed = null;
+    } else if (joinPolicy == 'invite_only') {
+      label = 'Sur invitation';
+      onPressed = null;
+    } else if (joinPolicy == 'request') {
+      label = 'Demander à rejoindre';
+      onPressed = () async {
+        final ok = await provider.joinCommunity(communityId: communityId);
+        if (!mounted) return;
+        if (!ok && provider.error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(provider.error!)),
+          );
+        }
+      };
+    } else {
+      // open (comportement existant : join direct)
+      label = 'Rejoindre';
+      onPressed = () async {
+        final ok = await provider.joinCommunity(communityId: communityId);
+        if (!mounted) return;
+        if (!ok && provider.error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(provider.error!)),
+          );
+        }
+      };
+    }
+
     return TextButton(
-      onPressed: communityId.isEmpty
-          ? null
-          : () async {
-              final ok = isMember
-                  ? await provider.leaveCommunity(communityId: communityId)
-                  : await provider.joinCommunity(communityId: communityId);
-              if (!mounted) return;
-              if (!ok && provider.error != null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(provider.error!)),
-                );
-              }
-            },
+      onPressed: onPressed,
       child: Text(
-        isMember ? 'Quitter' : 'Rejoindre',
+        label,
         style: const TextStyle(fontSize: 13),
       ),
     );

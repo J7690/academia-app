@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import 'package:http/http.dart' as http;
+import 'services/push_notification_service.dart';
 
 import 'web_update_stub.dart' if (dart.library.html) 'web_update_html.dart' as web_update;
 
@@ -122,6 +123,11 @@ void main() async {
     url: SupabaseConfig.url,
     anonKey: SupabaseConfig.anonKey,
   );
+  // Initialisation du transport de notifications push (FCM via Firebase)
+  // La logique métier et les compteurs restent gérés dans Supabase.
+  try {
+    await PushNotificationService.instance.init();
+  } catch (_) {}
   
   runApp(const AcademiaApp());
 }

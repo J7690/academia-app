@@ -10,6 +10,7 @@ class OpportunityFeedCard extends StatelessWidget {
   final VoidCallback? onLove;
   final VoidCallback? onComment;
   final VoidCallback? onAction;
+  final VoidCallback? onBookmark;
 
   const OpportunityFeedCard({
     super.key,
@@ -19,6 +20,7 @@ class OpportunityFeedCard extends StatelessWidget {
     this.onLove,
     this.onComment,
     this.onAction,
+    this.onBookmark,
   });
 
   @override
@@ -37,6 +39,8 @@ class OpportunityFeedCard extends StatelessWidget {
     final commentsCount = opportunity['comments_count'] as int? ?? 0;
     final myReaction = opportunity['my_reaction']?.toString();
     final createdAt = opportunity['created_at']?.toString();
+    final isNew = _isNew(createdAt);
+    final isBookmarked = opportunity['is_bookmarked'] == true;
 
     final location = [city, country].where((s) => s.isNotEmpty).join(', ');
     final timeAgo = _formatTimeAgo(createdAt);
@@ -73,6 +77,8 @@ class OpportunityFeedCard extends StatelessWidget {
                   organizationLogoUrl: organizationLogoUrl,
                   timeAgo: timeAgo,
                   isFeatured: isFeatured,
+                  isNew: isNew,
+                  isBookmarked: isBookmarked,
                 ),
                 const SizedBox(height: 12),
 
@@ -140,6 +146,8 @@ class OpportunityFeedCard extends StatelessWidget {
     String? organizationLogoUrl,
     required String timeAgo,
     required bool isFeatured,
+    required bool isNew,
+    required bool isBookmarked,
   }) {
     return Row(
       children: [
@@ -201,34 +209,71 @@ class OpportunityFeedCard extends StatelessWidget {
           ),
         ),
 
-        // Featured badge
-        if (isFeatured)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0x1AF6A623),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.star,
-                  size: 12,
-                  color: Color(0xFFF6A623),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Bouton favoris
+            InkWell(
+              onTap: onBookmark,
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Icon(
+                  isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                  size: 20,
+                  color: isBookmarked
+                      ? const Color(0xFF3275D0)
+                      : const Color(0xFF9CA3AF),
                 ),
-                SizedBox(width: 4),
-                Text(
-                  'À la une',
+              ),
+            ),
+            if (isNew || isFeatured) const SizedBox(width: 6),
+            if (isNew)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0x1A10B981),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'Nouveau',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFFF6A623),
+                    color: Color(0xFF10B981),
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+            if (isNew && isFeatured) const SizedBox(width: 6),
+            if (isFeatured)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0x1AF6A623),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.star,
+                      size: 12,
+                      color: Color(0xFFF6A623),
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'À la une',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFF6A623),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ],
     );
   }
@@ -270,6 +315,20 @@ class OpportunityFeedCard extends StatelessWidget {
           ),
       ],
     );
+  }
+
+  bool _isNew(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return false;
+
+    try {
+      final date = DateTime.parse(dateStr);
+      final now = DateTime.now();
+      final diff = now.difference(date);
+
+      return diff.inDays < 7;
+    } catch (_) {
+      return false;
+    }
   }
 
   String _formatTimeAgo(String? dateStr) {

@@ -12,11 +12,48 @@ import '../../providers/student_application_payments_provider.dart';
 
 class StudentApplicationDetailScreen extends StatefulWidget {
   final Map<String, dynamic> application;
+  final int initialTabIndex;
 
-  const StudentApplicationDetailScreen({super.key, required this.application});
+  const StudentApplicationDetailScreen({
+    super.key,
+    required this.application,
+    this.initialTabIndex = 0,
+  });
 
   @override
   State<StudentApplicationDetailScreen> createState() => _StudentApplicationDetailScreenState();
+}
+
+class _CountBadge extends StatelessWidget {
+  final int count;
+
+  const _CountBadge({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    if (count <= 0) return const SizedBox.shrink();
+    final display = count > 99 ? '99+' : count.toString();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFF3B30),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white, width: 1.5),
+      ),
+      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+      child: Center(
+        child: Text(
+          display,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            height: 1,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _StudentApplicationDetailScreenState extends State<StudentApplicationDetailScreen> {
@@ -321,12 +358,33 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
   Widget build(BuildContext context) {
     final app = widget.application;
     final status = app['status']?.toString() ?? '';
-    final createdAt = app['created_at']?.toString() ?? '';
+    final createdAtRaw = app['created_at']?.toString() ?? '';
+    final submittedAtRaw = app['submitted_at']?.toString() ?? '';
     final motivation = app['motivation_text']?.toString() ?? '';
     final appId = app['id']?.toString() ?? '';
+    final programTitle = app['program_title']?.toString() ?? '';
+    final degreeLevel = app['degree_level']?.toString() ?? '';
+    final universityName = app['university_name']?.toString() ?? '';
+
+    final statusColor = _applicationStatusColor(status);
+    final statusLabel = _applicationStatusLabel(status);
+    final createdAt = _formatApplicationDate(createdAtRaw);
+    final submittedAt = _formatApplicationDate(submittedAtRaw);
+
+    String statusLine = '';
+    if (status == 'accepted' && submittedAt.isNotEmpty) {
+      statusLine = 'Acceptée le $submittedAt';
+    } else if (status == 'under_review' && submittedAt.isNotEmpty) {
+      statusLine = 'En étude depuis le $submittedAt';
+    } else if (submittedAt.isNotEmpty) {
+      statusLine = 'Soumise le $submittedAt';
+    } else if (createdAt.isNotEmpty) {
+      statusLine = 'Créée le $createdAt';
+    }
 
     return DefaultTabController(
       length: 2,
+      initialIndex: widget.initialTabIndex,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Détail de la candidature'),
@@ -340,8 +398,8 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                   children: [
                     const Text('Messages'),
                     if (_hasUnreadMessages) ...[
-                      const SizedBox(width: 4),
-                      const _NotificationDot(),
+                      const SizedBox(width: 6),
+                      const _CountBadge(count: 1),
                     ],
                   ],
                 ),
@@ -356,19 +414,116 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
               children: [
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Statut : $status'),
-                      const SizedBox(height: 4),
-                      if (createdAt.isNotEmpty) Text('Créée le : $createdAt'),
-                      const SizedBox(height: 8),
-                      if (motivation.isNotEmpty) ...[
-                        const Text('Motivation :'),
-                        const SizedBox(height: 4),
-                        Text(motivation),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: statusColor.withOpacity(0.4)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.assignment_outlined,
+                              color: statusColor,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (programTitle.isNotEmpty)
+                                    Text(
+                                      degreeLevel.isNotEmpty
+                                          ? '$programTitle · $degreeLevel'
+                                          : programTitle,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: statusColor,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  if (universityName.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      universityName,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: Color(0xFF6B7280),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: statusColor.withOpacity(0.12),
+                                          borderRadius: BorderRadius.circular(999),
+                                        ),
+                                        child: Text(
+                                          statusLabel,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: statusColor,
+                                          ),
+                                        ),
+                                      ),
+                                      if (statusLine.isNotEmpty) ...[
+                                        const SizedBox(width: 12),
+                                        Flexible(
+                                          child: Text(
+                                            statusLine,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xFF6B7280),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (motivation.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Message de motivation',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF0A2540),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            motivation,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF4B5563),
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
                 Consumer<StudentApplicationPaymentsProvider>(
@@ -657,9 +812,12 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                           final isStudent = senderRole == 'student';
                           final alignment =
                               isStudent ? Alignment.centerRight : Alignment.centerLeft;
-                          final color = isStudent
-                              ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                          final Color bubbleColor = isStudent
+                              ? const Color(0xFF3275D0).withOpacity(0.12)
                               : Theme.of(context).colorScheme.surfaceVariant;
+                          final Color textColor = isStudent
+                              ? const Color(0xFF0A2540)
+                              : const Color(0xFF111827);
                           final label = isStudent ? 'Vous' : 'Plateforme / Admin';
 
                           return Align(
@@ -671,8 +829,8 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
-                                color: color,
-                                borderRadius: BorderRadius.circular(12),
+                                color: bubbleColor,
+                                borderRadius: BorderRadius.circular(16),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -685,7 +843,13 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  Text(content),
+                                  Text(
+                                    content,
+                                    style: TextStyle(
+                                      color: textColor,
+                                      fontSize: 13,
+                                    ),
+                                  ),
                                   if (createdAtMsg.isNotEmpty) ...[
                                     const SizedBox(height: 2),
                                     Text(
@@ -783,18 +947,49 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
   }
 }
 
-class _NotificationDot extends StatelessWidget {
-  const _NotificationDot();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 8,
-      height: 8,
-      decoration: const BoxDecoration(
-        color: Colors.red,
-        shape: BoxShape.circle,
-      ),
-    );
+Color _applicationStatusColor(String? status) {
+  switch (status) {
+    case 'submitted':
+      return const Color(0xFF3275D0); // Bleu - soumise
+    case 'under_review':
+      return const Color(0xFFF6A623); // Orange - en étude
+    case 'accepted':
+      return const Color(0xFF1B8F5A); // Vert - acceptée
+    case 'rejected':
+      return const Color(0xFFE53935); // Rouge - refusée
+    case 'canceled':
+      return const Color(0xFF6B7280); // Gris bleuté - annulée
+    case 'draft':
+    default:
+      return const Color(0xFF9CA3AF); // Gris neutre - brouillon / inconnu
   }
+}
+
+String _applicationStatusLabel(String? status) {
+  switch (status) {
+    case 'draft':
+      return 'Brouillon';
+    case 'submitted':
+      return 'Soumise';
+    case 'under_review':
+      return 'En étude';
+    case 'accepted':
+      return 'Acceptée';
+    case 'rejected':
+      return 'Refusée';
+    case 'canceled':
+      return 'Annulée';
+    default:
+      return status ?? 'Inconnu';
+  }
+}
+
+String _formatApplicationDate(String? value) {
+  if (value == null || value.isEmpty) return '';
+  final parsed = DateTime.tryParse(value);
+  if (parsed == null) return value;
+  final day = parsed.day.toString().padLeft(2, '0');
+  final month = parsed.month.toString().padLeft(2, '0');
+  final year = parsed.year.toString();
+  return '$day/$month/$year';
 }

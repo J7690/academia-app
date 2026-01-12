@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/student_communities_provider.dart';
@@ -91,6 +92,157 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
     setState(() {
       _replyToPost = null;
     });
+  }
+
+  void _insertEmoji(String emoji) {
+    final text = _messageController.text;
+    // Pour l'instant, on insère simplement à la fin du texte.
+    _messageController.text = text + emoji;
+    _messageController.selection = TextSelection.fromPosition(
+      TextPosition(offset: _messageController.text.length),
+    );
+  }
+
+  Future<void> _showEmojiPickerForInput() async {
+    const categories = {
+      'Smileys': [
+        '😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😊', '😇', '😉', '🙂', '🙃', '😋',
+        '😎', '🥰', '😍', '😘', '😙', '😚', '😜', '🤪',
+      ],
+      'Émotions': [
+        '😢', '😭', '😡', '🤯', '😱', '😴', '🤔', '😇', '😤', '🤗', '🤨', '😐',
+      ],
+      'Gestes': [
+        '👍', '👎', '👏', '🙌', '🙏', '🤝', '💪', '👌', '🤌', '✌️', '🤞', '🤟', '👋',
+      ],
+      'Cœurs': [
+        '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '💖', '💗', '💘', '💝', '💕',
+      ],
+      'Études': [
+        '📚', '📖', '📝', '✏️', '📌', '📎', '📅', '📊', '💻', '🖥️', '⌛', '⏰', '🎓',
+      ],
+      'Fun': [
+        '🔥', '✨', '🎉', '⭐', '🌟', '⚡', '🎧', '🎁', '🍀', '😈', '👑',
+      ],
+    };
+
+    const emojiNames = {
+      '😀': 'sourire',
+      '😁': 'sourire large',
+      '😂': 'rire',
+      '🤣': 'rire fort',
+      '😊': 'souriant',
+      '😍': 'amoureux',
+      '😘': 'bisou',
+      '😎': 'cool',
+      '😢': 'triste',
+      '😭': 'pleurs',
+      '😡': 'colère',
+      '🤯': 'explosion de tête',
+      '👍': 'pouce',
+      '🙏': 'merci',
+      '👏': 'applaudissements',
+      '💪': 'force',
+      '🔥': 'feu',
+      '✨': 'étincelles',
+      '❤️': 'coeur',
+      '💚': 'coeur vert',
+      '📚': 'livres',
+      '🎓': 'diplôme',
+    };
+
+    String activeCategory = categories.keys.first;
+    String query = '';
+
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) {
+        return SafeArea(
+          child: StatefulBuilder(
+            builder: (ctx, setModalState) {
+              final allInCategory = <String>[];
+              categories.forEach((name, list) {
+                if (name == activeCategory) {
+                  allInCategory.addAll(list);
+                }
+              });
+
+              final filtered = allInCategory.where((e) {
+                if (query.isEmpty) return true;
+                final name = emojiNames[e] ?? '';
+                return name.toLowerCase().contains(query.toLowerCase());
+              }).toList();
+
+              return Padding(
+                padding: const EdgeInsets.all(12),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (final cat in categories.keys)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ChoiceChip(
+                                  label: Text(cat),
+                                  selected: activeCategory == cat,
+                                  onSelected: (_) {
+                                    setModalState(() {
+                                      activeCategory = cat;
+                                      query = '';
+                                    });
+                                  },
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        decoration: const InputDecoration(
+                          prefixIcon: Icon(Icons.search),
+                          hintText: 'Rechercher un emoji (ex: coeur, rire...)',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        onChanged: (value) {
+                          setModalState(() {
+                            query = value.trim();
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: filtered
+                            .map(
+                              (e) => GestureDetector(
+                                onTap: () {
+                                  Navigator.of(ctx).pop();
+                                  _insertEmoji(e);
+                                },
+                                child: Text(
+                                  e,
+                                  style: const TextStyle(fontSize: 28),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _pickAndUploadAttachment() async {
@@ -260,7 +412,7 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                'Enregistrement audio non disponible sur cet appareil.',
+                "L'enregistrement audio n'est pas disponible depuis cette version (navigateur web).",
               ),
             ),
           );
@@ -356,6 +508,47 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
         const SnackBar(
           content: Text('Merci, ton signalement a bien été pris en compte.'),
         ),
+      );
+    }
+  }
+
+  Future<void> _confirmDeleteMyPost(Map<String, dynamic> post) async {
+    final postId = post['id']?.toString() ?? '';
+    if (postId.isEmpty) return;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Supprimer ce message'),
+          content: const Text(
+            'Ce message sera supprim e9 pour tous les membres du groupe. Continuer ?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Supprimer'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != true) return;
+
+    final provider = context.read<StudentCommunitiesProvider>();
+    final ok = await provider.deleteMyPost(
+      communityId: widget.communityId,
+      postId: postId,
+    );
+    if (!mounted) return;
+    if (!ok && provider.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(provider.error!)),
       );
     }
   }
@@ -604,6 +797,12 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
       postId: postId,
       emoji: emoji,
     );
+    if (!mounted) return;
+    if (provider.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(provider.error!)),
+      );
+    }
   }
 
   Future<void> _showReactionPicker(Map<String, dynamic> post) async {
@@ -946,6 +1145,121 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
     return false;
   }
 
+  void _openGroupInfoSheet() {
+    final provider = context.read<StudentCommunitiesProvider>();
+    Map<String, dynamic>? community;
+    for (final c in provider.communities) {
+      if (c['id']?.toString() == widget.communityId) {
+        community = c;
+        break;
+      }
+    }
+
+    final name = community?['name']?.toString() ?? widget.initialName;
+    final description =
+        community?['description']?.toString() ?? widget.initialDescription;
+    final category = community?['category']?.toString() ?? '';
+    final visibility = community?['visibility']?.toString() ?? 'public';
+    final joinPolicy = community?['join_policy']?.toString() ?? 'open';
+    final membersCount = community?['members_count'];
+
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (description.isNotEmpty)
+                Text(
+                  description,
+                  style: const TextStyle(fontSize: 13),
+                ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  if (category.isNotEmpty)
+                    Chip(
+                      label: Text(category),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  Chip(
+                    label: Text(
+                      visibility == 'public' ? 'Publique' : 'Privée',
+                    ),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  Chip(
+                    label: Text(
+                      () {
+                        final jp = joinPolicy.toLowerCase();
+                        if (jp == 'request') return 'Adhésion sur demande';
+                        if (jp == 'invite_only') return 'Sur invitation';
+                        return 'Adhésion ouverte';
+                      }(),
+                    ),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  if (membersCount is int)
+                    Chip(
+                      label: Text(
+                        '$membersCount membre${membersCount > 1 ? 's' : ''}',
+                      ),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _shareGroup() {
+    final provider = context.read<StudentCommunitiesProvider>();
+    Map<String, dynamic>? community;
+    for (final c in provider.communities) {
+      if (c['id']?.toString() == widget.communityId) {
+        community = c;
+        break;
+      }
+    }
+
+    final name = community?['name']?.toString() ?? widget.initialName;
+    final description =
+        community?['description']?.toString() ?? widget.initialDescription;
+    final slug = community?['slug']?.toString();
+
+    final buffer = StringBuffer()
+      ..writeln('Je t\'invite à rejoindre mon groupe "$name" sur Academia.')
+      ..writeln();
+    if (description.isNotEmpty) {
+      buffer.writeln(description);
+      buffer.writeln();
+    }
+    if (slug != null && slug.isNotEmpty) {
+      buffer.writeln('Lien : https://academia.nexium-group.com/communities/$slug');
+    }
+
+    Share.share(buffer.toString().trim());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<StudentCommunitiesProvider>(
@@ -1017,16 +1331,28 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
                     _openReportCommunityDialog();
                   } else if (value == 'create_poll') {
                     _openCreatePollDialog();
+                  } else if (value == 'group_info') {
+                    _openGroupInfoSheet();
+                  } else if (value == 'share_group') {
+                    _shareGroup();
                   }
                 },
                 itemBuilder: (context) => const [
                   PopupMenuItem(
-                    value: 'report_community',
-                    child: Text('Signaler la communauté'),
+                    value: 'group_info',
+                    child: Text('Infos du groupe'),
+                  ),
+                  PopupMenuItem(
+                    value: 'share_group',
+                    child: Text('Partager le groupe'),
                   ),
                   PopupMenuItem(
                     value: 'create_poll',
                     child: Text('Créer un sondage'),
+                  ),
+                  PopupMenuItem(
+                    value: 'report_community',
+                    child: Text('Signaler la communauté'),
                   ),
                 ],
               ),
@@ -1286,20 +1612,35 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
                                           setState(() {
                                             _replyToPost = p;
                                           });
+                                        } else if (value == 'delete') {
+                                          _confirmDeleteMyPost(p);
                                         } else if (value == 'report') {
                                           _openReportPostDialog(p);
                                         }
                                       },
-                                      itemBuilder: (context) => const [
-                                        PopupMenuItem(
-                                          value: 'reply',
-                                          child: Text('Répondre'),
-                                        ),
-                                        PopupMenuItem(
-                                          value: 'report',
-                                          child: Text('Signaler ce message'),
-                                        ),
-                                      ],
+                                      itemBuilder: (context) {
+                                        final items = <PopupMenuEntry<String>>[
+                                          const PopupMenuItem(
+                                            value: 'reply',
+                                            child: Text('Répondre'),
+                                          ),
+                                        ];
+                                        if (isMine) {
+                                          items.add(
+                                            const PopupMenuItem(
+                                              value: 'delete',
+                                              child: Text('Supprimer pour tout le monde'),
+                                            ),
+                                          );
+                                        }
+                                        items.add(
+                                          const PopupMenuItem(
+                                            value: 'report',
+                                            child: Text('Signaler ce message'),
+                                          ),
+                                        );
+                                        return items;
+                                      },
                                       padding: EdgeInsets.zero,
                                       child: const Icon(
                                         Icons.more_vert,
@@ -1401,7 +1742,7 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
                                     Icons.emoji_emotions_outlined,
                                     color: Colors.grey.shade600,
                                   ),
-                                  onPressed: null,
+                                  onPressed: _showEmojiPickerForInput,
                                   padding: const EdgeInsets.all(8),
                                   constraints: const BoxConstraints(),
                                 ),

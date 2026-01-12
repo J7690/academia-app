@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -21,10 +22,13 @@ import 'tabs/student_bobodo_tab.dart';
 import 'prep_concours/prep_concours_home_screen.dart';
 import 'student_dashboard_nav_controller.dart';
 import 'student_payments_screen.dart';
+import 'student_application_detail_screen.dart';
 
 /// Dashboard étudiant avec onglets principaux
 class StudentDashboardScreen extends StatefulWidget {
-  const StudentDashboardScreen({super.key});
+  final String? initialApplicationId;
+
+  const StudentDashboardScreen({super.key, this.initialApplicationId});
 
   @override
   State<StudentDashboardScreen> createState() => _StudentDashboardScreenState();
@@ -47,10 +51,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   bool _studentUnreadInitialized = false;
   bool _studentHomeNotificationInitialized = false;
   VoidCallback? _navListener;
+  String? _pendingApplicationId;
 
   @override
   void initState() {
     super.initState();
+    _pendingApplicationId = widget.initialApplicationId;
     StudentDashboardNavController.setIndex(_currentIndex);
     _navListener = () {
       final newIndex = StudentDashboardNavController.currentIndex;
@@ -75,6 +81,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         await context.read<StudentOpportunitiesProvider>().loadTypes();
       } catch (_) {}
       await _loadNotificationSummary();
+
+      final pendingAppId = _pendingApplicationId;
+      if (pendingAppId != null && mounted) {
+        _pendingApplicationId = null;
+        await _openApplicationFromNotification(pendingAppId);
+      }
     });
 
     _pollingTimer = Timer.periodic(const Duration(seconds: 45), (_) async {
@@ -85,6 +97,41 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       } catch (_) {}
       await _loadNotificationSummary();
     });
+  }
+
+  Future<void> _openApplicationFromNotification(String applicationId) async {
+    final applicationsProvider = context.read<StudentApplicationsProvider>();
+    final apps = applicationsProvider.applications;
+    Map<String, dynamic>? app;
+    for (final a in apps) {
+      if (a['id']?.toString() == applicationId) {
+        app = a;
+        break;
+      }
+    }
+
+    if (app == null) {
+      return;
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _currentIndex = 1;
+    });
+    StudentDashboardNavController.setIndex(1);
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChangeNotifierProvider(
+          create: (_) => StudentApplicationPaymentsProvider(),
+          child: StudentApplicationDetailScreen(
+            application: app!,
+            initialTabIndex: 1,
+          ),
+        ),
+      ),
+    );
   }
 
   void _ensureStudentProfile() async {
@@ -293,6 +340,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       _lastStudentUnreadCount = current;
       try {
         await NotificationSoundService.instance.playIfEnabled();
+      } catch (_) {}
+      try {
+        HapticFeedback.mediumImpact();
       } catch (_) {}
     } else {
       _lastStudentUnreadCount = current;

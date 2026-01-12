@@ -111,6 +111,69 @@ class StudentOpportunitiesProvider extends ChangeNotifier {
     }
   }
 
+  /// Charge uniquement les opportunités marquées en favoris (bookmarks)
+  /// Utilise la RPC app_student_list_bookmarked_opportunities avec la même
+  /// structure de réponse que app_student_list_opportunities
+  Future<void> loadBookmarkedOpportunities({
+    String? type,
+    String? search,
+    bool refresh = true,
+  }) async {
+    if (refresh) {
+      _currentOffset = 0;
+      _hasMore = true;
+      _currentType = type;
+      _currentSearch = search;
+      _setLoading(true);
+    } else {
+      if (!_hasMore || _isLoadingMore) return;
+      _isLoadingMore = true;
+      notifyListeners();
+    }
+
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_list_bookmarked_opportunities',
+        params: {
+          'p_type': type ?? _currentType,
+          'p_search': search ?? _currentSearch,
+          'p_limit': _pageSize,
+          'p_offset': _currentOffset,
+        },
+      );
+
+      if (response is Map<String, dynamic> && response['success'] == true) {
+        final data = (response['opportunities'] as List<dynamic>? ?? [])
+            .cast<Map<String, dynamic>>();
+        _total = response['total'] as int? ?? 0;
+        _hasMore = response['has_more'] as bool? ?? false;
+
+        if (refresh) {
+          _opportunities = data;
+        } else {
+          _opportunities = [..._opportunities, ...data];
+        }
+        _currentOffset += data.length;
+      } else if (response is List<dynamic>) {
+        // Fallback de sécurité si la RPC renvoie un tableau brut
+        final data = response.cast<Map<String, dynamic>>();
+        if (refresh) {
+          _opportunities = data;
+        } else {
+          _opportunities = [..._opportunities, ...data];
+        }
+        _hasMore = false;
+      }
+      notifyListeners();
+    } catch (e) {
+      _setError(e.toString());
+    } finally {
+      _setLoading(false);
+      _isLoadingMore = false;
+    }
+  }
+
   /// Charge plus d'opportunités (pagination)
   Future<void> loadMore() async {
     await loadOpportunities(
@@ -153,6 +216,17 @@ class StudentOpportunitiesProvider extends ChangeNotifier {
     }
   }
 
+  /// Met à jour localement le flag is_bookmarked d'une opportunité
+  void updateOpportunityBookmark(String opportunityId, bool isBookmarked) {
+    final index = _opportunities.indexWhere((o) => o['id'] == opportunityId);
+    if (index != -1) {
+      final updated = Map<String, dynamic>.from(_opportunities[index]);
+      updated['is_bookmarked'] = isBookmarked;
+      _opportunities[index] = updated;
+      notifyListeners();
+    }
+  }
+
   /// Charge le nombre de nouvelles opportunités (pour badge)
   Future<void> loadNewCount() async {
     try {
@@ -163,6 +237,34 @@ class StudentOpportunitiesProvider extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('[StudentOpportunitiesProvider] loadNewCount error: $e');
+    }
+  }
+
+  /// Active/désactive le favori (bookmark) pour une opportunité
+  /// Ne modifie pas les indicateurs de chargement globaux pour rester léger
+  Future<bool> toggleBookmark(String opportunityId) async {
+    try {
+      final dynamic response = await _client.rpc(
+        'app_opportunity_toggle_bookmark',
+        params: {
+          'p_opportunity_id': opportunityId,
+        },
+      );
+
+      if (response is! Map<String, dynamic>) {
+        return false;
+      }
+
+      if (response['success'] == true) {
+        final bool isBookmarked = response['is_bookmarked'] == true;
+        updateOpportunityBookmark(opportunityId, isBookmarked);
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      debugPrint('[StudentOpportunitiesProvider] toggleBookmark error: $e');
+      return false;
     }
   }
 

@@ -33,6 +33,38 @@ class StudentApplicationsTab extends StatefulWidget {
   State<StudentApplicationsTab> createState() => _StudentApplicationsTabState();
 }
 
+class _CountBadge extends StatelessWidget {
+  final int count;
+
+  const _CountBadge({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    if (count <= 0) return const SizedBox.shrink();
+    final display = count > 99 ? '99+' : count.toString();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFF3B30),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white, width: 1.5),
+      ),
+      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+      child: Center(
+        child: Text(
+          display,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            height: 1,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _StudentApplicationsTabState extends State<StudentApplicationsTab> {
   String? _statusFilter;
 
@@ -207,9 +239,22 @@ class _StatusFilterBar extends StatelessWidget {
           final selected = currentFilter == status;
           final label = status == null ? 'Tous' : _statusLabel(status);
           final iconData = _statusIcon(status);
-          final textColor = selected
+          final Color statusColor = status == null
               ? _kApplicationsFilterSelectedLabelColor
-              : _kApplicationsFilterUnselectedLabelColor;
+              : _statusColor(status);
+          final Color chipBackground = selected
+              ? statusColor.withOpacity(0.12)
+              : _kApplicationsFilterBackground;
+          final Color borderColor = selected
+              ? statusColor
+              : (status == null
+                  ? _kApplicationsFilterUnselectedBorderColor
+                  : statusColor.withOpacity(0.5));
+          final Color textColor = selected
+              ? statusColor
+              : (status == null
+                  ? _kApplicationsFilterUnselectedLabelColor
+                  : statusColor.withOpacity(0.9));
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: FilterChip(
@@ -235,13 +280,9 @@ class _StatusFilterBar extends StatelessWidget {
                 ],
               ),
               selected: selected,
-              selectedColor: _kApplicationsFilterSelectedBackground,
-              backgroundColor: _kApplicationsFilterBackground,
-              side: BorderSide(
-                color: selected
-                    ? _kApplicationsFilterSelectedBorderColor
-                    : _kApplicationsFilterUnselectedBorderColor,
-              ),
+              selectedColor: chipBackground,
+              backgroundColor: chipBackground,
+              side: BorderSide(color: borderColor),
               onSelected: (_) => onFilterChanged(status),
             ),
           );
@@ -266,8 +307,8 @@ class _ApplicationsHeader extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text(
+          children: [
+            const Text(
               'Mes candidatures',
               style: TextStyle(
                 fontSize: 18,
@@ -275,16 +316,104 @@ class _ApplicationsHeader extends StatelessWidget {
                 color: _kApplicationsFilterSelectedLabelColor,
               ),
             ),
-            SizedBox(height: 4),
-            Text(
+            const SizedBox(height: 4),
+            const Text(
               'Suivez l\'évolution de vos demandes universitaires.',
               style: TextStyle(
                 fontSize: 13,
                 color: _kApplicationsFilterUnselectedLabelColor,
               ),
             ),
+            const SizedBox(height: 8),
+            Consumer<StudentApplicationsProvider>(
+              builder: (context, provider, _) {
+                final apps = provider.applications;
+                if (apps.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                int inProgress = 0;
+                int accepted = 0;
+                for (final app in apps) {
+                  final status = app['status']?.toString();
+                  if (status == 'submitted' || status == 'under_review') {
+                    inProgress++;
+                  } else if (status == 'accepted') {
+                    accepted++;
+                  }
+                }
+
+                if (inProgress == 0 && accepted == 0) {
+                  return const SizedBox.shrink();
+                }
+
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    if (inProgress > 0)
+                      _ApplicationsStatPill(
+                        icon: Icons.timelapse,
+                        color: _kApplicationsStatusSubmittedColor,
+                        label:
+                            '$inProgress en cours',
+                      ),
+                    if (accepted > 0)
+                      _ApplicationsStatPill(
+                        icon: Icons.check_circle_outline,
+                        color: _kApplicationsStatusAcceptedColor,
+                        label:
+                            '$accepted acceptée${accepted > 1 ? 's' : ''}',
+                      ),
+                  ],
+                );
+              },
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ApplicationsStatPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _ApplicationsStatPill({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withOpacity(0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: color,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -319,10 +448,14 @@ class _ApplicationCard extends StatelessWidget {
     final statusColor = _statusColor(status);
 
     String mainDate = '';
-    if (submittedAt.isNotEmpty) {
-      mainDate = 'Soumise le : $submittedAt';
+    if (status == 'accepted' && submittedAt.isNotEmpty) {
+      mainDate = 'Acceptée le $submittedAt';
+    } else if (status == 'under_review' && submittedAt.isNotEmpty) {
+      mainDate = 'En étude depuis le $submittedAt';
+    } else if (submittedAt.isNotEmpty) {
+      mainDate = 'Soumise le $submittedAt';
     } else if (createdAt.isNotEmpty) {
-      mainDate = 'Créée le : $createdAt';
+      mainDate = 'Créée le $createdAt';
     }
 
     return Card(
@@ -331,6 +464,10 @@ class _ApplicationCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: statusColor.withOpacity(0.6),
+          width: 1.4,
+        ),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -341,7 +478,7 @@ class _ApplicationCard extends StatelessWidget {
             Container(
               width: 4,
               decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.9),
+                color: statusColor.withOpacity(0.85),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
                   bottomLeft: Radius.circular(16),
@@ -365,14 +502,7 @@ class _ApplicationCard extends StatelessWidget {
                               Positioned(
                                 right: 0,
                                 top: 0,
-                                child: Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFFF3B30),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
+                                child: _CountBadge(count: 1),
                               ),
                           ],
                         ),
@@ -386,9 +516,10 @@ class _ApplicationCard extends StatelessWidget {
                                   degreeLevel.isNotEmpty
                                       ? '$programTitle · $degreeLevel'
                                       : programTitle,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
+                                    color: statusColor,
                                   ),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,

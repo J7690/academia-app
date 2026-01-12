@@ -19,6 +19,429 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
     });
   }
 
+  Future<void> _openPostsDialog(
+    BuildContext context,
+    AdminCommunitiesProvider provider,
+    Map<String, dynamic> community,
+  ) async {
+    final communityId = community['id']?.toString() ?? '';
+    final name = community['name']?.toString() ?? '';
+    if (communityId.isEmpty) return;
+
+    await provider.loadPosts(communityId);
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Consumer<AdminCommunitiesProvider>(
+          builder: (context, p, child) {
+            final posts = p.posts;
+            return AlertDialog(
+              title: Text('Messages - $name'),
+              content: SizedBox(
+                width: 520,
+                height: 400,
+                child: posts.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Aucun message pour cette communauté.',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: posts.length,
+                        itemBuilder: (context, index) {
+                          final post = posts[index];
+                          final postId = post['id']?.toString() ?? '';
+                          final content =
+                              (post['content'] ?? '').toString();
+                          final isPinned = post['is_pinned'] == true;
+                          final createdAt =
+                              (post['created_at'] ?? '').toString();
+
+                          return Card(
+                            margin:
+                                const EdgeInsets.symmetric(vertical: 4.0),
+                            child: ListTile(
+                              title: Text(
+                                content.isNotEmpty
+                                    ? content
+                                    : '(message sans texte)',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                createdAt.isNotEmpty
+                                    ? createdAt
+                                    : '',
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    tooltip: isPinned
+                                        ? 'Retirer des messages épinglés'
+                                        : 'Épingler ce message',
+                                    icon: Icon(
+                                      isPinned
+                                          ? Icons.push_pin
+                                          : Icons.push_pin_outlined,
+                                      color: isPinned
+                                          ? Colors.orange
+                                          : Colors.grey,
+                                    ),
+                                    onPressed: postId.isEmpty
+                                        ? null
+                                        : () async {
+                                            final ok =
+                                                await p.pinPost(
+                                              postId: postId,
+                                              isPinned: !isPinned,
+                                            );
+                                            if (!dialogContext.mounted) return;
+                                            if (!ok && p.error != null) {
+                                              ScaffoldMessenger.of(
+                                                      dialogContext)
+                                                  .showSnackBar(
+                                                SnackBar(
+                                                  content: Text(p.error!),
+                                                ),
+                                              );
+                                            } else {
+                                              await p.loadPosts(communityId);
+                                            }
+                                          },
+                                  ),
+                                  IconButton(
+                                    tooltip: 'Supprimer',
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      color: Colors.redAccent,
+                                    ),
+                                    onPressed: postId.isEmpty
+                                        ? null
+                                        : () async {
+                                            final ok = await p.deletePost(
+                                              postId,
+                                            );
+                                            if (!dialogContext.mounted) return;
+                                            if (!ok && p.error != null) {
+                                              ScaffoldMessenger.of(
+                                                      dialogContext)
+                                                  .showSnackBar(
+                                                SnackBar(
+                                                  content: Text(p.error!),
+                                                ),
+                                              );
+                                            } else {
+                                              await p.loadPosts(communityId);
+                                            }
+                                          },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Fermer'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmDeleteCommunity(
+    BuildContext context,
+    AdminCommunitiesProvider provider,
+    Map<String, dynamic> community,
+  ) async {
+    final communityId = community['id']?.toString() ?? '';
+    final name = community['name']?.toString() ?? '';
+    if (communityId.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Supprimer la communauté'),
+          content: Text(
+            'Cette opération supprimera définitivement le groupe "$name" et toutes ses données associées (messages, membres, sondages...). Continuer ?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Supprimer'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    final ok = await provider.deleteCommunity(communityId: communityId);
+    if (!mounted) return;
+    if (!ok && provider.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(provider.error!)),
+      );
+    }
+  }
+
+  Future<void> _openMembersDialog(
+    BuildContext context,
+    AdminCommunitiesProvider provider,
+    Map<String, dynamic> community,
+  ) async {
+    final communityId = community['id']?.toString() ?? '';
+    final name = community['name']?.toString() ?? '';
+    if (communityId.isEmpty) return;
+
+    await provider.loadMembers(communityId);
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Consumer<AdminCommunitiesProvider>(
+          builder: (context, p, child) {
+            final members = p.members;
+            return AlertDialog(
+              title: Text('Membres - $name'),
+              content: SizedBox(
+                width: 480,
+                height: 360,
+                child: members.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Aucun membre pour cette communauté.',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: members.length,
+                        itemBuilder: (context, index) {
+                          final m = members[index];
+                          final userId = m['user_id']?.toString() ?? '';
+                          final displayName =
+                              (m['user_display_name'] ?? '').toString();
+                          final email = (m['user_email'] ?? '').toString();
+                          final role = (m['role'] ?? '').toString();
+                          final isActive = m['is_active'] != false;
+                          final isBanned = m['is_banned'] == true;
+
+                          return ListTile(
+                            title: Text(
+                              displayName.isNotEmpty
+                                  ? displayName
+                                  : email,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            subtitle: Text(
+                              [
+                                if (email.isNotEmpty) email,
+                                if (role.isNotEmpty) 'Rôle: $role',
+                                if (isBanned)
+                                  'Banni'
+                                else if (isActive)
+                                  'Actif'
+                                else
+                                  'Inactif',
+                              ].join(' • '),
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (!isBanned)
+                                  IconButton(
+                                    tooltip: 'Retirer du groupe',
+                                    icon: const Icon(
+                                      Icons.person_remove_alt_1_outlined,
+                                      color: Colors.redAccent,
+                                    ),
+                                    onPressed: userId.isEmpty
+                                        ? null
+                                        : () async {
+                                            final ok = await p.banUser(
+                                              communityId: communityId,
+                                              userId: userId,
+                                            );
+                                            if (!dialogContext.mounted) return;
+                                            if (!ok && p.error != null) {
+                                              ScaffoldMessenger.of(
+                                                      dialogContext)
+                                                  .showSnackBar(
+                                                SnackBar(
+                                                  content: Text(p.error!),
+                                                ),
+                                              );
+                                            } else {
+                                              await p.loadMembers(
+                                                communityId,
+                                              );
+                                            }
+                                          },
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Fermer'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _openJoinRequestsDialog(
+    BuildContext context,
+    AdminCommunitiesProvider provider,
+    Map<String, dynamic> community,
+  ) async {
+    final communityId = community['id']?.toString() ?? '';
+    final name = community['name']?.toString() ?? '';
+    if (communityId.isEmpty) return;
+
+    await provider.loadJoinRequests(communityId);
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Consumer<AdminCommunitiesProvider>(
+          builder: (context, p, child) {
+            final requests = p.joinRequests;
+            return AlertDialog(
+              title: Text('Demandes d\'adhésion - $name'),
+              content: SizedBox(
+                width: 480,
+                height: 360,
+                child: requests.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Aucune demande d\'adhésion en attente pour cette communauté.',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: requests.length,
+                        itemBuilder: (context, index) {
+                          final r = requests[index];
+                          final requestId = r['id']?.toString() ?? '';
+                          final displayName =
+                              (r['user_display_name'] ?? '').toString();
+                          final email = (r['user_email'] ?? '').toString();
+                          final createdAt = (r['created_at'] ?? '').toString();
+
+                          return ListTile(
+                            title: Text(
+                              displayName.isNotEmpty
+                                  ? displayName
+                                  : email,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            subtitle: Text(
+                              createdAt.isNotEmpty
+                                  ? 'Demande créée le $createdAt'
+                                  : 'Demande en attente',
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  tooltip: 'Refuser',
+                                  icon: const Icon(
+                                    Icons.close,
+                                    color: Colors.redAccent,
+                                  ),
+                                  onPressed: requestId.isEmpty
+                                      ? null
+                                      : () async {
+                                          final ok =
+                                              await p.handleJoinRequest(
+                                            communityId: communityId,
+                                            requestId: requestId,
+                                            action: 'reject',
+                                          );
+                                          if (!dialogContext.mounted) return;
+                                          if (!ok && p.error != null) {
+                                            ScaffoldMessenger.of(dialogContext)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                content: Text(p.error!),
+                                              ),
+                                            );
+                                          }
+                                        },
+                                ),
+                                IconButton(
+                                  tooltip: 'Accepter',
+                                  icon: const Icon(
+                                    Icons.check,
+                                    color: Colors.green,
+                                  ),
+                                  onPressed: requestId.isEmpty
+                                      ? null
+                                      : () async {
+                                          final ok =
+                                              await p.handleJoinRequest(
+                                            communityId: communityId,
+                                            requestId: requestId,
+                                            action: 'accept',
+                                          );
+                                          if (!dialogContext.mounted) return;
+                                          if (!ok && p.error != null) {
+                                            ScaffoldMessenger.of(dialogContext)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                content: Text(p.error!),
+                                              ),
+                                            );
+                                          }
+                                        },
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Fermer'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -308,6 +731,28 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
                             onPressed: id == null
                                 ? null
                                 : () {
+                                    _openMembersDialog(context, provider, c);
+                                  },
+                            icon: const Icon(Icons.group_outlined),
+                            label: const Text('Membres'),
+                          ),
+                          TextButton.icon(
+                            onPressed: id == null
+                                ? null
+                                : () {
+                                    _openJoinRequestsDialog(
+                                      context,
+                                      provider,
+                                      c,
+                                    );
+                                  },
+                            icon: const Icon(Icons.person_add_alt_1_outlined),
+                            label: const Text('Demandes'),
+                          ),
+                          TextButton.icon(
+                            onPressed: id == null
+                                ? null
+                                : () {
                                     _openPostsDialog(context, provider, c);
                                   },
                             icon: const Icon(Icons.forum_outlined),
@@ -325,6 +770,22 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
                                   },
                             icon: const Icon(Icons.shield_outlined),
                             label: const Text('Modération'),
+                          ),
+                          TextButton.icon(
+                            onPressed: id == null
+                                ? null
+                                : () {
+                                    _confirmDeleteCommunity(
+                                      context,
+                                      provider,
+                                      c,
+                                    );
+                                  },
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Colors.redAccent,
+                            ),
+                            label: const Text('Supprimer'),
                           ),
                         ],
                       ),
@@ -729,175 +1190,5 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
         SnackBar(content: Text(provider.error!)),
       );
     }
-  }
-
-  Future<void> _openPostsDialog(
-    BuildContext context,
-    AdminCommunitiesProvider provider,
-    Map<String, dynamic> community,
-  ) async {
-    final communityId = community['id']?.toString() ?? '';
-    final name = community['name']?.toString() ?? '';
-    if (communityId.isEmpty) return;
-
-    await provider.loadPosts(communityId);
-    if (!mounted) return;
-
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return Consumer<AdminCommunitiesProvider>(
-          builder: (context, p, child) {
-            final posts = p.posts;
-            return AlertDialog(
-              title: Text('Messages - $name'),
-              content: SizedBox(
-                width: 480,
-                height: 360,
-                child: posts.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Aucun message dans cette communauté pour le moment.',
-                          style: TextStyle(fontSize: 13),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: posts.length,
-                        itemBuilder: (context, index) {
-                          final post = posts[index];
-                          final postId = post['id']?.toString() ?? '';
-                          final authorId = post['author_id']?.toString() ?? '';
-                          final content =
-                              (post['content'] ?? '').toString();
-                          final createdAt =
-                              (post['created_at'] ?? '').toString();
-
-                          return Card(
-                            margin:
-                                const EdgeInsets.symmetric(vertical: 4.0),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    content,
-                                    style: const TextStyle(fontSize: 13),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Auteur: $authorId',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                  if (createdAt.isNotEmpty)
-                                    Text(
-                                      createdAt,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.end,
-                                    children: [
-                                      TextButton(
-                                        onPressed: postId.isEmpty
-                                            ? null
-                                            : () async {
-                                                final ok = await p.deletePost(
-                                                  postId,
-                                                );
-                                                if (!dialogContext.mounted) {
-                                                  return;
-                                                }
-                                                if (!ok && p.error != null) {
-                                                  ScaffoldMessenger.of(
-                                                          dialogContext)
-                                                      .showSnackBar(
-                                                    SnackBar(
-                                                      content: Text(
-                                                        p.error!,
-                                                      ),
-                                                    ),
-                                                  );
-                                                } else {
-                                                  await p.loadPosts(
-                                                    communityId,
-                                                  );
-                                                }
-                                              },
-                                        child: const Text(
-                                          'Supprimer',
-                                          style: TextStyle(fontSize: 12),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      TextButton(
-                                        onPressed: authorId.isEmpty
-                                            ? null
-                                            : () async {
-                                                final ok = await p.banUser(
-                                                  communityId: communityId,
-                                                  userId: authorId,
-                                                );
-                                                if (!dialogContext.mounted) {
-                                                  return;
-                                                }
-                                                if (!ok && p.error != null) {
-                                                  ScaffoldMessenger.of(
-                                                          dialogContext)
-                                                      .showSnackBar(
-                                                    SnackBar(
-                                                      content: Text(
-                                                        p.error!,
-                                                      ),
-                                                    ),
-                                                  );
-                                                } else {
-                                                  ScaffoldMessenger.of(
-                                                          dialogContext)
-                                                      .showSnackBar(
-                                                    const SnackBar(
-                                                      content: Text(
-                                                        'Utilisateur banni de cette communauté.',
-                                                      ),
-                                                    ),
-                                                  );
-                                                }
-                                              },
-                                        child: const Text(
-                                          'Bannir auteur',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0xFFEF4444),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Fermer'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
   }
 }

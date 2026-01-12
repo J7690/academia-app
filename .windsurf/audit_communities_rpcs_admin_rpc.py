@@ -32,12 +32,17 @@ def main() -> int:
     rpc_tests: list[tuple[str, Dict[str, Any] | None]] = [
         ("app_student_list_communities", {"p_search": None, "p_category": None}),
         ("app_student_list_my_communities", {}),
+        ("app_student_request_join_community", {"p_community_id": fake_uuid}),
         ("app_student_join_community", {"p_community_id": fake_uuid}),
         ("app_student_leave_community", {"p_community_id": fake_uuid}),
         ("app_student_list_community_posts", {"p_community_id": fake_uuid}),
         (
             "app_student_add_community_post",
             {"p_community_id": fake_uuid, "p_content": "test"},
+        ),
+        (
+            "app_student_delete_own_community_post",
+            {"p_post_id": fake_uuid},
         ),
         ("app_student_mark_community_read", {"p_community_id": fake_uuid}),
         ("app_student_list_my_communities_activity", {}),
@@ -67,6 +72,14 @@ def main() -> int:
             },
         ),
         (
+            "app_admin_list_community_posts",
+            {"p_community_id": fake_uuid},
+        ),
+        (
+            "app_admin_delete_community_post",
+            {"p_post_id": fake_uuid},
+        ),
+        (
             "app_admin_list_community_moderation_events",
             {"p_community_id": fake_uuid},
         ),
@@ -77,6 +90,26 @@ def main() -> int:
                 "p_resolution": "résolution de test (audit)",
                 "p_new_moderation_state": "clean",
                 "p_new_status": "active",
+            },
+        ),
+        (
+            "app_admin_pin_community_post",
+            {"p_post_id": fake_uuid, "p_is_pinned": True},
+        ),
+        (
+            "app_admin_list_community_members",
+            {"p_community_id": fake_uuid},
+        ),
+        (
+            "app_admin_list_community_join_requests",
+            {"p_community_id": fake_uuid},
+        ),
+        (
+            "app_admin_handle_community_join_request",
+            {
+                "p_request_id": fake_uuid,
+                "p_action": "reject",
+                "p_role": "member",
             },
         ),
     ]

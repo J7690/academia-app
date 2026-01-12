@@ -19,6 +19,7 @@ class StudentOpportunitiesTab extends StatefulWidget {
 class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
   String _searchQuery = '';
   String? _selectedType;
+  bool _showBookmarksOnly = false;
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
@@ -43,7 +44,15 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
         _scrollController.position.maxScrollExtent - 200) {
       final provider = context.read<StudentOpportunitiesProvider>();
       if (provider.hasMore && !provider.isLoadingMore) {
-        provider.loadMore();
+        if (_showBookmarksOnly) {
+          provider.loadBookmarkedOpportunities(
+            type: _selectedType,
+            search: _searchQuery.isEmpty ? null : _searchQuery,
+            refresh: false,
+          );
+        } else {
+          provider.loadMore();
+        }
       }
     }
   }
@@ -51,22 +60,38 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
   Future<void> _loadInitialData() async {
     final provider = context.read<StudentOpportunitiesProvider>();
     await provider.loadTypes();
-    await provider.loadOpportunities(
-      type: _selectedType,
-      search: _searchQuery.isEmpty ? null : _searchQuery,
-      refresh: true,
-    );
+    if (_showBookmarksOnly) {
+      await provider.loadBookmarkedOpportunities(
+        type: _selectedType,
+        search: _searchQuery.isEmpty ? null : _searchQuery,
+        refresh: true,
+      );
+    } else {
+      await provider.loadOpportunities(
+        type: _selectedType,
+        search: _searchQuery.isEmpty ? null : _searchQuery,
+        refresh: true,
+      );
+    }
     // Marquer les opportunités comme vues (reset badge)
     provider.markAsViewed();
   }
 
   Future<void> _onRefresh() async {
     final provider = context.read<StudentOpportunitiesProvider>();
-    await provider.loadOpportunities(
-      type: _selectedType,
-      search: _searchQuery.isEmpty ? null : _searchQuery,
-      refresh: true,
-    );
+    if (_showBookmarksOnly) {
+      await provider.loadBookmarkedOpportunities(
+        type: _selectedType,
+        search: _searchQuery.isEmpty ? null : _searchQuery,
+        refresh: true,
+      );
+    } else {
+      await provider.loadOpportunities(
+        type: _selectedType,
+        search: _searchQuery.isEmpty ? null : _searchQuery,
+        refresh: true,
+      );
+    }
   }
 
   void _onSearchChanged(String value) {
@@ -77,6 +102,22 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
   void _onTypeSelected(String? type) {
     setState(() => _selectedType = type);
     _onRefresh();
+  }
+
+  Future<void> _onToggleBookmark(Map<String, dynamic> opportunity) async {
+    final id = opportunity['id']?.toString();
+    if (id == null) return;
+
+    final provider = context.read<StudentOpportunitiesProvider>();
+    final success = await provider.toggleBookmark(id);
+
+    if (!success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Erreur lors de la mise à jour du favori.'),
+        ),
+      );
+    }
   }
 
   Future<void> _applyToOpportunity(Map<String, dynamic> opportunity) async {
@@ -330,6 +371,136 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
     );
   }
 
+  Widget _buildCareerTipCard() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFECFDF5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFA7F3D0),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: const BoxDecoration(
+              color: Color(0xFF6EE7B7),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.lightbulb,
+              size: 18,
+              color: Color(0xFF047857),
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Astuce carrière',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF065F46),
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Un message de motivation court et personnalisé augmente fortement tes chances de réponse.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF047857),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressCard() {
+    return Consumer<StudentOpportunitiesProvider>(
+      builder: (context, provider, _) {
+        final opportunities = provider.opportunities;
+        int bookmarkedCount = 0;
+        for (final opp in opportunities) {
+          if (opp['is_bookmarked'] == true) {
+            bookmarkedCount++;
+          }
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(top: 8, bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEEF2FF),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF4F46E5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.trending_up,
+                  size: 18,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Mon avancée carrière',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF111827),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 4,
+                      children: [
+                        _ProgressPill(
+                          icon: Icons.work_outline,
+                          label:
+                              '${provider.total} opportunité${provider.total > 1 ? 's' : ''}',
+                        ),
+                        _ProgressPill(
+                          icon: Icons.bookmark_outline,
+                          label:
+                              '$bookmarkedCount favori${bookmarkedCount > 1 ? 's' : ''}',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -426,11 +597,22 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
                 );
               }
 
+              const bool hasTipCard = true;
+              final int baseItemCount =
+                  opportunities.length + (provider.hasMore ? 1 : 0);
+              final int itemCount = baseItemCount + (hasTipCard ? 1 : 0);
+
               return ListView.builder(
                 padding: const EdgeInsets.only(bottom: 16),
-                itemCount: opportunities.length + (provider.hasMore ? 1 : 0),
+                itemCount: itemCount,
                 itemBuilder: (context, index) {
-                  if (index >= opportunities.length) {
+                  if (hasTipCard && index == 0) {
+                    return _buildCareerTipCard();
+                  }
+
+                  final int effectiveIndex = hasTipCard ? index - 1 : index;
+
+                  if (effectiveIndex >= opportunities.length) {
                     return const Padding(
                       padding: EdgeInsets.all(16),
                       child: Center(
@@ -443,7 +625,7 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
                     );
                   }
 
-                  final opp = opportunities[index];
+                  final opp = opportunities[effectiveIndex];
                   return OpportunityFeedCard(
                     opportunity: opp,
                     onTap: () {
@@ -453,6 +635,7 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
                     onLove: () => _onReaction(opp, 'love'),
                     onComment: () => _onComment(opp),
                     onAction: () => _applyToOpportunity(opp),
+                    onBookmark: () => _onToggleBookmark(opp),
                   );
                 },
               );
@@ -490,6 +673,62 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
               );
             },
           ),
+          const SizedBox(height: 6),
+          Consumer<StudentOpportunitiesProvider>(
+            builder: (context, provider, _) {
+              final opportunities = provider.opportunities;
+              if (opportunities.isEmpty) {
+                return const SizedBox.shrink();
+              }
+
+              final now = DateTime.now();
+              int recentCount = 0;
+              for (final opp in opportunities) {
+                final createdAtStr = opp['created_at']?.toString();
+                if (createdAtStr == null || createdAtStr.isEmpty) {
+                  continue;
+                }
+                try {
+                  final createdAt = DateTime.parse(createdAtStr);
+                  if (now.difference(createdAt).inDays < 7) {
+                    recentCount++;
+                  }
+                } catch (_) {}
+              }
+
+              if (recentCount <= 0) {
+                return const SizedBox.shrink();
+              }
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0F2FE),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.bolt,
+                      size: 14,
+                      color: Color(0xFF0EA5E9),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$recentCount nouvelle${recentCount > 1 ? 's' : ''} opportunité${recentCount > 1 ? 's' : ''} cette semaine',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF0369A1),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          _buildProgressCard(),
           const SizedBox(height: 12),
           TextField(
             controller: _searchController,
@@ -533,6 +772,76 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
                 ),
               );
             },
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilterChip(
+              label: const Text('Mes favoris'),
+              selected: _showBookmarksOnly,
+              onSelected: (selected) {
+                setState(() {
+                  _showBookmarksOnly = selected;
+                });
+                _onRefresh();
+              },
+              selectedColor: const Color(0xFFEEF2FF),
+              checkmarkColor: const Color(0xFF4F46E5),
+              labelStyle: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: _showBookmarksOnly
+                    ? const Color(0xFF4F46E5)
+                    : const Color(0xFF374151),
+              ),
+              side: BorderSide(
+                color: _showBookmarksOnly
+                    ? const Color(0xFF4F46E5)
+                    : const Color(0xFFE5E7EB),
+              ),
+              backgroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProgressPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _ProgressPill({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 16,
+            color: const Color(0xFF4F46E5),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF111827),
+            ),
           ),
         ],
       ),

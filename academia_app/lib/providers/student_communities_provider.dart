@@ -207,21 +207,21 @@ class StudentCommunitiesProvider extends ChangeNotifier {
     _setError(null);
     try {
       final dynamic response = await _client.rpc(
-        'app_student_join_community',
+        'app_student_request_join_community',
         params: {
           'p_community_id': communityId,
         },
       );
       if (response is! Map<String, dynamic>) {
         _setError(
-          "Réponse invalide du serveur lors de l'adhésion à la communauté.",
+          "Réponse invalide du serveur lors de la demande d'adhésion à la communauté.",
         );
         return false;
       }
       if (response['success'] != true) {
         _setError(
           response['error']?.toString() ??
-              "Erreur lors de l'adhésion à la communauté.",
+              "Erreur lors de la demande d'adhésion à la communauté.",
         );
         return false;
       }
@@ -247,13 +247,26 @@ class StudentCommunitiesProvider extends ChangeNotifier {
   }) async {
     _setError(null);
     try {
-      await _client.rpc(
+      final dynamic response = await _client.rpc(
         'app_student_toggle_community_post_reaction',
         params: {
           'p_post_id': postId,
           'p_emoji': emoji,
         },
       );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          "Réponse invalide du serveur lors de la réaction au message.",
+        );
+        return;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              "Erreur lors de la réaction au message.",
+        );
+        return;
+      }
       await loadCommunityPosts(communityId);
     } catch (e) {
       _setError(e.toString());
@@ -515,6 +528,49 @@ class StudentCommunitiesProvider extends ChangeNotifier {
         loadCommunityPosts(communityId),
         loadMyChats(),
       ]);
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<bool> deleteMyPost({
+    required String communityId,
+    required String postId,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_delete_own_community_post',
+        params: {
+          'p_post_id': postId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          "R e9ponse invalide du serveur lors de la suppression du message.",
+        );
+        return false;
+      }
+      if (response['success'] != true) {
+        final rawError = response['error']?.toString();
+        if (rawError == 'post_not_found_or_not_author') {
+          _setError(
+            "Ce message n'existe plus ou ne t'appartient pas.",
+          );
+        } else {
+          _setError(
+            rawError ??
+                "Erreur lors de la suppression du message de la communaut e9.",
+          );
+        }
+        return false;
+      }
+      await loadCommunityPosts(communityId);
       return true;
     } catch (e) {
       _setError(e.toString());

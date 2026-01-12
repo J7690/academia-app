@@ -28,7 +28,7 @@
     "http": 200,
     "ok": true,
     "mode": "select",
-    "rows_count": 21,
+    "rows_count": 24,
     "rows": [
       {
         "data_type": "uuid",
@@ -176,6 +176,27 @@
         "column_name": "updated_at",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "data_type": "numeric",
+        "table_name": "opportunities",
+        "column_name": "price",
+        "is_nullable": "YES",
+        "column_default": "NULL::numeric"
+      },
+      {
+        "data_type": "integer",
+        "table_name": "opportunities",
+        "column_name": "reactions_count",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "data_type": "integer",
+        "table_name": "opportunities",
+        "column_name": "comments_count",
+        "is_nullable": "NO",
+        "column_default": "0"
       }
     ],
     "error": null,
@@ -185,7 +206,7 @@
     "http": 200,
     "ok": true,
     "mode": "select",
-    "rows_count": 9,
+    "rows_count": 12,
     "rows": [
       {
         "data_type": "uuid",
@@ -249,6 +270,27 @@
         "column_name": "updated_at",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunity_applications",
+        "column_name": "admin_notes",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "opportunity_applications",
+        "column_name": "reviewed_at",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "opportunity_applications",
+        "column_name": "reviewed_by",
+        "is_nullable": "YES",
+        "column_default": null
       }
     ],
     "error": null,
@@ -317,7 +359,7 @@
     "http": 200,
     "ok": true,
     "mode": "select",
-    "rows_count": 12,
+    "rows_count": 22,
     "rows": [
       {
         "data_type": "jsonb",
@@ -351,6 +393,12 @@
       },
       {
         "data_type": "jsonb",
+        "routine_name": "app_admin_upsert_opportunity",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
         "routine_name": "app_admin_upsert_opportunity_type",
         "routine_type": "FUNCTION",
         "routine_schema": "public"
@@ -364,6 +412,54 @@
       {
         "data_type": "trigger",
         "routine_name": "app_notify_opportunity_change",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_opportunity_add_comment",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_opportunity_count_new",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_opportunity_delete_comment",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_opportunity_get_my_reaction",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_opportunity_get_reactions",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_opportunity_list_comments",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_opportunity_mark_viewed",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_opportunity_toggle_reaction",
         "routine_type": "FUNCTION",
         "routine_schema": "public"
       },
@@ -390,6 +486,12 @@
         "routine_name": "app_student_list_opportunities",
         "routine_type": "FUNCTION",
         "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_student_list_opportunities",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
       }
     ],
     "error": null,
@@ -399,7 +501,7 @@
     "http": 200,
     "ok": true,
     "mode": "select",
-    "rows_count": 12,
+    "rows_count": 22,
     "rows": [
       {
         "def": "CREATE OR REPLACE FUNCTION public.app_admin_list_opportunities()\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_role TEXT;\n    v_result JSONB;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    SELECT raw_user_meta_data->>'role'\n    INTO v_role\n    FROM auth.users\n    WHERE id = v_user_id;\n\n    IF v_role <> 'admin' THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');\n    END IF;\n\n    SELECT COALESCE(\n        JSONB_AGG(\n            JSONB_BUILD_OBJECT(\n                'id', o.id,\n                'title', o.title,\n                'short_description', o.short_description,\n                'description', o.description,\n                'type', o.type,\n                'category', o.category,\n                'organization_name', o.organization_name,\n                'organization_logo_url', o.organization_logo_url,\n                'country', o.country,\n                'city', o.city,\n                'is_remote_possible', o.is_remote_possible,\n                'contract_type', o.contract_type,\n                'duration_months', o.duration_months,\n                'start_date', o.start_date,\n                'application_deadline', o.application_deadline,\n                'status', o.status,\n                'is_featured', o.is_featured,\n                'is_active', o.is_active,\n                'created_by_user_id', o.created_by_user_id,\n                'created_at', o.created_at,\n                'updated_at', o.updated_at\n            )\n            ORDER BY o.created_at DESC\n        ),\n        '[]'::JSONB\n    ) INTO v_result\n    FROM app.opportunities o;\n\n    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'opportunities', v_result);\nEND;\n$function$\n",
@@ -427,6 +529,11 @@
         "schema": "public"
       },
       {
+        "def": "CREATE OR REPLACE FUNCTION public.app_admin_upsert_opportunity(p_opportunity_id uuid, p_title text, p_short_description text, p_description text, p_type text, p_category text, p_organization_name text, p_organization_logo_url text, p_country text, p_city text, p_is_remote_possible boolean, p_contract_type text, p_duration_months integer, p_start_date date, p_application_deadline date, p_status text, p_is_featured boolean, p_is_active boolean, p_price numeric DEFAULT NULL::numeric)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_role TEXT;\n    v_opportunity_id UUID;\n    v_title TEXT := NULLIF(TRIM(COALESCE(p_title, '')), '');\n    v_short_desc TEXT := NULLIF(TRIM(COALESCE(p_short_description, '')), '');\n    v_type TEXT := NULLIF(TRIM(COALESCE(p_type, '')), '');\n    v_org_name TEXT := NULLIF(TRIM(COALESCE(p_organization_name, '')), '');\n    v_country TEXT := NULLIF(TRIM(COALESCE(p_country, '')), '');\n    v_city TEXT := NULLIF(TRIM(COALESCE(p_city, '')), '');\n    v_status TEXT := COALESCE(NULLIF(TRIM(COALESCE(p_status, '')), ''), 'draft');\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    SELECT raw_user_meta_data->>'role'\n    INTO v_role\n    FROM auth.users\n    WHERE id = v_user_id;\n\n    IF v_role <> 'admin' THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');\n    END IF;\n\n    IF v_title IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_title');\n    END IF;\n\n    IF v_short_desc IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_short_description');\n    END IF;\n\n    IF v_type IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_type');\n    END IF;\n\n    IF v_org_name IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_organization_name');\n    END IF;\n\n    IF v_country IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_country');\n    END IF;\n\n    IF v_city IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_city');\n    END IF;\n\n    IF p_opportunity_id IS NULL THEN\n        -- Création\n        INSERT INTO app.opportunities (\n            title,\n            short_description,\n            description,\n            type,\n            category,\n            organization_name,\n            organization_logo_url,\n            country,\n            city,\n            is_remote_possible,\n            contract_type,\n            duration_months,\n            start_date,\n            application_deadline,\n            status,\n            is_featured,\n            is_active,\n            price,\n            created_by_user_id\n        )\n        VALUES (\n            v_title,\n            v_short_desc,\n            p_description,\n            v_type,\n            p_category,\n            v_org_name,\n            p_organization_logo_url,\n            v_country,\n            v_city,\n            COALESCE(p_is_remote_possible, FALSE),\n            p_contract_type,\n            p_duration_months,\n            p_start_date,\n            p_application_deadline,\n            v_status,\n            COALESCE(p_is_featured, FALSE),\n            COALESCE(p_is_active, TRUE),\n            p_price,\n            v_user_id\n        )\n        RETURNING id INTO v_opportunity_id;\n    ELSE\n        -- Mise à jour\n        UPDATE app.opportunities\n        SET\n            title = v_title,\n            short_description = v_short_desc,\n            description = p_description,\n            type = v_type,\n            category = p_category,\n            organization_name = v_org_name,\n            organization_logo_url = p_organization_logo_url,\n            country = v_country,\n            city = v_city,\n            is_remote_possible = COALESCE(p_is_remote_possible, is_remote_possible),\n            contract_type = p_contract_type,\n            duration_months = p_duration_months,\n            start_date = p_start_date,\n            application_deadline = p_application_deadline,\n            status = v_status,\n            is_featured = COALESCE(p_is_featured, is_featured),\n            is_active = COALESCE(p_is_active, is_active),\n            price = p_price,\n            updated_at = NOW()\n        WHERE id = p_opportunity_id\n        RETURNING id INTO v_opportunity_id;\n    END IF;\n\n    IF v_opportunity_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'opportunity_not_found');\n    END IF;\n\n    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'opportunity_id', v_opportunity_id);\nEND;\n$function$\n",
+        "name": "app_admin_upsert_opportunity",
+        "schema": "public"
+      },
+      {
         "def": "CREATE OR REPLACE FUNCTION public.app_admin_upsert_opportunity_type(p_type_id uuid, p_code text, p_label text, p_sort_order integer, p_is_active boolean)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_role TEXT;\n    v_type_id UUID;\n    v_code TEXT := NULLIF(TRIM(COALESCE(p_code, '')), '');\n    v_label TEXT := NULLIF(TRIM(COALESCE(p_label, '')), '');\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    SELECT raw_user_meta_data->>'role'\n    INTO v_role\n    FROM auth.users\n    WHERE id = v_user_id;\n\n    IF v_role <> 'admin' THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');\n    END IF;\n\n    IF v_code IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_code');\n    END IF;\n\n    IF v_label IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_label');\n    END IF;\n\n    IF p_type_id IS NULL THEN\n        INSERT INTO app.opportunity_types (\n            code,\n            label,\n            sort_order,\n            is_active\n        )\n        VALUES (\n            v_code,\n            v_label,\n            COALESCE(p_sort_order, 0),\n            COALESCE(p_is_active, TRUE)\n        )\n        RETURNING id INTO v_type_id;\n    ELSE\n        UPDATE app.opportunity_types\n        SET\n            code = v_code,\n            label = v_label,\n            sort_order = COALESCE(p_sort_order, sort_order),\n            is_active = COALESCE(p_is_active, is_active),\n            updated_at = NOW()\n        WHERE id = p_type_id\n        RETURNING id INTO v_type_id;\n    END IF;\n\n    IF v_type_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'type_not_found');\n    END IF;\n\n    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'type_id', v_type_id);\nEND;\n$function$\n",
         "name": "app_admin_upsert_opportunity_type",
         "schema": "public"
@@ -439,6 +546,46 @@
       {
         "def": "CREATE OR REPLACE FUNCTION public.app_notify_opportunity_change()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nBEGIN\n    -- On notifie uniquement pour les opportunités actives et publiées\n    IF NEW.is_active = TRUE AND NEW.status = 'published' THEN\n        PERFORM app_queue_notification_event(\n            NULL, -- broadcast éventuel géré côté worker si nécessaire\n            'student_opportunities',\n            'info',\n            JSONB_BUILD_OBJECT('opportunity_id', NEW.id)\n        );\n\n        PERFORM app_queue_notification_event(\n            (SELECT id FROM auth.users WHERE raw_user_meta_data->>'role' = 'admin' LIMIT 1),\n            'admin_opportunities',\n            'info',\n            JSONB_BUILD_OBJECT('opportunity_id', NEW.id)\n        );\n    END IF;\n\n    RETURN NEW;\nEND;\n$function$\n",
         "name": "app_notify_opportunity_change",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_opportunity_add_comment(p_opportunity_id uuid, p_content text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_comment_id UUID;\n    v_new_count INTEGER;\n    v_content TEXT := TRIM(COALESCE(p_content, ''));\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    IF v_content = '' OR LENGTH(v_content) < 2 THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'content_too_short');\n    END IF;\n\n    IF LENGTH(v_content) > 1000 THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'content_too_long');\n    END IF;\n\n    -- Vérifier si l'opportunité existe et est active\n    IF NOT EXISTS (\n        SELECT 1 FROM app.opportunities \n        WHERE id = p_opportunity_id AND is_active = TRUE AND status = 'published'\n    ) THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'opportunity_not_found');\n    END IF;\n\n    -- Insérer le commentaire\n    INSERT INTO app.opportunity_comments (opportunity_id, user_id, content)\n    VALUES (p_opportunity_id, v_user_id, v_content)\n    RETURNING id INTO v_comment_id;\n\n    -- Incrémenter le compteur\n    UPDATE app.opportunities \n    SET comments_count = comments_count + 1, updated_at = NOW()\n    WHERE id = p_opportunity_id\n    RETURNING comments_count INTO v_new_count;\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'comment_id', v_comment_id,\n        'comments_count', v_new_count\n    );\nEND;\n$function$\n",
+        "name": "app_opportunity_add_comment",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_opportunity_count_new()\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_last_viewed TIMESTAMPTZ;\n    v_count INTEGER;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', TRUE, 'count', 0);\n    END IF;\n\n    -- Récupérer la dernière date de consultation\n    SELECT last_viewed_at INTO v_last_viewed\n    FROM app.opportunity_views\n    WHERE user_id = v_user_id;\n\n    -- Si jamais consulté, compter toutes les opportunités des 7 derniers jours\n    IF v_last_viewed IS NULL THEN\n        v_last_viewed := NOW() - INTERVAL '7 days';\n    END IF;\n\n    -- Compter les nouvelles opportunités publiées depuis\n    SELECT COUNT(*) INTO v_count\n    FROM app.opportunities\n    WHERE is_active = TRUE\n      AND status = 'published'\n      AND created_at > v_last_viewed\n      AND (application_deadline IS NULL OR application_deadline >= CURRENT_DATE);\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'count', COALESCE(v_count, 0),\n        'last_viewed_at', v_last_viewed\n    );\nEND;\n$function$\n",
+        "name": "app_opportunity_count_new",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_opportunity_delete_comment(p_comment_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_opportunity_id UUID;\n    v_owner_id UUID;\n    v_new_count INTEGER;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    -- Vérifier ownership\n    SELECT opportunity_id, user_id INTO v_opportunity_id, v_owner_id\n    FROM app.opportunity_comments\n    WHERE id = p_comment_id;\n\n    IF v_opportunity_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'comment_not_found');\n    END IF;\n\n    IF v_owner_id != v_user_id THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_owner');\n    END IF;\n\n    -- Supprimer\n    DELETE FROM app.opportunity_comments WHERE id = p_comment_id;\n\n    -- Décrémenter le compteur\n    UPDATE app.opportunities \n    SET comments_count = GREATEST(0, comments_count - 1), updated_at = NOW()\n    WHERE id = v_opportunity_id\n    RETURNING comments_count INTO v_new_count;\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'comments_count', v_new_count\n    );\nEND;\n$function$\n",
+        "name": "app_opportunity_delete_comment",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_opportunity_get_my_reaction(p_opportunity_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_reaction_type TEXT;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', TRUE, 'my_reaction', NULL);\n    END IF;\n\n    SELECT reaction_type INTO v_reaction_type\n    FROM app.opportunity_reactions\n    WHERE opportunity_id = p_opportunity_id AND user_id = v_user_id;\n\n    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'my_reaction', v_reaction_type);\nEND;\n$function$\n",
+        "name": "app_opportunity_get_my_reaction",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_opportunity_get_reactions(p_opportunity_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_likes INTEGER;\n    v_loves INTEGER;\n    v_total INTEGER;\nBEGIN\n    SELECT \n        COUNT(*) FILTER (WHERE reaction_type = 'like'),\n        COUNT(*) FILTER (WHERE reaction_type = 'love'),\n        COUNT(*)\n    INTO v_likes, v_loves, v_total\n    FROM app.opportunity_reactions\n    WHERE opportunity_id = p_opportunity_id;\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'likes', COALESCE(v_likes, 0),\n        'loves', COALESCE(v_loves, 0),\n        'total', COALESCE(v_total, 0)\n    );\nEND;\n$function$\n",
+        "name": "app_opportunity_get_reactions",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_opportunity_list_comments(p_opportunity_id uuid, p_limit integer DEFAULT 20, p_offset integer DEFAULT 0)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_result JSONB;\n    v_total INTEGER;\nBEGIN\n    -- Compter le total\n    SELECT COUNT(*) INTO v_total\n    FROM app.opportunity_comments\n    WHERE opportunity_id = p_opportunity_id;\n\n    -- Récupérer les commentaires avec infos utilisateur depuis app.students\n    WITH comments_data AS (\n        SELECT \n            c.id,\n            c.user_id,\n            c.content,\n            c.created_at,\n            COALESCE(s.full_name, 'Utilisateur') AS user_name,\n            s.avatar_url AS user_avatar\n        FROM app.opportunity_comments c\n        LEFT JOIN app.students s ON s.id = c.user_id\n        WHERE c.opportunity_id = p_opportunity_id\n        ORDER BY c.created_at DESC\n        LIMIT p_limit OFFSET p_offset\n    )\n    SELECT COALESCE(\n        JSONB_AGG(\n            JSONB_BUILD_OBJECT(\n                'id', cd.id,\n                'user_id', cd.user_id,\n                'content', cd.content,\n                'created_at', cd.created_at,\n                'user_name', cd.user_name,\n                'user_avatar', cd.user_avatar\n            )\n        ),\n        '[]'::JSONB\n    ) INTO v_result\n    FROM comments_data cd;\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'comments', v_result,\n        'total', v_total,\n        'has_more', (p_offset + p_limit) < v_total\n    );\nEND;\n$function$\n",
+        "name": "app_opportunity_list_comments",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_opportunity_mark_viewed()\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    -- Upsert la date de dernière consultation\n    INSERT INTO app.opportunity_views (user_id, last_viewed_at)\n    VALUES (v_user_id, NOW())\n    ON CONFLICT (user_id) DO UPDATE\n    SET last_viewed_at = NOW();\n\n    RETURN JSONB_BUILD_OBJECT('success', TRUE);\nEND;\n$function$\n",
+        "name": "app_opportunity_mark_viewed",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_opportunity_toggle_reaction(p_opportunity_id uuid, p_reaction_type text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_existing_type TEXT;\n    v_new_count INTEGER;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    IF p_reaction_type NOT IN ('like', 'love') THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_reaction_type');\n    END IF;\n\n    -- Vérifier si l'opportunité existe et est active\n    IF NOT EXISTS (\n        SELECT 1 FROM app.opportunities \n        WHERE id = p_opportunity_id AND is_active = TRUE AND status = 'published'\n    ) THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'opportunity_not_found');\n    END IF;\n\n    -- Vérifier si une réaction existe déjà\n    SELECT reaction_type INTO v_existing_type\n    FROM app.opportunity_reactions\n    WHERE opportunity_id = p_opportunity_id AND user_id = v_user_id;\n\n    IF v_existing_type IS NOT NULL THEN\n        IF v_existing_type = p_reaction_type THEN\n            -- Même type: supprimer la réaction (toggle off)\n            DELETE FROM app.opportunity_reactions\n            WHERE opportunity_id = p_opportunity_id AND user_id = v_user_id;\n            \n            -- Décrémenter le compteur\n            UPDATE app.opportunities \n            SET reactions_count = GREATEST(0, reactions_count - 1), updated_at = NOW()\n            WHERE id = p_opportunity_id\n            RETURNING reactions_count INTO v_new_count;\n            \n            RETURN JSONB_BUILD_OBJECT(\n                'success', TRUE, \n                'action', 'removed',\n                'my_reaction', NULL,\n                'reactions_count', v_new_count\n            );\n        ELSE\n            -- Type différent: mettre à jour\n            UPDATE app.opportunity_reactions\n            SET reaction_type = p_reaction_type\n            WHERE opportunity_id = p_opportunity_id AND user_id = v_user_id;\n            \n            SELECT reactions_count INTO v_new_count\n            FROM app.opportunities WHERE id = p_opportunity_id;\n            \n            RETURN JSONB_BUILD_OBJECT(\n                'success', TRUE, \n                'action', 'updated',\n                'my_reaction', p_reaction_type,\n                'reactions_count', v_new_count\n            );\n        END IF;\n    ELSE\n        -- Pas de réaction: en créer une\n        INSERT INTO app.opportunity_reactions (opportunity_id, user_id, reaction_type)\n        VALUES (p_opportunity_id, v_user_id, p_reaction_type);\n        \n        -- Incrémenter le compteur\n        UPDATE app.opportunities \n        SET reactions_count = reactions_count + 1, updated_at = NOW()\n        WHERE id = p_opportunity_id\n        RETURNING reactions_count INTO v_new_count;\n        \n        RETURN JSONB_BUILD_OBJECT(\n            'success', TRUE, \n            'action', 'added',\n            'my_reaction', p_reaction_type,\n            'reactions_count', v_new_count\n        );\n    END IF;\nEND;\n$function$\n",
+        "name": "app_opportunity_toggle_reaction",
         "schema": "public"
       },
       {
@@ -458,6 +605,11 @@
       },
       {
         "def": "CREATE OR REPLACE FUNCTION public.app_student_list_opportunities(p_type text DEFAULT NULL::text, p_search text DEFAULT NULL::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_result JSONB;\n    v_search TEXT := NULLIF(TRIM(COALESCE(p_search, '')), '');\n    v_type TEXT := NULLIF(TRIM(COALESCE(p_type, '')), '');\nBEGIN\n    SELECT COALESCE(\n        JSONB_AGG(\n            JSONB_BUILD_OBJECT(\n                'id', o.id,\n                'title', o.title,\n                'short_description', o.short_description,\n                'description', o.description,\n                'type', o.type,\n                'category', o.category,\n                'organization_name', o.organization_name,\n                'organization_logo_url', o.organization_logo_url,\n                'country', o.country,\n                'city', o.city,\n                'is_remote_possible', o.is_remote_possible,\n                'contract_type', o.contract_type,\n                'duration_months', o.duration_months,\n                'start_date', o.start_date,\n                'application_deadline', o.application_deadline,\n                'status', o.status,\n                'is_featured', o.is_featured,\n                'created_at', o.created_at,\n                'updated_at', o.updated_at\n            )\n            ORDER BY o.is_featured DESC, o.created_at DESC\n        ),\n        '[]'::JSONB\n    ) INTO v_result\n    FROM app.opportunities o\n    WHERE o.is_active = TRUE\n      AND o.status = 'published'\n      AND (o.application_deadline IS NULL OR o.application_deadline >= CURRENT_DATE)\n      AND (v_type IS NULL OR LOWER(o.type) = LOWER(v_type))\n      AND (\n          v_search IS NULL\n          OR o.title ILIKE '%' || v_search || '%'\n          OR o.organization_name ILIKE '%' || v_search || '%'\n          OR o.city ILIKE '%' || v_search || '%'\n          OR o.country ILIKE '%' || v_search || '%'\n      );\n\n    RETURN v_result;\nEND;\n$function$\n",
+        "name": "app_student_list_opportunities",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_student_list_opportunities(p_type text DEFAULT NULL::text, p_search text DEFAULT NULL::text, p_limit integer DEFAULT 20, p_offset integer DEFAULT 0)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_result JSONB;\n    v_user_id UUID := auth.uid();\n    v_search TEXT := NULLIF(TRIM(COALESCE(p_search, '')), '');\n    v_type TEXT := NULLIF(TRIM(COALESCE(p_type, '')), '');\n    v_total INTEGER;\nBEGIN\n    -- Compter le total avec filtres\n    SELECT COUNT(*) INTO v_total\n    FROM app.opportunities o\n    WHERE o.is_active = TRUE\n      AND o.status = 'published'\n      AND (o.application_deadline IS NULL OR o.application_deadline >= CURRENT_DATE)\n      AND (v_type IS NULL OR LOWER(o.type) = LOWER(v_type))\n      AND (\n          v_search IS NULL\n          OR o.title ILIKE '%' || v_search || '%'\n          OR o.organization_name ILIKE '%' || v_search || '%'\n          OR o.city ILIKE '%' || v_search || '%'\n          OR o.country ILIKE '%' || v_search || '%'\n      );\n\n    -- Récupérer les opportunités avec compteurs et ma réaction\n    SELECT COALESCE(\n        JSONB_AGG(\n            JSONB_BUILD_OBJECT(\n                'id', o.id,\n                'title', o.title,\n                'short_description', o.short_description,\n                'description', o.description,\n                'type', o.type,\n                'category', o.category,\n                'organization_name', o.organization_name,\n                'organization_logo_url', o.organization_logo_url,\n                'country', o.country,\n                'city', o.city,\n                'is_remote_possible', o.is_remote_possible,\n                'contract_type', o.contract_type,\n                'duration_months', o.duration_months,\n                'start_date', o.start_date,\n                'application_deadline', o.application_deadline,\n                'price', o.price,\n                'status', o.status,\n                'is_featured', o.is_featured,\n                'reactions_count', o.reactions_count,\n                'comments_count', o.comments_count,\n                'created_at', o.created_at,\n                'updated_at', o.updated_at,\n                'my_reaction', (\n                    SELECT reaction_type \n                    FROM app.opportunity_reactions r \n                    WHERE r.opportunity_id = o.id AND r.user_id = v_user_id\n                )\n            )\n            ORDER BY o.is_featured DESC, o.created_at DESC\n        ),\n        '[]'::JSONB\n    ) INTO v_result\n    FROM app.opportunities o\n    WHERE o.is_active = TRUE\n      AND o.status = 'published'\n      AND (o.application_deadline IS NULL OR o.application_deadline >= CURRENT_DATE)\n      AND (v_type IS NULL OR LOWER(o.type) = LOWER(v_type))\n      AND (\n          v_search IS NULL\n          OR o.title ILIKE '%' || v_search || '%'\n          OR o.organization_name ILIKE '%' || v_search || '%'\n          OR o.city ILIKE '%' || v_search || '%'\n          OR o.country ILIKE '%' || v_search || '%'\n      )\n    LIMIT p_limit OFFSET p_offset;\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'opportunities', v_result,\n        'total', v_total,\n        'has_more', (p_offset + p_limit) < v_total\n    );\nEND;\n$function$\n",
         "name": "app_student_list_opportunities",
         "schema": "public"
       }
@@ -526,7 +678,7 @@
     "rows_count": 1,
     "rows": [
       {
-        "types_count": 1,
+        "types_count": 3,
         "applications_count": 2,
         "opportunities_count": 1
       }
@@ -538,15 +690,31 @@
     "http": 200,
     "ok": true,
     "mode": "select",
-    "rows_count": 1,
+    "rows_count": 3,
     "rows": [
       {
         "id": "761e4086-e6d2-45f9-8861-2cf752a108e6",
-        "code": "vendeur",
-        "label": "emploi",
+        "code": "job",
+        "label": "Emploi / Stage",
         "is_active": true,
         "created_at": "2025-11-29T16:44:28.858213+00:00",
+        "sort_order": 1
+      },
+      {
+        "id": "cee94d8b-da60-49eb-a591-552855d5c3a5",
+        "code": "service",
+        "label": "Service",
+        "is_active": true,
+        "created_at": "2026-01-04T17:39:34.083032+00:00",
         "sort_order": 2
+      },
+      {
+        "id": "3818a763-c4ff-4cf4-8fed-daa36ec3c35e",
+        "code": "product",
+        "label": "Bien à vendre",
+        "is_active": true,
+        "created_at": "2026-01-04T17:39:35.392325+00:00",
+        "sort_order": 3
       }
     ],
     "error": null,
@@ -561,7 +729,7 @@
       {
         "id": "d4c9af3a-5f43-421e-811f-8bee360d8f09",
         "city": "bobo",
-        "type": "internship",
+        "type": "job",
         "title": "stage a nexiom group",
         "status": "published",
         "country": "Burkina",
