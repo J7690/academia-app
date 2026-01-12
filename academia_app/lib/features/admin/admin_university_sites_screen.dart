@@ -925,6 +925,8 @@ class _AdminUniversitySitePreview extends StatelessWidget {
             .where((b) => (b['key']?.toString() ?? '').toLowerCase() != 'about')
             .toList(growable: false);
 
+        final primaryColor = Theme.of(context).colorScheme.primary;
+
         return Container
           (
           color: const Color(0xFFF9FAFB),
@@ -1030,47 +1032,69 @@ class _AdminUniversitySitePreview extends StatelessWidget {
                               label: const Text('Gérer les médias'),
                             ),
                           ],
-                        ),
+                        ],
                         const SizedBox(height: 8),
                         Card(
+                          color: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
-                            side: const BorderSide(color: Color(0xFFE5E7EB)),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              children: media.map((m) {
-                                final title = m['title']?.toString() ?? '';
-                                final mediaType =
-                                    m['media_type']?.toString() ?? '';
-                                return Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Padding(
-                                    padding:
-                                        const EdgeInsets.symmetric(vertical: 4.0),
-                                    child: Wrap(
-                                      spacing: 8,
-                                      crossAxisAlignment:
-                                          WrapCrossAlignment.center,
-                                      children: [
-                                        const Icon(
-                                          Icons.image_outlined,
-                                          size: 18,
-                                          color: Color(0xFF6B7280),
-                                        ),
-                                        Text(title.isNotEmpty
-                                            ? title
-                                            : 'Média'),
-                                        if (mediaType.isNotEmpty)
-                                          Chip(label: Text(mediaType)),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                            side: BorderSide(
+                              color: primaryColor.withOpacity(0.35),
+                              width: 1.4,
                             ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 4,
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withOpacity(0.9),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(16),
+                                    bottomLeft: Radius.circular(16),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Column(
+                                    children: media.map((m) {
+                                      final title = m['title']?.toString() ?? '';
+                                      final mediaType =
+                                          m['media_type']?.toString() ?? '';
+                                      return Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 4.0),
+                                          child: Wrap(
+                                            spacing: 8,
+                                            crossAxisAlignment:
+                                                WrapCrossAlignment.center,
+                                            children: [
+                                              const Icon(
+                                                Icons.image_outlined,
+                                                size: 18,
+                                                color: Color(0xFF6B7280),
+                                              ),
+                                              Text(title.isNotEmpty
+                                                  ? title
+                                                  : 'Média'),
+                                              if (mediaType.isNotEmpty)
+                                                Chip(label: Text(mediaType)),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -1091,77 +1115,101 @@ class _AdminUniversitySitePreview extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Card(
+                        color: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
-                          side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          side: BorderSide(
+                            color: primaryColor.withOpacity(0.35),
+                            width: 1.4,
+                          ),
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (logoUrl.isNotEmpty)
-                                Align(
-                                  alignment: Alignment.topRight,
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.network(
-                                      logoUrl,
-                                      height: 48,
-                                      width: 48,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, _, __) =>
-                                          const SizedBox.shrink(),
-                                    ),
-                                  ),
-                                ),
-                              Text(
-                                name,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 4,
+                              decoration: BoxDecoration(
+                                color: primaryColor.withOpacity(0.9),
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(16),
+                                  bottomLeft: Radius.circular(16),
                                 ),
                               ),
-                              if (description.isNotEmpty) ...[
-                                const SizedBox(height: 8),
-                                Text(description),
-                              ],
-                              if (aboutBlocks.isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                Column(
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: aboutBlocks.map((b) {
-                                    final title =
-                                        b['title']?.toString() ?? '';
-                                    final content =
-                                        b['content']?.toString() ?? '';
-                                    return Padding(
-                                      padding:
-                                          const EdgeInsets.only(bottom: 8.0),
-                                      child: Column(
+                                  children: [
+                                    if (logoUrl.isNotEmpty)
+                                      Align(
+                                        alignment: Alignment.topRight,
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.network(
+                                            logoUrl,
+                                            height: 48,
+                                            width: 48,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, _, __) =>
+                                                const SizedBox.shrink(),
+                                          ),
+                                        ),
+                                      ),
+                                    Text(
+                                      name,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    if (description.isNotEmpty) ...[
+                                      const SizedBox(height: 8),
+                                      Text(description),
+                                    ],
+                                    if (aboutBlocks.isNotEmpty) ...[
+                                      const SizedBox(height: 12),
+                                      Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
-                                        children: [
-                                          if (title.isNotEmpty)
-                                            Text(
-                                              title,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                              ),
+                                        children: aboutBlocks.map((b) {
+                                          final title =
+                                              b['title']?.toString() ?? '';
+                                          final content =
+                                              b['content']?.toString() ?? '';
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                                bottom: 8.0),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                if (title.isNotEmpty)
+                                                  Text(
+                                                    title,
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                if (content.isNotEmpty) ...[
+                                                  const SizedBox(height: 4),
+                                                  Text(content),
+                                                ],
+                                              ],
                                             ),
-                                          if (content.isNotEmpty) ...[
-                                            const SizedBox(height: 4),
-                                            Text(content),
-                                          ],
-                                        ],
+                                          );
+                                        }).toList(),
                                       ),
-                                    );
-                                  }).toList(),
+                                    ],
+                                  ],
                                 ),
-                              ],
-                            ],
-                          ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -1195,37 +1243,60 @@ class _AdminUniversitySitePreview extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Card(
+                          color: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
-                            side: const BorderSide(color: Color(0xFFE5E7EB)),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (highlightedPrograms.isNotEmpty) ...[
-                                  const Text(
-                                    'Programmes phares',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  _buildProgramsList(
-                                    highlightedPrograms,
-                                    universityCourses,
-                                  ),
-                                  const SizedBox(height: 12),
-                                ],
-                                if (otherPrograms.isNotEmpty)
-                                  _buildProgramsList(
-                                    otherPrograms,
-                                    universityCourses,
-                                  ),
-                              ],
+                            side: BorderSide(
+                              color: primaryColor.withOpacity(0.35),
+                              width: 1.4,
                             ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 4,
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withOpacity(0.9),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(16),
+                                    bottomLeft: Radius.circular(16),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (highlightedPrograms.isNotEmpty) ...[
+                                        const Text(
+                                          'Programmes phares',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        _buildProgramsList(
+                                          highlightedPrograms,
+                                          universityCourses,
+                                        ),
+                                        const SizedBox(height: 12),
+                                      ],
+                                      if (otherPrograms.isNotEmpty)
+                                        _buildProgramsList(
+                                          otherPrograms,
+                                          universityCourses,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -1254,58 +1325,84 @@ class _AdminUniversitySitePreview extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Card(
+                          color: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
-                            side: const BorderSide(color: Color(0xFFE5E7EB)),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              children: events.map((event) {
-                                final title =
-                                    event['title']?.toString() ?? '';
-                                final location =
-                                    event['location']?.toString() ?? '';
-                                final startAt =
-                                    event['start_at']?.toString() ?? '';
-                                final endAt =
-                                    event['end_at']?.toString() ?? '';
-
-                                final meta = [
-                                  if (startAt.isNotEmpty) 'Début: $startAt',
-                                  if (endAt.isNotEmpty) 'Fin: $endAt',
-                                  if (location.isNotEmpty) location,
-                                ].where((e) => e.isNotEmpty).join(' · ');
-
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        title,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      if (meta.isNotEmpty) ...[
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          meta,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0xFF6B7280),
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
+                            side: BorderSide(
+                              color: primaryColor.withOpacity(0.35),
+                              width: 1.4,
                             ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 4,
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withOpacity(0.9),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(16),
+                                    bottomLeft: Radius.circular(16),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Column(
+                                    children: events.map((event) {
+                                      final title =
+                                          event['title']?.toString() ?? '';
+                                      final location =
+                                          event['location']?.toString() ?? '';
+                                      final startAt =
+                                          event['start_at']?.toString() ?? '';
+                                      final endAt =
+                                          event['end_at']?.toString() ?? '';
+
+                                      final meta = [
+                                        if (startAt.isNotEmpty)
+                                          'Début: $startAt',
+                                        if (endAt.isNotEmpty) 'Fin: $endAt',
+                                        if (location.isNotEmpty) location,
+                                      ]
+                                          .where((e) => e.isNotEmpty)
+                                          .join(' · ');
+
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                            bottom: 8.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              title,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            if (meta.isNotEmpty) ...[
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                meta,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Color(0xFF6B7280),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -1334,58 +1431,82 @@ class _AdminUniversitySitePreview extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Card(
+                          color: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
-                            side: const BorderSide(color: Color(0xFFE5E7EB)),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              children: news.map((item) {
-                                final title =
-                                    item['title']?.toString() ?? '';
-                                final summary =
-                                    item['summary']?.toString() ?? '';
-                                final publishedAt =
-                                    item['published_at']?.toString() ?? '';
-
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        title,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      if (publishedAt.isNotEmpty) ...[
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          publishedAt,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0xFF6B7280),
-                                          ),
-                                        ),
-                                      ],
-                                      if (summary.isNotEmpty) ...[
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          summary,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
+                            side: BorderSide(
+                              color: primaryColor.withOpacity(0.35),
+                              width: 1.4,
                             ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 4,
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withOpacity(0.9),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(16),
+                                    bottomLeft: Radius.circular(16),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Column(
+                                    children: news.map((item) {
+                                      final title =
+                                          item['title']?.toString() ?? '';
+                                      final summary =
+                                          item['summary']?.toString() ?? '';
+                                      final publishedAt =
+                                          item['published_at']?.toString() ?? '';
+
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                            bottom: 8.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              title,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            if (publishedAt.isNotEmpty) ...[
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                publishedAt,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Color(0xFF6B7280),
+                                                ),
+                                              ),
+                                            ],
+                                            if (summary.isNotEmpty) ...[
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                summary,
+                                                maxLines: 2,
+                                                overflow:
+                                                    TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -1401,42 +1522,66 @@ class _AdminUniversitySitePreview extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Card(
+                          color: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
-                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                            side: BorderSide(
+                              color: primaryColor.withOpacity(0.35),
+                              width: 1.4,
+                            ),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: otherBlocks.map((b) {
-                                final title =
-                                    b['title']?.toString() ?? '';
-                                final content =
-                                    b['content']?.toString() ?? '';
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 4,
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withOpacity(0.9),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(16),
+                                    bottomLeft: Radius.circular(16),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
-                                    children: [
-                                      if (title.isNotEmpty)
-                                        Text(
-                                          title,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                    children: otherBlocks.map((b) {
+                                      final title =
+                                          b['title']?.toString() ?? '';
+                                      final content =
+                                          b['content']?.toString() ?? '';
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                            bottom: 8.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            if (title.isNotEmpty)
+                                              Text(
+                                                title,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            if (content.isNotEmpty) ...[
+                                              const SizedBox(height: 4),
+                                              Text(content),
+                                            ],
+                                          ],
                                         ),
-                                      if (content.isNotEmpty) ...[
-                                        const SizedBox(height: 4),
-                                        Text(content),
-                                      ],
-                                    ],
+                                      );
+                                    }).toList(),
                                   ),
-                                );
-                              }).toList(),
-                            ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -1465,56 +1610,80 @@ class _AdminUniversitySitePreview extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Card(
+                          color: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
-                            side: const BorderSide(color: Color(0xFFE5E7EB)),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              children: staff.map((s) {
-                                final fullName =
-                                    s['full_name']?.toString() ?? '';
-                                final role = s['role']?.toString() ?? '';
-                                final bio = s['bio']?.toString() ?? '';
-
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        fullName,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      if (role.isNotEmpty) ...[
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          role,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0xFF6B7280),
-                                          ),
-                                        ),
-                                      ],
-                                      if (bio.isNotEmpty) ...[
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          bio,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
+                            side: BorderSide(
+                              color: primaryColor.withOpacity(0.35),
+                              width: 1.4,
                             ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 4,
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withOpacity(0.9),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(16),
+                                    bottomLeft: Radius.circular(16),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Column(
+                                    children: staff.map((s) {
+                                      final fullName =
+                                          s['full_name']?.toString() ?? '';
+                                      final role = s['role']?.toString() ?? '';
+                                      final bio = s['bio']?.toString() ?? '';
+
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                            bottom: 8.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              fullName,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            if (role.isNotEmpty) ...[
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                role,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Color(0xFF6B7280),
+                                                ),
+                                              ),
+                                            ],
+                                            if (bio.isNotEmpty) ...[
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                bio,
+                                                maxLines: 2,
+                                                overflow:
+                                                    TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -1539,81 +1708,104 @@ class _AdminUniversitySitePreview extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Card(
+                          color: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
-                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                            side: BorderSide(
+                              color: primaryColor.withOpacity(0.35),
+                              width: 1.4,
+                            ),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (address.isNotEmpty) ...[
-                                  Row(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 4,
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withOpacity(0.9),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(16),
+                                    bottomLeft: Radius.circular(16),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      const Icon(
-                                        Icons.location_on_outlined,
-                                        size: 16,
-                                        color: Color(0xFF006D3C),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(child: Text(address)),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                ],
-                                if (contactEmail.isNotEmpty) ...[
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.mail_outline,
-                                        size: 16,
-                                        color: Color(0xFF006D3C),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(contactEmail),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                ],
-                                if (contactPhone.isNotEmpty) ...[
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.phone_outlined,
-                                        size: 16,
-                                        color: Color(0xFF006D3C),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(contactPhone),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                ],
-                                if (socialLinks.isNotEmpty) ...[
-                                  const SizedBox(height: 4),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 4,
-                                    children:
-                                        socialLinks.entries.map((entry) {
-                                      final platform =
-                                          entry.key.toString();
-                                      return Chip(
-                                        avatar: const Icon(
-                                          Icons.link,
-                                          size: 16,
+                                      if (address.isNotEmpty) ...[
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const Icon(
+                                              Icons.location_on_outlined,
+                                              size: 16,
+                                              color: Color(0xFF006D3C),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(child: Text(address)),
+                                          ],
                                         ),
-                                        label: Text(platform),
-                                      );
-                                    }).toList(),
+                                        const SizedBox(height: 8),
+                                      ],
+                                      if (contactEmail.isNotEmpty) ...[
+                                        Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.mail_outline,
+                                              size: 16,
+                                              color: Color(0xFF006D3C),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(contactEmail),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                      ],
+                                      if (contactPhone.isNotEmpty) ...[
+                                        Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.phone_outlined,
+                                              size: 16,
+                                              color: Color(0xFF006D3C),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(contactPhone),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                      ],
+                                      if (socialLinks.isNotEmpty) ...[
+                                        const SizedBox(height: 4),
+                                        Wrap(
+                                          spacing: 8,
+                                          runSpacing: 4,
+                                          children:
+                                              socialLinks.entries.map((entry) {
+                                            final platform =
+                                                entry.key.toString();
+                                            return Chip(
+                                              avatar: const Icon(
+                                                Icons.link,
+                                                size: 16,
+                                              ),
+                                              label: Text(platform),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ],
+                                    ],
                                   ),
-                                ],
-                              ],
-                            ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],

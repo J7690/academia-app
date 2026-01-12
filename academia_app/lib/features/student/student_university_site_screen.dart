@@ -131,6 +131,8 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                   ? mission
                   : vision);
 
+          final primaryColor = Theme.of(context).colorScheme.primary;
+
           // Ne pas ré-afficher sous forme de carte le média utilisé comme poster du hero.
           final List<Map<String, dynamic>> mediaForStrip;
           if (heroPosterMediaId != null && heroPosterMediaId.trim().isNotEmpty) {
@@ -201,14 +203,36 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                           ),
                           const SizedBox(height: 8),
                           Card(
+                            color: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                              side: const BorderSide(color: Color(0xFFE5E7EB)),
+                              side: BorderSide(
+                                color: primaryColor.withOpacity(0.35),
+                                width: 1.4,
+                              ),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: _MediaStrip(media: mediaForStrip),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 4,
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withOpacity(0.9),
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(16),
+                                      bottomLeft: Radius.circular(16),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: _MediaStrip(media: mediaForStrip),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -223,68 +247,90 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                         ),
                         const SizedBox(height: 8),
                         Card(
+                          color: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
-                            side: const BorderSide(color: Color(0xFFE5E7EB)),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (logoUrl.isNotEmpty)
-                                  Align(
-                                    alignment: Alignment.topRight,
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Image.network(
-                                        logoUrl,
-                                        height: 48,
-                                        width: 48,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, _, __) =>
-                                            const SizedBox.shrink(),
-                                      ),
-                                    ),
-                                  ),
-                                Text(
-                                  heroTitle.isNotEmpty
-                                      ? heroTitle
-                                      : displayName,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  tagline.isNotEmpty
-                                      ? tagline
-                                      : (mission.isNotEmpty ? mission : vision),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: Color(0xFF6B7280),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  heroSubtitle.isNotEmpty
-                                      ? heroSubtitle
-                                      : description,
-                                ),
-                                if (keyFigures.isNotEmpty) ...[
-                                  const SizedBox(height: 12),
-                                  _KeyFiguresChips(keyFigures: keyFigures),
-                                ],
-                                if (aboutBlocks.isNotEmpty) ...[
-                                  const SizedBox(height: 12),
-                                  _BlocksList(blocks: aboutBlocks),
-                                ],
-                              ],
+                            side: BorderSide(
+                              color: primaryColor.withOpacity(0.35),
+                              width: 1.4,
                             ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 4,
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withOpacity(0.9),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(16),
+                                    bottomLeft: Radius.circular(16),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      if (logoUrl.isNotEmpty)
+                                        Align(
+                                          alignment: Alignment.topRight,
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(12),
+                                            child: Image.network(
+                                              logoUrl,
+                                              height: 48,
+                                              width: 48,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, _, __) =>
+                                                  const SizedBox.shrink(),
+                                            ),
+                                          ),
+                                        ),
+                                      Text(
+                                        heroTitle.isNotEmpty
+                                            ? heroTitle
+                                            : displayName,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        tagline.isNotEmpty
+                                            ? tagline
+                                            : (mission.isNotEmpty ? mission : vision),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          color: Color(0xFF6B7280),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        heroSubtitle.isNotEmpty
+                                            ? heroSubtitle
+                                            : description,
+                                      ),
+                                      if (keyFigures.isNotEmpty) ...[
+                                        const SizedBox(height: 12),
+                                        _KeyFiguresChips(keyFigures: keyFigures),
+                                      ],
+                                      if (aboutBlocks.isNotEmpty) ...[
+                                        const SizedBox(height: 12),
+                                        _BlocksList(blocks: aboutBlocks),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -299,37 +345,59 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                           ),
                           const SizedBox(height: 8),
                           Card(
+                            color: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                              side: const BorderSide(color: Color(0xFFE5E7EB)),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (highlightedPrograms.isNotEmpty) ...[
-                                    const Text(
-                                      'Programmes phares',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    _ProgramsGrid(
-                                      programs: highlightedPrograms,
-                                      courses: courses,
-                                    ),
-                                    const SizedBox(height: 12),
-                                  ],
-                                  if (otherPrograms.isNotEmpty)
-                                    _ProgramsGrid(
-                                      programs: otherPrograms,
-                                      courses: courses,
-                                    ),
-                                ],
+                              side: BorderSide(
+                                color: primaryColor.withOpacity(0.35),
+                                width: 1.4,
                               ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 4,
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withOpacity(0.9),
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(16),
+                                      bottomLeft: Radius.circular(16),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        if (highlightedPrograms.isNotEmpty) ...[
+                                          const Text(
+                                            'Programmes phares',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          _ProgramsGrid(
+                                            programs: highlightedPrograms,
+                                            courses: courses,
+                                          ),
+                                          const SizedBox(height: 12),
+                                        ],
+                                        if (otherPrograms.isNotEmpty)
+                                          _ProgramsGrid(
+                                            programs: otherPrograms,
+                                            courses: courses,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -345,14 +413,36 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                           ),
                           const SizedBox(height: 8),
                           Card(
+                            color: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                              side: const BorderSide(color: Color(0xFFE5E7EB)),
+                              side: BorderSide(
+                                color: primaryColor.withOpacity(0.35),
+                                width: 1.4,
+                              ),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: _EventsList(events: events),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 4,
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withOpacity(0.9),
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(16),
+                                      bottomLeft: Radius.circular(16),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: _EventsList(events: events),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -368,14 +458,36 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                           ),
                           const SizedBox(height: 8),
                           Card(
+                            color: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                              side: const BorderSide(color: Color(0xFFE5E7EB)),
+                              side: BorderSide(
+                                color: primaryColor.withOpacity(0.35),
+                                width: 1.4,
+                              ),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: _NewsList(news: news),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 4,
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withOpacity(0.9),
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(16),
+                                      bottomLeft: Radius.circular(16),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: _NewsList(news: news),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -391,17 +503,39 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                           ),
                           const SizedBox(height: 8),
                           Card(
+                            color: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                              side: const BorderSide(color: Color(0xFFE5E7EB)),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: _BannerStrips(
-                                banners: middleBanners,
-                                media: media,
+                              side: BorderSide(
+                                color: primaryColor.withOpacity(0.35),
+                                width: 1.4,
                               ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 4,
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withOpacity(0.9),
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(16),
+                                      bottomLeft: Radius.circular(16),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: _BannerStrips(
+                                      banners: middleBanners,
+                                      media: media,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -417,14 +551,36 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                           ),
                           const SizedBox(height: 8),
                           Card(
+                            color: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                              side: const BorderSide(color: Color(0xFFE5E7EB)),
+                              side: BorderSide(
+                                color: primaryColor.withOpacity(0.35),
+                                width: 1.4,
+                              ),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: _BlocksList(blocks: otherBlocks),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 4,
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withOpacity(0.9),
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(16),
+                                      bottomLeft: Radius.circular(16),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: _BlocksList(blocks: otherBlocks),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -440,14 +596,36 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                           ),
                           const SizedBox(height: 8),
                           Card(
+                            color: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                              side: const BorderSide(color: Color(0xFFE5E7EB)),
+                              side: BorderSide(
+                                color: primaryColor.withOpacity(0.35),
+                                width: 1.4,
+                              ),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: _StaffList(staff: staff),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 4,
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withOpacity(0.9),
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(16),
+                                      bottomLeft: Radius.circular(16),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: _StaffList(staff: staff),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -463,17 +641,39 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                           ),
                           const SizedBox(height: 8),
                           Card(
+                            color: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                              side: const BorderSide(color: Color(0xFFE5E7EB)),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: _BannerStrips(
-                                banners: bottomBanners,
-                                media: media,
+                              side: BorderSide(
+                                color: primaryColor.withOpacity(0.35),
+                                width: 1.4,
                               ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 4,
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withOpacity(0.9),
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(16),
+                                      bottomLeft: Radius.circular(16),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: _BannerStrips(
+                                      banners: bottomBanners,
+                                      media: media,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -492,19 +692,41 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                           ),
                           const SizedBox(height: 8),
                           Card(
+                            color: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                              side: const BorderSide(color: Color(0xFFE5E7EB)),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: _ContactSection(
-                                email: contactEmail,
-                                phone: contactPhone,
-                                address: address,
-                                socialLinks: socialLinks,
+                              side: BorderSide(
+                                color: primaryColor.withOpacity(0.35),
+                                width: 1.4,
                               ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 4,
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withOpacity(0.9),
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(16),
+                                      bottomLeft: Radius.circular(16),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: _ContactSection(
+                                      email: contactEmail,
+                                      phone: contactPhone,
+                                      address: address,
+                                      socialLinks: socialLinks,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -1170,6 +1392,11 @@ class _ProgramCoursesSheet extends StatelessWidget {
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
+                      color: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.all(12.0),
                         child: Column(
@@ -1259,6 +1486,11 @@ class _MediaStrip extends StatelessWidget {
                       );
                     },
               child: Card(
+                color: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Column(
@@ -1385,6 +1617,11 @@ class _EventsList extends StatelessWidget {
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
+          color: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Column(
@@ -1442,6 +1679,11 @@ class _NewsList extends StatelessWidget {
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
+          color: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Column(
@@ -1497,6 +1739,11 @@ class _StaffList extends StatelessWidget {
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
+          color: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Column(
