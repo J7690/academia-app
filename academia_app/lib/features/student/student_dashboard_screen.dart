@@ -520,7 +520,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
+          colors: [Color(0xFF7BC96F), Color(0xFFE8F5E9)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

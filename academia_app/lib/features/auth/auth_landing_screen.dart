@@ -39,7 +39,7 @@ class AuthLandingScreen extends StatelessWidget {
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
+              colors: [Color(0xFF7BC96F), Color(0xFFE8F5E9)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -381,6 +381,44 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
     return copy.take(take).toList();
   }
 
+  Future<void> _showAuthRequiredDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Connexion requise'),
+          content: const Text(
+            'Pour voir tous les détails et postuler, connecte-toi ou crée un compte.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const LoginScreen(),
+                  ),
+                );
+              },
+              child: const Text('Se connecter'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const SignupScreen(),
+                  ),
+                );
+              },
+              child: const Text('Créer un compte'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildProgramCard(Map<String, dynamic> program) {
     final title =
         (program['program_title'] ?? program['title'] ?? '').toString();
@@ -388,24 +426,24 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
 
     return Container(
       decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFFE5F9E7),
-            Color(0xFFD1FAE5),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+        border: Border.all(
+          color: const Color(0x80F6A623),
+          width: 2,
         ),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const LoginScreen(),
-            ),
-          );
+          _showAuthRequiredDialog();
         },
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -423,6 +461,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
+                        color: Color(0xFF0A2540),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -432,7 +471,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 13,
-                        color: Color(0xFF4B5563),
+                        color: Color(0xFF6B7280),
                       ),
                     ),
                   ],
@@ -441,7 +480,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
               const SizedBox(width: 8),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF16A34A),
+                  backgroundColor: const Color(0xFF3275D0),
                   foregroundColor: Colors.white,
                   minimumSize: const Size(0, 36),
                   padding: const EdgeInsets.symmetric(
@@ -460,6 +499,391 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                   );
                 },
                 child: const Text('Voir plus'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShortTrainingCard(Map<String, dynamic> item) {
+    final title = (item['title'] ?? '').toString();
+    final category = (item['category'] ?? '').toString();
+    final modality = (item['modality'] ?? '').toString();
+    final location = (item['location'] ?? '').toString();
+    final rawPrice = item['price'];
+    final priceText = rawPrice == null || rawPrice.toString().trim().isEmpty
+        ? 'Tarif : à préciser'
+        : 'Tarif : ${rawPrice.toString()}';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+        border: Border.all(
+          color: const Color(0x80F6A623),
+          width: 2,
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          _showAuthRequiredDialog();
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0A2540),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    if (category.isNotEmpty || modality.isNotEmpty) ...[
+                      Text(
+                        [category, modality]
+                            .where((e) => e.trim().isNotEmpty)
+                            .join(' • '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                    ],
+                    if (location.isNotEmpty) ...[
+                      Text(
+                        location,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                    ],
+                    Text(
+                      priceText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF3275D0),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3275D0),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(0, 36),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const LoginScreen(),
+                    ),
+                  );
+                },
+                child: const Text('S’inscrire'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOpportunityHighlightCard(Map<String, dynamic> item) {
+    final title = (item['title'] ?? '').toString();
+    final org = (item['organization_name'] ?? '').toString();
+    final city = (item['city'] ?? '').toString();
+    final country = (item['country'] ?? '').toString();
+    final shortDescription = (item['short_description'] ?? '').toString();
+    final type = (item['type'] ?? '').toString();
+
+    String locationLabel;
+    if (city.isNotEmpty && country.isNotEmpty) {
+      locationLabel = '$city, $country';
+    } else if (city.isNotEmpty) {
+      locationLabel = city;
+    } else {
+      locationLabel = country;
+    }
+
+    final typeLabel = type.isNotEmpty ? 'Type : $type' : null;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+        border: Border.all(
+          color: const Color(0x80F6A623),
+          width: 2,
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const LoginScreen(),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0A2540),
+                ),
+              ),
+              const SizedBox(height: 4),
+              if (org.isNotEmpty) ...[
+                Text(
+                  org,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+                const SizedBox(height: 2),
+              ],
+              if (locationLabel.isNotEmpty) ...[
+                Text(
+                  locationLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+                const SizedBox(height: 4),
+              ],
+              if (shortDescription.isNotEmpty) ...[
+                Text(
+                  shortDescription,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF4B5563),
+                  ),
+                ),
+                const SizedBox(height: 6),
+              ],
+              if (typeLabel != null) ...[
+                Text(
+                  typeLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+                const SizedBox(height: 6),
+              ],
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3275D0),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(0, 32),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  onPressed: () {
+                    _showAuthRequiredDialog();
+                  },
+                  child: const Text('Voir l’offre'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOnlineCourseCard(Map<String, dynamic> item) {
+    final title = (item['title'] ?? '').toString();
+    final category = (item['category'] ?? '').toString();
+    final level = (item['level'] ?? '').toString();
+    final shortDescription = (item['short_description'] ?? '').toString();
+    final rawPrice = item['price'];
+    final priceText = rawPrice == null || rawPrice.toString().trim().isEmpty
+        ? 'Tarif : à préciser'
+        : 'Tarif : ${rawPrice.toString()}';
+
+    String? meta;
+    if (category.isNotEmpty && level.isNotEmpty) {
+      meta = '$category • $level';
+    } else if (category.isNotEmpty) {
+      meta = category;
+    } else if (level.isNotEmpty) {
+      meta = level;
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+        border: Border.all(
+          color: const Color(0x80F6A623),
+          width: 2,
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const LoginScreen(),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0A2540),
+                ),
+              ),
+              const SizedBox(height: 4),
+              if (meta != null && meta.isNotEmpty) ...[
+                Text(
+                  meta,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+                const SizedBox(height: 4),
+              ],
+              if (shortDescription.isNotEmpty) ...[
+                Text(
+                  shortDescription,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF4B5563),
+                  ),
+                ),
+                const SizedBox(height: 6),
+              ],
+              Text(
+                priceText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF3275D0),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3275D0),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(0, 32),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const LoginScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text('Voir le cours'),
+                ),
               ),
             ],
           ),
@@ -514,13 +938,17 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            color: Color(0x0D000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
           ),
         ],
+        border: Border.all(
+          color: const Color(0x80F6A623),
+          width: 2,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -546,6 +974,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
+              color: Color(0xFF0A2540),
             ),
           ),
           if (subtitle.isNotEmpty) ...[
@@ -579,9 +1008,9 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
     final cfg = landing.config;
 
     final primaryColor =
-        _parseColor(cfg?['primary_color'] as String?) ?? const Color(0xFFA3D65C);
+        _parseColor(cfg?['primary_color'] as String?) ?? const Color(0xFF7BC96F);
     final secondaryColor =
-        _parseColor(cfg?['secondary_color'] as String?) ?? const Color(0xFF1EA75C);
+        _parseColor(cfg?['secondary_color'] as String?) ?? const Color(0xFFE8F5E9);
     final accentColor =
         _parseColor(cfg?['accent_color'] as String?) ?? const Color(0xFFFF3B30);
 
@@ -601,6 +1030,9 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
     final announcements = landing.announcements;
     final partners = landing.partners;
     final whyCards = landing.whyCards;
+    final shortTrainingHighlights = landing.shortTrainingHighlights;
+    final opportunityHighlights = landing.opportunityHighlights;
+    final onlineCourseHighlights = landing.onlineCourseHighlights;
 
     _HeroMediaItem? currentItem;
     if (_mediaPlaylist.isNotEmpty &&
@@ -905,6 +1337,222 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                   ],
                 ),
               ),
+              if (shortTrainingHighlights.isNotEmpty) ...[
+                SizedBox(height: sectionSpacing),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Formations courtes à venir',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Découvre quelques sessions publiques avant de créer ton compte.',
+                        style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                      ),
+                      const SizedBox(height: 16),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isNarrow = constraints.maxWidth < 900;
+                          if (isNarrow) {
+                            return SizedBox(
+                              height: 180,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: shortTrainingHighlights.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(width: 12),
+                                itemBuilder: (context, index) {
+                                  final item = shortTrainingHighlights[index];
+                                  return SizedBox(
+                                    width: 280,
+                                    child: _buildShortTrainingCard(item),
+                                  );
+                                },
+                              ),
+                            );
+                          }
+
+                          final cardWidth = (constraints.maxWidth - 12) / 2;
+                          return Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: shortTrainingHighlights
+                                .map(
+                                  (item) => SizedBox(
+                                    width: cardWidth,
+                                    child: _buildShortTrainingCard(item),
+                                  ),
+                                )
+                                .toList(),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              if (opportunityHighlights.isNotEmpty) ...[
+                SizedBox(height: sectionSpacing),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () {
+                          _showAuthRequiredDialog();
+                        },
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF7E6),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: const Text(
+                                '🔥 Top opportunités du moment',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFFD97706),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Opportunités à saisir',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Les meilleures occasions pour booster ton parcours : stages, emplois et missions sélectionnés pour toi.',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isNarrow = constraints.maxWidth < 900;
+                          if (isNarrow) {
+                            return SizedBox(
+                              height: 190,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: opportunityHighlights.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(width: 12),
+                                itemBuilder: (context, index) {
+                                  final item = opportunityHighlights[index];
+                                  return SizedBox(
+                                    width: 280,
+                                    child: _buildOpportunityHighlightCard(item),
+                                  );
+                                },
+                              ),
+                            );
+                          }
+
+                          final cardWidth = (constraints.maxWidth - 12) / 2;
+                          return Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: opportunityHighlights
+                                .map(
+                                  (item) => SizedBox(
+                                    width: cardWidth,
+                                    child: _buildOpportunityHighlightCard(item),
+                                  ),
+                                )
+                                .toList(),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              if (onlineCourseHighlights.isNotEmpty) ...[
+                SizedBox(height: sectionSpacing),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Cours en ligne',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Quelques cours à découvrir en libre accès ou sur inscription.',
+                        style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                      ),
+                      const SizedBox(height: 16),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isNarrow = constraints.maxWidth < 900;
+                          if (isNarrow) {
+                            return SizedBox(
+                              height: 190,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: onlineCourseHighlights.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(width: 12),
+                                itemBuilder: (context, index) {
+                                  final item = onlineCourseHighlights[index];
+                                  return SizedBox(
+                                    width: 280,
+                                    child: _buildOnlineCourseCard(item),
+                                  );
+                                },
+                              ),
+                            );
+                          }
+
+                          final cardWidth = (constraints.maxWidth - 12) / 2;
+                          return Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: onlineCourseHighlights
+                                .map(
+                                  (item) => SizedBox(
+                                    width: cardWidth,
+                                    child: _buildOnlineCourseCard(item),
+                                  ),
+                                )
+                                .toList(),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               SizedBox(height: sectionSpacing),
               if (whyCards.isNotEmpty)
                 Padding(
@@ -1049,9 +1697,9 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 0),
                 padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF15803D), Color(0xFF0F766E)],
+                    colors: [primaryColor, secondaryColor],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
@@ -1094,9 +1742,9 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                           child: Text(
                             text,
                             style: const TextStyle(
-                              color: Color(0xFFF9FAFB),
+                              color: Color(0xFF000000),
                               fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),

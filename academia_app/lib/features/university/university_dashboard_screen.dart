@@ -396,7 +396,9 @@ Future<void> _showEditConfigDialog(
         final isActive = m['is_active'] != false;
         final url = (m['url'] ?? '').toString().trim();
         final storagePath = (m['storage_path'] ?? '').toString().trim();
-        if (!type.contains('video')) return false;
+        final isVideo = type.contains('video');
+        final isImage = type.contains('image');
+        if (!isVideo && !isImage) return false;
         if (!isActive) return false;
         return url.isNotEmpty || storagePath.isNotEmpty;
       })
@@ -2491,12 +2493,18 @@ class _UniversitySitePreview extends StatelessWidget {
         final university = siteProvider.university;
         final config = siteProvider.config;
         final blocks = siteProvider.blocks;
-        final media = siteProvider.media;
+        final allMedia = siteProvider.media;
+        final media = allMedia
+            .where((m) => m['is_active'] != false)
+            .toList(growable: false);
         final banners = siteProvider.banners;
         final events = siteProvider.events;
         final news = siteProvider.news;
         final staff = siteProvider.staff;
-        final programs = programsProvider.programs;
+        final allPrograms = programsProvider.programs;
+        final programs = allPrograms
+            .where((p) => p['is_active'] != false)
+            .toList(growable: false);
         final courses = programsProvider.courses;
 
         if (university == null) {
@@ -3432,7 +3440,9 @@ class _UniversitySiteMediaTab extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final media = provider.media;
+        final media = provider.media
+            .where((m) => m['is_active'] != false)
+            .toList(growable: false);
 
         if (media.isEmpty) {
           return Padding(
@@ -3607,7 +3617,9 @@ class _UniversitySiteProgramsTab extends StatelessWidget {
           );
         }
 
-        final programs = provider.programs;
+        final programs = provider.programs
+            .where((p) => p['is_active'] != false)
+            .toList(growable: false);
         final courses = provider.courses;
 
         if (programs.isEmpty) {

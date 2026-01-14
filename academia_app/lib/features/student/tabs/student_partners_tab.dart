@@ -75,6 +75,7 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
           }
         }
         final degreeLevels = allDegreeLevels.toList()..sort();
+        final totalPrograms = offers.length;
 
         final filteredUniversities = universities.where((uni) {
           final name = (uni['name'] ?? '').toString();
@@ -136,7 +137,7 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF006D3C),
+                          color: Color(0xFF0A2540),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -146,6 +147,72 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
                           fontSize: 13,
                           color: Color(0xFF6B7280),
                         ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE0F2FE),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.school_outlined,
+                                  size: 14,
+                                  color: Color(0xFF0EA5E9),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${universities.length} université${universities.length > 1 ? 's' : ''} partenaire${universities.length > 1 ? 's' : ''}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF0369A1),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (totalPrograms > 0) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEEF2FF),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.menu_book_outlined,
+                                    size: 14,
+                                    color: Color(0xFF4F46E5),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '$totalPrograms programme${totalPrograms > 1 ? 's' : ''}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF3730A3),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 16),
                       TextField(
@@ -194,18 +261,46 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
                           runSpacing: 8,
                           children: [
                             FilterChip(
-                              label: const Text('Tous les niveaux'),
+                              label: Text(
+                                'Tous les niveaux',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: _selectedDegreeLevel == null
+                                      ? const Color(0xFF4F46E5)
+                                      : const Color(0xFF374151),
+                                ),
+                              ),
                               selected: _selectedDegreeLevel == null,
                               onSelected: (_) {
                                 setState(() {
                                   _selectedDegreeLevel = null;
                                 });
                               },
+                              selectedColor: const Color(0xFFEEF2FF),
+                              checkmarkColor: const Color(0xFF4F46E5),
+                              backgroundColor: Colors.white,
+                              side: BorderSide(
+                                color: _selectedDegreeLevel == null
+                                    ? const Color(0xFF4F46E5)
+                                    : const Color(0xFFE5E7EB),
+                              ),
+                              shape: const StadiumBorder(),
                             ),
                             ...degreeLevels.map((level) {
+                              final isSelected = _selectedDegreeLevel == level;
                               return FilterChip(
-                                label: Text(level),
-                                selected: _selectedDegreeLevel == level,
+                                label: Text(
+                                  level,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: isSelected
+                                        ? const Color(0xFF4F46E5)
+                                        : const Color(0xFF374151),
+                                  ),
+                                ),
+                                selected: isSelected,
                                 onSelected: (_) {
                                   setState(() {
                                     if (_selectedDegreeLevel == level) {
@@ -215,6 +310,15 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
                                     }
                                   });
                                 },
+                                selectedColor: const Color(0xFFEEF2FF),
+                                checkmarkColor: const Color(0xFF4F46E5),
+                                backgroundColor: Colors.white,
+                                side: BorderSide(
+                                  color: isSelected
+                                      ? const Color(0xFF4F46E5)
+                                      : const Color(0xFFE5E7EB),
+                                ),
+                                shape: const StadiumBorder(),
                               );
                             }).toList(),
                           ],
@@ -327,6 +431,37 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
   }
 }
 
+class _DegreeLevelTag extends StatelessWidget {
+  final String text;
+
+  const _DegreeLevelTag({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    const color = Color(0xFF3275D0);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: color.withOpacity(0.35),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
 class _UniversityCard extends StatelessWidget {
   final Map<String, dynamic> university;
   final List<Map<String, dynamic>> programs;
@@ -363,11 +498,21 @@ class _UniversityCard extends StatelessWidget {
 
     final topPrograms = programs.take(2).toList(growable: false);
 
-    return Card(
-      color: Colors.white,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+        border: Border.all(
+          color: const Color(0x80F6A623),
+          width: 2,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -379,7 +524,7 @@ class _UniversityCard extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF006D3C),
+                color: Color(0xFF0A2540),
               ),
             ),
             if (locationText.isNotEmpty) ...[
@@ -397,25 +542,9 @@ class _UniversityCard extends StatelessWidget {
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
-                children: degreeLevels.map((level) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE5F9E7),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      level,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF006D3C),
-                      ),
-                    ),
-                  );
-                }).toList(),
+                children: degreeLevels
+                    .map((level) => _DegreeLevelTag(text: level))
+                    .toList(),
               ),
             ],
             if (topPrograms.isNotEmpty) ...[

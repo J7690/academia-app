@@ -1032,7 +1032,7 @@ class _AdminUniversitySitePreview extends StatelessWidget {
                               label: const Text('Gérer les médias'),
                             ),
                           ],
-                        ],
+                        ),
                         const SizedBox(height: 8),
                         Card(
                           color: Colors.white,

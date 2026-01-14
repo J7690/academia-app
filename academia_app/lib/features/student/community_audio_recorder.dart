@@ -12,13 +12,16 @@ class CommunityAudioRecorder {
   }
 
   Future<void> start() async {
-    // On laisse le plugin choisir un chemin temporaire, on récupère le path au stop().
+    final tempDir = Directory.systemTemp;
+    final filePath =
+        '${tempDir.path}/community_recording_${DateTime.now().millisecondsSinceEpoch}.m4a';
     await _recorder.start(
       const RecordConfig(
         encoder: AudioEncoder.aacLc,
         bitRate: 128000,
         sampleRate: 44100,
       ),
+      path: filePath,
     );
   }
 

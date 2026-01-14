@@ -476,11 +476,21 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
 
                     return SizedBox(
                       width: cardWidth,
-                      child: Card(
-                        color: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x0D000000),
+                              blurRadius: 10,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                          border: Border.all(
+                            color: const Color(0x80F6A623),
+                            width: 2,
+                          ),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(12),
@@ -494,6 +504,7 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
+                                  color: Color(0xFF0A2540),
                                 ),
                               ),
                               if (metaParts.isNotEmpty) ...[
@@ -504,7 +515,7 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     fontSize: 11,
-                                    color: Colors.black54,
+                                    color: Color(0xFF6B7280),
                                   ),
                                 ),
                               ],
@@ -514,7 +525,7 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
-                                  color: Color(0xFF2563EB),
+                                  color: Color(0xFF3275D0),
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -526,6 +537,10 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
                                       : () {
                                           _openRegistrationDialog(context, session);
                                         },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF3275D0),
+                                    foregroundColor: Colors.white,
+                                  ),
                                   child: const Text('S\'inscrire'),
                                 ),
                               ),
@@ -583,11 +598,21 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
 
                       return SizedBox(
                         width: cardWidth,
-                        child: Card(
-                          color: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x0D000000),
+                                blurRadius: 10,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                            border: Border.all(
+                              color: const Color(0x80F6A623),
+                              width: 2,
+                            ),
                           ),
                           child: Padding(
                             padding: const EdgeInsets.all(12),
@@ -601,6 +626,7 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
                                   style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
+                                    color: Color(0xFF0A2540),
                                   ),
                                 ),
                                 if (subtitleParts.isNotEmpty) ...[
@@ -613,7 +639,7 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       fontSize: 11,
-                                      color: Colors.black54,
+                                      color: Color(0xFF6B7280),
                                     ),
                                   ),
                                 ],

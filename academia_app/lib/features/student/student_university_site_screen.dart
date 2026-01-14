@@ -166,7 +166,7 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                                     style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF006D3C),
+                                      color: Color(0xFF0A2540),
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -198,7 +198,7 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF111827),
+                              color: Color(0xFF0A2540),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -207,9 +207,9 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(
-                                color: primaryColor.withOpacity(0.35),
-                                width: 1.4,
+                              side: const BorderSide(
+                                color: Color(0x80F6A623),
+                                width: 2,
                               ),
                             ),
                             child: Row(
@@ -242,7 +242,7 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF111827),
+                            color: Color(0xFF0A2540),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -251,9 +251,9 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(
-                              color: primaryColor.withOpacity(0.35),
-                              width: 1.4,
+                            side: const BorderSide(
+                              color: Color(0x80F6A623),
+                              width: 2,
                             ),
                           ),
                           child: Row(
@@ -298,6 +298,7 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                                         style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
+                                          color: Color(0xFF0A2540),
                                         ),
                                       ),
                                       const SizedBox(height: 4),
@@ -317,6 +318,11 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                                         heroSubtitle.isNotEmpty
                                             ? heroSubtitle
                                             : description,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Color(0xFF6B7280),
+                                          height: 1.4,
+                                        ),
                                       ),
                                       if (keyFigures.isNotEmpty) ...[
                                         const SizedBox(height: 12),
@@ -340,7 +346,7 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF111827),
+                              color: Color(0xFF0A2540),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -349,9 +355,9 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(
-                                color: primaryColor.withOpacity(0.35),
-                                width: 1.4,
+                              side: const BorderSide(
+                                color: Color(0x80F6A623),
+                                width: 2,
                               ),
                             ),
                             child: Row(
@@ -379,6 +385,7 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                                             'Programmes phares',
                                             style: TextStyle(
                                               fontWeight: FontWeight.w600,
+                                              color: Color(0xFF0A2540),
                                             ),
                                           ),
                                           const SizedBox(height: 8),
@@ -408,7 +415,7 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF111827),
+                              color: Color(0xFF0A2540),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -417,9 +424,9 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(
-                                color: primaryColor.withOpacity(0.35),
-                                width: 1.4,
+                              side: const BorderSide(
+                                color: Color(0x80F6A623),
+                                width: 2,
                               ),
                             ),
                             child: Row(
@@ -453,7 +460,7 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF111827),
+                              color: Color(0xFF0A2540),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -462,9 +469,9 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(
-                                color: primaryColor.withOpacity(0.35),
-                                width: 1.4,
+                              side: const BorderSide(
+                                color: Color(0x80F6A623),
+                                width: 2,
                               ),
                             ),
                             child: Row(
@@ -498,7 +505,7 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF111827),
+                              color: Color(0xFF0A2540),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -546,7 +553,7 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF111827),
+                              color: Color(0xFF0A2540),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -591,7 +598,7 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF111827),
+                              color: Color(0xFF0A2540),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -636,7 +643,7 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF111827),
+                              color: Color(0xFF0A2540),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -687,7 +694,7 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF111827),
+                              color: Color(0xFF0A2540),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -761,6 +768,36 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
               child: const Text('Retour'),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProgramTagPill extends StatelessWidget {
+  final String text;
+  final Color color;
+
+  const _ProgramTagPill({required this.text, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: color.withOpacity(0.35),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: color,
         ),
       ),
     );
@@ -1100,6 +1137,10 @@ class _BlocksList extends StatelessWidget {
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(
+              color: Color(0x80F6A623),
+              width: 2,
+            ),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -1112,11 +1153,20 @@ class _BlocksList extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
+                      color: Color(0xFF0A2540),
                     ),
                   ),
                 if (content.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  Text(content),
+                  const SizedBox(height: 2),
+                  Text(
+                    content,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 1.4,
+                      color: Color(0xFF4B5563),
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -1206,12 +1256,24 @@ class _ProgramCard extends StatelessWidget {
             .where((course) => course['program_id']?.toString() == programId)
             .toList(growable: false);
 
-    return Card(
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      color: Colors.white,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+        border: Border.all(
+          color: const Color(0x80F6A623),
+          width: 2,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -1223,14 +1285,24 @@ class _ProgramCard extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
+                color: Color(0xFF0A2540),
               ),
             ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
+              runSpacing: 4,
               children: [
-                if (degree.isNotEmpty) Chip(label: Text(degree)),
-                if (mode.isNotEmpty) Chip(label: Text(mode)),
+                if (degree.isNotEmpty)
+                  _ProgramTagPill(
+                    text: degree,
+                    color: primaryColor,
+                  ),
+                if (mode.isNotEmpty)
+                  _ProgramTagPill(
+                    text: mode,
+                    color: primaryColor.withOpacity(0.85),
+                  ),
               ],
             ),
             const SizedBox(height: 12),
@@ -1317,6 +1389,11 @@ class _ProgramCard extends StatelessWidget {
                     minimumSize: const Size(0, 36),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     textStyle: const TextStyle(fontSize: 13),
+                    foregroundColor: Colors.white,
+                    backgroundColor: const Color(0xFF3275D0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ],
@@ -1396,6 +1473,10 @@ class _ProgramCoursesSheet extends StatelessWidget {
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
+                        side: const BorderSide(
+                          color: Color(0x80F6A623),
+                          width: 2,
+                        ),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(12.0),
@@ -1407,20 +1488,27 @@ class _ProgramCoursesSheet extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
+                                color: Color(0xFF0A2540),
                               ),
                             ),
                             if (metaParts.isNotEmpty) ...[
                               const SizedBox(height: 4),
                               Text(
                                 metaParts.join(' • '),
-                                style: Theme.of(context).textTheme.bodySmall,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF6B7280),
+                                ),
                               ),
                             ],
                             if (prerequisites.isNotEmpty) ...[
                               const SizedBox(height: 4),
                               Text(
                                 'Prérequis: $prerequisites',
-                                style: Theme.of(context).textTheme.bodySmall,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF6B7280),
+                                ),
                               ),
                             ],
                             if (description.isNotEmpty) ...[
@@ -1429,6 +1517,11 @@ class _ProgramCoursesSheet extends StatelessWidget {
                                 description,
                                 maxLines: 4,
                                 overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  height: 1.4,
+                                  color: Color(0xFF4B5563),
+                                ),
                               ),
                             ],
                           ],
@@ -1490,6 +1583,10 @@ class _MediaStrip extends StatelessWidget {
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
+                  side: const BorderSide(
+                    color: Color(0x80F6A623),
+                    width: 2,
+                  ),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
@@ -1506,7 +1603,9 @@ class _MediaStrip extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
+                                fontSize: 14,
                                 fontWeight: FontWeight.w600,
+                                color: Color(0xFF0A2540),
                               ),
                             ),
                           ),
@@ -1519,6 +1618,11 @@ class _MediaStrip extends StatelessWidget {
                             description,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              height: 1.4,
+                              color: Color(0xFF4B5563),
+                            ),
                           ),
                         ),
                       ]
@@ -1632,13 +1736,17 @@ class _EventsList extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
+                    color: Color(0xFF0A2540),
                   ),
                 ),
                 if (metaParts.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
                     metaParts.join(' • '),
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF6B7280),
+                    ),
                   ),
                 ],
                 if (description.isNotEmpty) ...[
@@ -1647,6 +1755,11 @@ class _EventsList extends StatelessWidget {
                     description,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.4,
+                      color: Color(0xFF4B5563),
+                    ),
                   ),
                 ],
               ],
@@ -1694,13 +1807,17 @@ class _NewsList extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
+                    color: Color(0xFF0A2540),
                   ),
                 ),
                 if (publishedAt.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
                     publishedAt,
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF9CA3AF),
+                    ),
                   ),
                 ],
                 if (description.isNotEmpty) ...[
@@ -1709,6 +1826,11 @@ class _NewsList extends StatelessWidget {
                     description,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.4,
+                      color: Color(0xFF4B5563),
+                    ),
                   ),
                 ],
               ],
@@ -1754,13 +1876,17 @@ class _StaffList extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
+                    color: Color(0xFF0A2540),
                   ),
                 ),
                 if (role.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
                     role,
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF6B7280),
+                    ),
                   ),
                 ],
                 if (bio.isNotEmpty) ...[
@@ -1769,6 +1895,11 @@ class _StaffList extends StatelessWidget {
                     bio,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.4,
+                      color: Color(0xFF4B5563),
+                    ),
                   ),
                 ],
               ],

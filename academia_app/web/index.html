@@ -24,10 +24,10 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Academia">
-  <link rel="apple-touch-icon" href="assets/ACADEMIA_logo1.png">
+  <link rel="apple-touch-icon" href="assets/Academia.0.png">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="assets/ACADEMIA_logo1.png"/>
+  <link rel="icon" type="image/png" href="assets/Academia.0.png"/>
 
   <title>Academia – by Nexium Group</title>
   <link rel="manifest" href="manifest.json">
@@ -44,6 +44,31 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       color: #1b5e20;
       z-index: 9999;
+      overflow: hidden;
+    }
+
+    .loader-logo-bg {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.14;
+      pointer-events: none;
+    }
+
+    .loader-logo-bg img {
+      max-width: 420px;
+      width: 60vw;
+      height: auto;
+    }
+
+    .loader-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     .loader-logo {
@@ -162,10 +187,15 @@
 </head>
 <body>
   <div id="loader">
-    <div class="loader-logo">Academia</div>
-    <div class="loader-subtitle">Plateforme d'orientation & admissions</div>
-    <div class="loader-spinner"></div>
-    <div class="loader-text">Préparation de votre espace étudiant…</div>
+    <div class="loader-logo-bg">
+      <img src="assets/Academia.0.png" alt="Logo Academia">
+    </div>
+    <div class="loader-content">
+      <div class="loader-logo">Academia</div>
+      <div class="loader-subtitle">Plateforme d'orientation & admissions</div>
+      <div class="loader-spinner"></div>
+      <div class="loader-text">Préparation de votre espace étudiant…</div>
+    </div>
   </div>
 
   <script>
@@ -175,6 +205,24 @@
         loader.remove();
       }
     });
+  </script>
+  <script>
+    // Enregistre le service worker Firebase Messaging pour les notifications web.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker
+          .register('firebase-messaging-sw.js')
+          .then(function (registration) {
+            console.log(
+              '[Academia] Firebase Messaging service worker registered with scope:',
+              registration.scope
+            );
+          })
+          .catch(function (err) {
+            console.error('[Academia] Firebase Messaging service worker registration failed:', err);
+          });
+      });
+    }
   </script>
 
   <script src="flutter_bootstrap.js" async></script>

@@ -176,6 +176,24 @@
       }
     });
   </script>
+  <script>
+    // Enregistre le service worker Firebase Messaging pour les notifications web.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker
+          .register('firebase-messaging-sw.js')
+          .then(function (registration) {
+            console.log(
+              '[Academia] Firebase Messaging service worker registered with scope:',
+              registration.scope
+            );
+          })
+          .catch(function (err) {
+            console.error('[Academia] Firebase Messaging service worker registration failed:', err);
+          });
+      });
+    }
+  </script>
 
   <script src="flutter_bootstrap.js" async></script>
 </body>

@@ -159,6 +159,7 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
               Tab(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text('Messages'),
                     if (_hasUnreadMessages) ...[

@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/date_symbol_data_local.dart';
 import 'services/push_notification_service.dart';
 
 import 'web_update_stub.dart' if (dart.library.html) 'web_update_html.dart' as web_update;
@@ -115,6 +116,10 @@ Future<void> _checkWebVersion() async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialisation des données de locale pour Intl (dates, jours en fr_FR)
+  // Nécessaire avant toute utilisation de DateFormat('EEEE', 'fr_FR') etc.
+  await initializeDateFormatting('fr_FR');
 
   await _checkWebVersion();
 

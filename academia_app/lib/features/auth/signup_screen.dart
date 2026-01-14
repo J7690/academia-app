@@ -117,11 +117,11 @@ class _SignupScreenState extends State<SignupScreen> {
           Positioned.fill(
             child: Center(
               child: Opacity(
-                opacity: 0.14,
+                opacity: 0.18,
                 child: FractionallySizedBox(
                   widthFactor: 0.8,
                   child: Image.asset(
-                    'assets/images/nexiom.png',
+                    'assets/Academia.0.png',
                     fit: BoxFit.contain,
                   ),
                 ),

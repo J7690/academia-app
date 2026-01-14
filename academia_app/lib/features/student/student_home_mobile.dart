@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -78,6 +79,7 @@ class _StudentHomeMobileTabState extends State<StudentHomeMobileTab> {
         final slotsProvider = context.read<StudentHomeSlotsProvider>();
         await slotsProvider.loadSlotItems('mobile_row_short_trainings');
         await slotsProvider.loadSlotItems('mobile_row_online_courses');
+        await slotsProvider.loadSlotItems('mobile_row_opportunities');
       } catch (_) {}
     });
   }
@@ -733,6 +735,8 @@ class _MobileSectionsGrid extends StatelessWidget {
         const _MobileHomeTicker(),
         const SizedBox(height: 16),
         const StudentHomeFormationsSection(),
+        const SizedBox(height: 16),
+        _MobileOpportunitiesSection(),
       ],
     );
   }
@@ -1902,52 +1906,229 @@ class _MobileApplicationsSection extends StatelessWidget {
 class _MobileOpportunitiesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Colors.white,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Opportunités',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+    return Consumer<StudentHomeSlotsProvider>(
+      builder: (context, slotsProvider, child) {
+        final rawItems = slotsProvider
+            .getItemsForSlot('mobile_row_opportunities')
+            .where((item) => item['opportunity'] is Map)
+            .toList(growable: false);
+
+        if (slotsProvider.isLoading && rawItems.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Center(
+              child: SizedBox(
+                height: 28,
+                width: 28,
+                child: CircularProgressIndicator(strokeWidth: 2),
               ),
             ),
-            const SizedBox(height: 4),
-            const Text(
-              'Stages, emplois et autres opportunités pour les étudiants.',
-              style: TextStyle(
-                fontSize: 13,
-                color: Color(0xFF6F6F6F),
+          );
+        }
+
+        if (rawItems.isEmpty) {
+          // Aucun slot opportunités configuré pour l'instant : ne rien afficher.
+          return const SizedBox.shrink();
+        }
+
+        final opportunities = rawItems
+            .map((item) => Map<String, dynamic>.from(
+                  item['opportunity'] as Map,
+                ))
+            .toList(growable: false);
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Card(
+            color: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(
+                color: Color(0x80F6A623),
+                width: 1.5,
               ),
             ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const StudentOpportunitiesTab(),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const StudentOpportunitiesTab(),
+                        ),
+                      );
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF7E6),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: const Text(
+                            '🔥 Top opportunités du moment',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFD97706),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Opportunités à saisir',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF0A2540),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Les meilleures occasions pour booster ton parcours : stages, emplois et missions sélectionnés pour toi.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF6F6F6F),
+                          ),
+                        ),
+                      ],
                     ),
-                  );
-                },
-                child: const Text(
-                  'Voir les opportunités',
-                  style: TextStyle(fontSize: 12),
-                ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...opportunities.take(3).map((op) {
+                    final title = (op['title'] ?? '').toString();
+                    final type = (op['type'] ?? '').toString();
+                    final location = (op['location'] ?? '').toString();
+                    final startsAtRaw = op['starts_at']?.toString();
+
+                    String? formattedStart;
+                    if (startsAtRaw != null && startsAtRaw.isNotEmpty) {
+                      try {
+                        final parsed = DateTime.tryParse(startsAtRaw);
+                        if (parsed != null) {
+                          formattedStart =
+                              DateFormat('d MMMM y', 'fr_FR').format(parsed.toLocal());
+                        } else {
+                          formattedStart = startsAtRaw;
+                        }
+                      } catch (_) {
+                        formattedStart = startsAtRaw;
+                      }
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const StudentOpportunitiesTab(),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF9FAFB),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF0A2540),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  if (type.isNotEmpty)
+                                    Flexible(
+                                      child: Text(
+                                        type,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF4B5563),
+                                        ),
+                                      ),
+                                    ),
+                                  if (type.isNotEmpty && location.isNotEmpty)
+                                    const Text(
+                                      ' • ',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF9CA3AF),
+                                      ),
+                                    ),
+                                  if (location.isNotEmpty)
+                                    Flexible(
+                                      child: Text(
+                                        location,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF4B5563),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              if (formattedStart != null && formattedStart.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: Text(
+                                    'Début : $formattedStart',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Color(0xFF9CA3AF),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const StudentOpportunitiesTab(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'Voir toutes les opportunités',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

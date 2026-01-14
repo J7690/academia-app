@@ -14,6 +14,9 @@ class LandingContentProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _partners = [];
   List<Map<String, dynamic>> _whyCards = [];
   List<Map<String, dynamic>> _videos = [];
+  List<Map<String, dynamic>> _shortTrainingHighlights = [];
+  List<Map<String, dynamic>> _opportunityHighlights = [];
+  List<Map<String, dynamic>> _onlineCourseHighlights = [];
 
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
@@ -23,6 +26,12 @@ class LandingContentProvider extends ChangeNotifier {
   List<Map<String, dynamic>> get partners => List.unmodifiable(_partners);
   List<Map<String, dynamic>> get whyCards => List.unmodifiable(_whyCards);
   List<Map<String, dynamic>> get videos => List.unmodifiable(_videos);
+  List<Map<String, dynamic>> get shortTrainingHighlights =>
+      List.unmodifiable(_shortTrainingHighlights);
+  List<Map<String, dynamic>> get opportunityHighlights =>
+      List.unmodifiable(_opportunityHighlights);
+  List<Map<String, dynamic>> get onlineCourseHighlights =>
+      List.unmodifiable(_onlineCourseHighlights);
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -82,6 +91,9 @@ class LandingContentProvider extends ChangeNotifier {
     final partners = response['partners'];
     final whyCards = response['why_cards'];
     final videos = response['videos'];
+    final shortTrainings = response['short_training_highlights'];
+    final opportunities = response['opportunity_highlights'];
+    final onlineCourses = response['online_course_highlights'];
 
     if (cfg is Map) {
       _config = Map<String, dynamic>.from(cfg);
@@ -123,6 +135,33 @@ class LandingContentProvider extends ChangeNotifier {
           .toList(growable: false);
     } else {
       _videos = [];
+    }
+
+    if (shortTrainings is List) {
+      _shortTrainingHighlights = shortTrainings
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(growable: false);
+    } else {
+      _shortTrainingHighlights = [];
+    }
+
+    if (opportunities is List) {
+      _opportunityHighlights = opportunities
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(growable: false);
+    } else {
+      _opportunityHighlights = [];
+    }
+
+    if (onlineCourses is List) {
+      _onlineCourseHighlights = onlineCourses
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(growable: false);
+    } else {
+      _onlineCourseHighlights = [];
     }
 
     notifyListeners();

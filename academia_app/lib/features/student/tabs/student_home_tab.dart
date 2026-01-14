@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -25,6 +26,7 @@ import '../../../widgets/notification_sound_settings_dialog.dart';
 import '../widgets/student_short_trainings_section.dart';
 import '../widgets/student_home_online_courses_section.dart';
 import '../../../providers/student_application_payments_provider.dart';
+import 'student_opportunities_tab.dart';
 
 class _StudentHomeMediaItem {
   final String url;
@@ -136,6 +138,7 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
         final slotsProvider = context.read<StudentHomeSlotsProvider>();
         await slotsProvider.loadSlotItems('desktop_short_trainings');
         await slotsProvider.loadSlotItems('desktop_online_courses');
+        await slotsProvider.loadSlotItems('desktop_row_opportunities');
       } catch (_) {}
 
       if (!mounted) return;
@@ -458,6 +461,12 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                   child: StudentHomeOnlineCoursesSection(),
                 ),
               ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: _DesktopOpportunitiesSection(),
+                ),
+              ),
             ];
 
             if (offers.isEmpty) {
@@ -667,7 +676,7 @@ class _StudentHomeHero extends StatelessWidget {
                         return Container(
                           decoration: const BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
+                              colors: [Color(0xFF7BC96F), Color(0xFFE8F5E9)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -692,7 +701,7 @@ class _StudentHomeHero extends StatelessWidget {
                   return Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
+                        colors: [Color(0xFF7BC96F), Color(0xFFE8F5E9)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -756,7 +765,7 @@ class _StudentHomeTicker extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF15803D), Color(0xFF0F766E)],
+          colors: [Color(0xFF7BC96F), Color(0xFFE8F5E9)],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
@@ -799,14 +808,280 @@ class _StudentHomeTicker extends StatelessWidget {
                 child: Text(
                   text,
                   style: const TextStyle(
-                    color: Color(0xFFF9FAFB),
+                    color: Color(0xFF000000),
                     fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopOpportunitiesSection extends StatelessWidget {
+  const _DesktopOpportunitiesSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<StudentHomeSlotsProvider>(
+      builder: (context, slotsProvider, child) {
+        final rawItems = slotsProvider
+            .getItemsForSlot('desktop_row_opportunities')
+            .where((item) => item['opportunity'] is Map)
+            .toList(growable: false);
+
+        if (slotsProvider.isLoading && rawItems.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(8),
+            child: Center(
+              child: SizedBox(
+                height: 28,
+                width: 28,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          );
+        }
+
+        if (rawItems.isEmpty) {
+          // Aucun slot opportunités configuré pour l'instant : ne rien afficher.
+          return const SizedBox.shrink();
+        }
+
+        final opportunities = rawItems
+            .map((item) => Map<String, dynamic>.from(
+                  item['opportunity'] as Map,
+                ))
+            .toList(growable: false);
+
+        return Card(
+          color: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(
+              color: Color(0x80F6A623),
+              width: 1.5,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const StudentOpportunitiesTab(),
+                      ),
+                    );
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      // Badge marketing
+                      _DesktopOpportunitiesHeader(),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Liste des cartes opportunités (verticale, jusqu'à 3)
+                ...opportunities.take(3).map(
+                  (op) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: _DesktopOpportunityCard(opportunity: op),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const StudentOpportunitiesTab(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      'Voir toutes les opportunités',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _DesktopOpportunitiesHeader extends StatelessWidget {
+  const _DesktopOpportunitiesHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: const [
+        // Badge
+        _TopOpportunitiesBadge(),
+        SizedBox(height: 8),
+        Text(
+          'Opportunités à saisir',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF0A2540),
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          'Les meilleures occasions pour booster ton parcours : stages, emplois et missions sélectionnés pour toi.',
+          style: TextStyle(
+            fontSize: 13,
+            color: Color(0xFF6F6F6F),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TopOpportunitiesBadge extends StatelessWidget {
+  const _TopOpportunitiesBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 4,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7E6),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: const Text(
+        '🔥 Top opportunités du moment',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFFD97706),
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopOpportunityCard extends StatelessWidget {
+  final Map<String, dynamic> opportunity;
+
+  const _DesktopOpportunityCard({required this.opportunity});
+
+  @override
+  Widget build(BuildContext context) {
+    final title = (opportunity['title'] ?? '').toString();
+    final type = (opportunity['type'] ?? '').toString();
+    final location = (opportunity['location'] ?? '').toString();
+    final startsAtRaw = opportunity['starts_at']?.toString();
+
+    String? formattedStart;
+    if (startsAtRaw != null && startsAtRaw.isNotEmpty) {
+      try {
+        final parsed = DateTime.tryParse(startsAtRaw);
+        if (parsed != null) {
+          formattedStart =
+              DateFormat('d MMMM y', 'fr_FR').format(parsed.toLocal());
+        } else {
+          formattedStart = startsAtRaw;
+        }
+      } catch (_) {
+        formattedStart = startsAtRaw;
+      }
+    }
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const StudentOpportunitiesTab(),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0A2540),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                if (type.isNotEmpty)
+                  Flexible(
+                    child: Text(
+                      type,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF4B5563),
+                      ),
+                    ),
+                  ),
+                if (type.isNotEmpty && location.isNotEmpty)
+                  const Text(
+                    ' • ',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF9CA3AF),
+                    ),
+                  ),
+                if (location.isNotEmpty)
+                  Flexible(
+                    child: Text(
+                      location,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF4B5563),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            if (formattedStart != null && formattedStart.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  'Début : $formattedStart',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF9CA3AF),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -985,12 +1260,22 @@ class _OfferCard extends StatelessWidget {
     final universitySlug = offer['university_slug']?.toString();
     final highlighted = (offer['highlighted'] == true);
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      color: Colors.white,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+        border: Border.all(
+          color: const Color(0x80F6A623),
+          width: 2,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -1004,7 +1289,8 @@ class _OfferCard extends StatelessWidget {
                     title,
                     style: const TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0A2540),
                     ),
                   ),
                 ),
@@ -1029,12 +1315,19 @@ class _OfferCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               university,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0A2540),
+              ),
             ),
             const SizedBox(height: 4),
             Text(
               '$city, $country',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF6B7280),
+              ),
             ),
             if (description.isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -1042,6 +1335,11 @@ class _OfferCard extends StatelessWidget {
                 description,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF4B5563),
+                  height: 1.4,
+                ),
               ),
             ],
             const SizedBox(height: 8),
@@ -1051,13 +1349,43 @@ class _OfferCard extends StatelessWidget {
               children: [
                 if (degree.isNotEmpty)
                   Chip(
-                    label: Text(degree),
+                    label: Text(
+                      degree,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF3275D0),
+                      ),
+                    ),
+                    backgroundColor: const Color(0xFFE0EDFF),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                      side: const BorderSide(
+                        color: Color(0xFF3275D0),
+                        width: 1,
+                      ),
+                    ),
                     visualDensity: VisualDensity.compact,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 if (mode.isNotEmpty)
                   Chip(
-                    label: Text(mode),
+                    label: Text(
+                      mode,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF3275D0),
+                      ),
+                    ),
+                    backgroundColor: const Color(0xFFE0EDFF),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                      side: const BorderSide(
+                        color: Color(0xFF3275D0),
+                        width: 1,
+                      ),
+                    ),
                     visualDensity: VisualDensity.compact,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
@@ -1084,7 +1412,7 @@ class _OfferCard extends StatelessWidget {
                   label: const Text('Voir le mini-site'),
                 ),
                 const SizedBox(width: 8),
-                TextButton.icon(
+                ElevatedButton.icon(
                   onPressed: programId == null
                       ? null
                       : () async {
@@ -1131,6 +1459,10 @@ class _OfferCard extends StatelessWidget {
                             );
                           }
                         },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3275D0),
+                    foregroundColor: Colors.white,
+                  ),
                   icon: const Icon(Icons.send),
                   label: const Text('Candidater'),
                 ),

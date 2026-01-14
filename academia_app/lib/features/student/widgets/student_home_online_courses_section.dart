@@ -161,11 +161,21 @@ class StudentHomeOnlineCoursesSection extends StatelessWidget {
 
                     return SizedBox(
                       width: cardWidth,
-                      child: Card(
-                        color: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x0D000000),
+                              blurRadius: 10,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                          border: Border.all(
+                            color: const Color(0x80F6A623),
+                            width: 2,
+                          ),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(12),
@@ -179,6 +189,7 @@ class StudentHomeOnlineCoursesSection extends StatelessWidget {
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
+                                  color: Color(0xFF0A2540),
                                 ),
                               ),
                               if (shortDescription.isNotEmpty) ...[
@@ -187,7 +198,10 @@ class StudentHomeOnlineCoursesSection extends StatelessWidget {
                                   shortDescription,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontSize: 12),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF4B5563),
+                                  ),
                                 ),
                               ],
                               if (metaParts.isNotEmpty) ...[
@@ -198,7 +212,7 @@ class StudentHomeOnlineCoursesSection extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     fontSize: 11,
-                                    color: Colors.grey,
+                                    color: Color(0xFF6B7280),
                                   ),
                                 ),
                               ],
@@ -209,7 +223,7 @@ class StudentHomeOnlineCoursesSection extends StatelessWidget {
                                   style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
-                                    color: Color(0xFF2563EB),
+                                    color: Color(0xFF3275D0),
                                   ),
                                 ),
                               ],
@@ -221,7 +235,7 @@ class StudentHomeOnlineCoursesSection extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     fontSize: 11,
-                                    color: Colors.grey,
+                                    color: Color(0xFF6B7280),
                                   ),
                                 ),
                               ],
@@ -242,6 +256,10 @@ class StudentHomeOnlineCoursesSection extends StatelessWidget {
                                             ),
                                           );
                                         },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF3275D0),
+                                    foregroundColor: Colors.white,
+                                  ),
                                   child: Text(
                                     alreadyEnrolled ? 'Accéder' : 'Découvrir',
                                   ),
