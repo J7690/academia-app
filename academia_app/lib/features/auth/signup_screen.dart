@@ -135,7 +135,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 constraints: const BoxConstraints(maxWidth: 400),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.82),
+                    color: Colors.white.withOpacity(0.72),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: const [
                       BoxShadow(
