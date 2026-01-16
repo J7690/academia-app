@@ -141,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 constraints: const BoxConstraints(maxWidth: 400),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.72),
+                    color: Colors.white.withOpacity(0.64),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: const [
                       BoxShadow(

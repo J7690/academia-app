@@ -64,7 +64,7 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
       backgroundColor: const Color(0xFFF3F4F6),
       floatingActionButton: FloatingActionButton(
         onPressed: _openCreateGroupSheet,
-        backgroundColor: const Color(0xFF1EA75C),
+        backgroundColor: const Color(0xFF7BC96F),
         child: const Icon(Icons.add),
       ),
       body: SafeArea(
@@ -230,7 +230,7 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           gradient: const LinearGradient(
-            colors: [Color(0xFF1EA75C), Color(0xFF34B7F1)],
+            colors: [Color(0xFF7BC96F), Color(0xFFE8F5E9)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -381,7 +381,7 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
                   Icon(
                     Icons.chat_bubble_outline,
                     size: 18,
-                    color: Color(0xFF1EA75C),
+                    color: Color(0xFF7BC96F),
                   ),
                   SizedBox(width: 6),
                   Text(
@@ -676,7 +676,7 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
                   icon: const Icon(Icons.check),
                   label: const Text('Créer'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1EA75C),
+                    backgroundColor: const Color(0xFF7BC96F),
                     foregroundColor: Colors.white,
                   ),
                 ),
@@ -857,7 +857,7 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
                       padding:
                           const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1EA75C),
+                        color: const Color(0xFF7BC96F),
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(

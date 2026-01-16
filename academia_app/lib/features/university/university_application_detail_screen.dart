@@ -23,6 +23,7 @@ class UniversityApplicationDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
         title: const Text('Candidature - Université'),
       ),
@@ -243,7 +244,7 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
         final universityInfo = provider.universityInfo;
         final studentName = (app['student_full_name'] ?? studentProfile?['full_name'])?.toString() ?? '';
         final programTitle = app['program_title']?.toString() ?? provider.programInfo?['title']?.toString() ?? '';
-        final status = app['status']?.toString() ?? '';
+        final status = (app['status']?.toString() ?? '').trim();
         final requestedDegree =
             (app['requested_degree_level']?.toString() ?? '').trim();
         final requestedMode =
@@ -285,7 +286,15 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
               const SizedBox(height: 4),
               Text('Étudiant : $studentName'),
               const SizedBox(height: 4),
-              Text('Statut : $status'),
+              Row(
+                children: [
+                  const Text('Statut : '),
+                  if (status.isNotEmpty)
+                    _DossierStatusBadge(status: status)
+                  else
+                    const Text('Inconnu'),
+                ],
+              ),
               const SizedBox(height: 8),
               _buildStatusActions(context, provider, appId, status),
               const SizedBox(height: 16),
@@ -294,6 +303,14 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
                     style: Theme.of(context).textTheme.titleSmall),
                 const SizedBox(height: 8),
                 Card(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  color: Colors.white,
+                  elevation: 2,
+                  shadowColor: const Color(0x0D000000),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Column(
@@ -343,6 +360,14 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
                 Text('Profil académique', style: Theme.of(context).textTheme.titleSmall),
                 const SizedBox(height: 8),
                 Card(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  color: Colors.white,
+                  elevation: 2,
+                  shadowColor: const Color(0x0D000000),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Column(
@@ -371,6 +396,14 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
                 Text('Complétude du dossier', style: Theme.of(context).textTheme.titleSmall),
                 const SizedBox(height: 8),
                 Card(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  color: Colors.white,
+                  elevation: 2,
+                  shadowColor: const Color(0x0D000000),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Column(
@@ -654,7 +687,16 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
                     final highlighted = program['highlighted'] == true;
 
                     return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: Colors.white,
+                      elevation: 2,
+                      shadowColor: const Color(0x0D000000),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: highlighted
+                            ? const BorderSide(color: Color(0x80F6A623), width: 1.5)
+                            : const BorderSide(color: Color(0xFFE5E7EB)),
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.all(12.0),
                         child: Column(
@@ -664,7 +706,8 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
                               title,
                               style: const TextStyle(
                                 fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF0A2540),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -760,5 +803,85 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
         ),
       ],
     );
+  }
+}
+
+class _DossierStatusBadge extends StatelessWidget {
+  final String status;
+
+  const _DossierStatusBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final config = _DossierStatusConfig.fromStatus(status);
+    if (config == null) {
+      return Text(
+        status,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: config.color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: config.color.withOpacity(0.4),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        config.label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: config.color,
+        ),
+      ),
+    );
+  }
+}
+
+class _DossierStatusConfig {
+  final String label;
+  final Color color;
+
+  const _DossierStatusConfig({required this.label, required this.color});
+
+  static _DossierStatusConfig? fromStatus(String raw) {
+    final value = raw.toLowerCase().trim();
+    switch (value) {
+      case 'submitted':
+        return const _DossierStatusConfig(
+          label: 'Soumise',
+          color: Color(0xFF2563EB),
+        );
+      case 'under_review':
+        return const _DossierStatusConfig(
+          label: 'En étude',
+          color: Color(0xFFF59E0B),
+        );
+      case 'accepted':
+        return const _DossierStatusConfig(
+          label: 'Acceptée',
+          color: Color(0xFF10B981),
+        );
+      case 'rejected':
+        return const _DossierStatusConfig(
+          label: 'Refusée',
+          color: Color(0xFFEF4444),
+        );
+      case 'canceled':
+        return const _DossierStatusConfig(
+          label: 'Annulée',
+          color: Color(0xFF6B7280),
+        );
+      default:
+        return null;
+    }
   }
 }

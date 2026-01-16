@@ -10,9 +10,6 @@ import '../../providers/university_applications_provider.dart';
 import '../../providers/selected_university_application_provider.dart';
 import '../../providers/university_site_provider.dart';
 import '../../providers/university_programs_provider.dart';
-import '../../providers/university_application_messages_provider.dart';
-import '../../providers/university_application_detail_provider.dart';
-import '../../providers/university_application_payments_provider.dart';
 import '../../widgets/mini_site_hero_video.dart';
 import 'university_application_detail_screen.dart';
 import '../../services/notification_sound_service.dart';
@@ -78,15 +75,26 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
 
     return DefaultTabController(
       length: 2,
-      child: Consumer<UniversityApplicationsProvider>(
-        builder: (context, applicationsProvider, child) {
+      child: Consumer2<UniversityApplicationsProvider, UniversitySiteProvider>(
+        builder: (context, applicationsProvider, siteProvider, child) {
           final unread = applicationsProvider.unreadTotal;
+          final universityName =
+              siteProvider.university?['name']?.toString().trim();
+          final appBarTitle =
+              (universityName != null && universityName.isNotEmpty)
+                  ? universityName
+                  : 'Dashboard Université';
           return Scaffold(
             backgroundColor: const Color(0xFFF3F4F6),
             appBar: AppBar(
               elevation: 0,
-              centerTitle: false,
-              title: const Text('Dashboard Université'),
+              centerTitle: true,
+              title: Text(
+                appBarTitle,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               foregroundColor: Colors.white,
               flexibleSpace: Container(
                 decoration: const BoxDecoration(
@@ -98,35 +106,58 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                 ),
               ),
               actions: [
-                IconButton(
-                  onPressed: () {
-                    NotificationSoundSettingsDialog.show(context);
+                PopupMenuButton<_UniversityDashboardMenuAction>(
+                  icon: const Icon(Icons.more_vert),
+                  tooltip: 'Options du compte',
+                  onSelected: (value) {
+                    switch (value) {
+                      case _UniversityDashboardMenuAction.notifications:
+                        NotificationSoundSettingsDialog.show(context);
+                        break;
+                      case _UniversityDashboardMenuAction.changePassword:
+                        _showChangePasswordDialog(context);
+                        break;
+                      case _UniversityDashboardMenuAction.signOut:
+                        _signOut();
+                        break;
+                    }
                   },
-                  icon: const Icon(Icons.settings),
-                  tooltip: 'Paramètres des notifications',
-                ),
-                IconButton(
-                  onPressed: () {
-                    _showChangePasswordDialog(context);
-                  },
-                  icon: const Icon(Icons.lock_outline),
-                  tooltip: 'Changer le mot de passe',
-                ),
-                IconButton(
-                  onPressed: _signOut,
-                  icon: const Icon(Icons.logout),
-                  tooltip: 'Se déconnecter',
+                  itemBuilder: (context) => const [
+                    PopupMenuItem<_UniversityDashboardMenuAction>(
+                      value: _UniversityDashboardMenuAction.notifications,
+                      child: ListTile(
+                        leading: Icon(Icons.notifications_active_outlined),
+                        title: Text('Paramètres des notifications'),
+                      ),
+                    ),
+                    PopupMenuItem<_UniversityDashboardMenuAction>(
+                      value: _UniversityDashboardMenuAction.changePassword,
+                      child: ListTile(
+                        leading: Icon(Icons.lock_outline),
+                        title: Text('Changer le mot de passe'),
+                      ),
+                    ),
+                    PopupMenuItem<_UniversityDashboardMenuAction>(
+                      value: _UniversityDashboardMenuAction.signOut,
+                      child: ListTile(
+                        leading: Icon(Icons.logout),
+                        title: Text('Se déconnecter'),
+                      ),
+                    ),
+                  ],
                 ),
               ],
               bottom: TabBar(
-                isScrollable: true,
+                isScrollable: false,
+                indicatorSize: TabBarIndicatorSize.tab,
                 indicator: BoxDecoration(
                   color: const Color(0xFF1EA75C),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 indicatorPadding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                labelPadding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
                 labelColor: Colors.white,
                 unselectedLabelColor: Colors.white.withOpacity(0.85),
                 tabs: [
@@ -138,59 +169,84 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
             body: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 2),
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: const Color(0xFFEEF2FF),
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
                     ),
-                    child: Column(
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Compte université',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF4F46E5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.school_outlined,
+                            size: 18,
+                            color: Colors.white,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(Icons.email_outlined, size: 14),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                email,
-                                style: const TextStyle(fontSize: 12),
-                                overflow: TextOverflow.ellipsis,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                universityName ?? 'Compte université',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF111827),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.mark_unread_chat_alt,
-                              size: 14,
-                              color: Color(0xFF1EA75C),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              '$unread candidature(s) avec nouveautés',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ],
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.email_outlined,
+                                    size: 14,
+                                    color: Color(0xFF6B7280),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      email,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF6B7280),
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.mark_unread_chat_alt,
+                                    size: 14,
+                                    color: Color(0xFF1EA75C),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '$unread candidature(s) avec nouveautés',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF374151),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -211,6 +267,12 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
       ),
     );
   }
+}
+
+enum _UniversityDashboardMenuAction {
+  notifications,
+  changePassword,
+  signOut,
 }
 
 Future<void> _showChangePasswordDialog(BuildContext context) async {
@@ -1586,6 +1648,78 @@ class _UniversityTabLabel extends StatelessWidget {
   }
 }
 
+class _ApplicationStatusBadge extends StatelessWidget {
+  final String status;
+
+  const _ApplicationStatusBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final config = _ApplicationStatusConfig.fromStatus(status);
+    if (config == null) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: config.color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: config.color.withOpacity(0.4),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        config.label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: config.color,
+        ),
+      ),
+    );
+  }
+}
+
+class _ApplicationStatusConfig {
+  final String label;
+  final Color color;
+
+  const _ApplicationStatusConfig({required this.label, required this.color});
+
+  static _ApplicationStatusConfig? fromStatus(String raw) {
+    final value = raw.toLowerCase().trim();
+    switch (value) {
+      case 'submitted':
+        return const _ApplicationStatusConfig(
+          label: 'Soumise',
+          color: Color(0xFF2563EB),
+        );
+      case 'under_review':
+        return const _ApplicationStatusConfig(
+          label: 'En étude',
+          color: Color(0xFFF59E0B),
+        );
+      case 'accepted':
+        return const _ApplicationStatusConfig(
+          label: 'Acceptée',
+          color: Color(0xFF10B981),
+        );
+      case 'rejected':
+        return const _ApplicationStatusConfig(
+          label: 'Refusée',
+          color: Color(0xFFEF4444),
+        );
+      case 'canceled':
+        return const _ApplicationStatusConfig(
+          label: 'Annulée',
+          color: Color(0xFF6B7280),
+        );
+      default:
+        return null;
+    }
+  }
+}
+
 class _UniversityCandidaturesWorkspace extends StatefulWidget {
   const _UniversityCandidaturesWorkspace();
 
@@ -1610,37 +1744,49 @@ class _UniversityCandidaturesWorkspaceState extends State<_UniversityCandidature
       length: 2,
       child: Column(
         children: [
-          Consumer<UniversityApplicationsProvider>(
-            builder: (context, provider, child) {
-              final receivedCount = provider.unreadReceived;
-              final treatedCount = provider.unreadTreated;
-              return TabBar(
-                isScrollable: true,
-                indicator: BoxDecoration(
-                  color: const Color(0xFF1EA75C),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                indicatorPadding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                labelPadding: const EdgeInsets.symmetric(horizontal: 16),
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.black87,
-                tabs: [
-                  Tab(
-                    child: _UniversityTabLabel(
-                      text: 'Reçues',
-                      count: receivedCount,
-                    ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            child: Consumer<UniversityApplicationsProvider>(
+              builder: (context, provider, child) {
+                final receivedCount = provider.unreadReceived;
+                final treatedCount = provider.unreadTreated;
+                return Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5F3FF),
+                    borderRadius: BorderRadius.circular(999),
                   ),
-                  Tab(
-                    child: _UniversityTabLabel(
-                      text: 'Traitées',
-                      count: treatedCount,
+                  child: TabBar(
+                    isScrollable: false,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    indicator: BoxDecoration(
+                      color: const Color(0xFF1EA75C),
+                      borderRadius: BorderRadius.circular(999),
                     ),
+                    indicatorPadding: const EdgeInsets.symmetric(
+                      horizontal: 2,
+                      vertical: 1,
+                    ),
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 6),
+                    labelColor: Colors.white,
+                    unselectedLabelColor: const Color(0xFF1F2937),
+                    tabs: [
+                      Tab(
+                        child: _UniversityTabLabel(
+                          text: 'Reçues',
+                          count: receivedCount,
+                        ),
+                      ),
+                      Tab(
+                        child: _UniversityTabLabel(
+                          text: 'Traitées',
+                          count: treatedCount,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              );
-            },
+                );
+              },
+            ),
           ),
           const Divider(height: 1),
           const Expanded(
@@ -1729,121 +1875,105 @@ class _UniversityApplicationsBucket extends StatelessWidget {
           });
         }
 
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 900;
-
-            Widget buildList() {
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: apps.length,
-                itemBuilder: (context, index) {
-                  final app = apps[index];
-                  final isSelected = app['id'] == effectiveSelected['id'];
-                  return Card(
-                    elevation: 0,
-                    color: isSelected ? const Color(0xFFE5F9E7) : Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: isSelected
-                          ? BorderSide(
-                              color: const Color(0xFF1EA75C),
-                              width: 1.5,
-                            )
-                          : BorderSide.none,
-                    ),
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () {
-                        final appId = app['id']?.toString();
-                        if (appId != null && appId.isNotEmpty) {
-                          try {
-                            applicationsProvider.markApplicationSeen(appId);
-                          } catch (_) {}
-                        }
-                        selectionProvider.selectApplication(app);
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    app['program_title']?.toString() ?? 'Programme inconnu',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                if ((app['has_unread_for_university'] == true) ||
-                                    (app['has_unseen_for_university'] == true))
-                                  const Icon(
-                                    Icons.mark_unread_chat_alt,
-                                    size: 18,
-                                    color: Color(0xFFFF3B30),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text('Étudiant : ${app['student_full_name'] ?? ''}'),
-                            if (app['last_message_at'] != null)
-                              Text('Dernier message : ${app['last_message_at']}'),
-                          ],
+        Widget buildList() {
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: apps.length,
+            itemBuilder: (context, index) {
+              final app = apps[index];
+              final isSelected = app['id'] == effectiveSelected['id'];
+              final status = (app['status']?.toString() ?? '').trim();
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                elevation: 2,
+                shadowColor: const Color(0x0D000000),
+                color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: isSelected
+                      ? BorderSide(
+                          color: const Color(0xFF1EA75C),
+                          width: 1.5,
+                        )
+                      : const BorderSide(color: Color(0xFFE5E7EB)),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () {
+                    final appId = app['id']?.toString();
+                    if (appId != null && appId.isNotEmpty) {
+                      try {
+                        applicationsProvider.markApplicationSeen(appId);
+                      } catch (_) {}
+                    }
+                    selectionProvider.selectApplication(app);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => UniversityApplicationDetailScreen(
+                          application: app,
                         ),
                       ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                app['program_title']?.toString() ?? 'Programme inconnu',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF0A2540),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            if (status.isNotEmpty)
+                              _ApplicationStatusBadge(status: status),
+                            if ((app['has_unread_for_university'] == true) ||
+                                (app['has_unseen_for_university'] == true))
+                              const Icon(
+                                Icons.mark_unread_chat_alt,
+                                size: 18,
+                                color: Color(0xFFFF3B30),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Étudiant : ${app['student_full_name'] ?? ''}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF4B5563),
+                          ),
+                        ),
+                        if (app['last_message_at'] != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            'Dernier message : ${app['last_message_at']}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF6B7280),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                  );
-                },
-              );
-            }
-
-            Widget buildDetail() {
-              return ChangeNotifierProvider(
-                create: (_) => UniversityApplicationPaymentsProvider(),
-                child: UniversityApplicationDetailPanel(
-                  application: effectiveSelected,
-                ),
-              );
-            }
-
-            if (isWide) {
-              return Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: buildList(),
                   ),
-                  const VerticalDivider(width: 1),
-                  Expanded(
-                    flex: 3,
-                    child: buildDetail(),
-                  ),
-                ],
+                ),
               );
-            }
+            },
+          );
+        }
 
-            return Column(
-              children: [
-                Expanded(
-                  flex: 1,
-                  child: buildList(),
-                ),
-                const Divider(height: 1),
-                Expanded(
-                  flex: 2,
-                  child: buildDetail(),
-                ),
-              ],
-            );
-          },
-        );
+        return buildList();
       },
     );
   }
@@ -2355,38 +2485,7 @@ class _UniversitySiteWorkspaceState extends State<_UniversitySiteWorkspace> {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Column(
-        children: [
-          TabBar(
-            isScrollable: true,
-            indicator: BoxDecoration(
-              color: const Color(0xFF1EA75C),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            indicatorPadding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            labelPadding: const EdgeInsets.symmetric(horizontal: 16),
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.black87,
-            tabs: const [
-              Tab(text: 'Aperçu'),
-              Tab(text: 'Configurer le mini-site'),
-            ],
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: TabBarView(
-              children: const [
-                _UniversitySitePreview(),
-                _UniversitySiteEditorWorkspace(),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    return const _UniversitySitePreview();
   }
 }
 
@@ -2421,15 +2520,16 @@ class _UniversitySiteEditorWorkspace extends StatelessWidget {
           ),
           TabBar(
             isScrollable: true,
+            indicatorSize: TabBarIndicatorSize.label,
             indicator: BoxDecoration(
               color: const Color(0xFF1EA75C),
               borderRadius: BorderRadius.circular(999),
             ),
             indicatorPadding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 12),
             labelColor: Colors.white,
-            unselectedLabelColor: Colors.black87,
+            unselectedLabelColor: const Color(0xFF4B5563),
             tabs: const [
               Tab(text: 'Identité & contact'),
               Tab(text: 'Pages & contenus'),
@@ -2591,7 +2691,7 @@ class _UniversitySitePreview extends StatelessWidget {
                 : vision);
 
         return Container(
-          color: const Color(0xFFF9FAFB),
+          color: const Color(0xFFF3F4F6),
           child: SingleChildScrollView(
             child: Center(
               child: ConstrainedBox(
@@ -2683,7 +2783,7 @@ class _UniversitySitePreview extends StatelessWidget {
                             ),
                             TextButton.icon(
                               onPressed: () {
-                                DefaultTabController.of(context).animateTo(1);
+                                _showMiniSiteMediaManager(context);
                               },
                               icon: const Icon(Icons.photo_library_outlined, size: 16),
                               label: const Text('Gérer les médias'),
@@ -2692,7 +2792,9 @@ class _UniversitySitePreview extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Card(
-                          elevation: 0,
+                          color: Colors.white,
+                          elevation: 2,
+                          shadowColor: const Color(0x0D000000),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                             side: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -2718,7 +2820,7 @@ class _UniversitySitePreview extends StatelessWidget {
                           ),
                           TextButton.icon(
                             onPressed: () {
-                              DefaultTabController.of(context).animateTo(1);
+                              _showMiniSiteConfigManager(context);
                             },
                             icon: const Icon(Icons.edit, size: 16),
                             label: const Text('Configurer'),
@@ -2727,7 +2829,9 @@ class _UniversitySitePreview extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Card(
-                        elevation: 0,
+                        color: Colors.white,
+                        elevation: 2,
+                        shadowColor: const Color(0x0D000000),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                           side: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -2805,7 +2909,7 @@ class _UniversitySitePreview extends StatelessWidget {
                             ),
                             TextButton.icon(
                               onPressed: () {
-                                DefaultTabController.of(context).animateTo(1);
+                                _showMiniSiteProgramsManager(context);
                               },
                               icon: const Icon(Icons.school_outlined, size: 16),
                               label: const Text('Gérer les programmes'),
@@ -2814,7 +2918,9 @@ class _UniversitySitePreview extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Card(
-                          elevation: 0,
+                          color: Colors.white,
+                          elevation: 2,
+                          shadowColor: const Color(0x0D000000),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                             side: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -2864,7 +2970,7 @@ class _UniversitySitePreview extends StatelessWidget {
                             ),
                             TextButton.icon(
                               onPressed: () {
-                                DefaultTabController.of(context).animateTo(1);
+                                _showMiniSiteEventsManager(context);
                               },
                               icon: const Icon(Icons.event, size: 16),
                               label: const Text('Gérer les événements'),
@@ -2873,7 +2979,9 @@ class _UniversitySitePreview extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Card(
-                          elevation: 0,
+                          color: Colors.white,
+                          elevation: 2,
+                          shadowColor: const Color(0x0D000000),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                             side: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -2900,7 +3008,7 @@ class _UniversitySitePreview extends StatelessWidget {
                             ),
                             TextButton.icon(
                               onPressed: () {
-                                DefaultTabController.of(context).animateTo(1);
+                                _showMiniSiteNewsManager(context);
                               },
                               icon: const Icon(Icons.article_outlined, size: 16),
                               label: const Text('Gérer les actualités'),
@@ -2909,7 +3017,9 @@ class _UniversitySitePreview extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Card(
-                          elevation: 0,
+                          color: Colors.white,
+                          elevation: 2,
+                          shadowColor: const Color(0x0D000000),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                             side: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -2932,7 +3042,9 @@ class _UniversitySitePreview extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Card(
-                          elevation: 0,
+                          color: Colors.white,
+                          elevation: 2,
+                          shadowColor: const Color(0x0D000000),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                             side: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -2960,7 +3072,7 @@ class _UniversitySitePreview extends StatelessWidget {
                             ),
                             TextButton.icon(
                               onPressed: () {
-                                DefaultTabController.of(context).animateTo(1);
+                                _showMiniSiteBlocksManager(context);
                               },
                               icon: const Icon(Icons.notes, size: 16),
                               label: const Text('Gérer les contenus'),
@@ -2969,7 +3081,9 @@ class _UniversitySitePreview extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Card(
-                          elevation: 0,
+                          color: Colors.white,
+                          elevation: 2,
+                          shadowColor: const Color(0x0D000000),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                             side: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -2996,7 +3110,7 @@ class _UniversitySitePreview extends StatelessWidget {
                             ),
                             TextButton.icon(
                               onPressed: () {
-                                DefaultTabController.of(context).animateTo(1);
+                                _showMiniSiteStaffManager(context);
                               },
                               icon: const Icon(Icons.group_outlined, size: 16),
                               label: const Text('Gérer l\'équipe'),
@@ -3005,7 +3119,9 @@ class _UniversitySitePreview extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Card(
-                          elevation: 0,
+                          color: Colors.white,
+                          elevation: 2,
+                          shadowColor: const Color(0x0D000000),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                             side: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -3059,7 +3175,7 @@ class _UniversitySitePreview extends StatelessWidget {
                             ),
                             TextButton.icon(
                               onPressed: () {
-                                DefaultTabController.of(context).animateTo(1);
+                                _showMiniSiteConfigManager(context);
                               },
                               icon: const Icon(Icons.settings, size: 16),
                               label: const Text('Configurer le contact'),
@@ -3068,7 +3184,9 @@ class _UniversitySitePreview extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Card(
-                          elevation: 0,
+                          color: Colors.white,
+                          elevation: 2,
+                          shadowColor: const Color(0x0D000000),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                             side: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -3743,14 +3861,96 @@ class _UniversitySiteProgramsTab extends StatelessWidget {
                                 icon: const Icon(Icons.menu_book_outlined),
                                 label: const Text('Gérer les cours'),
                               ),
-                              TextButton.icon(
-                                onPressed: () => _showEditProgramDialog(
-                                  context,
-                                  provider,
-                                  program: program,
-                                ),
-                                icon: const Icon(Icons.edit),
-                                label: const Text('Modifier le programme'),
+                              Row(
+                                children: [
+                                  TextButton.icon(
+                                    onPressed: () => _showEditProgramDialog(
+                                      context,
+                                      provider,
+                                      program: program,
+                                    ),
+                                    icon: const Icon(Icons.edit),
+                                    label: const Text('Modifier le programme'),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  TextButton.icon(
+                                    onPressed: programId == null
+                                        ? null
+                                        : () async {
+                                            final confirm = await showDialog<bool>(
+                                              context: context,
+                                              builder: (dialogContext) {
+                                                return AlertDialog(
+                                                  title: const Text('Supprimer le programme ?'),
+                                                  content: const Text(
+                                                    'Le programme sera marqué comme inactif et ne sera plus visible sur le mini-site.',
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () =>
+                                                          Navigator.of(dialogContext).pop(false),
+                                                      child: const Text('Annuler'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () =>
+                                                          Navigator.of(dialogContext).pop(true),
+                                                      child: const Text('Supprimer'),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                            if (confirm != true) return;
+
+                                            final rawDuration = program['duration_months'];
+                                            int? duration;
+                                            if (rawDuration is int) {
+                                              duration = rawDuration;
+                                            } else if (rawDuration is num) {
+                                              duration = rawDuration.toInt();
+                                            } else if (rawDuration is String &&
+                                                rawDuration.isNotEmpty) {
+                                              duration = int.tryParse(rawDuration);
+                                            }
+
+                                            final rawFees = program['tuition_fees'];
+                                            num? fees;
+                                            if (rawFees is num) {
+                                              fees = rawFees;
+                                            } else if (rawFees is String &&
+                                                rawFees.isNotEmpty) {
+                                              fees = num.tryParse(rawFees);
+                                            }
+
+                                            final ok = await provider.upsertProgram(
+                                              programId: programId,
+                                              title: title,
+                                              description:
+                                                  program['description']?.toString(),
+                                              degreeLevel:
+                                                  degree.isNotEmpty ? degree : null,
+                                              mode: mode.isNotEmpty ? mode : null,
+                                              durationMonths: duration,
+                                              tuitionFees: fees,
+                                              highlighted: highlighted,
+                                              isActive: false,
+                                            );
+                                            if (!context.mounted) return;
+                                            if (!ok) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    provider.error ??
+                                                        'Erreur lors de la suppression du programme.',
+                                                  ),
+                                                ),
+                                              );
+                                            }
+                                          },
+                                    icon: const Icon(Icons.delete_outline),
+                                    label: const Text('Supprimer'),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -3766,6 +3966,111 @@ class _UniversitySiteProgramsTab extends StatelessWidget {
       },
     );
   }
+}
+
+Future<void> _showMiniSiteConfigManager(BuildContext context) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (ctx) {
+      return SafeArea(
+        child: SizedBox(
+          height: MediaQuery.of(ctx).size.height * 0.85,
+          child: const _UniversitySiteConfigTab(),
+        ),
+      );
+    },
+  );
+}
+
+Future<void> _showMiniSiteBlocksManager(BuildContext context) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (ctx) {
+      return SafeArea(
+        child: SizedBox(
+          height: MediaQuery.of(ctx).size.height * 0.85,
+          child: const _UniversitySiteBlocksTab(),
+        ),
+      );
+    },
+  );
+}
+
+Future<void> _showMiniSiteMediaManager(BuildContext context) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (ctx) {
+      return SafeArea(
+        child: SizedBox(
+          height: MediaQuery.of(ctx).size.height * 0.85,
+          child: const _UniversitySiteMediaTab(),
+        ),
+      );
+    },
+  );
+}
+
+Future<void> _showMiniSiteProgramsManager(BuildContext context) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (ctx) {
+      return SafeArea(
+        child: SizedBox(
+          height: MediaQuery.of(ctx).size.height * 0.85,
+          child: const _UniversitySiteProgramsTab(),
+        ),
+      );
+    },
+  );
+}
+
+Future<void> _showMiniSiteEventsManager(BuildContext context) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (ctx) {
+      return SafeArea(
+        child: SizedBox(
+          height: MediaQuery.of(ctx).size.height * 0.85,
+          child: const _UniversitySiteEventsTab(),
+        ),
+      );
+    },
+  );
+}
+
+Future<void> _showMiniSiteNewsManager(BuildContext context) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (ctx) {
+      return SafeArea(
+        child: SizedBox(
+          height: MediaQuery.of(ctx).size.height * 0.85,
+          child: const _UniversitySiteNewsTab(),
+        ),
+      );
+    },
+  );
+}
+
+Future<void> _showMiniSiteStaffManager(BuildContext context) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (ctx) {
+      return SafeArea(
+        child: SizedBox(
+          height: MediaQuery.of(ctx).size.height * 0.85,
+          child: const _UniversitySiteStaffTab(),
+        ),
+      );
+    },
+  );
 }
 
 Future<void> _showEditBlockDialog(
@@ -4062,6 +4367,14 @@ Future<void> _showEditMediaDialog(
                   final type = selectedType;
                   final title = titleController.text.trim();
                   final description = descriptionController.text.trim();
+                  if (title.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Le titre du média est obligatoire.'),
+                      ),
+                    );
+                    return;
+                  }
                   final lowerTypeSave = type.toLowerCase();
                   final isFileMediaSave = lowerTypeSave == 'video' ||
                       lowerTypeSave == 'image' ||
@@ -4342,25 +4655,6 @@ class _ProgramsGrid extends StatelessWidget {
     if (programs.isEmpty) {
       return const SizedBox.shrink();
     }
-
-    final isWide = MediaQuery.of(context).size.width > 900;
-
-    if (isWide) {
-      return Wrap(
-        spacing: 16,
-        runSpacing: 16,
-        children: programs.map((program) {
-          return SizedBox(
-            width: 320,
-            child: _ProgramPreviewCard(
-              program: program,
-              courses: courses,
-            ),
-          );
-        }).toList(),
-      );
-    }
-
     return Column(
       children: programs.map((program) {
         return Padding(
@@ -4448,6 +4742,8 @@ class _EventsList extends StatelessWidget {
         final location = event['location']?.toString() ?? '';
         final startDate = event['start_date']?.toString() ?? '';
         final endDate = event['end_date']?.toString() ?? '';
+        final rawType = event['event_type']?.toString() ?? '';
+        final type = rawType.trim();
 
         final dateParts = <String>[];
         if (startDate.isNotEmpty) dateParts.add(startDate);
@@ -4455,17 +4751,65 @@ class _EventsList extends StatelessWidget {
           dateParts.add(endDate);
         }
 
+        Color? badgeColor;
+        IconData badgeIcon = Icons.event_note;
+        String badgeLabel = type;
+
+        switch (type.toLowerCase()) {
+          case 'webinar':
+          case 'conférence':
+          case 'conference':
+            badgeColor = const Color(0xFF3275D0);
+            badgeLabel = 'Webinar';
+            badgeIcon = Icons.videocam_outlined;
+            break;
+          case 'jpo':
+          case 'portes_ouvertes':
+          case 'open_day':
+            badgeColor = const Color(0xFF1B8F5A);
+            badgeLabel = 'Portes ouvertes';
+            badgeIcon = Icons.meeting_room_outlined;
+            break;
+          case 'atelier':
+          case 'workshop':
+            badgeColor = const Color(0xFFF6A623);
+            badgeLabel = 'Atelier';
+            badgeIcon = Icons.psychology_outlined;
+            break;
+          default:
+            if (type.isNotEmpty) {
+              badgeColor = const Color(0xFF6B7280);
+              badgeLabel = type;
+              badgeIcon = Icons.event_note;
+            }
+            break;
+        }
+
         return Padding(
           padding: const EdgeInsets.only(bottom: 8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  if (badgeColor != null) ...[
+                    const SizedBox(width: 8),
+                    _MiniSiteBadge(
+                      label: badgeLabel,
+                      color: badgeColor,
+                      icon: badgeIcon,
+                    ),
+                  ],
+                ],
               ),
               if (dateParts.isNotEmpty || location.isNotEmpty) ...[
                 const SizedBox(height: 2),
@@ -4505,17 +4849,36 @@ class _NewsList extends StatelessWidget {
         final summary = item['summary']?.toString() ?? '';
         final publishedAt = item['published_at']?.toString() ?? '';
 
+        final isPublished = publishedAt.isNotEmpty;
+        final Color statusColor =
+            isPublished ? const Color(0xFF1B8F5A) : const Color(0xFFF59E0B);
+        final IconData statusIcon =
+            isPublished ? Icons.check_circle_outline : Icons.edit_outlined;
+        final String statusLabel = isPublished ? 'Publié' : 'Brouillon';
+
         return Padding(
           padding: const EdgeInsets.only(bottom: 8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _MiniSiteBadge(
+                    label: statusLabel,
+                    color: statusColor,
+                    icon: statusIcon,
+                  ),
+                ],
               ),
               if (publishedAt.isNotEmpty) ...[
                 const SizedBox(height: 2),
@@ -4539,6 +4902,57 @@ class _NewsList extends StatelessWidget {
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+class _MiniSiteBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+  final IconData icon;
+  final bool compact;
+
+  const _MiniSiteBadge({
+    required this.label,
+    required this.color,
+    required this.icon,
+    this.compact = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final background = color.withOpacity(0.08);
+    final borderColor = color.withOpacity(0.3);
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 10,
+        vertical: compact ? 3 : 4,
+      ),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(compact ? 8 : 10),
+        border: Border.all(color: borderColor, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: compact ? 12 : 14,
+            color: color,
+          ),
+          SizedBox(width: compact ? 4 : 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: compact ? 10 : 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
