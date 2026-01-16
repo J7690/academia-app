@@ -27,6 +27,9 @@ import '../widgets/student_short_trainings_section.dart';
 import '../widgets/student_home_online_courses_section.dart';
 import '../../../providers/student_application_payments_provider.dart';
 import 'student_opportunities_tab.dart';
+import '../../share/share_service.dart';
+import '../../share/share_mode_provider.dart';
+import '../../share/widgets/share_signature.dart';
 
 class _StudentHomeMediaItem {
   final String url;
@@ -63,6 +66,9 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
 
   final TextEditingController _universitySearchController = TextEditingController();
   final TextEditingController _programSearchController = TextEditingController();
+
+  final GlobalKey _shareBoundaryKey = GlobalKey();
+  final ShareService _shareService = ShareService();
 
   static const List<String> _fallbackAnnouncements = [
     'Ouverture des candidatures 2025',
@@ -155,6 +161,109 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
     _programSearchController.dispose();
     _mediaTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _shareCurrentView() async {
+    await _shareService.shareCurrentView(
+      context: context,
+      boundaryKey: _shareBoundaryKey,
+      shareText: 'Découvert via Academia – Faciliter l’accès aux formations.',
+    );
+  }
+
+  Future<void> _shareHeroCard() async {
+    final title = _heroTitle?.trim().isNotEmpty == true
+        ? _heroTitle!.trim()
+        : 'Espace étudiant Academia';
+
+    await _shareService.shareCustomCard(
+      context: context,
+      card: _StudentHomeShareHeroCard.buildWithTitle(title),
+      shareText: 'Découvert via Academia – Faciliter l’accès aux formations.',
+    );
+  }
+
+  Future<void> _shareDiscoverCard() async {
+    await _shareService.shareCustomCard(
+      context: context,
+      card: const _StudentHomeShareDiscoverCard(),
+      shareText: 'Découvert via Academia – Faciliter l’accès aux formations.',
+    );
+  }
+
+  Future<void> _shareQuickAccessCard() async {
+    await _shareService.shareCustomCard(
+      context: context,
+      card: const _StudentHomeShareQuickAccessCard(),
+      shareText: 'Découvert via Academia – Faciliter l’accès aux formations.',
+    );
+  }
+
+  void _openShareOptions() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.web),
+                title: const Text('Vue complète de la page'),
+                subtitle: const Text(
+                  'Capture tout l’écran d’accueil étudiant.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _shareCurrentView();
+                },
+              ),
+              const Divider(height: 0),
+              ListTile(
+                leading: const Icon(Icons.star_rounded),
+                title: const Text('Carte hero'),
+                subtitle: const Text(
+                  'Une carte visuelle mettant en avant le hero étudiant.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _shareHeroCard();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.school_outlined),
+                title: const Text('Carte découverte formations'),
+                subtitle: const Text(
+                  'Présente les formations, cours en ligne et opportunités.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _shareDiscoverCard();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.dashboard_customize_outlined),
+                title: const Text('Carte accès rapide'),
+                subtitle: const Text(
+                  'Met en avant les principales sections de ton espace.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _shareQuickAccessCard();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _setupMediaPlaylist() async {
@@ -437,6 +546,7 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                     final item = _mediaPlaylist[_currentMediaIndex];
                     return item.mediaType == 'image' ? item.url : null;
                   }(),
+                  onShare: _openShareOptions,
                 ),
               ),
               SliverToBoxAdapter(
@@ -619,12 +729,275 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
               );
             }
 
-            return CustomScrollView(
-              slivers: slivers,
+            return RepaintBoundary(
+              key: _shareBoundaryKey,
+              child: Stack(
+                children: [
+                  CustomScrollView(
+                    slivers: slivers,
+                  ),
+                  Positioned(
+                    right: 16,
+                    bottom: 16,
+                    child: IgnorePointer(
+                      child: Consumer<ShareModeProvider>(
+                        builder: (context, shareMode, _) {
+                          if (!shareMode.isShareModeEnabled) {
+                            return const SizedBox.shrink();
+                          }
+                          return const ShareSignature();
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             );
           },
         );
       },
+    );
+  }
+}
+
+class _StudentHomeShareHeroCard extends StatelessWidget {
+  final String title;
+
+  const _StudentHomeShareHeroCard({required this.title});
+
+  static Widget buildWithTitle(String title) {
+    return _StudentHomeShareHeroCard(title: title);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF7BC96F), Color(0xFF34D399)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.all(Radius.circular(24)),
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              top: 16,
+              left: 16,
+              right: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'Academia – Espace étudiant',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 24,
+              child: Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const Positioned(
+              right: 16,
+              bottom: 16,
+              child: ShareSignature(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StudentHomeShareDiscoverCard extends StatelessWidget {
+  const _StudentHomeShareDiscoverCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'Découvre des formations et opportunités',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0A2540),
+                  ),
+                ),
+                SizedBox(height: 12),
+                _SharePillRow(
+                  icon: Icons.school_outlined,
+                  label: 'Formations courtes',
+                ),
+                SizedBox(height: 8),
+                _SharePillRow(
+                  icon: Icons.computer_outlined,
+                  label: 'Cours en ligne',
+                ),
+                SizedBox(height: 8),
+                _SharePillRow(
+                  icon: Icons.work_outline,
+                  label: 'Opportunités',
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Tout en un seul espace étudiant, gratuitement.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF4B5563),
+                  ),
+                ),
+              ],
+            ),
+            const Positioned(
+              right: 0,
+              bottom: 0,
+              child: ShareSignature(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StudentHomeShareQuickAccessCard extends StatelessWidget {
+  const _StudentHomeShareQuickAccessCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF0A2540),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'Ton hub académique sur Academia',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: 12),
+                _ShareBullet(text: '🎓 Formations'),
+                _ShareBullet(text: '💻 Cours en ligne'),
+                _ShareBullet(text: '🚀 Opportunités'),
+                _ShareBullet(text: '👥 Communautés'),
+              ],
+            ),
+            const Positioned(
+              right: 0,
+              bottom: 0,
+              child: ShareSignature(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SharePillRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _SharePillRow({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE5F9E7),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: const Color(0xFF0A2540)),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF0A2540),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ShareBullet extends StatelessWidget {
+  final String text;
+
+  const _ShareBullet({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+        ),
+      ),
     );
   }
 }
@@ -635,6 +1008,7 @@ class _StudentHomeHero extends StatelessWidget {
   final String? heroTitle;
   final String? currentVideoUrl;
   final String? currentImageUrl;
+  final VoidCallback? onShare;
 
   const _StudentHomeHero({
     required this.videoReady,
@@ -642,6 +1016,7 @@ class _StudentHomeHero extends StatelessWidget {
     required this.heroTitle,
     required this.currentVideoUrl,
     required this.currentImageUrl,
+    this.onShare,
   });
 
   @override
@@ -657,6 +1032,9 @@ class _StudentHomeHero extends StatelessWidget {
     } else {
       aspectRatio = 16 / 5;
     }
+
+    final isShareModeEnabled =
+        context.select<ShareModeProvider, bool>((p) => p.isShareModeEnabled);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
@@ -723,6 +1101,42 @@ class _StudentHomeHero extends StatelessWidget {
                   ),
                 ),
               ),
+              if (onShare != null && !isShareModeEnabled)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Material(
+                    color: Colors.black.withOpacity(0.35),
+                    borderRadius: BorderRadius.circular(999),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(999),
+                      onTap: onShare,
+                      child: const Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.share,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              'Partager',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               if (title != null && title.isNotEmpty)
                 Positioned(
                   left: 16,

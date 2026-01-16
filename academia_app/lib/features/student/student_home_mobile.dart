@@ -33,6 +33,9 @@ import 'widgets/student_mobile_scaffold.dart';
 import '../../providers/student_application_payments_provider.dart';
 import 'student_payments_screen.dart';
 import 'widgets/formations_section.dart';
+import '../share/share_service.dart';
+import '../share/share_mode_provider.dart';
+import '../share/widgets/share_signature.dart';
 
 class StudentHomeMobileTab extends StatefulWidget {
   const StudentHomeMobileTab({super.key});
@@ -43,6 +46,9 @@ class StudentHomeMobileTab extends StatefulWidget {
 
 class _StudentHomeMobileTabState extends State<StudentHomeMobileTab> {
   bool _initialized = false;
+
+  final GlobalKey _shareBoundaryKey = GlobalKey();
+  final ShareService _shareService = ShareService();
 
   @override
   void initState() {
@@ -84,6 +90,14 @@ class _StudentHomeMobileTabState extends State<StudentHomeMobileTab> {
     });
   }
 
+  Future<void> _shareCurrentView() async {
+    await _shareService.shareCurrentView(
+      context: context,
+      boundaryKey: _shareBoundaryKey,
+      shareText: 'Découvert via Academia – Faciliter l’accès aux formations.',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer2<StudentOffersProvider, HomeFormationsProvider>(
@@ -92,16 +106,37 @@ class _StudentHomeMobileTabState extends State<StudentHomeMobileTab> {
           formationsProvider.syncFromHomeOffers(offersProvider.homeOffers);
         });
 
-        return StudentMobileScrollablePage(
-          children: [
-            const SizedBox(height: 8),
-            const _MobileTopNavBar(),
-            const SizedBox(height: 16),
-            _MobileProfileCard(),
-            const SizedBox(height: 16),
-            const _MobileSectionsGrid(),
-            const SizedBox(height: 24),
-          ],
+        return RepaintBoundary(
+          key: _shareBoundaryKey,
+          child: Stack(
+            children: [
+              StudentMobileScrollablePage(
+                children: [
+                  const SizedBox(height: 8),
+                  const _MobileTopNavBar(),
+                  const SizedBox(height: 16),
+                  _MobileProfileCard(),
+                  const SizedBox(height: 16),
+                  _MobileSectionsGrid(),
+                  const SizedBox(height: 24),
+                ],
+              ),
+              Positioned(
+                right: 16,
+                bottom: 16,
+                child: IgnorePointer(
+                  child: Consumer<ShareModeProvider>(
+                    builder: (context, shareMode, _) {
+                      if (!shareMode.isShareModeEnabled) {
+                        return const SizedBox.shrink();
+                      }
+                      return const ShareSignature();
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -382,6 +417,26 @@ class _MobileTopNavBarState extends State<_MobileTopNavBar>
                 ),
               ),
               if (!isCompact) const SizedBox(width: 8),
+              if (!isCompact)
+                Consumer<ShareModeProvider>(
+                  builder: (context, shareMode, _) {
+                    if (shareMode.isShareModeEnabled) {
+                      return const SizedBox.shrink();
+                    }
+                    final isBusy = shareMode.isBusy;
+                    return _TopNavIconButton(
+                      icon: Icons.share,
+                      onTap: isBusy
+                          ? null
+                          : () {
+                              final parent = context
+                                  .findAncestorStateOfType<_StudentHomeMobileTabState>();
+                              parent?._shareCurrentView();
+                            },
+                    );
+                  },
+                ),
+              if (!isCompact) const SizedBox(width: 4),
               if (!isCompact)
                 _TopNavIconButton(
                   icon: Icons.person_outline,

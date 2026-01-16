@@ -16,6 +16,9 @@ import '../debug/network_diagnostic_screen.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
 import '../../video/academia_playback_engine.dart';
+import '../share/share_service.dart';
+import '../share/share_mode_provider.dart';
+import '../share/widgets/share_signature.dart';
 
 class _HeroMediaItem {
   final String url;
@@ -29,6 +32,9 @@ class AuthLandingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final shareService = ShareService();
+    final shareBoundaryKey = GlobalKey();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
@@ -95,6 +101,28 @@ class AuthLandingScreen extends StatelessWidget {
           ),
         ),
         actions: [
+          Consumer<ShareModeProvider>(
+            builder: (context, shareMode, _) {
+              if (shareMode.isShareModeEnabled) {
+                return const SizedBox.shrink();
+              }
+              final isBusy = shareMode.isBusy;
+              return IconButton(
+                icon: const Icon(Icons.share),
+                tooltip: 'Partager',
+                onPressed: isBusy
+                    ? null
+                    : () async {
+                        await shareService.shareCurrentView(
+                          context: context,
+                          boundaryKey: shareBoundaryKey,
+                          shareText:
+                              'Découvert via Academia – Faciliter l’accès aux formations.',
+                        );
+                      },
+              );
+            },
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: SizedBox(
@@ -120,7 +148,28 @@ class AuthLandingScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: const _MarketingLandingView(),
+      body: RepaintBoundary(
+        key: shareBoundaryKey,
+        child: Stack(
+          children: [
+            const _MarketingLandingView(),
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: IgnorePointer(
+                child: Consumer<ShareModeProvider>(
+                  builder: (context, shareMode, _) {
+                    if (!shareMode.isShareModeEnabled) {
+                      return const SizedBox.shrink();
+                    }
+                    return const ShareSignature();
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

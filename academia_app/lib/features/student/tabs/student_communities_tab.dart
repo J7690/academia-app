@@ -6,6 +6,9 @@ import '../../../providers/student_communities_provider.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
 import '../student_community_detail_screen.dart';
+import '../../share/share_service.dart';
+import '../../share/share_mode_provider.dart';
+import '../../share/widgets/share_signature.dart';
 
 class StudentCommunitiesTab extends StatefulWidget {
   const StudentCommunitiesTab({super.key});
@@ -19,6 +22,8 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
 
   final TextEditingController _searchController = TextEditingController();
   final GlobalKey _myGroupsSectionKey = GlobalKey();
+  final GlobalKey _shareBoundaryKey = GlobalKey();
+  final ShareService _shareService = ShareService();
 
   @override
   void initState() {
@@ -36,6 +41,14 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _shareCurrentView() async {
+    await _shareService.shareCurrentView(
+      context: context,
+      boundaryKey: _shareBoundaryKey,
+      shareText: 'Découvert via Academia – Faciliter l’accès aux formations.',
+    );
   }
 
   Future<void> _reload() async {
@@ -60,14 +73,22 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isShareModeEnabled =
+        context.select<ShareModeProvider, bool>((p) => p.isShareModeEnabled);
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _openCreateGroupSheet,
-        backgroundColor: const Color(0xFF7BC96F),
-        child: const Icon(Icons.add),
-      ),
-      body: SafeArea(
+      floatingActionButton: isShareModeEnabled
+          ? null
+          : FloatingActionButton(
+              onPressed: _openCreateGroupSheet,
+              backgroundColor: const Color(0xFF7BC96F),
+              child: const Icon(Icons.add),
+            ),
+      body: RepaintBoundary(
+        key: _shareBoundaryKey,
+        child: Stack(
+          children: [
+            SafeArea(
         child: Column(
           children: [
             Padding(
@@ -75,12 +96,31 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    'Communautés',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Communautés',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Consumer<ShareModeProvider>(
+                        builder: (context, shareMode, _) {
+                          if (shareMode.isShareModeEnabled) {
+                            return const SizedBox.shrink();
+                          }
+                          final isBusy = shareMode.isBusy;
+                          return IconButton(
+                            icon: const Icon(Icons.share),
+                            tooltip: 'Partager',
+                            onPressed: isBusy ? null : _shareCurrentView,
+                          );
+                        },
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   const Text(
@@ -177,21 +217,23 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
                           onSeeMyGroups: _scrollToMyGroupsSection,
                         ),
                         const SizedBox(height: 16),
-                        _buildChatsSection(context, chats),
-                        const SizedBox(height: 16),
-                        KeyedSubtree(
-                          key: _myGroupsSectionKey,
-                          child: _buildSection(
-                            context: context,
-                            title: 'Mes discussions actives',
-                            subtitle:
-                                'Les groupes dont tu fais déjà partie, classés par activité.',
-                            emptyText:
-                                'Tu n\'as encore rejoint aucune communauté. Rejoins un groupe ci-dessous pour commencer à échanger.',
-                            communities: my,
+                        if (!isShareModeEnabled)
+                          _buildChatsSection(context, chats),
+                        if (!isShareModeEnabled) const SizedBox(height: 16),
+                        if (!isShareModeEnabled)
+                          KeyedSubtree(
+                            key: _myGroupsSectionKey,
+                            child: _buildSection(
+                              context: context,
+                              title: 'Mes discussions actives',
+                              subtitle:
+                                  'Les groupes dont tu fais déjà partie, classés par activité.',
+                              emptyText:
+                                  'Tu n\'as encore rejoint aucune communauté. Rejoins un groupe ci-dessous pour commencer à échanger.',
+                              communities: my,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
+                        if (!isShareModeEnabled) const SizedBox(height: 16),
                         _buildSection(
                           context: context,
                           title: 'Découvrir par centres d\'intérêt',
@@ -205,6 +247,23 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
                     ),
                   );
                 },
+              ),
+            ),
+          ],
+        ),
+            ),
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: IgnorePointer(
+                child: Consumer<ShareModeProvider>(
+                  builder: (context, shareMode, _) {
+                    if (!shareMode.isShareModeEnabled) {
+                      return const SizedBox.shrink();
+                    }
+                    return const ShareSignature();
+                  },
+                ),
               ),
             ),
           ],

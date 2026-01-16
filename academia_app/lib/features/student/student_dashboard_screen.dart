@@ -23,6 +23,7 @@ import 'prep_concours/prep_concours_home_screen.dart';
 import 'student_dashboard_nav_controller.dart';
 import 'student_payments_screen.dart';
 import 'student_application_detail_screen.dart';
+import '../share/share_mode_provider.dart';
 
 /// Dashboard étudiant avec onglets principaux
 class StudentDashboardScreen extends StatefulWidget {
@@ -361,6 +362,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final isMobile = context.isMobile;
+    final bool isShareModeEnabled =
+        context.select<ShareModeProvider, bool>((p) => p.isShareModeEnabled);
     return Consumer<StudentApplicationsProvider>(
       builder: (context, applicationsProvider, child) {
         final unread = applicationsProvider.unreadCount;
@@ -375,7 +378,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         return Scaffold(
           backgroundColor: const Color(0xFFF3F4F6),
           body: _buildCurrentTabBody(isMobile),
-          bottomNavigationBar: bottomNav,
+          bottomNavigationBar: isShareModeEnabled ? null : bottomNav,
         );
       },
     );

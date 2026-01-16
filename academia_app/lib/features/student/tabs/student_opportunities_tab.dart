@@ -7,6 +7,9 @@ import '../../../providers/opportunity_reactions_provider.dart';
 import '../../../widgets/opportunities/opportunity_feed_card.dart';
 import '../../../widgets/opportunities/opportunity_skeleton_loader.dart';
 import '../../../widgets/opportunities/opportunity_comments_sheet.dart';
+import '../../share/share_service.dart';
+import '../../share/share_mode_provider.dart';
+import '../../share/widgets/share_signature.dart';
 
 /// Onglet Opportunités - Feed social style Facebook/LinkedIn
 class StudentOpportunitiesTab extends StatefulWidget {
@@ -23,6 +26,9 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
+  final GlobalKey _shareBoundaryKey = GlobalKey();
+  final ShareService _shareService = ShareService();
+
   @override
   void initState() {
     super.initState();
@@ -37,6 +43,14 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
     _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _shareCurrentView() async {
+    await _shareService.shareCurrentView(
+      context: context,
+      boundaryKey: _shareBoundaryKey,
+      shareText: 'Découvert via Academia – Faciliter l’accès aux formations.',
+    );
   }
 
   void _onScroll() {
@@ -505,19 +519,23 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
-      body: NestedScrollView(
-        controller: _scrollController,
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverToBoxAdapter(
-              child: _buildHeader(),
-            ),
-          ];
-        },
-        body: RefreshIndicator(
-          onRefresh: _onRefresh,
-          child: Consumer<StudentOpportunitiesProvider>(
-            builder: (context, provider, child) {
+      body: RepaintBoundary(
+        key: _shareBoundaryKey,
+        child: Stack(
+          children: [
+            NestedScrollView(
+              controller: _scrollController,
+              headerSliverBuilder: (context, innerBoxIsScrolled) {
+                return [
+                  SliverToBoxAdapter(
+                    child: _buildHeader(),
+                  ),
+                ];
+              },
+              body: RefreshIndicator(
+                onRefresh: _onRefresh,
+                child: Consumer<StudentOpportunitiesProvider>(
+                  builder: (context, provider, child) {
               if (provider.isLoading && provider.opportunities.isEmpty) {
                 return const SingleChildScrollView(
                   physics: AlwaysScrollableScrollPhysics(),
@@ -557,8 +575,8 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
                 );
               }
 
-              final opportunities = provider.opportunities;
-              if (opportunities.isEmpty) {
+                    final opportunities = provider.opportunities;
+                    if (opportunities.isEmpty) {
                 return SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: Center(
@@ -597,50 +615,70 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
                 );
               }
 
-              const bool hasTipCard = true;
-              final int baseItemCount =
-                  opportunities.length + (provider.hasMore ? 1 : 0);
-              final int itemCount = baseItemCount + (hasTipCard ? 1 : 0);
+                    const bool hasTipCard = true;
+                    final int baseItemCount =
+                        opportunities.length + (provider.hasMore ? 1 : 0);
+                    final int itemCount = baseItemCount + (hasTipCard ? 1 : 0);
 
-              return ListView.builder(
-                padding: const EdgeInsets.only(bottom: 16),
-                itemCount: itemCount,
-                itemBuilder: (context, index) {
-                  if (hasTipCard && index == 0) {
-                    return _buildCareerTipCard();
-                  }
+                    return ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      itemCount: itemCount,
+                      itemBuilder: (context, index) {
+                        if (hasTipCard && index == 0) {
+                          return _buildCareerTipCard();
+                        }
 
-                  final int effectiveIndex = hasTipCard ? index - 1 : index;
+                        final int effectiveIndex =
+                            hasTipCard ? index - 1 : index;
 
-                  if (effectiveIndex >= opportunities.length) {
-                    return const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Center(
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
+                        if (effectiveIndex >= opportunities.length) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Center(
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+
+                        final opp = opportunities[effectiveIndex];
+                        return OpportunityFeedCard(
+                          opportunity: opp,
+                          onTap: () {
+                            // TODO: Navigate to detail screen
+                          },
+                          onLike: () => _onReaction(opp, 'like'),
+                          onLove: () => _onReaction(opp, 'love'),
+                          onComment: () => _onComment(opp),
+                          onAction: () => _applyToOpportunity(opp),
+                          onBookmark: () => _onToggleBookmark(opp),
+                        );
+                      },
                     );
-                  }
-
-                  final opp = opportunities[effectiveIndex];
-                  return OpportunityFeedCard(
-                    opportunity: opp,
-                    onTap: () {
-                      // TODO: Navigate to detail screen
-                    },
-                    onLike: () => _onReaction(opp, 'like'),
-                    onLove: () => _onReaction(opp, 'love'),
-                    onComment: () => _onComment(opp),
-                    onAction: () => _applyToOpportunity(opp),
-                    onBookmark: () => _onToggleBookmark(opp),
-                  );
-                },
-              );
-            },
-          ),
+                  },
+                ),
+              ),
+            ),
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: IgnorePointer(
+                child: Consumer<ShareModeProvider>(
+                  builder: (context, shareMode, _) {
+                    if (!shareMode.isShareModeEnabled) {
+                      return const SizedBox.shrink();
+                    }
+                    return const ShareSignature();
+                  },
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -653,13 +691,32 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Opportunités',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0A2540),
-            ),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Opportunités',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0A2540),
+                  ),
+                ),
+              ),
+              Consumer<ShareModeProvider>(
+                builder: (context, shareMode, _) {
+                  if (shareMode.isShareModeEnabled) {
+                    return const SizedBox.shrink();
+                  }
+                  final isBusy = shareMode.isBusy;
+                  return IconButton(
+                    icon: const Icon(Icons.share),
+                    tooltip: 'Partager',
+                    onPressed: isBusy ? null : _shareCurrentView,
+                  );
+                },
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           Consumer<StudentOpportunitiesProvider>(

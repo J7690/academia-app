@@ -8,6 +8,9 @@ import '../../widgets/error_widget.dart';
 import '../../widgets/mini_site_hero_video.dart';
 import 'mini_site_media_viewer_screen.dart';
 import 'application_request_dialog.dart';
+import '../share/share_service.dart';
+import '../share/share_mode_provider.dart';
+import '../share/widgets/share_signature.dart';
 
 class StudentUniversitySiteScreen extends StatefulWidget {
   final String universitySlug;
@@ -20,6 +23,17 @@ class StudentUniversitySiteScreen extends StatefulWidget {
 }
 
 class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScreen> {
+  final GlobalKey _shareBoundaryKey = GlobalKey();
+  final ShareService _shareService = ShareService();
+
+  Future<void> _shareCurrentView() async {
+    await _shareService.shareCurrentView(
+      context: context,
+      boundaryKey: _shareBoundaryKey,
+      shareText: "Découvert via Academia – Faciliter l’accès aux formations.",
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -33,9 +47,28 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.universityName ?? 'Mini-site université'),
+        actions: [
+          Consumer<ShareModeProvider>(
+            builder: (context, shareMode, _) {
+              if (shareMode.isShareModeEnabled) {
+                return const SizedBox.shrink();
+              }
+              final isBusy = shareMode.isBusy;
+              return IconButton(
+                icon: const Icon(Icons.share),
+                tooltip: 'Partager',
+                onPressed: isBusy ? null : _shareCurrentView,
+              );
+            },
+          ),
+        ],
       ),
-      body: Consumer<StudentUniversitySiteProvider>(
-        builder: (context, provider, child) {
+      body: RepaintBoundary(
+        key: _shareBoundaryKey,
+        child: Stack(
+          children: [
+            Consumer<StudentUniversitySiteProvider>(
+              builder: (context, provider, child) {
           if (provider.isLoading && provider.site == null) {
             return const LoadingWidget(message: "Chargement du mini-site de l'université...");
           }
@@ -746,6 +779,23 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
             ),
           );
         },
+      ),
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: IgnorePointer(
+                child: Consumer<ShareModeProvider>(
+                  builder: (context, shareMode, _) {
+                    if (!shareMode.isShareModeEnabled) {
+                      return const SizedBox.shrink();
+                    }
+                    return const ShareSignature();
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: SafeArea(
         top: false,

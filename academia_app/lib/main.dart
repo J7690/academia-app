@@ -73,6 +73,7 @@ import 'providers/admin_communities_provider.dart';
 import 'providers/admin_challenges_provider.dart';
 import 'providers/admin_prep_concours_provider.dart';
 import 'providers/prep_concours_provider.dart';
+import 'features/share/share_mode_provider.dart';
 import 'features/auth/auth_wrapper.dart';
 import 'features/auth/auth_callback_screen.dart';
 
@@ -203,6 +204,7 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => UniversitySiteProvider()),
       ChangeNotifierProvider(create: (_) => BobodoProvider()),
       ChangeNotifierProvider(create: (_) => PrepConcoursProvider()),
+      ChangeNotifierProvider(create: (_) => ShareModeProvider()),
     ];
 
     if (kDebugMode) {
