@@ -316,10 +316,15 @@ if __name__ == "__main__":
             print("⏰ Exécution recommandée: toutes les heures")
             
             return True
-            
         except Exception as e:
             print(f"❌ Erreur lors du setup monitoring: {e}")
             return False
+
+def get_management_access_token() -> str:
+    access = SupabasePermanentAccess()
+    config = access.get_permanent_config()
+    token = config.get("service_role_key", "")
+    return token or ""
 
 def main():
     """Point d'entrée principal"""

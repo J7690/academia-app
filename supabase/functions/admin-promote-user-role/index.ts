@@ -1,5 +1,5 @@
 // Supabase Edge Function: admin-promote-user-role
-// Promote an existing user (typically with role = 'student') to 'admin' or 'university'.
+// Promote an existing user (typically with role = 'student') to 'admin', 'instructor' or 'university'.
 // For 'university', also ensure an app.universities row exists and link via university_id.
 
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
@@ -120,7 +120,12 @@ serve(async (req) => {
       );
     }
 
-    if (targetRole !== 'admin' && targetRole !== 'university') {
+    if (
+      targetRole !== 'admin' &&
+      targetRole !== 'university' &&
+      targetRole !== 'instructor' &&
+      targetRole !== 'commercial'
+    ) {
       return new Response(
         JSON.stringify({ error: 'invalid_target_role' }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
@@ -171,6 +176,73 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, user_id: targetUserId, previous_role: currentRole, new_role: 'admin' }),
+        { status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+      );
+    }
+
+    if (targetRole === 'instructor') {
+      const newMeta: Record<string, unknown> = {
+        ...currentMeta,
+        role: 'instructor',
+      };
+
+      const { data: updatedUser3, error: updateError3 } = await supabaseService.auth.admin.updateUserById(
+        targetUserId,
+        {
+          user_metadata: newMeta,
+        },
+      );
+
+      if (updateError3 || !updatedUser3 || !updatedUser3.user) {
+        console.error('Error promoting user to instructor', updateError3?.message ?? updateError3);
+        return new Response(
+          JSON.stringify({ error: 'promotion_failed' }),
+          { status: 500, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, user_id: targetUserId, previous_role: currentRole, new_role: 'instructor' }),
+        { status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+      );
+    }
+
+    if (targetRole === 'commercial') {
+      const newMeta: Record<string, unknown> = {
+        ...currentMeta,
+        role: 'commercial',
+      };
+
+      const { data: updatedUser4, error: updateError4 } = await supabaseService.auth.admin.updateUserById(
+        targetUserId,
+        {
+          user_metadata: newMeta,
+        },
+      );
+
+      if (updateError4 || !updatedUser4 || !updatedUser4.user) {
+        console.error('Error promoting user to commercial', updateError4?.message ?? updateError4);
+        return new Response(
+          JSON.stringify({ error: 'promotion_failed' }),
+          { status: 500, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+        );
+      }
+
+      // Initialiser le profil commercial avec un taux par défaut (peut être ajusté ensuite par l'admin)
+      try {
+        const { error: rpcError } = await supabaseService.rpc('app_admin_set_commercial_commission_rate', {
+          p_user_id: targetUserId,
+          p_rate: 5.0,
+        });
+        if (rpcError) {
+          console.error('Error initializing commercial profile via RPC', rpcError.message ?? rpcError);
+        }
+      } catch (rpcExc) {
+        console.error('Exception while initializing commercial profile via RPC', rpcExc);
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, user_id: targetUserId, previous_role: currentRole, new_role: 'commercial' }),
         { status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
       );
     }

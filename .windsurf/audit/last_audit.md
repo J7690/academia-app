@@ -211,3 +211,27 @@ Ce fichier doit être mis à jour **avant** toute modification de code ou de sch
   3. Compléter `academia_app/docs/plan_refonte_ui_mobile_etudiant.md` avec une section "État d’avancement" résumant que les Étapes 1–9 ont été implémentées dans le code Flutter, avec référence à `.windsurf/audit/last_audit.md` pour le détail.
   4. Laisser les tests visuels concrets (320/360/390/414 px, vrais devices/emulateurs) à exécuter côté développeur, en s’appuyant sur ces notes.
 - **Validation finale**: Étape 10 prête à être exécutée – principalement documentaire et de validation, sans changement métier.
+
+## Audit du 2026-01-16 – Parcours utilisateurs & connaissances Bobodo
+
+- **Date/heure**: 2026-01-16T11:30Z (approximation UTC)
+- **Contexte de la tâche**: Documenter clairement, pour les étudiants, les principaux parcours dans l’app Academia (inscription/connexion, postuler à une opportunité, suivi de candidature) et exposer ces parcours dans la base de connaissances locale Bobodo afin que l’assistant puisse expliquer précisément comment utiliser la plateforme.
+- **Agent spécialisé sélectionné**: `integration_agent` (lecture Flutter + flux Supabase + intégration Bobodo).
+- **Fichiers impactés (prévu)**:
+  - `.windsurf/add_bobodo_knowledge_nexiom_academia_extra.py` (ajout de 3 entrées dans `EXTRA_ITEMS` pour les parcours étudiants — catégorie `academia`).
+  - (Documentation fonctionnelle potentielle) `academia_app/docs/parcours_etudiant_inscription_connexion.md`, `academia_app/docs/parcours_etudiant_postuler_formation.md`, `academia_app/docs/parcours_etudiant_suivi_candidature.md` si besoin de fichiers Markdown séparés.
+- **Dépendances principales**:
+  - Flutter: écrans `AuthLandingScreen`, `SignupScreen`, `LoginScreen`, `AuthCallbackScreen`, `AuthWrapper`, `StudentDashboardScreen`, `StudentOpportunitiesTab`, `StudentApplicationsTab`, `StudentApplicationDetailScreen`.
+  - Supabase: flux d’authentification (email de confirmation, reset password), RPC et tables de candidatures/opportunités, notifications.
+  - Bobodo: schéma `app.bobodo_knowledge`, RPC `app_search_bobodo_knowledge`, scripts `.windsurf/seed_bobodo_knowledge.py` et `.windsurf/add_bobodo_knowledge_nexiom_academia_extra.py`.
+- **Risques de régression identifiés**:
+  - Risque faible sur le code: l’intervention se limite à ajouter de nouvelles fiches de connaissance dans `EXTRA_ITEMS` sans modifier la logique Flutter ni le SQL existant.
+  - Risque fonctionnel: si les parcours sont mal décrits ou dépassés par rapport à l’UI réelle, Bobodo pourrait donner des indications inexactes aux étudiants.
+  - Risque de duplication: titres de fiches pouvant déjà exister dans `app.bobodo_knowledge` (géré par le script qui saute les doublons de titre).
+- **Plan d’action détaillé**:
+  1. Relire les écrans Flutter d’authentification et de tableau de bord étudiant pour cartographier les parcours "Inscription & connexion", "Postuler à une opportunité" et "Suivi d’une candidature" (onglets Opportunités / Candidatures / écran détail de candidature).
+  2. Rédiger pour chaque parcours une description pédagogique pas-à-pas (écran affiché, actions à effectuer, ce que l’utilisateur voit après chaque action) au format texte structuré compatible Markdown.
+  3. Ajouter dans `EXTRA_ITEMS` de `.windsurf/add_bobodo_knowledge_nexiom_academia_extra.py` trois nouvelles fiches de connaissance Bobodo (catégorie `academia`, tags ciblés) contenant ces descriptions.
+  4. Demander au développeur d’exécuter manuellement le script `add_bobodo_knowledge_nexiom_academia_extra.py` via la RPC `admin_execute_sql` pour insérer les nouvelles fiches dans `app.bobodo_knowledge`.
+  5. Optionnel: utiliser `.windsurf/test_bobodo_search.py` pour vérifier que des requêtes du type "inscription academia", "postuler à une formation", "suivre ma candidature" remontent bien les nouvelles fiches, puis tester Bobodo côté étudiant.
+- **Validation finale**: À réaliser après exécution manuelle du script d’ajout et vérification des réponses de Bobodo sur ces thématiques.

@@ -3,7 +3,7 @@
     "http": 200,
     "ok": true,
     "mode": "select",
-    "rows_count": 130,
+    "rows_count": 137,
     "sample_rows": [
       {
         "table_name": "admin_user_action_logs",
@@ -63,7 +63,7 @@
     "http": 200,
     "ok": true,
     "mode": "select",
-    "rows_count": 1182,
+    "rows_count": 1255,
     "sample_rows": [
       {
         "data_type": "uuid",
@@ -143,7 +143,7 @@
     "http": 200,
     "ok": true,
     "mode": "select",
-    "rows_count": 376,
+    "rows_count": 388,
     "sample_rows": [
       {
         "data_type": "text",
@@ -213,7 +213,7 @@
     "http": 200,
     "ok": true,
     "mode": "select",
-    "rows_count": 364,
+    "rows_count": 375,
     "sample_rows": [
       {
         "def": "CREATE OR REPLACE FUNCTION public.app_accept_user_invitation(p_token text, p_full_name text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_email TEXT;\n    v_invitation_id UUID;\n    v_inv_email TEXT;\n    v_inv_role TEXT;\n    v_inv_university_id UUID;\n    v_status TEXT;\n    v_expires_at TIMESTAMPTZ;\n    v_now TIMESTAMPTZ := NOW();\n    v_meta JSONB;\n    v_exists BOOLEAN;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    SELECT email, raw_user_meta_data\n    INTO v_email, v_meta\n    FROM auth.users\n    WHERE id = v_user_id;\n\n    IF v_email IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'user_not_found');\n    END IF;\n\n    SELECT id, email, role, university_id, status, expires_at\n    INTO v_invitation_id, v_inv_email, v_inv_role, v_inv_university_id, v_status, v_expires_at\n    FROM app.user_invitations\n    WHERE token = p_token\n    LIMIT 1;\n\n    IF v_invitation_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invitation_not_found');\n    END IF;\n\n    IF LOWER(v_inv_email) <> LOWER(v_email) THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'email_mismatch');\n    END IF;\n\n    IF v_status <> 'pending' THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invitation_not_pending');\n    END IF;\n\n    IF v_expires_at IS NOT NULL AND v_expires_at <= v_now THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invitation_expired');\n    END IF;\n\n    v_meta := COALESCE(v_meta, '{}'::JSONB);\n\n    IF v_inv_role = 'university' THEN\n        IF v_inv_university_id IS NULL THEN\n            RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invitation_missing_university');\n        END IF;\n        v_meta := v_meta\n            || JSONB_BUILD_OBJECT('role', 'university')\n            || JSONB_BUILD_OBJECT('university_id', v_inv_university_id::TEXT);\n    ELSIF v_inv_role = 'instructor' THEN\n        v_meta := v_meta || JSONB_BUILD_OBJECT('role', 'instructor');\n    ELSIF v_inv_role = 'admin' THEN\n        v_meta := v_meta || JSONB_BUILD_OBJECT('role', 'admin');\n    ELSE\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'unsupported_role');\n    END IF;\n\n    IF p_full_name IS NOT NULL AND LENGTH(TRIM(p_full_name)) > 0 THEN\n        v_meta := v_meta || JSONB_BUILD_OBJECT('full_name', TRIM(p_full_name));\n    END IF;\n\n    UPDATE auth.users\n    SET raw_user_meta_data = v_meta\n    WHERE id = v_user_id;\n\n    IF v_inv_role = 'instructor' THEN\n        SELECT EXISTS(SELECT 1 FROM app.instructors WHERE id = v_user_id)\n        INTO v_exists;\n\n        IF NOT v_exists THEN\n            INSERT INTO app.instructors (id, full_name)\n            VALUES (v_user_id, NULLIF(TRIM(p_full_name), ''));\n        ELSE\n            UPDATE app.instructors\n            SET full_name = COALESCE(NULLIF(TRIM(p_full_name), ''), full_name),\n                updated_at = NOW()\n            WHERE id = v_user_id;\n        END IF;\n    END IF;\n\n    UPDATE app.user_invitations\n    SET status = 'used',\n        used_at = v_now,\n        updated_at = v_now\n    WHERE id = v_invitation_id;\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'role', v_inv_role\n    );\nEND;\n$function$\n",
@@ -343,7 +343,7 @@
     "http": 200,
     "ok": true,
     "mode": "select",
-    "rows_count": 200,
+    "rows_count": 216,
     "sample_rows": [
       {
         "cmd": "ALL",

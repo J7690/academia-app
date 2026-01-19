@@ -23,6 +23,9 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
   final _adminEmailController = TextEditingController();
   final _adminPasswordController = TextEditingController();
   final _adminFullNameController = TextEditingController();
+  final _commercialEmailController = TextEditingController();
+  final _commercialPasswordController = TextEditingController();
+  final _commercialFullNameController = TextEditingController();
   String _selectedRole = 'instructor';
   String? _selectedUniversityId;
 
@@ -33,7 +36,375 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
       context.read<AdminUserInvitationsProvider>().loadInvitations();
       context.read<AdminUniversitiesProvider>().loadUniversities();
       context.read<AdminUsersOverviewProvider>().loadUsers();
+      context.read<AdminUsersOverviewProvider>().loadCommercialsOverview();
     });
+  }
+
+  Future<void> _createCommercialAccountDirect(BuildContext context) async {
+    final email = _commercialEmailController.text.trim();
+    final password = _commercialPasswordController.text;
+    final fullName = _commercialFullNameController.text.trim();
+
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez renseigner un email.'),
+        ),
+      );
+      return;
+    }
+
+    if (password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez renseigner un mot de passe temporaire.'),
+        ),
+      );
+      return;
+    }
+
+    final provider = context.read<AdminUserInvitationsProvider>();
+    final response = await provider.createCommercialAccountDirect(
+      email: email,
+      password: password,
+      fullName: fullName.isEmpty ? null : fullName,
+    );
+
+    if (!mounted) return;
+
+    if (response == null) {
+      final error = provider.error ??
+          'Erreur lors de la création du compte commercial.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error)),
+      );
+      return;
+    }
+
+    _commercialEmailController.clear();
+    _commercialPasswordController.clear();
+    _commercialFullNameController.clear();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Compte commercial créé avec succès.'),
+      ),
+    );
+  }
+
+  Future<void> _showCommercialDetail(
+    BuildContext context,
+    String userId,
+  ) async {
+    final usersProvider = context.read<AdminUsersOverviewProvider>();
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Détail commercial'),
+          content: FutureBuilder<Map<String, dynamic>?>(
+            future: usersProvider.fetchCommercialDetail(userId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SizedBox(
+                  height: 60,
+                  child: Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                );
+              }
+              if (snapshot.hasError) {
+                return Text(
+                  snapshot.error?.toString() ??
+                      'Erreur lors du chargement du détail commercial.',
+                  style: const TextStyle(color: Colors.red),
+                );
+              }
+              final data = snapshot.data;
+              if (data == null) {
+                return const Text(
+                  'Aucune donnée commerciale disponible.',
+                  style: TextStyle(fontSize: 13),
+                );
+              }
+
+              final commercial =
+                  (data['commercial'] as Map?) ?? const <String, dynamic>{};
+              final referrals =
+                  (data['referrals'] as List?) ?? const <Map<String, dynamic>>[];
+              final commissions =
+                  (data['commissions'] as List?) ?? const <Map<String, dynamic>>[];
+
+              return SizedBox(
+                width: 420,
+                height: 360,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        (commercial['email'] ?? '').toString(),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Code : ${(commercial['ref_code'] ?? '').toString()}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Étudiants rattachés',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (referrals.isEmpty)
+                        const Text(
+                          'Aucun étudiant référé pour le moment.',
+                          style: TextStyle(fontSize: 12),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: referrals.length,
+                          itemBuilder: (context, index) {
+                            final ref = referrals[index] as Map;
+                            final studentId =
+                                (ref['student_id'] ?? '').toString();
+                            final attributedAt =
+                                (ref['attributed_at'] ?? '').toString();
+                            return ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(
+                                'Étudiant : $studentId',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              subtitle: attributedAt.isEmpty
+                                  ? null
+                                  : Text(
+                                      'Attribué le : $attributedAt',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                            );
+                          },
+                        ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Commissions',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (commissions.isEmpty)
+                        const Text(
+                          'Aucune commission pour le moment.',
+                          style: TextStyle(fontSize: 12),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: commissions.length,
+                          itemBuilder: (context, index) {
+                            final c = commissions[index] as Map;
+                            final studentId =
+                                (c['student_id'] ?? '').toString();
+                            final amount = c['commission_amount'] ?? 0;
+                            final currency =
+                                (c['currency'] ?? '').toString();
+                            final status =
+                                (c['status'] ?? '').toString();
+                            final commissionId =
+                                (c['id'] ?? '').toString();
+                            final isPending = status == 'pending';
+
+                            return ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(
+                                'Étudiant : $studentId',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Montant : $amount $currency – Statut : $status',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  if (isPending) ...[
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        TextButton(
+                                          onPressed:
+                                              usersProvider.isUpdating
+                                                  ? null
+                                                  : () async {
+                                                      final ok =
+                                                          await usersProvider
+                                                              .updateReferralCommissionStatus(
+                                                        commissionId:
+                                                            commissionId,
+                                                        newStatus: 'paid',
+                                                      );
+                                                      if (!mounted) return;
+                                                      final msg = ok
+                                                          ? 'Commission marquée comme payée.'
+                                                          : (usersProvider.error ??
+                                                              'Mise à jour de la commission échouée.');
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(msg),
+                                                        ),
+                                                      );
+                                                      if (ok) {
+                                                        Navigator.of(
+                                                                dialogContext)
+                                                            .pop();
+                                                      }
+                                                    },
+                                          child: const Text(
+                                            'Marquer payée',
+                                            style:
+                                                TextStyle(fontSize: 11),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        TextButton(
+                                          onPressed:
+                                              usersProvider.isUpdating
+                                                  ? null
+                                                  : () async {
+                                                      final ok =
+                                                          await usersProvider
+                                                              .updateReferralCommissionStatus(
+                                                        commissionId:
+                                                            commissionId,
+                                                        newStatus:
+                                                            'rejected',
+                                                      );
+                                                      if (!mounted) return;
+                                                      final msg = ok
+                                                          ? 'Commission rejetée.'
+                                                          : (usersProvider.error ??
+                                                              'Mise à jour de la commission échouée.');
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(msg),
+                                                        ),
+                                                      );
+                                                      if (ok) {
+                                                        Navigator.of(
+                                                                dialogContext)
+                                                            .pop();
+                                                      }
+                                                    },
+                                          child: const Text(
+                                            'Rejeter',
+                                            style:
+                                                TextStyle(fontSize: 11),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('Fermer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _promoteUserToCommercial(
+    BuildContext context,
+    String userId,
+  ) async {
+    final usersProvider = context.read<AdminUsersOverviewProvider>();
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Promouvoir en commercial'),
+          content: const Text(
+            'Ce compte passera au rôle commercial. Voulez-vous continuer ?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              child: const Text('Valider'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) {
+      return;
+    }
+
+    final ok = await usersProvider.promoteUserRole(
+      userId: userId,
+      targetRole: 'commercial',
+    );
+
+    if (!mounted) return;
+
+    if (!ok) {
+      final error = usersProvider.error ?? 'Promotion en commercial échouée.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Compte promu en commercial.'),
+        ),
+      );
+    }
   }
 
   @override
@@ -47,6 +418,9 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
     _adminEmailController.dispose();
     _adminPasswordController.dispose();
     _adminFullNameController.dispose();
+    _commercialEmailController.dispose();
+    _commercialPasswordController.dispose();
+    _commercialFullNameController.dispose();
     super.dispose();
   }
 
@@ -465,16 +839,57 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                                   final double targetMinWidth =
                                       maxWidth < 700 ? (maxWidth * 1.3) : maxWidth;
 
+                                  final commercials =
+                                      usersProvider.commercialsOverview ?? const [];
+                                  int totalCommercials = commercials.length;
+                                  int totalStudents = 0;
+                                  num totalPending = 0;
+                                  num totalPaid = 0;
+
+                                  for (final item in commercials) {
+                                    final studentsCount =
+                                        item['students_count'] as num? ?? 0;
+                                    final pending =
+                                        item['total_commission_pending'] as num? ?? 0;
+                                    final paid =
+                                        item['total_commission_paid'] as num? ?? 0;
+                                    totalStudents += studentsCount.toInt();
+                                    totalPending += pending;
+                                    totalPaid += paid;
+                                  }
+
                                   return SingleChildScrollView(
                                     scrollDirection: Axis.horizontal,
                                     child: IntrinsicWidth(
                                       child: Column(
                                         children: [
                                           const SizedBox(height: 4),
+                                          if (totalCommercials > 0)
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.only(bottom: 8.0),
+                                              child: Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: Text(
+                                                  'Commerciaux actifs : $totalCommercials  • '
+                                                  'Étudiants référés : $totalStudents  • '
+                                                  'Commissions en attente : $totalPending  • '
+                                                  'Commissions payées : $totalPaid',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.black87,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
                                           ...users.map((user) {
                                             final email = user['email']?.toString() ?? '';
                                             final role = user['role']?.toString() ?? '';
                                             final fullName = user['full_name']?.toString();
+                                            final refCode =
+                                                user['ref_code']?.toString() ?? '';
+                                            final refLink =
+                                                user['ref_link']?.toString() ?? '';
                                             final createdAt =
                                                 user['created_at']?.toString() ?? '';
                                             final lastActivity =
@@ -519,6 +934,23 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                                                       fontSize: 12,
                                                     ),
                                                   ),
+                                                  if (role == 'commercial' &&
+                                                      refCode.isNotEmpty)
+                                                    Text(
+                                                      'Code commercial : $refCode',
+                                                      style: const TextStyle(
+                                                        fontSize: 11,
+                                                      ),
+                                                    ),
+                                                  if (role == 'commercial' &&
+                                                      refLink.isNotEmpty)
+                                                    Text(
+                                                      'Lien : $refLink',
+                                                      style: const TextStyle(
+                                                        fontSize: 11,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
                                                   Text(
                                                     isDeleted
                                                         ? 'Compte : supprimé'
@@ -672,6 +1104,50 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                                                             },
                                                       child: const Text(
                                                         'Rendre admin',
+                                                      ),
+                                                    ),
+                                                  if (!isDeleted &&
+                                                      role == 'commercial')
+                                                    TextButton(
+                                                      onPressed: () async {
+                                                        final targetId = user['id']
+                                                            ?.toString();
+                                                        if (targetId == null ||
+                                                            targetId.isEmpty) {
+                                                          return;
+                                                        }
+                                                        await _showCommercialDetail(
+                                                          context,
+                                                          targetId,
+                                                        );
+                                                      },
+                                                      child: const Text(
+                                                        'Détail commercial',
+                                                      ),
+                                                    ),
+                                                  if (!isDeleted &&
+                                                      role == 'student')
+                                                    TextButton(
+                                                      onPressed: usersProvider
+                                                              .isUpdating
+                                                          ? null
+                                                          : () async {
+                                                              final targetId =
+                                                                  user['id']
+                                                                      ?.toString();
+                                                              if (targetId ==
+                                                                      null ||
+                                                                  targetId
+                                                                      .isEmpty) {
+                                                                return;
+                                                              }
+                                                              await _promoteUserToCommercial(
+                                                                context,
+                                                                targetId,
+                                                              );
+                                                            },
+                                                      child: const Text(
+                                                        'Rendre commercial',
                                                       ),
                                                     ),
                                                   if (!isDeleted &&
@@ -1120,6 +1596,74 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                                     ),
                                   )
                                 : const Text('Créer le compte administrateur'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Créer un compte commercial',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _commercialEmailController,
+                          decoration: const InputDecoration(
+                            labelText: 'Email du compte commercial',
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _commercialFullNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Nom complet (optionnel)',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _commercialPasswordController,
+                          decoration: const InputDecoration(
+                            labelText: 'Mot de passe temporaire',
+                          ),
+                          obscureText: true,
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 44,
+                          child: ElevatedButton(
+                            onPressed: isSaving
+                                ? null
+                                : () => _createCommercialAccountDirect(
+                                      context,
+                                    ),
+                            child: isSaving
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text('Créer le compte commercial'),
                           ),
                         ),
                       ],

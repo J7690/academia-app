@@ -223,4 +223,99 @@ class AdminUserInvitationsProvider extends ChangeNotifier {
       _setSaving(false);
     }
   }
+
+  Future<Map<String, dynamic>?> createCommercialAccountDirect({
+    required String email,
+    required String password,
+    String? fullName,
+    double? commissionRate,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final body = <String, dynamic>{
+        'email': email.trim(),
+        'password': password,
+      };
+      if (fullName != null && fullName.trim().isNotEmpty) {
+        body['full_name'] = fullName.trim();
+      }
+      if (commissionRate != null) {
+        body['commission_rate'] = commissionRate;
+      }
+
+      final response = await _client.functions.invoke(
+        'admin-create-commercial-account',
+        body: body,
+      );
+
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors de la création du compte commercial.',
+        );
+        return null;
+      }
+
+      if (data['success'] != true) {
+        _setError(
+          data['error']?.toString() ??
+              'Erreur lors de la création du compte commercial.',
+        );
+        return null;
+      }
+
+      await loadInvitations();
+      return data;
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  Future<Map<String, dynamic>?> createTeacherAccountDirect({
+    required String email,
+    required String password,
+    String? fullName,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final response = await _client.functions.invoke(
+        'admin-create-teacher-account',
+        body: <String, dynamic>{
+          'email': email.trim(),
+          'password': password,
+          if (fullName != null && fullName.trim().isNotEmpty)
+            'full_name': fullName.trim(),
+        },
+      );
+
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors de la création du compte enseignant.',
+        );
+        return null;
+      }
+
+      if (data['success'] != true) {
+        _setError(
+          data['error']?.toString() ??
+              'Erreur lors de la création du compte enseignant.',
+        );
+        return null;
+      }
+
+      await loadInvitations();
+      return data;
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    } finally {
+      _setSaving(false);
+    }
+  }
 }

@@ -46,6 +46,53 @@ class StudentApplicationPaymentsProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> declareExistingPayment({
+    required String paymentId,
+    required String channel,
+    required double amount,
+    String? externalReference,
+    String? studentNote,
+  }) async {
+    if (paymentId.isEmpty) {
+      _setError('Paiement introuvable.');
+      return false;
+    }
+
+    _setLoading(true);
+    _setError(null);
+    try {
+      final declareResp = await _client.rpc(
+        'app_student_declare_payment',
+        params: {
+          'p_payment_id': paymentId,
+          'p_channel': channel,
+          'p_amount_paid': amount,
+          'p_external_reference': externalReference,
+          'p_student_note': studentNote,
+        },
+      );
+      final declareData = declareResp as Map<String, dynamic>?;
+      if (declareData == null || declareData['success'] != true) {
+        _setError(
+          declareData?['error']?.toString() ??
+              'Erreur lors de la déclaration du paiement.',
+        );
+        return false;
+      }
+
+      await loadMyPayments();
+      return true;
+    } catch (e, st) {
+      debugPrint(
+        '[StudentApplicationPaymentsProvider] declareExistingPayment error=$e stack=$st',
+      );
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   Future<void> loadPayments(String applicationId) async {
     if (applicationId.isEmpty) return;
     _setLoading(true);

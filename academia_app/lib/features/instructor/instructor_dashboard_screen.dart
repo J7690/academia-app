@@ -10,6 +10,7 @@ import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart';
 import 'instructor_course_forum_screen.dart';
 import '../live/livekit_room_screen.dart';
+import 'teacher_td_assignments_screen.dart';
 
 class InstructorDashboardScreen extends StatefulWidget {
   const InstructorDashboardScreen({super.key});
@@ -278,6 +279,28 @@ class _InstructorHomeTab extends StatelessWidget {
                         }).toList(),
                     ],
                   ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Card(
+                color: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: ListTile(
+                  title: const Text('Mes missions TD'),
+                  subtitle: const Text(
+                    'Voir les TD qui vous ont été assignés par l\'administrateur.',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const TeacherTdAssignmentsScreen(),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],

@@ -10,11 +10,14 @@ class AdminUsersOverviewProvider extends ChangeNotifier {
   String? _error;
   List<Map<String, dynamic>> _users = [];
   bool _isUpdating = false;
+  List<Map<String, dynamic>>? _commercialsOverview;
 
   bool get isLoading => _isLoading;
   String? get error => _error;
   List<Map<String, dynamic>> get users => List.unmodifiable(_users);
   bool get isUpdating => _isUpdating;
+  List<Map<String, dynamic>>? get commercialsOverview =>
+      _commercialsOverview == null ? null : List.unmodifiable(_commercialsOverview!);
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -209,4 +212,95 @@ class AdminUsersOverviewProvider extends ChangeNotifier {
   }
 
   Future<void> refresh() => loadUsers();
+
+  Future<void> loadCommercialsOverview() async {
+    try {
+      final response = await _client.rpc('app_admin_list_commercials_overview');
+      if (response is! Map<String, dynamic>) {
+        return;
+      }
+      if (response['success'] != true) {
+        return;
+      }
+      final data = response['commercials'];
+      if (data is List) {
+        _commercialsOverview = data
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+        notifyListeners();
+      }
+    } catch (_) {
+      // On ignore les erreurs ici : l'écran admin reste fonctionnel sans ce résumé.
+    }
+  }
+
+  Future<Map<String, dynamic>?> fetchCommercialDetail(
+    String commercialUserId,
+  ) async {
+    try {
+      final response = await _client.rpc(
+        'app_admin_get_commercial_detail',
+        params: {
+          'p_commercial_user_id': commercialUserId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        throw Exception(
+          'Réponse invalide du serveur pour le détail commercial.',
+        );
+      }
+      if (response['success'] != true) {
+        final message = response['error']?.toString() ??
+            'Erreur lors du chargement du détail commercial.';
+        throw Exception(message);
+      }
+      final data = response['data'];
+      if (data is Map) {
+        return Map<String, dynamic>.from(data);
+      }
+      return null;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<bool> updateReferralCommissionStatus({
+    required String commissionId,
+    required String newStatus,
+    String? adminNote,
+  }) async {
+    _setUpdating(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(
+        'app_admin_update_referral_commission_status',
+        params: {
+          'p_commission_id': commissionId,
+          'p_new_status': newStatus,
+          'p_admin_note': adminNote,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur pour la mise à jour de la commission.',
+        );
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors de la mise à jour de la commission.',
+        );
+        return false;
+      }
+      await loadCommercialsOverview();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setUpdating(false);
+    }
+  }
 }

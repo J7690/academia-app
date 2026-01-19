@@ -22,6 +22,7 @@ import 'tabs/student_bobodo_tab.dart';
 import 'prep_concours/prep_concours_home_screen.dart';
 import 'student_dashboard_nav_controller.dart';
 import 'student_payments_screen.dart';
+import 'student_td_root_screen.dart';
 import 'student_application_detail_screen.dart';
 import '../share/share_mode_provider.dart';
 
@@ -423,7 +424,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           child = const _FeatureComingSoonTab(title: 'Cours');
           break;
         case 10:
-          child = const _FeatureComingSoonTab(title: 'Formations');
+          child = const StudentTdRootScreen();
           break;
         case 11:
           child = const _FeatureComingSoonTab(title: 'Lives');
@@ -475,7 +476,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           child = const _FeatureComingSoonTab(title: 'Cours');
           break;
         case 10:
-          child = const _FeatureComingSoonTab(title: 'Formations');
+          child = const StudentTdRootScreen();
           break;
         case 11:
           child = const _FeatureComingSoonTab(title: 'Lives');
@@ -636,14 +637,14 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           ),
           NavigationDestination(
             icon: _HomeNavIcon(
-              icon: Icons.play_circle_outline,
+              icon: Icons.school_outlined,
               hasNew: _hasNewTrainings,
             ),
             selectedIcon: _HomeNavIcon(
-              icon: Icons.play_circle,
+              icon: Icons.school,
               hasNew: _hasNewTrainings,
             ),
-            label: 'Formations',
+            label: 'TD',
           ),
           NavigationDestination(
             icon: _HomeNavIcon(
@@ -783,13 +784,13 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                         ),
                         _buildMobileNavItem(
                           index: 10,
-                          label: 'Formations',
+                          label: 'TD',
                           icon: _HomeNavIcon(
-                            icon: Icons.play_circle_outline,
+                            icon: Icons.school_outlined,
                             hasNew: _hasNewTrainings,
                           ),
                           selectedIcon: _HomeNavIcon(
-                            icon: Icons.play_circle,
+                            icon: Icons.school,
                             hasNew: _hasNewTrainings,
                           ),
                         ),

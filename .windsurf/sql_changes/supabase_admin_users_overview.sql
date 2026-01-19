@@ -26,7 +26,7 @@ BEGIN
     RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
   END IF;
 
-  -- Construire la liste des comptes utilisateurs avec présence et statut admin
+  -- Construire la liste des comptes utilisateurs avec présence, statut admin et éventuel profil commercial
   SELECT COALESCE(
     JSONB_AGG(
       JSONB_BUILD_OBJECT(
@@ -45,7 +45,9 @@ BEGIN
         'is_suspended', COALESCE(s.is_suspended, FALSE),
         'suspended_reason', s.suspended_reason,
         'is_deleted', COALESCE(s.is_deleted, FALSE),
-        'deleted_reason', s.deleted_reason
+        'deleted_reason', s.deleted_reason,
+        'ref_code', cp.ref_code,
+        'ref_link', cp.ref_link
       )
       ORDER BY u.created_at DESC
     ),
@@ -53,7 +55,8 @@ BEGIN
   ) INTO v_result
   FROM auth.users u
   LEFT JOIN app.user_presence p ON p.user_id = u.id
-  LEFT JOIN app.user_admin_status s ON s.user_id = u.id;
+  LEFT JOIN app.user_admin_status s ON s.user_id = u.id
+  LEFT JOIN app.commercial_profiles cp ON cp.user_id = u.id;
 
   RETURN JSONB_BUILD_OBJECT('success', TRUE, 'users', v_result);
 END;

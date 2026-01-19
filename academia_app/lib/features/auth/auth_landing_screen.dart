@@ -193,6 +193,20 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
   int _currentMediaIndex = 0;
 
   static const String _landingHeroCacheKey = 'landing_hero_playlist_v1';
+  static const String _pendingReferralCodeKey = 'pending_referral_code_v1';
+  static const String _pendingReferralSourceKey = 'pending_referral_source_v1';
+
+  Future<void> _captureReferralFromUrlIfPresent() async {
+    try {
+      final uri = Uri.base;
+      final rawRef = uri.queryParameters['ref']?.trim();
+      if (rawRef == null || rawRef.isEmpty) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_pendingReferralCodeKey, rawRef);
+      await prefs.setString(_pendingReferralSourceKey, 'link');
+    } catch (_) {}
+  }
 
   Future<void> _loadHeroPlaylistFromCache() async {
     try {
@@ -335,6 +349,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
       _startTicker();
 
       await _refreshHeroPlaylistFromRemote();
+      await _captureReferralFromUrlIfPresent();
     });
   }
 

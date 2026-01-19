@@ -73,6 +73,16 @@ import 'providers/admin_communities_provider.dart';
 import 'providers/admin_challenges_provider.dart';
 import 'providers/admin_prep_concours_provider.dart';
 import 'providers/prep_concours_provider.dart';
+import 'providers/admin_td_catalog_provider.dart';
+import 'providers/admin_td_teachers_provider.dart';
+import 'providers/admin_td_student_requests_provider.dart';
+import 'providers/student_td_catalog_provider.dart';
+import 'providers/student_td_enrollments_provider.dart';
+import 'providers/student_td_requests_provider.dart';
+import 'providers/teacher_td_assignments_provider.dart';
+import 'providers/admin_td_enrollments_provider.dart';
+import 'providers/td_messages_provider.dart';
+import 'providers/commercial_dashboard_provider.dart';
 import 'features/share/share_mode_provider.dart';
 import 'features/auth/auth_wrapper.dart';
 import 'features/auth/auth_callback_screen.dart';
@@ -184,6 +194,9 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => AdminOnlineCoursesProvider()),
       ChangeNotifierProvider(create: (_) => AdminLiveSessionsProvider()),
       ChangeNotifierProvider(create: (_) => AdminOnlineCourseMessagesProvider()),
+      ChangeNotifierProvider(create: (_) => AdminTdCatalogProvider()),
+      ChangeNotifierProvider(create: (_) => AdminTdTeachersProvider()),
+      ChangeNotifierProvider(create: (_) => AdminTdStudentRequestsProvider()),
       ChangeNotifierProvider(create: (_) => InstructorOnlineCoursesProvider()),
       ChangeNotifierProvider(create: (_) => InstructorOnlineCourseLiveSessionsProvider()),
       ChangeNotifierProvider(create: (_) => InstructorOnlineCourseForumProvider()),
@@ -204,6 +217,12 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => UniversitySiteProvider()),
       ChangeNotifierProvider(create: (_) => BobodoProvider()),
       ChangeNotifierProvider(create: (_) => PrepConcoursProvider()),
+      ChangeNotifierProvider(create: (_) => StudentTdCatalogProvider()),
+      ChangeNotifierProvider(create: (_) => StudentTdEnrollmentsProvider()),
+      ChangeNotifierProvider(create: (_) => StudentTdRequestsProvider()),
+      ChangeNotifierProvider(create: (_) => TeacherTdAssignmentsProvider()),
+      ChangeNotifierProvider(create: (_) => AdminTdEnrollmentsProvider()),
+      ChangeNotifierProvider(create: (_) => TdMessagesProvider()),
       ChangeNotifierProvider(create: (_) => ShareModeProvider()),
     ];
 

@@ -7,6 +7,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
 const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY') ?? '';
 const OPENROUTER_MODEL = Deno.env.get('OPENROUTER_MODEL') ?? '';
+const OPENROUTER_EMBEDDING_MODEL = Deno.env.get('OPENROUTER_EMBEDDING_MODEL') ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
@@ -33,13 +34,67 @@ function isSensitiveQuery(message: string): boolean {
   return SENSITIVE_KEYWORDS.some((kw) => text.includes(kw));
 }
 
+async function embedQuery(text: string): Promise<string | null> {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  if (!OPENROUTER_API_KEY) return null;
+  if (!OPENROUTER_EMBEDDING_MODEL) return null;
+
+  const payload = {
+    model: OPENROUTER_EMBEDDING_MODEL,
+    input: trimmed,
+  };
+
+  const resp = await fetch('https://openrouter.ai/api/v1/embeddings', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!resp.ok) {
+    const body = await resp.text();
+    console.error(
+      `OpenRouter embeddings error status=${resp.status} model=${OPENROUTER_EMBEDDING_MODEL} body=${body.slice(0, 500)}`,
+    );
+    return null;
+  }
+
+  const data = await resp.json();
+  const arr = Array.isArray(data?.data) ? data.data : null;
+  if (!arr || !arr.length) return null;
+  const first = arr[0] as { embedding?: unknown };
+  const rawVec = (first?.embedding as unknown) as unknown[] | undefined;
+  if (!Array.isArray(rawVec) || !rawVec.length) return null;
+
+  const normalized = rawVec.map((x) => {
+    const v = typeof x === 'number' ? x : Number(x);
+    if (!Number.isFinite(v)) return 0;
+    return Number(v.toFixed(8));
+  });
+
+  const inner = normalized.join(',');
+  return `[${inner}]`;
+}
+
+type ChatHistoryMessage = { role: 'user' | 'assistant'; content: string };
+
 async function callOpenRouter(
   prompt: string,
   knowledge: Array<Record<string, unknown>>,
-  options?: { systemPrompt?: string | null; includeNoAnswerSentinel?: boolean },
+  options?: {
+    systemPrompt?: string | null;
+    includeNoAnswerSentinel?: boolean;
+    history?: ChatHistoryMessage[];
+    max_tokens?: number;
+  },
 ): Promise<string> {
   const systemPrompt = options?.systemPrompt ?? null;
   const includeNoAnswerSentinel = options?.includeNoAnswerSentinel ?? true;
+  const history = options?.history ?? [];
 
   if (!OPENROUTER_API_KEY || !OPENROUTER_MODEL) {
     throw new Error('OPENROUTER_API_KEY or OPENROUTER_MODEL not configured');
@@ -76,9 +131,15 @@ async function callOpenRouter(
       `\n\nSi tu ne peux pas répondre de façon fiable, réponds exactement par: ${NO_ANSWER_SENTINEL}`;
   }
 
-  const messages: Array<{ role: 'system' | 'user'; content: string }> = [];
+  const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
   if (systemPrompt) {
     messages.push({ role: 'system', content: systemPrompt });
+  }
+  for (const h of history) {
+    const content = (h?.content ?? '').toString().trim();
+    if (!content) continue;
+    const role: 'user' | 'assistant' = h.role === 'assistant' ? 'assistant' : 'user';
+    messages.push({ role, content });
   }
   messages.push({ role: 'user', content: finalUserPrompt });
 
@@ -86,6 +147,8 @@ async function callOpenRouter(
     model: OPENROUTER_MODEL,
     messages,
     temperature: 0.2,
+    // Limiter la longueur des réponses pour éviter les pavés trop longs.
+    max_tokens: options?.max_tokens ?? 500,
   };
 
   const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -144,7 +207,27 @@ async function searchKnowledge(supabaseService: ReturnType<typeof createClient>,
     return [];
   }
 
-  // 1) full query
+  let knowledge: Array<Record<string, unknown>> = [];
+
+  try {
+    const vec = await embedQuery(trimmed);
+    if (vec) {
+      const { data: vecData, error: vecError } = await supabaseService.rpc('app_search_bobodo_knowledge_vector', {
+        p_embedding: vec,
+        p_limit: 5,
+      });
+      if (vecError) {
+        console.error('app_search_bobodo_knowledge_vector error', vecError.message);
+      } else {
+        knowledge = extractList(vecData);
+      }
+    }
+  } catch (e) {
+    console.error('searchKnowledge vector error', e);
+  }
+
+  if (knowledge.length) return knowledge;
+
   const { data, error } = await supabaseService.rpc('app_search_bobodo_knowledge', {
     p_query: trimmed,
     p_category: null,
@@ -152,10 +235,9 @@ async function searchKnowledge(supabaseService: ReturnType<typeof createClient>,
   if (error) {
     console.error('app_search_bobodo_knowledge error', error.message);
   }
-  let knowledge = extractList(data);
+  knowledge = extractList(data);
   if (knowledge.length) return knowledge;
 
-  // 2) fallback simplified queries for Nexiom/Academia
   const lower = trimmed.toLowerCase();
   const terms: string[] = [];
   if (lower.includes('nexiom') || lower.includes('nexium')) terms.push('nexiom');
@@ -175,6 +257,56 @@ async function searchKnowledge(supabaseService: ReturnType<typeof createClient>,
   }
 
   return combined;
+}
+
+async function loadConversationHistoryForSession(
+  supabaseForUser: ReturnType<typeof createClient>,
+  sessionId: string,
+  maxMessages = 8,
+): Promise<ChatHistoryMessage[]> {
+  if (!sessionId) return [];
+
+  try {
+    const { data, error } = await supabaseForUser.rpc('app_list_bobodo_messages', {
+      p_session_id: sessionId,
+    });
+
+    if (error) {
+      console.error('app_list_bobodo_messages error', error.message);
+      return [];
+    }
+
+    let rows: any[] = [];
+    if (Array.isArray(data)) {
+      rows = data as any[];
+    } else if (data && typeof data === 'object' && 'result' in (data as Record<string, unknown>)) {
+      const r = (data as any).result;
+      if (Array.isArray(r)) rows = r as any[];
+    }
+
+    const history: ChatHistoryMessage[] = [];
+    for (const raw of rows) {
+      const row = raw as Record<string, unknown>;
+      const sender = (row.sender ?? '').toString();
+      const content = (row.content ?? '').toString().trim();
+      if (!content) continue;
+
+      if (sender === 'student') {
+        history.push({ role: 'user', content });
+      } else if (sender === 'assistant') {
+        history.push({ role: 'assistant', content });
+      }
+    }
+
+    if (history.length > maxMessages) {
+      return history.slice(history.length - maxMessages);
+    }
+
+    return history;
+  } catch (e) {
+    console.error('loadConversationHistoryForSession error', e);
+    return [];
+  }
 }
 
 async function logDetectedNeed(
@@ -358,19 +490,42 @@ async function generateAnswerForCategory(
   category: string,
   knowledge: Array<Record<string, unknown>>,
   sessionId: string,
+  history: ChatHistoryMessage[],
 ): Promise<string> {
-  // Pour l\'instant, on utilise un prompt générique très proche du backend Python.
+  // Pour l'instant, on utilise un prompt générique très proche du backend Python.
   let systemPrompt =
     'Tu es Bobodo, assistant IA pour Nexiom Group et la plateforme Academia. ' +
     "Tu aides les utilisateurs sur l'orientation, les études, l'emploi et la plateforme Academia. " +
-    'Réponds en français clair, bienveillant et structuré, avec des phrases courtes. Ne promets jamais de résultat garanti. ' +
-    'Si la question sort du périmètre (santé, finance, droit, etc.), conseille de consulter un professionnel ou un service officiel.';
+    'Ton style doit être professionnel, chaleureux et concret. ' +
+    'Réponds en français clair, avec des phrases courtes. Adapte la longueur à la question : pour les questions simples, 2 à 4 phrases suffisent ; pour les questions plus complexes, 5 à 8 phrases maximum. ' +
+    'Commence toujours par répondre directement à la question de manière synthétique, puis éventuellement ajoute quelques précisions utiles. ' +
+    "Ne répète pas systématiquement toute la présentation de Nexiom Group si l'utilisateur pose une question précise. " +
+    "Ne promets jamais de résultat garanti. Si la question sort du périmètre (santé, finance, droit, etc.), conseille de consulter un professionnel ou un service officiel.";
 
-  // On pourrait ajuster légèrement selon la catégorie si besoin.
+  // On pourrait ajuster légèrement selon la catégorie à l'avenir si besoin.
+  // Gestion spéciale des réponses très courtes ("oui", "non", ...)
+  let promptForModel = message;
+  const trimmed = message.trim().toLowerCase();
+  const shortYesNo = ['oui', 'non', 'oui.', 'non.', 'oui!', 'non!'].includes(trimmed);
+  if (shortYesNo && history.length) {
+    // Chercher la dernière question posée par Bobodo (dernier assistant qui se termine par '?')
+    const reversed = [...history].reverse();
+    const lastAssistant = reversed.find((h) => h.role === 'assistant' && h.content.trim().endsWith('?'))
+      ?? reversed.find((h) => h.role === 'assistant');
 
-  const answer = await callOpenRouter(message, knowledge, {
+    if (lastAssistant) {
+      promptForModel =
+        `L'utilisateur te répond "${message.trim()}" à la question suivante que tu lui as posée précédemment : ` +
+        `"${lastAssistant.content.trim()}".
+Poursuis la conversation en prenant cela en compte, sans répéter toute ta réponse précédente.`;
+    }
+  }
+
+  const answer = await callOpenRouter(promptForModel, knowledge, {
     systemPrompt,
     includeNoAnswerSentinel: true,
+    history,
+    max_tokens: 350, // encore plus court pour éviter les dissertations
   });
 
   return answer;
@@ -478,7 +633,10 @@ serve(async (req) => {
     // 2) Recherche de connaissance
     const knowledge = await searchKnowledge(supabaseService, message);
 
-    // 3) Filtre de sécurité, classification et génération
+    // 3) Charger un court historique de conversation pour donner du contexte à OpenRouter
+    const history = await loadConversationHistoryForSession(supabaseForUser, sessionId);
+
+    // 4) Filtre de sécurité, classification et génération
     let assistantMessage: string;
     let category: string | null = null;
 
@@ -487,7 +645,7 @@ serve(async (req) => {
         assistantMessage = await callOpenRouterSafetyRefusal(message);
       } else {
         category = await classifyQueryWithOpenRouter(message);
-        assistantMessage = await generateAnswerForCategory(message, category, knowledge, sessionId);
+        assistantMessage = await generateAnswerForCategory(message, category, knowledge, sessionId, history);
         if (category) {
           await logDetectedNeed(supabaseService, sessionId, message, category);
         }

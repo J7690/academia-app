@@ -75,6 +75,13 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
                 onReload: () {
                   paymentsProvider.loadMyPayments();
                 },
+                onDeclarePayment: (payment) {
+                  _openDeclareExistingPaymentFlow(
+                    context,
+                    paymentsProvider,
+                    payment,
+                  );
+                },
               ),
             ],
           );
@@ -103,6 +110,258 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _openDeclareExistingPaymentFlow(
+    BuildContext context,
+    StudentApplicationPaymentsProvider paymentsProvider,
+    Map<String, dynamic> payment,
+  ) async {
+    final paymentId = payment['id']?.toString() ?? '';
+    if (paymentId.isEmpty) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Impossible de trouver l\'identifiant du paiement.'),
+        ),
+      );
+      return;
+    }
+
+    final rawAmount = payment['amount_due'];
+    double? amountDue;
+    if (rawAmount is num) {
+      amountDue = rawAmount.toDouble();
+    } else if (rawAmount is String) {
+      amountDue = double.tryParse(rawAmount.replaceAll(',', '.'));
+    }
+
+    if (amountDue == null || amountDue <= 0) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Montant dû invalide pour ce paiement. Merci de contacter l\'administration.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    String? selectedChannel;
+    String externalRef = '';
+    String studentNote = '';
+    String? localError;
+    bool isSubmitting = false;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: 16 + bottomInset,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Déclarer un paiement existant',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Montant dû : ${amountDue!.toStringAsFixed(0)} XOF',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: selectedChannel,
+                      decoration: const InputDecoration(
+                        labelText: 'Canal de paiement',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'orange_money',
+                          child: Text('Orange Money'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'moov_money',
+                          child: Text('Moov Money'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'telecel_money',
+                          child: Text('Telecel Money'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'cash',
+                          child: Text('Espèces / guichet'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          selectedChannel = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText:
+                            'Référence opérateur / ID transaction (obligatoire pour Orange/Moov/Telecel)',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          externalRef = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Note pour l\'administration (optionnel)',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          studentNote = value;
+                        });
+                      },
+                    ),
+                    if (localError != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        localError!,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: isSubmitting
+                              ? null
+                              : () {
+                                  Navigator.of(context).pop();
+                                },
+                          child: const Text('Annuler'),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: isSubmitting
+                              ? null
+                              : () async {
+                                  if (selectedChannel == null ||
+                                      selectedChannel!.isEmpty) {
+                                    setState(() {
+                                      localError =
+                                          'Choisis un canal de paiement.';
+                                    });
+                                    return;
+                                  }
+                                  final extTrimmed = externalRef.trim();
+                                  if ((selectedChannel == 'orange_money' ||
+                                          selectedChannel == 'moov_money' ||
+                                          selectedChannel == 'telecel_money') &&
+                                      extTrimmed.isEmpty) {
+                                    setState(() {
+                                      localError =
+                                          'Saisis l\'ID de transaction ou la référence figurant dans ton SMS de paiement.';
+                                    });
+                                    return;
+                                  }
+
+                                  setState(() {
+                                    isSubmitting = true;
+                                    localError = null;
+                                  });
+
+                                  bool success = false;
+                                  try {
+                                    success = await paymentsProvider
+                                        .declareExistingPayment(
+                                      paymentId: paymentId,
+                                      channel: selectedChannel!,
+                                      amount: amountDue!,
+                                      externalReference:
+                                          extTrimmed.isEmpty ? null : extTrimmed,
+                                      studentNote: studentNote.isEmpty
+                                          ? null
+                                          : studentNote,
+                                    );
+                                  } catch (e) {
+                                    setState(() {
+                                      localError = e.toString();
+                                    });
+                                  } finally {
+                                    setState(() {
+                                      isSubmitting = false;
+                                    });
+                                  }
+
+                                  if (!context.mounted) {
+                                    return;
+                                  }
+
+                                  if (success) {
+                                    Navigator.of(context).pop();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Paiement déclaré, en attente de vérification.',
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    final providerError = paymentsProvider.error ??
+                                        'Erreur lors de la déclaration du paiement.';
+                                    setState(() {
+                                      localError = providerError;
+                                    });
+                                  }
+                                },
+                          child: isSubmitting
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor:
+                                        AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                )
+                              : const Text('Déclarer le paiement'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -1060,12 +1319,14 @@ class _PaymentsHistorySection extends StatelessWidget {
   final bool isLoading;
   final String? error;
   final VoidCallback onReload;
+  final void Function(Map<String, dynamic> payment)? onDeclarePayment;
 
   const _PaymentsHistorySection({
     required this.payments,
     required this.isLoading,
     required this.error,
     required this.onReload,
+    this.onDeclarePayment,
   });
 
   @override
@@ -1165,6 +1426,7 @@ class _PaymentsHistorySection extends StatelessWidget {
             final extRef = p['external_reference']?.toString() ?? '';
             final createdAt = p['created_at']?.toString() ?? '';
             final hasApplication = p['application_id'] != null;
+            final isTdAccess = reason == 'td_access';
 
             return Card(
               child: Padding(
@@ -1204,6 +1466,23 @@ class _PaymentsHistorySection extends StatelessWidget {
                       Text('Référence : $ref'),
                     if (extRef.isNotEmpty)
                       Text('Référence externe : $extRef'),
+                    if (isTdAccess &&
+                        (status == 'pending' ||
+                            status == 'declared_by_student' ||
+                            status == 'under_verification'))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: TextButton.icon(
+                          onPressed: () {
+                            onDeclarePayment?.call(p);
+                          },
+                          icon: const Icon(Icons.payments_outlined, size: 18),
+                          label: const Text(
+                            'Déclarer / mettre à jour ce paiement',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ),
                     if (status == 'confirmed')
                       TextButton.icon(
                         onPressed: () async {

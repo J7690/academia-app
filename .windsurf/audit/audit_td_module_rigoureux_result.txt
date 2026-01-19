@@ -1,0 +1,8 @@
+[ACTION] Résultat attendu non trouvé dans les logs standards. Pour obtenir la sortie réelle des requêtes d’audit TD, il faut modifier le script Python d’exécution (apply_one_sql_via_admin_rpc.py) pour afficher ou écrire explicitement le résultat SQL (stdout, fichier, ou print JSON).
+
+Étapes recommandées :
+- Modifier apply_one_sql_via_admin_rpc.py pour afficher le résultat de chaque requête SQL exécutée.
+- Relancer l’audit et capturer la sortie complète (tables TD, policies RLS, GRANTs, fonctions, colonnes).
+- Comparer point par point avec les accès Flutter dans AdminTdCatalogProvider et AdminTdTeachersProvider.
+
+Sans cette adaptation, l’audit ne peut pas être validé ni comparé sérieusement.

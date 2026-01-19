@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/supabase_config.dart';
@@ -11,6 +12,8 @@ import '../config/supabase_config.dart';
 /// L'appel à l'IA OpenRouter doit se faire via un backend sécurisé (non géré ici).
 class BobodoProvider extends ChangeNotifier {
   final SupabaseClient _client = Supabase.instance.client;
+
+  static const String _sessionPrefKey = 'bobodo_current_session_id_v1';
 
   bool _isLoading = false;
   String? _error;
@@ -44,13 +47,33 @@ class BobodoProvider extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
+      final user = _client.auth.currentUser;
+      if (user == null) {
+        throw Exception('Utilisateur non connecté');
+      }
+
       final result = await _client
-          .rpc('app_create_bobodo_session', params: {'p_title': title});
+          .rpc('app_get_or_create_bobodo_session', params: {
+        'p_title': title,
+      });
+      debugPrint('Bobodo createSession rpc result: $result');
       final sessionId = result?.toString();
       _currentSessionId = sessionId;
       _messages.clear();
       notifyListeners();
+
+      // Persister la session Bobodo pour la réutiliser lors des prochains
+      // lancements de l'application.
+      if (sessionId != null && sessionId.isNotEmpty) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(_sessionPrefKey, sessionId);
+        } catch (_) {
+          // On ignore les erreurs de persistance pour ne pas bloquer l'UX.
+        }
+      }
     } catch (e) {
+      debugPrint('Bobodo createSession error: $e');
       _setError(e.toString());
     } finally {
       _setLoading(false);
@@ -88,8 +111,37 @@ class BobodoProvider extends ChangeNotifier {
     // 1) S'assurer qu'une session existe
     var sessionId = _currentSessionId;
     if (sessionId == null) {
-      await createSession(title: content.substring(0, content.length > 60 ? 60 : content.length));
-      sessionId = _currentSessionId;
+      // Tenter d'abord de recharger une session existante depuis les préférences
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final stored = prefs.getString(_sessionPrefKey);
+        if (stored != null && stored.trim().isNotEmpty) {
+          sessionId = stored.trim();
+          _currentSessionId = sessionId;
+          // Optionnel : recharger l'historique si besoin.
+          await loadMessages();
+        }
+      } catch (_) {
+        // Si lecture des préférences échoue, on continue en créant une session.
+      }
+
+      if (sessionId == null) {
+        await createSession(
+          title: content.substring(0, content.length > 60 ? 60 : content.length),
+        );
+        sessionId = _currentSessionId;
+      }
+    } else {
+      // On a déjà un session_id en mémoire, mais on vérifie si elle est toujours valide
+      // en essayant de charger les messages. Si erreur, on tente d'en créer une nouvelle.
+      try {
+        await loadMessages();
+      } catch (_) {
+        await createSession(
+          title: content.substring(0, content.length > 60 ? 60 : content.length),
+        );
+        sessionId = _currentSessionId;
+      }
     }
     if (sessionId == null) {
       _setError('Impossible de créer la session Bobodo.');

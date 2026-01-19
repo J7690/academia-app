@@ -145,12 +145,22 @@ def apply_sql_file(manager: SupabaseAutoManager, winds_dir: Path, filename: str)
             print("[WARN] Réponse non JSON, statement peut-être exécuté")
             continue
 
-        if isinstance(data, dict) and not data.get("ok", True):
-            print("[WARN] admin_execute_sql a renvoyé une erreur :")
-            print(json.dumps(data, indent=2, ensure_ascii=False)[:600])
-            all_ok = False
+        # Patch: afficher explicitement tout résultat SQL utile
+        if isinstance(data, dict):
+            if not data.get("ok", True):
+                print("[WARN] admin_execute_sql a renvoyé une erreur :")
+                print(json.dumps(data, indent=2, ensure_ascii=False)[:600])
+                all_ok = False
+            elif "data" in data and data["data"]:
+                print("[RESULT] Résultat SQL:")
+                print(json.dumps(data["data"], indent=2, ensure_ascii=False))
+            elif "rows" in data and data["rows"]:
+                print("[RESULT] Résultat SQL (rows):")
+                print(json.dumps(data["rows"], indent=2, ensure_ascii=False))
+            else:
+                print("[OK] Statement exécuté (pas de résultat exploitable)")
         else:
-            print("[OK] Statement exécuté")
+            print("[OK] Statement exécuté (réponse non dict)")
 
     return all_ok
 

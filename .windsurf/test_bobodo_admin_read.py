@@ -46,23 +46,23 @@ def main() -> int:
     # 1) Compter et lister les connaissances Bobodo
     run_sql(
         "COUNT app.bobodo_knowledge",
-        "SELECT COUNT(*) AS count FROM app.bobodo_knowledge;",
+        "SELECT COUNT(*) AS count FROM app.bobodo_knowledge",
     )
 
     run_sql(
         "LIST app.bobodo_knowledge",
-        "SELECT category, title, tags, language, is_active FROM app.bobodo_knowledge ORDER BY created_at DESC LIMIT 20;",
+        "SELECT category, title, tags, language, is_active FROM app.bobodo_knowledge ORDER BY created_at DESC LIMIT 20",
     )
 
     # 2) Tester la fonction app_search_bobodo_knowledge côté base
     run_sql(
         "SEARCH nexion/nexiom",
-        "SELECT app_search_bobodo_knowledge('nexiom', NULL) AS result;",
+        "SELECT app_search_bobodo_knowledge('nexiom', NULL) AS result",
     )
 
     run_sql(
         "SEARCH academia",
-        "SELECT app_search_bobodo_knowledge('academia', NULL) AS result;",
+        "SELECT app_search_bobodo_knowledge('academia', NULL) AS result",
     )
 
     return 0
