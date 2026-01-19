@@ -2757,6 +2757,7 @@ class _UniversitySitePreview extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      // Zone Hero : toujours afficher, même si vide
                       if (media.isNotEmpty) ...[
                         MiniSiteHeroVideo(
                           media: media,
@@ -2767,30 +2768,55 @@ class _UniversitySitePreview extends StatelessWidget {
                           heroPosterMediaId: heroPosterMediaId,
                         ),
                         const SizedBox(height: 16),
-                      ],
-                      if (media.isNotEmpty || topBanners.isNotEmpty) ...[
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                'Médias / ambiance du campus',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF111827),
+                      ] else ...[
+                        // Placeholder hero vide
+                        Container(
+                          height: 200,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE5E7EB),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFD1D5DB)),
+                          ),
+                          child: const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.photo_library_outlined, size: 48, color: Color(0xFF9CA3AF)),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Ajouter une image ou vidéo hero',
+                                  style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
                                 ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      // Médias / Ambiance : toujours afficher le titre et le bouton
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Médias / ambiance du campus',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF111827),
                               ),
                             ),
-                            TextButton.icon(
-                              onPressed: () {
-                                _showMiniSiteMediaManager(context);
-                              },
-                              icon: const Icon(Icons.photo_library_outlined, size: 16),
-                              label: const Text('Gérer les médias'),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
+                          ),
+                          TextButton.icon(
+                            onPressed: () {
+                              _showMiniSiteMediaManager(context);
+                            },
+                            icon: const Icon(Icons.photo_library_outlined, size: 16),
+                            label: const Text('Gérer les médias'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (media.isNotEmpty || topBanners.isNotEmpty) ...[
                         Card(
                           color: Colors.white,
                           elevation: 2,
@@ -2802,6 +2828,33 @@ class _UniversitySitePreview extends StatelessWidget {
                           child: Padding(
                             padding: const EdgeInsets.all(12.0),
                             child: _MediaStrip(media: media),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ] else ...[
+                        Card(
+                          color: Colors.white,
+                          elevation: 2,
+                          shadowColor: const Color(0x0D000000),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: const Center(
+                              child: Column(
+                                children: [
+                                  Icon(Icons.photo_library_outlined, size: 48, color: Color(0xFF9CA3AF)),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Aucun média pour le moment.\nCliquez sur « Gérer les médias » pour en ajouter.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -2894,29 +2947,30 @@ class _UniversitySitePreview extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      if (programs.isNotEmpty) ...[
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                'Programmes',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF111827),
-                                ),
+                      // Programmes : toujours afficher le titre et le bouton
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Programmes',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF111827),
                               ),
                             ),
-                            TextButton.icon(
-                              onPressed: () {
-                                _showMiniSiteProgramsManager(context);
-                              },
-                              icon: const Icon(Icons.school_outlined, size: 16),
-                              label: const Text('Gérer les programmes'),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
+                          ),
+                          TextButton.icon(
+                            onPressed: () {
+                              _showMiniSiteProgramsManager(context);
+                            },
+                            icon: const Icon(Icons.school_outlined, size: 16),
+                            label: const Text('Gérer les programmes'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (programs.isNotEmpty) ...[
                         Card(
                           color: Colors.white,
                           elevation: 2,
@@ -2954,30 +3008,58 @@ class _UniversitySitePreview extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 16),
-                      ],
-                      if (events.isNotEmpty) ...[
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                'Événements',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF111827),
-                                ),
+                      ] else ...[
+                        Card(
+                          color: Colors.white,
+                          elevation: 2,
+                          shadowColor: const Color(0x0D000000),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: const Center(
+                              child: Column(
+                                children: [
+                                  Icon(Icons.school_outlined, size: 48, color: Color(0xFF9CA3AF)),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Aucun programme pour le moment.\nCliquez sur « Gérer les programmes » pour en ajouter.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                                  ),
+                                ],
                               ),
                             ),
-                            TextButton.icon(
-                              onPressed: () {
-                                _showMiniSiteEventsManager(context);
-                              },
-                              icon: const Icon(Icons.event, size: 16),
-                              label: const Text('Gérer les événements'),
-                            ),
-                          ],
+                          ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 16),
+                      ],
+                      // Événements : toujours afficher le titre et le bouton
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Événements',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: () {
+                              _showMiniSiteEventsManager(context);
+                            },
+                            icon: const Icon(Icons.event, size: 16),
+                            label: const Text('Gérer les événements'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (events.isNotEmpty) ...[
                         Card(
                           color: Colors.white,
                           elevation: 2,
@@ -2992,30 +3074,58 @@ class _UniversitySitePreview extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 16),
-                      ],
-                      if (news.isNotEmpty) ...[
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                'Actualités',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF111827),
-                                ),
+                      ] else ...[
+                        Card(
+                          color: Colors.white,
+                          elevation: 2,
+                          shadowColor: const Color(0x0D000000),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: const Center(
+                              child: Column(
+                                children: [
+                                  Icon(Icons.event_outlined, size: 48, color: Color(0xFF9CA3AF)),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Aucun événement pour le moment.\nCliquez sur « Gérer les événements » pour en ajouter.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                                  ),
+                                ],
                               ),
                             ),
-                            TextButton.icon(
-                              onPressed: () {
-                                _showMiniSiteNewsManager(context);
-                              },
-                              icon: const Icon(Icons.article_outlined, size: 16),
-                              label: const Text('Gérer les actualités'),
-                            ),
-                          ],
+                          ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 16),
+                      ],
+                      // Actualités : toujours afficher le titre et le bouton
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Actualités',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: () {
+                              _showMiniSiteNewsManager(context);
+                            },
+                            icon: const Icon(Icons.article_outlined, size: 16),
+                            label: const Text('Gérer les actualités'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (news.isNotEmpty) ...[
                         Card(
                           color: Colors.white,
                           elevation: 2,
@@ -3027,6 +3137,33 @@ class _UniversitySitePreview extends StatelessWidget {
                           child: Padding(
                             padding: const EdgeInsets.all(12.0),
                             child: _NewsList(news: news),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ] else ...[
+                        Card(
+                          color: Colors.white,
+                          elevation: 2,
+                          shadowColor: const Color(0x0D000000),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: const Center(
+                              child: Column(
+                                children: [
+                                  Icon(Icons.article_outlined, size: 48, color: Color(0xFF9CA3AF)),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Aucune actualité pour le moment.\nCliquez sur « Gérer les actualités » pour en ajouter.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -3095,29 +3232,30 @@ class _UniversitySitePreview extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                       ],
-                      if (staff.isNotEmpty) ...[
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                'Équipe',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF111827),
-                                ),
+                      // Équipe : toujours afficher le titre et le bouton
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Équipe',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF111827),
                               ),
                             ),
-                            TextButton.icon(
-                              onPressed: () {
-                                _showMiniSiteStaffManager(context);
-                              },
-                              icon: const Icon(Icons.group_outlined, size: 16),
-                              label: const Text('Gérer l\'équipe'),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
+                          ),
+                          TextButton.icon(
+                            onPressed: () {
+                              _showMiniSiteStaffManager(context);
+                            },
+                            icon: const Icon(Icons.group_outlined, size: 16),
+                            label: const Text('Gérer l\'équipe'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (staff.isNotEmpty) ...[
                         Card(
                           color: Colors.white,
                           elevation: 2,
@@ -3129,6 +3267,33 @@ class _UniversitySitePreview extends StatelessWidget {
                           child: Padding(
                             padding: const EdgeInsets.all(12.0),
                             child: _StaffList(staff: staff),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ] else ...[
+                        Card(
+                          color: Colors.white,
+                          elevation: 2,
+                          shadowColor: const Color(0x0D000000),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: const Center(
+                              child: Column(
+                                children: [
+                                  Icon(Icons.group_outlined, size: 48, color: Color(0xFF9CA3AF)),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Aucun membre d\'équipe configuré.\nCliquez sur « Gérer l\'équipe » pour en ajouter.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -3746,10 +3911,26 @@ class _UniversitySiteProgramsTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ElevatedButton.icon(
-                  onPressed: provider.loadPrograms,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Recharger les programmes'),
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => _showEditProgramDialog(context, provider),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Ajouter un programme'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        await provider.loadPrograms();
+                        await provider.loadCourses();
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Recharger'),
+                    ),
+                    const SizedBox(width: 8),
+                    if (provider.error != null)
+                      Expanded(child: Text(provider.error!)),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 const Text('Aucun programme configuré pour le moment.'),

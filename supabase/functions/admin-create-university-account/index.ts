@@ -188,6 +188,28 @@ serve(async (req) => {
 
     const userId = createdUser.user.id;
 
+    // Clonage automatique du mini-site & des offres à partir de l'université modèle Arbilo.
+    // Cette opération est idempotente et n'ajoute du contenu que si l'université cible
+    // n'a encore aucun bloc/média/programme configuré. En cas d'erreur, on ne bloque pas
+    // la création du compte, on se contente de logguer l'erreur pour audit.
+    try {
+      const { error: cloneError } = await supabaseService.rpc(
+        'app_admin_clone_university_from_template',
+        {
+          p_template_slug: 'universite-arbilo',
+          p_target_university_id: universityId,
+        },
+      );
+      if (cloneError) {
+        console.error(
+          'Error cloning university mini-site & offers from template Arbilo',
+          cloneError.message ?? cloneError,
+        );
+      }
+    } catch (e) {
+      console.error('Unexpected error while cloning university mini-site from template', e);
+    }
+
     // Envoyer un email de réinitialisation de mot de passe via Supabase
     // afin que le partenaire définisse lui-même son mot de passe.
     try {
