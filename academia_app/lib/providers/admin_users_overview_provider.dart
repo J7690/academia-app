@@ -303,4 +303,41 @@ class AdminUsersOverviewProvider extends ChangeNotifier {
       _setUpdating(false);
     }
   }
+
+  Future<bool> updateCommercialCommissionRate({
+    required String userId,
+    required double rate,
+  }) async {
+    _setUpdating(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(
+        'app_admin_set_commercial_commission_rate',
+        params: {
+          'p_user_id': userId,
+          'p_rate': rate,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur pour la mise à jour du taux de commission.',
+        );
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors de la mise à jour du taux de commission.',
+        );
+        return false;
+      }
+      await loadCommercialsOverview();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setUpdating(false);
+    }
+  }
 }

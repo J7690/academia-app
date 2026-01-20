@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/admin_users_overview_provider.dart';
 
@@ -19,6 +21,163 @@ class _AdminCommercialsScreenState extends State<AdminCommercialsScreen> {
       provider.loadUsers();
       provider.loadCommercialsOverview();
     });
+  }
+
+  Future<void> _showEditCommissionRateDialog(
+    BuildContext context,
+    String userId,
+    double? currentRate,
+  ) async {
+    final controller = TextEditingController(
+      text: currentRate?.toString() ?? '',
+    );
+    final usersProvider = context.read<AdminUsersOverviewProvider>();
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Modifier le taux de commission'),
+          content: TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              labelText: 'Taux (%)',
+              hintText: 'Ex: 5.0',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final text = controller.text.trim().replaceAll(',', '.');
+                final parsed = double.tryParse(text);
+                if (parsed == null || parsed < 0) {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    const SnackBar(
+                      content: Text('Taux invalide. Veuillez saisir un nombre positif.'),
+                    ),
+                  );
+                  return;
+                }
+                final ok = await usersProvider.updateCommercialCommissionRate(
+                  userId: userId,
+                  rate: parsed,
+                );
+                if (!dialogContext.mounted) return;
+                if (!ok) {
+                  final error = usersProvider.error ??
+                      'Mise à jour du taux de commission échouée.';
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    SnackBar(content: Text(error)),
+                  );
+                } else {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    SnackBar(
+                      content: Text('Taux de commission mis à jour à ${parsed.toString()}%.'),
+                    ),
+                  );
+                  Navigator.of(dialogContext).pop();
+                }
+              },
+              child: const Text('Enregistrer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showShareReferralDialog(BuildContext context, String link) async {
+    final encodedLink = Uri.encodeComponent(link);
+    final message = 'Rejoins Academia avec ce lien de parrainage : $link';
+    final encodedMessage = Uri.encodeComponent(message);
+
+    Future<void> launchShare(Uri uri) async {
+      try {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (_) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Impossible d\'ouvrir l\'application de partage.'),
+          ),
+        );
+      }
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Partager le lien commercial'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.chat, color: Colors.green),
+                title: const Text('WhatsApp'),
+                onTap: () async {
+                  await launchShare(
+                    Uri.parse('https://wa.me/?text=$encodedMessage'),
+                  );
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.facebook, color: Colors.blue),
+                title: const Text('Facebook'),
+                onTap: () async {
+                  await launchShare(
+                    Uri.parse(
+                      'https://www.facebook.com/sharer/sharer.php?u=$encodedLink',
+                    ),
+                  );
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.send, color: Colors.blueAccent),
+                title: const Text('Telegram'),
+                onTap: () async {
+                  await launchShare(
+                    Uri.parse(
+                      'https://t.me/share/url?url=$encodedLink&text=$encodedMessage',
+                    ),
+                  );
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: Colors.purple),
+                title: const Text('Instagram'),
+                onTap: () async {
+                  await launchShare(Uri.parse(link));
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.ondemand_video, color: Colors.red),
+                title: const Text('YouTube'),
+                onTap: () async {
+                  await launchShare(Uri.parse(link));
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Fermer'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _showCommercialDetail(
@@ -520,6 +679,26 @@ class _AdminCommercialsScreenState extends State<AdminCommercialsScreen> {
                                       user['is_deleted'] == true;
                                   final deletedReason = user['deleted_reason']
                                       ?.toString();
+                                  // Stats par commercial depuis l'overview
+                                  final overviewItem = overview.firstWhere(
+                                    (item) =>
+                                        (item['user_id']?.toString() ?? '') ==
+                                        (user['id']?.toString() ?? ''),
+                                    orElse: () => const <String, dynamic>{},
+                                  );
+                                  final perStudentsCount =
+                                      overviewItem['students_count'] as num? ??
+                                          0;
+                                  final perPending =
+                                      overviewItem['total_commission_pending']
+                                              as num? ??
+                                          0;
+                                  final perPaid =
+                                      overviewItem['total_commission_paid']
+                                              as num? ??
+                                          0;
+                                  final perRate =
+                                      overviewItem['commission_rate'] as num?;
                                   final title =
                                       (fullName != null && fullName.isNotEmpty)
                                           ? fullName
@@ -559,14 +738,16 @@ class _AdminCommercialsScreenState extends State<AdminCommercialsScreen> {
                                               fontSize: 11,
                                             ),
                                           ),
-                                        if (refLink.isNotEmpty)
-                                          Text(
+                                        if (refLink.isNotEmpty) ...[
+                                          const SizedBox(height: 2),
+                                          SelectableText(
                                             'Lien : $refLink',
                                             style: const TextStyle(
                                               fontSize: 11,
                                               color: Colors.grey,
                                             ),
                                           ),
+                                        ],
                                         Text(
                                           isDeleted
                                               ? 'Compte : supprimé'
@@ -631,11 +812,78 @@ class _AdminCommercialsScreenState extends State<AdminCommercialsScreen> {
                                               color: Colors.grey,
                                             ),
                                           ),
+                                        if (perStudentsCount > 0 ||
+                                            perPending > 0 ||
+                                            perPaid > 0)
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(top: 4),
+                                            child: Text(
+                                              'Étudiants référés : ${perStudentsCount.toInt()}  •  En attente : $perPending  •  Payées : $perPaid',
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                          ),
                                       ],
                                     ),
                                     trailing: Wrap(
                                       spacing: 8,
                                       children: [
+                                        if (refLink.isNotEmpty)
+                                          TextButton(
+                                            onPressed: () async {
+                                              await Clipboard.setData(
+                                                ClipboardData(text: refLink),
+                                              );
+                                              if (!context.mounted) return;
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    'Lien commercial copié.',
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                            child: const Text('Copier le lien'),
+                                          ),
+                                        if (refLink.isNotEmpty)
+                                          TextButton(
+                                            onPressed: () {
+                                              _showShareReferralDialog(
+                                                context,
+                                                refLink,
+                                              );
+                                            },
+                                            child: const Text('Partager'),
+                                          ),
+                                        if (!isDeleted)
+                                          TextButton(
+                                            onPressed:
+                                                usersProvider.isUpdating
+                                                    ? null
+                                                    : () async {
+                                                        final targetId =
+                                                            user['id']
+                                                                ?.toString();
+                                                        if (targetId == null ||
+                                                            targetId.isEmpty) {
+                                                          return;
+                                                        }
+
+                                                        await _showEditCommissionRateDialog(
+                                                          context,
+                                                          targetId,
+                                                          perRate
+                                                              ?.toDouble(),
+                                                        );
+                                                      },
+                                            child: const Text(
+                                              'Taux commission',
+                                            ),
+                                          ),
                                         TextButton(
                                           onPressed: usersProvider.isUpdating ||
                                                   isDeleted
