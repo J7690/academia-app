@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -45,6 +46,26 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
   String? _mediaSignature;
   String? _currentImageUrl;
   String? _currentVideoUrl;
+  Timer? _imageTimer;
+
+  void _cancelImageTimer() {
+    _imageTimer?.cancel();
+    _imageTimer = null;
+  }
+
+  void _scheduleNextImage() {
+    _cancelImageTimer();
+    if (_playlist.length <= 1) {
+      return;
+    }
+    _imageTimer = Timer(const Duration(seconds: 5), () {
+      if (!mounted || _playlist.isEmpty) {
+        return;
+      }
+      final nextIndex = (_currentIndex + 1) % _playlist.length;
+      _goToIndex(nextIndex);
+    });
+  }
 
   @override
   void initState() {
@@ -60,6 +81,7 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
 
   @override
   void dispose() {
+    _cancelImageTimer();
     super.dispose();
   }
 
@@ -82,6 +104,7 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
       '[MiniSiteHeroVideo._buildPlaylist] start media_count=${widget.media.length} '
       'heroPosterMediaId=${widget.heroPosterMediaId}',
     );
+    _cancelImageTimer();
     _videoReady = false;
     _currentVideoUrl = null;
     if (mounted) {
@@ -197,8 +220,10 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
       if (mounted) {
         setState(() {});
       }
+      _scheduleNextImage();
     } else {
       _currentImageUrl = null;
+      _cancelImageTimer();
       _initVideo(item.url);
     }
   }

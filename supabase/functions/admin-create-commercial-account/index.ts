@@ -134,15 +134,20 @@ serve(async (req) => {
 
     const userId = createdUser.user.id;
 
-    // Initialiser le profil commercial via la RPC app_admin_set_commercial_commission_rate
     try {
       const rate = typeof commissionRateRaw === 'number' ? commissionRateRaw : 5.0;
-      const { error: rpcError } = await supabaseService.rpc('app_admin_set_commercial_commission_rate', {
-        p_user_id: userId,
-        p_rate: rate,
-      });
+      const { error: rpcError } = await supabaseForUser.rpc(
+        'app_admin_set_commercial_commission_rate',
+        {
+          p_user_id: userId,
+          p_rate: rate,
+        },
+      );
       if (rpcError) {
-        console.error('Error initializing commercial profile via RPC', rpcError.message ?? rpcError);
+        console.error(
+          'Error initializing commercial profile via RPC',
+          (rpcError as any).message ?? rpcError,
+        );
       }
     } catch (e) {
       console.error('Unexpected error while initializing commercial profile via RPC', e);

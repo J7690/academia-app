@@ -119,10 +119,9 @@ def get_management_headers() -> Optional[dict]:
             print(f"[WARN] Échec get_management_access_token(): {exc}")
 
     # 2) Fallback sur la variable d'environnement si toujours vide
-    if not access_token:
-        env_token = os.environ.get("SUPABASE_ACCESS_TOKEN", "").strip()
-        if env_token:
-            access_token = env_token
+    env_token = os.environ.get("SUPABASE_ACCESS_TOKEN", "").strip()
+    if env_token:
+        access_token = env_token
 
     if not access_token:
         print("[ERROR] Aucun token Management API disponible (ni supabase_permanent_access, ni SUPABASE_ACCESS_TOKEN).")

@@ -11,11 +11,11 @@ def main() -> None:
       FROM information_schema.tables
       WHERE table_schema = 'app'
         AND table_name IN ('commercial_profiles','user_referrals','referral_commissions')
-      ORDER BY table_name;
+      ORDER BY table_name
     """,
-    "sample_commercial_profiles": "SELECT * FROM app.commercial_profiles ORDER BY created_at DESC LIMIT 10;",
-    "sample_user_referrals": "SELECT * FROM app.user_referrals ORDER BY attributed_at DESC LIMIT 10;",
-    "sample_referral_commissions": "SELECT * FROM app.referral_commissions ORDER BY created_at DESC LIMIT 10;",
+    "sample_commercial_profiles": "SELECT * FROM app.commercial_profiles ORDER BY created_at DESC LIMIT 10",
+    "sample_user_referrals": "SELECT * FROM app.user_referrals ORDER BY attributed_at DESC LIMIT 10",
+    "sample_referral_commissions": "SELECT * FROM app.referral_commissions ORDER BY created_at DESC LIMIT 10",
     "rpc_presence": """
       SELECT proname
       FROM pg_proc
@@ -26,7 +26,7 @@ def main() -> None:
         'app_register_referral_for_current_user',
         'app_admin_update_referral_commission_status'
       )
-      ORDER BY proname;
+      ORDER BY proname
     """,
   }
 

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../providers/admin_user_invitations_provider.dart';
 import '../../providers/admin_universities_provider.dart';
 import '../../providers/admin_users_overview_provider.dart';
+import '../../providers/admin_td_teachers_provider.dart';
 
 class AdminUserInvitationsScreen extends StatefulWidget {
   const AdminUserInvitationsScreen({super.key});
@@ -26,6 +27,13 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
   final _commercialEmailController = TextEditingController();
   final _commercialPasswordController = TextEditingController();
   final _commercialFullNameController = TextEditingController();
+  final _commercialCommissionRateController = TextEditingController();
+  final _teacherEmailController = TextEditingController();
+  final _teacherPasswordController = TextEditingController();
+  final _teacherFullNameController = TextEditingController();
+  final _teacherDisciplineController = TextEditingController();
+  final _teacherZoneController = TextEditingController();
+  final _teacherAvailabilityController = TextEditingController();
   String _selectedRole = 'instructor';
   String? _selectedUniversityId;
 
@@ -44,6 +52,21 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
     final email = _commercialEmailController.text.trim();
     final password = _commercialPasswordController.text;
     final fullName = _commercialFullNameController.text.trim();
+    final commissionText = _commercialCommissionRateController.text.trim();
+
+    double? commissionRate;
+    if (commissionText.isNotEmpty) {
+      final normalized = commissionText.replaceAll(',', '.');
+      commissionRate = double.tryParse(normalized);
+      if (commissionRate == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Veuillez renseigner un taux de commission valide.'),
+          ),
+        );
+        return;
+      }
+    }
 
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -68,6 +91,7 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
       email: email,
       password: password,
       fullName: fullName.isEmpty ? null : fullName,
+      commissionRate: commissionRate,
     );
 
     if (!mounted) return;
@@ -84,6 +108,7 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
     _commercialEmailController.clear();
     _commercialPasswordController.clear();
     _commercialFullNameController.clear();
+     _commercialCommissionRateController.clear();
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -153,6 +178,12 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                         'Code : ${(commercial['ref_code'] ?? '').toString()}',
                         style: const TextStyle(fontSize: 12),
                       ),
+                      const SizedBox(height: 4),
+                      if (commercial['commission_rate'] != null)
+                        Text(
+                          'Taux de commission : ${commercial['commission_rate']}%',
+                          style: const TextStyle(fontSize: 12),
+                        ),
                       const SizedBox(height: 12),
                       const Text(
                         'Étudiants rattachés',
@@ -421,6 +452,13 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
     _commercialEmailController.dispose();
     _commercialPasswordController.dispose();
     _commercialFullNameController.dispose();
+    _commercialCommissionRateController.dispose();
+    _teacherEmailController.dispose();
+    _teacherPasswordController.dispose();
+    _teacherFullNameController.dispose();
+    _teacherDisciplineController.dispose();
+    _teacherZoneController.dispose();
+    _teacherAvailabilityController.dispose();
     super.dispose();
   }
 
@@ -589,6 +627,103 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Compte administrateur créé avec succès.'),
+      ),
+    );
+  }
+
+  Future<void> _createTeacherAccountDirect(BuildContext context) async {
+    final email = _teacherEmailController.text.trim().toLowerCase();
+    final password = _teacherPasswordController.text;
+    final fullNameInput = _teacherFullNameController.text.trim();
+    final discipline = _teacherDisciplineController.text.trim();
+    final zone = _teacherZoneController.text.trim();
+    final availability = _teacherAvailabilityController.text.trim();
+
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez renseigner un email.'),
+        ),
+      );
+      return;
+    }
+
+    if (password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez renseigner un mot de passe temporaire.'),
+        ),
+      );
+      return;
+    }
+
+    final invitationsProvider =
+        context.read<AdminUserInvitationsProvider>();
+    final teacherAccount =
+        await invitationsProvider.createTeacherAccountDirect(
+      email: email,
+      password: password,
+      fullName: fullNameInput.isEmpty ? null : fullNameInput,
+    );
+
+    if (!mounted) return;
+
+    if (teacherAccount == null || teacherAccount['success'] != true) {
+      final error = invitationsProvider.error ??
+          'Erreur lors de la création du compte enseignant.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error)),
+      );
+      return;
+    }
+
+    final userId = teacherAccount['user_id']?.toString() ?? '';
+    if (userId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Compte enseignant créé, mais identifiant utilisateur manquant.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    String fullName = fullNameInput;
+    if (fullName.isEmpty) {
+      fullName = email;
+    }
+
+    final tdTeachersProvider = context.read<AdminTdTeachersProvider>();
+    final ok = await tdTeachersProvider.createTeacher(
+      userId: userId,
+      fullName: fullName,
+      discipline: discipline.isEmpty ? null : discipline,
+      zone: zone.isEmpty ? null : zone,
+      availability: availability.isEmpty ? null : availability,
+    );
+
+    if (!mounted) return;
+
+    if (!ok) {
+      final error = tdTeachersProvider.error ??
+          'Compte enseignant créé, mais erreur lors de la création de la fiche TD.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error)),
+      );
+      return;
+    }
+
+    _teacherEmailController.clear();
+    _teacherPasswordController.clear();
+    _teacherFullNameController.clear();
+    _teacherDisciplineController.clear();
+    _teacherZoneController.clear();
+    _teacherAvailabilityController.clear();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Compte enseignant TD créé avec succès.'),
       ),
     );
   }
@@ -1537,140 +1672,245 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                       ),
                     ),
                   ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Créer un compte administrateur',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Créer un compte administrateur',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _adminEmailController,
+                              decoration: const InputDecoration(
+                                labelText: 'Email du compte administrateur',
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _adminFullNameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Nom complet (optionnel)',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _adminPasswordController,
+                              decoration: const InputDecoration(
+                                labelText: 'Mot de passe temporaire',
+                              ),
+                              obscureText: true,
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 44,
+                              child: ElevatedButton(
+                                onPressed: isSaving
+                                    ? null
+                                    : () => _createAdminAccountDirect(context),
+                                child: isSaving
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text('Créer le compte administrateur'),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _adminEmailController,
-                          decoration: const InputDecoration(
-                            labelText: 'Email du compte administrateur',
-                          ),
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _adminFullNameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Nom complet (optionnel)',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _adminPasswordController,
-                          decoration: const InputDecoration(
-                            labelText: 'Mot de passe temporaire',
-                          ),
-                          obscureText: true,
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 44,
-                          child: ElevatedButton(
-                            onPressed: isSaving
-                                ? null
-                                : () => _createAdminAccountDirect(context),
-                            child: isSaving
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text('Créer le compte administrateur'),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Créer un compte commercial',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Créer un compte commercial',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _commercialEmailController,
+                              decoration: const InputDecoration(
+                                labelText: 'Email du compte commercial',
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _commercialFullNameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Nom complet (optionnel)',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _commercialCommissionRateController,
+                              decoration: const InputDecoration(
+                                labelText: 'Taux de commission (%) (optionnel)',
+                              ),
+                              keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true,
+                                signed: false,
+                              ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'[0-9.,]'),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _commercialPasswordController,
+                              decoration: const InputDecoration(
+                                labelText: 'Mot de passe temporaire',
+                              ),
+                              obscureText: true,
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 44,
+                              child: ElevatedButton(
+                                onPressed: isSaving
+                                    ? null
+                                    : () => _createCommercialAccountDirect(
+                                          context,
+                                        ),
+                                child: isSaving
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text('Créer le compte commercial'),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _commercialEmailController,
-                          decoration: const InputDecoration(
-                            labelText: 'Email du compte commercial',
-                          ),
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _commercialFullNameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Nom complet (optionnel)',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _commercialPasswordController,
-                          decoration: const InputDecoration(
-                            labelText: 'Mot de passe temporaire',
-                          ),
-                          obscureText: true,
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 44,
-                          child: ElevatedButton(
-                            onPressed: isSaving
-                                ? null
-                                : () => _createCommercialAccountDirect(
-                                      context,
-                                    ),
-                            child: isSaving
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text('Créer le compte commercial'),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Créer un compte enseignant TD',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _teacherEmailController,
+                              decoration: const InputDecoration(
+                                labelText: 'Email du compte enseignant',
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _teacherFullNameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Nom complet (optionnel)',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _teacherPasswordController,
+                              decoration: const InputDecoration(
+                                labelText: 'Mot de passe temporaire',
+                              ),
+                              obscureText: true,
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _teacherDisciplineController,
+                              decoration: const InputDecoration(
+                                labelText: 'Discipline TD',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _teacherZoneController,
+                              decoration: const InputDecoration(
+                                labelText: 'Zone géographique',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _teacherAvailabilityController,
+                              decoration: const InputDecoration(
+                                labelText: 'Disponibilité',
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 44,
+                              child: ElevatedButton(
+                                onPressed: isSaving
+                                    ? null
+                                    : () => _createTeacherAccountDirect(
+                                          context,
+                                        ),
+                                child: isSaving
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text('Créer le compte enseignant TD'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Card(

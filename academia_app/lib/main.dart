@@ -223,6 +223,7 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => TeacherTdAssignmentsProvider()),
       ChangeNotifierProvider(create: (_) => AdminTdEnrollmentsProvider()),
       ChangeNotifierProvider(create: (_) => TdMessagesProvider()),
+      ChangeNotifierProvider(create: (_) => CommercialDashboardProvider()),
       ChangeNotifierProvider(create: (_) => ShareModeProvider()),
     ];
 
