@@ -33,35 +33,126 @@ class _TeacherTdAssignmentsScreenState extends State<TeacherTdAssignmentsScreen>
         ? const <Map<String, dynamic>>[]
         : messagesProvider.messagesFor(_selectedEnrollmentId!);
 
+    final nextSessions = assignmentsProvider.nextSessions;
+    DateTime? nextSessionAt;
+    if (nextSessions.isNotEmpty) {
+      for (final s in nextSessions) {
+        final raw = s['scheduled_at'];
+        if (raw == null) continue;
+        final dt = DateTime.tryParse(raw.toString());
+        if (dt == null) continue;
+        if (nextSessionAt == null || dt.isBefore(nextSessionAt)) {
+          nextSessionAt = dt;
+        }
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mes missions TD'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth > 900;
-            final list = _buildAssignmentsList(assignments, messagesProvider);
+        child: Column(
+          children: [
+            _buildHeader(assignments.length, nextSessions.length, nextSessionAt),
+            const SizedBox(height: 16),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isWide = constraints.maxWidth > 900;
+                  final list =
+                      _buildAssignmentsList(assignments, messagesProvider);
 
-            if (!isWide) {
-              return Column(
+                  if (!isWide) {
+                    return Column(
+                      children: [
+                        Expanded(child: list),
+                        const SizedBox(height: 16),
+                        _buildMessagesPanel(messagesProvider, messages),
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      Expanded(flex: 3, child: list),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 2,
+                        child: _buildMessagesPanel(
+                          messagesProvider,
+                          messages,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(
+    int assignmentsCount,
+    int upcomingSessionsCount,
+    DateTime? nextSessionAt,
+  ) {
+    String nextLabel;
+    if (nextSessionAt != null) {
+      final d = nextSessionAt;
+      final day = d.day.toString().padLeft(2, '0');
+      final month = d.month.toString().padLeft(2, '0');
+      final year = d.year.toString();
+      final hour = d.hour.toString().padLeft(2, '0');
+      final minute = d.minute.toString().padLeft(2, '0');
+      nextLabel = 'Prochaine séance prévue le $day/$month/$year à $hour:$minute';
+    } else {
+      nextLabel =
+          'Dès qu\'un admin programme une séance, elle apparaîtra dans ton planning.';
+    }
+
+    return Card(
+      elevation: 1,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: list),
-                  const SizedBox(height: 16),
-                  _buildMessagesPanel(messagesProvider, messages),
+                  Text(
+                    'Tu as $assignmentsCount mission(s) TD assignée(s).',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    upcomingSessionsCount > 0
+                        ? '$upcomingSessionsCount séance(s) à venir.'
+                        : 'Aucune séance planifiée pour le moment.',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    nextLabel,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF4B5563),
+                    ),
+                  ),
                 ],
-              );
-            }
-
-            return Row(
-              children: [
-                Expanded(flex: 3, child: list),
-                const SizedBox(width: 16),
-                Expanded(flex: 2, child: _buildMessagesPanel(messagesProvider, messages)),
-              ],
-            );
-          },
+              ),
+            ),
+          ],
         ),
       ),
     );

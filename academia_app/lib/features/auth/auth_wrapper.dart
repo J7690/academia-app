@@ -55,17 +55,22 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   Future<void> _attachReferralIfNeeded() async {
     if (_referralHandledForSession) {
+      debugPrint('ReferralAttach: already handled for this session, skipping.');
       return;
     }
 
     final session = _client.auth.currentSession;
     if (session == null) {
+      debugPrint('ReferralAttach: no current session, skipping.');
       return;
     }
 
     try {
+      debugPrint('ReferralAttach: session userId=' + session.user.id);
       final prefs = await SharedPreferences.getInstance();
       final refCode = prefs.getString('pending_referral_code_v1');
+      debugPrint('ReferralAttach: pending_referral_code_v1=' +
+          (refCode ?? 'null'));
       if (refCode == null || refCode.trim().isEmpty) {
         _referralHandledForSession = true;
         return;
@@ -74,17 +79,34 @@ class _AuthWrapperState extends State<AuthWrapper> {
       final source =
           prefs.getString('pending_referral_source_v1') ?? 'link';
 
-      await _client.rpc('app_register_referral_for_current_user', params: {
+      debugPrint('ReferralAttach: calling app_register_referral_for_current_user '
+          'with refCode=' +
+          refCode +
+          ' source=' +
+          source);
+
+      final result = await _client
+          .rpc('app_register_referral_for_current_user', params: {
         'p_ref_code': refCode,
         'p_source': source,
       });
 
-      await prefs.remove('pending_referral_code_v1');
-      await prefs.remove('pending_referral_source_v1');
-    } catch (_) {
+      debugPrint('ReferralAttach: RPC result=' + result.toString());
+
+      if (result is Map && result['success'] == true) {
+        await prefs.remove('pending_referral_code_v1');
+        await prefs.remove('pending_referral_source_v1');
+        debugPrint('ReferralAttach: cleared pending referral from preferences.');
+      } else {
+        debugPrint('ReferralAttach: RPC did not succeed, keeping pending referral in preferences.');
+      }
+    } catch (e) {
       // On n'échoue pas la connexion si le rattachement échoue.
+      debugPrint('ReferralAttach: error while attaching referral: ' +
+          e.toString());
     } finally {
       _referralHandledForSession = true;
+      debugPrint('ReferralAttach: mark handledForSession=true');
     }
   }
 

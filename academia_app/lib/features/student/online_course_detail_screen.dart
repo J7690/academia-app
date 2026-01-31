@@ -855,117 +855,122 @@ class _OnlineCourseDetailScreenState extends State<OnlineCourseDetailScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (context) {
+      builder: (sheetContext) {
         return SafeArea(
           child: Padding(
             padding: EdgeInsets.only(
               left: 16,
               right: 16,
               top: 12,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 12,
+              bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 12,
             ),
             child: Consumer<OnlineCourseForumProvider>(
               builder: (context, p, child) {
                 final messages = p.messages;
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            threadTitle,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
+                return SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              threadTitle,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    if (p.isLoadingMessages)
-                      const LinearProgressIndicator(),
-                    SizedBox(
-                      height: 260,
-                      child: ListView.builder(
-                        itemCount: messages.length,
-                        itemBuilder: (context, index) {
-                          final m = messages[index];
-                          final content = (m['content'] ?? '').toString();
-                          final senderRole =
-                              (m['sender_role'] ?? '').toString();
-                          final isMe = senderRole == 'student';
-                          return Align(
-                            alignment: isMe
-                                ? Alignment.centerRight
-                                : Alignment.centerLeft,
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(
-                                vertical: 2,
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isMe
-                                    ? const Color(0xFFDCFCE7)
-                                    : const Color(0xFFE5E7EB),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                content,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                            ),
-                          );
-                        },
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.of(sheetContext).pop(),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: messageController,
-                            decoration: const InputDecoration(
-                              hintText: 'Écrire un message...',
+                      const SizedBox(height: 8),
+                      if (p.isLoadingMessages)
+                        const LinearProgressIndicator(),
+                      SizedBox(
+                        height: 260,
+                        child: ListView.builder(
+                          itemCount: messages.length,
+                          itemBuilder: (context, index) {
+                            final m = messages[index];
+                            final content = (m['content'] ?? '').toString();
+                            final senderRole =
+                                (m['sender_role'] ?? '').toString();
+                            final isMe = senderRole == 'student';
+                            return Align(
+                              alignment: isMe
+                                  ? Alignment.centerRight
+                                  : Alignment.centerLeft,
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(
+                                  vertical: 2,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isMe
+                                      ? const Color(0xFFDCFCE7)
+                                      : const Color(0xFFE5E7EB),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  content,
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: messageController,
+                              decoration: const InputDecoration(
+                                hintText: 'Écrire un message...',
+                              ),
+                              minLines: 1,
+                              maxLines: 3,
                             ),
-                            minLines: 1,
-                            maxLines: 3,
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.send),
-                          onPressed: p.isSending
-                              ? null
-                              : () async {
-                                  final text =
-                                      messageController.text.trim();
-                                  if (text.isEmpty) return;
-                                  final ok = await p.sendMessage(
-                                    threadId: threadId,
-                                    content: text,
-                                  );
-                                  if (!ok && p.error != null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(p.error!)),
+                          IconButton(
+                            icon: const Icon(Icons.send),
+                            onPressed: p.isSending
+                                ? null
+                                : () async {
+                                    final text =
+                                        messageController.text.trim();
+                                    if (text.isEmpty) return;
+                                    final ok = await p.sendMessage(
+                                      threadId: threadId,
+                                      content: text,
                                     );
-                                  } else {
-                                    messageController.clear();
-                                  }
-                                },
-                        ),
-                      ],
-                    ),
-                  ],
+                                    if (!ok && p.error != null) {
+                                      ScaffoldMessenger.of(sheetContext)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(p.error!),
+                                        ),
+                                      );
+                                    } else {
+                                      messageController.clear();
+                                    }
+                                  },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 );
               },
             ),

@@ -115,6 +115,7 @@ class _AdminTdScreenState extends State<AdminTdScreen> {
     List<Map<String, dynamic>> enrollments,
   ) {
     final total = enrollments.length;
+
     int pendingPayment = 0;
     int waitingAdmin = 0;
     int active = 0;
@@ -130,7 +131,25 @@ class _AdminTdScreenState extends State<AdminTdScreen> {
       }
     }
 
-    final cards = [
+    // Si disponible, on privilégie les compteurs agrégés renvoyés par le backend.
+    final dashboardCounts =
+        context.read<AdminTdEnrollmentsProvider>().dashboardCounts;
+    int? upcomingSessions;
+    int? studentRequestsPending;
+    if (dashboardCounts != null) {
+      pendingPayment =
+          (dashboardCounts['enrollments_pending_payment'] as int?) ?? pendingPayment;
+      waitingAdmin =
+          (dashboardCounts['enrollments_waiting_admin'] as int?) ?? waitingAdmin;
+      active =
+          (dashboardCounts['enrollments_active'] as int?) ?? active;
+      upcomingSessions =
+          dashboardCounts['upcoming_sessions'] as int?;
+      studentRequestsPending =
+          dashboardCounts['student_requests_pending'] as int?;
+    }
+
+    final cards = <Widget>[
       _StatCard(
         color: const Color(0xFFFFA726),
         title: 'En attente de paiement',
@@ -152,6 +171,25 @@ class _AdminTdScreenState extends State<AdminTdScreen> {
         value: total.toString(),
       ),
     ];
+
+    if (upcomingSessions != null) {
+      cards.add(
+        _StatCard(
+          color: const Color(0xFF5C6BC0),
+          title: 'Séances à venir',
+          value: upcomingSessions.toString(),
+        ),
+      );
+    }
+    if (studentRequestsPending != null) {
+      cards.add(
+        _StatCard(
+          color: const Color(0xFFEF6C00),
+          title: 'Demandes TD en attente',
+          value: studentRequestsPending.toString(),
+        ),
+      );
+    }
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,

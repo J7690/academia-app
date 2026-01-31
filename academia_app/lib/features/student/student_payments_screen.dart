@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../providers/student_application_payments_provider.dart';
 import '../../providers/student_applications_provider.dart';
 import '../../utils/payment_receipt_pdf.dart';
+import '../../widgets/bobodo_state.dart';
+import '../../widgets/bobodo_view.dart';
 import 'widgets/student_mobile_scaffold.dart';
 
 class StudentPaymentsScreen extends StatefulWidget {
@@ -39,6 +41,25 @@ class _StudentPaymentsScreenState extends State<StudentPaymentsScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Padding(
+                    padding: EdgeInsets.only(right: 12.0),
+                    child: BobodoView(
+                      state: BobodoState.thinking,
+                      size: 52,
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Quand tu déclares un paiement, je garde une trace claire de ton avancée financière. Chaque étape validée rapproche ton dossier du badge "Admission confirmée".',
+                      style: TextStyle(fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               _PaymentChannelsSection(
                 onChannelTap: (channel) {
                   _openCreateProfilePaymentFlow(

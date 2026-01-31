@@ -7,6 +7,8 @@ import '../../../providers/opportunity_reactions_provider.dart';
 import '../../../widgets/opportunities/opportunity_feed_card.dart';
 import '../../../widgets/opportunities/opportunity_skeleton_loader.dart';
 import '../../../widgets/opportunities/opportunity_comments_sheet.dart';
+import '../../../widgets/bobodo_state.dart';
+import '../../../widgets/bobodo_view.dart';
 import '../../share/share_service.dart';
 import '../../share/share_mode_provider.dart';
 import '../../share/widgets/share_signature.dart';
@@ -734,58 +736,67 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
           Consumer<StudentOpportunitiesProvider>(
             builder: (context, provider, _) {
               final opportunities = provider.opportunities;
-              if (opportunities.isEmpty) {
-                return const SizedBox.shrink();
-              }
-
-              final now = DateTime.now();
-              int recentCount = 0;
+              int bookmarkedCount = 0;
               for (final opp in opportunities) {
-                final createdAtStr = opp['created_at']?.toString();
-                if (createdAtStr == null || createdAtStr.isEmpty) {
-                  continue;
+                if (opp['is_bookmarked'] == true) {
+                  bookmarkedCount++;
                 }
-                try {
-                  final createdAt = DateTime.parse(createdAtStr);
-                  if (now.difference(createdAt).inDays < 7) {
-                    recentCount++;
-                  }
-                } catch (_) {}
               }
 
-              if (recentCount <= 0) {
-                return const SizedBox.shrink();
+              final hasAny = opportunities.isNotEmpty;
+              final hasBookmarked = bookmarkedCount > 0;
+
+              final BobodoState state;
+              if (!hasAny) {
+                state = BobodoState.idle;
+              } else if (hasBookmarked) {
+                state = BobodoState.success;
+              } else {
+                state = BobodoState.thinking;
               }
 
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0F2FE),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.bolt,
-                      size: 14,
-                      color: Color(0xFF0EA5E9),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '$recentCount nouvelle${recentCount > 1 ? 's' : ''} opportunité${recentCount > 1 ? 's' : ''} cette semaine',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF0369A1),
-                        fontWeight: FontWeight.w500,
+              String text;
+              if (!hasAny) {
+                text =
+                    'Dès que tu commences à explorer des opportunités, je t’aide à repérer celles qui collent à ton projet. Sauvegarder et postuler, c’est avancer vers tes prochains badges carrière.';
+              } else if (hasBookmarked) {
+                text =
+                    'Tu as déjà repéré des opportunités intéressantes. En postulent régulièrement, tu construis ton propre parcours et tes badges d’expérience pro.';
+              } else {
+                text =
+                    'Parcours les opportunités, sauvegarde celles qui te parlent et prépare quelques candidatures ciblées : je suis là pour t’aider à garder le cap.';
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 12.0),
+                        child: BobodoView(
+                          state: state,
+                          size: 52,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                      Expanded(
+                        child: Text(
+                          text,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  _buildProgressCard(),
+                ],
               );
             },
           ),
-          _buildProgressCard(),
           const SizedBox(height: 12),
           TextField(
             controller: _searchController,

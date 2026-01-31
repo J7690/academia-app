@@ -8,6 +8,8 @@ import '../course_resource_viewer_screen.dart';
 import '../online_course_detail_screen.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
+import '../../../widgets/bobodo_state.dart';
+import '../../../widgets/bobodo_view.dart';
 
 class StudentCoursesTab extends StatefulWidget {
   const StudentCoursesTab({super.key});
@@ -53,7 +55,29 @@ class _StudentCoursesTabState extends State<StudentCoursesTab> {
                   'Ressources pédagogiques organisées par domaine et matière.',
                   style: TextStyle(fontSize: 14),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Padding(
+                      padding: EdgeInsets.only(right: 8.0),
+                      child: BobodoView(
+                        state: BobodoState.thinking,
+                        size: 40,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        'Tu peux utiliser ces ressources pour consolider tes cours, préparer tes évaluations et enrichir ton dossier. Je t’aide à rester organisé(e) dans ta révision.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF4B5563),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 TextField(
                   decoration: const InputDecoration(
                     hintText: 'Rechercher un cours, une matière ou une ressource...',

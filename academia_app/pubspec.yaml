@@ -31,6 +31,7 @@ dependencies:
   
   # UI
   cupertino_icons: ^1.0.2
+  flutter_svg: ^2.0.9
   
   # Sélection de fichiers (upload de documents de candidature)
   file_picker: ^10.3.6

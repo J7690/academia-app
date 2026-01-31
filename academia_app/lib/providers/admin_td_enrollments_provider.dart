@@ -10,11 +10,14 @@ class AdminTdEnrollmentsProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   List<Map<String, dynamic>> _enrollments = [];
+  Map<String, dynamic>? _dashboardCounts;
 
   bool get isLoading => _isLoading;
   String? get error => _error;
   List<Map<String, dynamic>> get enrollments =>
       List.unmodifiable(_enrollments);
+  Map<String, dynamic>? get dashboardCounts =>
+      _dashboardCounts == null ? null : Map<String, dynamic>.from(_dashboardCounts!);
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -30,7 +33,19 @@ class AdminTdEnrollmentsProvider extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      _enrollments = await _service.adminListEnrollmentsWithContext();
+      final enrollments = await _service.adminListEnrollmentsWithContext();
+      _enrollments = enrollments;
+
+      // Charger également le dashboard admin TD pour alimenter le cockpit.
+      try {
+        final dashboard = await _service.adminGetDashboard();
+        final rawCounts = dashboard['counts'];
+        if (rawCounts is Map) {
+          _dashboardCounts = Map<String, dynamic>.from(rawCounts as Map);
+        }
+      } catch (_) {
+        // En cas d'erreur sur le dashboard, on ne bloque pas l'affichage des inscriptions.
+      }
       notifyListeners();
     } catch (e, st) {
       debugPrint('[AdminTdEnrollmentsProvider] loadEnrollments error=$e stack=$st');

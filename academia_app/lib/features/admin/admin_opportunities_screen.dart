@@ -22,6 +22,58 @@ class _AdminOpportunitiesScreenState extends State<AdminOpportunitiesScreen> {
     });
   }
 
+  Future<void> _confirmDeleteOpportunity(
+    BuildContext context,
+    AdminOpportunitiesProvider provider,
+    String opportunityId,
+    String title,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Supprimer l\'opportunité'),
+          content: Text(
+            "Cette opportunité sera retirée de la plateforme côté étudiant (elle ne sera plus listée ni accessible).\n\nTitre : " +
+                title,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text(
+                'Supprimer',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    final success = await provider.updateOpportunityStatus(
+      opportunityId: opportunityId,
+      status: 'archived',
+      isActive: false,
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? 'Opportunité supprimée (non visible côté étudiant).'
+              : provider.error ??
+                  'Erreur lors de la suppression de l\'opportunité.',
+        ),
+      ),
+    );
+  }
+
   Future<void> _showTypesDialog() async {
     final provider = context.read<AdminOpportunitiesProvider>();
     await provider.loadTypes();
@@ -863,6 +915,21 @@ class _AdminOpportunitiesScreenState extends State<AdminOpportunitiesScreen> {
                                 onPressed: () {
                                   _showApplicationsDialog(opp);
                                 },
+                              ),
+                              IconButton(
+                                tooltip: 'Supprimer cette opportunité',
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.redAccent,
+                                ),
+                                onPressed: id == null
+                                    ? null
+                                    : () => _confirmDeleteOpportunity(
+                                          context,
+                                          provider,
+                                          id,
+                                          title,
+                                        ),
                               ),
                             ],
                           ),

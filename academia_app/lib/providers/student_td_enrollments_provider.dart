@@ -10,11 +10,16 @@ class StudentTdEnrollmentsProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   List<Map<String, dynamic>> _enrollments = [];
+  List<Map<String, dynamic>> _nextSessions = [];
+  int _unreadMessagesCount = 0;
 
   bool get isLoading => _isLoading;
   String? get error => _error;
   List<Map<String, dynamic>> get enrollments =>
       List.unmodifiable(_enrollments);
+  List<Map<String, dynamic>> get nextSessions =>
+      List.unmodifiable(_nextSessions);
+  int get unreadMessagesCount => _unreadMessagesCount;
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -30,7 +35,23 @@ class StudentTdEnrollmentsProvider extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      _enrollments = await _service.studentListMyEnrollments();
+      final dashboard = await _service.studentGetDashboard();
+
+      final rawEnrollments = dashboard['enrollments'] as List<dynamic>? ?? [];
+      _enrollments = rawEnrollments
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(growable: false);
+
+      final rawNextSessions =
+          dashboard['next_sessions'] as List<dynamic>? ?? [];
+      _nextSessions = rawNextSessions
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(growable: false);
+
+      _unreadMessagesCount =
+          (dashboard['unread_messages_count'] as int?) ?? 0;
       notifyListeners();
     } catch (e, st) {
       debugPrint('[StudentTdEnrollmentsProvider] loadMyEnrollments error=$e stack=$st');

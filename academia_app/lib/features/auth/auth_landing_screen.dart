@@ -12,20 +12,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/landing_content_provider.dart';
 import '../../providers/student_offers_provider.dart';
 import '../../utils/responsive.dart';
+import '../../widgets/hero_media_carousel.dart';
 import '../debug/network_diagnostic_screen.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
-import '../../video/academia_playback_engine.dart';
 import '../share/share_service.dart';
 import '../share/share_mode_provider.dart';
 import '../share/widgets/share_signature.dart';
-
-class _HeroMediaItem {
-  final String url;
-  final String mediaType; // 'video' ou 'image'
-
-  const _HeroMediaItem({required this.url, required this.mediaType});
-}
 
 class AuthLandingScreen extends StatelessWidget {
   const AuthLandingScreen({super.key});
@@ -182,15 +175,11 @@ class _MarketingLandingView extends StatefulWidget {
 }
 
 class _MarketingLandingViewState extends State<_MarketingLandingView> {
-  bool _videoReady = false;
-
   late final ScrollController _tickerController;
   Timer? _tickerTimer;
 
-  static const Duration _imageSlideDuration = Duration(seconds: 8);
-  Timer? _mediaTimer;
-  List<_HeroMediaItem> _mediaPlaylist = [];
-  int _currentMediaIndex = 0;
+  /// Playlist du hero landing, alimentée par app_public_hero_playlist.
+  List<HeroMediaItem> _heroMediaItems = [];
 
   static const String _landingHeroCacheKey = 'landing_hero_playlist_v1';
   static const String _pendingReferralCodeKey = 'pending_referral_code_v1';
@@ -199,13 +188,23 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
   Future<void> _captureReferralFromUrlIfPresent() async {
     try {
       final uri = Uri.base;
+      debugPrint('ReferralLanding: Uri.base=' + uri.toString());
       final rawRef = uri.queryParameters['ref']?.trim();
+      debugPrint('ReferralLanding: rawRef=' + (rawRef ?? 'null'));
       if (rawRef == null || rawRef.isEmpty) return;
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_pendingReferralCodeKey, rawRef);
       await prefs.setString(_pendingReferralSourceKey, 'link');
-    } catch (_) {}
+      debugPrint(
+        'ReferralLanding: stored pending_referral_code_v1=' +
+            rawRef +
+            ' source=link',
+      );
+    } catch (e) {
+      debugPrint('ReferralLanding: error while capturing ref from URL: ' +
+          e.toString());
+    }
   }
 
   Future<void> _loadHeroPlaylistFromCache() async {
@@ -217,86 +216,105 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
       final decoded = jsonDecode(raw);
       if (decoded is! List) return;
 
-      final cached = <_HeroMediaItem>[];
+      final cached = <HeroMediaItem>[];
+      var sort = 0;
       for (final item in decoded) {
         if (item is! Map) continue;
-        final map = Map<String, dynamic>.from(item as Map);
+        final map = Map<String, dynamic>.from(item);
         final url = (map['url'] ?? '').toString().trim();
         if (url.isEmpty) continue;
         final mediaType = (map['mediaType'] ?? 'video').toString();
-        cached.add(_HeroMediaItem(url: url, mediaType: mediaType));
+        cached.add(
+          HeroMediaItem(
+            id: 'cache_$sort',
+            mediaType: mediaType,
+            url: url,
+            sortOrder: sort,
+          ),
+        );
+        sort++;
       }
 
       if (cached.isEmpty || !mounted) return;
 
       setState(() {
-        _mediaPlaylist = cached;
+        _heroMediaItems = cached;
       });
-      _goToMediaIndex(0);
     } catch (_) {}
   }
 
   Future<void> _refreshHeroPlaylistFromRemote() async {
-    final playlist = <_HeroMediaItem>[];
-    try {
-      final client = Supabase.instance.client;
-      final dynamic response = await client
-          .schema('app')
-          .from('hero_playlist')
-          .select(
-              'base_video_url, base_image_url, media_type, sort_order, is_active')
-          .eq('slot', 'landing_hero_main')
-          .eq('is_active', true)
-          .order('sort_order', ascending: true)
-          .limit(10);
+    final client = Supabase.instance.client;
+    final playlist = <HeroMediaItem>[];
 
-      if (response is List && response.isNotEmpty) {
-        for (final raw in response) {
-          Map<String, dynamic>? row;
-          if (raw is Map<String, dynamic>) {
-            row = raw;
-          } else if (raw is Map) {
-            row = Map<String, dynamic>.from(raw);
-          }
-          if (row == null) {
+    try {
+      final dynamic response = await client.rpc(
+        'app_public_hero_playlist',
+        params: {'p_slot': 'landing_hero_main'},
+      );
+
+      if (response is! Map<String, dynamic>) {
+        return;
+      }
+      if (response['success'] != true) {
+        return;
+      }
+
+      final items = response['items'];
+      if (items is! List) {
+        return;
+      }
+
+      for (final raw in items) {
+        if (raw is! Map) continue;
+        final row = Map<String, dynamic>.from(raw);
+
+        final rawType = (row['media_type'] ?? 'video').toString().toLowerCase();
+        final isImage = rawType == 'image';
+
+        final playbackRaw = row['playback'];
+        Map<String, dynamic>? playback;
+        if (playbackRaw is Map) {
+          playback = Map<String, dynamic>.from(playbackRaw);
+        }
+
+        final bestUrl = (playback?['best_url'] ?? '').toString().trim();
+        final posterUrl = (playback?['poster_url'] ?? '').toString().trim();
+        final baseVideoUrl = (row['base_video_url'] ?? '').toString().trim();
+        final baseImageUrl = (row['base_image_url'] ?? '').toString().trim();
+
+        String? resolvedUrl;
+        String mediaType;
+
+        if (isImage) {
+          if (baseImageUrl.isEmpty) continue;
+          resolvedUrl = baseImageUrl;
+          mediaType = 'image';
+        } else {
+          resolvedUrl = bestUrl.isNotEmpty ? bestUrl : baseVideoUrl;
+          if (resolvedUrl.isEmpty) {
             continue;
           }
-
-          final rawType =
-              (row['media_type'] ?? 'video').toString().toLowerCase();
-          final isImage = rawType == 'image';
-          final heroVideoUrl =
-              (row['base_video_url'] ?? '').toString().trim();
-          final heroImageUrl =
-              (row['base_image_url'] ?? '').toString().trim();
-
-          String? chosenUrl;
-          String mediaType;
-          if (isImage && heroImageUrl.isNotEmpty) {
-            chosenUrl = heroImageUrl;
-            mediaType = 'image';
-          } else if (!isImage && heroVideoUrl.isNotEmpty) {
-            chosenUrl = heroVideoUrl;
-            mediaType = 'video';
-          } else if (heroVideoUrl.isNotEmpty) {
-            chosenUrl = heroVideoUrl;
-            mediaType = 'video';
-          } else if (heroImageUrl.isNotEmpty) {
-            chosenUrl = heroImageUrl;
-            mediaType = 'image';
-          } else {
-            chosenUrl = null;
-            mediaType = 'video';
-          }
-
-          if (chosenUrl != null && chosenUrl.isNotEmpty) {
-            debugPrint(
-              'Landing: hero item from app.hero_playlist url=' + chosenUrl,
-            );
-            playlist
-                .add(_HeroMediaItem(url: chosenUrl, mediaType: mediaType));
-          }
+          mediaType = 'video';
         }
+
+        final id = (row['id'] ?? '').toString();
+        final sortOrder = (row['sort_order'] as int?) ?? playlist.length;
+
+        debugPrint(
+          'Landing: hero item from app_public_hero_playlist slot=landing_hero_main '
+          'id=' + id + ' type=' + mediaType + ' url=' + resolvedUrl,
+        );
+
+        playlist.add(
+          HeroMediaItem(
+            id: id.isNotEmpty ? id : 'auto_${playlist.length}',
+            mediaType: mediaType,
+            url: resolvedUrl,
+            posterUrl: posterUrl.isNotEmpty ? posterUrl : null,
+            sortOrder: sortOrder,
+          ),
+        );
       }
     } catch (_) {}
 
@@ -305,9 +323,8 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
     }
 
     setState(() {
-      _mediaPlaylist = playlist;
+      _heroMediaItems = playlist;
     });
-    _goToMediaIndex(0);
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -353,51 +370,6 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
     });
   }
 
-  void _goToMediaIndex(int index) {
-    if (_mediaPlaylist.isEmpty) return;
-    _mediaTimer?.cancel();
-
-    _currentMediaIndex = index % _mediaPlaylist.length;
-    final item = _mediaPlaylist[_currentMediaIndex];
-
-    if (item.mediaType == 'image') {
-      debugPrint('Landing: displaying image media url=' + item.url);
-      _videoReady = true;
-      if (mounted) {
-        setState(() {});
-      }
-      _mediaTimer = Timer(_imageSlideDuration, _onMediaCompleted);
-    } else {
-      _initVideo(item.url);
-    }
-  }
-
-  Future<void> _initVideo(String url) async {
-    debugPrint('Landing: _initVideo(url=' + url + ')');
-    _videoReady = false;
-    if (mounted) {
-      setState(() {});
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _videoReady = true;
-    });
-  }
-
-  void _onVideoCompleted() {
-    _onMediaCompleted();
-  }
-
-  void _onMediaCompleted() {
-    if (!mounted) return;
-    if (_mediaPlaylist.isEmpty) return;
-    final nextIndex = (_currentMediaIndex + 1) % _mediaPlaylist.length;
-    final nextItem = _mediaPlaylist[nextIndex];
-    debugPrint('Landing: _onMediaCompleted -> next=${nextItem.mediaType}');
-    _goToMediaIndex(nextIndex);
-  }
-
   void _startTicker() {
     _tickerTimer?.cancel();
     const step = 4.0;
@@ -431,7 +403,6 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
   void dispose() {
     _tickerTimer?.cancel();
     _tickerController.dispose();
-    _mediaTimer?.cancel();
     super.dispose();
   }
 
@@ -1098,24 +1069,6 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
     final opportunityHighlights = landing.opportunityHighlights;
     final onlineCourseHighlights = landing.onlineCourseHighlights;
 
-    _HeroMediaItem? currentItem;
-    if (_mediaPlaylist.isNotEmpty &&
-        _currentMediaIndex >= 0 &&
-        _currentMediaIndex < _mediaPlaylist.length) {
-      currentItem = _mediaPlaylist[_currentMediaIndex];
-    }
-
-    String? currentVideoUrl;
-    String? currentImageUrl;
-    final item = currentItem;
-    if (item != null) {
-      if (item.mediaType == 'video') {
-        currentVideoUrl = item.url;
-      } else if (item.mediaType == 'image') {
-        currentImageUrl = item.url;
-      }
-    }
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final firstHeight = constraints.maxHeight;
@@ -1131,174 +1084,137 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(28),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: () {
-                    if (currentImageUrl != null) {
-                      return Image.network(
-                        currentImageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, _, __) {
-                          return Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [primaryColor, secondaryColor],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+            child: HeroMediaCarousel(
+              items: _heroMediaItems,
+              // On laisse le hero occuper sa hauteur naturelle, sans AspectRatio.
+              useAspectRatio: false,
+              autoplay: true,
+              loopVideos: false,
+              mutedByDefault: kIsWeb,
+              showControls: false,
+              defaultImageDuration: const Duration(seconds: 8),
+              overlayBuilder: (context, currentItem) {
+                return Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        primaryColor.withOpacity(0.75),
+                        primaryColor.withOpacity(0.4),
+                        secondaryColor.withOpacity(0.05),
+                      ],
+                      stops: const [0.0, 0.45, 1.0],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      24,
+                      isMobile ? 12 : 16,
+                      24,
+                      isMobile ? 20 : 32,
+                    ),
+                    child: Align(
+                      alignment: isMobile
+                          ? Alignment.bottomLeft
+                          : Alignment.centerLeft,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 520),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.18),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                heroBadge,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
-                          );
-                        },
-                      );
-                    }
-
-                    if (_videoReady && currentVideoUrl != null) {
-                      return AcademiaPlaybackEngine.view(
-                        url: currentVideoUrl,
-                        autoplay: true,
-                        looping: false,
-                        muted: kIsWeb,
-                        showControls: false,
-                        fit: BoxFit.cover,
-                        onCompleted: _onVideoCompleted,
-                        showErrorText: false,
-                      );
-                    }
-
-                    return Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [primaryColor, secondaryColor],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                            SizedBox(height: heroBadgeSpacing),
+                            Text(
+                              heroTitle,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: isMobile ? 22 : 24,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            SizedBox(height: heroTitleSpacing),
+                            Text(
+                              heroSubtitle,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                              ),
+                            ),
+                            SizedBox(height: heroSubtitleSpacing),
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 8,
+                              children: [
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: accentColor,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 22,
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => const SignupScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text('Créer un compte'),
+                                ),
+                                OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: Colors.white),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 10,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => const LoginScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text('Se connecter'),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                    );
-                  }(),
-                ),
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          primaryColor.withOpacity(0.75),
-                          primaryColor.withOpacity(0.4),
-                          secondaryColor.withOpacity(0.05),
-                        ],
-                        stops: const [0.0, 0.45, 1.0],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
                     ),
                   ),
-                ),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    24,
-                    isMobile ? 12 : 16,
-                    24,
-                    isMobile ? 20 : 32,
-                  ),
-                  child: Align(
-                    alignment:
-                        isMobile ? Alignment.bottomLeft : Alignment.centerLeft,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 520),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.18),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              heroBadge,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: heroBadgeSpacing),
-                          Text(
-                            heroTitle,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: isMobile ? 22 : 24,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          SizedBox(height: heroTitleSpacing),
-                          Text(
-                            heroSubtitle,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                            ),
-                          ),
-                          SizedBox(height: heroSubtitleSpacing),
-                          Wrap(
-                            spacing: 12,
-                            runSpacing: 8,
-                            children: [
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: accentColor,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 22,
-                                    vertical: 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => const SignupScreen(),
-                                    ),
-                                  );
-                                },
-                                child: const Text('Créer un compte'),
-                              ),
-                              OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Colors.white),
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 10,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => const LoginScreen(),
-                                    ),
-                                  );
-                                },
-                                child: const Text('Se connecter'),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                );
+              },
             ),
           ),
         );

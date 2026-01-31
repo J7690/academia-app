@@ -26,6 +26,7 @@ dependencies:
   
   # UI
   cupertino_icons: ^1.0.2
+  flutter_svg: ^2.0.9
   
   # Local storage
   shared_preferences: ^2.2.2
@@ -46,3 +47,4 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/bobodo/

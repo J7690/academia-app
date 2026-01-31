@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../providers/prep_concours_provider.dart';
+import '../../../widgets/bobodo_state.dart';
+import '../../../widgets/bobodo_view.dart';
 import 'prep_chapters_screen.dart';
 
 class PrepConcoursHomeScreen extends StatefulWidget {
@@ -107,12 +109,28 @@ class _PrepConcoursHomeScreenState extends State<PrepConcoursHomeScreen> {
 
           final subjects = provider.subjects;
           if (subjects.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'Aucune matière n\'est encore disponible.\n(Le module est prêt, il manque juste le contenu.)',
-                  textAlign: TextAlign.center,
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: const [
+                    BobodoView(
+                      state: BobodoState.idle,
+                      size: 72,
+                    ),
+                    SizedBox(height: 12),
+                    Text(
+                      'Le module Prépa concours est activé mais les matières ne sont pas encore publiées. Reviens bientôt : je t’aiderai à suivre ta progression chapitre par chapitre.',
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 12),
+                    Text(
+                      'Aucune matière n\'est encore disponible.\n(Le module est prêt, il manque juste le contenu.)',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
             );
@@ -120,9 +138,38 @@ class _PrepConcoursHomeScreenState extends State<PrepConcoursHomeScreen> {
 
           return ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-            itemCount: subjects.length,
+            itemCount: subjects.length + 1,
             itemBuilder: (context, index) {
-              final s = subjects[index];
+              if (index == 0) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Padding(
+                        padding: EdgeInsets.only(right: 12.0),
+                        child: BobodoView(
+                          state: BobodoState.thinking,
+                          size: 48,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Tu peux réviser concours par concours, chapitre par chapitre. Chaque séance travaillée te rapproche de ton badge "Prépa terminée".',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final s = subjects[index - 1];
               return Card(
                 elevation: 0,
                 margin: const EdgeInsets.only(bottom: 12),

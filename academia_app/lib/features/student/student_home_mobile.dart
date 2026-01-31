@@ -20,6 +20,8 @@ import '../../providers/student_short_trainings_provider.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart';
 import '../../widgets/notification_sound_settings_dialog.dart';
+import '../../widgets/bobodo_state.dart';
+import '../../widgets/bobodo_view.dart';
 import 'student_application_detail_screen.dart';
 import 'tabs/student_applications_tab.dart';
 import 'tabs/student_opportunities_tab.dart';
@@ -212,91 +214,94 @@ class _MobileTopNavBarState extends State<_MobileTopNavBar>
                   top: 12,
                   bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 4,
-                      width: 40,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                    const Text(
-                      'Rechercher une formation',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      autofocus: true,
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.search),
-                        hintText:
-                            'Nom de la filière, université, niveau...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(24)),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        height: 4,
+                        width: 40,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(999),
                         ),
                       ),
-                      onChanged: (value) {
-                        setState(() {
-                          query = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 260,
-                      child: formations.isEmpty
-                          ? const Center(
-                              child: Text(
-                                'Les formations apparaîtront ici dès qu’elles seront disponibles.',
-                                textAlign: TextAlign.center,
-                              ),
-                            )
-                          : ListView.builder(
-                              itemCount: filtered.length,
-                              itemBuilder: (context, index) {
-                                final formation = filtered[index];
-                                return ListTile(
-                                  leading: const Icon(Icons.school_rounded),
-                                  title: Text(
-                                    formation.title,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  subtitle: Text(
-                                    formation.universityName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  onTap: () {
-                                    Navigator.of(ctx).pop();
-                                    final slug = formation.universitySlug;
-                                    if (slug == null || slug.isEmpty) {
-                                      return;
-                                    }
-                                    Navigator.of(this.context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            StudentUniversitySiteScreen(
-                                          universitySlug: slug,
-                                          universityName:
-                                              formation.universityName,
+                      const Text(
+                        'Rechercher une formation',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        autofocus: true,
+                        decoration: const InputDecoration(
+                          prefixIcon: Icon(Icons.search),
+                          hintText:
+                              'Nom de la filière, université, niveau...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(24)),
+                          ),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            query = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 260,
+                        child: formations.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'Les formations apparaîtront ici dès qu’elles seront disponibles.',
+                                  textAlign: TextAlign.center,
+                                ),
+                              )
+                            : ListView.builder(
+                                itemCount: filtered.length,
+                                itemBuilder: (context, index) {
+                                  final formation = filtered[index];
+                                  return ListTile(
+                                    leading:
+                                        const Icon(Icons.school_rounded),
+                                    title: Text(
+                                      formation.title,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    subtitle: Text(
+                                      formation.universityName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    onTap: () {
+                                      Navigator.of(ctx).pop();
+                                      final slug = formation.universitySlug;
+                                      if (slug == null || slug.isEmpty) {
+                                        return;
+                                      }
+                                      Navigator.of(this.context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              StudentUniversitySiteScreen(
+                                            universitySlug: slug,
+                                            universityName:
+                                                formation.universityName,
+                                          ),
                                         ),
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                    ),
-                  ],
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -1649,76 +1654,104 @@ class _MobileProfileCard extends StatelessWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const StudentProfileScreen(),
-                      ),
-                    );
-                  },
-                  child: CircleAvatar(
-                    radius: 22,
-                    backgroundImage:
-                        avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
-                    child: avatarUrl.isEmpty
-                        ? Text(
-                            initial,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          )
-                        : null,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        locationText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF6F6F6F),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                Row(
                   children: [
-                    Text(
-                      'Candidatures',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF6F6F6F),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const StudentProfileScreen(),
+                          ),
+                        );
+                      },
+                      child: CircleAvatar(
+                        radius: 22,
+                        backgroundImage:
+                            avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+                        child: avatarUrl.isEmpty
+                            ? Text(
+                                initial,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              )
+                            : null,
                       ),
                     ),
-                    Text(
-                      '$appsCount',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            locationText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF6F6F6F),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text(
+                          'Candidatures',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF6F6F6F),
+                          ),
+                        ),
+                        Text(
+                          '$appsCount',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Padding(
+                      padding: EdgeInsets.only(right: 8.0),
+                      child: BobodoView(
+                        state: BobodoState.idle,
+                        size: 40,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        'Je t’aide à garder une vue d’ensemble : profil, candidatures, paiements et challenges. On avance ensemble, une étape et un badge à la fois.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF4B5563),
+                        ),
                       ),
                     ),
                   ],

@@ -14,6 +14,8 @@ import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
 import '../../../video/academia_playback_engine.dart';
 import '../../../widgets/video_overlays_layer.dart';
+import '../../../widgets/bobodo_state.dart';
+import '../../../widgets/bobodo_view.dart';
 import '../student_challenge_detail_screen.dart';
 import '../student_challenge_video_editor_screen.dart';
 import '../student_profile_screen.dart';
@@ -110,37 +112,86 @@ class _StudentChallengesTabState extends State<StudentChallengesTab> {
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Participe à des missions et concours pour gagner des points et progresser.',
-          style: TextStyle(fontSize: 14),
-        ),
-        const SizedBox(height: 12),
         Consumer<StudentChallengesProvider>(
           builder: (context, provider, child) {
             final stats = provider.stats;
-            if (stats == null) {
-              return const SizedBox.shrink();
+            final totalJoined = stats == null
+                ? 0
+                : stats['total_joined'] as int? ?? 0;
+            final totalCompleted = stats == null
+                ? 0
+                : stats['total_completed'] as int? ?? 0;
+            final totalPoints = stats == null
+                ? 0
+                : stats['total_points'] as int? ?? 0;
+
+            final bool hasJoined = totalJoined > 0;
+            final bool hasCompleted = totalCompleted > 0;
+            final bool hasPoints = totalPoints > 0;
+
+            BobodoState state;
+            if (!hasJoined && !hasCompleted && !hasPoints) {
+              state = BobodoState.idle;
+            } else if (hasCompleted || hasPoints) {
+              state = BobodoState.success;
+            } else {
+              state = BobodoState.thinking;
             }
-            final totalJoined = stats['total_joined'] as int? ?? 0;
-            final totalCompleted = stats['total_completed'] as int? ?? 0;
-            final totalPoints = stats['total_points'] as int? ?? 0;
-            return Card(
-              color: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+
+            String text;
+            if (!hasJoined) {
+              text =
+                  'Les challenges vidéo te permettent de t’entraîner, gagner des points et montrer ce que tu sais faire. Rejoins ton premier challenge pour débloquer tes premiers badges.';
+            } else if (!hasCompleted) {
+              text =
+                  'Tu as déjà rejoint des challenges, bravo. En les terminant, tu marques des points et construis ton badge de progression pas à pas.';
+            } else {
+              text =
+                  'Tu as déjà validé des challenges et gagné des points : continue, chaque mission terminée renforce ton profil et tes futurs badges sur Academia.';
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildStatItem('Challenges rejoints', totalJoined),
-                    _buildStatItem('Terminés', totalCompleted),
-                    _buildStatItem('Points gagnés', totalPoints),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12.0),
+                      child: BobodoView(
+                        state: state,
+                        size: 52,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        text,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 12),
+                if (stats != null)
+                  Card(
+                    color: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildStatItem('Challenges rejoints', totalJoined),
+                          _buildStatItem('Terminés', totalCompleted),
+                          _buildStatItem('Points gagnés', totalPoints),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
             );
           },
         ),
@@ -448,24 +499,26 @@ class _StudentChallengesTabState extends State<StudentChallengesTab> {
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Signaler la vidéo'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: reasonController,
-                decoration: const InputDecoration(
-                  labelText: 'Motif (obligatoire)',
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: reasonController,
+                  decoration: const InputDecoration(
+                    labelText: 'Motif (obligatoire)',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: detailsController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Détails (optionnel)',
+                const SizedBox(height: 8),
+                TextField(
+                  controller: detailsController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Détails (optionnel)',
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -2195,24 +2248,26 @@ class _ChallengeVideoActions extends StatelessWidget {
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Signaler la vidéo'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: reasonController,
-                decoration: const InputDecoration(
-                  labelText: 'Motif (obligatoire)',
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: reasonController,
+                  decoration: const InputDecoration(
+                    labelText: 'Motif (obligatoire)',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: detailsController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Détails (optionnel)',
+                const SizedBox(height: 8),
+                TextField(
+                  controller: detailsController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Détails (optionnel)',
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
             TextButton(

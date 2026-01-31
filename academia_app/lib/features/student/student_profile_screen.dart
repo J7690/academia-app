@@ -5,6 +5,8 @@ import '../../providers/student_profile_provider.dart';
 import '../../providers/student_dossier_documents_provider.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart';
+import '../../widgets/bobodo_state.dart';
+import '../../widgets/bobodo_view.dart';
 import 'student_dossier_documents_screen.dart';
 
 class StudentProfileScreen extends StatefulWidget {
@@ -122,6 +124,25 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Padding(
+                      padding: EdgeInsets.only(right: 12.0),
+                      child: BobodoView(
+                        state: BobodoState.thinking,
+                        size: 56,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        'Remplis tranquillement ton profil : plus il est complet, plus ton dossier est clair pour les universités. Je suis là pour t’aider à décrocher ton badge "Dossier prêt".',
+                        style: TextStyle(fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 TextField(
                   controller: _fullNameController,
                   decoration: const InputDecoration(

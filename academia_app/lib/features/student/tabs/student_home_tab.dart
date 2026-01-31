@@ -21,7 +21,7 @@ import '../../../providers/online_courses_catalog_provider.dart';
 import '../../../providers/student_online_courses_provider.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
-import '../../../video/academia_playback_engine.dart';
+import '../../../widgets/hero_media_carousel.dart';
 import '../../../widgets/notification_sound_settings_dialog.dart';
 import '../widgets/student_short_trainings_section.dart';
 import '../widgets/student_home_online_courses_section.dart';
@@ -31,13 +31,6 @@ import '../../share/share_service.dart';
 import '../../share/share_mode_provider.dart';
 import '../../share/widgets/share_signature.dart';
 
-class _StudentHomeMediaItem {
-  final String url;
-  final String mediaType;
-
-  const _StudentHomeMediaItem({required this.url, required this.mediaType});
-}
-
 class StudentHomeTab extends StatefulWidget {
   const StudentHomeTab({super.key});
 
@@ -46,17 +39,11 @@ class StudentHomeTab extends StatefulWidget {
 }
 
 class _StudentHomeTabState extends State<StudentHomeTab> {
-  bool _videoReady = false;
-  String? _currentVideoUrl;
-
   late final ScrollController _tickerController;
   Timer? _tickerTimer;
 
-  static const Duration _imageSlideDuration = Duration(seconds: 5);
-  Timer? _mediaTimer;
-
-  List<_StudentHomeMediaItem> _mediaPlaylist = [];
-  int _currentMediaIndex = 0;
+  /// Playlist du hero étudiant, alimentée par app_public_hero_playlist.
+  List<HeroMediaItem> _heroMediaItems = [];
 
   String? _heroTitle;
 
@@ -88,20 +75,27 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
       final decoded = jsonDecode(raw);
       if (decoded is! Map) return;
 
-      final map = Map<String, dynamic>.from(decoded as Map);
+      final map = Map<String, dynamic>.from(decoded);
       final itemsRaw = map['items'];
-      final cached = <_StudentHomeMediaItem>[];
+      final cached = <HeroMediaItem>[];
 
       if (itemsRaw is List) {
+        var sort = 0;
         for (final item in itemsRaw) {
           if (item is! Map) continue;
-          final m = Map<String, dynamic>.from(item as Map);
+          final m = Map<String, dynamic>.from(item);
           final url = (m['url'] ?? '').toString().trim();
           if (url.isEmpty) continue;
           final mediaType = (m['mediaType'] ?? 'video').toString();
           cached.add(
-            _StudentHomeMediaItem(url: url, mediaType: mediaType),
+            HeroMediaItem(
+              id: 'cache_$sort',
+              mediaType: mediaType,
+              url: url,
+              sortOrder: sort,
+            ),
           );
+          sort++;
         }
       }
 
@@ -110,12 +104,9 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
       final cachedTitle = map['title']?.toString();
 
       setState(() {
-        _mediaPlaylist = cached;
-        _currentMediaIndex = 0;
+        _heroMediaItems = cached;
         _heroTitle = cachedTitle;
       });
-
-      _goToMediaIndex(0);
     } catch (_) {}
   }
 
@@ -159,7 +150,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
     _tickerController.dispose();
     _universitySearchController.dispose();
     _programSearchController.dispose();
-    _mediaTimer?.cancel();
     super.dispose();
   }
 
@@ -269,75 +259,84 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   Future<void> _setupMediaPlaylist() async {
     final client = Supabase.instance.client;
 
-    final playlist = <_StudentHomeMediaItem>[];
+    final playlist = <HeroMediaItem>[];
     String? title;
 
     try {
-      final dynamic response = await client
-          .schema('app')
-          .from('hero_playlist')
-          .select(
-              'base_video_url, base_image_url, media_type, sort_order, is_active, title')
-          .eq('slot', 'student_home_hero_main')
-          .eq('is_active', true)
-          .order('sort_order', ascending: true)
-          .limit(10);
+      final dynamic response = await client.rpc(
+        'app_public_hero_playlist',
+        params: {'p_slot': 'student_home_hero_main'},
+      );
 
-      if (response is List && response.isNotEmpty) {
-        for (final raw in response) {
-          Map<String, dynamic>? row;
-          if (raw is Map<String, dynamic>) {
-            row = raw;
-          } else if (raw is Map) {
-            row = Map<String, dynamic>.from(raw);
-          }
-          if (row == null) {
+      if (response is! Map<String, dynamic>) {
+        return;
+      }
+      if (response['success'] != true) {
+        return;
+      }
+
+      final items = response['items'];
+      if (items is! List) {
+        return;
+      }
+
+      for (final raw in items) {
+        if (raw is! Map) continue;
+        final row = Map<String, dynamic>.from(raw);
+
+        final rawType = (row['media_type'] ?? 'video').toString().toLowerCase();
+        final isImage = rawType == 'image';
+
+        final playbackRaw = row['playback'];
+        Map<String, dynamic>? playback;
+        if (playbackRaw is Map) {
+          playback = Map<String, dynamic>.from(playbackRaw);
+        }
+
+        final bestUrl = (playback?['best_url'] ?? '').toString().trim();
+        final posterUrl = (playback?['poster_url'] ?? '').toString().trim();
+        final baseVideoUrl = (row['base_video_url'] ?? '').toString().trim();
+        final baseImageUrl = (row['base_image_url'] ?? '').toString().trim();
+
+        String? resolvedUrl;
+        String mediaType;
+
+        if (isImage) {
+          if (baseImageUrl.isEmpty) continue;
+          resolvedUrl = baseImageUrl;
+          mediaType = 'image';
+        } else {
+          resolvedUrl = bestUrl.isNotEmpty ? bestUrl : baseVideoUrl;
+          if (resolvedUrl.isEmpty) {
             continue;
           }
-
-          final rawType = (row['media_type'] ?? 'video').toString().toLowerCase();
-          final isImage = rawType == 'image';
-          final heroVideoUrl = (row['base_video_url'] ?? '').toString().trim();
-          final heroImageUrl = (row['base_image_url'] ?? '').toString().trim();
-
-          String? chosenUrl;
-          String mediaType;
-          if (isImage && heroImageUrl.isNotEmpty) {
-            chosenUrl = heroImageUrl;
-            mediaType = 'image';
-          } else if (!isImage && heroVideoUrl.isNotEmpty) {
-            chosenUrl = heroVideoUrl;
-            mediaType = 'video';
-          } else if (heroVideoUrl.isNotEmpty) {
-            chosenUrl = heroVideoUrl;
-            mediaType = 'video';
-          } else if (heroImageUrl.isNotEmpty) {
-            chosenUrl = heroImageUrl;
-            mediaType = 'image';
-          } else {
-            chosenUrl = null;
-            mediaType = 'video';
-          }
-
-          if (chosenUrl != null && chosenUrl.isNotEmpty) {
-            debugPrint(
-              'StudentHome: hero item from app.hero_playlist type=$mediaType url=$chosenUrl',
-            );
-            playlist.add(
-              _StudentHomeMediaItem(url: chosenUrl, mediaType: mediaType),
-            );
-            title ??= row['title']?.toString();
-          }
+          mediaType = 'video';
         }
+
+        final id = (row['id'] ?? '').toString();
+        final sortOrder = (row['sort_order'] as int?) ?? playlist.length;
+
+        debugPrint(
+          'StudentHome: hero item from app_public_hero_playlist slot=student_home_hero_main '
+          'id=' + id + ' type=' + mediaType + ' url=' + resolvedUrl,
+        );
+
+        playlist.add(
+          HeroMediaItem(
+            id: id.isNotEmpty ? id : 'auto_${playlist.length}',
+            mediaType: mediaType,
+            url: resolvedUrl,
+            posterUrl: posterUrl.isNotEmpty ? posterUrl : null,
+            sortOrder: sortOrder,
+          ),
+        );
+
+        title ??= row['title']?.toString();
       }
     } catch (_) {}
 
     if (playlist.isEmpty) {
-      _mediaPlaylist = [];
-      _currentMediaIndex = 0;
-      _videoReady = false;
-      _currentVideoUrl = null;
-      _mediaTimer?.cancel();
+      _heroMediaItems = [];
       if (mounted) {
         setState(() {
           _heroTitle = null;
@@ -346,10 +345,8 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
       return;
     }
 
-    _mediaPlaylist = playlist;
-    _currentMediaIndex = 0;
+    _heroMediaItems = playlist;
     _heroTitle = title;
-    _goToMediaIndex(0);
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -367,56 +364,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
         jsonEncode(data),
       );
     } catch (_) {}
-  }
-
-  void _goToMediaIndex(int index) {
-    if (_mediaPlaylist.isEmpty) return;
-    _mediaTimer?.cancel();
-
-    _currentMediaIndex = index % _mediaPlaylist.length;
-    final item = _mediaPlaylist[_currentMediaIndex];
-
-    debugPrint(
-      'StudentHome: _goToMediaIndex index=$_currentMediaIndex type=${item.mediaType} url=${item.url}',
-    );
-
-    if (item.mediaType == 'image') {
-      _currentVideoUrl = null;
-      _videoReady = true;
-      if (mounted) {
-        setState(() {});
-      }
-      _mediaTimer = Timer(_imageSlideDuration, _onMediaCompleted);
-    } else {
-      _initVideo(item.url);
-    }
-  }
-
-  Future<void> _initVideo(String url) async {
-    debugPrint('StudentHome: _initVideo url=' + url);
-    _videoReady = false;
-    _currentVideoUrl = null;
-    if (mounted) {
-      setState(() {});
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _currentVideoUrl = url;
-      _videoReady = true;
-    });
-  }
-
-  void _onVideoCompleted() {
-    _onMediaCompleted();
-  }
-
-  void _onMediaCompleted() {
-    if (_mediaPlaylist.isEmpty) return;
-    final nextIndex = (_currentMediaIndex + 1) % _mediaPlaylist.length;
-    final nextItem = _mediaPlaylist[nextIndex];
-    debugPrint('StudentHome: _onMediaCompleted -> next=${nextItem.mediaType}');
-    _goToMediaIndex(nextIndex);
   }
 
   void _startTicker() {
@@ -524,28 +471,9 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
             final slivers = <Widget>[
               SliverToBoxAdapter(child: _ProfileHeader()),
               SliverToBoxAdapter(
-                child: _StudentHomeHero(
-                  videoReady: _videoReady,
-                  onVideoCompleted: _onVideoCompleted,
+                child: _StudentHomeHeroCarousel(
+                  heroItems: _heroMediaItems,
                   heroTitle: _heroTitle,
-                  currentVideoUrl: () {
-                    if (_mediaPlaylist.isEmpty ||
-                        _currentMediaIndex < 0 ||
-                        _currentMediaIndex >= _mediaPlaylist.length) {
-                      return null;
-                    }
-                    final item = _mediaPlaylist[_currentMediaIndex];
-                    return item.mediaType == 'video' ? item.url : null;
-                  }(),
-                  currentImageUrl: () {
-                    if (_mediaPlaylist.isEmpty ||
-                        _currentMediaIndex < 0 ||
-                        _currentMediaIndex >= _mediaPlaylist.length) {
-                      return null;
-                    }
-                    final item = _mediaPlaylist[_currentMediaIndex];
-                    return item.mediaType == 'image' ? item.url : null;
-                  }(),
                   onShare: _openShareOptions,
                 ),
               ),
@@ -1002,20 +930,14 @@ class _ShareBullet extends StatelessWidget {
   }
 }
 
-class _StudentHomeHero extends StatelessWidget {
-  final bool videoReady;
-  final VoidCallback onVideoCompleted;
+class _StudentHomeHeroCarousel extends StatelessWidget {
+  final List<HeroMediaItem> heroItems;
   final String? heroTitle;
-  final String? currentVideoUrl;
-  final String? currentImageUrl;
   final VoidCallback? onShare;
 
-  const _StudentHomeHero({
-    required this.videoReady,
-    required this.onVideoCompleted,
+  const _StudentHomeHeroCarousel({
+    required this.heroItems,
     required this.heroTitle,
-    required this.currentVideoUrl,
-    required this.currentImageUrl,
     this.onShare,
   });
 
@@ -1040,55 +962,29 @@ class _StudentHomeHero extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
-        child: AspectRatio(
+        child: HeroMediaCarousel(
+          items: heroItems,
           aspectRatio: aspectRatio,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: () {
-                  if (currentImageUrl != null) {
-                    return Image.network(
-                      currentImageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, _, __) {
-                        return Container(
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Color(0xFF7BC96F), Color(0xFFE8F5E9)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  }
-
-                  if (videoReady && currentVideoUrl != null) {
-                    return AcademiaPlaybackEngine.view(
-                      url: currentVideoUrl!,
-                      autoplay: true,
-                      looping: false,
-                      muted: kIsWeb,
-                      showControls: false,
-                      fit: BoxFit.cover,
-                      onCompleted: onVideoCompleted,
-                    );
-                  }
-
-                  return Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF7BC96F), Color(0xFFE8F5E9)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+          useAspectRatio: true,
+          autoplay: true,
+          loopVideos: false,
+          mutedByDefault: kIsWeb,
+          showControls: false,
+          defaultImageDuration: const Duration(seconds: 5),
+          overlayBuilder: (context, currentItem) {
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF7BC96F), Color(0xFFE8F5E9)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                  );
-                }(),
-              ),
-              Positioned.fill(
-                child: Container(
+                  ),
+                ),
+                Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -1100,61 +996,63 @@ class _StudentHomeHero extends StatelessWidget {
                     ),
                   ),
                 ),
-              ),
-              if (onShare != null && !isShareModeEnabled)
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: Material(
-                    color: Colors.black.withOpacity(0.35),
-                    borderRadius: BorderRadius.circular(999),
-                    child: InkWell(
+                if (onShare != null && !isShareModeEnabled)
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Material(
+                      color: Colors.black.withOpacity(0.35),
                       borderRadius: BorderRadius.circular(999),
-                      onTap: onShare,
-                      child: const Padding(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.share,
-                              size: 16,
-                              color: Colors.white,
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              'Partager',
-                              style: TextStyle(
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(999),
+                        onTap: onShare,
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.share,
+                                size: 16,
                                 color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
                               ),
-                            ),
-                          ],
+                              SizedBox(width: 6),
+                              Text(
+                                'Partager',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              if (title != null && title.isNotEmpty)
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 16,
-                  child: Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                if (title != null && title.isNotEmpty)
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: 16,
+                    child: Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-            ],
-          ),
+              ],
+            );
+          },
         ),
       ),
     );

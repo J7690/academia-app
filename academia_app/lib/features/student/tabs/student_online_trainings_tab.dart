@@ -7,6 +7,8 @@ import '../../../providers/student_online_course_messages_provider.dart';
 import '../online_course_detail_screen.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
+import '../../../widgets/bobodo_state.dart';
+import '../../../widgets/bobodo_view.dart';
 
 class StudentOnlineTrainingsTab extends StatefulWidget {
   const StudentOnlineTrainingsTab({super.key});
@@ -50,7 +52,29 @@ class _StudentOnlineTrainingsTabState extends State<StudentOnlineTrainingsTab> {
                   'Catalogue de formations 100% en ligne : vidéos, audios, TD live et replays.',
                   style: TextStyle(fontSize: 14),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Padding(
+                      padding: EdgeInsets.only(right: 8.0),
+                      child: BobodoView(
+                        state: BobodoState.thinking,
+                        size: 40,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        'Ces formations en ligne complètent tes études : en suivant les modules jusqu’au bout, tu construis ton badge de progression continue.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF4B5563),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 TextField(
                   decoration: const InputDecoration(
                     hintText: 'Rechercher une formation en ligne...',
@@ -136,153 +160,156 @@ class _StudentOnlineTrainingsTabState extends State<StudentOnlineTrainingsTab> {
             top: 16,
             bottom: 16 + MediaQuery.of(sheetContext).viewInsets.bottom,
           ),
-          child: SizedBox(
-            height: 380,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Messages sur la formation en ligne',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+          child: SingleChildScrollView(
+            child: SizedBox(
+              height: 380,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Messages sur la formation en ligne',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                if (title.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    title,
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                Expanded(
-                  child: Consumer<StudentOnlineCourseMessagesProvider>(
-                    builder: (context, provider, child) {
-                      if (provider.isLoading && provider.messages.isEmpty) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      }
+                  if (title.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      title,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: Consumer<StudentOnlineCourseMessagesProvider>(
+                      builder: (context, provider, child) {
+                        if (provider.isLoading && provider.messages.isEmpty) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
 
-                      if (provider.error != null &&
-                          provider.messages.isEmpty) {
-                        return Center(child: Text(provider.error!));
-                      }
+                        if (provider.error != null &&
+                            provider.messages.isEmpty) {
+                          return Center(child: Text(provider.error!));
+                        }
 
-                      final messages = provider.messages;
-                      if (messages.isEmpty) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(16.0),
-                            child: Text(
-                              'Aucun message pour le moment. Utilisez le champ ci-dessous pour poser vos questions (organisation, accès, paiement, etc.).',
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        );
-                      }
-
-                      return ListView.builder(
-                        itemCount: messages.length,
-                        itemBuilder: (context, index) {
-                          final msg = messages[index];
-                          final senderRole =
-                              msg['sender_role']?.toString() ?? '';
-                          final content =
-                              msg['content']?.toString() ?? '';
-                          final createdAt =
-                              msg['created_at']?.toString() ?? '';
-
-                          final isStudent = senderRole == 'student';
-                          final alignment = isStudent
-                              ? Alignment.centerRight
-                              : Alignment.centerLeft;
-                          final color = isStudent
-                              ? Theme.of(context)
-                                  .colorScheme
-                                  .primary
-                                  .withOpacity(0.1)
-                              : Theme.of(context)
-                                  .colorScheme
-                                  .surfaceVariant;
-                          final label =
-                              isStudent ? 'Vous' : 'Nexium / Plateforme';
-
-                          return Align(
-                            alignment: alignment,
-                            child: Container(
-                              margin:
-                                  const EdgeInsets.symmetric(vertical: 4),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: color,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    label,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(content),
-                                  if (createdAt.isNotEmpty) ...[
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      createdAt,
-                                      style: const TextStyle(fontSize: 10),
-                                    ),
-                                  ],
-                                ],
+                        final messages = provider.messages;
+                        if (messages.isEmpty) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Text(
+                                'Aucun message pour le moment. Utilisez le champ ci-dessous pour poser vos questions (organisation, accès, paiement, etc.).',
+                                textAlign: TextAlign.center,
                               ),
                             ),
                           );
-                        },
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: controller,
-                        minLines: 1,
-                        maxLines: 4,
-                        decoration: const InputDecoration(
-                          hintText:
-                              'Écrire un message (organisation, accès, paiement, etc.)',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.send),
-                      onPressed: () async {
-                        final text = controller.text.trim();
-                        if (text.isEmpty) return;
-                        final ok = await messagesProvider.sendMessage(
-                          enrollmentId: enrollmentId,
-                          content: text,
-                        );
-                        if (ok) {
-                          controller.clear();
                         }
+
+                        return ListView.builder(
+                          itemCount: messages.length,
+                          itemBuilder: (context, index) {
+                            final msg = messages[index];
+                            final senderRole =
+                                msg['sender_role']?.toString() ?? '';
+                            final content =
+                                msg['content']?.toString() ?? '';
+                            final createdAt =
+                                msg['created_at']?.toString() ?? '';
+
+                            final isStudent = senderRole == 'student';
+                            final alignment = isStudent
+                                ? Alignment.centerRight
+                                : Alignment.centerLeft;
+                            final color = isStudent
+                                ? Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withOpacity(0.1)
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .surfaceVariant;
+                            final label =
+                                isStudent ? 'Vous' : 'Nexium / Plateforme';
+
+                            return Align(
+                              alignment: alignment,
+                              child: Container(
+                                margin:
+                                    const EdgeInsets.symmetric(vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      label,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(content),
+                                    if (createdAt.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        createdAt,
+                                        style:
+                                            const TextStyle(fontSize: 10),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
                       },
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: controller,
+                          minLines: 1,
+                          maxLines: 4,
+                          decoration: const InputDecoration(
+                            hintText:
+                                'Écrire un message (organisation, accès, paiement, etc.)',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.send),
+                        onPressed: () async {
+                          final text = controller.text.trim();
+                          if (text.isEmpty) return;
+                          final ok = await messagesProvider.sendMessage(
+                            enrollmentId: enrollmentId,
+                            content: text,
+                          );
+                          if (ok) {
+                            controller.clear();
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );

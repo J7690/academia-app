@@ -9,6 +9,8 @@ import '../../providers/student_application_files_provider.dart';
 import '../../providers/student_application_messages_provider.dart';
 import '../../providers/student_applications_provider.dart';
 import '../../providers/student_application_payments_provider.dart';
+import '../../widgets/bobodo_state.dart';
+import '../../widgets/bobodo_view.dart';
 
 class StudentApplicationDetailScreen extends StatefulWidget {
   final Map<String, dynamic> application;
@@ -371,6 +373,9 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
     final createdAt = _formatApplicationDate(createdAtRaw);
     final submittedAt = _formatApplicationDate(submittedAtRaw);
 
+    final bobodoState = _bobodoStateForStatus(status);
+    final bobodoText = _bobodoHeaderTextForStatus(status);
+
     String statusLine = '';
     if (status == 'accepted' && submittedAt.isNotEmpty) {
       statusLine = 'Acceptée le $submittedAt';
@@ -389,6 +394,7 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
         appBar: AppBar(
           title: const Text('Détail de la candidature'),
           bottom: TabBar(
+            isScrollable: true,
             onTap: _handleTabTap,
             tabs: [
               const Tab(text: 'Documents'),
@@ -427,11 +433,14 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              Icons.assignment_outlined,
-                              color: statusColor,
+                            Padding(
+                              padding: const EdgeInsets.only(right: 12.0),
+                              child: BobodoView(
+                                state: bobodoState,
+                                size: 56,
+                                text: bobodoText,
+                              ),
                             ),
-                            const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -992,4 +1001,39 @@ String _formatApplicationDate(String? value) {
   final month = parsed.month.toString().padLeft(2, '0');
   final year = parsed.year.toString();
   return '$day/$month/$year';
+}
+
+BobodoState _bobodoStateForStatus(String? status) {
+  switch (status) {
+    case 'accepted':
+      return BobodoState.success;
+    case 'rejected':
+    case 'canceled':
+      return BobodoState.warning;
+    case 'submitted':
+    case 'under_review':
+      return BobodoState.thinking;
+    case 'draft':
+    default:
+      return BobodoState.idle;
+  }
+}
+
+String _bobodoHeaderTextForStatus(String? status) {
+  switch (status) {
+    case 'draft':
+      return 'Tu peux compléter cette candidature à ton rythme. Quand tout est rempli, tu te rapproches du badge \"Dossier prêt\".';
+    case 'submitted':
+      return 'Candidature soumise. Tu viens de valider une étape clé vers le badge \"Dossier complet\".';
+    case 'under_review':
+      return 'Candidature en étude. Tu as déjà fait ta part, je te préviens dès qu\'une décision tombe.';
+    case 'accepted':
+      return 'Candidature acceptée 🎓. Tu peux considérer cette admission comme ton badge \"Admission confirmée\".';
+    case 'rejected':
+      return 'Cette candidature a été refusée. On peut regarder ensemble d\'autres options adaptées à ton profil.';
+    case 'canceled':
+      return 'Cette candidature a été annulée. Tu peux en créer une nouvelle si nécessaire, je t\'accompagne étape par étape.';
+    default:
+      return 'Je t\'aide à suivre l\'avancement de cette candidature et tes futures récompenses étape par étape.';
+  }
 }

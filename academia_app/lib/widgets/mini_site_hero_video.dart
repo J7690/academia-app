@@ -1,9 +1,8 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../video/academia_playback_engine.dart';
+import 'hero_media_carousel.dart';
 
 class MiniSiteHeroVideo extends StatefulWidget {
   final List<Map<String, dynamic>> media;
@@ -27,45 +26,10 @@ class MiniSiteHeroVideo extends StatefulWidget {
   State<MiniSiteHeroVideo> createState() => _MiniSiteHeroVideoState();
 }
 
-class _MiniSiteVideoItem {
-  final String url;
-  final Map<String, dynamic> media;
-  final String mediaType; // 'video' ou 'image'
-
-  const _MiniSiteVideoItem({
-    required this.url,
-    required this.media,
-    required this.mediaType,
-  });
-}
-
 class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
-  bool _videoReady = false;
-  List<_MiniSiteVideoItem> _playlist = const [];
-  int _currentIndex = 0;
+  List<HeroMediaItem> _heroItems = const [];
+  Map<String, Map<String, dynamic>> _mediaById = const {};
   String? _mediaSignature;
-  String? _currentImageUrl;
-  String? _currentVideoUrl;
-  Timer? _imageTimer;
-
-  void _cancelImageTimer() {
-    _imageTimer?.cancel();
-    _imageTimer = null;
-  }
-
-  void _scheduleNextImage() {
-    _cancelImageTimer();
-    if (_playlist.length <= 1) {
-      return;
-    }
-    _imageTimer = Timer(const Duration(seconds: 5), () {
-      if (!mounted || _playlist.isEmpty) {
-        return;
-      }
-      final nextIndex = (_currentIndex + 1) % _playlist.length;
-      _goToIndex(nextIndex);
-    });
-  }
 
   @override
   void initState() {
@@ -81,7 +45,6 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
 
   @override
   void dispose() {
-    _cancelImageTimer();
     super.dispose();
   }
 
@@ -104,18 +67,12 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
       '[MiniSiteHeroVideo._buildPlaylist] start media_count=${widget.media.length} '
       'heroPosterMediaId=${widget.heroPosterMediaId}',
     );
-    _cancelImageTimer();
-    _videoReady = false;
-    _currentVideoUrl = null;
-    if (mounted) {
-      setState(() {});
-    }
-
     if (widget.media.isEmpty) {
       debugPrint('[MiniSiteHeroVideo._buildPlaylist] no_media');
       if (mounted) {
         setState(() {
-          _playlist = const [];
+          _heroItems = const [];
+          _mediaById = const {};
         });
       }
       return;
@@ -147,7 +104,8 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
       debugPrint('[MiniSiteHeroVideo._buildPlaylist] no_candidates_after_filter');
       if (mounted) {
         setState(() {
-          _playlist = const [];
+          _heroItems = const [];
+          _mediaById = const {};
         });
       }
       return;
@@ -170,20 +128,31 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
     });
 
     final client = Supabase.instance.client;
-    final items = <_MiniSiteVideoItem>[];
+    final items = <HeroMediaItem>[];
+    final mediaById = <String, Map<String, dynamic>>{};
     for (final m in candidates) {
       final resolved = await _resolveMediaUrl(client, m);
       if (resolved == null || resolved.isEmpty) continue;
       final type = (m['media_type'] ?? '').toString().toLowerCase();
       final isImage = type.contains('image');
       final mediaType = isImage ? 'image' : 'video';
+
+      var id = (m['id'] ?? '').toString();
+      if (id.isEmpty) {
+        id = 'media_${items.length}';
+      }
+      final sortOrder = (m['sort_order'] as int?) ?? items.length;
+
       items.add(
-        _MiniSiteVideoItem(
-          url: resolved,
-          media: m,
+        HeroMediaItem(
+          id: id,
           mediaType: mediaType,
+          url: resolved,
+          posterUrl: null,
+          sortOrder: sortOrder,
         ),
       );
+      mediaById[id] = m;
     }
 
     if (!mounted) return;
@@ -191,41 +160,24 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
     if (items.isEmpty) {
       debugPrint('[MiniSiteHeroVideo._buildPlaylist] no_items_after_resolve');
       setState(() {
-        _playlist = const [];
+        _heroItems = const [];
+        _mediaById = const {};
       });
       return;
     }
 
-    _playlist = items;
-    final firstMedia = items.first.media;
-    final firstId = firstMedia['id'];
-    final firstType = firstMedia['media_type'];
+    final firstMedia = mediaById[items.first.id];
+    final firstId = firstMedia?['id'];
+    final firstType = firstMedia?['media_type'];
     debugPrint(
       '[MiniSiteHeroVideo._buildPlaylist] playlist_ready size=${items.length} '
       'first_id=$firstId first_type=$firstType',
     );
-    _currentIndex = 0;
-    _goToIndex(0);
-  }
 
-  void _goToIndex(int index) {
-    if (_playlist.isEmpty) return;
-    _currentIndex = index % _playlist.length;
-    final item = _playlist[_currentIndex];
-
-    if (item.mediaType == 'image') {
-      _currentImageUrl = item.url;
-      _currentVideoUrl = null;
-      _videoReady = true;
-      if (mounted) {
-        setState(() {});
-      }
-      _scheduleNextImage();
-    } else {
-      _currentImageUrl = null;
-      _cancelImageTimer();
-      _initVideo(item.url);
-    }
+    setState(() {
+      _heroItems = items;
+      _mediaById = mediaById;
+    });
   }
 
   Future<String?> _resolveMediaUrl(SupabaseClient client, Map<String, dynamic> media) async {
@@ -245,30 +197,8 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
     }
   }
 
-  Future<void> _initVideo(String url) async {
-    _videoReady = false;
-    _currentImageUrl = null;
-    _currentVideoUrl = null;
-    if (mounted) {
-      setState(() {});
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _currentVideoUrl = url;
-      _videoReady = true;
-    });
-  }
-
-  void _onVideoCompleted() {
-    if (_playlist.isEmpty) return;
-    final nextIndex = (_currentIndex + 1) % _playlist.length;
-    _goToIndex(nextIndex);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final hasMedia = _playlist.isNotEmpty && _videoReady;
     final width = MediaQuery.of(context).size.width;
     double aspectRatio;
     if (width < 600) {
@@ -279,62 +209,37 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
       aspectRatio = 16 / 5;
     }
 
-    final currentMedia = (_playlist.isNotEmpty && _currentIndex < _playlist.length)
-        ? _playlist[_currentIndex].media
-        : null;
-    final mediaTitle = currentMedia?['title']?.toString() ?? '';
+    final mediaById = _mediaById;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
-      child: AspectRatio(
+      child: HeroMediaCarousel(
+        items: _heroItems,
         aspectRatio: aspectRatio,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: () {
-                if (_currentImageUrl != null) {
-                  return Image.network(
-                    _currentImageUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, _, __) {
-                      return Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                }
+        useAspectRatio: true,
+        autoplay: true,
+        loopVideos: true,
+        mutedByDefault: false,
+        showControls: false,
+        defaultImageDuration: const Duration(seconds: 5),
+        overlayBuilder: (context, currentItem) {
+          final media =
+              currentItem != null ? mediaById[currentItem.id] : null;
+          final mediaTitle = media?['title']?.toString() ?? '';
 
-                if (hasMedia && _currentVideoUrl != null) {
-                  return AcademiaPlaybackEngine.view(
-                    url: _currentVideoUrl!,
-                    autoplay: true,
-                    looping: true,
-                    muted: false,
-                    showControls: false,
-                    fit: BoxFit.cover,
-                    onCompleted: _onVideoCompleted,
-                  );
-                }
-
-                return Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                );
-              }(),
-            ),
-            Positioned.fill(
-              child: Container(
+                ),
+              ),
+              Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -346,78 +251,80 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
                   ),
                 ),
               ),
-            ),
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 16,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          widget.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        if (widget.location.isNotEmpty) ...[
-                          const SizedBox(height: 4),
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 16,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           Text(
-                            widget.location,
+                            widget.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                        if ((widget.tagline ?? '').isNotEmpty || mediaTitle.isNotEmpty) ...[
-                          const SizedBox(height: 6),
-                          Text(
-                            mediaTitle.isNotEmpty
-                                ? mediaTitle
-                                : (widget.tagline ?? ''),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
+                          if (widget.location.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              widget.location,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                          if ((widget.tagline ?? '').isNotEmpty ||
+                              mediaTitle.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              mediaTitle.isNotEmpty
+                                  ? mediaTitle
+                                  : (widget.tagline ?? ''),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
-                    ),
-                  ),
-                  if ((widget.logoUrl ?? '').isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 12),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          widget.logoUrl!,
-                          height: 40,
-                          width: 40,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, _, __) => const SizedBox.shrink(),
-                        ),
                       ),
                     ),
-                ],
+                    if ((widget.logoUrl ?? '').isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 12),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            widget.logoUrl!,
+                            height: 40,
+                            width: 40,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, _, __) =>
+                                const SizedBox.shrink(),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          );
+        },
       ),
     );
   }

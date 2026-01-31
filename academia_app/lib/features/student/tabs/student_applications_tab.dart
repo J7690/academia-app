@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../../providers/student_applications_provider.dart';
 import '../../../providers/student_application_payments_provider.dart';
+import '../../../widgets/bobodo_state.dart';
+import '../../../widgets/bobodo_view.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
 import '../student_application_detail_screen.dart';
@@ -332,39 +334,115 @@ class _ApplicationsHeader extends StatelessWidget {
                   return const SizedBox.shrink();
                 }
 
-                int inProgress = 0;
+                int drafts = 0;
+                int submitted = 0;
+                int underReview = 0;
                 int accepted = 0;
+                int rejected = 0;
+                int canceled = 0;
+
                 for (final app in apps) {
                   final status = app['status']?.toString();
-                  if (status == 'submitted' || status == 'under_review') {
-                    inProgress++;
-                  } else if (status == 'accepted') {
-                    accepted++;
+                  switch (status) {
+                    case 'draft':
+                      drafts++;
+                      break;
+                    case 'submitted':
+                      submitted++;
+                      break;
+                    case 'under_review':
+                      underReview++;
+                      break;
+                    case 'accepted':
+                      accepted++;
+                      break;
+                    case 'rejected':
+                      rejected++;
+                      break;
+                    case 'canceled':
+                      canceled++;
+                      break;
+                    default:
+                      break;
                   }
                 }
 
-                if (inProgress == 0 && accepted == 0) {
-                  return const SizedBox.shrink();
-                }
+                final bobodoState = _bobodoSummaryState(
+                  drafts: drafts,
+                  submitted: submitted,
+                  underReview: underReview,
+                  accepted: accepted,
+                  rejected: rejected,
+                  canceled: canceled,
+                );
 
-                return Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
+                final bobodoText = _bobodoSummaryText(
+                  drafts: drafts,
+                  submitted: submitted,
+                  underReview: underReview,
+                  accepted: accepted,
+                  rejected: rejected,
+                  canceled: canceled,
+                );
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (inProgress > 0)
-                      _ApplicationsStatPill(
-                        icon: Icons.timelapse,
-                        color: _kApplicationsStatusSubmittedColor,
-                        label:
-                            '$inProgress en cours',
-                      ),
-                    if (accepted > 0)
-                      _ApplicationsStatPill(
-                        icon: Icons.check_circle_outline,
-                        color: _kApplicationsStatusAcceptedColor,
-                        label:
-                            '$accepted acceptée${accepted > 1 ? 's' : ''}',
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 12.0),
+                          child: BobodoView(
+                            state: bobodoState,
+                            size: 56,
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            bobodoText,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: _kApplicationsFilterUnselectedLabelColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        if (drafts > 0)
+                          _ApplicationsStatPill(
+                            icon: Icons.edit_note,
+                            color: _kApplicationsStatusDraftColor,
+                            label: '$drafts brouillon${drafts > 1 ? 's' : ''}',
+                          ),
+                        if (submitted + underReview > 0)
+                          _ApplicationsStatPill(
+                            icon: Icons.timelapse,
+                            color: _kApplicationsStatusSubmittedColor,
+                            label:
+                                '${submitted + underReview} en cours',
+                          ),
+                        if (accepted > 0)
+                          _ApplicationsStatPill(
+                            icon: Icons.check_circle_outline,
+                            color: _kApplicationsStatusAcceptedColor,
+                            label:
+                                '$accepted acceptée${accepted > 1 ? 's' : ''}',
+                          ),
+                        if (rejected + canceled > 0)
+                          _ApplicationsStatPill(
+                            icon: Icons.cancel_outlined,
+                            color: _kApplicationsStatusRejectedColor,
+                            label:
+                                '${rejected + canceled} terminée${rejected + canceled > 1 ? 's' : ''}',
+                          ),
+                      ],
+                    ),
                   ],
                 );
               },
@@ -668,4 +746,53 @@ String _formatDate(String? value) {
   final month = parsed.month.toString().padLeft(2, '0');
   final year = parsed.year.toString();
   return '$day/$month/$year';
+}
+
+BobodoState _bobodoSummaryState({
+  required int drafts,
+  required int submitted,
+  required int underReview,
+  required int accepted,
+  required int rejected,
+  required int canceled,
+}) {
+  if (accepted > 0) {
+    return BobodoState.success;
+  }
+  if (submitted + underReview > 0) {
+    return BobodoState.thinking;
+  }
+  if (rejected + canceled > 0) {
+    return BobodoState.warning;
+  }
+  return BobodoState.idle;
+}
+
+String _bobodoSummaryText({
+  required int drafts,
+  required int submitted,
+  required int underReview,
+  required int accepted,
+  required int rejected,
+  required int canceled,
+}) {
+  final int inProgress = submitted + underReview;
+  final int finished = rejected + canceled;
+
+  if (accepted > 0 && inProgress > 0) {
+    return 'Tu as déjà au moins une admission et d\'autres dossiers en cours. On sécurise ce qui est gagné et on continue à avancer.';
+  }
+  if (accepted > 0) {
+    return 'Bravo, tu as au moins une candidature acceptée 🎓. Considère-la comme ton badge \"Admission confirmée\" et vérifie les prochaines étapes.';
+  }
+  if (inProgress > 0) {
+    return 'Tes candidatures sont en cours d\'étude. Quand ton dossier est complet et soumis, tu décroches le badge \"Dossier complet\".';
+  }
+  if (drafts > 0) {
+    return 'Tu as des brouillons de candidatures. En les complétant, tu te rapproches du badge \"Dossier prêt\".';
+  }
+  if (finished > 0) {
+    return 'Tes candidatures actuelles sont terminées. Tu peux explorer de nouveaux programmes si tu veux viser un nouveau badge.';
+  }
+  return 'Dès que tu crées une candidature, je t\'aide à suivre son avancement et tes badges ici.';
 }

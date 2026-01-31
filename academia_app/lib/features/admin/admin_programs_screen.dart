@@ -39,6 +39,57 @@ class _AdminProgramsScreenState extends State<AdminProgramsScreen> {
     }
   }
 
+  Future<void> _confirmDeleteProgram(
+    BuildContext context,
+    AdminProgramsProvider provider,
+    String programId,
+    String title,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Supprimer le programme'),
+          content: Text(
+            "Ce programme sera retiré de la plateforme côté étudiant (il ne sera plus proposé dans les offres).\n\nTitre : " +
+                title,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text(
+                'Supprimer',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    final success = await provider.updateProgramStatus(
+      programId: programId,
+      isActive: false,
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? 'Programme supprimé (non visible côté étudiant).'
+              : provider.error ??
+                  'Erreur lors de la suppression du programme.',
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -208,6 +259,21 @@ class _AdminProgramsScreenState extends State<AdminProgramsScreen> {
                                 onPressed: (websiteUrl == null || websiteUrl.trim().isEmpty)
                                     ? null
                                     : () => _openWebsite(websiteUrl),
+                              ),
+                              IconButton(
+                                tooltip: 'Supprimer ce programme',
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.redAccent,
+                                ),
+                                onPressed: programId == null
+                                    ? null
+                                    : () => _confirmDeleteProgram(
+                                          context,
+                                          provider,
+                                          programId,
+                                          title,
+                                        ),
                               ),
                             ],
                           ),

@@ -966,6 +966,65 @@ class _AdminShortTrainingsScreenState extends State<AdminShortTrainingsScreen> {
                                     label:
                                         Text('Sessions (${sessions.length})'),
                                   ),
+                                  const SizedBox(width: 8),
+                                  TextButton.icon(
+                                    onPressed: () async {
+                                      final confirmed = await showDialog<bool>(
+                                        context: context,
+                                        builder: (dialogContext) {
+                                          return AlertDialog(
+                                            title: const Text(
+                                                'Supprimer la formation courte'),
+                                            content: Text(
+                                              "Cette formation sera retirée de la plateforme côté étudiant (elle ne sera plus proposée dans les formations courtes).\n\nTitre : " +
+                                                  title,
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.of(dialogContext)
+                                                        .pop(false),
+                                                child: const Text('Annuler'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.of(dialogContext)
+                                                        .pop(true),
+                                                child: const Text(
+                                                  'Supprimer',
+                                                  style: TextStyle(
+                                                    color: Colors.red,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+
+                                      if (confirmed != true) return;
+
+                                      final ok = await provider
+                                          .deleteTraining(training);
+                                      if (!context.mounted) return;
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            ok
+                                                ? 'Formation supprimée (non visible côté étudiant).'
+                                                : provider.error ??
+                                                    'Erreur lors de la suppression de la formation.',
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      color: Colors.redAccent,
+                                    ),
+                                    label: const Text('Supprimer'),
+                                  ),
                                 ],
                               ),
                             ],

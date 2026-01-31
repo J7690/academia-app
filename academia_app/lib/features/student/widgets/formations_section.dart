@@ -73,8 +73,18 @@ class StudentHomeFormationsSection extends StatelessWidget {
                 separatorBuilder: (_, __) => const SizedBox(width: 12),
                 itemBuilder: (context, index) {
                   final formation = formations[index];
+                  final screenWidth = MediaQuery.of(context).size.width;
+                  // Largeur de carte responsive : environ 75 % de l'écran,
+                  // avec des bornes pour éviter des cartes trop petites ou trop larges.
+                  double cardWidth = screenWidth * 0.75;
+                  if (cardWidth < 220) {
+                    cardWidth = 220;
+                  } else if (cardWidth > 340) {
+                    cardWidth = 340;
+                  }
+
                   return SizedBox(
-                    width: 280,
+                    width: cardWidth,
                     child: _FormationCard(formation: formation),
                   );
                 },
@@ -122,8 +132,16 @@ class _FormationsLoadingSkeleton extends StatelessWidget {
               itemCount: 3,
               separatorBuilder: (_, __) => const SizedBox(width: 12),
               itemBuilder: (context, index) {
+                final screenWidth = MediaQuery.of(context).size.width;
+                double cardWidth = screenWidth * 0.7;
+                if (cardWidth < 200) {
+                  cardWidth = 200;
+                } else if (cardWidth > 320) {
+                  cardWidth = 320;
+                }
+
                 return Container(
-                  width: 260,
+                  width: cardWidth,
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(16),

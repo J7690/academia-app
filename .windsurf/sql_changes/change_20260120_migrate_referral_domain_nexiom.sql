@@ -34,10 +34,10 @@ DECLARE
 BEGIN
   -- Base publique de l'app : configurable via le paramètre Postgres
   --   app.app_public_base_url
-  -- avec repli sur l'URL Netlify actuelle.
+  -- avec repli sur l'URL Netlify actuelle de production.
   v_base_url := COALESCE(
     current_setting('app.app_public_base_url', true),
-    'https://dulcet-snickerdoodle-915a6b.netlify.app'
+    'https://amazing-boba-9a75a7.netlify.app'
   );
   IF v_user_id IS NULL THEN
     RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
@@ -117,7 +117,7 @@ UPDATE app.commercial_profiles
 SET ref_link =
   COALESCE(
     current_setting('app.app_public_base_url', true),
-    'https://dulcet-snickerdoodle-915a6b.netlify.app'
+    'https://amazing-boba-9a75a7.netlify.app'
   ) || '/?ref=' || ref_code
 WHERE ref_code IS NOT NULL
   AND TRIM(ref_code) <> '';

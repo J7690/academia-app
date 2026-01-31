@@ -447,24 +447,26 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Signaler la communauté'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: reasonController,
-                decoration: const InputDecoration(
-                  labelText: 'Raison du signalement *',
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: reasonController,
+                  decoration: const InputDecoration(
+                    labelText: 'Raison du signalement *',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: detailsController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Détails (optionnel)',
+                const SizedBox(height: 8),
+                TextField(
+                  controller: detailsController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Détails (optionnel)',
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -563,24 +565,26 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Signaler ce message'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: reasonController,
-                decoration: const InputDecoration(
-                  labelText: 'Raison du signalement *',
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: reasonController,
+                  decoration: const InputDecoration(
+                    labelText: 'Raison du signalement *',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: detailsController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Détails (optionnel)',
+                const SizedBox(height: 8),
+                TextField(
+                  controller: detailsController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Détails (optionnel)',
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -1171,60 +1175,62 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
       builder: (ctx) {
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              if (description.isNotEmpty)
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  description,
-                  style: const TextStyle(fontSize: 13),
+                  name,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  if (category.isNotEmpty)
-                    Chip(
-                      label: Text(category),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  Chip(
-                    label: Text(
-                      visibility == 'public' ? 'Publique' : 'Privée',
-                    ),
-                    visualDensity: VisualDensity.compact,
+                const SizedBox(height: 8),
+                if (description.isNotEmpty)
+                  Text(
+                    description,
+                    style: const TextStyle(fontSize: 13),
                   ),
-                  Chip(
-                    label: Text(
-                      () {
-                        final jp = joinPolicy.toLowerCase();
-                        if (jp == 'request') return 'Adhésion sur demande';
-                        if (jp == 'invite_only') return 'Sur invitation';
-                        return 'Adhésion ouverte';
-                      }(),
-                    ),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  if (membersCount is int)
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    if (category.isNotEmpty)
+                      Chip(
+                        label: Text(category),
+                        visualDensity: VisualDensity.compact,
+                      ),
                     Chip(
                       label: Text(
-                        '$membersCount membre${membersCount > 1 ? 's' : ''}',
+                        visibility == 'public' ? 'Publique' : 'Privée',
                       ),
                       visualDensity: VisualDensity.compact,
                     ),
-                ],
-              ),
-            ],
+                    Chip(
+                      label: Text(
+                        () {
+                          final jp = joinPolicy.toLowerCase();
+                          if (jp == 'request') return 'Adhésion sur demande';
+                          if (jp == 'invite_only') return 'Sur invitation';
+                          return 'Adhésion ouverte';
+                        }(),
+                      ),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    if (membersCount is int)
+                      Chip(
+                        label: Text(
+                          '$membersCount membre${membersCount > 1 ? 's' : ''}',
+                        ),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },

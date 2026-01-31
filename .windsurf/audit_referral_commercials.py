@@ -28,6 +28,58 @@ def main() -> None:
       )
       ORDER BY proname
     """,
+    "roles_in_auth_users": """
+      SELECT
+        raw_user_meta_data->>'role' AS role,
+        COUNT(*) AS users_count,
+        MIN(created_at) AS first_created_at,
+        MAX(created_at) AS last_created_at
+      FROM auth.users
+      GROUP BY raw_user_meta_data->>'role'
+      ORDER BY role
+    """,
+    "students_overview": """
+      SELECT
+        COUNT(*) AS students_count,
+        MIN(created_at) AS first_created_at,
+        MAX(created_at) AS last_created_at
+      FROM app.students
+    """,
+    "students_without_profile": """
+      SELECT COUNT(*) AS students_without_profile
+      FROM auth.users u
+      WHERE u.raw_user_meta_data->>'role' = 'student'
+        AND NOT EXISTS (
+          SELECT 1 FROM app.students s WHERE s.id = u.id
+        )
+    """,
+    "students_profile_without_auth": """
+      SELECT COUNT(*) AS profiles_without_auth
+      FROM app.students s
+      WHERE NOT EXISTS (
+        SELECT 1 FROM auth.users u WHERE u.id = s.id
+      )
+    """,
+    "commercial_profiles_vs_roles": """
+      SELECT
+        u.id AS user_id,
+        u.email,
+        u.raw_user_meta_data->>'role' AS role,
+        cp.ref_code,
+        cp.ref_link,
+        cp.commission_rate,
+        cp.is_active
+      FROM app.commercial_profiles cp
+      JOIN auth.users u ON u.id = cp.user_id
+      ORDER BY cp.created_at DESC
+    """,
+    "fn_def_app_register_referral_for_current_user": """
+      SELECT pg_get_functiondef(p.oid) AS definition
+      FROM pg_proc p
+      WHERE p.proname = 'app_register_referral_for_current_user'
+      ORDER BY p.oid DESC
+      LIMIT 1
+    """,
   }
 
   for name, sql in queries.items():

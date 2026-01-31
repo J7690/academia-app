@@ -660,87 +660,90 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
             top: 16,
             bottom: bottomInset + 16,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Nouveau groupe',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nom du groupe *',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description (optionnel)',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: categoryController,
-                decoration: const InputDecoration(
-                  labelText: 'Catégorie (optionnel)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    final provider =
-                        context.read<StudentCommunitiesProvider>();
-                    final communityId = await provider.createGroup(
-                      name: nameController.text,
-                      description: descriptionController.text,
-                      category: categoryController.text.isEmpty
-                          ? null
-                          : categoryController.text,
-                    );
-                    if (!mounted) return;
-                    if (communityId == null) {
-                      if (provider.error != null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(provider.error!)),
-                        );
-                      }
-                      return;
-                    }
-
-                    Navigator.of(context).pop();
-
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => StudentCommunityDetailScreen(
-                          communityId: communityId,
-                          initialName: nameController.text.trim(),
-                          initialDescription: descriptionController.text.trim(),
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.check),
-                  label: const Text('Créer'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF7BC96F),
-                    foregroundColor: Colors.white,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Nouveau groupe',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nom du groupe *',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Description (optionnel)',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: categoryController,
+                  decoration: const InputDecoration(
+                    labelText: 'Catégorie (optionnel)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      final provider =
+                          context.read<StudentCommunitiesProvider>();
+                      final communityId = await provider.createGroup(
+                        name: nameController.text,
+                        description: descriptionController.text,
+                        category: categoryController.text.isEmpty
+                            ? null
+                            : categoryController.text,
+                      );
+                      if (!mounted) return;
+                      if (communityId == null) {
+                        if (provider.error != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(provider.error!)),
+                          );
+                        }
+                        return;
+                      }
+
+                      Navigator.of(context).pop();
+
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => StudentCommunityDetailScreen(
+                            communityId: communityId,
+                            initialName: nameController.text.trim(),
+                            initialDescription:
+                                descriptionController.text.trim(),
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.check),
+                    label: const Text('Créer'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF7BC96F),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -895,7 +898,7 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-              const SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   if (description.isNotEmpty)
                     Text(
                       description,
@@ -913,8 +916,10 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
                   if (isMember && unreadCount > 0) ...[
                     const SizedBox(height: 4),
                     Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF7BC96F),
                         borderRadius: BorderRadius.circular(999),

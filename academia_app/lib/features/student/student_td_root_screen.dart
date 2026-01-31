@@ -5,6 +5,11 @@ import '../../providers/student_td_catalog_provider.dart';
 import '../../providers/student_td_enrollments_provider.dart';
 import '../../providers/student_td_requests_provider.dart';
 import '../../providers/td_messages_provider.dart';
+import '../../widgets/bobodo_state.dart';
+import '../../widgets/bobodo_view.dart';
+import '../share/share_service.dart';
+import '../share/share_mode_provider.dart';
+import '../share/widgets/share_signature.dart';
 
 class StudentTdRootScreen extends StatefulWidget {
   const StudentTdRootScreen({super.key});
@@ -14,6 +19,9 @@ class StudentTdRootScreen extends StatefulWidget {
 }
 
 class _StudentTdRootScreenState extends State<StudentTdRootScreen> {
+  final GlobalKey _shareBoundaryKey = GlobalKey();
+  final ShareService _shareService = ShareService();
+
   @override
   void initState() {
     super.initState();
@@ -25,27 +33,387 @@ class _StudentTdRootScreenState extends State<StudentTdRootScreen> {
     });
   }
 
+  Future<void> _shareCurrentView() async {
+    await _shareService.shareCurrentView(
+      context: context,
+      boundaryKey: _shareBoundaryKey,
+      shareText:
+          'Découvert via Academia – Module TD (Travaux dirigés) de mon espace étudiant.',
+    );
+  }
+
+  void _openShareOptions() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.web),
+                title: const Text('Vue complète de l\'espace TD'),
+                subtitle: const Text(
+                  'Capture tout l\'écran du module TD (onglet actuel).',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _shareCurrentView();
+                },
+              ),
+              const Divider(height: 0),
+              ListTile(
+                leading: const Icon(Icons.school_outlined),
+                title: const Text('Carte "Mes TD actifs"'),
+                subtitle: const Text(
+                  'Met en avant le nombre de TD actifs et quelques titres.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _shareTdActiveCard();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.schedule_outlined),
+                title: const Text('Carte prochaine séance TD'),
+                subtitle: const Text(
+                  'Partage la date de ta prochaine séance TD.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _shareTdNextSessionCard();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _shareTdActiveCard() async {
+    final provider = context.read<StudentTdEnrollmentsProvider>();
+    final enrollments = provider.enrollments;
+    final active = enrollments
+        .where((e) => (e['access_status'] ?? '').toString() == 'active')
+        .toList(growable: false);
+
+    final titles = <String>{};
+    for (final e in active) {
+      final title = (e['program_title'] ?? 'Programme TD').toString().trim();
+      if (title.isNotEmpty) {
+        titles.add(title);
+      }
+      if (titles.length >= 3) break;
+    }
+
+    await _shareService.shareCustomCard(
+      context: context,
+      card: _StudentTdShareActiveCard(
+        activeCount: active.length,
+        programTitles: titles.toList(growable: false),
+      ),
+      shareText:
+          'Mes TD actifs sur Academia – Module TD (Travaux dirigés).',
+    );
+  }
+
+  Future<void> _shareTdNextSessionCard() async {
+    final provider = context.read<StudentTdEnrollmentsProvider>();
+    final nextSessions = provider.nextSessions;
+
+    DateTime? nextSessionAt;
+    if (nextSessions.isNotEmpty) {
+      for (final s in nextSessions) {
+        final raw = s['scheduled_at'];
+        if (raw == null) continue;
+        final dt = DateTime.tryParse(raw.toString());
+        if (dt == null) continue;
+        if (nextSessionAt == null || dt.isBefore(nextSessionAt)) {
+          nextSessionAt = dt;
+        }
+      }
+    }
+
+    String subtitle;
+    if (nextSessionAt != null) {
+      final d = nextSessionAt;
+      final day = d.day.toString().padLeft(2, '0');
+      final month = d.month.toString().padLeft(2, '0');
+      final year = d.year.toString();
+      final hour = d.hour.toString().padLeft(2, '0');
+      final minute = d.minute.toString().padLeft(2, '0');
+      subtitle = 'Le $day/$month/$year à $hour:$minute';
+    } else {
+      subtitle = 'Aucune séance TD programmée pour le moment.';
+    }
+
+    await _shareService.shareCustomCard(
+      context: context,
+      card: _StudentTdShareNextSessionCard(
+        title: 'Ma prochaine séance TD',
+        subtitle: subtitle,
+      ),
+      shareText:
+          'Ma prochaine séance de Travaux dirigés sur Academia.',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 3,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF3F4F6),
-        appBar: AppBar(
-          title: const Text('TD - Travaux dirigés'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Catalogue TD'),
-              Tab(text: 'Mes TD'),
-              Tab(text: 'Mes demandes'),
-            ],
-          ),
-        ),
-        body: TabBarView(
+      child: RepaintBoundary(
+        key: _shareBoundaryKey,
+        child: Stack(
           children: [
-            _StudentTdCatalogTab(),
-            _StudentTdMyEnrollmentsTab(),
-            _StudentTdRequestsTab(),
+            Scaffold(
+              backgroundColor: const Color(0xFFF3F4F6),
+              appBar: AppBar(
+                title: const Text('TD - Travaux dirigés'),
+                actions: [
+                  Consumer<ShareModeProvider>(
+                    builder: (context, shareMode, _) {
+                      final isBusy = shareMode.isBusy;
+                      return IconButton(
+                        icon: const Icon(Icons.share),
+                        onPressed: isBusy ? null : _openShareOptions,
+                        tooltip: 'Partager mon espace TD',
+                      );
+                    },
+                  ),
+                ],
+                bottom: TabBar(
+                  isScrollable: true,
+                  tabs: const [
+                    Tab(text: 'Catalogue TD'),
+                    Tab(text: 'Mes TD'),
+                    Tab(text: 'Mes demandes'),
+                  ],
+                ),
+              ),
+              body: const TabBarView(
+                children: [
+                  _StudentTdCatalogTab(),
+                  _StudentTdMyEnrollmentsTab(),
+                  _StudentTdRequestsTab(),
+                ],
+              ),
+            ),
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: IgnorePointer(
+                child: Consumer<ShareModeProvider>(
+                  builder: (context, shareMode, _) {
+                    if (!shareMode.isShareModeEnabled) {
+                      return const SizedBox.shrink();
+                    }
+                    return const ShareSignature();
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StudentTdShareActiveCard extends StatelessWidget {
+  final int activeCount;
+  final List<String> programTitles;
+
+  const _StudentTdShareActiveCard({
+    required this.activeCount,
+    required this.programTitles,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasActive = activeCount > 0;
+    final titles = programTitles.take(3).toList(growable: false);
+
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x33000000),
+              offset: Offset(0, 10),
+              blurRadius: 30,
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Academia – Module TD',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  hasActive
+                      ? "J'ai $activeCount TD actif(s) en ce moment."
+                      : 'Je prépare mes futurs Travaux dirigés.',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (hasActive && titles.isNotEmpty) ...[
+                  const Text(
+                    'Programmes en cours:',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...titles.map(
+                    (t) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.check_circle_outline,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              t,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  const Text(
+                    'Dès que mes premiers TD seront activés, ils apparaîtront ici.',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const Positioned(
+              right: 16,
+              bottom: 16,
+              child: ShareSignature(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StudentTdShareNextSessionCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _StudentTdShareNextSessionCard({
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Ma prochaine séance de Travaux dirigés',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0A2540),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF4B5563),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Partagé depuis mon espace étudiant Academia.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ],
+            ),
+            const Positioned(
+              right: 16,
+              bottom: 16,
+              child: ShareSignature(),
+            ),
           ],
         ),
       ),
@@ -68,31 +436,61 @@ class _StudentTdCatalogTab extends StatelessWidget {
         itemCount: programs.length + 1,
         itemBuilder: (context, index) {
           if (index == 0) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEEF2FF),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const CircleAvatar(
-                  radius: 18,
-                  backgroundColor: Color(0xFF4F46E5),
-                  child: Icon(Icons.help_outline, color: Colors.white, size: 20),
+            return Column(
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Padding(
+                        padding: EdgeInsets.only(right: 12.0),
+                        child: BobodoView(
+                          state: BobodoState.thinking,
+                          size: 40,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Les TD sont organisés par l\'administrateur. Parcours le catalogue et, si rien ne correspond, tu peux demander un TD adapté à ton niveau.',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                title: const Text(
-                  'Je ne trouve pas mon TD',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF2FF),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Color(0xFF4F46E5),
+                      child: Icon(Icons.help_outline, color: Colors.white, size: 20),
+                    ),
+                    title: const Text(
+                      'Je ne trouve pas mon TD',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: const Text(
+                      'Demande un TD spécifique à l\'administrateur si aucun programme ne correspond.',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () => _promptCreateRequest(context),
+                  ),
                 ),
-                subtitle: const Text(
-                  'Demande un TD spécifique à l\'administrateur si aucun programme ne correspond.',
-                  style: TextStyle(fontSize: 12),
-                ),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => _promptCreateRequest(context),
-              ),
+              ],
             );
           }
 
@@ -541,13 +939,117 @@ class _StudentTdMyEnrollmentsTab extends StatelessWidget {
     final messagesProvider = context.watch<TdMessagesProvider>();
     final enrollments = enrollmentsProvider.enrollments;
 
+    // Calculer quelques infos de cockpit
+    final nextSessions = enrollmentsProvider.nextSessions;
+    DateTime? nextSessionAt;
+    if (nextSessions.isNotEmpty) {
+      for (final s in nextSessions) {
+        final raw = s['scheduled_at'];
+        if (raw == null) continue;
+        final dt = DateTime.tryParse(raw.toString());
+        if (dt == null) continue;
+        if (nextSessionAt == null || dt.isBefore(nextSessionAt)) {
+          nextSessionAt = dt;
+        }
+      }
+    }
+
+    final activeCount = enrollments
+        .where((e) => (e['access_status'] ?? '').toString() == 'active')
+        .length;
+    final unreadCount = enrollmentsProvider.unreadMessagesCount;
+
     return RefreshIndicator(
       onRefresh: enrollmentsProvider.loadMyEnrollments,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: enrollments.length,
+        itemCount: enrollments.length + 1,
         itemBuilder: (context, index) {
-          final e = enrollments[index];
+          if (index == 0) {
+            String? nextLabel;
+            if (nextSessionAt != null) {
+              final d = nextSessionAt;
+              final day = d.day.toString().padLeft(2, '0');
+              final month = d.month.toString().padLeft(2, '0');
+              final year = d.year.toString();
+              final hour = d.hour.toString().padLeft(2, '0');
+              final minute = d.minute.toString().padLeft(2, '0');
+              nextLabel = 'Prochaine séance prévue le $day/$month/$year à $hour:$minute';
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Card(
+                  color: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(right: 12.0),
+                          child: BobodoView(
+                            state: BobodoState.thinking,
+                            size: 40,
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                activeCount > 0
+                                    ? 'Tu as $activeCount TD actifs en ce moment.'
+                                    : "Tu n'as pas encore de TD actif.",
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              if (nextLabel != null)
+                                Text(
+                                  nextLabel,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF4B5563),
+                                  ),
+                                )
+                              else
+                                const Text(
+                                  'Dès que ton admin programme une séance, elle apparaîtra ici.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF4B5563),
+                                  ),
+                                ),
+                              const SizedBox(height: 4),
+                              if (unreadCount > 0)
+                                Text(
+                                  'Tu as $unreadCount message(s) non lu(s) avec l\'admin TD.',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF2563EB),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            );
+          }
+
+          final e = enrollments[index - 1];
           final enrollmentId = e['id']?.toString() ?? '';
           final title = e['program_title']?.toString() ?? 'Programme TD';
           final level = e['program_level']?.toString() ?? '';

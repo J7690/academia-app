@@ -1000,8 +1000,14 @@ class _AdminStudentHomeScreenState extends State<AdminStudentHomeScreen> {
                               final urlIsEmpty = url.isEmpty;
                               final urlLooksHttp = url.startsWith('http://') ||
                                   url.startsWith('https://');
-                              final unsupported = urlIsEmpty ||
-                                  (mediaTypeLower == 'video' && !urlLooksHttp);
+                              // Pour les vidéos basées sur VideoAsset, baseVideoUrl
+                              // peut légitimement être vide. On ne considère donc
+                              // comme "non supporté" que :
+                              // - les images sans URL;
+                              // - les vidéos avec une URL non vide mais non http(s).
+                              final unsupported = isImage
+                                  ? urlIsEmpty
+                                  : (!urlIsEmpty && !urlLooksHttp);
 
                               final subtitleBuffer = StringBuffer()
                                 ..writeln('Type: ' +

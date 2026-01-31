@@ -60,6 +60,40 @@ class AdminShortTrainingsProvider extends ChangeNotifier {
     }
   }
 
+  /// Effectue un "soft delete" d'une formation courte en la marquant comme inactive.
+  /// On réutilise la RPC app_admin_upsert_short_training avec les données existantes
+  /// pour ne modifier que le flag is_active.
+  Future<bool> deleteTraining(Map<String, dynamic> training) async {
+    final id = training['id']?.toString();
+    if (id == null || id.isEmpty) {
+      _setError('Identifiant de formation manquant.');
+      return false;
+    }
+
+    final String title = training['title']?.toString() ?? '';
+    final String? shortDescription =
+        training['short_description']?.toString();
+    final String? fullDescription =
+        training['full_description']?.toString();
+    final String? category = training['category']?.toString();
+    final String? modality = training['modality']?.toString();
+    final int? durationDays = training['duration_days'] as int?;
+    final dynamic rawPrice = training['price'];
+    final double? price = rawPrice is num ? rawPrice.toDouble() : null;
+
+    return upsertTraining(
+      trainingId: id,
+      title: title,
+      shortDescription: shortDescription,
+      fullDescription: fullDescription,
+      category: category,
+      modality: modality,
+      durationDays: durationDays,
+      price: price,
+      isActive: false,
+    );
+  }
+
   Future<bool> upsertTraining({
     String? trainingId,
     required String title,
