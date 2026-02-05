@@ -250,6 +250,20 @@ class _AdminOnlineCoursesScreenState extends State<AdminOnlineCoursesScreen> {
                             icon: const Icon(Icons.people_outline),
                             label: const Text('Inscriptions'),
                           ),
+                          const SizedBox(height: 4),
+                          TextButton.icon(
+                            onPressed: () {
+                              _confirmDeleteCourse(context, provider, course);
+                            },
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Colors.red,
+                            ),
+                            label: const Text(
+                              'Supprimer',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
                           if (courseId != null)
                             Text(
                               courseId,
@@ -275,6 +289,53 @@ class _AdminOnlineCoursesScreenState extends State<AdminOnlineCoursesScreen> {
         },
         icon: const Icon(Icons.add),
         label: const Text('Ajouter un cours en ligne'),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteCourse(
+    BuildContext context,
+    AdminOnlineCoursesProvider provider,
+    Map<String, dynamic> course,
+  ) async {
+    final title = (course['title'] ?? '').toString();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Supprimer ce cours en ligne ?'),
+          content: Text(
+            title.isEmpty
+                ? 'Ce cours sera retiré de la landing et de l\'espace étudiant (catalogue des formations en ligne). Les étudiants déjà inscrits garderont leur accès dans "Mes formations en ligne".'
+                : 'Le cours "$title" sera retiré de la landing et de l\'espace étudiant (catalogue des formations en ligne). Les étudiants déjà inscrits garderont leur accès dans "Mes formations en ligne".',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Supprimer'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    final ok = await provider.deleteOnlineCourse(course);
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'Le cours en ligne a été supprimé de la landing et du catalogue étudiant.'
+              : 'Erreur lors de la suppression du cours en ligne.',
+        ),
       ),
     );
   }

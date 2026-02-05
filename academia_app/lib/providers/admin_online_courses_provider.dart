@@ -125,6 +125,44 @@ class AdminOnlineCoursesProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> deleteOnlineCourse(Map<String, dynamic> course) async {
+    final courseId = course['id']?.toString();
+    if (courseId == null || courseId.isEmpty) {
+      return false;
+    }
+
+    final dynamic rawEstimatedHours = course['estimated_hours'];
+    int? estimatedHours;
+    if (rawEstimatedHours is int) {
+      estimatedHours = rawEstimatedHours;
+    }
+
+    final dynamic rawPrice = course['price'];
+    num? price;
+    if (rawPrice is num) {
+      price = rawPrice;
+    }
+
+    return upsertOnlineCourse(
+      courseId: courseId,
+      title: (course['title'] ?? '').toString(),
+      shortDescription: course['short_description']?.toString(),
+      fullDescription: course['full_description']?.toString(),
+      category: course['category']?.toString(),
+      level: course['level']?.toString(),
+      language: course['language']?.toString(),
+      estimatedHours: estimatedHours,
+      coverImageUrl: course['cover_image_url']?.toString(),
+      price: price,
+      contactPhone: course['contact_phone']?.toString(),
+      contactWhatsapp: course['contact_whatsapp']?.toString(),
+      contactEmail: course['contact_email']?.toString(),
+      contactWebsite: course['contact_website']?.toString(),
+      contactNotes: course['contact_notes']?.toString(),
+      isPublished: false,
+    );
+  }
+
   Future<List<Map<String, dynamic>>> loadEnrollments(String courseId) async {
     _setError(null);
     try {

@@ -298,7 +298,7 @@ BEGIN
         LEFT JOIN app.programs p ON s.domain = 'program' AND p.id = s.object_id AND p.is_active = TRUE
         LEFT JOIN app.universities u ON s.domain = 'program' AND u.id = p.university_id AND u.is_active = TRUE
         LEFT JOIN app.short_training_sessions sts ON s.domain = 'short_training_session' AND sts.id = s.object_id
-        LEFT JOIN app.online_courses c ON s.domain = 'online_course' AND c.id = s.object_id
+        LEFT JOIN app.online_courses c ON s.domain = 'online_course' AND c.id = s.object_id AND c.is_published = TRUE
         LEFT JOIN app.opportunities o ON s.domain = 'opportunity' AND o.id = s.object_id
         WHERE s.slot = p_slot
           AND s.is_active = TRUE
