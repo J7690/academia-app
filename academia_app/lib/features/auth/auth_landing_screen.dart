@@ -1221,13 +1221,10 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
         return SingleChildScrollView(
           child: Column(
             children: [
-              if (isMobile)
-                hero
-              else
-                SizedBox(
-                  height: firstHeight,
-                  child: hero,
-                ),
+              SizedBox(
+                height: firstHeight,
+                child: hero,
+              ),
               SizedBox(height: sectionSpacing),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
