@@ -1074,6 +1074,9 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
         final firstHeight = constraints.maxHeight;
         final width = constraints.maxWidth;
         final bool isMobile = width < AppBreakpoints.mobile;
+        // Hauteur du hero : plus compacte sur mobile (~70% de la hauteur dispo),
+        // plein écran sur desktop/tablette.
+        final double heroHeight = isMobile ? firstHeight * 0.7 : firstHeight;
         final double heroBadgeSpacing = isMobile ? 12.0 : 16.0;
         final double heroTitleSpacing = isMobile ? 8.0 : 10.0;
         final double heroSubtitleSpacing = isMobile ? 14.0 : 18.0;
@@ -1222,7 +1225,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
           child: Column(
             children: [
               SizedBox(
-                height: firstHeight,
+                height: heroHeight,
                 child: hero,
               ),
               SizedBox(height: sectionSpacing),
