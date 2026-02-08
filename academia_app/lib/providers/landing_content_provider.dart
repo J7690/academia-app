@@ -513,6 +513,12 @@ class LandingContentProvider extends ChangeNotifier {
     _setSaving(true);
     _setError(null);
     try {
+      debugPrint(
+        'LandingContentProvider.upsertVideo: start videoId=$videoId '
+        'mediaType=$mediaType videoUrl=$videoUrl videoAssetId=$videoAssetId '
+        'sortOrder=$sortOrder isActive=$isActive',
+      );
+
       final trimmedUrl = videoUrl?.trim() ?? '';
 
       String? effectiveVideoAssetId = videoAssetId;
@@ -546,8 +552,19 @@ class LandingContentProvider extends ChangeNotifier {
       if (mediaType == 'video' &&
           (effectiveVideoAssetId == null || effectiveVideoAssetId.isEmpty)) {
         _setError('VideoAsset manquant pour la vidéo de la landing.');
+        debugPrint(
+          'LandingContentProvider.upsertVideo: abort, missing VideoAsset for video '
+          '(mediaType=$mediaType, trimmedUrl=$trimmedUrl)',
+        );
         return false;
       }
+
+      debugPrint(
+        'LandingContentProvider.upsertVideo: calling RPC app_admin_upsert_landing_video '
+        'with videoId=$videoId effectiveVideoAssetId=$effectiveVideoAssetId '
+        'mediaType=$mediaType sortOrder=$sortOrder isActive=$isActive '
+        'hasPlayback=${effectivePlayback != null}',
+      );
 
       final dynamic response = await _client.rpc(
         'app_admin_upsert_landing_video',
@@ -561,6 +578,7 @@ class LandingContentProvider extends ChangeNotifier {
           'p_media_type': mediaType,
         },
       );
+      debugPrint('LandingContentProvider.upsertVideo: response=$response');
       if (response is! Map<String, dynamic>) {
         _setError('Réponse invalide du serveur lors de la sauvegarde de la vidéo.');
         return false;
@@ -569,11 +587,16 @@ class LandingContentProvider extends ChangeNotifier {
         _setError(
           response['error']?.toString() ?? 'Erreur lors de la sauvegarde de la vidéo.',
         );
+        debugPrint(
+          'LandingContentProvider.upsertVideo: RPC error '
+          "success=${response['success']} error=${response['error']}",
+        );
         return false;
       }
       await loadAdminLandingContent();
       return true;
     } catch (e) {
+      debugPrint('LandingContentProvider.upsertVideo: exception=$e');
       _setError(e.toString());
       return false;
     } finally {

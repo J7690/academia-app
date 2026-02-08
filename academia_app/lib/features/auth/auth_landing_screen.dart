@@ -1071,163 +1071,180 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final firstHeight = constraints.maxHeight;
         final width = constraints.maxWidth;
         final bool isMobile = width < AppBreakpoints.mobile;
-        // Hauteur du hero : plus compacte sur mobile (~45% de la hauteur dispo),
-        // plein écran sur desktop/tablette.
-        final double heroHeight = isMobile ? firstHeight * 0.45 : firstHeight;
+
+        double heroAspectRatio;
+        if (width < 600) {
+          heroAspectRatio = 16 / 9;
+        } else if (width < 1000) {
+          heroAspectRatio = 16 / 7;
+        } else {
+          heroAspectRatio = 16 / 5;
+        }
+
         final double heroBadgeSpacing = isMobile ? 12.0 : 16.0;
         final double heroTitleSpacing = isMobile ? 8.0 : 10.0;
         final double heroSubtitleSpacing = isMobile ? 14.0 : 18.0;
         final double sectionSpacing = isMobile ? 16.0 : 24.0;
         final double partnersSpacing = isMobile ? 20.0 : 24.0;
         final double bottomSpacing = isMobile ? 16.0 : 24.0;
+
         final hero = Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(24),
             child: HeroMediaCarousel(
               items: _heroMediaItems,
-              // On laisse le hero occuper sa hauteur naturelle, sans AspectRatio.
-              useAspectRatio: false,
+              aspectRatio: heroAspectRatio,
+              useAspectRatio: true,
               autoplay: true,
               loopVideos: false,
               mutedByDefault: kIsWeb,
               showControls: false,
-              defaultImageDuration: const Duration(seconds: 8),
+              defaultImageDuration: const Duration(seconds: 5),
               overlayBuilder: (context, currentItem) {
-                return Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        primaryColor.withOpacity(0.75),
-                        primaryColor.withOpacity(0.4),
-                        secondaryColor.withOpacity(0.05),
-                      ],
-                      stops: const [0.0, 0.45, 1.0],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      24,
-                      isMobile ? 12 : 16,
-                      24,
-                      isMobile ? 20 : 32,
-                    ),
-                    child: Align(
-                      alignment: isMobile
-                          ? Alignment.bottomLeft
-                          : Alignment.centerLeft,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 520),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.18),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                heroBadge,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: heroBadgeSpacing),
-                            Text(
-                              heroTitle,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: isMobile ? 22 : 24,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            SizedBox(height: heroTitleSpacing),
-                            Text(
-                              heroSubtitle,
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                              ),
-                            ),
-                            SizedBox(height: heroSubtitleSpacing),
-                            Wrap(
-                              spacing: 12,
-                              runSpacing: 8,
-                              children: [
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: accentColor,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 22,
-                                      vertical: 12,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => const SignupScreen(),
-                                      ),
-                                    );
-                                  },
-                                  child: const Text('Créer un compte'),
-                                ),
-                                OutlinedButton(
-                                  style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(color: Colors.white),
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 10,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => const LoginScreen(),
-                                      ),
-                                    );
-                                  },
-                                  child: const Text('Se connecter'),
-                                ),
-                              ],
-                            ),
-                          ],
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF7BC96F), Color(0xFFE8F5E9)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
                       ),
                     ),
-                  ),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black.withOpacity(0.45),
+                            Colors.black.withOpacity(0.1),
+                          ],
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        24,
+                        isMobile ? 12 : 16,
+                        24,
+                        isMobile ? 20 : 32,
+                      ),
+                      child: Align(
+                        alignment: isMobile
+                            ? Alignment.bottomLeft
+                            : Alignment.centerLeft,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 520),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.18),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  heroBadge,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: heroBadgeSpacing),
+                              Text(
+                                heroTitle,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: isMobile ? 22 : 24,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              SizedBox(height: heroTitleSpacing),
+                              Text(
+                                heroSubtitle,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              SizedBox(height: heroSubtitleSpacing),
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 8,
+                                children: [
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: accentColor,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 22,
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(999),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => const SignupScreen(),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text('Créer un compte'),
+                                  ),
+                                  OutlinedButton(
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(color: Colors.white),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                        vertical: 10,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(999),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => const LoginScreen(),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text('Se connecter'),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 );
               },
             ),
           ),
         );
+
         return SingleChildScrollView(
           child: Column(
             children: [
-              SizedBox(
-                height: heroHeight,
-                child: hero,
-              ),
+              hero,
               SizedBox(height: sectionSpacing),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),

@@ -1264,10 +1264,25 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
 
                               final subtitleBuffer = StringBuffer()
                                 ..writeln('Type: ' +
-                                    (isImage ? 'Image' : 'Vidéo'))
-                                ..writeln('URL: ${url.isEmpty ? '(vide)' : url}')
-                                ..write('Ordre: ${sortOrder}  •  ' +
-                                    (active ? 'Active' : 'Inactive'));
+                                    (isImage ? 'Image' : 'Vidéo'));
+
+                              if (isImage) {
+                                subtitleBuffer.writeln(
+                                  'URL: ${url.isEmpty ? '(vide)' : url}',
+                                );
+                              } else {
+                                // Les vidéos basées sur VideoAsset peuvent ne pas avoir
+                                // d'URL directe (baseVideoUrl). La lecture utilise le
+                                // manifest VideoAsset côté frontend.
+                                subtitleBuffer.writeln(
+                                  'URL: ${url.isEmpty ? '(gérée via VideoAsset)' : url}',
+                                );
+                              }
+
+                              subtitleBuffer.write(
+                                'Ordre: ${sortOrder}  •  ' +
+                                    (active ? 'Active' : 'Inactive'),
+                              );
                               if (unsupported) {
                                 subtitleBuffer.writeln(
                                   '\n[!] Média potentiellement non supporté (URL vide ou invalide)',
@@ -1299,8 +1314,7 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
                                                 ),
                                       ),
                                       IconButton(
-                                        icon:
-                                            const Icon(Icons.delete_outline),
+                                        icon: const Icon(Icons.delete_outline),
                                         onPressed:
                                             provider.isSaving || _heroLoading
                                                 ? null
