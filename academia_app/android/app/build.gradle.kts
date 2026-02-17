@@ -7,7 +7,10 @@ plugins {
 
 android {
     namespace = "com.example.academia_app"
-    compileSdk = flutter.compileSdkVersion
+    // Use a recent Android SDK to support modern libraries (e.g. material
+    // attributes like android:attr/lStar used transitively by plugins) and
+    // recent AndroidX dependencies.
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -25,7 +28,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -35,6 +38,12 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            // For now we disable code shrinking/minification to avoid R8
+            // missing class checks on ARCore/Sceneform while we validate
+            // functional behavior. This can be re-enabled later with proper
+            // keep rules.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }

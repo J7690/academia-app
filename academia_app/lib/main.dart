@@ -16,6 +16,9 @@ import 'providers/supabase_provider.dart';
 import 'providers/student_offers_provider.dart';
 import 'providers/home_formations_provider.dart';
 import 'providers/student_opportunities_provider.dart';
+import 'providers/student_announcements_provider.dart';
+import 'providers/student_academic_calendar_provider.dart';
+import 'providers/student_weather_provider.dart';
 import 'providers/student_communities_provider.dart';
 import 'providers/student_challenges_provider.dart';
 import 'providers/student_applications_provider.dart';
@@ -66,6 +69,8 @@ import 'providers/admin_short_trainings_provider.dart';
 import 'providers/admin_short_training_messages_provider.dart';
 import 'providers/admin_online_course_messages_provider.dart';
 import 'providers/admin_opportunities_provider.dart';
+import 'providers/admin_academic_announcements_provider.dart';
+import 'providers/admin_academic_events_provider.dart';
 import 'providers/admin_student_home_slots_provider.dart';
 import 'providers/opportunity_reactions_provider.dart';
 import 'providers/opportunity_comments_provider.dart';
@@ -157,6 +162,9 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => LandingContentProvider()),
       ChangeNotifierProvider(create: (_) => StudentHomeContentProvider()),
       ChangeNotifierProvider(create: (_) => StudentHomeSlotsProvider()),
+      ChangeNotifierProvider(create: (_) => StudentAnnouncementsProvider()),
+      ChangeNotifierProvider(create: (_) => StudentAcademicCalendarProvider()),
+      ChangeNotifierProvider(create: (_) => StudentWeatherProvider()),
       ChangeNotifierProvider(create: (_) => StudentOffersProvider()),
       ChangeNotifierProvider(create: (_) => HomeFormationsProvider()),
       ChangeNotifierProvider(create: (_) => StudentOpportunitiesProvider()),
@@ -185,6 +193,8 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => AdminApplicationMessagesProvider()),
       ChangeNotifierProvider(create: (_) => AdminProgramsProvider()),
       ChangeNotifierProvider(create: (_) => AdminOpportunitiesProvider()),
+      ChangeNotifierProvider(create: (_) => AdminAcademicAnnouncementsProvider()),
+      ChangeNotifierProvider(create: (_) => AdminAcademicEventsProvider()),
       ChangeNotifierProvider(create: (_) => AdminStudentHomeSlotsProvider()),
       ChangeNotifierProvider(create: (_) => AdminCommunitiesProvider()),
       ChangeNotifierProvider(create: (_) => AdminChallengesProvider()),

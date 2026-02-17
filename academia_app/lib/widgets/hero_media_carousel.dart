@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import '../video/academia_playback_engine.dart';
 
@@ -169,6 +170,13 @@ class _HeroMediaCarouselState extends State<HeroMediaCarousel>
     }
   }
 
+  void _handleVideoStarted() {
+    if (_videoStartTimer != null) {
+      _videoStartTimer!.cancel();
+      _videoStartTimer = null;
+    }
+  }
+
   void _goToNext() {
     if (!mounted || widget.items.isEmpty) {
       return;
@@ -261,14 +269,17 @@ class _HeroMediaCarouselState extends State<HeroMediaCarousel>
             looping: widget.loopVideos,
             muted: widget.mutedByDefault,
             showControls: widget.showControls,
+            showErrorText: false,
             fit: BoxFit.cover,
             onCompleted: _handleVideoCompleted,
+            onFirstPlay: _handleVideoStarted,
           ),
         ],
       );
     }
 
     // Image simple avec timer.
+    debugPrint('HeroMediaCarousel: building image item url=' + item.url);
     return Image.network(
       item.url,
       fit: BoxFit.cover,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/student_profile_provider.dart';
+import '../../providers/student_weather_provider.dart';
 import '../../providers/student_dossier_documents_provider.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart';
@@ -32,6 +33,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   final TextEditingController _bacInstitutionController = TextEditingController();
   final TextEditingController _bacCountryController = TextEditingController();
   final TextEditingController _studyProjectController = TextEditingController();
+  final TextEditingController _timezoneController = TextEditingController();
+  final TextEditingController _geoLatController = TextEditingController();
+  final TextEditingController _geoLonController = TextEditingController();
 
   bool _initializedFromProfile = false;
 
@@ -60,6 +64,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     _bacInstitutionController.dispose();
     _bacCountryController.dispose();
     _studyProjectController.dispose();
+    _timezoneController.dispose();
+    _geoLatController.dispose();
+    _geoLonController.dispose();
     super.dispose();
   }
 
@@ -114,6 +121,15 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 profile['bac_country']?.toString() ?? '';
             _studyProjectController.text =
                 profile['study_project_text']?.toString() ?? '';
+            _timezoneController.text = profile['timezone']?.toString() ?? '';
+            final geoLat = profile['geo_latitude'];
+            if (geoLat != null) {
+              _geoLatController.text = geoLat.toString();
+            }
+            final geoLon = profile['geo_longitude'];
+            if (geoLon != null) {
+              _geoLonController.text = geoLon.toString();
+            }
             _initializedFromProfile = true;
           }
 
@@ -173,6 +189,44 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                     labelText: 'Ville',
                     border: OutlineInputBorder(),
                   ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _timezoneController,
+                  decoration: const InputDecoration(
+                    labelText: 'Fuseau horaire (ex: Africa/Lome)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _geoLatController,
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: 'Latitude',
+                          hintText: 'ex: 6.1319',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: _geoLonController,
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: 'Longitude',
+                          hintText: 'ex: 1.2228',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -351,6 +405,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                               _bacCountryController.text.trim();
                           final studyProject =
                               _studyProjectController.text.trim();
+                          final timezoneText = _timezoneController.text.trim();
+                          final geoLatText = _geoLatController.text.trim();
+                          final geoLonText = _geoLonController.text.trim();
 
                           final success = await provider.updateProfile(
                             fullName: fullName.isEmpty ? null : fullName,
@@ -383,6 +440,18 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                             studyProjectText: studyProject.isEmpty
                                 ? null
                                 : studyProject,
+                            timezone:
+                                timezoneText.isEmpty ? null : timezoneText,
+                            geoLatitude: geoLatText.isEmpty
+                                ? null
+                                : double.tryParse(
+                                    geoLatText.replaceAll(',', '.'),
+                                  ),
+                            geoLongitude: geoLonText.isEmpty
+                                ? null
+                                : double.tryParse(
+                                    geoLonText.replaceAll(',', '.'),
+                                  ),
                           );
 
                           if (!mounted) return;
@@ -391,6 +460,11 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Profil mis à jour.')),
                             );
+                            try {
+                              await context
+                                  .read<StudentWeatherProvider>()
+                                  .loadWeatherFromStudentProfile();
+                            } catch (_) {}
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(

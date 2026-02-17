@@ -908,6 +908,11 @@ class _AdminUniversitySitePreview extends StatelessWidget {
             .where((e) => e.trim().isNotEmpty)
             .join(', ');
 
+        final cfg = siteProvider.config;
+        final heroTitle = (cfg?['hero_title']?.toString() ?? '').trim();
+        final heroSubtitle = (cfg?['hero_subtitle']?.toString() ?? '').trim();
+        final heroPosterMediaId = cfg?['hero_poster_media_id']?.toString();
+
         final contactEmail = university['contact_email']?.toString() ?? '';
         final contactPhone = university['contact_phone']?.toString() ?? '';
         final address = university['address']?.toString() ?? '';
@@ -927,8 +932,7 @@ class _AdminUniversitySitePreview extends StatelessWidget {
 
         final primaryColor = Theme.of(context).colorScheme.primary;
 
-        return Container
-          (
+        return Container(
           color: const Color(0xFFF9FAFB),
           child: SingleChildScrollView(
             child: Center(
@@ -1000,11 +1004,11 @@ class _AdminUniversitySitePreview extends StatelessWidget {
                       if (media.isNotEmpty) ...[
                         MiniSiteHeroVideo(
                           media: media,
-                          title: name,
+                          title: heroTitle.isNotEmpty ? heroTitle : name,
                           location: locationText,
-                          tagline: null,
+                          tagline: heroSubtitle.isNotEmpty ? heroSubtitle : null,
                           logoUrl: logoUrl.isNotEmpty ? logoUrl : null,
-                          heroPosterMediaId: null,
+                          heroPosterMediaId: heroPosterMediaId,
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -1895,6 +1899,14 @@ class _AdminSiteMediaTab extends StatelessWidget {
               icon: const Icon(Icons.add),
               label: const Text('Ajouter un média'),
             ),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: () {
+                _showAdminEditHeroConfigDialog(context, provider);
+              },
+              icon: const Icon(Icons.settings),
+              label: const Text('Configurer le hero'),
+            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -2483,6 +2495,174 @@ Future<void> _showAdminEditBlockDialog(
             child: const Text('Enregistrer'),
           ),
         ],
+      );
+    },
+  );
+}
+
+Future<void> _showAdminEditHeroConfigDialog(
+  BuildContext context,
+  AdminUniversitySiteProvider provider,
+) async {
+  final cfg = provider.config ?? <String, dynamic>{};
+  final titleController =
+      TextEditingController(text: cfg['hero_title']?.toString() ?? '');
+  final subtitleController =
+      TextEditingController(text: cfg['hero_subtitle']?.toString() ?? '');
+  final primaryColorController = TextEditingController(
+    text: cfg['hero_primary_color']?.toString() ?? '',
+  );
+  final secondaryColorController = TextEditingController(
+    text: cfg['hero_secondary_color']?.toString() ?? '',
+  );
+
+  final media = provider.media;
+  final heroCandidates = media
+      .where((m) {
+        final type = m['media_type']?.toString().toLowerCase() ?? '';
+        final isActive = m['is_active'] != false;
+        final url = (m['url'] ?? '').toString().trim();
+        final storagePath = (m['storage_path'] ?? '').toString().trim();
+        final isVideo = type.contains('video');
+        final isImage = type.contains('image');
+        if (!isVideo && !isImage) return false;
+        if (!isActive) return false;
+        return url.isNotEmpty || storagePath.isNotEmpty;
+      })
+      .toList(growable: false);
+
+  String? selectedHeroMediaId = cfg['hero_poster_media_id']?.toString();
+
+  await showDialog<void>(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Configuration du hero du mini-site'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Titre du hero *',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: subtitleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Sous-titre (optionnel)',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: primaryColorController,
+                    decoration: const InputDecoration(
+                      labelText:
+                          'Couleur primaire (hex, optionnel, ex: #1EA75C)',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: secondaryColorController,
+                    decoration: const InputDecoration(
+                      labelText:
+                          'Couleur secondaire (hex, optionnel, ex: #A3D65C)',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (heroCandidates.isNotEmpty)
+                    DropdownButtonFormField<String>(
+                      value: selectedHeroMediaId != null &&
+                              heroCandidates.any((m) =>
+                                  m['id']?.toString() == selectedHeroMediaId)
+                          ? selectedHeroMediaId
+                          : null,
+                      items: heroCandidates.map((m) {
+                        final id = m['id']?.toString();
+                        if (id == null) return null;
+                        final title = m['title']?.toString() ?? '';
+                        final type = m['media_type']?.toString() ?? '';
+                        return DropdownMenuItem<String>(
+                          value: id,
+                          child: Text(
+                            [title, type]
+                                .where((e) => e.isNotEmpty)
+                                .join(' · '),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).whereType<DropdownMenuItem<String>>().toList(),
+                      decoration: const InputDecoration(
+                        labelText: 'Média hero (affiche, optionnel)',
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedHeroMediaId = value;
+                        });
+                      },
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Annuler'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final title = titleController.text.trim();
+                  final subtitle = subtitleController.text.trim();
+                  final primaryColor = primaryColorController.text.trim();
+                  final secondaryColor =
+                      secondaryColorController.text.trim();
+
+                  if (title.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content:
+                            Text('Le titre du hero du mini-site est obligatoire.'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  final ok = await provider.upsertConfig(
+                    heroTitle: title,
+                    heroSubtitle:
+                        subtitle.isNotEmpty ? subtitle : null,
+                    heroPrimaryColor: primaryColor.isNotEmpty
+                        ? primaryColor
+                        : null,
+                    heroSecondaryColor: secondaryColor.isNotEmpty
+                        ? secondaryColor
+                        : null,
+                    heroPosterMediaId: selectedHeroMediaId,
+                  );
+                  if (!context.mounted) return;
+                  if (ok) {
+                    Navigator.of(context).pop();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          provider.error ??
+                              'Erreur lors de la sauvegarde de la configuration du mini-site (admin).',
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Enregistrer'),
+              ),
+            ],
+          );
+        },
       );
     },
   );
@@ -3261,6 +3441,14 @@ Future<void> _showAdminEditMediaDialog(
                   final type = selectedType;
                   final title = titleController.text.trim();
                   final description = descriptionController.text.trim();
+                  if (title.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Le titre du média est obligatoire.'),
+                      ),
+                    );
+                    return;
+                  }
                   final lowerTypeSave = type.toLowerCase();
                   final isFileMediaSave = lowerTypeSave == 'video' ||
                       lowerTypeSave == 'image' ||
@@ -3317,6 +3505,10 @@ Future<void> _showAdminEditMediaDialog(
                       );
                       return;
                     }
+                  }
+
+                  if (url != null && pickedBytes == null && pickedFileName == null) {
+                    storagePath = null;
                   }
 
                   final ok = await provider.upsertMedia(

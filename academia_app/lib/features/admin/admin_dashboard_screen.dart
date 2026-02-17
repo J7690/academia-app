@@ -27,6 +27,7 @@ import 'admin_hero_video_encoder_screen.dart';
 import 'admin_user_invitations_screen.dart';
 import 'admin_commercials_screen.dart';
 import 'admin_td_screen.dart';
+import 'admin_academic_communication_screen.dart';
 import 'admin_live_sessions_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -269,7 +270,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 21,
+      length: 22,
       child: Consumer<AdminApplicationsProvider>(
         builder: (context, applicationsProvider, child) {
           final unread = applicationsProvider.unreadCount;
@@ -388,6 +389,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const Tab(text: 'Commerciaux'),
                   const Tab(text: 'Comptes utilisateurs'),
                   const Tab(text: 'TD'),
+                  const Tab(text: 'Communication'),
                 ],
               ),
             ),
@@ -414,6 +416,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 AdminCommercialsScreen(),
                 AdminUserInvitationsScreen(),
                 AdminTdScreen(),
+                AdminAcademicCommunicationScreen(),
               ],
             ),
           );

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -133,9 +134,20 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
     for (final m in candidates) {
       final resolved = await _resolveMediaUrl(client, m);
       if (resolved == null || resolved.isEmpty) continue;
+
       final type = (m['media_type'] ?? '').toString().toLowerCase();
       final isImage = type.contains('image');
       final mediaType = isImage ? 'image' : 'video';
+
+      String? posterUrl;
+      final playbackRaw = m['playback'];
+      if (playbackRaw is Map) {
+        final playback = Map<String, dynamic>.from(playbackRaw);
+        final rawPoster = (playback['poster_url'] ?? '').toString().trim();
+        if (rawPoster.isNotEmpty) {
+          posterUrl = rawPoster;
+        }
+      }
 
       var id = (m['id'] ?? '').toString();
       if (id.isEmpty) {
@@ -148,7 +160,7 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
           id: id,
           mediaType: mediaType,
           url: resolved,
-          posterUrl: null,
+          posterUrl: posterUrl,
           sortOrder: sortOrder,
         ),
       );
@@ -181,6 +193,18 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
   }
 
   Future<String?> _resolveMediaUrl(SupabaseClient client, Map<String, dynamic> media) async {
+    final type = (media['media_type'] ?? '').toString().toLowerCase();
+    final isImage = type.contains('image');
+
+    final playbackRaw = media['playback'];
+    if (!isImage && playbackRaw is Map) {
+      final playback = Map<String, dynamic>.from(playbackRaw);
+      final bestUrl = (playback['best_url'] ?? '').toString().trim();
+      if (bestUrl.isNotEmpty) {
+        return bestUrl;
+      }
+    }
+
     final directUrl = (media['url'] ?? '').toString().trim();
     if (directUrl.isNotEmpty) return directUrl;
 
@@ -218,33 +242,34 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
         aspectRatio: aspectRatio,
         useAspectRatio: true,
         autoplay: true,
-        loopVideos: true,
-        mutedByDefault: false,
+        loopVideos: false,
+        mutedByDefault: kIsWeb,
         showControls: false,
         defaultImageDuration: const Duration(seconds: 5),
         overlayBuilder: (context, currentItem) {
-          final media =
-              currentItem != null ? mediaById[currentItem.id] : null;
+          final hasMedia = currentItem != null;
+          final media = hasMedia ? mediaById[currentItem!.id] : null;
           final mediaTitle = media?['title']?.toString() ?? '';
 
           return Stack(
             fit: StackFit.expand,
             children: [
-              Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              if (!hasMedia)
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF7BC96F), Color(0xFFE8F5E9)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                   ),
                 ),
-              ),
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
                       Colors.black.withOpacity(0.45),
-                      Colors.black.withOpacity(0.05),
+                      Colors.black.withOpacity(0.1),
                     ],
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,

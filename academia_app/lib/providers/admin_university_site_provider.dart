@@ -10,6 +10,7 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
   String? _error;
   String? _currentUniversityId;
   Map<String, dynamic>? _university;
+  Map<String, dynamic>? _config;
   List<Map<String, dynamic>> _blocks = [];
   List<Map<String, dynamic>> _media = [];
   List<Map<String, dynamic>> _events = [];
@@ -21,6 +22,7 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
   String? get error => _error;
   String? get currentUniversityId => _currentUniversityId;
   Map<String, dynamic>? get university => _university;
+  Map<String, dynamic>? get config => _config;
   List<Map<String, dynamic>> get blocks => List.unmodifiable(_blocks);
   List<Map<String, dynamic>> get media => List.unmodifiable(_media);
   List<Map<String, dynamic>> get events => List.unmodifiable(_events);
@@ -30,6 +32,59 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
+  }
+
+  Future<bool> upsertConfig({
+    required String heroTitle,
+    String? heroSubtitle,
+    String? heroPrimaryColor,
+    String? heroSecondaryColor,
+    String? heroPosterMediaId,
+  }) async {
+    final universityId = _currentUniversityId;
+    if (universityId == null) {
+      _setError('Aucune université sélectionnée.');
+      return false;
+    }
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_admin_upsert_university_site_config',
+        params: {
+          'p_university_id': universityId,
+          'p_hero_title': heroTitle,
+          'p_hero_subtitle': heroSubtitle,
+          'p_hero_primary_color': heroPrimaryColor,
+          'p_hero_secondary_color': heroSecondaryColor,
+          'p_hero_poster_media_id':
+              (heroPosterMediaId != null && heroPosterMediaId.trim().isNotEmpty)
+                  ? heroPosterMediaId
+                  : null,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors de la sauvegarde de la configuration du mini-site (admin).',
+        );
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(
+          response['error']?.toString() ??
+              'Erreur lors de la sauvegarde de la configuration du mini-site (admin).',
+        );
+        return false;
+      }
+
+      await loadSiteForUniversity(universityId);
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
   }
 
   void _setSaving(bool value) {
@@ -68,6 +123,7 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
       }
 
       final uni = response['university'];
+      final cfg = response['config'];
       final blocks = response['blocks'];
       final media = response['media'];
       final events = response['events'];
@@ -78,6 +134,12 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
         _university = Map<String, dynamic>.from(uni);
       } else {
         _university = null;
+      }
+
+      if (cfg is Map) {
+        _config = Map<String, dynamic>.from(cfg);
+      } else {
+        _config = null;
       }
 
       if (blocks is List) {
@@ -128,6 +190,7 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _university = null;
+      _config = null;
       _blocks = [];
       _media = [];
       _events = [];
@@ -218,6 +281,39 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
     }
   }
 
+  Future<Map<String, dynamic>?> _fetchPlaybackForDirectUrl(String url) async {
+    try {
+      final dynamic response = await _client.rpc(
+        'app_videoasset_get_playback_for_direct_url',
+        params: {
+          'p_direct_url': url,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        debugPrint(
+            '[AdminUniversitySiteProvider._fetchPlaybackForDirectUrl] invalid response type: ${response.runtimeType}');
+        return null;
+      }
+      if (response['success'] != true) {
+        final error = response['error']?.toString();
+        debugPrint(
+            '[AdminUniversitySiteProvider._fetchPlaybackForDirectUrl] error from RPC: $error');
+        return null;
+      }
+      final manifest = response['manifest'];
+      if (manifest is! Map<String, dynamic>) {
+        debugPrint(
+            '[AdminUniversitySiteProvider._fetchPlaybackForDirectUrl] manifest manquant ou invalide dans la réponse: $manifest');
+        return null;
+      }
+      return Map<String, dynamic>.from(manifest);
+    } catch (e) {
+      debugPrint(
+          '[AdminUniversitySiteProvider._fetchPlaybackForDirectUrl] exception: $e');
+      return null;
+    }
+  }
+
   Future<bool> upsertMedia({
     String? mediaId,
     required String mediaType,
@@ -236,9 +332,49 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
     }
     _setSaving(true);
     _setError(null);
-    debugPrint(
-        '[AdminUniversitySiteProvider.upsertMedia] universityId=$universityId, mediaId=$mediaId, mediaType=$mediaType, title=$title, description=$description, url=$url, storagePath=$storagePath, thumbnailUrl=$thumbnailUrl, sortOrder=$sortOrder, isActive=$isActive');
     try {
+      final lowerType = mediaType.toLowerCase().trim();
+      String? effectiveVideoAssetId;
+      Map<String, dynamic>? effectivePlayback;
+
+      if (lowerType.contains('video')) {
+        final pathTrim = (storagePath ?? '').trim();
+        if (pathTrim.isEmpty) {
+          _setError(
+              'VideoAsset manquant pour le média vidéo du mini-site (admin).');
+          return false;
+        }
+
+        final publicUrl = _client.storage
+            .from('university-media')
+            .getPublicUrl(pathTrim);
+        debugPrint(
+            '[AdminUniversitySiteProvider.upsertMedia] resolving VideoAsset for publicUrl=$publicUrl');
+
+        final manifest = await _fetchPlaybackForDirectUrl(publicUrl);
+        if (manifest == null) {
+          debugPrint(
+              '[AdminUniversitySiteProvider.upsertMedia] aucun manifest résolu pour publicUrl=$publicUrl, on continue sans VideoAsset.');
+        } else {
+          final rawVideoAssetId = manifest['video_asset_id']?.toString();
+          final rawPlayback = manifest['playback'];
+
+          if (rawVideoAssetId != null &&
+              rawVideoAssetId.trim().isNotEmpty &&
+              rawPlayback is Map<String, dynamic>) {
+            effectiveVideoAssetId = rawVideoAssetId.trim();
+            effectivePlayback = Map<String, dynamic>.from(rawPlayback);
+          } else {
+            debugPrint(
+              '[AdminUniversitySiteProvider.upsertMedia] manifest sans video_asset_id ou playback invalide, on continue sans VideoAsset. manifest=$manifest',
+            );
+          }
+        }
+      }
+
+      debugPrint(
+          '[AdminUniversitySiteProvider.upsertMedia] universityId=$universityId, mediaId=$mediaId, mediaType=$mediaType, title=$title, description=$description, url=$url, storagePath=$storagePath, thumbnailUrl=$thumbnailUrl, sortOrder=$sortOrder, isActive=$isActive, videoAssetId=$effectiveVideoAssetId, hasPlayback=${effectivePlayback != null}');
+
       final dynamic response = await _client.rpc(
         'app_admin_upsert_university_media',
         params: {
@@ -252,20 +388,22 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
           'p_thumbnail_url': thumbnailUrl,
           'p_sort_order': sortOrder,
           'p_is_active': isActive,
+          'p_video_asset_id': effectiveVideoAssetId,
+          'p_playback': effectivePlayback,
         },
       );
       if (response is! Map<String, dynamic>) {
         debugPrint(
             '[AdminUniversitySiteProvider.upsertMedia] invalid response type: ${response.runtimeType}');
-        _setError('Réponse invalide du serveur lors de la sauvegarde du média (admin).');
+        _setError(
+            'Réponse invalide du serveur lors de la sauvegarde du média (admin).');
         return false;
       }
       if (response['success'] != true) {
         final error = response['error']?.toString();
         debugPrint(
             '[AdminUniversitySiteProvider.upsertMedia] error from RPC: $error');
-        _setError(error ??
-            'Erreur lors de la sauvegarde du média (admin).');
+        _setError(error ?? 'Erreur lors de la sauvegarde du média (admin).');
         return false;
       }
       await loadSiteForUniversity(universityId);
@@ -595,20 +733,39 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
       debugPrint(
           '[AdminUniversitySiteProvider.uploadMediaFile] uploading to bucket=university-media, storagePath=$storagePath');
 
-      await _client.storage.from('university-media').uploadBinary(
-            storagePath,
-            bytes,
-            fileOptions: FileOptions(
-              contentType: MimeTypeHelper.normalize(mimeType),
-            ),
-          );
+      try {
+        await _client.storage.from('university-media').uploadBinary(
+              storagePath,
+              bytes,
+              fileOptions: FileOptions(
+                contentType: MimeTypeHelper.normalize(mimeType),
+                upsert: true,
+              ),
+            );
+      } on StorageException catch (e) {
+        debugPrint(
+          '[AdminUniversitySiteProvider.uploadMediaFile] StorageException message=${e.message} '
+          'status=${e.statusCode} error=${e.error}',
+        );
+        final message = e.message.toLowerCase();
+        final error = (e.error ?? '').toLowerCase();
+        final statusCode = e.statusCode?.toString() ?? '';
+        final isDuplicate = statusCode == '409' ||
+            message.contains('already exists') ||
+            error.contains('duplicate');
+
+        if (!isDuplicate) {
+          _setError(e.toString());
+          return null;
+        }
+      } catch (e) {
+        debugPrint(
+            '[AdminUniversitySiteProvider.uploadMediaFile] exception=$e');
+        _setError(e.toString());
+        return null;
+      }
 
       return storagePath;
-    } catch (e) {
-      debugPrint(
-          '[AdminUniversitySiteProvider.uploadMediaFile] exception: $e');
-      _setError(e.toString());
-      return null;
     } finally {
       _setSaving(false);
     }

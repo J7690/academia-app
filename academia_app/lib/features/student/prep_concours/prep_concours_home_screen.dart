@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../providers/prep_concours_provider.dart';
 import '../../../widgets/bobodo_state.dart';
@@ -17,47 +16,14 @@ class PrepConcoursHomeScreen extends StatefulWidget {
 class _PrepConcoursHomeScreenState extends State<PrepConcoursHomeScreen> {
   bool _initialized = false;
 
-  Future<bool> _checkAccess() async {
-    final client = Supabase.instance.client;
-    final dynamic res = await client.rpc(
-      'app_has_feature_access',
-      params: {'p_feature_key': 'prep_concours'},
-    );
-    return res == true;
-  }
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_initialized) return;
     _initialized = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAccess().then((allowed) async {
-        if (!mounted) return;
-        if (!allowed) {
-          await showDialog<void>(
-            context: context,
-            builder: (dialogContext) {
-              return AlertDialog(
-                title: const Text('Prépa concours'),
-                content: const Text(
-                  'Cette fonctionnalité est réservée aux comptes ayant accès au module.\n\nContacte le support ou souscris à l’offre correspondante.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                    child: const Text('Fermer'),
-                  ),
-                ],
-              );
-            },
-          );
-          if (!mounted) return;
-          Navigator.of(context).pop();
-          return;
-        }
-        context.read<PrepConcoursProvider>().loadSubjects();
-      });
+      if (!mounted) return;
+      context.read<PrepConcoursProvider>().loadSubjects();
     });
   }
 

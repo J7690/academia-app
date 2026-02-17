@@ -14,6 +14,7 @@ class AcademiaPlaybackEngine {
     BoxFit fit = BoxFit.cover,
     VoidCallback? onCompleted,
     bool showErrorText = true,
+    VoidCallback? onFirstPlay,
   }) {
     return AcademiaPlaybackView(
       url: url,
@@ -24,6 +25,7 @@ class AcademiaPlaybackEngine {
       fit: fit,
       onCompleted: onCompleted,
       showErrorText: showErrorText,
+      onFirstPlay: onFirstPlay,
     );
   }
 }

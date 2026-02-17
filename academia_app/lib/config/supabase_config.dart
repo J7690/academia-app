@@ -8,8 +8,8 @@ class SupabaseConfig {
   static const String anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoZXZkZmN3bGNxemRveWJmdmdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNTY1NjAsImV4cCI6MjA3ODYzMjU2MH0.8Zm6i6UaOrEOUvOafHOXOf0UiPOdp7on-aajYASOdk8';
 
   // Clé SERVICE ROLE (secrète, réservée au backend et à certaines opérations admin)
-  static const String serviceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoZXZkZmN3bGNxemRveWJmdmdzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzA1NjU2MCwiZXhwIjoyMDc4NjMyNTYwfQ.U0xz7oHnUISnxzAG8ehm_gRzoOlQPucj61i2f-1FjgM';
+  static const String serviceKey = '';
 
-  static const String frontendBaseUrl = 'https://amazing-boba-9a75a7.netlify.app';
+  static const String frontendBaseUrl = 'https://dulcet-snickerdoodle-915a6b.netlify.app';
   static const String authCallbackUrl = '${frontendBaseUrl}/auth/callback';
 }

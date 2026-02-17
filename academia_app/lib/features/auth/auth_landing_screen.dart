@@ -248,20 +248,32 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
     final playlist = <HeroMediaItem>[];
 
     try {
+      debugPrint(
+        'Landing: calling app_public_hero_playlist(slot=landing_hero_main)',
+      );
       final dynamic response = await client.rpc(
         'app_public_hero_playlist',
         params: {'p_slot': 'landing_hero_main'},
       );
 
       if (response is! Map<String, dynamic>) {
+        debugPrint(
+          'Landing: invalid hero playlist response type='
+          '${response.runtimeType}',
+        );
         return;
       }
       if (response['success'] != true) {
+        debugPrint(
+          'Landing: app_public_hero_playlist returned non-success: '
+          'success=${response['success']} error=${response['error']}',
+        );
         return;
       }
 
       final items = response['items'];
       if (items is! List) {
+        debugPrint('Landing: hero playlist items is not a List');
         return;
       }
 
@@ -316,25 +328,43 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
           ),
         );
       }
-    } catch (_) {}
+      debugPrint(
+        'Landing: hero playlist built with \\${playlist.length} items from app_public_hero_playlist',
+      );
+    } catch (e) {
+      debugPrint(
+        'Landing: error while loading hero playlist from app_public_hero_playlist: '
+        '\\$e',
+      );
+    }
 
-    if (!mounted || playlist.isEmpty) {
+    if (!mounted) {
+      debugPrint(
+        'Landing: hero playlist refresh aborted after app_public_hero_playlist, '
+        'mounted=\\$mounted playlist_len=${playlist.length}',
+      );
       return;
     }
 
+    // Always update the in-memory hero playlist, even when it becomes empty,
+    // so that deletions in the admin actually clear the hero media on landing.
     setState(() {
       _heroMediaItems = playlist;
     });
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final data = playlist
-          .map((e) => {
-                'url': e.url,
-                'mediaType': e.mediaType,
-              })
-          .toList();
-      await prefs.setString(_landingHeroCacheKey, jsonEncode(data));
+      if (playlist.isEmpty) {
+        await prefs.remove(_landingHeroCacheKey);
+      } else {
+        final data = playlist
+            .map((e) => {
+                  'url': e.url,
+                  'mediaType': e.mediaType,
+                })
+            .toList();
+        await prefs.setString(_landingHeroCacheKey, jsonEncode(data));
+      }
     } catch (_) {}
   }
 
@@ -1101,21 +1131,24 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
               autoplay: true,
               loopVideos: false,
               mutedByDefault: kIsWeb,
-              showControls: false,
+              showControls: true,
               defaultImageDuration: const Duration(seconds: 5),
               overlayBuilder: (context, currentItem) {
+                final hasMedia = currentItem != null;
+
                 return Stack(
                   fit: StackFit.expand,
                   children: [
-                    Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF7BC96F), Color(0xFFE8F5E9)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                    if (!hasMedia)
+                      Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF7BC96F), Color(0xFFE8F5E9)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                         ),
                       ),
-                    ),
                     Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(

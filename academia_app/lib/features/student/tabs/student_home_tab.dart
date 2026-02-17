@@ -12,6 +12,7 @@ import '../student_profile_screen.dart';
 import '../student_university_site_screen.dart';
 import '../application_request_dialog.dart';
 import '../student_payments_screen.dart';
+import '../student_home_mobile.dart' show StudentAssistantSection;
 import '../../../providers/student_profile_provider.dart';
 import '../../../providers/student_offers_provider.dart';
 import '../../../providers/student_applications_provider.dart';
@@ -19,6 +20,9 @@ import '../../../providers/student_home_content_provider.dart';
 import '../../../providers/student_home_slots_provider.dart';
 import '../../../providers/online_courses_catalog_provider.dart';
 import '../../../providers/student_online_courses_provider.dart';
+import '../../../providers/student_weather_provider.dart';
+import '../../../providers/student_announcements_provider.dart';
+import '../../../providers/student_academic_calendar_provider.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
 import '../../../widgets/hero_media_carousel.dart';
@@ -136,6 +140,25 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
         await slotsProvider.loadSlotItems('desktop_short_trainings');
         await slotsProvider.loadSlotItems('desktop_online_courses');
         await slotsProvider.loadSlotItems('desktop_row_opportunities');
+      } catch (_) {}
+
+      // Chargement des données pour l'assistant (météo, annonces, calendrier)
+      try {
+        await context
+            .read<StudentWeatherProvider>()
+            .loadWeatherFromStudentProfile();
+      } catch (_) {}
+      try {
+        final announcementsProvider =
+            context.read<StudentAnnouncementsProvider>();
+        await announcementsProvider.refreshUnreadCount();
+        await announcementsProvider.loadAnnouncements(limit: 10);
+      } catch (_) {}
+      try {
+        final calendarProvider =
+            context.read<StudentAcademicCalendarProvider>();
+        await calendarProvider.loadEvents();
+        await calendarProvider.loadSummary();
       } catch (_) {}
 
       if (!mounted) return;
@@ -263,20 +286,32 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
     String? title;
 
     try {
+      debugPrint(
+        'StudentHome: calling app_public_hero_playlist(slot=student_home_hero_main)',
+      );
       final dynamic response = await client.rpc(
         'app_public_hero_playlist',
         params: {'p_slot': 'student_home_hero_main'},
       );
 
       if (response is! Map<String, dynamic>) {
+        debugPrint(
+          'StudentHome: invalid hero playlist response type='
+          '${response.runtimeType}',
+        );
         return;
       }
       if (response['success'] != true) {
+        debugPrint(
+          'StudentHome: app_public_hero_playlist returned non-success: '
+          'success=${response['success']} error=${response['error']}',
+        );
         return;
       }
 
       final items = response['items'];
       if (items is! List) {
+        debugPrint('StudentHome: hero playlist items is not a List');
         return;
       }
 
@@ -333,9 +368,21 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
 
         title ??= row['title']?.toString();
       }
-    } catch (_) {}
+      debugPrint(
+        'StudentHome: hero playlist built with \\${playlist.length} items from app_public_hero_playlist',
+      );
+    } catch (e) {
+      debugPrint(
+        'StudentHome: error while loading hero playlist from app_public_hero_playlist: '
+        '\\$e',
+      );
+    }
 
     if (playlist.isEmpty) {
+      debugPrint(
+        'StudentHome: hero playlist is empty after app_public_hero_playlist, '
+        'mounted=$mounted',
+      );
       _heroMediaItems = [];
       if (mounted) {
         setState(() {
@@ -345,8 +392,15 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
       return;
     }
 
-    _heroMediaItems = playlist;
-    _heroTitle = title;
+    if (mounted) {
+      setState(() {
+        _heroMediaItems = playlist;
+        _heroTitle = title;
+      });
+    } else {
+      _heroMediaItems = playlist;
+      _heroTitle = title;
+    }
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -485,6 +539,12 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                     announcements: homeContent.announcements,
                     fallbackAnnouncements: _fallbackAnnouncements,
                   ),
+                ),
+              ),
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: StudentAssistantSection(),
                 ),
               ),
               const SliverToBoxAdapter(
@@ -943,7 +1003,13 @@ class _StudentHomeHeroCarousel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = heroTitle;
+    final rawTitle = heroTitle?.trim() ?? '';
+    final title = rawTitle.isNotEmpty ? rawTitle : 'Espace étudiant Academia';
+
+    debugPrint(
+      'StudentHomeHeroCarousel: building with heroItems=' +
+          heroItems.length.toString(),
+    );
 
     final width = MediaQuery.of(context).size.width;
     double aspectRatio;
@@ -972,18 +1038,20 @@ class _StudentHomeHeroCarousel extends StatelessWidget {
           showControls: false,
           defaultImageDuration: const Duration(seconds: 5),
           overlayBuilder: (context, currentItem) {
+            final hasMedia = currentItem != null;
             return Stack(
               fit: StackFit.expand,
               children: [
-                Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF7BC96F), Color(0xFFE8F5E9)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                if (!hasMedia)
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF7BC96F), Color(0xFFE8F5E9)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                     ),
                   ),
-                ),
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -1034,7 +1102,7 @@ class _StudentHomeHeroCarousel extends StatelessWidget {
                       ),
                     ),
                   ),
-                if (title != null && title.isNotEmpty)
+                if (title.isNotEmpty)
                   Positioned(
                     left: 16,
                     right: 16,

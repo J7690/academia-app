@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../providers/admin_prep_concours_provider.dart';
 import '../../../providers/prep_concours_provider.dart';
@@ -34,6 +35,327 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
       admin.loadSourceDocuments(subjectId: _selectedSubjectId, status: _docStatus),
       admin.loadAiGenerations(subjectId: _selectedSubjectId, status: _genStatus),
     ]);
+  }
+
+  String _subjectTitleForId(String subjectId) {
+    final subjects = context.read<PrepConcoursProvider>().subjects;
+    for (final s in subjects) {
+      if (s.id == subjectId) {
+        return s.title;
+      }
+    }
+    return subjectId;
+  }
+
+  Future<void> _showEntitlementsDialog() async {
+    final client = Supabase.instance.client;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final dynamic res = await client.rpc(
+        'app_admin_prep_list_entitlements',
+        params: {
+          'p_feature_key': 'prep_concours',
+          'p_only_active': true,
+        },
+      );
+      if (res is! Map) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Réponse invalide du serveur (entitlements).'),
+          ),
+        );
+        return;
+      }
+      final map = Map<String, dynamic>.from(res);
+      if (map['success'] != true) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              map['error']?.toString() ??
+                  'Erreur lors du chargement des entitlements.',
+            ),
+          ),
+        );
+        return;
+      }
+      final data = map['entitlements'];
+      final entitlements = data is List
+          ? data
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList(growable: false)
+          : <Map<String, dynamic>>[];
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Accès Prépa concours'),
+            content: SizedBox(
+              width: 520,
+              height: 320,
+              child: entitlements.isEmpty
+                  ? const Center(
+                      child: Text('Aucun entitlement actif pour le moment.'),
+                    )
+                  : ListView.builder(
+                      itemCount: entitlements.length,
+                      itemBuilder: (context, index) {
+                        final e = entitlements[index];
+                        final email = (e['email'] ?? '').toString();
+                        final isActive = e['is_active'] == true;
+                        final grantedAt = (e['granted_at'] ?? '').toString();
+                        final userId = (e['user_id'] ?? '').toString();
+                        return ListTile(
+                          dense: true,
+                          title: Text(
+                            email.isEmpty ? userId : email,
+                          ),
+                          subtitle: grantedAt.isEmpty
+                              ? null
+                              : Text('Depuis: $grantedAt'),
+                          trailing: Icon(
+                            isActive ? Icons.check_circle : Icons.cancel,
+                            color: isActive ? Colors.green : Colors.red,
+                            size: 18,
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Fermer'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Erreur entitlements: $e'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _showAiUsageSummaryDialog() async {
+    final client = Supabase.instance.client;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final dynamic res = await client.rpc(
+        'app_admin_prep_ai_get_usage_summary',
+        params: {
+          'p_days': 1,
+          'p_endpoint': 'ai/prep/generate',
+        },
+      );
+      if (res is! Map) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Réponse invalide du serveur (analytics IA).'),
+          ),
+        );
+        return;
+      }
+      final map = Map<String, dynamic>.from(res);
+      if (map['success'] != true) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              map['error']?.toString() ??
+                  'Erreur lors du chargement des analytics IA.',
+            ),
+          ),
+        );
+        return;
+      }
+      final total = map['total'] ?? 0;
+      final days = map['days'] ?? 1;
+      final byStatus = map['by_status'];
+      final topUsers = map['top_users'];
+      final byStatusList = byStatus is List
+          ? byStatus
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList(growable: false)
+          : <Map<String, dynamic>>[];
+      final topUsersList = topUsers is List
+          ? topUsers
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList(growable: false)
+          : <Map<String, dynamic>>[];
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Analytics IA – Prépa concours'),
+            content: SizedBox(
+              width: 520,
+              height: 320,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Fenêtre: $days jour(s)'),
+                    Text('Total appels IA: $total'),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Par statut',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6),
+                    if (byStatusList.isEmpty)
+                      const Text('Aucune donnée sur la période.')
+                    else
+                      ...byStatusList.map(
+                        (e) => Text(
+                          "- ${e['status']}: ${e['count']}",
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Top utilisateurs (ID bruts)',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6),
+                    if (topUsersList.isEmpty)
+                      const Text('Aucun utilisateur sur la période.')
+                    else
+                      ...topUsersList.map(
+                        (u) => Text(
+                          "- ${u['user_id']}: ${u['count']} appel(s)",
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Fermer'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Erreur analytics IA: $e'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _showAttemptsSummaryDialog() async {
+    final client = Supabase.instance.client;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final dynamic res = await client.rpc(
+        'app_admin_prep_get_attempts_summary',
+        params: {
+          'p_subject_id': _selectedSubjectId,
+          'p_days': 30,
+        },
+      );
+      if (res is! Map) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Réponse invalide du serveur (stats tentatives).'),
+          ),
+        );
+        return;
+      }
+      final map = Map<String, dynamic>.from(res);
+      if (map['success'] != true) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              map['error']?.toString() ??
+                  'Erreur lors du chargement des stats tentatives.',
+            ),
+          ),
+        );
+        return;
+      }
+      final overall = map['overall'];
+      final bySubject = map['by_subject'];
+      final overallMap = overall is Map
+          ? Map<String, dynamic>.from(overall)
+          : <String, dynamic>{};
+      final bySubjectList = bySubject is List
+          ? bySubject
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList(growable: false)
+          : <Map<String, dynamic>>[];
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          final total = overallMap['total'] ?? 0;
+          final correct = overallMap['correct'] ?? 0;
+          final accuracy = overallMap['accuracy'] ?? 0;
+          final avgTime = overallMap['avg_time_sec'] ?? 0;
+          return AlertDialog(
+            title: const Text('Stats tentatives – Prépa concours'),
+            content: SizedBox(
+              width: 520,
+              height: 320,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Total tentatives: $total'),
+                    Text('Réponses correctes: $correct'),
+                    Text('Précision globale: $accuracy %'),
+                    Text('Temps moyen: $avgTime s'),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Par matière',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6),
+                    if (bySubjectList.isEmpty)
+                      const Text('Aucune donnée sur la période.')
+                    else
+                      ...bySubjectList.map(
+                        (sub) {
+                          final subjectId = (sub['subject_id'] ?? '').toString();
+                          final title = subjectId.isEmpty
+                              ? 'Matière inconnue'
+                              : _subjectTitleForId(subjectId);
+                          final t = sub['total'] ?? 0;
+                          final acc = sub['accuracy'] ?? 0;
+                          return Text('- $title : $t tentatives, $acc %');
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Fermer'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Erreur stats tentatives: $e'),
+        ),
+      );
+    }
   }
 
   Future<void> _openGenerationDetail(AdminPrepAiGeneration gen) async {
@@ -85,407 +407,411 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
     );
   }
 
-  Future<void> _openGenerateDialog() async {
-    final subjectIdController = TextEditingController(text: _selectedSubjectId ?? '');
-    final promptController = TextEditingController();
-    final numController = TextEditingController(text: '10');
-    String selectedSubjectId = _selectedSubjectId ?? '';
+	Future<void> _openGenerateDialog() async {
+		final subjectIdController = TextEditingController(text: _selectedSubjectId ?? '');
+		final promptController = TextEditingController();
+		final numController = TextEditingController(text: '10');
+		String selectedSubjectId = _selectedSubjectId ?? '';
 
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        final subjects = context.read<PrepConcoursProvider>().subjects;
+		await showDialog<void>(
+			context: context,
+			builder: (dialogContext) {
+				final subjects = context.read<PrepConcoursProvider>().subjects;
 
-        return AlertDialog(
-          title: const Text('Générer des questions'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (subjects.isNotEmpty)
-                  DropdownButtonFormField<String>(
-                    initialValue: selectedSubjectId.isNotEmpty ? selectedSubjectId : null,
-                    items: subjects
-                        .map(
-                          (s) => DropdownMenuItem(
-                            value: s.id,
-                            child: Text(s.title),
-                          ),
-                        )
-                        .toList(growable: false),
-                    onChanged: (value) {
-                      selectedSubjectId = value ?? '';
-                      subjectIdController.text = selectedSubjectId;
-                    },
-                    decoration: const InputDecoration(
-                      labelText: 'Matière *',
-                    ),
-                  )
-                else
-                  TextField(
-                    controller: subjectIdController,
-                    decoration: const InputDecoration(
-                      labelText: 'Identifiant matière (technique)',
-                    ),
-                  ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: numController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre de questions',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: promptController,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Instructions (optionnel)',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final messenger = ScaffoldMessenger.of(context);
-                final subjectId = subjectIdController.text.trim();
-                if (subjectId.isEmpty) return;
-                Navigator.of(dialogContext).pop();
+				return AlertDialog(
+					title: const Text('Générer des questions'),
+					content: SingleChildScrollView(
+						child: Column(
+							mainAxisSize: MainAxisSize.min,
+							children: [
+								if (subjects.isNotEmpty)
+									DropdownButtonFormField<String>(
+										initialValue:
+											selectedSubjectId.isNotEmpty ? selectedSubjectId : null,
+										items: subjects
+											.map(
+												(s) => DropdownMenuItem(
+													value: s.id,
+													child: Text(s.title),
+												),
+											)
+											.toList(growable: false),
+										onChanged: (value) {
+											selectedSubjectId = value ?? '';
+											subjectIdController.text = selectedSubjectId;
+										},
+										decoration: const InputDecoration(
+											labelText: 'Matière *',
+										),
+									)
+								else
+									TextField(
+										controller: subjectIdController,
+										decoration: const InputDecoration(
+											labelText: 'Identifiant matière (technique)',
+										),
+									),
+								const SizedBox(height: 8),
+								TextField(
+									controller: numController,
+									keyboardType: TextInputType.number,
+									decoration: const InputDecoration(
+										labelText: 'Nombre de questions',
+									),
+								),
+								const SizedBox(height: 8),
+								TextField(
+									controller: promptController,
+									maxLines: 4,
+									decoration: const InputDecoration(
+										labelText: 'Instructions (optionnel)',
+									),
+								),
+							],
+						),
+					),
+					actions: [
+						TextButton(
+							onPressed: () => Navigator.of(dialogContext).pop(),
+							child: const Text('Annuler'),
+						),
+						ElevatedButton(
+							onPressed: () async {
+								final messenger = ScaffoldMessenger.of(context);
+								final subjectId = subjectIdController.text.trim();
+								if (subjectId.isEmpty) return;
+								Navigator.of(dialogContext).pop();
+								messenger.showSnackBar(
+									const SnackBar(
+										content: Text(
+											'La génération IA de QCM est en cours de développement et est temporairement désactivée.',
+										),
+									),
+								);
+							},
+							child: const Text('Générer'),
+						),
+					],
+				);
+			},
+		);
+	}
 
-                messenger.showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'La génération IA de QCM est en cours de développement et est temporairement désactivée.',
-                    ),
-                  ),
-                );
-              },
-              child: const Text('Générer'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+	Future<void> _openCreateSubjectDialog() async {
+		final titleController = TextEditingController();
+		final slugController = TextEditingController();
+		final descriptionController = TextEditingController();
 
-  Future<void> _openCreateSubjectDialog() async {
-    final titleController = TextEditingController();
-    final slugController = TextEditingController();
-    final descriptionController = TextEditingController();
+		await showDialog<void>(
+			context: context,
+			builder: (dialogContext) {
+				return AlertDialog(
+					title: const Text('Créer une matière'),
+					content: SizedBox(
+						width: 520,
+						child: SingleChildScrollView(
+							child: Column(
+								mainAxisSize: MainAxisSize.min,
+								children: [
+									TextField(
+										controller: titleController,
+										decoration: const InputDecoration(
+											labelText: 'Nom de la matière *',
+										),
+									),
+									const SizedBox(height: 8),
+									TextField(
+										controller: descriptionController,
+										maxLines: 3,
+										decoration: const InputDecoration(
+											labelText: 'Description (optionnel)',
+										),
+									),
+									const SizedBox(height: 8),
+									TextField(
+										controller: slugController,
+										decoration: const InputDecoration(
+											labelText: 'Code (optionnel) — ex: culture-generale',
+										),
+									),
+								],
+							),
+						),
+					),
+					actions: [
+						TextButton(
+							onPressed: () => Navigator.of(dialogContext).pop(),
+							child: const Text('Annuler'),
+						),
+						ElevatedButton(
+							onPressed: () async {
+								final title = titleController.text.trim();
+								if (title.isEmpty) return;
 
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Créer une matière'),
-          content: SizedBox(
-            width: 520,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nom de la matière *',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: descriptionController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'Description (optionnel)',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: slugController,
-                    decoration: const InputDecoration(
-                      labelText: 'Code (optionnel) — ex: culture-generale',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final title = titleController.text.trim();
-                if (title.isEmpty) return;
+								final provider = context.read<PrepConcoursProvider>();
+								final messenger = ScaffoldMessenger.of(context);
 
-                final provider = context.read<PrepConcoursProvider>();
-                final messenger = ScaffoldMessenger.of(context);
+								Navigator.of(dialogContext).pop();
+								final id = await provider.createSubject(
+									title: title,
+									slug: slugController.text.trim().isEmpty
+											? null
+											: slugController.text.trim(),
+									description: descriptionController.text.trim().isEmpty
+											? null
+											: descriptionController.text.trim(),
+								);
 
-                Navigator.of(dialogContext).pop();
-                final id = await provider.createSubject(
-                  title: title,
-                  slug: slugController.text.trim().isEmpty ? null : slugController.text.trim(),
-                  description: descriptionController.text.trim().isEmpty
-                      ? null
-                      : descriptionController.text.trim(),
-                );
+								if (!context.mounted) return;
 
-                if (!context.mounted) return;
+								if (id == null || id.isEmpty) {
+									messenger.showSnackBar(
+										SnackBar(content: Text(provider.error ?? 'Création impossible.')),
+									);
+									return;
+								}
 
-                if (id == null || id.isEmpty) {
-                  messenger.showSnackBar(
-                    SnackBar(content: Text(provider.error ?? 'Création impossible.')),
-                  );
-                  return;
-                }
+								messenger.showSnackBar(
+									const SnackBar(content: Text('Matière créée.')),
+								);
 
-                messenger.showSnackBar(
-                  const SnackBar(content: Text('Matière créée.')),
-                );
+								setState(() {
+									_selectedSubjectId = id;
+								});
+								await _reload();
+							},
+							child: const Text('Créer'),
+						),
+					],
+				);
+			},
+		);
+	}
 
-                setState(() {
-                  _selectedSubjectId = id;
-                });
-                await _reload();
-              },
-              child: const Text('Créer'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+	Future<void> _openCreateDialog() async {
+		final provider = context.read<AdminPrepConcoursProvider>();
 
-  Future<void> _openCreateDialog() async {
-    final provider = context.read<AdminPrepConcoursProvider>();
+		final yearController = TextEditingController();
+		final docTypeController = TextEditingController();
+		final statusController = TextEditingController(text: 'received');
+		final extractedTextController = TextEditingController();
 
-    final yearController = TextEditingController();
-    final docTypeController = TextEditingController();
-    final statusController = TextEditingController(text: 'received');
-    final extractedTextController = TextEditingController();
+		await showDialog<void>(
+			context: context,
+			builder: (dialogContext) {
+				return AlertDialog(
+					title: const Text('Nouveau document source'),
+					content: SingleChildScrollView(
+						child: Column(
+							mainAxisSize: MainAxisSize.min,
+							children: [
+								TextField(
+									controller: yearController,
+									keyboardType: TextInputType.number,
+									decoration: const InputDecoration(labelText: 'Année (optionnel)'),
+								),
+								const SizedBox(height: 8),
+								TextField(
+									controller: docTypeController,
+									decoration: const InputDecoration(labelText: 'Type (optionnel)'),
+								),
+								const SizedBox(height: 8),
+								TextField(
+									controller: statusController,
+									decoration: const InputDecoration(labelText: 'Statut'),
+								),
+								const SizedBox(height: 8),
+								TextField(
+									controller: extractedTextController,
+									maxLines: 6,
+									decoration: const InputDecoration(labelText: 'Texte extrait (optionnel)'),
+								),
+							],
+						),
+					),
+					actions: [
+						TextButton(
+							onPressed: () => Navigator.of(dialogContext).pop(),
+							child: const Text('Annuler'),
+						),
+						ElevatedButton(
+							onPressed: provider.isSaving
+									? null
+									: () async {
+										final messenger = ScaffoldMessenger.of(context);
+										final subjectId = (_selectedSubjectId ?? '').trim();
+										if (subjectId.isEmpty) {
+											messenger.showSnackBar(
+												const SnackBar(
+													content: Text('Choisis une matière avant de créer un document.'),
+												),
+											);
+											return;
+										}
+										final year = int.tryParse(yearController.text.trim());
+										final ok = await provider.upsertSourceDocument(
+											subjectId: subjectId,
+											year: year,
+											docType: docTypeController.text.trim().isEmpty
+												? null
+												: docTypeController.text.trim(),
+											extractedText: extractedTextController.text.trim().isEmpty
+												? null
+												: extractedTextController.text.trim(),
+											status: statusController.text.trim().isEmpty
+												? 'received'
+												: statusController.text.trim(),
+										);
+										if (!context.mounted) return;
+										if (ok) {
+											Navigator.of(dialogContext).pop();
+											messenger.showSnackBar(
+												const SnackBar(content: Text('Document créé.')),
+											);
+										} else {
+											messenger.showSnackBar(
+												SnackBar(
+													content: Text(provider.error ?? 'Erreur lors de la création.'),
+												),
+											);
+										}
+									},
+							child: const Text('Créer'),
+						),
+					],
+				);
+			},
+		);
+	}
 
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Nouveau document source'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: yearController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Année (optionnel)'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: docTypeController,
-                  decoration: const InputDecoration(labelText: 'Type (optionnel)'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: statusController,
-                  decoration: const InputDecoration(labelText: 'Statut'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: extractedTextController,
-                  maxLines: 6,
-                  decoration: const InputDecoration(labelText: 'Texte extrait (optionnel)'),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: provider.isSaving
-                  ? null
-                  : () async {
-                      final messenger = ScaffoldMessenger.of(context);
-                      final subjectId = (_selectedSubjectId ?? '').trim();
-                      if (subjectId.isEmpty) {
-                        messenger.showSnackBar(
-                          const SnackBar(content: Text('Choisis une matière avant de créer un document.')),
-                        );
-                        return;
-                      }
-                      final year = int.tryParse(yearController.text.trim());
-                      final ok = await provider.upsertSourceDocument(
-                        subjectId: subjectId,
-                        year: year,
-                        docType: docTypeController.text.trim().isEmpty
-                            ? null
-                            : docTypeController.text.trim(),
-                        extractedText: extractedTextController.text.trim().isEmpty
-                            ? null
-                            : extractedTextController.text.trim(),
-                        status: statusController.text.trim().isEmpty
-                            ? 'received'
-                            : statusController.text.trim(),
-                      );
-                      if (!context.mounted) return;
-                      if (ok) {
-                        Navigator.of(dialogContext).pop();
-                        messenger.showSnackBar(
-                          const SnackBar(content: Text('Document créé.')),
-                        );
-                      } else {
-                        messenger.showSnackBar(
-                          SnackBar(
-                            content: Text(provider.error ?? 'Erreur lors de la création.'),
-                          ),
-                        );
-                      }
-                    },
-              child: const Text('Créer'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+	Future<void> _openDetail(AdminPrepSourceDocument doc) async {
+		final provider = context.read<AdminPrepConcoursProvider>();
+		final textController = TextEditingController(text: doc.extractedText ?? '');
+		String selectedStatus = doc.status;
 
-  Future<void> _openDetail(AdminPrepSourceDocument doc) async {
-    final provider = context.read<AdminPrepConcoursProvider>();
-    final textController = TextEditingController(text: doc.extractedText ?? '');
-    String selectedStatus = doc.status;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: 16 + MediaQuery.of(sheetContext).viewInsets.bottom,
-          ),
-          child: StatefulBuilder(
-            builder: (context, setStateSheet) {
-              return SizedBox(
-                height: 520,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Document',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      doc.id,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      initialValue: selectedStatus,
-                      items: const [
-                        DropdownMenuItem(value: 'received', child: Text('received')),
-                        DropdownMenuItem(value: 'extracted', child: Text('extracted')),
-                        DropdownMenuItem(value: 'indexed', child: Text('indexed')),
-                        DropdownMenuItem(value: 'validated', child: Text('validated')),
-                        DropdownMenuItem(value: 'published', child: Text('published')),
-                        DropdownMenuItem(value: 'rejected', child: Text('rejected')),
-                      ],
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setStateSheet(() {
-                          selectedStatus = value;
-                        });
-                      },
-                      decoration: const InputDecoration(labelText: 'Statut'),
-                    ),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: textController,
-                        expands: true,
-                        maxLines: null,
-                        minLines: null,
-                        decoration: const InputDecoration(
-                          labelText: 'Texte extrait',
-                          border: OutlineInputBorder(),
-                          alignLabelWithHint: true,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: provider.isSaving
-                                ? null
-                                : () async {
-                                    final messenger = ScaffoldMessenger.of(context);
-                                    final ok = await provider.updateSourceDocumentText(
-                                      documentId: doc.id,
-                                      extractedText: textController.text,
-                                    );
-                                    if (!context.mounted) return;
-                                    if (ok) {
-                                      messenger.showSnackBar(
-                                        const SnackBar(content: Text('Texte mis à jour.')),
-                                      );
-                                    } else {
-                                      messenger.showSnackBar(
-                                        SnackBar(content: Text(provider.error ?? 'Erreur.')),
-                                      );
-                                    }
-                                  },
-                            child: const Text('Enregistrer texte'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: provider.isSaving
-                                ? null
-                                : () async {
-                                    final messenger = ScaffoldMessenger.of(context);
-                                    final ok = await provider.setSourceDocumentStatus(
-                                      documentId: doc.id,
-                                      status: selectedStatus,
-                                    );
-                                    if (!context.mounted) return;
-                                    if (ok) {
-                                      messenger.showSnackBar(
-                                        const SnackBar(content: Text('Statut mis à jour.')),
-                                      );
-                                    } else {
-                                      messenger.showSnackBar(
-                                        SnackBar(content: Text(provider.error ?? 'Erreur.')),
-                                      );
-                                    }
-                                  },
-                            child: const Text('Mettre à jour statut'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
+		await showModalBottomSheet<void>(
+			context: context,
+			isScrollControlled: true,
+			builder: (sheetContext) {
+				return Padding(
+					padding: EdgeInsets.only(
+						left: 16,
+						right: 16,
+						top: 16,
+						bottom: 16 + MediaQuery.of(sheetContext).viewInsets.bottom,
+					),
+					child: StatefulBuilder(
+						builder: (context, setStateSheet) {
+							return SizedBox(
+								height: 520,
+								child: Column(
+									crossAxisAlignment: CrossAxisAlignment.stretch,
+									children: [
+										Text(
+											'Document',
+											style: Theme.of(context).textTheme.titleMedium,
+										),
+										const SizedBox(height: 8),
+										Text(
+											doc.id,
+											style: const TextStyle(fontSize: 12, color: Colors.grey),
+										),
+										const SizedBox(height: 12),
+										DropdownButtonFormField<String>(
+											initialValue: selectedStatus,
+											items: const [
+												DropdownMenuItem(value: 'received', child: Text('received')),
+												DropdownMenuItem(value: 'extracted', child: Text('extracted')),
+												DropdownMenuItem(value: 'indexed', child: Text('indexed')),
+												DropdownMenuItem(value: 'validated', child: Text('validated')),
+												DropdownMenuItem(value: 'published', child: Text('published')),
+												DropdownMenuItem(value: 'rejected', child: Text('rejected')),
+											],
+											onChanged: (value) {
+												if (value == null) return;
+												setStateSheet(() {
+													selectedStatus = value;
+												});
+											},
+											decoration: const InputDecoration(labelText: 'Statut'),
+										),
+										const SizedBox(height: 8),
+										Expanded(
+											child: TextField(
+												controller: textController,
+												expands: true,
+												maxLines: null,
+												minLines: null,
+												decoration: const InputDecoration(
+													labelText: 'Texte extrait',
+													border: OutlineInputBorder(),
+													alignLabelWithHint: true,
+												),
+											),
+										),
+										const SizedBox(height: 12),
+										Row(
+											children: [
+												Expanded(
+													child: OutlinedButton(
+														onPressed: provider.isSaving
+															? null
+															: () async {
+																final messenger = ScaffoldMessenger.of(context);
+																final ok = await provider.updateSourceDocumentText(
+																	documentId: doc.id,
+																	extractedText: textController.text,
+																);
+																if (!context.mounted) return;
+																if (ok) {
+																	messenger.showSnackBar(
+																		const SnackBar(content: Text('Texte mis à jour.')),
+																	);
+																} else {
+																	messenger.showSnackBar(
+																		SnackBar(content: Text(provider.error ?? 'Erreur.')),
+																	);
+																}
+															},
+														child: const Text('Enregistrer texte'),
+													),
+												),
+												const SizedBox(width: 12),
+												Expanded(
+													child: ElevatedButton(
+														onPressed: provider.isSaving
+															? null
+															: () async {
+																final messenger = ScaffoldMessenger.of(context);
+																final ok = await provider.setSourceDocumentStatus(
+																	documentId: doc.id,
+																	status: selectedStatus,
+																);
+																if (!context.mounted) return;
+																if (ok) {
+																	messenger.showSnackBar(
+																		const SnackBar(content: Text('Statut mis à jour.')),
+																	);
+																} else {
+																	messenger.showSnackBar(
+																		SnackBar(content: Text(provider.error ?? 'Erreur.')),
+																	);
+																}
+															},
+														child: const Text('Mettre à jour statut'),
+													),
+												),
+											],
+										),
+									],
+								),
+							);
+						},
+					),
+				);
+			},
+		);
+	}
 
   @override
   Widget build(BuildContext context) {
@@ -523,6 +849,21 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
             onPressed: hasSubjectSelected ? _openCreateDialog : null,
             icon: const Icon(Icons.add),
             tooltip: 'Ajouter un document',
+          ),
+          IconButton(
+            onPressed: _showEntitlementsDialog,
+            icon: const Icon(Icons.verified_user),
+            tooltip: 'Accès Prépa',
+          ),
+          IconButton(
+            onPressed: _showAiUsageSummaryDialog,
+            icon: const Icon(Icons.insights),
+            tooltip: 'Analytics IA',
+          ),
+          IconButton(
+            onPressed: _showAttemptsSummaryDialog,
+            icon: const Icon(Icons.bar_chart),
+            tooltip: 'Stats tentatives',
           ),
         ],
       ),

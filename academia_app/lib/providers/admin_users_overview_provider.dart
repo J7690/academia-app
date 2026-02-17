@@ -11,6 +11,7 @@ class AdminUsersOverviewProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _users = [];
   bool _isUpdating = false;
   List<Map<String, dynamic>>? _commercialsOverview;
+  List<Map<String, dynamic>> _deletedUsers = [];
 
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -18,6 +19,7 @@ class AdminUsersOverviewProvider extends ChangeNotifier {
   bool get isUpdating => _isUpdating;
   List<Map<String, dynamic>>? get commercialsOverview =>
       _commercialsOverview == null ? null : List.unmodifiable(_commercialsOverview!);
+  List<Map<String, dynamic>> get deletedUsers => List.unmodifiable(_deletedUsers);
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -96,6 +98,45 @@ class AdminUsersOverviewProvider extends ChangeNotifier {
         return false;
       }
       await loadUsers();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setUpdating(false);
+    }
+  }
+
+  Future<bool> hardDeleteUserAccount({
+    required String userId,
+    String? reason,
+  }) async {
+    _setUpdating(true);
+    _setError(null);
+    try {
+      final response = await _client.functions.invoke(
+        'admin-hard-delete-user-account',
+        body: <String, dynamic>{
+          'target_user_id': userId,
+          if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+        },
+      );
+
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur pour la suppression définitive du compte.');
+        return false;
+      }
+      if (data['success'] != true) {
+        _setError(
+          data['error']?.toString() ??
+              'Erreur lors de la suppression définitive du compte utilisateur.',
+        );
+        return false;
+      }
+
+      await loadUsers();
+      await loadDeletedUsers();
       return true;
     } catch (e) {
       _setError(e.toString());
@@ -232,6 +273,34 @@ class AdminUsersOverviewProvider extends ChangeNotifier {
       }
     } catch (_) {
       // On ignore les erreurs ici : l'écran admin reste fonctionnel sans ce résumé.
+    }
+  }
+
+  Future<void> loadDeletedUsers({int limit = 200, int offset = 0}) async {
+    try {
+      final response = await _client.rpc(
+        'app_admin_list_deleted_users',
+        params: {
+          'p_limit': limit,
+          'p_offset': offset,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        return;
+      }
+      if (response['success'] != true) {
+        return;
+      }
+      final data = response['deleted_users'];
+      if (data is List) {
+        _deletedUsers = data
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+        notifyListeners();
+      }
+    } catch (_) {
+      // On ignore les erreurs ici : l'écran admin reste fonctionnel sans l'archive.
     }
   }
 

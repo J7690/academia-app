@@ -418,13 +418,13 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           );
           break;
         case 8:
-          child = const _FeatureComingSoonTab(title: 'Challenges');
+          child = const StudentTdRootScreen();
           break;
         case 9:
-          child = const _FeatureComingSoonTab(title: 'Cours');
+          child = const _FeatureComingSoonTab(title: 'Challenges');
           break;
         case 10:
-          child = const StudentTdRootScreen();
+          child = const _FeatureComingSoonTab(title: 'Cours');
           break;
         case 11:
           child = const _FeatureComingSoonTab(title: 'Lives');
@@ -470,13 +470,13 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           );
           break;
         case 8:
-          child = const _FeatureComingSoonTab(title: 'Challenges');
+          child = const StudentTdRootScreen();
           break;
         case 9:
-          child = const _FeatureComingSoonTab(title: 'Cours');
+          child = const _FeatureComingSoonTab(title: 'Challenges');
           break;
         case 10:
-          child = const StudentTdRootScreen();
+          child = const _FeatureComingSoonTab(title: 'Cours');
           break;
         case 11:
           child = const _FeatureComingSoonTab(title: 'Lives');
@@ -615,6 +615,17 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           ),
           NavigationDestination(
             icon: _HomeNavIcon(
+              icon: Icons.school_outlined,
+              hasNew: _hasNewTrainings,
+            ),
+            selectedIcon: _HomeNavIcon(
+              icon: Icons.school,
+              hasNew: _hasNewTrainings,
+            ),
+            label: 'TD',
+          ),
+          NavigationDestination(
+            icon: _HomeNavIcon(
               icon: Icons.emoji_events_outlined,
               hasNew: _hasNewChallenges,
             ),
@@ -634,17 +645,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
               hasNew: _hasNewCourses,
             ),
             label: 'Cours',
-          ),
-          NavigationDestination(
-            icon: _HomeNavIcon(
-              icon: Icons.school_outlined,
-              hasNew: _hasNewTrainings,
-            ),
-            selectedIcon: _HomeNavIcon(
-              icon: Icons.school,
-              hasNew: _hasNewTrainings,
-            ),
-            label: 'TD',
           ),
           NavigationDestination(
             icon: _HomeNavIcon(
@@ -760,6 +760,18 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                         ),
                         _buildMobileNavItem(
                           index: 8,
+                          label: 'TD',
+                          icon: _HomeNavIcon(
+                            icon: Icons.school_outlined,
+                            hasNew: _hasNewTrainings,
+                          ),
+                          selectedIcon: _HomeNavIcon(
+                            icon: Icons.school,
+                            hasNew: _hasNewTrainings,
+                          ),
+                        ),
+                        _buildMobileNavItem(
+                          index: 9,
                           label: 'Challenges',
                           icon: _HomeNavIcon(
                             icon: Icons.emoji_events_outlined,
@@ -771,7 +783,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                           ),
                         ),
                         _buildMobileNavItem(
-                          index: 9,
+                          index: 10,
                           label: 'Cours',
                           icon: _HomeNavIcon(
                             icon: Icons.menu_book_outlined,
@@ -780,18 +792,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                           selectedIcon: _HomeNavIcon(
                             icon: Icons.menu_book,
                             hasNew: _hasNewCourses,
-                          ),
-                        ),
-                        _buildMobileNavItem(
-                          index: 10,
-                          label: 'TD',
-                          icon: _HomeNavIcon(
-                            icon: Icons.school_outlined,
-                            hasNew: _hasNewTrainings,
-                          ),
-                          selectedIcon: _HomeNavIcon(
-                            icon: Icons.school,
-                            hasNew: _hasNewTrainings,
                           ),
                         ),
                         _buildMobileNavItem(

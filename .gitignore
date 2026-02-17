@@ -4,6 +4,8 @@
 .packages
 pubspec.lock
 
+**/build/
+
 # IDE files
 .idea/
 android/.gradle/
@@ -11,6 +13,13 @@ android/.gradle/
 # Windsurf / Python cache
 .windsurf/__pycache__/
 *.pyc
+
+.windsurf/*
+!.windsurf/sql_changes/
+!.windsurf/sql_changes/**
+
+# Supabase CLI temp
+supabase/.temp/
 
 # Sensitive files
 *.env

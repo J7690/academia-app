@@ -17,6 +17,9 @@ import '../../providers/online_courses_catalog_provider.dart';
 import '../../providers/student_online_courses_provider.dart';
 import '../../providers/home_formations_provider.dart';
 import '../../providers/student_short_trainings_provider.dart';
+import '../../providers/student_weather_provider.dart';
+import '../../providers/student_announcements_provider.dart';
+import '../../providers/student_academic_calendar_provider.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart';
 import '../../widgets/notification_sound_settings_dialog.dart';
@@ -29,6 +32,8 @@ import 'tabs/student_challenges_tab.dart' as challenges_tab;
 import 'tabs/student_partners_tab.dart' as partners_tab;
 import 'student_university_site_screen.dart';
 import 'student_profile_screen.dart';
+import 'student_announcements_screen.dart';
+import 'student_academic_calendar_screen.dart';
 import 'online_course_detail_screen.dart';
 import 'tabs/student_online_trainings_tab.dart';
 import 'widgets/student_mobile_scaffold.dart';
@@ -89,6 +94,23 @@ class _StudentHomeMobileTabState extends State<StudentHomeMobileTab> {
         await slotsProvider.loadSlotItems('mobile_row_online_courses');
         await slotsProvider.loadSlotItems('mobile_row_opportunities');
       } catch (_) {}
+      try {
+        await context
+            .read<StudentWeatherProvider>()
+            .loadWeatherFromStudentProfile();
+      } catch (_) {}
+      try {
+        final announcementsProvider =
+            context.read<StudentAnnouncementsProvider>();
+        await announcementsProvider.refreshUnreadCount();
+        await announcementsProvider.loadAnnouncements(limit: 10);
+      } catch (_) {}
+      try {
+        final calendarProvider =
+            context.read<StudentAcademicCalendarProvider>();
+        await calendarProvider.loadEvents();
+        await calendarProvider.loadSummary();
+      } catch (_) {}
     });
   }
 
@@ -119,6 +141,8 @@ class _StudentHomeMobileTabState extends State<StudentHomeMobileTab> {
                   const SizedBox(height: 16),
                   _MobileProfileCard(),
                   const SizedBox(height: 16),
+                  const _MobileAssistantSection(),
+                  const SizedBox(height: 16),
                   _MobileSectionsGrid(),
                   const SizedBox(height: 24),
                 ],
@@ -143,6 +167,59 @@ class _StudentHomeMobileTabState extends State<StudentHomeMobileTab> {
       },
     );
   }
+}
+
+String _describeWeatherCode(int code) {
+  if (code == 0) return 'Ciel dégagé';
+  if (code == 1 || code == 2) return 'Plutôt ensoleillé';
+  if (code == 3) return 'Ciel nuageux';
+  if (code == 45 || code == 48) return 'Brouillard';
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
+    return 'Pluie';
+  }
+  if (code >= 71 && code <= 77) return 'Neige';
+  if (code == 95 || code == 96 || code == 99) {
+    return 'Orages';
+  }
+  return 'Conditions variables';
+}
+
+IconData _iconForWeatherCode(int code) {
+  if (code == 0) return Icons.wb_sunny_outlined;
+  if (code == 1 || code == 2) return Icons.wb_sunny_outlined;
+  if (code == 3) return Icons.cloud_outlined;
+  if (code == 45 || code == 48) return Icons.waves_outlined;
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
+    return Icons.grain_outlined;
+  }
+  if (code >= 71 && code <= 77) return Icons.ac_unit_outlined;
+  if (code == 95 || code == 96 || code == 99) {
+    return Icons.thunderstorm_outlined;
+  }
+  return Icons.wb_cloudy_outlined;
+}
+
+Color _colorForWeatherCode(int code) {
+  if (code == 0 || code == 1 || code == 2) {
+    return const Color(0xFFF59E0B);
+  }
+  if (code == 3 || code == 45 || code == 48) {
+    return const Color(0xFF6B7280);
+  }
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
+    return const Color(0xFF2563EB);
+  }
+  if (code >= 71 && code <= 77) {
+    return const Color(0xFF38BDF8);
+  }
+  if (code == 95 || code == 96 || code == 99) {
+    return const Color(0xFFEC4899);
+  }
+  return const Color(0xFF6B7280);
+}
+
+bool _isRainyCode(int code) {
+  return (code >= 51 && code <= 67) || (code >= 80 && code <= 82);
 }
 
 class _MobileTopNavBar extends StatefulWidget {
@@ -588,65 +665,104 @@ class _MobileHomeHeroState extends State<_MobileHomeHero> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
         final client = Supabase.instance.client;
-        final dynamic response = await client
-            .schema('app')
-            .from('hero_playlist')
-            .select(
-                'base_video_url, base_image_url, media_type, sort_order, is_active')
-            .eq('slot', 'student_home_hero_main')
-            .eq('is_active', true)
-            .order('sort_order', ascending: true)
-            .limit(10);
+        final localPlaylist = <_HomeHeroMediaItem>[];
+
+        try {
+          debugPrint(
+            'StudentHomeMobile: calling app_public_hero_playlist('
+            'slot=student_home_hero_main)',
+          );
+          final dynamic response = await client.rpc(
+            'app_public_hero_playlist',
+            params: {'p_slot': 'student_home_hero_main'},
+          );
+
+          if (response is! Map<String, dynamic>) {
+            debugPrint(
+              'StudentHomeMobile: invalid hero playlist response type='
+              '${response.runtimeType}',
+            );
+          } else if (response['success'] != true) {
+            debugPrint(
+              'StudentHomeMobile: app_public_hero_playlist returned '
+              'non-success: success=${response['success']} '
+              'error=${response['error']}',
+            );
+          } else {
+            final items = response['items'];
+            if (items is! List) {
+              debugPrint(
+                'StudentHomeMobile: hero playlist items is not a List',
+              );
+            } else {
+              for (final raw in items) {
+                if (raw is! Map) continue;
+                final row = Map<String, dynamic>.from(raw);
+
+                final rawType =
+                    (row['media_type'] ?? 'video').toString().toLowerCase();
+                final isImage = rawType == 'image';
+
+                final playbackRaw = row['playback'];
+                Map<String, dynamic>? playback;
+                if (playbackRaw is Map) {
+                  playback = Map<String, dynamic>.from(playbackRaw);
+                }
+
+                final bestUrl =
+                    (playback?['best_url'] ?? '').toString().trim();
+                final baseVideoUrl =
+                    (row['base_video_url'] ?? '').toString().trim();
+                final baseImageUrl =
+                    (row['base_image_url'] ?? '').toString().trim();
+
+                String? resolvedUrl;
+                bool resolvedIsImage;
+
+                if (isImage) {
+                  if (baseImageUrl.isEmpty) {
+                    continue;
+                  }
+                  resolvedUrl = baseImageUrl;
+                  resolvedIsImage = true;
+                } else {
+                  resolvedUrl =
+                      bestUrl.isNotEmpty ? bestUrl : baseVideoUrl;
+                  if (resolvedUrl.isEmpty) {
+                    continue;
+                  }
+                  resolvedIsImage = false;
+                }
+
+                debugPrint(
+                  'StudentHomeMobile: hero item from app_public_hero_playlist '
+                  'slot=student_home_hero_main type='
+                  '${resolvedIsImage ? 'image' : 'video'} '
+                  'url=' + resolvedUrl,
+                );
+
+                localPlaylist.add(
+                  _HomeHeroMediaItem(
+                    url: resolvedUrl,
+                    isImage: resolvedIsImage,
+                  ),
+                );
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint(
+            'StudentHomeMobile: error while loading hero playlist from '
+            'app_public_hero_playlist: $e',
+          );
+        }
 
         if (!mounted) return;
 
-        if (response is List && response.isNotEmpty) {
-          for (final raw in response) {
-            Map<String, dynamic>? row;
-            if (raw is Map<String, dynamic>) {
-              row = raw;
-            } else if (raw is Map) {
-              row = Map<String, dynamic>.from(raw);
-            }
-            if (row == null) continue;
-
-            final rawType = (row['media_type'] ?? 'video')
-                .toString()
-                .toLowerCase();
-            final isImage = rawType == 'image';
-            final heroVideoUrl =
-                (row['base_video_url'] ?? '').toString().trim();
-            final heroImageUrl =
-                (row['base_image_url'] ?? '').toString().trim();
-
-            String? chosenUrl;
-            bool chosenIsImage;
-            if (isImage && heroImageUrl.isNotEmpty) {
-              chosenUrl = heroImageUrl;
-              chosenIsImage = true;
-            } else if (!isImage && heroVideoUrl.isNotEmpty) {
-              chosenUrl = heroVideoUrl;
-              chosenIsImage = false;
-            } else if (heroVideoUrl.isNotEmpty) {
-              chosenUrl = heroVideoUrl;
-              chosenIsImage = false;
-            } else if (heroImageUrl.isNotEmpty) {
-              chosenUrl = heroImageUrl;
-              chosenIsImage = true;
-            } else {
-              chosenUrl = null;
-              chosenIsImage = false;
-            }
-
-            if (chosenUrl != null && chosenUrl.isNotEmpty) {
-              _playlist.add(
-                _HomeHeroMediaItem(url: chosenUrl, isImage: chosenIsImage),
-              );
-            }
-          }
-        }
-
-        if (_playlist.isNotEmpty && mounted) {
+        if (localPlaylist.isNotEmpty) {
+          _playlist
+            ..clear()
+            ..addAll(localPlaylist);
           _goToIndex(0);
         }
       } catch (_) {}
@@ -737,6 +853,7 @@ class _MobileHomeHeroState extends State<_MobileHomeHero> {
                     looping: false,
                     muted: kIsWeb,
                     showControls: false,
+                    showErrorText: false,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -775,6 +892,385 @@ class _MobileHomeHeroState extends State<_MobileHomeHero> {
         ),
       ),
     );
+  }
+}
+
+class _MobileAssistantSection extends StatelessWidget {
+  const _MobileAssistantSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer3<
+        StudentWeatherProvider,
+        StudentAnnouncementsProvider,
+        StudentAcademicCalendarProvider>(
+      builder: (
+        context,
+        weatherProvider,
+        announcementsProvider,
+        calendarProvider,
+        _,
+      ) {
+        final weather = weatherProvider.weather;
+        final bool hasAnnouncements =
+            announcementsProvider.unreadCount > 0 ||
+                announcementsProvider.announcements.isNotEmpty;
+        final bool hasCalendar =
+            calendarProvider.upcomingFollowedCount > 0 ||
+                calendarProvider.events.isNotEmpty;
+        String? weatherLine;
+        String? weatherDetailsLine;
+        String? weatherAdviceLine;
+        IconData weatherIcon = Icons.wb_sunny_outlined;
+        Color weatherIconColor = const Color(0xFFF59E0B);
+        if (weather is Map<String, dynamic>) {
+          try {
+            final dynamic tempRaw = weather['temperature'];
+            final dynamic codeRaw = weather['weatherCode'];
+            final dynamic sunriseRaw = weather['sunrise'];
+            final dynamic sunsetRaw = weather['sunset'];
+            final dynamic uvRaw = weather['uvIndex'];
+
+            final double? temp = tempRaw is num
+                ? tempRaw.toDouble()
+                : double.tryParse(tempRaw?.toString() ?? '');
+            final int? code = codeRaw is num
+                ? codeRaw.toInt()
+                : int.tryParse(codeRaw?.toString() ?? '');
+            final DateTime? sunrise =
+                DateTime.tryParse(sunriseRaw?.toString() ?? '');
+            final DateTime? sunset =
+                DateTime.tryParse(sunsetRaw?.toString() ?? '');
+            final double? uvIndex = uvRaw is num
+                ? uvRaw.toDouble()
+                : double.tryParse(uvRaw?.toString() ?? '');
+
+            final String city =
+                weatherProvider.location?['city']?.toString() ?? '';
+
+            String description = '';
+            if (code != null) {
+              description = _describeWeatherCode(code);
+              weatherIcon = _iconForWeatherCode(code);
+              weatherIconColor = _colorForWeatherCode(code);
+            }
+
+            if (temp != null) {
+              final int rounded = temp.round();
+              if (description.isNotEmpty) {
+                if (city.isNotEmpty) {
+                  weatherLine = '$rounded°C, $description · $city';
+                } else {
+                  weatherLine = '$rounded°C, $description';
+                }
+              } else if (city.isNotEmpty) {
+                weatherLine = '$rounded°C · $city';
+              } else {
+                weatherLine = '$rounded°C';
+              }
+            }
+
+            if (sunrise != null && sunset != null) {
+              final DateFormat fmt = DateFormat.Hm();
+              final String sr = fmt.format(sunrise);
+              final String ss = fmt.format(sunset);
+              weatherDetailsLine = 'Lever $sr · Coucher $ss';
+            }
+
+            if (uvIndex != null) {
+              String uvLabel;
+              if (uvIndex >= 8) {
+                uvLabel = 'très élevé';
+              } else if (uvIndex >= 6) {
+                uvLabel = 'élevé';
+              } else if (uvIndex >= 3) {
+                uvLabel = 'modéré';
+              } else {
+                uvLabel = 'faible';
+              }
+              final String uvText =
+                  uvIndex % 1 == 0 ? uvIndex.toInt().toString() : uvIndex.toStringAsFixed(1);
+              final String line = 'Indice UV: $uvText ($uvLabel)';
+              weatherDetailsLine = weatherDetailsLine == null
+                  ? line
+                  : '$weatherDetailsLine · $line';
+
+              if (uvIndex >= 8) {
+                weatherAdviceLine =
+                    'Soleil très fort, protège-toi bien (casquette, crème).';
+              }
+            }
+
+            if (weatherAdviceLine == null && temp != null && temp >= 35) {
+              weatherAdviceLine =
+                  'Journée très chaude, hydrate-toi bien et privilégie l’ombre.';
+            } else if (weatherAdviceLine == null && code != null) {
+              if (_isRainyCode(code)) {
+                weatherAdviceLine =
+                    'Pluie prévue, pense à anticiper tes déplacements.';
+              }
+            }
+          } catch (_) {
+            // En cas de format inattendu, on reste silencieux.
+          }
+        }
+
+        final bool isDefaultLocation =
+            weatherProvider.location?['is_default_location'] == true;
+
+        final unreadAnnouncements = announcementsProvider.unreadCount;
+        String announcementsLine =
+            'Aucune annonce importante pour le moment';
+        if (hasAnnouncements) {
+          if (unreadAnnouncements > 0) {
+            announcementsLine =
+                '$unreadAnnouncements annonce${unreadAnnouncements > 1 ? 's' : ''} importante${unreadAnnouncements > 1 ? 's' : ''}';
+          } else if (announcementsProvider.announcements.isNotEmpty) {
+            final first = announcementsProvider.announcements.first;
+            final title = first['title']?.toString() ?? '';
+            if (title.isNotEmpty) {
+              announcementsLine = title;
+            }
+          }
+        }
+
+        final upcomingCount = calendarProvider.upcomingFollowedCount;
+        String calendarLine =
+            'Aucun événement académique enregistré pour le moment';
+        if (hasCalendar) {
+          if (upcomingCount > 0) {
+            calendarLine =
+                '$upcomingCount événement${upcomingCount > 1 ? 's' : ''} à venir que vous suivez';
+          } else if (calendarProvider.events.isNotEmpty) {
+            final first = calendarProvider.events.first;
+            final title = first['title']?.toString() ?? '';
+            final startAt = first['start_at']?.toString() ?? '';
+            if (title.isNotEmpty && startAt.isNotEmpty) {
+              calendarLine = '$title · $startAt';
+            } else if (title.isNotEmpty) {
+              calendarLine = title;
+            }
+          }
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x14000000),
+                  offset: Offset(0, 8),
+                  blurRadius: 24,
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: const [
+                    Icon(
+                      Icons.assistant_outlined,
+                      size: 20,
+                      color: Color(0xFF0A2540),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Assistant étudiant',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF0A2540),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (isDefaultLocation && weatherLine != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3F4F6),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(
+                                Icons.location_on_outlined,
+                                size: 12,
+                                color: Color(0xFF6B7280),
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Localisation par défaut : Ouagadougou',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Color(0xFF6B7280),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const StudentProfileScreen(),
+                              ),
+                            );
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 2,
+                            ),
+                            child: Text(
+                              'Modifier dans mon profil',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF2563EB),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (weatherLine != null)
+                  Row(
+                    children: [
+                      Icon(
+                        weatherIcon,
+                        size: 18,
+                        color: weatherIconColor,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          weatherLine,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                if (weatherDetailsLine != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      weatherDetailsLine,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                  ),
+                if (weatherAdviceLine != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      weatherAdviceLine,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                  ),
+                if (weatherLine != null)
+                  const SizedBox(height: 6),
+                InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const StudentAnnouncementsScreen(),
+                      ),
+                    );
+                  },
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.campaign_outlined,
+                        size: 18,
+                        color: Color(0xFF2563EB),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          announcementsLine,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
+                InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const StudentAcademicCalendarScreen(),
+                      ),
+                    );
+                  },
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.event_outlined,
+                        size: 18,
+                        color: Color(0xFF16A34A),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          calendarLine,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class StudentAssistantSection extends StatelessWidget {
+  const StudentAssistantSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const _MobileAssistantSection();
   }
 }
 

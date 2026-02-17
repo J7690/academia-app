@@ -13,6 +13,7 @@ class AcademiaPlaybackView extends StatefulWidget {
   final BoxFit fit;
   final VoidCallback? onCompleted;
   final bool showErrorText;
+  final VoidCallback? onFirstPlay;
 
   const AcademiaPlaybackView({
     super.key,
@@ -24,6 +25,7 @@ class AcademiaPlaybackView extends StatefulWidget {
     this.fit = BoxFit.cover,
     this.onCompleted,
     this.showErrorText = true,
+    this.onFirstPlay,
   });
 
   @override
@@ -96,6 +98,9 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
 
         if (v.isInitialized && v.isPlaying && !_loggedFirstPlay) {
           _loggedFirstPlay = true;
+          if (widget.onFirstPlay != null) {
+            widget.onFirstPlay!();
+          }
           debugPrint(
             '[AcademiaPlaybackView] playing isWeb=$kIsWeb '
             'position=${v.position} duration=${v.duration}',
@@ -207,15 +212,25 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
     final v = controller.value;
     final aspectRatio = v.aspectRatio == 0 || v.aspectRatio.isNaN ? (16 / 9) : v.aspectRatio;
 
-    Widget content = FittedBox(
-      fit: widget.fit,
-      clipBehavior: Clip.hardEdge,
-      child: SizedBox(
-        width: 1,
-        height: 1 / aspectRatio,
+    Widget content;
+    if (kIsWeb) {
+      // Sur le web, éviter les transforms complexes autour du <video> HTML
+      // (FittedBox/scale) qui peuvent figer l'image. On laisse la vidéo
+      // occuper simplement tout l'espace disponible fourni par le parent.
+      content = SizedBox.expand(
         child: VideoPlayer(controller),
-      ),
-    );
+      );
+    } else {
+      content = FittedBox(
+        fit: widget.fit,
+        clipBehavior: Clip.hardEdge,
+        child: SizedBox(
+          width: 1,
+          height: 1 / aspectRatio,
+          child: VideoPlayer(controller),
+        ),
+      );
+    }
 
     if (widget.showControls) {
       content = GestureDetector(

@@ -59,6 +59,9 @@ class StudentProfileProvider extends ChangeNotifier {
     String? bacInstitution,
     String? bacCountry,
     String? studyProjectText,
+    String? timezone,
+    double? geoLatitude,
+    double? geoLongitude,
   }) async {
     _setLoading(true);
     _setError(null);
@@ -82,6 +85,9 @@ class StudentProfileProvider extends ChangeNotifier {
       if (studyProjectText != null) {
         params['p_study_project_text'] = studyProjectText;
       }
+      if (timezone != null) params['p_timezone'] = timezone;
+      if (geoLatitude != null) params['p_geo_latitude'] = geoLatitude;
+      if (geoLongitude != null) params['p_geo_longitude'] = geoLongitude;
 
       final result = await _client.rpc('app_update_student_profile', params: params);
       if (result is Map) {
