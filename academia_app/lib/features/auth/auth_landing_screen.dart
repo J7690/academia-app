@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:animate_do/animate_do.dart';
 
 import '../../providers/landing_content_provider.dart';
 import '../../providers/student_offers_provider.dart';
@@ -44,18 +45,20 @@ class AuthLandingScreen extends StatelessWidget {
             ),
           ),
         ),
-        leadingWidth: 150,
+        leadingWidth: context.isMobile ? 110 : 150,
         leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
+          padding: const EdgeInsets.only(left: 8),
           child: Align(
             alignment: Alignment.centerLeft,
             child: SizedBox(
-              height: 40,
+              height: 36,
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Colors.white, width: 1.5),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: context.isMobile ? 10 : 16,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(999),
                   ),
@@ -65,10 +68,11 @@ class AuthLandingScreen extends StatelessWidget {
                     MaterialPageRoute(builder: (_) => const LoginScreen()),
                   );
                 },
-                child: const Text(
+                child: Text(
                   'Connexion',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
+                    fontSize: context.isMobile ? 12 : 14,
                   ),
                 ),
               ),
@@ -117,14 +121,16 @@ class AuthLandingScreen extends StatelessWidget {
             },
           ),
           Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(right: 8),
             child: SizedBox(
-              height: 40,
+              height: 36,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFF3B30),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: context.isMobile ? 10 : 16,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(999),
                   ),
@@ -135,7 +141,12 @@ class AuthLandingScreen extends StatelessWidget {
                     MaterialPageRoute(builder: (_) => const SignupScreen()),
                   );
                 },
-                child: const Text('Créer un compte'),
+                child: Text(
+                  'Créer un compte',
+                  style: TextStyle(
+                    fontSize: context.isMobile ? 12 : 14,
+                  ),
+                ),
               ),
             ),
           ),
@@ -341,9 +352,54 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
     if (!mounted) {
       debugPrint(
         'Landing: hero playlist refresh aborted after app_public_hero_playlist, '
-        'mounted=\\$mounted playlist_len=${playlist.length}',
+        'mounted=$mounted playlist_len=${playlist.length}',
       );
       return;
+    }
+
+    if (playlist.isEmpty) {
+      try {
+        Map<String, dynamic>? cfg;
+
+        final landing = context.read<LandingContentProvider>();
+        final cachedCfg = landing.config;
+        if (cachedCfg != null) {
+          cfg = cachedCfg;
+        } else {
+          final dynamic resp = await client.rpc('app_public_landing_content');
+          if (resp is Map<String, dynamic> && resp['success'] == true) {
+            final c = resp['config'];
+            if (c is Map) {
+              cfg = Map<String, dynamic>.from(c);
+            }
+          }
+        }
+
+        final playback = (cfg?['playback'] is Map)
+            ? Map<String, dynamic>.from(cfg?['playback'] as Map)
+            : null;
+        final bestUrl = (playback?['best_url'] ?? '').toString().trim();
+        final heroVideoUrl = (cfg?['hero_video_url'] ?? '').toString().trim();
+        final fallbackUrl = bestUrl.isNotEmpty ? bestUrl : heroVideoUrl;
+        if (fallbackUrl.isNotEmpty) {
+          playlist.add(
+            HeroMediaItem(
+              id: 'fallback_config',
+              mediaType: 'video',
+              url: fallbackUrl,
+              posterUrl: (playback?['poster_url'] ?? '').toString().trim().isNotEmpty
+                  ? (playback?['poster_url'] ?? '').toString().trim()
+                  : null,
+              sortOrder: 0,
+            ),
+          );
+          debugPrint(
+            'Landing: hero playlist empty from app_public_hero_playlist, using config fallback url=$fallbackUrl',
+          );
+        }
+      } catch (e) {
+        debugPrint('Landing: error while building hero fallback from config: $e');
+      }
     }
 
     // Always update the in-memory hero playlist, even when it becomes empty,
@@ -484,89 +540,162 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
     );
   }
 
-  Widget _buildProgramCard(Map<String, dynamic> program) {
+  static const _kLandingCardGradients = <List<Color>>[
+    [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
+    [Color(0xFF1A2980), Color(0xFF26D0CE)],
+    [Color(0xFF0B486B), Color(0xFFF56217)],
+    [Color(0xFF2E7D32), Color(0xFF66BB6A)],
+    [Color(0xFF4A148C), Color(0xFFAB47BC)],
+    [Color(0xFFBF360C), Color(0xFFFF8A65)],
+    [Color(0xFF00695C), Color(0xFF4DB6AC)],
+    [Color(0xFF283593), Color(0xFF5C6BC0)],
+  ];
+
+  Widget _buildProgramCard(Map<String, dynamic> program, {int gradientIndex = 0}) {
     final title =
         (program['program_title'] ?? program['title'] ?? '').toString();
     final universityName = (program['university_name'] ?? '').toString();
+    final degree = (program['degree_level'] ?? '').toString();
+    final city = (program['city'] ?? '').toString();
+    final country = (program['country'] ?? '').toString();
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0D000000),
-            blurRadius: 10,
-            offset: Offset(0, 2),
+    final locationParts = <String>[];
+    if (city.isNotEmpty) locationParts.add(city);
+    if (country.isNotEmpty) locationParts.add(country);
+    final location = locationParts.join(', ');
+
+    final colors =
+        _kLandingCardGradients[gradientIndex % _kLandingCardGradients.length];
+
+    return _ScaleTapWrapper(
+      onTap: () {
+        _showAuthRequiredDialog();
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: colors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
-        border: Border.all(
-          color: const Color(0x80F6A623),
-          width: 2,
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x28000000),
+              offset: Offset(0, 4),
+              blurRadius: 12,
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            // Decorative circle pattern
+            Positioned(
+              right: -20,
+              top: -20,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.08),
+                ),
+              ),
+            ),
+            Positioned(
+              left: -10,
+              bottom: -15,
+              child: Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.06),
+                ),
+              ),
+            ),
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // University icon
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.school_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Title
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  // University name
+                  Text(
+                    universityName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.white.withOpacity(0.75),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Badges
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: [
+                      if (degree.isNotEmpty)
+                        _buildBadge(degree),
+                      if (location.isNotEmpty)
+                        _buildBadge(location),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          _showAuthRequiredDialog();
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF0A2540),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      universityName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3275D0),
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(0, 36),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const LoginScreen(),
-                    ),
-                  );
-                },
-                child: const Text('Voir plus'),
-              ),
-            ],
-          ),
+    );
+  }
+
+  Widget _buildBadge(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w500,
+          color: Colors.white,
         ),
       ),
     );
@@ -1121,16 +1250,24 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
         final double bottomSpacing = isMobile ? 16.0 : 24.0;
 
         final hero = Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: HeroMediaCarousel(
+          padding: EdgeInsets.fromLTRB(isMobile ? 0 : 16, 4, isMobile ? 0 : 16, 4),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF2E7D32),
+                width: 1.5,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10.5),
+              child: HeroMediaCarousel(
               items: _heroMediaItems,
               aspectRatio: heroAspectRatio,
               useAspectRatio: true,
               autoplay: true,
-              loopVideos: false,
-              mutedByDefault: kIsWeb,
+              loopVideos: true,
+              mutedByDefault: true,
               showControls: true,
               defaultImageDuration: const Duration(seconds: 5),
               overlayBuilder: (context, currentItem) {
@@ -1161,22 +1298,25 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                         ),
                       ),
                     ),
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        24,
-                        isMobile ? 12 : 16,
-                        24,
-                        isMobile ? 20 : 32,
-                      ),
-                      child: Align(
-                        alignment: isMobile
-                            ? Alignment.bottomLeft
-                            : Alignment.centerLeft,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 520),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    Positioned.fill(
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          24,
+                          isMobile ? 12 : 16,
+                          24,
+                          isMobile ? 12 : 24,
+                        ),
+                        child: Align(
+                          alignment: isMobile
+                              ? Alignment.bottomLeft
+                              : Alignment.centerLeft,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 520),
+                            child: SingleChildScrollView(
+                              reverse: true,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -1265,12 +1405,15 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                             ],
                           ),
                         ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 );
               },
             ),
+          ),
           ),
         );
 
@@ -1325,44 +1468,29 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                             style: TextStyle(fontSize: 13),
                           );
                         }
-                        final isWide = MediaQuery.of(context).size.width >= 900;
-                        if (!isWide) {
-                          final double listHeight = isMobile ? 150 : 170;
-                          final double cardWidth = isMobile ? 230 : 280;
-                          return SizedBox(
-                            height: listHeight,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: items.length,
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(width: 12),
-                              itemBuilder: (context, index) {
-                                final p = items[index];
-                                return SizedBox(
-                                  width: cardWidth,
-                                  child: _buildProgramCard(p),
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            const spacing = 10.0;
+                            final cardWidth =
+                                (constraints.maxWidth - spacing) / 2;
+                            return Wrap(
+                              spacing: spacing,
+                              runSpacing: 10,
+                              children: items.asMap().entries.map((entry) {
+                                return FadeInUp(
+                                  duration: const Duration(milliseconds: 500),
+                                  delay: Duration(milliseconds: 150 * entry.key),
+                                  child: SizedBox(
+                                    width: cardWidth,
+                                    child: _buildProgramCard(
+                                      entry.value,
+                                      gradientIndex: entry.key,
+                                    ),
+                                  ),
                                 );
-                              },
-                            ),
-                          );
-                        }
-
-                        final screenWidth = MediaQuery.of(context).size.width;
-                        final horizontalPadding = 40.0; // 20 de chaque côté
-                        final availableWidth = screenWidth - horizontalPadding;
-                        final cardWidth = (availableWidth - 12) / 2;
-
-                        return Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: items
-                              .map(
-                                (p) => SizedBox(
-                                  width: cardWidth,
-                                  child: _buildProgramCard(p),
-                                ),
-                              )
-                              .toList(),
+                              }).toList(),
+                            );
+                          },
                         );
                       },
                     ),
@@ -1416,10 +1544,16 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                             spacing: 12,
                             runSpacing: 12,
                             children: shortTrainingHighlights
+                                .asMap()
+                                .entries
                                 .map(
-                                  (item) => SizedBox(
-                                    width: cardWidth,
-                                    child: _buildShortTrainingCard(item),
+                                  (entry) => FadeInUp(
+                                    duration: const Duration(milliseconds: 500),
+                                    delay: Duration(milliseconds: 150 * entry.key),
+                                    child: SizedBox(
+                                      width: cardWidth,
+                                      child: _buildShortTrainingCard(entry.value),
+                                    ),
                                   ),
                                 )
                                 .toList(),
@@ -1510,10 +1644,16 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                             spacing: 12,
                             runSpacing: 12,
                             children: opportunityHighlights
+                                .asMap()
+                                .entries
                                 .map(
-                                  (item) => SizedBox(
-                                    width: cardWidth,
-                                    child: _buildOpportunityHighlightCard(item),
+                                  (entry) => FadeInUp(
+                                    duration: const Duration(milliseconds: 500),
+                                    delay: Duration(milliseconds: 150 * entry.key),
+                                    child: SizedBox(
+                                      width: cardWidth,
+                                      child: _buildOpportunityHighlightCard(entry.value),
+                                    ),
                                   ),
                                 )
                                 .toList(),
@@ -1571,10 +1711,16 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                             spacing: 12,
                             runSpacing: 12,
                             children: onlineCourseHighlights
+                                .asMap()
+                                .entries
                                 .map(
-                                  (item) => SizedBox(
-                                    width: cardWidth,
-                                    child: _buildOnlineCourseCard(item),
+                                  (entry) => FadeInUp(
+                                    duration: const Duration(milliseconds: 500),
+                                    delay: Duration(milliseconds: 150 * entry.key),
+                                    child: SizedBox(
+                                      width: cardWidth,
+                                      child: _buildOnlineCourseCard(entry.value),
+                                    ),
                                   ),
                                 )
                                 .toList(),
@@ -1623,7 +1769,13 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                             spacing: 12,
                             runSpacing: 12,
                             children: whyCards
-                                .map((card) => _buildWhyCard(card, accentColor))
+                                .asMap()
+                                .entries
+                                .map((entry) => FadeInUp(
+                                      duration: const Duration(milliseconds: 500),
+                                      delay: Duration(milliseconds: 150 * entry.key),
+                                      child: _buildWhyCard(entry.value, accentColor),
+                                    ))
                                 .toList(),
                           );
                         },
@@ -1790,6 +1942,56 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
           ),
         );
       },
+    );
+  }
+}
+
+class _ScaleTapWrapper extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+
+  const _ScaleTapWrapper({required this.child, this.onTap});
+
+  @override
+  State<_ScaleTapWrapper> createState() => _ScaleTapWrapperState();
+}
+
+class _ScaleTapWrapperState extends State<_ScaleTapWrapper>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+      lowerBound: 0.0,
+      upperBound: 1.0,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) => _controller.reverse(),
+      onTapCancel: () => _controller.reverse(),
+      onTap: widget.onTap,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final scale = 1.0 - 0.04 * _controller.value;
+          return Transform.scale(scale: scale, child: child);
+        },
+        child: widget.child,
+      ),
     );
   }
 }

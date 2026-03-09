@@ -4,12 +4,21 @@ import 'package:provider/provider.dart';
 import '../../providers/student_td_catalog_provider.dart';
 import '../../providers/student_td_enrollments_provider.dart';
 import '../../providers/student_td_requests_provider.dart';
+import '../../providers/td_gamification_provider.dart';
 import '../../providers/td_messages_provider.dart';
+import '../../theme/td_theme.dart';
+
 import '../../widgets/bobodo_state.dart';
 import '../../widgets/bobodo_view.dart';
 import '../share/share_service.dart';
 import '../share/share_mode_provider.dart';
 import '../share/widgets/share_signature.dart';
+import 'td/td_home_tab.dart';
+import 'td/td_catalog_tab.dart';
+import 'td/td_my_enrollments_tab.dart';
+import 'td/td_resources_tab.dart';
+import 'td/td_leaderboard_tab.dart';
+import 'td/td_stats_tab.dart';
 
 class StudentTdRootScreen extends StatefulWidget {
   const StudentTdRootScreen({super.key});
@@ -27,6 +36,7 @@ class _StudentTdRootScreenState extends State<StudentTdRootScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      context.read<TdGamificationProvider>().loadAll();
       context.read<StudentTdCatalogProvider>().loadPrograms();
       context.read<StudentTdEnrollmentsProvider>().loadMyEnrollments();
       context.read<StudentTdRequestsProvider>().loadMyRequests();
@@ -167,15 +177,22 @@ class _StudentTdRootScreenState extends State<StudentTdRootScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 6,
       child: RepaintBoundary(
         key: _shareBoundaryKey,
         child: Stack(
           children: [
             Scaffold(
-              backgroundColor: const Color(0xFFF3F4F6),
+              backgroundColor: TdTheme.scaffoldBg,
               appBar: AppBar(
-                title: const Text('TD - Travaux dirigés'),
+                elevation: 0,
+                centerTitle: false,
+                title: const Text('Travaux Dirigés',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
+                foregroundColor: Colors.white,
+                flexibleSpace: Container(
+                  decoration: TdTheme.gradientHeader(TdTheme.studentTdGradient),
+                ),
                 actions: [
                   Consumer<ShareModeProvider>(
                     builder: (context, shareMode, _) {
@@ -188,20 +205,32 @@ class _StudentTdRootScreenState extends State<StudentTdRootScreen> {
                     },
                   ),
                 ],
-                bottom: TabBar(
+                bottom: const TabBar(
                   isScrollable: true,
-                  tabs: const [
-                    Tab(text: 'Catalogue TD'),
-                    Tab(text: 'Mes TD'),
-                    Tab(text: 'Mes demandes'),
+                  indicatorColor: Colors.white,
+                  indicatorWeight: 3,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.white70,
+                  labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
+                  labelPadding: EdgeInsets.symmetric(horizontal: 12),
+                  tabs: [
+                    Tab(icon: Icon(Icons.home_outlined, size: 18), text: 'Accueil'),
+                    Tab(icon: Icon(Icons.explore_outlined, size: 18), text: 'Catalogue'),
+                    Tab(icon: Icon(Icons.school_outlined, size: 18), text: 'Mes TD'),
+                    Tab(icon: Icon(Icons.folder_outlined, size: 18), text: 'Ressources'),
+                    Tab(icon: Icon(Icons.leaderboard_outlined, size: 18), text: 'Classement'),
+                    Tab(icon: Icon(Icons.bar_chart_outlined, size: 18), text: 'Stats'),
                   ],
                 ),
               ),
               body: const TabBarView(
                 children: [
-                  _StudentTdCatalogTab(),
-                  _StudentTdMyEnrollmentsTab(),
-                  _StudentTdRequestsTab(),
+                  TdHomeTab(),
+                  TdCatalogTab(),
+                  TdMyEnrollmentsTab(),
+                  TdResourcesTab(),
+                  TdLeaderboardTab(),
+                  TdStatsTab(),
                 ],
               ),
             ),
@@ -501,46 +530,76 @@ class _StudentTdCatalogTab extends StatelessWidget {
           final price = p['price'];
           final currency = p['currency']?.toString() ?? 'XOF';
 
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            elevation: 2,
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: ListTile(
-              title: Text(title),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+          return GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => _StudentTdProgramDetailScreen(program: p),
+                ),
+              );
+            },
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              decoration: TdTheme.cardDecoration(),
+              child: Row(
                 children: [
-                  const SizedBox(height: 4),
-                  if (level.isNotEmpty || modality.isNotEmpty)
-                    Text(
-                      [
-                        if (level.isNotEmpty) 'Niveau: $level',
-                        if (modality.isNotEmpty) 'Modalité: $modality',
-                      ].join(' · '),
-                      style: const TextStyle(fontSize: 12),
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: TdTheme.studentTdPrimary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(TdTheme.radiusMd),
                     ),
-                  if (price != null)
-                    Text(
-                      'Prix: $price $currency',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    child: const Icon(Icons.menu_book,
+                        color: TdTheme.studentTdPrimary, size: 24),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w700, fontSize: 14)),
+                        const SizedBox(height: 4),
+                        if (level.isNotEmpty || modality.isNotEmpty)
+                          Wrap(
+                            spacing: 6,
+                            children: [
+                              if (level.isNotEmpty)
+                                TdTheme.statusBadge(level, TdTheme.studentTdPrimary),
+                              if (modality.isNotEmpty)
+                                TdTheme.statusBadge(modality, TdTheme.neutral),
+                            ],
+                          ),
+                      ],
                     ),
+                  ),
+                  if (price != null) ...[
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '$price',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: TdTheme.studentTdPrimary,
+                          ),
+                        ),
+                        Text(currency,
+                            style: const TextStyle(
+                                fontSize: 10, color: TdTheme.textTertiary)),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(width: 4),
+                  const Icon(Icons.chevron_right,
+                      size: 18, color: TdTheme.textTertiary),
                 ],
               ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => _StudentTdProgramDetailScreen(program: p),
-                  ),
-                );
-              },
             ),
           );
         },
@@ -728,114 +787,197 @@ class _StudentTdProgramDetailScreenState extends State<_StudentTdProgramDetailSc
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
-      appBar: AppBar(
-        title: Text(title),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (level.isNotEmpty || modality.isNotEmpty)
-              Text(
-                [
-                  if (level.isNotEmpty) 'Niveau: $level',
-                  if (modality.isNotEmpty) 'Modalité: $modality',
-                ].join(' · '),
-                style: const TextStyle(fontSize: 13),
-              ),
-            const SizedBox(height: 8),
-            Card(
-              elevation: 2,
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (price != null)
-                      Text(
-                        'Prix: $price $currency',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0A2540),
-                        ),
-                      ),
-                    const SizedBox(height: 8),
-                    if (description.isNotEmpty)
-                      Text(
-                        description,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF4B5563),
-                        ),
-                      ),
-                  ],
+      backgroundColor: TdTheme.scaffoldBg,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 160,
+            pinned: true,
+            foregroundColor: Colors.white,
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(title,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              background: Container(
+                decoration: TdTheme.gradientHeader(TdTheme.studentTdGradient),
+                child: Center(
+                  child: Icon(Icons.menu_book,
+                      size: 48, color: Colors.white.withOpacity(0.3)),
                 ),
               ),
             ),
-            if (nextSessionLabel != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                nextSessionLabel!,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-              ),
-            ],
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  final numericPrice = price is num ? price as num : null;
-                  if (programId.isEmpty || numericPrice == null || numericPrice <= 0) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Ce TD n\'a pas encore de prix défini par l\'administration. Merci de réessayer plus tard.',
-                        ),
-                      ),
-                    );
-                    return;
-                  }
-
-                  final studentNotes = await _promptPersonalization(context);
-                  if (studentNotes == null) {
-                    // L'étudiant a annulé le formulaire de personnalisation.
-                    return;
-                  }
-
-                  final enrollmentsProvider =
-                      context.read<StudentTdEnrollmentsProvider>();
-                  final ok = await enrollmentsProvider.createEnrollmentAndPayment(
-                    programId: programId,
-                    collectionId: null,
-                    accessScope: 'program',
-                    amountDue: numericPrice.toDouble(),
-                    studentNotes: studentNotes,
-                  );
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        ok
-                            ? 'Demande TD enregistrée. Déclare ton paiement dans l\'onglet Paiements.'
-                            : enrollmentsProvider.error ??
-                                'Erreur lors de la création de la demande TD.',
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Tags
+                  if (level.isNotEmpty || modality.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Wrap(
+                        spacing: 8,
+                        children: [
+                          if (level.isNotEmpty)
+                            TdTheme.statusBadge(level, TdTheme.studentTdPrimary),
+                          if (modality.isNotEmpty)
+                            TdTheme.statusBadge(modality, TdTheme.neutral),
+                        ],
                       ),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.payments_outlined),
-                label: const Text('Je veux ce TD (paiement manuel)'),
+
+                  // Price card
+                  if (price != null)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: TdTheme.studentTdPrimary.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(TdTheme.radiusLg),
+                        border: Border.all(color: TdTheme.studentTdPrimary.withOpacity(0.15)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: TdTheme.studentTdPrimary.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.payments_outlined,
+                                color: TdTheme.studentTdPrimary, size: 22),
+                          ),
+                          const SizedBox(width: 14),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Tarif',
+                                  style: TextStyle(fontSize: 11, color: TdTheme.textSecondary)),
+                              Text(
+                                '$price $currency',
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: TdTheme.studentTdPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Description
+                  if (description.isNotEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: TdTheme.cardDecoration(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Description',
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: TdTheme.textPrimary)),
+                          const SizedBox(height: 8),
+                          Text(description,
+                              style: const TextStyle(
+                                  fontSize: 13, color: TdTheme.textSecondary, height: 1.5)),
+                        ],
+                      ),
+                    ),
+
+                  // Next session
+                  if (nextSessionLabel != null)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: TdTheme.success.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(TdTheme.radiusMd),
+                        border: Border.all(color: TdTheme.success.withOpacity(0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.event, color: TdTheme.success, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(nextSessionLabel!,
+                                style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: TdTheme.success)),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Enroll button
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: TdTheme.studentTdPrimary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(TdTheme.radiusMd),
+                        ),
+                      ),
+                      onPressed: () async {
+                        final numericPrice = price is num ? price as num : null;
+                        if (programId.isEmpty || numericPrice == null || numericPrice <= 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Ce TD n\'a pas encore de prix d\u00e9fini par l\'administration.',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+
+                        final studentNotes = await _promptPersonalization(context);
+                        if (studentNotes == null) return;
+
+                        final enrollmentsProvider =
+                            context.read<StudentTdEnrollmentsProvider>();
+                        final ok = await enrollmentsProvider.createEnrollmentAndPayment(
+                          programId: programId,
+                          collectionId: null,
+                          accessScope: 'program',
+                          amountDue: numericPrice.toDouble(),
+                          studentNotes: studentNotes,
+                        );
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              ok
+                                  ? 'Demande TD enregistr\u00e9e. D\u00e9clare ton paiement dans l\'onglet Paiements.'
+                                  : enrollmentsProvider.error ??
+                                      'Erreur lors de la cr\u00e9ation de la demande TD.',
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.payments_outlined),
+                      label: const Text('Je veux ce TD'),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

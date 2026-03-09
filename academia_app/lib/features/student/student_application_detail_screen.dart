@@ -415,9 +415,9 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
         ),
         body: TabBarView(
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+            ListView(
+                padding: EdgeInsets.zero,
+                children: [
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Container(
@@ -433,14 +433,15 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.only(right: 12.0),
+                            SizedBox(
+                              width: 68,
                               child: BobodoView(
                                 state: bobodoState,
                                 size: 56,
                                 text: bobodoText,
                               ),
                             ),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -471,8 +472,10 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                     ),
                                   ],
                                   const SizedBox(height: 6),
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 4,
+                                    crossAxisAlignment: WrapCrossAlignment.center,
                                     children: [
                                       Container(
                                         padding: const EdgeInsets.symmetric(
@@ -492,18 +495,14 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                           ),
                                         ),
                                       ),
-                                      if (statusLine.isNotEmpty) ...[
-                                        const SizedBox(width: 12),
-                                        Flexible(
-                                          child: Text(
-                                            statusLine,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Color(0xFF6B7280),
-                                            ),
+                                      if (statusLine.isNotEmpty)
+                                        Text(
+                                          statusLine,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Color(0xFF6B7280),
                                           ),
                                         ),
-                                      ],
                                     ],
                                   ),
                                 ],
@@ -637,155 +636,198 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                     ],
                   ),
                 ),
-                Expanded(
-                  child: Consumer<StudentApplicationFilesProvider>(
+                Consumer<StudentApplicationFilesProvider>(
                     builder: (context, provider, child) {
                       if (provider.isLoading && provider.files.isEmpty) {
-                        return const Center(child: CircularProgressIndicator());
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
                       }
 
                       if (provider.error != null) {
-                        return Center(child: Text('Erreur : ${provider.error}'));
+                        return Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Center(child: Text('Erreur : ${provider.error}')),
+                        );
                       }
 
                       final files = provider.files;
                       if (files.isEmpty) {
-                        return const Center(
-                          child: Text('Aucun document ajouté pour cette candidature.'),
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(
+                            child: Text('Aucun document ajouté pour cette candidature.'),
+                          ),
                         );
                       }
 
-                      return ListView.builder(
-                        itemCount: files.length,
-                        itemBuilder: (context, index) {
+                      return Column(
+                        children: List.generate(files.length, (index) {
                           final file = files[index];
                           final type = file['file_type']?.toString() ?? '';
                           final path = file['storage_path']?.toString() ?? '';
                           final uploadedAt = file['uploaded_at']?.toString() ?? '';
 
-                          return ListTile(
-                            leading: const Icon(Icons.insert_drive_file),
-                            title: Text(type.isNotEmpty ? type : 'Document'),
-                            subtitle: Text(path),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 6,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                IconButton(
-                                  icon: const Icon(Icons.visibility),
-                                  tooltip: 'Voir',
-                                  onPressed: () async {
-                                    final provider = context
-                                        .read<StudentApplicationFilesProvider>();
-                                    final url =
-                                        await provider.createSignedUrl(path);
-                                    if (!context.mounted) return;
-                                    if (url == null) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            provider.error ??
-                                                'Impossible d\'ouvrir le document.',
+                                Row(
+                                  children: [
+                                    const Icon(Icons.insert_drive_file, size: 20),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            type.isNotEmpty ? type : 'Document',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(fontSize: 14),
                                           ),
-                                        ),
-                                      );
-                                      return;
-                                    }
-
-                                    final uri = Uri.parse(url);
-                                    final opened = await launchUrl(
-                                      uri,
-                                      mode: LaunchMode.externalApplication,
-                                    );
-                                    if (!opened && context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Impossible d\'ouvrir le document.',
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete),
-                                  tooltip: 'Supprimer',
-                                  onPressed: () async {
-                                    final id = file['id']?.toString();
-                                    if (id == null || id.isEmpty || appId.isEmpty) {
-                                      return;
-                                    }
-
-                                    final confirm = await showDialog<bool>(
-                                      context: context,
-                                      builder: (ctx) => AlertDialog(
-                                        title: const Text(
-                                            'Supprimer ce document ?'),
-                                        content: const Text(
-                                          'Cette action est définitive.',
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.of(ctx).pop(false),
-                                            child: const Text('Annuler'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.of(ctx).pop(true),
-                                            child: const Text('Supprimer'),
+                                          Text(
+                                            path,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xFF6B7280),
+                                            ),
                                           ),
                                         ],
                                       ),
-                                    );
-
-                                    if (confirm != true || !context.mounted) {
-                                      return;
-                                    }
-
-                                    final provider = context
-                                        .read<StudentApplicationFilesProvider>();
-                                    final ok = await provider.deleteFile(
-                                      fileId: id,
-                                      storagePath: path,
-                                      applicationId: appId,
-                                    );
-
-                                    if (!context.mounted) return;
-
-                                    if (ok) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Document supprimé avec succès.',
-                                          ),
-                                        ),
-                                      );
-                                    } else {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            provider.error ??
-                                                'Erreur lors de la suppression.',
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  },
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  uploadedAt,
-                                  style: const TextStyle(fontSize: 11),
+                                const SizedBox(height: 4),
+                                Wrap(
+                                  spacing: 4,
+                                  runSpacing: 4,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.visibility, size: 20),
+                                      tooltip: 'Voir',
+                                      constraints: const BoxConstraints(),
+                                      padding: const EdgeInsets.all(6),
+                                      onPressed: () async {
+                                        final provider = context
+                                            .read<StudentApplicationFilesProvider>();
+                                        final url =
+                                            await provider.createSignedUrl(path);
+                                        if (!context.mounted) return;
+                                        if (url == null) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                provider.error ??
+                                                    'Impossible d\'ouvrir le document.',
+                                              ),
+                                            ),
+                                          );
+                                          return;
+                                        }
+                                        final uri = Uri.parse(url);
+                                        final opened = await launchUrl(
+                                          uri,
+                                          mode: LaunchMode.externalApplication,
+                                        );
+                                        if (!opened && context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Impossible d\'ouvrir le document.',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, size: 20),
+                                      tooltip: 'Supprimer',
+                                      constraints: const BoxConstraints(),
+                                      padding: const EdgeInsets.all(6),
+                                      onPressed: () async {
+                                        final id = file['id']?.toString();
+                                        if (id == null || id.isEmpty || appId.isEmpty) {
+                                          return;
+                                        }
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            title: const Text(
+                                                'Supprimer ce document ?'),
+                                            content: const Text(
+                                              'Cette action est définitive.',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.of(ctx).pop(false),
+                                                child: const Text('Annuler'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.of(ctx).pop(true),
+                                                child: const Text('Supprimer'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirm != true || !context.mounted) {
+                                          return;
+                                        }
+                                        final provider = context
+                                            .read<StudentApplicationFilesProvider>();
+                                        final ok = await provider.deleteFile(
+                                          fileId: id,
+                                          storagePath: path,
+                                          applicationId: appId,
+                                        );
+                                        if (!context.mounted) return;
+                                        if (ok) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Document supprimé avec succès.',
+                                              ),
+                                            ),
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                provider.error ??
+                                                    'Erreur lors de la suppression.',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                    if (uploadedAt.isNotEmpty)
+                                      Text(
+                                        uploadedAt,
+                                        style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                                      ),
+                                  ],
                                 ),
+                                const Divider(height: 1),
                               ],
                             ),
                           );
-                        },
+                        }),
                       );
                     },
                   ),
-                ),
-              ],
+                ],
             ),
             Column(
               children: [

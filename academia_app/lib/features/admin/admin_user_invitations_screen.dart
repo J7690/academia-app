@@ -34,8 +34,15 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
   final _teacherDisciplineController = TextEditingController();
   final _teacherZoneController = TextEditingController();
   final _teacherAvailabilityController = TextEditingController();
+  final _merchantEmailController = TextEditingController();
+  final _merchantPasswordController = TextEditingController();
+  final _merchantDisplayNameController = TextEditingController();
+  final _merchantCountryController = TextEditingController();
+  final _merchantCityController = TextEditingController();
   String _selectedRole = 'instructor';
   String? _selectedUniversityId;
+  bool _isCreatingMerchantDirect = false;
+  bool _isCreatingUniversityDirect = false;
 
   @override
   void initState() {
@@ -45,7 +52,121 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
       context.read<AdminUniversitiesProvider>().loadUniversities();
       context.read<AdminUsersOverviewProvider>().loadUsers();
       context.read<AdminUsersOverviewProvider>().loadCommercialsOverview();
+      context.read<AdminUsersOverviewProvider>().loadDeletedUsers();
     });
+  }
+
+  Future<void> _createMerchantAccountDirect(BuildContext context) async {
+    final email = _merchantEmailController.text.trim();
+    final password = _merchantPasswordController.text;
+    final displayName = _merchantDisplayNameController.text.trim();
+    final country = _merchantCountryController.text.trim();
+    final city = _merchantCityController.text.trim();
+
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Veuillez renseigner un email.')),
+      );
+      return;
+    }
+
+    if (password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Veuillez renseigner un mot de passe temporaire.')),
+      );
+      return;
+    }
+
+    if (displayName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Veuillez renseigner un nom de marchand.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isCreatingMerchantDirect = true;
+    });
+    final provider = context.read<AdminUserInvitationsProvider>();
+    final response = await provider.createMerchantAccountDirect(
+      email: email,
+      password: password,
+      displayName: displayName,
+      country: country.isEmpty ? null : country,
+      city: city.isEmpty ? null : city,
+    );
+
+    if (mounted) {
+      setState(() {
+        _isCreatingMerchantDirect = false;
+      });
+    }
+
+    if (!mounted) return;
+
+    if (response == null) {
+      final error = provider.error ?? 'Erreur lors de la création du compte marchand.';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+
+    _merchantEmailController.clear();
+    _merchantPasswordController.clear();
+    _merchantDisplayNameController.clear();
+    _merchantCountryController.clear();
+    _merchantCityController.clear();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Compte marchand créé avec succès.')),
+    );
+  }
+
+  Future<void> _promoteUserToMerchant(
+    BuildContext context,
+    String userId,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Promouvoir en marchand'),
+          content: const Text(
+            'Ce compte passera au rôle marchand. Voulez-vous continuer ?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Promouvoir'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    final usersProvider = context.read<AdminUsersOverviewProvider>();
+    final ok = await usersProvider.promoteUserRole(
+      userId: userId,
+      targetRole: 'merchant',
+    );
+
+    if (!mounted) return;
+
+    if (!ok) {
+      final error = usersProvider.error ?? 'Promotion en marchand échouée.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error)),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Compte promu en marchand.')),
+      );
+    }
   }
 
   Future<void> _createCommercialAccountDirect(BuildContext context) async {
@@ -459,6 +580,11 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
     _teacherDisciplineController.dispose();
     _teacherZoneController.dispose();
     _teacherAvailabilityController.dispose();
+    _merchantEmailController.dispose();
+    _merchantPasswordController.dispose();
+    _merchantDisplayNameController.dispose();
+    _merchantCountryController.dispose();
+    _merchantCityController.dispose();
     super.dispose();
   }
 
@@ -550,12 +676,21 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
       return;
     }
 
+    setState(() {
+      _isCreatingUniversityDirect = true;
+    });
     final provider = context.read<AdminUserInvitationsProvider>();
     final response = await provider.createUniversityAccountDirect(
       email: email,
       password: password,
       universityName: universityName,
     );
+
+    if (mounted) {
+      setState(() {
+        _isCreatingUniversityDirect = false;
+      });
+    }
 
     if (!mounted) return;
 
@@ -947,7 +1082,7 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                                   ),
                                 ),
                               )
-                            else if (usersProvider.error != null)
+                            else if (usersProvider.error != null && users.isEmpty)
                               Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 8),
                                 child: Text(
@@ -1301,6 +1436,31 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                                                                       .isEmpty) {
                                                                 return;
                                                               }
+                                                              await _promoteUserToMerchant(
+                                                                context,
+                                                                targetId,
+                                                              );
+                                                            },
+                                                      child: const Text(
+                                                        'Rendre marchand',
+                                                      ),
+                                                    ),
+                                                  if (!isDeleted &&
+                                                      role == 'student')
+                                                    TextButton(
+                                                      onPressed: usersProvider
+                                                              .isUpdating
+                                                          ? null
+                                                          : () async {
+                                                              final targetId =
+                                                                  user['id']
+                                                                      ?.toString();
+                                                              if (targetId ==
+                                                                      null ||
+                                                                  targetId
+                                                                      .isEmpty) {
+                                                                return;
+                                                              }
                                                               await _promoteUserToUniversity(
                                                                 context,
                                                                 targetId,
@@ -1343,7 +1503,7 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                                                                   ),
                                                                   content:
                                                                       const Text(
-                                                                    'Cette action marque le compte comme supprimé et suspend l\'accès. Voulez-vous continuer ?',
+                                                                    'Ce compte sera définitivement supprimé et archivé dans l\'onglet "Comptes supprimés". Voulez-vous continuer ?',
                                                                   ),
                                                                   actions: [
                                                                     TextButton(
@@ -1385,7 +1545,7 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                                                             }
 
                                                             final ok = await usersProvider
-                                                                .deleteUserAccount(
+                                                                .hardDeleteUserAccount(
                                                               userId: targetId,
                                                             );
                                                             if (!context
@@ -1412,7 +1572,7 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                                                                   .showSnackBar(
                                                                 const SnackBar(
                                                                   content: Text(
-                                                                    'Compte utilisateur supprimé.',
+                                                                    'Compte supprimé et archivé.',
                                                                   ),
                                                                 ),
                                                               );
@@ -1651,12 +1811,12 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                               width: double.infinity,
                               height: 44,
                               child: ElevatedButton(
-                                onPressed: isSaving
+                                onPressed: _isCreatingUniversityDirect
                                     ? null
                                     : () => _createUniversityAccountDirect(
                                           context,
                                         ),
-                                child: isSaving
+                                child: _isCreatingUniversityDirect
                                     ? const SizedBox(
                                         width: 20,
                                         height: 20,
@@ -1665,6 +1825,97 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                                         ),
                                       )
                                     : const Text('Créer le compte université'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Créer un compte marchand (direct)',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _merchantEmailController,
+                              decoration: const InputDecoration(
+                                labelText: 'Email',
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _merchantPasswordController,
+                              decoration: const InputDecoration(
+                                labelText: 'Mot de passe temporaire',
+                              ),
+                              obscureText: true,
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _merchantDisplayNameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Nom du marchand',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: _merchantCountryController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Pays (optionnel)',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _merchantCityController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Ville (optionnel)',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 44,
+                              child: ElevatedButton(
+                                onPressed: _isCreatingMerchantDirect
+                                    ? null
+                                    : () => _createMerchantAccountDirect(
+                                          context,
+                                        ),
+                                child: _isCreatingMerchantDirect
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text('Créer le compte marchand'),
                               ),
                             ),
                           ],
@@ -1955,6 +2206,10 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                             DropdownMenuItem(
                               value: 'instructor',
                               child: Text('Formateur / CI'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'merchant',
+                              child: Text('Marchand'),
                             ),
                           ],
                           onChanged: (value) {
@@ -2247,6 +2502,193 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                               );
                             },
                           ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Comptes supprimés',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: usersProvider.isLoading
+                                      ? null
+                                      : () {
+                                          usersProvider.loadDeletedUsers();
+                                        },
+                                  icon: const Icon(Icons.refresh),
+                                  tooltip: 'Actualiser les comptes supprimés',
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Archive des comptes supprimés pour traçabilité.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            if (usersProvider.deletedUsers.isEmpty)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8),
+                                child: Text(
+                                  'Aucun compte supprimé pour le moment.',
+                                  style: TextStyle(fontSize: 13),
+                                ),
+                              )
+                            else
+                              ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: usersProvider.deletedUsers.length,
+                                itemBuilder: (context, index) {
+                                  final du = usersProvider.deletedUsers[index];
+                                  final email = du['email']?.toString() ?? '';
+                                  final role = du['role']?.toString() ?? '';
+                                  final fullName = du['full_name']?.toString() ?? '';
+                                  final deletedAt = du['deleted_at']?.toString() ?? '';
+                                  final reason = du['deleted_reason']?.toString() ?? '';
+                                  final userId = du['user_id']?.toString() ?? '';
+
+                                  String roleLabel;
+                                  switch (role) {
+                                    case 'admin':
+                                      roleLabel = 'Administrateur';
+                                      break;
+                                    case 'university':
+                                      roleLabel = 'Université';
+                                      break;
+                                    case 'student':
+                                      roleLabel = 'Étudiant';
+                                      break;
+                                    case 'commercial':
+                                      roleLabel = 'Commercial';
+                                      break;
+                                    case 'teacher':
+                                      roleLabel = 'Enseignant';
+                                      break;
+                                    case 'instructor':
+                                      roleLabel = 'Formateur';
+                                      break;
+                                    default:
+                                      roleLabel = role.isNotEmpty ? role : 'Inconnu';
+                                  }
+
+                                  return Card(
+                                    margin: const EdgeInsets.only(bottom: 8),
+                                    color: const Color(0xFFFEF2F2),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  email.isNotEmpty
+                                                      ? email
+                                                      : (fullName.isNotEmpty
+                                                          ? fullName
+                                                          : userId),
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 4,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFFFF3B30)
+                                                      .withOpacity(0.1),
+                                                  borderRadius:
+                                                      BorderRadius.circular(999),
+                                                ),
+                                                child: Text(
+                                                  roleLabel,
+                                                  style: const TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Color(0xFFFF3B30),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          if (fullName.isNotEmpty &&
+                                              email.isNotEmpty)
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.only(top: 2),
+                                              child: Text(
+                                                fullName,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ),
+                                          if (deletedAt.isNotEmpty)
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.only(top: 2),
+                                              child: Text(
+                                                'Supprimé le : $deletedAt',
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ),
+                                          if (reason.isNotEmpty)
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.only(top: 2),
+                                              child: Text(
+                                                'Raison : $reason',
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

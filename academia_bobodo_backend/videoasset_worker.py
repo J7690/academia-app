@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import socket
+import subprocess
 import tempfile
 import uuid
 from datetime import datetime, timezone
@@ -31,10 +33,51 @@ SUPABASE_URL = (os.getenv("SUPABASE_URL") or "").rstrip("/")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY") or ""
 VIDEO_ASSET_BUCKET = os.getenv("VIDEO_ASSET_BUCKET", "video-assets")
 
+# Optional: use a backend proxy endpoint to reach Supabase when DNS/network is unreliable.
+# The proxy must accept /supabase/{path} and forward to SUPABASE_URL/{path} with auth headers.
+SUPABASE_PROXY_URL = (os.getenv("SUPABASE_PROXY_URL") or "").rstrip("/")
+
+# Timeout (seconds) for Supabase REST calls made by this worker.
+# In proxy mode, requests can take longer depending on backend load.
+SUPABASE_HTTP_TIMEOUT = float(os.getenv("SUPABASE_HTTP_TIMEOUT") or "30")
+
+WATERMARK_LOGO_PATH = os.getenv("WATERMARK_LOGO_PATH") or str(
+    (BASE_DIR.parent / "assets" / "images" / "academia.png").resolve()
+)
+
 
 def _check_config() -> None:
-    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        raise RuntimeError("SUPABASE_URL ou SUPABASE_SERVICE_KEY manquant pour videoasset_worker.")
+    if not SUPABASE_SERVICE_KEY:
+        raise RuntimeError("SUPABASE_SERVICE_KEY manquant pour videoasset_worker.")
+    if not SUPABASE_URL and not SUPABASE_PROXY_URL:
+        raise RuntimeError("SUPABASE_URL ou SUPABASE_PROXY_URL manquant pour videoasset_worker.")
+
+
+def _diagnose_supabase_dns() -> None:
+    # Best-effort: helps audits when the worker can't reach Supabase directly.
+    if not SUPABASE_URL:
+        return
+    try:
+        host = SUPABASE_URL.replace("https://", "").replace("http://", "").split("/")[0]
+        socket.getaddrinfo(host, 443)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[videoasset_worker] DNS resolution failed for SUPABASE host: %s (%s)", SUPABASE_URL, exc)
+
+
+def _rest_base() -> str:
+    # Direct mode:   {SUPABASE_URL}/rest/v1/...
+    # Proxy mode:    {SUPABASE_PROXY_URL}/supabase/rest/v1/...
+    if SUPABASE_PROXY_URL:
+        return f"{SUPABASE_PROXY_URL}/supabase/rest/v1"
+    return f"{SUPABASE_URL}/rest/v1"
+
+
+def _storage_base() -> str:
+    # Direct mode:   {SUPABASE_URL}/storage/v1/...
+    # Proxy mode:    {SUPABASE_PROXY_URL}/supabase/storage/v1/...
+    if SUPABASE_PROXY_URL:
+        return f"{SUPABASE_PROXY_URL}/supabase/storage/v1"
+    return f"{SUPABASE_URL}/storage/v1"
 
 
 def _supabase_headers(extra: Optional[Dict[str, str]] = None) -> Dict[str, str]:
@@ -42,6 +85,8 @@ def _supabase_headers(extra: Optional[Dict[str, str]] = None) -> Dict[str, str]:
         "apikey": SUPABASE_SERVICE_KEY,
         "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
         "Accept": "application/json",
+        "Accept-Profile": "app",
+        "Content-Profile": "app",
     }
     if extra:
         headers.update(extra)
@@ -50,13 +95,14 @@ def _supabase_headers(extra: Optional[Dict[str, str]] = None) -> Dict[str, str]:
 
 async def _fetch_queued_jobs(limit: int = 5) -> List[Dict[str, Any]]:
     _check_config()
-    url = f"{SUPABASE_URL}/rest/v1/app.video_processing_jobs"
+    _diagnose_supabase_dns()
+    url = f"{_rest_base()}/video_processing_jobs"
     params = {
         "status": "eq.queued",
         "order": "created_at.asc",
         "limit": str(limit),
     }
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
         resp = await client.get(url, headers=_supabase_headers(), params=params)
 
     if resp.status_code >= 400:
@@ -79,9 +125,9 @@ async def _update_job(job_id: str, fields: Dict[str, Any]) -> None:
     if not fields:
         return
     _check_config()
-    url = f"{SUPABASE_URL}/rest/v1/app.video_processing_jobs"
+    url = f"{_rest_base()}/video_processing_jobs"
     params = {"id": f"eq.{job_id}"}
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
         await client.patch(url, headers=_supabase_headers({"Content-Type": "application/json"}), params=params, json=fields)
 
 
@@ -107,13 +153,13 @@ async def _mark_job_failed(job_id: str, message: str) -> None:
 
 async def _get_primary_source_for_asset(video_asset_id: str) -> Optional[Dict[str, Any]]:
     _check_config()
-    url = f"{SUPABASE_URL}/rest/v1/app.video_sources"
+    url = f"{_rest_base()}/video_sources"
     params = {
         "video_asset_id": f"eq.{video_asset_id}",
         "select": "id,storage_bucket,storage_path",
         "limit": "1",
     }
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
         resp = await client.get(url, headers=_supabase_headers(), params=params)
 
     if resp.status_code >= 400:
@@ -143,7 +189,7 @@ async def _download_source_to_temp(source: Dict[str, Any]) -> Path:
     if not bucket or not storage_path:
         raise RuntimeError("storage_bucket ou storage_path manquant pour la source vidéo.")
 
-    url = f"{SUPABASE_URL}/storage/v1/object/{bucket}/{storage_path}"
+    url = f"{_storage_base()}/object/{bucket}/{storage_path}"
     headers = _supabase_headers()
 
     tmp_dir = Path(tempfile.gettempdir())
@@ -164,16 +210,70 @@ async def _download_source_to_temp(source: Dict[str, Any]) -> Path:
 
 async def _delete_existing_mp4_renditions(video_asset_id: str) -> None:
     _check_config()
-    url = f"{SUPABASE_URL}/rest/v1/app.video_renditions"
+    url = f"{_rest_base()}/video_renditions"
     params = {
         "video_asset_id": f"eq.{video_asset_id}",
         "kind": "eq.mp4",
+        "status": "in.(ready,processing)",
     }
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        resp = await client.delete(url, headers=_supabase_headers())
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
+        resp = await client.delete(url, headers=_supabase_headers(), params=params)
     if resp.status_code >= 400:
         logger.error(
             "[videoasset_worker] delete_existing_mp4_renditions failed: %s %s",
+            resp.status_code,
+            resp.text[:400],
+        )
+
+
+async def _get_rendition_row(video_asset_id: str, rendition_key: str) -> Optional[Dict[str, Any]]:
+    _check_config()
+    rk = (rendition_key or "").strip()
+    if not rk:
+        return
+    url = f"{_rest_base()}/video_renditions"
+    params = {
+        "video_asset_id": f"eq.{video_asset_id}",
+        "rendition_key": f"eq.{rk}",
+        "select": "id,video_asset_id,rendition_key,status,storage_path,public_url_hint,meta",
+    }
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
+        resp = await client.get(url, headers=_supabase_headers(), params=params)
+    if resp.status_code >= 400:
+        logger.error(
+            "[videoasset_worker] get_rendition_row failed: %s %s",
+            resp.status_code,
+            resp.text[:400],
+        )
+        return None
+
+    try:
+        data = resp.json()
+    except ValueError:
+        return None
+
+    if isinstance(data, list) and data:
+        row = data[0]
+        if isinstance(row, dict):
+            return row
+    return None
+
+
+async def _delete_rendition_by_key(video_asset_id: str, rendition_key: str) -> None:
+    _check_config()
+    rk = (rendition_key or "").strip()
+    if not rk:
+        return
+    url = f"{_rest_base()}/video_renditions"
+    params = {
+        "video_asset_id": f"eq.{video_asset_id}",
+        "rendition_key": f"eq.{rk}",
+    }
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
+        resp = await client.delete(url, headers=_supabase_headers(), params=params)
+    if resp.status_code >= 400:
+        logger.error(
+            "[videoasset_worker] delete_rendition_by_key failed: %s %s",
             resp.status_code,
             resp.text[:400],
         )
@@ -190,13 +290,13 @@ async def _upload_rendition_file(
         raise RuntimeError(f"Rendition file missing: {path}")
 
     object_key = f"renditions/{video_asset_id}/{rendition_key}.mp4"
-    storage_url = f"{SUPABASE_URL}/storage/v1/object/{VIDEO_ASSET_BUCKET}/{object_key}"
+    storage_url = f"{_storage_base()}/object/{VIDEO_ASSET_BUCKET}/{object_key}"
 
-    headers = _supabase_headers({"Content-Type": "video/mp4"})
+    headers = _supabase_headers({"Content-Type": "video/mp4", "x-upsert": "true"})
     data = path.read_bytes()
 
     async with httpx.AsyncClient(timeout=600.0) as client:
-        resp = await client.post(storage_url, headers=headers, content=data)
+        resp = await client.put(storage_url, headers=headers, content=data)
 
     if resp.status_code >= 400:
         try:
@@ -207,7 +307,7 @@ async def _upload_rendition_file(
             f"Erreur upload rendition VideoAsset ({resp.status_code}): {body}"
         )
 
-    public_url = f"{SUPABASE_URL}/storage/v1/object/public/{VIDEO_ASSET_BUCKET}/{object_key}"
+    public_url = f"{SUPABASE_URL}/storage/v1/object/public/{VIDEO_ASSET_BUCKET}/{object_key}" if SUPABASE_URL else ""
 
     row: Dict[str, Any] = {
         "video_asset_id": video_asset_id,
@@ -228,9 +328,9 @@ async def _insert_video_renditions(rows: List[Dict[str, Any]]) -> None:
     if not rows:
         return
     _check_config()
-    url = f"{SUPABASE_URL}/rest/v1/app.video_renditions"
+    url = f"{_rest_base()}/video_renditions"
     headers = _supabase_headers({"Content-Type": "application/json", "Prefer": "return=minimal"})
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
         resp = await client.post(url, headers=headers, json=rows)
     if resp.status_code >= 400:
         logger.error(
@@ -241,12 +341,121 @@ async def _insert_video_renditions(rows: List[Dict[str, Any]]) -> None:
         raise RuntimeError("Echec de l'insertion des renditions VideoAsset.")
 
 
+async def _upsert_video_rendition(row: Dict[str, Any]) -> None:
+    if not row:
+        return
+    _check_config()
+    url = f"{_rest_base()}/video_renditions?on_conflict=video_asset_id,rendition_key"
+    headers = _supabase_headers(
+        {
+            "Content-Type": "application/json",
+            "Prefer": "resolution=merge-duplicates,return=minimal",
+        }
+    )
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
+        resp = await client.post(url, headers=headers, json=[row])
+    if resp.status_code >= 400:
+        logger.error(
+            "[videoasset_worker] upsert_video_rendition failed: %s %s",
+            resp.status_code,
+            resp.text[:400],
+        )
+        raise RuntimeError("Echec de l'upsert video_renditions.")
+
+
+def _run_ffmpeg_export_watermarked(input_path: Path, logo_path: Path) -> Path:
+    if not input_path.exists():
+        raise RuntimeError(f"Input video missing: {input_path}")
+    if not logo_path.exists():
+        raise RuntimeError(f"Watermark logo missing: {logo_path}")
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="videoasset_watermark_"))
+    output_path = tmp_dir / "export_watermarked.mp4"
+
+    # Baseline-ish H.264 for compatibility, and overlay bottom-right.
+    # watermark scale: ~12% width, keep ratio.
+    filter_complex = (
+        "[1:v]format=rgba,colorchannelmixer=aa=0.5[wm0];"
+        "[wm0][0:v]scale2ref=w='min(iw,main_w*0.12)':h=-1[wm][base];"
+        "[base][wm]overlay="
+        "x='W-w-24-20*(0.5+0.5*sin(2*PI*t/6))':"
+        "y='H-h-24-12*(0.5+0.5*cos(2*PI*t/7))':"
+        "format=auto,format=yuv420p[v]"
+    )
+
+    x264_params = (
+        "ref=1:"
+        "bframes=0:"
+        "cabac=0:"
+        "deblock=0:"
+        "weightp=0:"
+        "no-scenecut=1:"
+        "level=30"
+    )
+
+    cmd = [
+        "ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-y",
+        "-i",
+        str(input_path),
+        "-i",
+        str(logo_path),
+        "-filter_complex",
+        filter_complex,
+        "-map",
+        "[v]",
+        "-map",
+        "0:a?",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "veryfast",
+        "-profile:v",
+        "baseline",
+        "-level",
+        "3.0",
+        "-x264-params",
+        x264_params,
+        "-g",
+        "30",
+        "-keyint_min",
+        "30",
+        "-movflags",
+        "+faststart",
+        "-c:a",
+        "aac",
+        "-ac",
+        "2",
+        "-ar",
+        "44100",
+        "-b:a",
+        "96k",
+        str(output_path),
+    ]
+
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    if result.returncode != 0:
+        stderr_text = result.stderr.decode("utf-8", errors="ignore")
+        stderr_tail = stderr_text[-4000:] if len(stderr_text) > 4000 else stderr_text
+        raise RuntimeError(
+            f"ffmpeg watermark error (code {result.returncode}): {stderr_tail}"
+        )
+
+    if not output_path.exists():
+        raise RuntimeError("ffmpeg watermark succeeded but output missing")
+
+    return output_path
+
+
 async def _mark_video_asset_ready(video_asset_id: str) -> None:
     _check_config()
-    url = f"{SUPABASE_URL}/rest/v1/app.video_assets"
+    url = f"{_rest_base()}/video_assets"
     params = {"id": f"eq.{video_asset_id}"}
     body = {"status": "ready"}
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
         resp = await client.patch(
             url,
             headers=_supabase_headers({"Content-Type": "application/json"}),
@@ -325,6 +534,55 @@ async def _process_generate_hls_job(job: Dict[str, Any], worker_id: str) -> None
                 pass
 
 
+async def _process_export_watermarked_job(job: Dict[str, Any], worker_id: str) -> None:
+    video_asset_id = str(job.get("video_asset_id") or "").strip()
+    job_id = str(job.get("id") or "").strip()
+    if not video_asset_id or not job_id:
+        raise RuntimeError("Job export_watermarked sans video_asset_id ou id.")
+
+    await _mark_job_running(job_id, worker_id)
+
+    source = await _get_primary_source_for_asset(video_asset_id)
+    if not source:
+        raise RuntimeError("Aucune source trouvée pour ce VideoAsset.")
+
+    input_path: Optional[Path] = None
+    out_path: Optional[Path] = None
+    try:
+        input_path = await _download_source_to_temp(source)
+
+        logo_path = Path(WATERMARK_LOGO_PATH)
+        out_path = _run_ffmpeg_export_watermarked(input_path, logo_path)
+
+        # Remove previous row/object if present (best-effort)
+        await _delete_rendition_by_key(video_asset_id, "export_watermarked")
+
+        row = await _upload_rendition_file(
+            video_asset_id,
+            out_path,
+            "export_watermarked",
+            approx_width=None,
+        )
+        await _upsert_video_rendition(row)
+
+        await _mark_job_done(job_id)
+        logger.info(
+            "[videoasset_worker] VideoAsset %s: export_watermarked generated and uploaded.",
+            video_asset_id,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("[videoasset_worker] Erreur sur job export_watermarked %s", job_id)
+        await _mark_job_failed(job_id, str(exc))
+        raise
+    finally:
+        for p in (input_path, out_path):
+            try:
+                if p is not None and isinstance(p, Path) and p.exists():
+                    p.unlink()
+            except Exception:  # noqa: BLE001
+                pass
+
+
 async def _process_single_job(job: Dict[str, Any], worker_id: str) -> None:
     job_type = str(job.get("job_type") or "").strip().lower()
     job_id = str(job.get("id") or "").strip()
@@ -336,6 +594,10 @@ async def _process_single_job(job: Dict[str, Any], worker_id: str) -> None:
 
     if job_type == "generate_hls":
         await _process_generate_hls_job(job, worker_id)
+        return
+
+    if job_type == "export_watermarked":
+        await _process_export_watermarked_job(job, worker_id)
         return
 
     # Pour l'instant, les autres types de job sont marqués comme terminés sans effet.
@@ -350,6 +612,7 @@ async def run_once(max_jobs: int = 3) -> None:
     """
 
     _check_config()
+    _diagnose_supabase_dns()
     worker_id = f"videoasset_worker_{uuid.uuid4().hex[:8]}"
     jobs = await _fetch_queued_jobs(limit=max_jobs)
     if not jobs:
@@ -367,4 +630,18 @@ async def run_once(max_jobs: int = 3) -> None:
 
 
 if __name__ == "__main__":  # pragma: no cover
-    asyncio.run(run_once())
+    loop_mode = (os.getenv("WORKER_LOOP") or "").strip().lower() in {"1", "true", "yes"}
+    if not loop_mode:
+        asyncio.run(run_once())
+    else:
+        interval_s = float((os.getenv("WORKER_INTERVAL_SECONDS") or "2").strip() or "2")
+
+        async def _loop() -> None:
+            while True:
+                try:
+                    await run_once(max_jobs=int(os.getenv("WORKER_MAX_JOBS") or "3"))
+                except Exception as exc:  # noqa: BLE001
+                    logger.exception("[videoasset_worker] Loop iteration failed: %s", exc)
+                await asyncio.sleep(max(interval_s, 0.5))
+
+        asyncio.run(_loop())

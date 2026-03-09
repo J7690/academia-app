@@ -10,6 +10,7 @@ import '../../providers/student_applications_provider.dart';
 import '../../providers/student_opportunities_provider.dart';
 import '../../providers/student_application_payments_provider.dart';
 import '../../providers/student_communities_provider.dart';
+import '../../services/app_badge_service.dart';
 import '../../services/notification_sound_service.dart';
 import '../../utils/responsive.dart';
 import 'student_home_mobile.dart';
@@ -19,12 +20,17 @@ import 'tabs/student_opportunities_tab.dart';
 import 'tabs/student_communities_tab.dart';
 import 'tabs/student_partners_tab.dart';
 import 'tabs/student_bobodo_tab.dart';
-import 'prep_concours/prep_concours_home_screen.dart';
+import 'student_prep_concours_screen.dart';
 import 'student_dashboard_nav_controller.dart';
 import 'student_payments_screen.dart';
 import 'student_td_root_screen.dart';
 import 'student_application_detail_screen.dart';
+import 'tabs/student_challenges_tab.dart';
 import '../share/share_mode_provider.dart';
+import '../../widgets/student_assistant_overlay.dart';
+import '../../services/push_trigger_service.dart';
+import '../../widgets/notification_permission_checker.dart';
+import '../../widgets/support_fab.dart';
 
 /// Dashboard étudiant avec onglets principaux
 class StudentDashboardScreen extends StatefulWidget {
@@ -38,16 +44,15 @@ class StudentDashboardScreen extends StatefulWidget {
 
 class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   int _currentIndex = 0;
-  bool _hasNewHomeContent = false;
-  bool _hasNewChallenges = false;
-  bool _hasNewCourses = false;
-  bool _hasNewTrainings = false;
-  bool _hasNewLives = false;
-  bool _hasNewPayments = false;
-  int _studentPaymentsCount = 0;
-  bool _hasNewCommunities = false;
-  bool _hasNewPartners = false;
-  bool _hasNewBobodo = false;
+  int _countHome = 0;
+  int _countChallenges = 0;
+  int _countCourses = 0;
+  int _countTrainings = 0;
+  int _countLives = 0;
+  int _countPayments = 0;
+  int _countCommunities = 0;
+  int _countPartners = 0;
+  int _countBobodo = 0;
   Timer? _pollingTimer;
   int _lastStudentUnreadCount = 0;
   bool _studentUnreadInitialized = false;
@@ -83,6 +88,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         await context.read<StudentOpportunitiesProvider>().loadTypes();
       } catch (_) {}
       await _loadNotificationSummary();
+      PushTriggerService.instance.triggerPendingPush();
+      if (mounted) NotificationPermissionChecker.instance.checkAndRequest(context);
 
       final pendingAppId = _pendingApplicationId;
       if (pendingAppId != null && mounted) {
@@ -98,6 +105,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         await _checkStudentUnreadChange();
       } catch (_) {}
       await _loadNotificationSummary();
+      PushTriggerService.instance.triggerPendingPush();
     });
   }
 
@@ -143,6 +151,24 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     } catch (_) {}
   }
 
+  /// Extract new_count from a summary domain map, falling back to 1 if has_new is true.
+  int _extractCount(dynamic domainData) {
+    if (domainData is! Map) return 0;
+    final hasNew = domainData['has_new'] == true;
+    final rawCount = domainData['new_count'] ??
+        domainData['unseen_count'] ??
+        domainData['unread_count'] ??
+        domainData['count'];
+    int count = 0;
+    if (rawCount is int) {
+      count = rawCount;
+    } else if (rawCount is String) {
+      count = int.tryParse(rawCount) ?? 0;
+    }
+    if (hasNew && count == 0) count = 1;
+    return count;
+  }
+
   Future<void> _loadNotificationSummary() async {
     final client = Supabase.instance.client;
     try {
@@ -151,102 +177,75 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       if (response['success'] != true) return;
       final summary = response['summary'];
       if (summary is! Map) return;
-      debugPrint('[StudentDashboard] notification summary keys: ' +
-          summary.keys.map((e) => e.toString()).toList().toString());
-      debugPrint('[StudentDashboard] student_payments summary: ' +
-          (summary['student_payments']?.toString() ?? 'null'));
-      final home = summary['student_home'];
-      final shortTrainings = summary['short_trainings'];
-      final challenges = summary['student_challenges'];
-      final courses = summary['student_courses'];
-      final trainings = summary['student_online_trainings'];
-      final lives = summary['student_lives'];
-      final payments = summary['student_payments'];
-      final communities = summary['student_communities'];
-      final partners = summary['student_universities'];
-      final bobodo = summary['student_bobodo'];
-      final prepConcours = summary['student_prep_concours'];
 
-      final hasNewHome = home is Map && home['has_new'] == true;
-      final hasNewShortTrainings =
-          shortTrainings is Map && shortTrainings['has_new'] == true;
-      final hasNewChallenges = challenges is Map && challenges['has_new'] == true;
-      final hasNewCourses = courses is Map && courses['has_new'] == true;
-      final hasNewTrainings = trainings is Map && trainings['has_new'] == true;
-      final hasNewLives = lives is Map && lives['has_new'] == true;
-      final hasNewCommunities =
-          communities is Map && communities['has_new'] == true;
-      final hasNewPartners = partners is Map && partners['has_new'] == true;
-      final hasNewBobodo = bobodo is Map && bobodo['has_new'] == true;
-      final hasNewPrepConcours =
-          prepConcours is Map && prepConcours['has_new'] == true;
-      final backendHasNewPayments =
-          payments is Map && payments['has_new'] == true;
+      final homeCount = _extractCount(summary['student_home']) +
+          _extractCount(summary['short_trainings']);
+      final challengesCount = _extractCount(summary['student_challenges']);
+      final coursesCount = _extractCount(summary['student_courses']);
+      final trainingsCount = _extractCount(summary['student_online_trainings']);
+      final livesCount = _extractCount(summary['student_lives']);
+      final paymentsCount = _extractCount(summary['student_payments']);
+      final communitiesCount = _extractCount(summary['student_communities']);
+      final partnersCount = _extractCount(summary['student_universities']);
+      final bobodoCount = _extractCount(summary['student_bobodo']);
 
-      int paymentsCount = 0;
-      if (payments is Map) {
-        final rawCount = payments['new_count'] ??
-            payments['unseen_count'] ??
-            payments['unread_count'] ??
-            payments['count'];
-        if (rawCount is int) {
-          paymentsCount = rawCount;
-        } else if (rawCount is String) {
-          paymentsCount = int.tryParse(rawCount) ?? 0;
-        }
-      }
+      final totalBadge = homeCount +
+          challengesCount +
+          coursesCount +
+          trainingsCount +
+          livesCount +
+          paymentsCount +
+          communitiesCount +
+          partnersCount +
+          bobodoCount;
 
-      if (backendHasNewPayments && paymentsCount == 0) {
-        paymentsCount = 1;
-      }
+      // Update app icon badge (WhatsApp-style count on launcher icon)
+      AppBadgeService.instance.updateBadge(totalBadge);
 
-      final hasNewPayments = backendHasNewPayments || paymentsCount > 0;
-
-      final hasNewHomeOrShort = hasNewHome || hasNewShortTrainings;
-      final hasNewAny = hasNewHomeOrShort ||
-          hasNewChallenges ||
-          hasNewCourses ||
-          hasNewTrainings ||
-          hasNewLives ||
-          hasNewPayments ||
-          hasNewCommunities ||
-          hasNewPartners ||
-          hasNewBobodo ||
-          hasNewPrepConcours;
       if (!mounted) return;
+
+      final previousTotal = _countHome +
+          _countChallenges +
+          _countCourses +
+          _countTrainings +
+          _countLives +
+          _countPayments +
+          _countCommunities +
+          _countPartners +
+          _countBobodo;
+
       if (!_studentHomeNotificationInitialized) {
         _studentHomeNotificationInitialized = true;
         setState(() {
-          _hasNewHomeContent = hasNewAny;
-          _hasNewChallenges = hasNewChallenges;
-          _hasNewCourses = hasNewCourses;
-          _hasNewTrainings = hasNewTrainings;
-          _hasNewLives = hasNewLives;
-          _hasNewPayments = hasNewPayments;
-          _hasNewCommunities = hasNewCommunities;
-          _hasNewPartners = hasNewPartners;
-          _hasNewBobodo = hasNewBobodo;
-          _studentPaymentsCount = paymentsCount;
+          _countHome = homeCount;
+          _countChallenges = challengesCount;
+          _countCourses = coursesCount;
+          _countTrainings = trainingsCount;
+          _countLives = livesCount;
+          _countPayments = paymentsCount;
+          _countCommunities = communitiesCount;
+          _countPartners = partnersCount;
+          _countBobodo = bobodoCount;
         });
         return;
       }
-      final previous = _hasNewHomeContent;
-      if (!previous && hasNewAny) {
+
+      if (previousTotal == 0 && totalBadge > 0) {
         try {
           await NotificationSoundService.instance.playIfEnabled();
         } catch (_) {}
       }
+
       setState(() {
-        _hasNewHomeContent = hasNewAny;
-        _hasNewChallenges = hasNewChallenges;
-        _hasNewCourses = hasNewCourses;
-        _hasNewTrainings = hasNewTrainings;
-        _hasNewLives = hasNewLives;
-        _hasNewPayments = hasNewPayments;
-        _hasNewCommunities = hasNewCommunities;
-        _hasNewPartners = hasNewPartners;
-        _hasNewBobodo = hasNewBobodo;
-        _studentPaymentsCount = paymentsCount;
+        _countHome = homeCount;
+        _countChallenges = challengesCount;
+        _countCourses = coursesCount;
+        _countTrainings = trainingsCount;
+        _countLives = livesCount;
+        _countPayments = paymentsCount;
+        _countCommunities = communitiesCount;
+        _countPartners = partnersCount;
+        _countBobodo = bobodoCount;
       });
     } catch (_) {}
   }
@@ -263,7 +262,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     } catch (_) {}
     if (!mounted) return;
     setState(() {
-      _hasNewHomeContent = false;
+      _countHome = 0;
     });
   }
 
@@ -276,7 +275,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     } catch (_) {}
     if (!mounted) return;
     setState(() {
-      _hasNewPayments = false;
+      _countPayments = 0;
     });
   }
 
@@ -289,7 +288,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     } catch (_) {}
     if (!mounted) return;
     setState(() {
-      _hasNewCommunities = false;
+      _countCommunities = 0;
     });
   }
 
@@ -302,7 +301,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     } catch (_) {}
     if (!mounted) return;
     setState(() {
-      _hasNewPartners = false;
+      _countPartners = 0;
     });
   }
 
@@ -315,7 +314,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     } catch (_) {}
     if (!mounted) return;
     setState(() {
-      _hasNewBobodo = false;
+      _countBobodo = 0;
     });
   }
 
@@ -370,15 +369,56 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         final unread = applicationsProvider.unreadCount;
 
         Widget? bottomNav;
-        if (isMobile) {
-          bottomNav = _buildMobileBottomNav(unread);
-        } else {
-          bottomNav = _buildDesktopBottomNav(unread);
+        // Masquer la barre du dashboard quand on est dans le feed vidéo
+        // Challenges (index 8) — le feed a sa propre barre TikTok.
+        final bool hideBottomNav = _currentIndex == 8;
+        if (!hideBottomNav) {
+          if (isMobile) {
+            bottomNav = _buildMobileBottomNav(unread);
+          } else {
+            bottomNav = _buildDesktopBottomNav(unread);
+          }
         }
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF3F4F6),
-          body: _buildCurrentTabBody(isMobile),
+          backgroundColor: const Color(0xFFFAFAFA),
+          body: Stack(
+            children: [
+              _buildCurrentTabBody(isMobile),
+              const StudentAssistantOverlay(),
+              // FABs flottants — masqués sur Challenge (index 8)
+              if (_currentIndex != 8)
+                Positioned(
+                  right: 16,
+                  bottom: 96,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // FAB Bobodo (IA) — style Meta AI WhatsApp
+                      FloatingActionButton(
+                        heroTag: 'bobodo_fab',
+                        onPressed: () {
+                          _markStudentBobodoSeen();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const Scaffold(
+                                body: SafeArea(child: StudentBobodoTab()),
+                              ),
+                            ),
+                          );
+                        },
+                        backgroundColor: const Color(0xFF6C63FF),
+                        elevation: 4,
+                        child: const Icon(Icons.smart_toy, color: Colors.white, size: 26),
+                      ),
+                      const SizedBox(height: 12),
+                      // FAB Support (messagerie admin)
+                      SupportFab(),
+                    ],
+                  ),
+                ),
+            ],
+          ),
           bottomNavigationBar: isShareModeEnabled ? null : bottomNav,
         );
       },
@@ -406,31 +446,34 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           child = const StudentPartnersTab();
           break;
         case 5:
-          child = const StudentBobodoTab();
+          child = const StudentPrepConcoursScreen();
           break;
         case 6:
-          child = const PrepConcoursHomeScreen();
-          break;
-        case 7:
           child = ChangeNotifierProvider(
             create: (_) => StudentApplicationPaymentsProvider(),
             child: const StudentPaymentsScreen(),
           );
           break;
-        case 8:
+        case 7:
           child = const StudentTdRootScreen();
           break;
-        case 9:
-          child = const _FeatureComingSoonTab(title: 'Challenges');
+        case 8:
+          child = const StudentChallengesTab();
           break;
-        case 10:
+        case 9:
           child = const _FeatureComingSoonTab(title: 'Cours');
           break;
-        case 11:
+        case 10:
           child = const _FeatureComingSoonTab(title: 'Lives');
           break;
         default:
           child = const StudentHomeMobileTab();
+      }
+
+      // Le feed vidéo Challenges (index 8) gère son propre plein écran
+      // et sa propre barre TikTok — pas de SafeArea.
+      if (_currentIndex == 8) {
+        return child;
       }
 
       return SafeArea(
@@ -458,27 +501,24 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           child = const StudentPartnersTab();
           break;
         case 5:
-          child = const StudentBobodoTab();
+          child = const StudentPrepConcoursScreen();
           break;
         case 6:
-          child = const PrepConcoursHomeScreen();
-          break;
-        case 7:
           child = ChangeNotifierProvider(
             create: (_) => StudentApplicationPaymentsProvider(),
             child: const StudentPaymentsScreen(),
           );
           break;
-        case 8:
+        case 7:
           child = const StudentTdRootScreen();
           break;
-        case 9:
-          child = const _FeatureComingSoonTab(title: 'Challenges');
+        case 8:
+          child = const StudentChallengesTab();
           break;
-        case 10:
+        case 9:
           child = const _FeatureComingSoonTab(title: 'Cours');
           break;
-        case 11:
+        case 10:
           child = const _FeatureComingSoonTab(title: 'Lives');
           break;
         default:
@@ -497,8 +537,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       _markStudentHomeSeen();
     } else if (index == 3) {
       _markStudentCommunitiesSeen();
-      // Recharger l'état des communautés à chaque ouverture de l'onglet
-      // pour que les nouveaux groupes / chats soient bien visibles.
       try {
         final communitiesProvider =
             context.read<StudentCommunitiesProvider>();
@@ -506,16 +544,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         communitiesProvider.loadMyCommunities();
         communitiesProvider.loadMyCommunitiesActivity();
         communitiesProvider.loadMyChats();
-      } catch (_) {
-        // En cas d'erreur ponctuelle, on ne casse pas la navigation.
-      }
+      } catch (_) {}
     } else if (index == 4) {
       _markStudentPartnersSeen();
     } else if (index == 5) {
-      _markStudentBobodoSeen();
-    } else if (index == 6) {
       _markStudentPrepConcoursSeen();
-    } else if (index == 7) {
+    } else if (index == 6) {
       _markStudentPaymentsSeen();
     }
   }
@@ -524,7 +558,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF7BC96F), Color(0xFFE8F5E9)],
+          colors: [Color(0xFF2E7D32), Color(0xFFE8F5E9)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -538,13 +572,13 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         onDestinationSelected: _onDestinationSelected,
         destinations: [
           NavigationDestination(
-            icon: _HomeNavIcon(
+            icon: _NavBadgeIcon(
               icon: Icons.home_outlined,
-              hasNew: _hasNewHomeContent,
+              count: _countHome,
             ),
-            selectedIcon: _HomeNavIcon(
+            selectedIcon: _NavBadgeIcon(
               icon: Icons.home,
-              hasNew: _hasNewHomeContent,
+              count: _countHome,
             ),
             label: 'Accueil',
           ),
@@ -565,37 +599,26 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             label: 'Opportunités',
           ),
           NavigationDestination(
-            icon: _HomeNavIcon(
+            icon: _NavBadgeIcon(
               icon: Icons.groups_outlined,
-              hasNew: _hasNewCommunities,
+              count: _countCommunities,
             ),
-            selectedIcon: _HomeNavIcon(
+            selectedIcon: _NavBadgeIcon(
               icon: Icons.groups,
-              hasNew: _hasNewCommunities,
+              count: _countCommunities,
             ),
             label: 'Communautés',
           ),
           NavigationDestination(
-            icon: _HomeNavIcon(
+            icon: _NavBadgeIcon(
               icon: Icons.apartment_outlined,
-              hasNew: _hasNewPartners,
+              count: _countPartners,
             ),
-            selectedIcon: _HomeNavIcon(
+            selectedIcon: _NavBadgeIcon(
               icon: Icons.apartment,
-              hasNew: _hasNewPartners,
+              count: _countPartners,
             ),
             label: 'Universités',
-          ),
-          NavigationDestination(
-            icon: _HomeNavIcon(
-              icon: Icons.smart_toy_outlined,
-              hasNew: _hasNewBobodo,
-            ),
-            selectedIcon: _HomeNavIcon(
-              icon: Icons.smart_toy,
-              hasNew: _hasNewBobodo,
-            ),
-            label: 'Bobodo',
           ),
           const NavigationDestination(
             icon: Icon(Icons.school_outlined),
@@ -605,55 +628,55 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           NavigationDestination(
             icon: _NavBadgeIcon(
               icon: Icons.payments_outlined,
-              count: _studentPaymentsCount,
+              count: _countPayments,
             ),
             selectedIcon: _NavBadgeIcon(
               icon: Icons.payments,
-              count: _studentPaymentsCount,
+              count: _countPayments,
             ),
             label: 'Paiements',
           ),
           NavigationDestination(
-            icon: _HomeNavIcon(
+            icon: _NavBadgeIcon(
               icon: Icons.school_outlined,
-              hasNew: _hasNewTrainings,
+              count: _countTrainings,
             ),
-            selectedIcon: _HomeNavIcon(
+            selectedIcon: _NavBadgeIcon(
               icon: Icons.school,
-              hasNew: _hasNewTrainings,
+              count: _countTrainings,
             ),
             label: 'TD',
           ),
           NavigationDestination(
-            icon: _HomeNavIcon(
+            icon: _NavBadgeIcon(
               icon: Icons.emoji_events_outlined,
-              hasNew: _hasNewChallenges,
+              count: _countChallenges,
             ),
-            selectedIcon: _HomeNavIcon(
+            selectedIcon: _NavBadgeIcon(
               icon: Icons.emoji_events,
-              hasNew: _hasNewChallenges,
+              count: _countChallenges,
             ),
             label: 'Challenges',
           ),
           NavigationDestination(
-            icon: _HomeNavIcon(
+            icon: _NavBadgeIcon(
               icon: Icons.menu_book_outlined,
-              hasNew: _hasNewCourses,
+              count: _countCourses,
             ),
-            selectedIcon: _HomeNavIcon(
+            selectedIcon: _NavBadgeIcon(
               icon: Icons.menu_book,
-              hasNew: _hasNewCourses,
+              count: _countCourses,
             ),
             label: 'Cours',
           ),
           NavigationDestination(
-            icon: _HomeNavIcon(
+            icon: _NavBadgeIcon(
               icon: Icons.videocam_outlined,
-              hasNew: _hasNewLives,
+              count: _countLives,
             ),
-            selectedIcon: _HomeNavIcon(
+            selectedIcon: _NavBadgeIcon(
               icon: Icons.videocam,
-              hasNew: _hasNewLives,
+              count: _countLives,
             ),
             label: 'Lives',
           ),
@@ -677,13 +700,13 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                 child: Container(
                   width: MediaQuery.of(context).size.width * 0.92,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE6F3FA),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(28),
                     boxShadow: const [
                       BoxShadow(
-                        color: Color(0x33000000),
-                        offset: Offset(0, 12),
-                        blurRadius: 32,
+                        color: Color(0x22000000),
+                        offset: Offset(0, 8),
+                        blurRadius: 24,
                       ),
                     ],
                   ),
@@ -694,14 +717,14 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                       children: [
                         _buildMobileNavItem(
                           index: 0,
-                          label: 'Accueil',
-                          icon: _HomeNavIcon(
-                            icon: Icons.home_outlined,
-                            hasNew: _hasNewHomeContent,
+                          label: 'Explorer',
+                          icon: _NavBadgeIcon(
+                            icon: Icons.explore_outlined,
+                            count: _countHome,
                           ),
-                          selectedIcon: _HomeNavIcon(
-                            icon: Icons.home,
-                            hasNew: _hasNewHomeContent,
+                          selectedIcon: _NavBadgeIcon(
+                            icon: Icons.explore,
+                            count: _countHome,
                           ),
                         ),
                         _buildMobileNavItem(
@@ -725,85 +748,91 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                         _buildMobileNavItem(
                           index: 3,
                           label: 'Communautés',
-                          icon: const Icon(Icons.groups_outlined),
-                          selectedIcon: const Icon(Icons.groups),
+                          icon: _NavBadgeIcon(
+                            icon: Icons.groups_outlined,
+                            count: _countCommunities,
+                          ),
+                          selectedIcon: _NavBadgeIcon(
+                            icon: Icons.groups,
+                            count: _countCommunities,
+                          ),
                         ),
                         _buildMobileNavItem(
                           index: 4,
                           label: 'Universités',
-                          icon: const Icon(Icons.apartment_outlined),
-                          selectedIcon: const Icon(Icons.apartment),
+                          icon: _NavBadgeIcon(
+                            icon: Icons.apartment_outlined,
+                            count: _countPartners,
+                          ),
+                          selectedIcon: _NavBadgeIcon(
+                            icon: Icons.apartment,
+                            count: _countPartners,
+                          ),
                         ),
                         _buildMobileNavItem(
                           index: 5,
-                          label: 'Bobodo',
-                          icon: const Icon(Icons.smart_toy_outlined),
-                          selectedIcon: const Icon(Icons.smart_toy),
-                        ),
-                        _buildMobileNavItem(
-                          index: 6,
                           label: 'Concours',
                           icon: const Icon(Icons.school_outlined),
                           selectedIcon: const Icon(Icons.school),
                         ),
                         _buildMobileNavItem(
-                          index: 7,
+                          index: 6,
                           label: 'Paiements',
                           icon: _NavBadgeIcon(
                             icon: Icons.payments_outlined,
-                            count: _studentPaymentsCount,
+                            count: _countPayments,
                           ),
                           selectedIcon: _NavBadgeIcon(
                             icon: Icons.payments,
-                            count: _studentPaymentsCount,
+                            count: _countPayments,
+                          ),
+                        ),
+                        _buildMobileNavItem(
+                          index: 7,
+                          label: 'TD',
+                          icon: _NavBadgeIcon(
+                            icon: Icons.school_outlined,
+                            count: _countTrainings,
+                          ),
+                          selectedIcon: _NavBadgeIcon(
+                            icon: Icons.school,
+                            count: _countTrainings,
                           ),
                         ),
                         _buildMobileNavItem(
                           index: 8,
-                          label: 'TD',
-                          icon: _HomeNavIcon(
-                            icon: Icons.school_outlined,
-                            hasNew: _hasNewTrainings,
+                          label: 'Challenges',
+                          icon: _NavBadgeIcon(
+                            icon: Icons.emoji_events_outlined,
+                            count: _countChallenges,
                           ),
-                          selectedIcon: _HomeNavIcon(
-                            icon: Icons.school,
-                            hasNew: _hasNewTrainings,
+                          selectedIcon: _NavBadgeIcon(
+                            icon: Icons.emoji_events,
+                            count: _countChallenges,
                           ),
                         ),
                         _buildMobileNavItem(
                           index: 9,
-                          label: 'Challenges',
-                          icon: _HomeNavIcon(
-                            icon: Icons.emoji_events_outlined,
-                            hasNew: _hasNewChallenges,
+                          label: 'Cours',
+                          icon: _NavBadgeIcon(
+                            icon: Icons.menu_book_outlined,
+                            count: _countCourses,
                           ),
-                          selectedIcon: _HomeNavIcon(
-                            icon: Icons.emoji_events,
-                            hasNew: _hasNewChallenges,
+                          selectedIcon: _NavBadgeIcon(
+                            icon: Icons.menu_book,
+                            count: _countCourses,
                           ),
                         ),
                         _buildMobileNavItem(
                           index: 10,
-                          label: 'Cours',
-                          icon: _HomeNavIcon(
-                            icon: Icons.menu_book_outlined,
-                            hasNew: _hasNewCourses,
-                          ),
-                          selectedIcon: _HomeNavIcon(
-                            icon: Icons.menu_book,
-                            hasNew: _hasNewCourses,
-                          ),
-                        ),
-                        _buildMobileNavItem(
-                          index: 11,
                           label: 'Lives',
-                          icon: _HomeNavIcon(
+                          icon: _NavBadgeIcon(
                             icon: Icons.videocam_outlined,
-                            hasNew: _hasNewLives,
+                            count: _countLives,
                           ),
-                          selectedIcon: _HomeNavIcon(
+                          selectedIcon: _NavBadgeIcon(
                             icon: Icons.videocam,
-                            hasNew: _hasNewLives,
+                            count: _countLives,
                           ),
                         ),
                       ],
@@ -824,12 +853,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     required Widget icon,
     required Widget selectedIcon,
   }) {
-    const double iconSize = 24;
-    const double fontSize = 11;
+    const double iconSize = 22;
+    const double fontSize = 10;
     final bool isSelected = _currentIndex == index;
 
-    final Color selectedColor = const Color(0xFF0A2540);
-    final Color unselectedColor = const Color(0xFF60748F);
+    const Color selectedColor = Color(0xFF2E7D32);
+    const Color unselectedColor = Color(0xFF9E9E9E);
 
     final Widget effectiveIcon = isSelected ? selectedIcon : icon;
 
@@ -848,7 +877,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color:
-                  isSelected ? Colors.white.withOpacity(0.9) : Colors.transparent,
+                  isSelected ? const Color(0xFFE8F5E9) : Colors.transparent,
               borderRadius: BorderRadius.circular(22),
             ),
             child: Column(
@@ -861,7 +890,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                   ),
                   child: effectiveIcon,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
                   label,
                   style: TextStyle(
@@ -962,7 +991,7 @@ class _FeatureComingSoonTab extends StatelessWidget {
                     StudentDashboardNavController.setIndex(0);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF16A34A),
+                    backgroundColor: const Color(0xFF2E7D32),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -983,34 +1012,3 @@ class _FeatureComingSoonTab extends StatelessWidget {
   }
 }
 
-class _HomeNavIcon extends StatelessWidget {
-  final IconData icon;
-  final bool hasNew;
-
-  const _HomeNavIcon({required this.icon, required this.hasNew});
-
-  @override
-  Widget build(BuildContext context) {
-    if (!hasNew) {
-      return Icon(icon);
-    }
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Icon(icon),
-        Positioned(
-          right: -2,
-          top: -2,
-          child: Container(
-            width: 10,
-            height: 10,
-            decoration: const BoxDecoration(
-              color: Color(0xFFFF3B30),
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}

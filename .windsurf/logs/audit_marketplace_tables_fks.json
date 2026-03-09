@@ -1,0 +1,484 @@
+{
+  "COLUMNS": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 63,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "table_name": "merchant_profiles",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "merchant_profiles",
+        "column_name": "display_name",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "merchant_profiles",
+        "column_name": "logo_url",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "merchant_profiles",
+        "column_name": "bio",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "merchant_profiles",
+        "column_name": "country",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "merchant_profiles",
+        "column_name": "city",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "table_name": "merchant_profiles",
+        "column_name": "is_verified",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "text",
+        "table_name": "merchant_profiles",
+        "column_name": "verification_level",
+        "is_nullable": "NO",
+        "column_default": "'none'::text"
+      },
+      {
+        "data_type": "boolean",
+        "table_name": "merchant_profiles",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "merchant_profiles",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "merchant_profiles",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "opportunities",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunities",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunities",
+        "column_name": "short_description",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunities",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunities",
+        "column_name": "type",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunities",
+        "column_name": "category",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunities",
+        "column_name": "organization_name",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunities",
+        "column_name": "organization_logo_url",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunities",
+        "column_name": "country",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunities",
+        "column_name": "city",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "table_name": "opportunities",
+        "column_name": "is_remote_possible",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunities",
+        "column_name": "contract_type",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "table_name": "opportunities",
+        "column_name": "duration_months",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "date",
+        "table_name": "opportunities",
+        "column_name": "start_date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "date",
+        "table_name": "opportunities",
+        "column_name": "application_deadline",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunities",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'draft'::text"
+      },
+      {
+        "data_type": "boolean",
+        "table_name": "opportunities",
+        "column_name": "is_featured",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "boolean",
+        "table_name": "opportunities",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "opportunities",
+        "column_name": "created_by_user_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "opportunities",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "opportunities",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "numeric",
+        "table_name": "opportunities",
+        "column_name": "price",
+        "is_nullable": "YES",
+        "column_default": "NULL::numeric"
+      },
+      {
+        "data_type": "integer",
+        "table_name": "opportunities",
+        "column_name": "reactions_count",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "data_type": "integer",
+        "table_name": "opportunities",
+        "column_name": "comments_count",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "opportunities",
+        "column_name": "merchant_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunities",
+        "column_name": "review_status",
+        "is_nullable": "NO",
+        "column_default": "'draft'::text"
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunities",
+        "column_name": "review_reason",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "opportunities",
+        "column_name": "submitted_at",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "opportunities",
+        "column_name": "reviewed_at",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "opportunities",
+        "column_name": "reviewed_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "table_name": "opportunities",
+        "column_name": "price_from",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "table_name": "opportunities",
+        "column_name": "price_to",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunities",
+        "column_name": "currency",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "table_name": "opportunities",
+        "column_name": "min_order_qty",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "table_name": "opportunities",
+        "column_name": "lead_time_days",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "table_name": "opportunities",
+        "column_name": "is_ready_to_ship",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "opportunity_inquiries",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "opportunity_inquiries",
+        "column_name": "opportunity_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "opportunity_inquiries",
+        "column_name": "buyer_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "opportunity_inquiries",
+        "column_name": "merchant_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunity_inquiries",
+        "column_name": "message",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "table_name": "opportunity_inquiries",
+        "column_name": "quantity",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "table_name": "opportunity_inquiries",
+        "column_name": "budget",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunity_inquiries",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'open'::text"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "opportunity_inquiries",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "opportunity_inquiries",
+        "column_name": "last_message_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "opportunity_inquiries",
+        "column_name": "listing_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "opportunity_inquiry_messages",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "opportunity_inquiry_messages",
+        "column_name": "inquiry_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "opportunity_inquiry_messages",
+        "column_name": "sender_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "opportunity_inquiry_messages",
+        "column_name": "content",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "opportunity_inquiry_messages",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "FOREIGN_KEYS": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 3,
+    "rows": [
+      {
+        "table_name": "opportunity_inquiries",
+        "column_name": "listing_id",
+        "constraint_name": "opportunity_inquiries_listing_id_fkey",
+        "foreign_table_name": "marketplace_listings",
+        "foreign_column_name": "id"
+      },
+      {
+        "table_name": "opportunity_inquiries",
+        "column_name": "opportunity_id",
+        "constraint_name": "opportunity_inquiries_opportunity_id_fkey",
+        "foreign_table_name": "opportunities",
+        "foreign_column_name": "id"
+      },
+      {
+        "table_name": "opportunity_inquiry_messages",
+        "column_name": "inquiry_id",
+        "constraint_name": "opportunity_inquiry_messages_inquiry_id_fkey",
+        "foreign_table_name": "opportunity_inquiries",
+        "foreign_column_name": "id"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  }
+}

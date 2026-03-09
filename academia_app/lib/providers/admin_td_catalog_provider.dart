@@ -52,7 +52,12 @@ class AdminTdCatalogProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> createField({required String name}) async {
+  Future<bool> createField({
+    required String name,
+    String? colorHex,
+    String? iconName,
+    String? description,
+  }) async {
     if (name.trim().isEmpty) {
       _setError('Nom de filière invalide.');
       return false;
@@ -60,14 +65,44 @@ class AdminTdCatalogProvider extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      print(await _client.auth.currentSession?.user?.appMetadata);
       await _client.schema('app').from('td_fields').insert({
             'name': name.trim(),
+            if (colorHex != null && colorHex.isNotEmpty) 'color_hex': colorHex,
+            if (iconName != null && iconName.isNotEmpty) 'icon_name': iconName,
+            if (description != null && description.isNotEmpty) 'description': description,
           });
       await loadFields();
       return true;
     } catch (e, st) {
       debugPrint('[AdminTdCatalogProvider] createField error=$e stack=$st');
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<bool> updateField({
+    required String fieldId,
+    String? name,
+    String? colorHex,
+    String? iconName,
+    String? description,
+  }) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final updates = <String, dynamic>{};
+      if (name != null && name.isNotEmpty) updates['name'] = name;
+      if (colorHex != null) updates['color_hex'] = colorHex;
+      if (iconName != null) updates['icon_name'] = iconName;
+      if (description != null) updates['description'] = description;
+      if (updates.isEmpty) return true;
+      await _client.schema('app').from('td_fields').update(updates).eq('id', fieldId);
+      await loadFields();
+      return true;
+    } catch (e, st) {
+      debugPrint('[AdminTdCatalogProvider] updateField error=$e stack=$st');
       _setError(e.toString());
       return false;
     } finally {
@@ -104,6 +139,10 @@ class AdminTdCatalogProvider extends ChangeNotifier {
     required String title,
     required double price,
     String? modality,
+    String? description,
+    String? coverImageUrl,
+    bool isFeatured = false,
+    String? tags,
   }) async {
     if (fieldId.isEmpty || title.trim().isEmpty) {
       _setError('Filière ou titre de programme invalide.');
@@ -119,11 +158,50 @@ class AdminTdCatalogProvider extends ChangeNotifier {
             'price': price,
             'modality': modality ?? 'online',
             'status': 'published',
+            if (description != null && description.isNotEmpty) 'description': description,
+            if (coverImageUrl != null && coverImageUrl.isNotEmpty) 'cover_image_url': coverImageUrl,
+            'is_featured': isFeatured,
+            if (tags != null && tags.isNotEmpty) 'tags': tags.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList(),
           });
       await loadPrograms(fieldId: fieldId);
       return true;
     } catch (e, st) {
       debugPrint('[AdminTdCatalogProvider] createProgram error=$e stack=$st');
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<bool> updateProgram({
+    required String programId,
+    required String fieldId,
+    String? title,
+    String? description,
+    String? level,
+    double? price,
+    String? coverImageUrl,
+    bool? isFeatured,
+    String? tags,
+  }) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final updates = <String, dynamic>{};
+      if (title != null && title.isNotEmpty) updates['title'] = title;
+      if (description != null) updates['description'] = description;
+      if (level != null && level.isNotEmpty) updates['level'] = level;
+      if (price != null) updates['price'] = price;
+      if (coverImageUrl != null) updates['cover_image_url'] = coverImageUrl;
+      if (isFeatured != null) updates['is_featured'] = isFeatured;
+      if (tags != null) updates['tags'] = tags.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
+      if (updates.isEmpty) return true;
+      await _client.schema('app').from('td_programs').update(updates).eq('id', programId);
+      await loadPrograms(fieldId: fieldId);
+      return true;
+    } catch (e, st) {
+      debugPrint('[AdminTdCatalogProvider] updateProgram error=$e stack=$st');
       _setError(e.toString());
       return false;
     } finally {

@@ -1,11 +1,40 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
 import '../utils/url_normalizer.dart';
 
+/// Controller that allows external code (e.g. the TikTok feed) to
+/// toggle play/pause on an [AcademiaPlaybackView].
+class AcademiaPlaybackController {
+  _AcademiaPlaybackViewState? _state;
+
+  /// Toggle play/pause. Returns true if now playing, false if paused.
+  Future<bool> toggle() async {
+    final result = await _state?._toggleExternal();
+    return result ?? false;
+  }
+
+  Future<void> pause() async => _state?._pauseExternal();
+  Future<void> play() async => _state?._playExternal();
+
+  /// Current playback position in milliseconds.
+  Future<int> getPosition() async => await _state?._getPositionMs() ?? 0;
+
+  /// Total duration in milliseconds.
+  Future<int> getDuration() async => await _state?._getDurationMs() ?? 0;
+
+  bool get isAttached => _state != null;
+}
+
 class AcademiaPlaybackView extends StatefulWidget {
   final String url;
+  final bool preferFlutterPlayer;
+  final bool deferInitialization;
   final bool autoplay;
   final bool looping;
   final bool muted;
@@ -14,10 +43,13 @@ class AcademiaPlaybackView extends StatefulWidget {
   final VoidCallback? onCompleted;
   final bool showErrorText;
   final VoidCallback? onFirstPlay;
+  final AcademiaPlaybackController? playbackController;
 
   const AcademiaPlaybackView({
     super.key,
     required this.url,
+    this.preferFlutterPlayer = false,
+    this.deferInitialization = false,
     this.autoplay = true,
     this.looping = true,
     this.muted = false,
@@ -26,6 +58,7 @@ class AcademiaPlaybackView extends StatefulWidget {
     this.onCompleted,
     this.showErrorText = true,
     this.onFirstPlay,
+    this.playbackController,
   });
 
   @override
@@ -33,16 +66,31 @@ class AcademiaPlaybackView extends StatefulWidget {
 }
 
 class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
+  // --- Web: uses Flutter video_player ---
   VideoPlayerController? _controller;
+
+  // --- Shared state ---
   bool _initializing = false;
   Object? _error;
   bool _hasCompleted = false;
   bool _loggedFirstPlay = false;
 
+  // Android native MethodChannel
+  MethodChannel? _nativeChannel;
+  bool _isPaused = false;
+
+  /// True when running on Android (not web).
+  bool get _useNativeAndroid => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+  bool get _shouldUseNativeAndroid => _useNativeAndroid && !widget.preferFlutterPlayer;
+
   @override
   void initState() {
     super.initState();
-    _init();
+    widget.playbackController?._state = this;
+    if (!widget.deferInitialization) {
+      _init();
+    }
   }
 
   @override
@@ -68,6 +116,23 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
 
     final url = UrlNormalizer.normalize(original);
 
+    final uri = Uri.tryParse(url);
+    final isLocalFileUri = uri != null && uri.scheme.toLowerCase() == 'file';
+
+    // Sur Android, on utilise la PlatformView native qui a le filtre MediaTek.
+    // Pas besoin d'initialiser un VideoPlayerController.
+    // Exception: pour les previews locales (file://), la PlatformView native peut
+    // crasher selon les devices. Dans ce cas on utilise video_player.
+    if (_shouldUseNativeAndroid && !isLocalFileUri) {
+      debugPrint('[AcademiaPlaybackView] using native Android view url=$url');
+      setState(() {
+        _initializing = false;
+        _error = null;
+      });
+      return;
+    }
+
+    // --- Web / iOS: Flutter video_player ---
     setState(() {
       _initializing = true;
       _error = null;
@@ -75,11 +140,16 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
     });
 
     try {
-      // Debug interne pour diagnostiquer les soucis de lecture vidéo sur certains appareils.
-      // Ne change rien à l'UI utilisateur, mais permet de tracer l'URL exacte utilisée.
       debugPrint('[AcademiaPlaybackView] init url=$url');
-      final controller = VideoPlayerController.networkUrl(Uri.parse(url));
+      final VideoPlayerController controller;
+      if (isLocalFileUri) {
+        final parsed = Uri.parse(url);
+        controller = VideoPlayerController.file(File.fromUri(parsed));
+      } else {
+        controller = VideoPlayerController.networkUrl(Uri.parse(url));
+      }
       _controller = controller;
+
       await controller.initialize();
       await controller.setLooping(widget.looping);
       await controller.setVolume(widget.muted ? 0.0 : 1.0);
@@ -139,6 +209,14 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
         _initializing = false;
         _error = e;
       });
+      if (widget.onCompleted != null) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted && !_hasCompleted) {
+            _hasCompleted = true;
+            widget.onCompleted?.call();
+          }
+        });
+      }
     }
   }
 
@@ -152,8 +230,124 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
 
   @override
   void dispose() {
+    if (widget.playbackController?._state == this) {
+      widget.playbackController?._state = null;
+    }
+    _nativeChannel = null;
     _disposeController();
     super.dispose();
+  }
+
+  /// External toggle (called by AcademiaPlaybackController)
+  Future<bool> _toggleExternal() async {
+    if (_useNativeAndroid) {
+      final ch = _nativeChannel;
+      if (ch == null) return !_isPaused; // PlatformView not ready yet
+      try {
+        final result = await ch.invokeMethod<bool>('toggle')
+            .timeout(const Duration(seconds: 2), onTimeout: () => null);
+        if (result != null) {
+          _isPaused = !result;
+        } else {
+          _isPaused = !_isPaused;
+        }
+        if (mounted) setState(() {});
+        return !_isPaused;
+      } catch (_) {
+        return !_isPaused;
+      }
+    }
+    final c = _controller;
+    if (c != null && c.value.isInitialized) {
+      if (c.value.isPlaying) {
+        await c.pause();
+        _isPaused = true;
+      } else {
+        await c.play();
+        _isPaused = false;
+      }
+      if (mounted) setState(() {});
+      return !_isPaused;
+    }
+    return false;
+  }
+
+  Future<void> _pauseExternal() async {
+    if (_useNativeAndroid) {
+      final ch = _nativeChannel;
+      if (ch == null) return;
+      try {
+        await ch.invokeMethod<bool>('pause')
+            .timeout(const Duration(seconds: 2), onTimeout: () => null);
+      } catch (_) {}
+      _isPaused = true;
+      if (mounted) setState(() {});
+      return;
+    }
+    final c = _controller;
+    if (c != null && c.value.isInitialized) {
+      await c.pause();
+      _isPaused = true;
+      if (mounted) setState(() {});
+    }
+  }
+
+  Future<void> _playExternal() async {
+    if (_useNativeAndroid) {
+      final ch = _nativeChannel;
+      if (ch == null) return;
+      try {
+        await ch.invokeMethod<bool>('play')
+            .timeout(const Duration(seconds: 2), onTimeout: () => null);
+      } catch (_) {}
+      _isPaused = false;
+      if (mounted) setState(() {});
+      return;
+    }
+    final c = _controller;
+    if (c != null && c.value.isInitialized) {
+      await c.play();
+      _isPaused = false;
+      if (mounted) setState(() {});
+    }
+  }
+
+  Future<int> _getPositionMs() async {
+    if (_useNativeAndroid) {
+      final ch = _nativeChannel;
+      if (ch == null) return 0;
+      try {
+        final result = await ch.invokeMethod<int>('getPosition')
+            .timeout(const Duration(seconds: 1), onTimeout: () => 0);
+        return result ?? 0;
+      } catch (_) {
+        return 0;
+      }
+    }
+    final c = _controller;
+    if (c != null && c.value.isInitialized) {
+      return c.value.position.inMilliseconds;
+    }
+    return 0;
+  }
+
+  Future<int> _getDurationMs() async {
+    if (_useNativeAndroid) {
+      final ch = _nativeChannel;
+      if (ch == null) return 0;
+      try {
+        final result = await ch.invokeMethod<int>('getDuration')
+            .timeout(const Duration(seconds: 1), onTimeout: () => 0);
+        return result ?? 0;
+      } catch (_) {
+        return 0;
+      }
+    }
+    final c = _controller;
+    if (c != null && c.value.isInitialized) {
+      return c.value.duration.inMilliseconds;
+    }
+    return 0;
   }
 
   void _toggle() {
@@ -171,7 +365,65 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
 
   @override
   Widget build(BuildContext context) {
+    // --- Android: native PlatformView with MediaTek-safe codec selector ---
+    if (_shouldUseNativeAndroid) {
+      final url = UrlNormalizer.normalize(widget.url.trim());
+      if (url.isEmpty) {
+        return Container(color: Colors.black);
+      }
+
+      final resizeMode = widget.fit == BoxFit.cover
+          ? 'cover'
+          : widget.fit == BoxFit.fill
+              ? 'fill'
+              : widget.fit == BoxFit.fitWidth
+                  ? 'fitWidth'
+                  : widget.fit == BoxFit.fitHeight
+                      ? 'fitHeight'
+                      : 'contain';
+
+      debugPrint('[AcademiaPlaybackView] build AndroidView url=${url.length > 60 ? '${url.substring(0, 60)}...' : url}  autoplay=${widget.autoplay}');
+
+      return AndroidView(
+        key: ValueKey('android_video_$url'),
+        viewType: 'academia_android_video',
+        creationParams: <String, dynamic>{
+          'url': url,
+          'autoplay': widget.autoplay,
+          'loop': widget.looping,
+          'muted': widget.muted,
+          'showControls': widget.showControls,
+          'resizeMode': resizeMode,
+        },
+        creationParamsCodec: const StandardMessageCodec(),
+        onPlatformViewCreated: (int viewId) {
+          debugPrint('[AcademiaPlaybackView] PlatformView created viewId=$viewId url=${url.length > 60 ? '${url.substring(0, 60)}...' : url}');
+          _nativeChannel = MethodChannel('academia_android_video_$viewId');
+        },
+      );
+    }
+
+    // --- Web / iOS: Flutter video_player ---
     final controller = _controller;
+
+    if (widget.deferInitialization && controller == null && _error == null) {
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () async {
+          if (_initializing) return;
+          await _init();
+          final c = _controller;
+          if (c != null && c.value.isInitialized) {
+            try {
+              await c.play();
+            } catch (_) {}
+          }
+        },
+        child: Container(
+          color: Colors.black,
+        ),
+      );
+    }
 
     if (_error != null) {
       if (!widget.showErrorText) {

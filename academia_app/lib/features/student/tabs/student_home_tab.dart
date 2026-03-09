@@ -322,6 +322,8 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
         final rawType = (row['media_type'] ?? 'video').toString().toLowerCase();
         final isImage = rawType == 'image';
 
+        final videoAssetId = (row['video_asset_id'] ?? '').toString().trim();
+
         final playbackRaw = row['playback'];
         Map<String, dynamic>? playback;
         if (playbackRaw is Map) {
@@ -342,9 +344,34 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
           mediaType = 'image';
         } else {
           resolvedUrl = bestUrl.isNotEmpty ? bestUrl : baseVideoUrl;
-          if (resolvedUrl.isEmpty) {
-            continue;
+          if (resolvedUrl.isEmpty && videoAssetId.isNotEmpty) {
+            try {
+              final dynamic manifestResp = await client.rpc(
+                'app_videoasset_get_playback_manifest',
+                params: {
+                  'p_video_asset_id': videoAssetId,
+                },
+              );
+              if (manifestResp is Map<String, dynamic> &&
+                  manifestResp['success'] == true) {
+                final manifest = manifestResp['manifest'];
+                if (manifest is Map) {
+                  final m = Map<String, dynamic>.from(manifest);
+                  final pb = m['playback'];
+                  if (pb is Map) {
+                    final pbMap = Map<String, dynamic>.from(pb);
+                    final best = (pbMap['best_url'] ?? '').toString().trim();
+                    if (best.isNotEmpty) {
+                      resolvedUrl = best;
+                    }
+                  }
+                }
+              }
+            } catch (_) {}
           }
+
+          final resolved = resolvedUrl;
+          if (resolved == null || resolved.isEmpty) continue;
           mediaType = 'video';
         }
 
@@ -353,14 +380,14 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
 
         debugPrint(
           'StudentHome: hero item from app_public_hero_playlist slot=student_home_hero_main '
-          'id=' + id + ' type=' + mediaType + ' url=' + resolvedUrl,
+          'id=' + id + ' type=' + mediaType + ' url=' + resolvedUrl!,
         );
 
         playlist.add(
           HeroMediaItem(
             id: id.isNotEmpty ? id : 'auto_${playlist.length}',
             mediaType: mediaType,
-            url: resolvedUrl,
+            url: resolvedUrl!,
             posterUrl: posterUrl.isNotEmpty ? posterUrl : null,
             sortOrder: sortOrder,
           ),
@@ -383,11 +410,14 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
         'StudentHome: hero playlist is empty after app_public_hero_playlist, '
         'mounted=$mounted',
       );
-      _heroMediaItems = [];
-      if (mounted) {
-        setState(() {
-          _heroTitle = null;
-        });
+      // Keep cached hero (if any) to avoid blank hero when playlist is temporarily inconsistent.
+      if (_heroMediaItems.isEmpty) {
+        _heroMediaItems = [];
+        if (mounted) {
+          setState(() {
+            _heroTitle = null;
+          });
+        }
       }
       return;
     }
@@ -1034,7 +1064,7 @@ class _StudentHomeHeroCarousel extends StatelessWidget {
           useAspectRatio: true,
           autoplay: true,
           loopVideos: false,
-          mutedByDefault: kIsWeb,
+          mutedByDefault: true,
           showControls: false,
           defaultImageDuration: const Duration(seconds: 5),
           overlayBuilder: (context, currentItem) {

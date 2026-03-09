@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../providers/prep_concours_provider.dart';
+import '../../../widgets/academia_rich_content.dart';
 import 'prep_progress_screen.dart';
 
 class PrepExamScreen extends StatefulWidget {
@@ -339,8 +340,8 @@ class _PrepExamScreenState extends State<PrepExamScreen> {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      q.question,
+                    child: AcademiaRichContent(
+                      content: q.question,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -376,7 +377,7 @@ class _PrepExamScreenState extends State<PrepExamScreen> {
                             ),
                           ),
                           child: ListTile(
-                            title: Text(value),
+                            title: AcademiaRichContent(content: value),
                             onTap: _isSubmitting
                                 ? null
                                 : () {
@@ -573,8 +574,8 @@ class _ExamCorrectionCard extends StatelessWidget {
               style: const TextStyle(fontSize: 12, color: Colors.black54),
             ),
             const SizedBox(height: 8),
-            Text(
-              question.question,
+            AcademiaRichContent(
+              content: question.question,
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
@@ -596,13 +597,13 @@ class _ExamCorrectionCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            Text(
-              hasUserAnswer ? 'Ta réponse: $userAnswer' : 'Ta réponse: (aucune)',
+            AcademiaRichContent(
+              content: hasUserAnswer ? 'Ta réponse: $userAnswer' : 'Ta réponse: (aucune)',
             ),
             if (correctAnswer != null && correctAnswer.trim().isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text(
-                'Bonne réponse: $correctAnswer',
+              AcademiaRichContent(
+                content: 'Bonne réponse: $correctAnswer',
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ],
@@ -613,7 +614,7 @@ class _ExamCorrectionCard extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 4),
-              Text(question.explanation!),
+              AcademiaRichContent(content: question.explanation!),
             ],
           ],
         ),

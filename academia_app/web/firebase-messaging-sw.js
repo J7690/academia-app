@@ -6,11 +6,12 @@ importScripts("https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"
 importScripts("https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js");
 
 firebase.initializeApp({
-  apiKey: "AIzaSyDWmkr4yNdQkP5QSDRGzX-8UXCB1Jrg30w",
-  projectId: "acadmia-cb427",
-  messagingSenderId: "352842183958",
-  appId: "1:352842183958:web:892dd9dece487871fde7af",
-  storageBucket: "acadmia-cb427.firebasestorage.app",
+  apiKey: "AIzaSyB_9r-GJ9KdbgTTjZHhav9DZpoCSuh63qA",
+  authDomain: "academia-e2c41.firebaseapp.com",
+  projectId: "academia-e2c41",
+  messagingSenderId: "593442809911",
+  appId: "1:593442809911:web:3d63c267fcc760123af7b2",
+  storageBucket: "academia-e2c41.firebasestorage.app",
 });
 
 // Retrieve an instance of Firebase Messaging so that it can handle background messages.

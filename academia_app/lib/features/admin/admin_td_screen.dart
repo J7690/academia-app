@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../providers/admin_td_enrollments_provider.dart';
 import '../../providers/td_messages_provider.dart';
+import '../../theme/td_theme.dart';
+import 'admin_td_analytics_screen.dart';
 import 'admin_td_catalog_screen.dart';
 import 'admin_td_teachers_screen.dart';
 import 'admin_td_student_requests_screen.dart';
@@ -37,7 +39,7 @@ class _AdminTdScreenState extends State<AdminTdScreen> {
         : messagesProvider.messagesFor(_selectedEnrollmentId!);
 
     return Container(
-      color: const Color(0xFFF3F4F6),
+      color: TdTheme.scaffoldBg,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: LayoutBuilder(
@@ -46,47 +48,84 @@ class _AdminTdScreenState extends State<AdminTdScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Module TD – Paiements & affectations',
-                  style: Theme.of(context).textTheme.titleLarge,
+                // Header with violet gradient
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: TdTheme.adminTdGradient),
+                    borderRadius: BorderRadius.circular(TdTheme.radiusLg),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.assignment, color: Colors.white, size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Module TD',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold)),
+                            Text('Paiements, affectations & suivi',
+                                style: TextStyle(color: Colors.white70, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: null,
+                        icon: Icon(Icons.refresh, color: Colors.white70),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
+                // Navigation buttons
                 Wrap(
                   spacing: 8,
-                  runSpacing: 4,
+                  runSpacing: 6,
                   children: [
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const AdminTdCatalogScreen(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.dashboard_customize_outlined, size: 18),
-                      label: const Text('Filières, programmes & séances TD'),
+                    _NavChip(
+                      icon: Icons.dashboard_customize_outlined,
+                      label: 'Catalogue TD',
+                      color: TdTheme.adminTdPrimary,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(builder: (_) => const AdminTdCatalogScreen()),
+                      ),
                     ),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const AdminTdTeachersScreen(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.people_alt_outlined, size: 18),
-                      label: const Text('Enseignants TD'),
+                    _NavChip(
+                      icon: Icons.people_alt_outlined,
+                      label: 'Enseignants',
+                      color: TdTheme.instructorPrimary,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(builder: (_) => const AdminTdTeachersScreen()),
+                      ),
                     ),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const AdminTdStudentRequestsScreen(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.help_outline, size: 18),
-                      label: const Text('Demandes étudiants TD'),
+                    _NavChip(
+                      icon: Icons.help_outline,
+                      label: 'Demandes',
+                      color: TdTheme.warning,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(builder: (_) => const AdminTdStudentRequestsScreen()),
+                      ),
+                    ),
+                    _NavChip(
+                      icon: Icons.analytics_outlined,
+                      label: 'Analytics & Badges',
+                      color: const Color(0xFFF59E0B),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(builder: (_) => const AdminTdAnalyticsScreen()),
+                      ),
                     ),
                   ],
                 ),
@@ -613,6 +652,47 @@ class _AdminTdScreenState extends State<AdminTdScreen> {
   }
 }
 
+class _NavChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _NavChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(TdTheme.radiusMd),
+          border: Border.all(color: color.withOpacity(0.2)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 6),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+            const SizedBox(width: 4),
+            Icon(Icons.arrow_forward_ios, size: 10, color: color.withOpacity(0.5)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _StatCard extends StatelessWidget {
   final Color color;
   final String title;
@@ -627,29 +707,50 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 180,
-      padding: const EdgeInsets.all(12),
+      width: 160,
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(12),
+        color: TdTheme.cardBg,
+        borderRadius: BorderRadius.circular(TdTheme.radiusMd),
+        border: Border.all(color: TdTheme.divider),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: color,
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade800,
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 11,
+                color: TdTheme.textSecondary,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
             ),
           ),
         ],

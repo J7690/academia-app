@@ -10,6 +10,9 @@ class CommercialDashboardProvider extends ChangeNotifier {
   Map<String, dynamic>? _summary;
   List<Map<String, dynamic>> _referrals = [];
   List<Map<String, dynamic>> _commissions = [];
+  List<Map<String, dynamic>> _prospectPayments = [];
+  Map<String, dynamic>? _gamification;
+  List<Map<String, dynamic>> _leaderboard = [];
 
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -17,6 +20,9 @@ class CommercialDashboardProvider extends ChangeNotifier {
   Map<String, dynamic>? get summary => _summary;
   List<Map<String, dynamic>> get referrals => List.unmodifiable(_referrals);
   List<Map<String, dynamic>> get commissions => List.unmodifiable(_commissions);
+  List<Map<String, dynamic>> get prospectPayments => List.unmodifiable(_prospectPayments);
+  Map<String, dynamic>? get gamification => _gamification;
+  List<Map<String, dynamic>> get leaderboard => List.unmodifiable(_leaderboard);
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -26,6 +32,20 @@ class CommercialDashboardProvider extends ChangeNotifier {
   void _setError(String? value) {
     _error = value;
     notifyListeners();
+  }
+
+  Future<bool> claimMilestone(String milestoneId) async {
+    try {
+      final resp = await _client.rpc('app_commercial_claim_milestone',
+          params: {'p_milestone_id': milestoneId});
+      if (resp is Map && resp['success'] == true) {
+        await loadDashboard();
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> loadDashboard() async {
@@ -49,6 +69,7 @@ class CommercialDashboardProvider extends ChangeNotifier {
       final rawSummary = response['summary'];
       final rawReferrals = response['referrals'];
       final rawCommissions = response['commissions'];
+      final rawProspectPayments = response['prospect_payments'];
 
       if (rawProfile is Map) {
         _profile = Map<String, dynamic>.from(rawProfile);
@@ -78,6 +99,32 @@ class CommercialDashboardProvider extends ChangeNotifier {
             .toList(growable: false);
       } else {
         _commissions = [];
+      }
+
+      if (rawProspectPayments is List) {
+        _prospectPayments = rawProspectPayments
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+      } else {
+        _prospectPayments = [];
+      }
+
+      final rawGamification = response['gamification'];
+      if (rawGamification is Map) {
+        _gamification = Map<String, dynamic>.from(rawGamification);
+      } else {
+        _gamification = null;
+      }
+
+      final rawLeaderboard = response['leaderboard'];
+      if (rawLeaderboard is List) {
+        _leaderboard = rawLeaderboard
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+      } else {
+        _leaderboard = [];
       }
 
       notifyListeners();

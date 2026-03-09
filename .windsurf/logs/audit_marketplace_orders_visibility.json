@@ -1,0 +1,93 @@
+{
+  "timestamp": "2026-03-05T17:54:21.661397Z",
+  "queries": {
+    "LAST_ORDERS": {
+      "http": 200,
+      "ok": true,
+      "rows": [
+        {
+          "id": "fa2bd264-9c3f-4b76-9b81-78f0889e6377",
+          "status": "pending",
+          "currency": "XOF",
+          "created_at": "2026-03-05T17:24:48.830355+00:00",
+          "student_id": "6745c7ad-732b-47d0-b5b8-06d6dcf286ff",
+          "merchant_id": "f7d2ff67-1005-44c5-83aa-e9ffa74192ad",
+          "total_amount": 2500.0
+        },
+        {
+          "id": "65ac16be-90e1-42ed-870a-10acfdafeec0",
+          "status": "confirmed",
+          "currency": "XOF",
+          "created_at": "2025-11-24T13:59:48.265712+00:00",
+          "student_id": "6745c7ad-732b-47d0-b5b8-06d6dcf286ff",
+          "merchant_id": "b5f6621a-77a7-4d0d-94d1-0c2d5513fdae",
+          "total_amount": 2500
+        }
+      ],
+      "error": null,
+      "sqlstate": null,
+      "rows_count": 2
+    },
+    "ORDERS_WITH_MERCHANT": {
+      "http": 200,
+      "ok": true,
+      "rows": [
+        {
+          "status": "pending",
+          "currency": "XOF",
+          "order_id": "fa2bd264-9c3f-4b76-9b81-78f0889e6377",
+          "created_at": "2026-03-05T17:24:48.830355+00:00",
+          "merchant_pk": "f7d2ff67-1005-44c5-83aa-e9ffa74192ad",
+          "total_amount": 2500.0,
+          "merchant_name": "R-Nexiom",
+          "merchant_owner_user_id": "96867d47-dec9-4e86-8a72-452958b27733"
+        },
+        {
+          "status": "confirmed",
+          "currency": "XOF",
+          "order_id": "65ac16be-90e1-42ed-870a-10acfdafeec0",
+          "created_at": "2025-11-24T13:59:48.265712+00:00",
+          "merchant_pk": "b5f6621a-77a7-4d0d-94d1-0c2d5513fdae",
+          "total_amount": 2500,
+          "merchant_name": "NEXIOM SARL",
+          "merchant_owner_user_id": "489bff02-d74f-460d-9adb-cc3215edc4c9"
+        }
+      ],
+      "error": null,
+      "sqlstate": null,
+      "rows_count": 2
+    },
+    "ROUTINE_DEF_app_merchant_list_my_marketplace_orders": {
+      "http": 200,
+      "ok": true,
+      "rows": [
+        {
+          "ddl": "CREATE OR REPLACE FUNCTION public.app_merchant_list_my_marketplace_orders(p_limit integer DEFAULT 50, p_offset integer DEFAULT 0, p_status text DEFAULT NULL::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_user uuid := auth.uid();\n  v_role text;\nBEGIN\n  IF v_user IS NULL THEN\n    RETURN jsonb_build_object('success', false, 'error', 'not_authenticated');\n  END IF;\n\n  v_role := public.app_get_current_role();\n  IF v_role <> 'merchant' THEN\n    RETURN jsonb_build_object('success', false, 'error', 'not_merchant');\n  END IF;\n\n  RETURN jsonb_build_object(\n    'success', true,\n    'items', (\n      SELECT COALESCE(\n        jsonb_agg(\n          jsonb_build_object(\n            'id', o.id,\n            'student_id', o.student_id,\n            'merchant_id', o.merchant_id,\n            'status', o.status,\n            'total_amount', o.total_amount,\n            'currency', o.currency,\n            'created_at', o.created_at,\n            'updated_at', o.updated_at\n          )\n          ORDER BY o.created_at DESC\n        ),\n        '[]'::jsonb\n      )\n      FROM app.marketplace_orders o\n      WHERE o.merchant_id = v_user\n        AND (p_status IS NULL OR o.status = p_status)\n      LIMIT GREATEST(1, LEAST(p_limit, 200))\n      OFFSET GREATEST(0, p_offset)\n    )\n  );\nEND;\n$function$\n"
+        }
+      ],
+      "error": null,
+      "sqlstate": null,
+      "rows_count": 1
+    },
+    "ROUTINE_DEF_app_merchant_get_marketplace_order_detail": {
+      "http": 200,
+      "ok": true,
+      "rows": [
+        {
+          "ddl": "CREATE OR REPLACE FUNCTION public.app_merchant_get_marketplace_order_detail(p_order_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_user uuid := auth.uid();\n  v_role text;\n  v_order record;\nBEGIN\n  IF v_user IS NULL THEN\n    RETURN jsonb_build_object('success', false, 'error', 'not_authenticated');\n  END IF;\n  IF p_order_id IS NULL THEN\n    RETURN jsonb_build_object('success', false, 'error', 'invalid_order_id');\n  END IF;\n\n  v_role := public.app_get_current_role();\n  IF v_role <> 'merchant' THEN\n    RETURN jsonb_build_object('success', false, 'error', 'not_merchant');\n  END IF;\n\n  SELECT * INTO v_order\n  FROM app.marketplace_orders o\n  WHERE o.id = p_order_id\n    AND o.merchant_id = v_user\n  LIMIT 1;\n\n  IF NOT FOUND THEN\n    RETURN jsonb_build_object('success', false, 'error', 'order_not_found');\n  END IF;\n\n  RETURN jsonb_build_object(\n    'success', true,\n    'order', to_jsonb(v_order),\n    'items', (\n      SELECT COALESCE(\n        jsonb_agg(\n          jsonb_build_object(\n            'id', i.id,\n            'product_id', i.product_id,\n            'quantity', i.quantity,\n            'unit_price', i.unit_price,\n            'currency', i.currency,\n            'title', l.title\n          )\n          ORDER BY i.id\n        ),\n        '[]'::jsonb\n      )\n      FROM app.marketplace_order_items i\n      JOIN app.marketplace_listings l ON l.id = i.product_id\n      WHERE i.order_id = p_order_id\n    )\n  );\nEND;\n$function$\n"
+        }
+      ],
+      "error": null,
+      "sqlstate": null,
+      "rows_count": 1
+    },
+    "ROUTINE_DEF_app_admin_list_marketplace_orders": {
+      "http": 200,
+      "ok": true,
+      "rows": [],
+      "error": null,
+      "sqlstate": null,
+      "rows_count": 0
+    }
+  }
+}

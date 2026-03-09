@@ -1,0 +1,425 @@
+{
+  "TABLES_CANDIDATES": {
+    "ok": true,
+    "http": 200,
+    "mode": "select",
+    "rows": [
+      {
+        "table_name": "challenge_favorites",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "marketplace_listings",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "marketplace_merchants",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "marketplace_order_items",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "marketplace_orders",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "marketplace_products",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "opportunity_bookmarks",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "opportunity_types",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "video_favorites",
+        "table_schema": "app"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "OPPORTUNITIES_TYPE_DISTINCT": {
+    "ok": true,
+    "http": 200,
+    "mode": "select",
+    "rows": [
+      {
+        "cnt": 2,
+        "type": "job"
+      },
+      {
+        "cnt": 1,
+        "type": "Agroalimentaire"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "MARKETPLACE_LISTINGS_TYPE_DISTINCT": {
+    "ok": true,
+    "http": 200,
+    "mode": "select",
+    "rows": [
+      {
+        "cnt": 1,
+        "type": "Agroalimentaire"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "OPPORTUNITIES_CATEGORY_DISTINCT": {
+    "ok": true,
+    "http": 200,
+    "mode": "select",
+    "rows": [
+      {
+        "cnt": 2,
+        "category": null
+      },
+      {
+        "cnt": 1,
+        "category": "Agroalimentaire"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "MARKETPLACE_LISTINGS_CATEGORY_DISTINCT": {
+    "ok": true,
+    "http": 200,
+    "mode": "select",
+    "rows": [
+      {
+        "cnt": 1,
+        "category": "Agroalimentaire"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "FUNCTIONS_CANDIDATES": {
+    "ok": true,
+    "http": 200,
+    "mode": "select",
+    "rows": [
+      {
+        "routine_name": "app_admin_list_marketplace_merchants",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_admin_list_marketplace_products",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_admin_list_opportunity_types",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_admin_list_pending_marketplace_listings",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_admin_review_marketplace_listing",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_admin_update_marketplace_merchant_status",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_admin_update_marketplace_product_status",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_admin_upsert_opportunity_type",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_create_marketplace_order_simple",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_list_marketplace_home",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_list_marketplace_merchants",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_list_marketplace_products_by_merchant",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_list_opportunity_types",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_list_student_marketplace_orders",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_merchant_list_my_marketplace_listings",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_merchant_submit_marketplace_listing_for_review",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_merchant_upsert_marketplace_listing",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_notify_admin_marketplace_order",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_opportunity_toggle_bookmark",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_student_create_marketplace_listing_inquiry",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_student_favorite_challenge_video",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_student_get_marketplace_listing_detail",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_student_list_bookmarked_opportunities",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_student_list_marketplace_listings",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_student_unfavorite_challenge_video",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_student_video_favorite",
+        "routine_schema": "public"
+      },
+      {
+        "routine_name": "app_student_video_unfavorite",
+        "routine_schema": "public"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "POLICIES_BOOKMARKS_TYPES": {
+    "ok": true,
+    "http": 200,
+    "mode": "select",
+    "rows": [
+      {
+        "cmd": "DELETE",
+        "qual": "(user_id = auth.uid())",
+        "roles": [
+          "public"
+        ],
+        "tablename": "challenge_favorites",
+        "permissive": "PERMISSIVE",
+        "policyname": "student_delete_own_challenge_favorites",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "public"
+        ],
+        "tablename": "challenge_favorites",
+        "permissive": "PERMISSIVE",
+        "policyname": "student_insert_own_challenge_favorites",
+        "schemaname": "app",
+        "with_check": "(user_id = auth.uid())"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "true",
+        "roles": [
+          "public"
+        ],
+        "tablename": "challenge_favorites",
+        "permissive": "PERMISSIVE",
+        "policyname": "student_select_challenge_favorites",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "marketplace_listings",
+        "permissive": "PERMISSIVE",
+        "policyname": "merchant_insert_own_marketplace_listings",
+        "schemaname": "app",
+        "with_check": "(merchant_id = auth.uid())"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(merchant_id = auth.uid())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "marketplace_listings",
+        "permissive": "PERMISSIVE",
+        "policyname": "merchant_select_own_marketplace_listings",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "(merchant_id = auth.uid())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "marketplace_listings",
+        "permissive": "PERMISSIVE",
+        "policyname": "merchant_update_own_marketplace_listings",
+        "schemaname": "app",
+        "with_check": "(merchant_id = auth.uid())"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((is_active = true) AND (status = 'published'::text) AND (review_status = 'approved'::text))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_listings",
+        "permissive": "PERMISSIVE",
+        "policyname": "public_select_published_marketplace_listings",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((status = 'approved'::text) AND (is_active = true))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_merchants",
+        "permissive": "PERMISSIVE",
+        "policyname": "public_select_active_marketplace_merchants",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_order_items",
+        "permissive": "PERMISSIVE",
+        "policyname": "student_insert_own_marketplace_order_items",
+        "schemaname": "app",
+        "with_check": "(EXISTS ( SELECT 1\n   FROM app.marketplace_orders o\n  WHERE ((o.id = marketplace_order_items.order_id) AND (o.student_id = auth.uid()))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(EXISTS ( SELECT 1\n   FROM app.marketplace_orders o\n  WHERE ((o.id = marketplace_order_items.order_id) AND (o.student_id = auth.uid()))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_order_items",
+        "permissive": "PERMISSIVE",
+        "policyname": "student_select_own_marketplace_order_items",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_orders",
+        "permissive": "PERMISSIVE",
+        "policyname": "student_insert_own_marketplace_orders",
+        "schemaname": "app",
+        "with_check": "(student_id = auth.uid())"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(student_id = auth.uid())",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_orders",
+        "permissive": "PERMISSIVE",
+        "policyname": "student_select_own_marketplace_orders",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "(student_id = auth.uid())",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_orders",
+        "permissive": "PERMISSIVE",
+        "policyname": "student_update_own_marketplace_orders",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(status = 'published'::text)",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_products",
+        "permissive": "PERMISSIVE",
+        "policyname": "public_select_published_marketplace_products",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "ALL",
+        "qual": "(user_id = auth.uid())",
+        "roles": [
+          "public"
+        ],
+        "tablename": "opportunity_bookmarks",
+        "permissive": "PERMISSIVE",
+        "policyname": "user_manage_own_opportunity_bookmarks",
+        "schemaname": "app",
+        "with_check": "(user_id = auth.uid())"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(is_active = true)",
+        "roles": [
+          "public"
+        ],
+        "tablename": "opportunity_types",
+        "permissive": "PERMISSIVE",
+        "policyname": "public_select_active_opportunity_types",
+        "schemaname": "app",
+        "with_check": null
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  }
+}

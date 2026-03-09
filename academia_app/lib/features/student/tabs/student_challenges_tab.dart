@@ -1,14 +1,18 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
-import 'package:file_picker/file_picker.dart';
+import 'dart:async';
+import 'dart:math' as math;
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import 'package:saver_gallery/saver_gallery.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+// tiktoklikescroller retiré : incompatible avec AndroidView PlatformViews.
+// On utilise PageView.builder + _TikTokScrollPhysics custom à la place.
 import '../../../providers/student_challenges_provider.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
@@ -18,8 +22,10 @@ import '../../../widgets/bobodo_state.dart';
 import '../../../widgets/bobodo_view.dart';
 import '../student_challenge_detail_screen.dart';
 import '../student_challenge_video_editor_screen.dart';
-import '../student_profile_screen.dart';
+import '../challenge_camera_capture_screen.dart';
+import '../student_social_profile_screen.dart';
 import '../student_dashboard_nav_controller.dart';
+import '../student_recently_deleted_videos_screen.dart';
 
 class StudentChallengesFeedScreen extends StatelessWidget {
   const StudentChallengesFeedScreen({super.key});
@@ -33,30 +39,114 @@ class StudentChallengesFeedScreen extends StatelessWidget {
       ),
     );
   }
+
 }
 
-class StudentChallengesTab extends StatefulWidget {
+class _TimedVideoOverlaysLayer extends StatefulWidget {
+  final Map<String, dynamic>? overlays;
+  final AcademiaPlaybackController? controller;
+
+  const _TimedVideoOverlaysLayer({
+    required this.overlays,
+    required this.controller,
+  });
+
+  @override
+  State<_TimedVideoOverlaysLayer> createState() => _TimedVideoOverlaysLayerState();
+}
+
+class _TimedVideoOverlaysLayerState extends State<_TimedVideoOverlaysLayer> {
+  Timer? _timer;
+  double _positionMs = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _startPolling();
+  }
+
+  @override
+  void didUpdateWidget(covariant _TimedVideoOverlaysLayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      _positionMs = 0.0;
+      _timer?.cancel();
+      _startPolling();
+    }
+  }
+
+  void _startPolling() {
+    _timer = Timer.periodic(const Duration(milliseconds: 200), (_) async {
+      final ctrl = widget.controller;
+      if (ctrl == null || !ctrl.isAttached) return;
+      try {
+        final pos = await ctrl.getPosition();
+        if (!mounted) return;
+        setState(() {
+          _positionMs = pos.toDouble();
+        });
+      } catch (_) {}
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return VideoOverlaysLayer(
+      overlays: widget.overlays,
+      positionMs: _positionMs,
+    );
+  }
+}
+
+class StudentChallengesTab extends StatelessWidget {
   const StudentChallengesTab({super.key});
 
   @override
-  State<StudentChallengesTab> createState() => _StudentChallengesTabState();
+  Widget build(BuildContext context) {
+    // Feed plein écran immersif — plus de TabBar.
+    // L'accès aux Challenges se fait via le bouton dans la bottom bar
+    // ou la colonne d'actions droite.
+    return const Scaffold(
+      backgroundColor: Colors.black,
+      body: _ChallengeVideosFeed(),
+    );
+  }
 }
 
-class _StudentChallengesTabState extends State<StudentChallengesTab> {
-  String _searchQuery = '';
-  String _typeFilter = 'all'; // all, mission, contest
-  bool _onlyJoined = false;
+// ---------------------------------------------------------------------------
+// Challenges list body (sub-tab 2)
+// ---------------------------------------------------------------------------
 
+class _ChallengesListBody extends StatefulWidget {
+  const _ChallengesListBody();
+
+  @override
+  State<_ChallengesListBody> createState() => _ChallengesListBodyState();
+}
+
+class _ChallengesListBodyState extends State<_ChallengesListBody> {
+  String _searchQuery = '';
+  String _typeFilter = 'all';
+  bool _onlyJoined = false;
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
       final provider = context.read<StudentChallengesProvider>();
-      provider.loadChallenges();
-      provider.loadMyParticipations();
-      provider.loadStats();
+      await provider.loadChallenges();
+      if (!mounted) return;
+      await provider.loadMyParticipations();
+      if (!mounted) return;
+      await provider.loadStats();
     });
   }
 
@@ -84,18 +174,16 @@ class _StudentChallengesTabState extends State<StudentChallengesTab> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: _buildHeaderContent(),
-            ),
-            Expanded(
-              child: _buildChallengesList(),
-            ),
-          ],
-        ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: _buildHeaderContent(),
+          ),
+          Expanded(
+            child: _buildChallengesList(),
+          ),
+        ],
       ),
     );
   }
@@ -141,7 +229,7 @@ class _StudentChallengesTabState extends State<StudentChallengesTab> {
             String text;
             if (!hasJoined) {
               text =
-                  'Les challenges vidéo te permettent de t’entraîner, gagner des points et montrer ce que tu sais faire. Rejoins ton premier challenge pour débloquer tes premiers badges.';
+                  'Les challenges vidéo te permettent de t\'entraîner, gagner des points et montrer ce que tu sais faire. Rejoins ton premier challenge pour débloquer tes premiers badges.';
             } else if (!hasCompleted) {
               text =
                   'Tu as déjà rejoint des challenges, bravo. En les terminant, tu marques des points et construis ton badge de progression pas à pas.';
@@ -337,216 +425,6 @@ class _StudentChallengesTabState extends State<StudentChallengesTab> {
               ),
             ],
           ),
-        );
-      },
-    );
-  }
-  static Future<void> _showGenericCommentsSheet(
-    BuildContext context,
-    StudentChallengesProvider provider,
-    String videoType,
-    String videoId,
-  ) async {
-    final comments = await provider.loadVideoComments(videoType, videoId);
-    final controller = TextEditingController();
-
-    // ignore: use_build_context_synchronously
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.black87,
-      builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
-            left: 16,
-            right: 16,
-            top: 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Commentaires',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (comments.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Text(
-                    'Aucun commentaire pour le moment.',
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
-                )
-              else
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 260),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: comments.length,
-                    itemBuilder: (context, index) {
-                      final c = comments[index];
-                      final content = c['content']?.toString() ?? '';
-                      final userId = c['user_id']?.toString() ?? '';
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(
-                              Icons.person,
-                              size: 16,
-                              color: Colors.white70,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    userId,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    content,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                maxLines: 2,
-                minLines: 1,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  hintText: 'Ajouter un commentaire...',
-                  hintStyle: TextStyle(color: Colors.white54),
-                  filled: true,
-                  fillColor: Color(0xFF111111),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(8)),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final text = controller.text.trim();
-                    if (text.isEmpty) {
-                      return;
-                    }
-                    final ok = await provider.addVideoComment(
-                      videoType: videoType,
-                      videoId: videoId,
-                      content: text,
-                    );
-                    if (!sheetContext.mounted) return;
-                    if (!ok && provider.error != null) {
-                      ScaffoldMessenger.of(sheetContext).showSnackBar(
-                        SnackBar(content: Text(provider.error!)),
-                      );
-                    } else if (ok) {
-                      Navigator.of(sheetContext).pop();
-                    }
-                  },
-                  child: const Text('Publier'),
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  static Future<void> _showGenericReportDialog(
-    BuildContext context,
-    StudentChallengesProvider provider,
-    String videoType,
-    String videoId,
-  ) async {
-    final reasonController = TextEditingController();
-    final detailsController = TextEditingController();
-
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Signaler la vidéo'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: reasonController,
-                  decoration: const InputDecoration(
-                    labelText: 'Motif (obligatoire)',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: detailsController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Détails (optionnel)',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final reason = reasonController.text.trim();
-                final details = detailsController.text.trim();
-                final ok = await provider.reportVideo(
-                  videoType: videoType,
-                  videoId: videoId,
-                  reason: reason,
-                  details: details.isEmpty ? null : details,
-                );
-                if (!dialogContext.mounted) return;
-                if (!ok && provider.error != null) {
-                  ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    SnackBar(content: Text(provider.error!)),
-                  );
-                } else if (ok) {
-                  Navigator.of(dialogContext).pop();
-                }
-              },
-              child: const Text('Envoyer'),
-            ),
-          ],
         );
       },
     );
@@ -776,6 +654,359 @@ class _StudentChallengesTabState extends State<StudentChallengesTab> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Generic comments & report helpers (used by feed actions)
+// ---------------------------------------------------------------------------
+
+Future<void> _showGenericCommentsSheet(
+  BuildContext context,
+  StudentChallengesProvider provider,
+  String videoType,
+  String videoId,
+) async {
+  List<Map<String, dynamic>> comments =
+      await provider.loadVideoComments(videoType, videoId);
+  final controller = TextEditingController();
+  final currentUserId = Supabase.instance.client.auth.currentUser?.id ?? '';
+
+  String formatRelative(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inMinutes < 1) return 'à l\'instant';
+    if (diff.inMinutes < 60) return 'il y a ${diff.inMinutes} min';
+    if (diff.inHours < 24) return 'il y a ${diff.inHours} h';
+    return 'il y a ${diff.inDays} j';
+  }
+
+  Future<void> reload(StateSetter setModalState) async {
+    final fresh = await provider.loadVideoComments(videoType, videoId);
+    setModalState(() {
+      comments = fresh;
+    });
+  }
+
+  // ignore: use_build_context_synchronously
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) {
+      return StatefulBuilder(
+        builder: (sheetContext, setModalState) {
+          return DraggableScrollableSheet(
+            initialChildSize: 0.6,
+            minChildSize: 0.4,
+            maxChildSize: 0.92,
+            builder: (context, scrollController) {
+              return Container(
+                decoration: const BoxDecoration(
+                  color: Color(0xFF0B0B0B),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 10),
+                      Container(
+                        width: 44,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              'Commentaires (${comments.length})',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => reload(setModalState),
+                            icon: const Icon(Icons.refresh, color: Colors.white70),
+                            tooltip: 'Rafraîchir',
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.of(sheetContext).pop(),
+                            icon: const Icon(Icons.close, color: Colors.white70),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                      ),
+                      const Divider(color: Colors.white12, height: 1),
+                      Expanded(
+                        child: comments.isEmpty
+                            ? const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: Text(
+                                    'Aucun commentaire pour le moment.',
+                                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                                  ),
+                                ),
+                              )
+                            : ListView.builder(
+                                controller: scrollController,
+                                itemCount: comments.length,
+                                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                                itemBuilder: (context, index) {
+                                  final c = comments[index];
+                                  final content = c['content']?.toString() ?? '';
+                                  final userId = c['user_id']?.toString() ?? '';
+                                  final displayName = c['display_name']?.toString().trim();
+                                  final avatarUrl = c['avatar_url']?.toString().trim();
+                                  final commentId = c['id']?.toString() ?? '';
+                                  final isOwn = userId == currentUserId;
+
+                                  DateTime? createdAt;
+                                  final createdRaw = c['created_at']?.toString();
+                                  if (createdRaw != null && createdRaw.isNotEmpty) {
+                                    createdAt = DateTime.tryParse(createdRaw);
+                                  }
+
+                                  final name = (displayName != null && displayName.isNotEmpty)
+                                      ? displayName
+                                      : '@${userId.isNotEmpty ? userId.substring(0, 8) : 'user'}';
+                                  final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 16,
+                                          backgroundColor: const Color(0xFF1EA75C),
+                                          backgroundImage: (avatarUrl != null && avatarUrl.isNotEmpty)
+                                              ? NetworkImage(avatarUrl)
+                                              : null,
+                                          child: (avatarUrl == null || avatarUrl.isEmpty)
+                                              ? Text(
+                                                  initial,
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                )
+                                              : null,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      name,
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        color: Colors.white70,
+                                                        fontSize: 12,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  if (createdAt != null)
+                                                    Text(
+                                                      formatRelative(createdAt.toLocal()),
+                                                      style: const TextStyle(
+                                                        color: Colors.white38,
+                                                        fontSize: 11,
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                content,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (isOwn && commentId.isNotEmpty)
+                                          IconButton(
+                                            onPressed: () async {
+                                              final ok = await provider.deleteVideoComment(
+                                                commentId: commentId,
+                                                videoType: videoType,
+                                                videoId: videoId,
+                                              );
+                                              if (!sheetContext.mounted) return;
+                                              if (!ok && provider.error != null) {
+                                                ScaffoldMessenger.of(sheetContext).showSnackBar(
+                                                  SnackBar(content: Text(provider.error!)),
+                                                );
+                                                return;
+                                              }
+                                              await reload(setModalState);
+                                            },
+                                            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                                          ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(
+                          left: 12,
+                          right: 12,
+                          bottom: 12 + MediaQuery.of(sheetContext).viewInsets.bottom,
+                          top: 8,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: controller,
+                                maxLines: 4,
+                                minLines: 1,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: const InputDecoration(
+                                  hintText: 'Ajouter un commentaire...',
+                                  hintStyle: TextStyle(color: Colors.white54),
+                                  filled: true,
+                                  fillColor: Color(0xFF111111),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.all(Radius.circular(999)),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF1EA75C),
+                                shape: BoxShape.circle,
+                              ),
+                              child: IconButton(
+                                onPressed: () async {
+                                  final text = controller.text.trim();
+                                  if (text.isEmpty) return;
+                                  final ok = await provider.addVideoComment(
+                                    videoType: videoType,
+                                    videoId: videoId,
+                                    content: text,
+                                  );
+                                  if (!sheetContext.mounted) return;
+                                  if (!ok && provider.error != null) {
+                                    ScaffoldMessenger.of(sheetContext).showSnackBar(
+                                      SnackBar(content: Text(provider.error!)),
+                                    );
+                                    return;
+                                  }
+                                  controller.clear();
+                                  await reload(setModalState);
+                                },
+                                icon: const Icon(Icons.send, color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      );
+    },
+  );
+}
+
+Future<void> _showGenericReportDialog(
+  BuildContext context,
+  StudentChallengesProvider provider,
+  String videoType,
+  String videoId,
+) async {
+  final reasonController = TextEditingController();
+  final detailsController = TextEditingController();
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: const Text('Signaler la vidéo'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: reasonController,
+                decoration: const InputDecoration(
+                  labelText: 'Motif (obligatoire)',
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: detailsController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Détails (optionnel)',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final reason = reasonController.text.trim();
+              final details = detailsController.text.trim();
+              final ok = await provider.reportVideo(
+                videoType: videoType,
+                videoId: videoId,
+                reason: reason,
+                details: details.isEmpty ? null : details,
+              );
+              if (!dialogContext.mounted) return;
+              if (!ok && provider.error != null) {
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
+                  SnackBar(content: Text(provider.error!)),
+                );
+              } else if (ok) {
+                Navigator.of(dialogContext).pop();
+              }
+            },
+            child: const Text('Envoyer'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TikTok-style video feed (sub-tab 1)
+// ---------------------------------------------------------------------------
+
 class _ChallengeVideosFeed extends StatefulWidget {
   const _ChallengeVideosFeed();
 
@@ -785,10 +1016,17 @@ class _ChallengeVideosFeed extends StatefulWidget {
 
 class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
   bool _initialized = false;
-  final PageController _pageController = PageController();
   bool _isLoadingMore = false;
   bool _hasMore = true;
   final int _pageSize = 20;
+
+  // PageView controller — compatible avec AndroidView PlatformViews
+  // viewportFraction < 1 force Flutter à pré-rendre les pages adjacentes
+  final PageController _pageController = PageController(viewportFraction: 0.999);
+
+  // Auto-pause on swipe: track controllers per page index
+  final Map<int, AcademiaPlaybackController> _controllers = {};
+  int _currentPage = 0;
 
   @override
   void initState() {
@@ -800,6 +1038,7 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
       await provider.loadChallengeVideos(limit: _pageSize);
       if (!mounted) return;
       final videos = provider.videos;
+      debugPrint('[FEED] Loaded ${videos.length} videos');
       setState(() {
         _hasMore = videos.length >= _pageSize;
       });
@@ -812,15 +1051,61 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
     super.dispose();
   }
 
+  void _onPageChanged(int newIndex) {
+    debugPrint('[FEED] Page changed: $_currentPage -> $newIndex');
+    // Pause all controllers except the new active one
+    for (final entry in _controllers.entries) {
+      if (entry.key != newIndex && entry.value.isAttached) {
+        entry.value.pause();
+        debugPrint('[FEED]   Paused controller at index ${entry.key}');
+      }
+    }
+    _currentPage = newIndex;
+    final newCtrl = _controllers[newIndex];
+    if (newCtrl != null && newCtrl.isAttached) {
+      newCtrl.play();
+      debugPrint('[FEED]   Playing controller at index $newIndex');
+    } else {
+      debugPrint('[FEED]   No controller ready at index $newIndex (attached=${newCtrl?.isAttached})');
+    }
+    // Clean up controllers far from current (keep only N-2..N+2)
+    final removed = <int>[];
+    _controllers.removeWhere((key, _) {
+      if ((key - newIndex).abs() > 2) {
+        removed.add(key);
+        return true;
+      }
+      return false;
+    });
+    if (removed.isNotEmpty) {
+      debugPrint('[FEED]   Cleaned up controllers: $removed');
+    }
+  }
+
+  Future<void> _reloadAfterDeletion() async {
+    final provider = context.read<StudentChallengesProvider>();
+    _controllers.clear();
+    _currentPage = 0;
+    await provider.loadChallengeVideos(limit: _pageSize);
+    if (!mounted) return;
+    final videos = provider.videos;
+    setState(() {
+      _hasMore = videos.length >= _pageSize;
+    });
+    if (_pageController.hasClients) {
+      _pageController.jumpToPage(0);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<StudentChallengesProvider>(
       builder: (context, provider, child) {
         final videos = provider.videos;
 
-        if (provider.isLoading && videos.isEmpty) {
+        if (provider.isLoadingVideos && videos.isEmpty) {
           return const LoadingWidget(
-            message: 'Chargement des vidéos de challenges...',
+            message: 'Chargement des vidéos...',
           );
         }
 
@@ -840,13 +1125,23 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
             PageView.builder(
               controller: _pageController,
               scrollDirection: Axis.vertical,
+              physics: const _TikTokPageScrollPhysics(),
               itemCount: videos.length,
               onPageChanged: (index) {
+                _onPageChanged(index);
                 _loadMoreIfNeeded(index, videos);
               },
               itemBuilder: (context, index) {
                 final video = videos[index];
-                return _ChallengeVideoItem(video: video);
+                return _ChallengeVideoItem(
+                  key: ValueKey('video_${video['video_type']}_${video['participation_id'] ?? video['video_id']}_$index'),
+                  video: video,
+                  isActive: index == _currentPage,
+                  onDeleted: _reloadAfterDeletion,
+                  onControllerReady: (ctrl) {
+                    _controllers[index] = ctrl;
+                  },
+                );
               },
             ),
             Positioned(
@@ -932,131 +1227,174 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
     final screenWidth = mediaQuery.size.width;
     final isCompactHeight = screenHeight < 700;
     final isCompactWidth = screenWidth < 360;
-
     final bool isCompact = isCompactHeight || isCompactWidth;
 
-    final double iconSize = isCompact ? 16 : 20;
-    final double labelFontSize = isCompact ? 9 : 11;
-    final double centralButtonSize = isCompact ? 28 : 34;
-    final double centralIconSize = isCompact ? 16 : 20;
-    final double verticalPadding = isCompact ? 2 : 4;
-    final double horizontalOuterPadding = 0;
-    final double horizontalInnerPadding = isCompactWidth ? 16 : 20;
+    final double iconSize = isCompact ? 22 : 26;
+    final double labelFontSize = isCompact ? 9 : 10;
+    final double centralButtonSize = isCompact ? 38 : 44;
+    final double centralIconSize = isCompact ? 22 : 26;
+    final double verticalPadding = isCompact ? 6 : 8;
 
-    return SafeArea(
-      top: false,
-      minimum: EdgeInsets.zero,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: horizontalOuterPadding),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: horizontalInnerPadding,
-            vertical: verticalPadding,
-          ),
-          decoration: const BoxDecoration(
-            color: Colors.black,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(16),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
+    Widget buildNavItem({
+      required IconData icon,
+      required String label,
+      required VoidCallback onTap,
+    }) {
+      return Expanded(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              InkWell(
-                onTap: () => StudentDashboardNavController.setIndex(0),
-                borderRadius: BorderRadius.circular(24),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.home,
-                        color: Colors.white,
-                        size: iconSize,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Accueil',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: labelFontSize,
-                        ),
-                      ),
-                    ],
-                  ),
+              Icon(icon, color: Colors.white, size: iconSize),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: labelFontSize,
                 ),
-              ),
-              GestureDetector(
-                onTap: () => _openCreateVideoFromFeed(context),
-                child: Container(
-                  width: centralButtonSize,
-                  height: centralButtonSize,
-                  decoration: BoxDecoration(
-                    borderRadius:
-                        BorderRadius.circular(centralButtonSize / 2),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.add,
-                    color: Colors.white,
-                    size: centralIconSize,
-                  ),
-                ),
-              ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    icon: Icon(
-                      Icons.person_outline,
-                      color: Colors.white,
-                      size: iconSize,
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const StudentProfileScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Profil',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: labelFontSize,
-                    ),
-                  ),
-                ],
-              ),
-              IconButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const StudentChallengesTab(),
-                    ),
-                  );
-                },
-                icon: const Icon(
-                  Icons.emoji_events_outlined,
-                  color: Colors.white,
-                ),
-                tooltip: 'Voir les challenges',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
         ),
+      );
+    }
+
+    return SafeArea(
+      top: false,
+      minimum: EdgeInsets.zero,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // TikTok-style progress bar synced with actual video playback
+          SizedBox(
+            height: 3,
+            child: _VideoProgressBar(
+              key: ValueKey('progress_page_$_currentPage'),
+              controller: _controllers[_currentPage],
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: 4,
+              vertical: verticalPadding,
+            ),
+            decoration: const BoxDecoration(
+              color: Colors.black,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // 1. Accueil
+                buildNavItem(
+                  icon: Icons.home_filled,
+                  label: 'Accueil',
+                  onTap: () {
+                    _pauseAllControllers();
+                    StudentDashboardNavController.setIndex(0);
+                  },
+                ),
+                // 2. Challenges
+                buildNavItem(
+                  icon: Icons.emoji_events_outlined,
+                  label: 'Challenges',
+                  onTap: () {
+                    _pauseAllControllers();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => Scaffold(
+                          backgroundColor: const Color(0xFFF3F4F6),
+                          appBar: AppBar(
+                            title: const Text('Challenges'),
+                            backgroundColor: const Color(0xFF1EA75C),
+                            foregroundColor: Colors.white,
+                          ),
+                          body: const _ChallengesListBody(),
+                        ),
+                      ),
+                    ).then((_) {
+                      if (!mounted) return;
+                      final ctrl = _controllers[_currentPage];
+                      if (ctrl != null && ctrl.isAttached) ctrl.play();
+                    });
+                  },
+                ),
+                // 3. Bouton + central (créer une vidéo)
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _openCreateVideoFromFeed(context),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: centralButtonSize,
+                          height: centralButtonSize,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(centralButtonSize / 4),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF1EA75C).withValues(alpha: 0.4),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: centralIconSize,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // 4. Messages (placeholder)
+                buildNavItem(
+                  icon: Icons.chat_bubble_outline,
+                  label: 'Messages',
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Messagerie — bientôt disponible')),
+                    );
+                  },
+                ),
+                // 5. Profil TikTok-like
+                buildNavItem(
+                  icon: Icons.person_outline,
+                  label: 'Profil',
+                  onTap: () {
+                    final userId = Supabase.instance.client.auth.currentUser?.id;
+                    if (userId == null) return;
+                    _pauseAllControllers();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => StudentSocialProfileScreen(
+                          userId: userId,
+                        ),
+                      ),
+                    ).then((_) {
+                      if (!mounted) return;
+                      final ctrl = _controllers[_currentPage];
+                      if (ctrl != null && ctrl.isAttached) ctrl.play();
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1107,240 +1445,119 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
     );
   }
 
-  Future<String?> _askVideoCreationMode(BuildContext context) async {
-    return showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: Colors.white,
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'Comment veux-tu créer ta vidéo ?',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.videocam),
-                title: const Text('Se filmer avec la caméra'),
-                onTap: () {
-                  Navigator.of(sheetContext).pop('camera');
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.video_library),
-                title: const Text('Uploader une vidéo depuis l\'appareil'),
-                onTap: () {
-                  Navigator.of(sheetContext).pop('gallery');
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
+  /// Ouvre directement la caméra TikTok. Après capture, passe au Studio.
   Future<void> _openCreateVideoFromFeed(BuildContext context) async {
-    if (!context.mounted) {
-      return;
-    }
+    if (!context.mounted) return;
 
-    final mode = await _askVideoCreationMode(context);
-    if (mode == null) {
-      return;
-    }
+    // Pause toutes les vidéos du feed avant de naviguer
+    _pauseAllControllers();
 
-    if (!context.mounted) {
-      return;
-    }
+    final segments = await Navigator.of(context).push<List<XFile>?>(
+      MaterialPageRoute(
+        builder: (_) => const ChallengeCameraCaptureScreen(),
+      ),
+    );
 
-    if (mode == 'camera') {
-      await _createFreeVideoFromCamera(context);
-    } else if (mode == 'gallery') {
-      await _createFreeVideoFromGallery(context);
-    }
-  }
+    if (!mounted) return;
 
-  Future<void> _createFreeVideoFromCamera(BuildContext context) async {
-    final picker = ImagePicker();
-    XFile? picked;
-    try {
-      picked = await picker.pickVideo(
-        source: ImageSource.camera,
-        maxDuration: const Duration(seconds: 60),
-      );
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Impossible d\'ouvrir la caméra. Vérifie les autorisations de l\'appareil.',
+    // Si l'utilisateur a capturé des segments, ouvrir le Studio avec les segments
+    if (segments != null && segments.isNotEmpty) {
+      final published = await Navigator.of(context).push<bool?>(
+        MaterialPageRoute(
+          builder: (_) => StudentChallengeVideoEditorScreen(
+            videoType: 'free',
+            initialMode: 'camera',
+            initialSegments: segments,
           ),
         ),
       );
+
+      if (!mounted) return;
+      await _onReturnFromStudio(published == true);
       return;
     }
 
-    if (picked == null) {
-      return;
+    if (!mounted) return;
+    final ctrl = _controllers[_currentPage];
+    if (ctrl != null && ctrl.isAttached) {
+      ctrl.play();
     }
-
-    final bytes = await picked.readAsBytes();
-    final name = picked.name.isNotEmpty ? picked.name : 'video.mp4';
-    final ext = name.contains('.') ? name.split('.').last : 'mp4';
-
-    if (!context.mounted) {
-      return;
-    }
-
-    await _handleFreeVideoUpload(
-      context: context,
-      bytes: bytes,
-      fileName: name,
-      mimeType: ext,
-    );
   }
 
-  Future<void> _createFreeVideoFromGallery(BuildContext context) async {
-    final result = await FilePicker.platform.pickFiles(
-      allowMultiple: false,
-      withData: true,
-      type: FileType.custom,
-      allowedExtensions: const ['mp4', 'mov', 'webm', 'mkv'],
-    );
-
-    if (result == null || result.files.isEmpty) {
-      return;
-    }
-
-    final file = result.files.first;
-    final bytes = file.bytes;
-    if (bytes == null) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Impossible de lire la vidéo sélectionnée.'),
-        ),
-      );
-      return;
-    }
-
-    final name = file.name.isNotEmpty ? file.name : 'video.mp4';
-    final ext = file.extension;
-
-    if (!context.mounted) {
-      return;
-    }
-
-    await _handleFreeVideoUpload(
-      context: context,
-      bytes: bytes,
-      fileName: name,
-      mimeType: ext,
-    );
-  }
-
-  Future<void> _handleFreeVideoUpload({
-    required BuildContext context,
-    required Uint8List bytes,
-    required String fileName,
-    String? mimeType,
-  }) async {
+  /// Called when returning from the Studio. If [published] is true,
+  /// reloads the feed and scrolls to index 0 (the just-published video).
+  Future<void> _onReturnFromStudio(bool published) async {
     final provider = context.read<StudentChallengesProvider>();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Upload de ta vidéo en cours...'),
-      ),
-    );
-
-    final url = await provider.uploadFreeVideo(
-      bytes: bytes,
-      fileName: fileName,
-      mimeType: mimeType,
-    );
-
-    if (!context.mounted) {
-      return;
+    if (published) {
+      // Reload the feed to include the newly published video
+      await provider.loadChallengeVideos(limit: _pageSize);
+      if (!mounted) return;
+      // Scroll to the first video (most recent = the one just published)
+      if (_pageController.hasClients) {
+        _pageController.jumpToPage(0);
+      }
+      _currentPage = 0;
+    } else {
+      // Resume playback on the current video
+      final ctrl = _controllers[_currentPage];
+      if (ctrl != null && ctrl.isAttached) {
+        ctrl.play();
+      }
     }
-
-    if (url == null) {
-      final error = provider.error ?? 'Erreur lors de l\'upload de la vidéo.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
-      return;
-    }
-
-    // On suppose désormais que l'upload retourne un objet VideoAsset déjà prêt
-    // avec son manifest de playback (best_url/poster_url) via une RPC dédiée.
-    final manifest = await provider.fetchPlaybackForDirectUrl(url);
-    if (manifest == null) {
-      final error = provider.error ??
-          'Erreur lors de la récupération des renditions vidéo.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
-      return;
-    }
-
-    final videoAssetId = manifest['video_asset_id']?.toString() ?? '';
-    final playback = manifest['playback'];
-    if (videoAssetId.isEmpty || playback is! Map<String, dynamic>) {
-      final error = provider.error ??
-          'Playback vidéo invalide ou incomplet.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
-      return;
-    }
-
-    final freeVideoId = await provider.createFreeVideo(
-      videoAssetId: videoAssetId,
-      playback: Map<String, dynamic>.from(playback),
-    );
-
-    if (!context.mounted) {
-      return;
-    }
-
-    if (freeVideoId == null || freeVideoId.isEmpty) {
-      final error =
-          provider.error ?? 'Erreur lors de la création de la vidéo libre.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
-      return;
-    }
-
-    // Ouvre le Studio unifié en mode "free" pour personnaliser la vidéo.
-    // ignore: use_build_context_synchronously
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => StudentChallengeVideoEditorScreen(
-          videoType: 'free',
-          freeVideoId: freeVideoId,
-        ),
-      ),
-    );
-
-    await provider.loadChallengeVideos(limit: _pageSize);
   }
+
+  /// Pause tous les controllers vidéo (utilisé avant navigation)
+  void _pauseAllControllers() {
+    for (final entry in _controllers.entries) {
+      if (entry.value.isAttached) {
+        entry.value.pause();
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Custom PageScrollPhysics : spring rapide + seuil de drag réduit.
+// Rend le swipe entre vidéos plus facile et naturel (style TikTok).
+// ---------------------------------------------------------------------------
+class _TikTokPageScrollPhysics extends PageScrollPhysics {
+  const _TikTokPageScrollPhysics({super.parent});
+
+  @override
+  _TikTokPageScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return _TikTokPageScrollPhysics(parent: buildParent(ancestor));
+  }
+
+  // Spring rapide : snap vif sans oscillation
+  @override
+  SpringDescription get spring => const SpringDescription(
+        mass: 0.8,
+        stiffness: 100,
+        damping: 14,
+      );
+
+  // Seuil de vitesse réduit : un petit flick suffit pour changer de page
+  @override
+  double get minFlingVelocity => 50.0;
+
+  // Seuil de drag réduit : ~15% de la page suffit (au lieu de ~50%)
+  @override
+  double get dragStartDistanceMotionThreshold => 3.5;
 }
 
 class _ChallengeVideoItem extends StatefulWidget {
   final Map<String, dynamic> video;
+  final ValueChanged<AcademiaPlaybackController>? onControllerReady;
+  final Future<void> Function()? onDeleted;
+  final bool isActive;
 
-  const _ChallengeVideoItem({Key? key, required this.video}) : super(key: key);
+  const _ChallengeVideoItem({
+    Key? key,
+    required this.video,
+    required this.isActive,
+    this.onControllerReady,
+    this.onDeleted,
+  }) : super(key: key);
 
   @override
   State<_ChallengeVideoItem> createState() => _ChallengeVideoItemState();
@@ -1352,43 +1569,95 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
   String? _errorMessage;
   String _selectedUrl = '';
 
+  // TikTok-style controls
+  final AcademiaPlaybackController _playbackController = AcademiaPlaybackController();
+  bool _isPaused = false;
+  bool _showPauseIcon = false;
+
+  // Custom double-tap detection (avoids 300ms GestureDetector delay)
+  DateTime _lastTapTime = DateTime(2000);
+  Offset _lastTapPosition = Offset.zero;
+  Timer? _singleTapTimer;
+
+  // Double-tap heart animation
+  final List<_HeartAnimData> _hearts = [];
+  final math.Random _rng = math.Random();
+
+  String get _videoLabel {
+    final vt = widget.video['video_type']?.toString() ?? '?';
+    final vid = widget.video['participation_id']?.toString() ??
+        widget.video['video_id']?.toString() ?? '?';
+    return '$vt/$vid';
+  }
+
   @override
   void initState() {
     super.initState();
+    debugPrint('[VIDEO_ITEM] initState  label=$_videoLabel  isActive=${widget.isActive}');
+    widget.onControllerReady?.call(_playbackController);
     _startInit();
   }
 
-  Future<void> _startInit() async {
-    print("### INIT VIDEO FEED ###");
-    print("ANDROID VIDEO DEBUG :: raw video object = ${widget.video}");
+  @override
+  void didUpdateWidget(covariant _ChallengeVideoItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isActive != widget.isActive) {
+      debugPrint('[VIDEO_ITEM] didUpdateWidget  label=$_videoLabel  isActive: ${oldWidget.isActive} -> ${widget.isActive}');
+    }
+  }
 
+  Future<void> _startInit() async {
+    String url = '';
+
+    // 1) playback.best_url
     final playback = widget.video['playback'];
     if (playback is Map) {
       final playbackMap = Map<String, dynamic>.from(playback);
-      _selectedUrl = playbackMap['best_url']?.toString().trim() ?? '';
-    } else {
-      _selectedUrl = '';
+      url = playbackMap['best_url']?.toString().trim() ?? '';
     }
-    print("ANDROID VIDEO DEBUG :: picked URL = $_selectedUrl");
+
+    // 2) video_renditions (480p, default, legacy_primary, or first available)
+    if (url.isEmpty) {
+      final renditions = widget.video['video_renditions'];
+      if (renditions is Map) {
+        final r = Map<String, dynamic>.from(renditions);
+        final url480 = r['480p']?.toString() ?? '';
+        final urlDefault = r['default']?.toString() ?? '';
+        final urlLegacy = r['legacy_primary']?.toString() ?? '';
+        if (url480.isNotEmpty) {
+          url = url480;
+        } else if (urlDefault.isNotEmpty) {
+          url = urlDefault;
+        } else if (urlLegacy.isNotEmpty) {
+          url = urlLegacy;
+        } else {
+          for (final v in r.values) {
+            final s = v?.toString() ?? '';
+            if (s.isNotEmpty && s.startsWith('http')) {
+              url = s;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // 3) video_url direct
+    if (url.isEmpty) {
+      url = widget.video['video_url']?.toString().trim() ?? '';
+    }
+
+    _selectedUrl = url;
+
+    debugPrint('[VIDEO_ITEM] _startInit  label=$_videoLabel  url=${_selectedUrl.length > 80 ? _selectedUrl.substring(0, 80) : _selectedUrl}');
 
     if (_selectedUrl.isEmpty) {
       _setError("Aucune URL vidéo disponible (renditions absentes ou invalides).");
       return;
     }
 
-    final isAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
-
-    // Android → doit utiliser une URL render (pas la vidéo brute).
-    // Sur le web et les autres plateformes, on autorise les URLs brutes
-    // (ex: free_videos) pour ne pas bloquer la lecture.
-    if (isAndroid && !_selectedUrl.contains("/renders/")) {
-      _setError(
-        "Android ne lit pas la vidéo brute. Rendition absente.\nURL : $_selectedUrl",
-      );
-      return;
-    }
-
     if (!mounted) return;
+    debugPrint('[VIDEO_ITEM] _startInit OK -> _initialized=true  label=$_videoLabel');
     setState(() => _initialized = true);
   }
 
@@ -1406,6 +1675,7 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
   }
 
   void _setError(String msg) {
+    debugPrint('[VIDEO_ITEM] ERROR  label=$_videoLabel  msg=$msg');
     final urlForTelemetry = _selectedUrl.isNotEmpty
         ? _selectedUrl
         : '';
@@ -1424,8 +1694,84 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
     }
   }
 
+  void _onSingleTap() async {
+    if (!_initialized) return;
+    final isPlaying = await _playbackController.toggle();
+    if (!mounted) return;
+    setState(() {
+      _isPaused = !isPlaying;
+      _showPauseIcon = true;
+    });
+    if (!_isPaused) {
+      // Hide pause icon after a short delay when resuming
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (mounted && !_isPaused) {
+          setState(() => _showPauseIcon = false);
+        }
+      });
+    }
+  }
+
+  void _onDoubleTap(TapDownDetails details, BuildContext ctx) {
+    // Spawn heart animation at tap position
+    final box = ctx.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final local = box.globalToLocal(details.globalPosition);
+    final id = DateTime.now().microsecondsSinceEpoch;
+    setState(() {
+      _hearts.add(_HeartAnimData(
+        id: id,
+        x: local.dx,
+        y: local.dy,
+        rotation: (_rng.nextDouble() - 0.5) * 0.6,
+      ));
+    });
+
+    // Trigger like if not already liked
+    final video = widget.video;
+    final hasLiked = video['has_liked'] == true;
+    if (!hasLiked) {
+      final provider = ctx.read<StudentChallengesProvider>();
+      final videoType = video['video_type']?.toString() ?? 'challenge';
+      final isChallenge = videoType != 'free';
+      final participationId = video['participation_id']?.toString() ?? '';
+      final videoId = video['video_id']?.toString() ?? '';
+
+      if (isChallenge && participationId.isNotEmpty) {
+        provider.likeChallengeVideo(participationId: participationId);
+      } else if (videoType.isNotEmpty && videoId.isNotEmpty) {
+        provider.likeVideo(videoType: videoType, videoId: videoId);
+      }
+    }
+  }
+
+  void _handleTapUp(TapUpDetails details) {
+    if (!_initialized) return;
+    final now = DateTime.now();
+    final dt = now.difference(_lastTapTime).inMilliseconds;
+    final pos = details.globalPosition;
+
+    if (dt < 300 && (pos - _lastTapPosition).distance < 50) {
+      // Double-tap detected — cancel pending single-tap, fire heart
+      _singleTapTimer?.cancel();
+      _singleTapTimer = null;
+      _lastTapTime = DateTime(2000);
+      _onDoubleTap(TapDownDetails(globalPosition: pos), context);
+    } else {
+      // Potential single-tap — schedule with short delay to allow double-tap
+      _lastTapTime = now;
+      _lastTapPosition = pos;
+      _singleTapTimer?.cancel();
+      _singleTapTimer = Timer(const Duration(milliseconds: 300), () {
+        _onSingleTap();
+      });
+    }
+  }
+
   @override
   void dispose() {
+    debugPrint('[VIDEO_ITEM] dispose  label=$_videoLabel');
+    _singleTapTimer?.cancel();
     super.dispose();
   }
 
@@ -1454,10 +1800,22 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
     final hasFavorited = video['has_favorited'] == true;
     final participationId = video['participation_id']?.toString() ?? '';
     final videoId = video['video_id']?.toString() ?? '';
+    final videoAssetId = video['video_asset_id']?.toString() ?? '';
     final videoUrl = video['video_url']?.toString() ?? '';
     final parentParticipationId =
         video['parent_participation_id']?.toString() ?? '';
     final remixType = video['remix_type']?.toString() ?? '';
+    final allowDownload = video['allow_download'] == true;
+    final authorUserId = video['user_id']?.toString() ?? video['owner_id']?.toString() ?? '';
+    final authorName = video['display_name']?.toString() ?? video['user_name']?.toString() ?? '';
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    final isOwner = currentUserId.isNotEmpty && authorUserId.isNotEmpty && currentUserId == authorUserId;
+
+    Map<String, dynamic>? videoRenditions;
+    final rawRenditions = video['video_renditions'];
+    if (rawRenditions is Map) {
+      videoRenditions = Map<String, dynamic>.from(rawRenditions);
+    }
 
     Map<String, dynamic>? overlays;
     final rawOverlays = video['overlays'] ?? video['layers'];
@@ -1498,6 +1856,8 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
             metaParts: metaParts,
             remixType: remixType,
             parentParticipationId: parentParticipationId,
+            authorUserId: authorUserId,
+            authorName: authorName,
             context: context,
           ),
           _buildRightActions(
@@ -1505,6 +1865,8 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
             participationId: participationId,
             videoType: videoType,
             videoId: videoId,
+            videoAssetId: videoAssetId,
+            videoRenditions: videoRenditions,
             likesCount: likesCount,
             favoritesCount: favoritesCount,
             commentsCount: commentsCount,
@@ -1514,6 +1876,9 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
             parentParticipationId: parentParticipationId,
             remixType: remixType,
             isChallenge: isChallenge,
+            isOwner: isOwner,
+            allowDownload: allowDownload,
+            onDeleted: widget.onDeleted,
           ),
         ],
       );
@@ -1522,40 +1887,78 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
     return Stack(
       children: [
         Positioned.fill(
-          child: Container(
-            color: Colors.black,
-            child: _initialized
-                ? Center(
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: AcademiaPlaybackEngine.view(
-                            url: _selectedUrl,
-                            autoplay: true,
-                            looping: true,
-                            muted: false,
-                            showControls: false,
-                            fit: BoxFit.cover,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapUp: _handleTapUp,
+            child: Container(
+              color: Colors.black,
+              child: _initialized
+                  ? Center(
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              child: AcademiaPlaybackEngine.view(
+                                url: _selectedUrl,
+                                autoplay: widget.isActive,
+                                looping: true,
+                                muted: false,
+                                showControls: false,
+                                fit: BoxFit.cover,
+                                playbackController: _playbackController,
+                              ),
+                            ),
                           ),
-                        ),
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            child: VideoOverlaysLayer(overlays: overlays),
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              child: _TimedVideoOverlaysLayer(
+                                overlays: overlays,
+                                controller: _playbackController,
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                    )
+                  : const Center(
+                      child: CircularProgressIndicator(),
                     ),
-                  )
-                : const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+            ),
           ),
         ),
+        // Pause icon overlay
+        if (_showPauseIcon)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Center(
+                child: AnimatedOpacity(
+                  opacity: _isPaused ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.4),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.pause,
+                      color: Colors.white,
+                      size: 48,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        // Double-tap heart animations
+        ..._hearts.map((h) => _DoubleTapHeart(key: ValueKey(h.id), data: h, onDone: () {
+          if (mounted) setState(() => _hearts.removeWhere((e) => e.id == h.id));
+        })),
         Positioned(
           left: 0,
           right: 0,
           bottom: 0,
-          height: 220,
+          height: 280,
           child: IgnorePointer(
             child: Container(
               decoration: const BoxDecoration(
@@ -1576,6 +1979,8 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
           metaParts: metaParts,
           remixType: remixType,
           parentParticipationId: parentParticipationId,
+          authorUserId: authorUserId,
+          authorName: authorName,
           context: context,
         ),
         _buildRightActions(
@@ -1583,6 +1988,8 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
           participationId: participationId,
           videoType: videoType,
           videoId: videoId,
+          videoAssetId: videoAssetId,
+          videoRenditions: videoRenditions,
           likesCount: likesCount,
           favoritesCount: favoritesCount,
           commentsCount: commentsCount,
@@ -1592,6 +1999,9 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
           parentParticipationId: parentParticipationId,
           remixType: remixType,
           isChallenge: isChallenge,
+          isOwner: isOwner,
+          allowDownload: allowDownload,
+          onDeleted: widget.onDeleted,
         ),
       ],
     );
@@ -1602,25 +2012,58 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
     required List<String> metaParts,
     required String remixType,
     required String parentParticipationId,
+    required String authorUserId,
+    required String authorName,
     required BuildContext context,
   }) {
     return Positioned(
-      left: 16,
-      right: 80,
-      bottom: 96,
+      left: 12,
+      right: 72,
+      bottom: 12,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (authorUserId.isNotEmpty)
+            GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => StudentSocialProfileScreen(
+                      userId: authorUserId,
+                      displayName: authorName.isNotEmpty ? authorName : null,
+                    ),
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      authorName.isNotEmpty ? authorName : '@${authorUserId.substring(0, 8)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           if (challengeTitle.isNotEmpty)
-            Text(
-              challengeTitle,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                challengeTitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                ),
               ),
             ),
           if (metaParts.isNotEmpty)
@@ -1691,6 +2134,8 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
     required String participationId,
     required String videoType,
     required String videoId,
+    required String videoAssetId,
+    required Map<String, dynamic>? videoRenditions,
     required int likesCount,
     required int favoritesCount,
     required int commentsCount,
@@ -1700,6 +2145,9 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
     required String parentParticipationId,
     required String remixType,
     required bool isChallenge,
+    required bool isOwner,
+    required bool allowDownload,
+    required Future<void> Function()? onDeleted,
   }) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isCompactWidth = screenWidth < 360;
@@ -1707,11 +2155,13 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
 
     return Positioned(
       right: rightPadding,
-      bottom: 96,
+      bottom: 120,
       child: _ChallengeVideoActions(
         participationId: participationId,
         videoType: videoType,
         videoId: videoId,
+        videoAssetId: videoAssetId,
+        videoRenditions: videoRenditions,
         likesCount: likesCount,
         favoritesCount: favoritesCount,
         commentsCount: commentsCount,
@@ -1721,6 +2171,9 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
         parentParticipationId: parentParticipationId,
         remixType: remixType,
         isChallenge: isChallenge,
+        isOwner: isOwner,
+        allowDownload: allowDownload,
+        onDeleted: onDeleted,
       ),
     );
   }
@@ -1730,6 +2183,8 @@ class _ChallengeVideoActions extends StatelessWidget {
   final String participationId;
   final String videoType;
   final String videoId;
+  final String videoAssetId;
+  final Map<String, dynamic>? videoRenditions;
   final int likesCount;
   final int favoritesCount;
   final int commentsCount;
@@ -1739,12 +2194,17 @@ class _ChallengeVideoActions extends StatelessWidget {
   final String parentParticipationId;
   final String remixType;
   final bool isChallenge;
+  final bool isOwner;
+  final bool allowDownload;
+  final Future<void> Function()? onDeleted;
 
   const _ChallengeVideoActions({
     Key? key,
     required this.participationId,
     required this.videoType,
     required this.videoId,
+    required this.videoAssetId,
+    required this.videoRenditions,
     required this.likesCount,
     required this.favoritesCount,
     required this.commentsCount,
@@ -1754,7 +2214,370 @@ class _ChallengeVideoActions extends StatelessWidget {
     required this.parentParticipationId,
     required this.remixType,
     required this.isChallenge,
+    required this.isOwner,
+    required this.allowDownload,
+    required this.onDeleted,
   }) : super(key: key);
+
+  static Future<bool> _ensureMediaSavePermission() async {
+    if (kIsWeb) return false;
+
+    if (Platform.isIOS) {
+      final status = await Permission.photosAddOnly.request();
+      return status.isGranted;
+    }
+
+    final storageStatus = await Permission.storage.request();
+    if (storageStatus.isGranted) return true;
+
+    final photosStatus = await Permission.photos.request();
+    if (photosStatus.isGranted) return true;
+
+    final videosStatus = await Permission.videos.request();
+    return videosStatus.isGranted;
+  }
+
+  static Future<bool> _downloadWatermarkedWithProgressSheet({
+    required BuildContext context,
+    required StudentChallengesProvider provider,
+    required String videoType,
+    required String videoId,
+    required String videoAssetId,
+    required String fallbackVideoUrl,
+    required Map<String, dynamic>? videoRenditions,
+  }) async {
+    if (kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Téléchargement non supporté sur le web.')),
+      );
+      return false;
+    }
+
+    final existing = _pickWatermarkedUrlFromRenditions(videoRenditions).trim();
+
+    final ValueNotifier<String> phase = ValueNotifier<String>('prepare');
+    final ValueNotifier<String> message = ValueNotifier<String>('Préparation de la vidéo...');
+    final ValueNotifier<double?> progress = ValueNotifier<double?>(null);
+    final ValueNotifier<bool> canClose = ValueNotifier<bool>(false);
+    bool cancelled = false;
+    bool started = false;
+
+    Future<T?> _withTimeout<T>(Future<T> f, Duration d) async {
+      try {
+        return await f.timeout(d);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    Future<void> run() async {
+      try {
+        String urlToDownload = existing;
+
+        if (urlToDownload.isEmpty && videoAssetId.trim().isNotEmpty) {
+          debugPrint(
+            '[watermark-download] request export_watermarked asset=$videoAssetId',
+          );
+          final resp = await _withTimeout<Map<String, dynamic>?>(
+            provider.requestVideoExportWatermarked(
+              videoAssetId: videoAssetId,
+            ),
+            const Duration(seconds: 20),
+          );
+
+          if (resp == null) {
+            phase.value = 'error';
+            message.value = provider.error ??
+                'Impossible de préparer la vidéo. Réessaie plus tard.';
+            canClose.value = true;
+            return;
+          }
+
+          final status = resp['status']?.toString() ?? '';
+          final url = resp['url']?.toString() ?? '';
+          debugPrint(
+            '[watermark-download] request response status=$status urlLen=${url.length}',
+          );
+          if (status == 'ready' && url.trim().isNotEmpty) {
+            urlToDownload = url.trim();
+          }
+        }
+
+        if (urlToDownload.isEmpty && videoAssetId.trim().isNotEmpty) {
+          phase.value = 'prepare';
+          message.value = 'Préparation de la vidéo (logo)...';
+          final deadline = DateTime.now().add(const Duration(seconds: 90));
+
+          String lastStatus = '';
+
+          while (!cancelled && DateTime.now().isBefore(deadline)) {
+            final st = await _withTimeout<Map<String, dynamic>?>(
+              provider.getVideoExportWatermarkedStatus(
+                videoAssetId: videoAssetId,
+              ),
+              const Duration(seconds: 20),
+            );
+
+            if (st == null) {
+              phase.value = 'error';
+              message.value = provider.error ??
+                  'Erreur lors de la vérification de l\'export.';
+              canClose.value = true;
+              return;
+            }
+
+            final status = st['status']?.toString() ?? '';
+            final url = st['url']?.toString() ?? '';
+
+            if (status.isNotEmpty && status != lastStatus) {
+              lastStatus = status;
+              message.value = 'Préparation de la vidéo (logo)... ($status)';
+              debugPrint(
+                '[watermark-download] poll status=$status urlLen=${url.length}',
+              );
+            }
+
+            if (status == 'ready' && url.trim().isNotEmpty) {
+              urlToDownload = url.trim();
+              break;
+            }
+
+            if (status == 'failed') {
+              phase.value = 'error';
+              message.value = st['error']?.toString() ??
+                  'Échec de la préparation de la vidéo.';
+              canClose.value = true;
+              return;
+            }
+
+            if (status == 'unknown') {
+              debugPrint('[watermark-download] poll unknown status payload=$st');
+            }
+
+            await Future.delayed(const Duration(seconds: 2));
+          }
+
+          if (cancelled) {
+            canClose.value = true;
+            return;
+          }
+
+          if (urlToDownload.isEmpty) {
+            phase.value = 'error';
+            message.value =
+                'Préparation trop longue. Réessaie dans quelques instants.';
+            canClose.value = true;
+            return;
+          }
+        }
+
+        if (urlToDownload.isEmpty) {
+          if (fallbackVideoUrl.trim().isNotEmpty) {
+            urlToDownload = fallbackVideoUrl.trim();
+          } else {
+            phase.value = 'error';
+            message.value = 'Lien vidéo indisponible.';
+            canClose.value = true;
+            return;
+          }
+        }
+
+        if (cancelled) {
+          canClose.value = true;
+          return;
+        }
+
+        final okPerm = await _ensureMediaSavePermission();
+        if (!okPerm) {
+          phase.value = 'error';
+          message.value = 'Permission refusée pour enregistrer la vidéo.';
+          canClose.value = true;
+          return;
+        }
+
+        phase.value = 'download';
+        message.value = 'Téléchargement...';
+        progress.value = 0.0;
+
+        final client = http.Client();
+        try {
+          final uri = Uri.parse(urlToDownload);
+          final req = http.Request('GET', uri);
+          final res = await client.send(req);
+
+          if (res.statusCode != 200) {
+            phase.value = 'error';
+            message.value = 'Erreur HTTP ${res.statusCode}.';
+            canClose.value = true;
+            return;
+          }
+
+          final total = res.contentLength;
+          int received = 0;
+          final tmpDir = await getTemporaryDirectory();
+          final safeName = 'academia_${videoType}_$videoId';
+          final file = File('${tmpDir.path}/$safeName.mp4');
+          final sink = file.openWrite();
+          try {
+            await for (final chunk in res.stream) {
+              if (cancelled) {
+                await sink.flush();
+                await sink.close();
+                canClose.value = true;
+                return;
+              }
+              sink.add(chunk);
+              received += chunk.length;
+              if (total != null && total > 0) {
+                final p = received / total;
+                progress.value = p.clamp(0.0, 1.0);
+              } else {
+                progress.value = null;
+              }
+            }
+          } finally {
+            await sink.flush();
+            await sink.close();
+          }
+
+          phase.value = 'save';
+          message.value = 'Enregistrement dans la galerie...';
+          progress.value = null;
+
+          final dynamic result = await SaverGallery.saveFile(
+            filePath: file.path,
+            fileName: '$safeName.mp4',
+            androidRelativePath: 'Movies',
+            skipIfExists: false,
+          );
+
+          final ok = (result is Map) ? result['isSuccess'] == true : false;
+          if (ok) {
+            phase.value = 'done';
+            message.value = 'Vidéo enregistrée dans la galerie.';
+            canClose.value = true;
+          } else {
+            phase.value = 'error';
+            message.value = 'Impossible d\'enregistrer la vidéo.';
+            canClose.value = true;
+          }
+        } finally {
+          client.close();
+        }
+      } catch (e) {
+        phase.value = 'error';
+        message.value = 'Erreur lors du téléchargement: $e';
+        canClose.value = true;
+      }
+    }
+
+    final bool? sheetResult = await showModalBottomSheet<bool>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.black87,
+      builder: (sheetContext) {
+        if (!started) {
+          started = true;
+          Future.microtask(run);
+        }
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Téléchargement',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ValueListenableBuilder<String>(
+                  valueListenable: message,
+                  builder: (_, msg, __) {
+                    return Text(
+                      msg,
+                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                ValueListenableBuilder<double?>(
+                  valueListenable: progress,
+                  builder: (_, p, __) {
+                    return LinearProgressIndicator(
+                      value: p,
+                      backgroundColor: Colors.white12,
+                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                      minHeight: 6,
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ValueListenableBuilder<bool>(
+                        valueListenable: canClose,
+                        builder: (_, closable, __) {
+                          return OutlinedButton(
+                            onPressed: () {
+                              if (!closable) {
+                                cancelled = true;
+                                message.value = 'Annulation...';
+                                return;
+                              }
+                              Navigator.of(sheetContext).pop(phase.value == 'done');
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.white24),
+                            ),
+                            child: Text(
+                              closable ? 'Fermer' : 'Annuler',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    phase.dispose();
+    message.dispose();
+    progress.dispose();
+    canClose.dispose();
+
+    return sheetResult == true;
+  }
+
+  static String _pickWatermarkedUrlFromVideo(Map<String, dynamic> video) {
+    final renditions = video['video_renditions'];
+    if (renditions is Map) {
+      final r = Map<String, dynamic>.from(renditions);
+      final url = r['export_watermarked']?.toString().trim() ?? '';
+      if (url.isNotEmpty) return url;
+    }
+    return '';
+  }
+
+  static String _pickWatermarkedUrlFromRenditions(Map<String, dynamic>? renditions) {
+    if (renditions == null) return '';
+    final url = renditions['export_watermarked']?.toString().trim() ?? '';
+    return url;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1763,6 +2586,170 @@ class _ChallengeVideoActions extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        IconButton(
+          onPressed: () async {
+            await showModalBottomSheet<void>(
+              context: context,
+              backgroundColor: Colors.black87,
+              builder: (sheetContext) {
+                return SafeArea(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (allowDownload)
+                        ListTile(
+                          leading: const Icon(
+                            Icons.download,
+                            color: Colors.white,
+                          ),
+                          title: const Text(
+                            'Télécharger',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          onTap: () async {
+                            Navigator.of(sheetContext).pop();
+
+                            final ok = await _downloadWatermarkedWithProgressSheet(
+                              context: context,
+                              provider: provider,
+                              videoType: videoType,
+                              videoId: videoId,
+                              videoAssetId: videoAssetId,
+                              fallbackVideoUrl: videoUrl,
+                              videoRenditions: videoRenditions,
+                            );
+                            if (!context.mounted) return;
+                            if (ok) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Vidéo enregistrée dans la galerie')),
+                              );
+                            }
+                          },
+                        ),
+                      if (isOwner)
+                        SwitchListTile(
+                          secondary: const Icon(
+                            Icons.download_for_offline,
+                            color: Colors.white,
+                          ),
+                          title: const Text(
+                            'Autoriser le téléchargement',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          value: allowDownload,
+                          onChanged: (value) async {
+                            final ok = await provider.setVideoAllowDownload(
+                              videoType: videoType,
+                              videoId: videoId,
+                              allowDownload: value,
+                            );
+                            if (!sheetContext.mounted) return;
+                            if (!ok) {
+                              if (provider.error != null) {
+                                ScaffoldMessenger.of(sheetContext).showSnackBar(
+                                  SnackBar(content: Text(provider.error!)),
+                                );
+                              }
+                              return;
+                            }
+                            await onDeleted?.call();
+                            if (!sheetContext.mounted) return;
+                            Navigator.of(sheetContext).pop();
+                          },
+                        ),
+                      ListTile(
+                        leading: const Icon(
+                          Icons.history,
+                          color: Colors.white,
+                        ),
+                        title: const Text(
+                          'Récemment supprimées',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        onTap: () async {
+                          Navigator.of(sheetContext).pop();
+                          final restored = await Navigator.of(context).push<bool>(
+                            MaterialPageRoute(
+                              builder: (_) => const StudentRecentlyDeletedVideosScreen(),
+                            ),
+                          );
+                          if (restored == true) {
+                            await onDeleted?.call();
+                          }
+                        },
+                      ),
+                      if (isOwner)
+                        ListTile(
+                          leading: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.redAccent,
+                          ),
+                          title: const Text(
+                            'Supprimer',
+                            style: TextStyle(color: Colors.redAccent),
+                          ),
+                          onTap: () async {
+                            final confirmed = await showDialog<bool>(
+                              context: sheetContext,
+                              builder: (dialogContext) {
+                                return AlertDialog(
+                                  title: const Text('Supprimer cette vidéo ?'),
+                                  content: const Text(
+                                    'Elle sera déplacée dans "Récemment supprimées".',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(dialogContext).pop(false),
+                                      child: const Text('Annuler'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.of(dialogContext).pop(true),
+                                      child: const Text('Supprimer'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+
+                            if (confirmed != true) return;
+
+                            final ok = await provider.softDeleteVideo(
+                              videoType: videoType,
+                              videoId: videoId,
+                            );
+                            if (!sheetContext.mounted) return;
+
+                            if (!ok) {
+                              if (provider.error != null) {
+                                ScaffoldMessenger.of(sheetContext).showSnackBar(
+                                  SnackBar(content: Text(provider.error!)),
+                                );
+                              }
+                              return;
+                            }
+
+                            Navigator.of(sheetContext).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Vidéo supprimée')),
+                            );
+                            await onDeleted?.call();
+                          },
+                        ),
+                      ListTile(
+                        leading: const Icon(Icons.close, color: Colors.white70),
+                        title: const Text('Annuler', style: TextStyle(color: Colors.white70)),
+                        onTap: () => Navigator.of(sheetContext).pop(),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+          icon: const Icon(Icons.more_horiz, color: Colors.white),
+        ),
+        const SizedBox(height: 4),
         IconButton(
           onPressed: () async {
             bool ok = false;
@@ -1880,7 +2867,7 @@ class _ChallengeVideoActions extends StatelessWidget {
 
             // Autres vidéos (ex: free) → commentaires génériques (video_type, video_id).
             if (videoType.isNotEmpty && videoId.isNotEmpty) {
-              await _StudentChallengesTabState._showGenericCommentsSheet(
+              await _showGenericCommentsSheet(
                 context,
                 provider,
                 videoType,
@@ -1907,6 +2894,36 @@ class _ChallengeVideoActions extends StatelessWidget {
           style: const TextStyle(color: Colors.white, fontSize: 12),
         ),
         const SizedBox(height: 12),
+        if (allowDownload)
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                onPressed: () async {
+                  final ok = await _downloadWatermarkedWithProgressSheet(
+                    context: context,
+                    provider: provider,
+                    videoType: videoType,
+                    videoId: videoId,
+                    videoAssetId: videoAssetId,
+                    fallbackVideoUrl: videoUrl,
+                    videoRenditions: videoRenditions,
+                  );
+                  if (!context.mounted) return;
+                  if (ok) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Vidéo enregistrée dans la galerie'),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.download, color: Colors.white),
+                tooltip: 'Télécharger',
+              ),
+              const SizedBox(height: 4),
+            ],
+          ),
         IconButton(
           onPressed: () async {
             if (videoUrl.isEmpty) {
@@ -2051,7 +3068,7 @@ class _ChallengeVideoActions extends StatelessWidget {
 
             // Autres vidéos → signalement générique (video_type, video_id).
             if (videoType.isNotEmpty && videoId.isNotEmpty) {
-              await _StudentChallengesTabState._showGenericReportDialog(
+              await _showGenericReportDialog(
                 context,
                 provider,
                 videoType,
@@ -2097,141 +3114,11 @@ class _ChallengeVideoActions extends StatelessWidget {
     StudentChallengesProvider provider,
     String participationId,
   ) async {
-    final comments =
-        await provider.loadChallengeVideoComments(participationId);
-    final controller = TextEditingController();
-
-    // ignore: use_build_context_synchronously
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.black87,
-      builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
-            left: 16,
-            right: 16,
-            top: 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Commentaires',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (comments.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Text(
-                    'Aucun commentaire pour le moment.',
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
-                )
-              else
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 260),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: comments.length,
-                    itemBuilder: (context, index) {
-                      final c = comments[index];
-                      final content = c['content']?.toString() ?? '';
-                      final userId = c['user_id']?.toString() ?? '';
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(
-                              Icons.person,
-                              size: 16,
-                              color: Colors.white70,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    userId,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    content,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                maxLines: 2,
-                minLines: 1,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  hintText: 'Ajouter un commentaire...',
-                  hintStyle: TextStyle(color: Colors.white54),
-                  filled: true,
-                  fillColor: Color(0xFF111111),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(8)),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final text = controller.text.trim();
-                    if (text.isEmpty) {
-                      return;
-                    }
-                    final ok = await provider.addChallengeVideoComment(
-                      participationId: participationId,
-                      content: text,
-                    );
-                    if (!sheetContext.mounted) return;
-                    if (!ok && provider.error != null) {
-                      ScaffoldMessenger.of(sheetContext).showSnackBar(
-                        SnackBar(content: Text(provider.error!)),
-                      );
-                    } else if (ok) {
-                      Navigator.of(sheetContext).pop();
-                    }
-                  },
-                  child: const Text('Publier'),
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-          ),
-        );
-      },
+    await _showGenericCommentsSheet(
+      context,
+      provider,
+      'challenge',
+      participationId,
     );
   }
 
@@ -2370,10 +3257,22 @@ class _DuoParentVideoPreviewScreenState
         final r = Map<String, dynamic>.from(renditions);
         final url480 = r['480p']?.toString() ?? '';
         final urlDefault = r['default']?.toString() ?? '';
+        final urlLegacy = r['legacy_primary']?.toString() ?? '';
         if (url480.isNotEmpty) {
           url = url480;
         } else if (urlDefault.isNotEmpty) {
           url = urlDefault;
+        } else if (urlLegacy.isNotEmpty) {
+          url = urlLegacy;
+        } else {
+          // Fallback: use first available rendition URL
+          for (final v in r.values) {
+            final s = v?.toString() ?? '';
+            if (s.isNotEmpty && s.startsWith('http')) {
+              url = s;
+              break;
+            }
+          }
         }
       }
     }
@@ -2383,7 +3282,7 @@ class _DuoParentVideoPreviewScreenState
       url = rawUrl.trim();
     }
 
-    if (url.isEmpty || !url.contains('/renders/')) {
+    if (url.isEmpty) {
       setState(() {
         _isLoading = false;
         _error = 'Aucune URL vidéo disponible pour la vidéo originale.';
@@ -2449,6 +3348,178 @@ class _DuoParentVideoPreviewScreenState
                       : const CircularProgressIndicator(),
         ),
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// TikTok-style double-tap heart animation helpers
+// ---------------------------------------------------------------------------
+
+class _HeartAnimData {
+  final int id;
+  final double x;
+  final double y;
+  final double rotation;
+
+  const _HeartAnimData({
+    required this.id,
+    required this.x,
+    required this.y,
+    required this.rotation,
+  });
+}
+
+class _DoubleTapHeart extends StatefulWidget {
+  final _HeartAnimData data;
+  final VoidCallback onDone;
+
+  const _DoubleTapHeart({
+    super.key,
+    required this.data,
+    required this.onDone,
+  });
+
+  @override
+  State<_DoubleTapHeart> createState() => _DoubleTapHeartState();
+}
+
+class _DoubleTapHeartState extends State<_DoubleTapHeart>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+  late final Animation<double> _opacity;
+  late final Animation<double> _translateY;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
+    _scale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.2), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 1.2, end: 1.0), weight: 20),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+
+    _opacity = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 20),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.0), weight: 40),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 40),
+    ]).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+
+    _translateY = Tween<double>(begin: 0, end: -80).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOut),
+    );
+
+    _ctrl.forward().then((_) {
+      widget.onDone();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: widget.data.x - 36,
+      top: widget.data.y - 36,
+      child: AnimatedBuilder(
+        animation: _ctrl,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, _translateY.value),
+            child: Opacity(
+              opacity: _opacity.value,
+              child: Transform.scale(
+                scale: _scale.value,
+                child: Transform.rotate(
+                  angle: widget.data.rotation,
+                  child: const Icon(
+                    Icons.favorite,
+                    color: Colors.redAccent,
+                    size: 72,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// TikTok-style progress bar synced with actual video playback.
+// Polls position/duration from the native player via AcademiaPlaybackController.
+// ---------------------------------------------------------------------------
+class _VideoProgressBar extends StatefulWidget {
+  final AcademiaPlaybackController? controller;
+
+  const _VideoProgressBar({super.key, this.controller});
+
+  @override
+  State<_VideoProgressBar> createState() => _VideoProgressBarState();
+}
+
+class _VideoProgressBarState extends State<_VideoProgressBar> {
+  Timer? _timer;
+  double _progress = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _startPolling();
+  }
+
+  @override
+  void didUpdateWidget(covariant _VideoProgressBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      _progress = 0.0;
+      _timer?.cancel();
+      _startPolling();
+    }
+  }
+
+  void _startPolling() {
+    _timer = Timer.periodic(const Duration(milliseconds: 250), (_) async {
+      final ctrl = widget.controller;
+      if (ctrl == null || !ctrl.isAttached) return;
+      try {
+        final pos = await ctrl.getPosition();
+        final dur = await ctrl.getDuration();
+        if (!mounted) return;
+        if (dur > 0) {
+          setState(() {
+            _progress = (pos / dur).clamp(0.0, 1.0);
+          });
+        }
+      } catch (_) {}
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LinearProgressIndicator(
+      value: _progress,
+      backgroundColor: Colors.white.withValues(alpha: 0.3),
+      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+      minHeight: 3,
     );
   }
 }

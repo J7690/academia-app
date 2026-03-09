@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../providers/prep_concours_provider.dart';
+import '../../../widgets/academia_rich_content.dart';
 import 'prep_progress_screen.dart';
 
 class PrepTrainingScreen extends StatefulWidget {
@@ -241,8 +242,8 @@ class _PrepTrainingScreenState extends State<PrepTrainingScreen> {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      q.question,
+                    child: AcademiaRichContent(
+                      content: q.question,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -278,7 +279,7 @@ class _PrepTrainingScreenState extends State<PrepTrainingScreen> {
                             ),
                           ),
                           child: ListTile(
-                            title: Text(value),
+                            title: AcademiaRichContent(content: value),
                             onTap: _isSubmitting
                                 ? null
                                 : () {

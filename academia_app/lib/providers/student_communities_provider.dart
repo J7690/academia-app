@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert' as json;
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -19,7 +22,11 @@ class StudentCommunitiesProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _posts = [];
   List<Map<String, dynamic>> _polls = [];
   RealtimeChannel? _postsChannel;
+  RealtimeChannel? _presenceChannel;
   final Map<String, int> _unreadByCommunityId = {};
+  List<Map<String, dynamic>> _typingUsers = [];
+  Timer? _typingDebounce;
+  Map<String, int> _postReadCounts = {};
 
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
@@ -31,6 +38,8 @@ class StudentCommunitiesProvider extends ChangeNotifier {
   List<Map<String, dynamic>> get polls => _polls;
   Map<String, int> get unreadByCommunityId => _unreadByCommunityId;
   String? get currentUserId => _client.auth.currentUser?.id;
+  List<Map<String, dynamic>> get typingUsers => _typingUsers;
+  Map<String, int> get postReadCounts => _postReadCounts;
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -384,41 +393,53 @@ class StudentCommunitiesProvider extends ChangeNotifier {
       final storagePath =
           '${user.id}/communities/$communityId/$sanitizedFileName';
 
-      // Utiliser une requête HTTP directe avec service_role key
-      // car les policies RLS sur storage.objects ne sont pas configurées
-      final uploadUrl = '${SupabaseConfig.url}/storage/v1/object/community-media/$storagePath';
       final contentType = MimeTypeHelper.normalize(mimeType) ?? 'application/octet-stream';
+      final accessToken = _client.auth.currentSession?.accessToken;
+      if (accessToken == null || accessToken.isEmpty) {
+        _setError('Session expirée. Reconnecte-toi.');
+        return null;
+      }
+
+      // Upload via Edge Function proxy (bypass RLS avec service_role)
+      final edgeFnUrl =
+          '${SupabaseConfig.url}/functions/v1/setup-storage-policies';
 
       try {
         final response = await http.post(
-          Uri.parse(uploadUrl),
+          Uri.parse(edgeFnUrl),
           headers: {
-            'apikey': SupabaseConfig.serviceKey,
-            'Authorization': 'Bearer ${SupabaseConfig.serviceKey}',
-            'Content-Type': contentType,
-            'x-upsert': 'true',
+            'apikey': SupabaseConfig.anonKey,
+            'Authorization': 'Bearer $accessToken',
+            'Content-Type': 'application/octet-stream',
+            'x-file-path': storagePath,
+            'x-content-type': contentType,
           },
           body: bytes,
         );
 
-        if (response.statusCode != 200 && response.statusCode != 201) {
-          // Vérifier si c'est un duplicata (409)
-          if (response.statusCode == 409) {
-            // Fichier existe déjà, c'est OK
-          } else {
-            final errorBody = response.body;
-            _setError('Erreur upload: $errorBody');
-            return null;
-          }
+        debugPrint('[uploadCommunityMedia] Edge Fn → ${response.statusCode}');
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          // Extraire l'URL publique de la réponse JSON
+          try {
+            final decoded = json.jsonDecode(response.body);
+            if (decoded is Map) {
+              final url = decoded['url']?.toString();
+              if (url != null && url.isNotEmpty) return url;
+            }
+          } catch (_) {}
+          // Fallback: construire l'URL manuellement
+          return '${SupabaseConfig.url}/storage/v1/object/public/community-media/$storagePath';
+        } else {
+          final errorBody = response.body;
+          debugPrint('[uploadCommunityMedia] ERROR ${response.statusCode}: $errorBody');
+          _setError('Erreur upload (${response.statusCode}): $errorBody');
+          return null;
         }
       } catch (e) {
+        debugPrint('[uploadCommunityMedia] Network error: $e');
         _setError('Erreur réseau: $e');
         return null;
       }
-
-      final publicUrl =
-          '${SupabaseConfig.url}/storage/v1/object/public/community-media/$storagePath';
-      return publicUrl;
     } catch (e) {
       _setError(e.toString());
       return null;
@@ -523,6 +544,22 @@ class StudentCommunitiesProvider extends ChangeNotifier {
               "Erreur lors de l'envoi du message à la communauté.",
         );
         return false;
+      }
+      // Send push notifications for @mentions
+      final postId = response['post_id']?.toString();
+      if (text.contains('@[') && postId != null) {
+        try {
+          await _client.rpc(
+            'app_notify_community_mention',
+            params: {
+              'p_community_id': communityId,
+              'p_post_id': postId,
+              'p_content': text,
+            },
+          );
+        } catch (e) {
+          debugPrint('[Communities] mention notification error: $e');
+        }
       }
       await Future.wait([
         loadCommunityPosts(communityId),
@@ -631,6 +668,93 @@ class StudentCommunitiesProvider extends ChangeNotifier {
       _client.removeChannel(_postsChannel!);
       _postsChannel = null;
     }
+    _unsubscribePresence();
+  }
+
+  // ── Typing indicator via Supabase Realtime broadcast ──
+
+  void subscribeToTypingIndicator(String communityId) {
+    _unsubscribePresence();
+    final channel = _client.channel('typing:$communityId');
+
+    channel.onBroadcast(
+      event: 'typing',
+      callback: (payload) {
+        final userId = payload['user_id']?.toString();
+        final displayName = payload['display_name']?.toString() ?? '';
+        if (userId == null || userId == currentUserId) return;
+
+        final existing = _typingUsers.indexWhere((u) => u['user_id'] == userId);
+        if (existing >= 0) {
+          _typingUsers[existing] = {
+            'user_id': userId,
+            'display_name': displayName,
+            'timestamp': DateTime.now().millisecondsSinceEpoch,
+          };
+        } else {
+          _typingUsers.add({
+            'user_id': userId,
+            'display_name': displayName,
+            'timestamp': DateTime.now().millisecondsSinceEpoch,
+          });
+        }
+        _cleanStaleTypers();
+        notifyListeners();
+      },
+    );
+
+    channel.onBroadcast(
+      event: 'stop_typing',
+      callback: (payload) {
+        final userId = payload['user_id']?.toString();
+        if (userId == null) return;
+        _typingUsers.removeWhere((u) => u['user_id'] == userId);
+        notifyListeners();
+      },
+    );
+
+    channel.subscribe();
+    _presenceChannel = channel;
+  }
+
+  void _unsubscribePresence() {
+    _typingDebounce?.cancel();
+    _typingDebounce = null;
+    if (_presenceChannel != null) {
+      _client.removeChannel(_presenceChannel!);
+      _presenceChannel = null;
+    }
+    _typingUsers = [];
+  }
+
+  void _cleanStaleTypers() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    _typingUsers.removeWhere(
+      (u) => (now - (u['timestamp'] as int? ?? 0)) > 4000,
+    );
+  }
+
+  void broadcastTyping(String communityId, String displayName) {
+    _presenceChannel?.sendBroadcastMessage(
+      event: 'typing',
+      payload: {
+        'user_id': currentUserId,
+        'display_name': displayName,
+      },
+    );
+    _typingDebounce?.cancel();
+    _typingDebounce = Timer(const Duration(seconds: 3), () {
+      broadcastStopTyping(communityId);
+    });
+  }
+
+  void broadcastStopTyping(String communityId) {
+    _typingDebounce?.cancel();
+    _typingDebounce = null;
+    _presenceChannel?.sendBroadcastMessage(
+      event: 'stop_typing',
+      payload: {'user_id': currentUserId},
+    );
   }
 
   Future<void> markCommunityRead(String communityId) async {
@@ -785,5 +909,268 @@ class StudentCommunitiesProvider extends ChangeNotifier {
     } finally {
       _setSaving(false);
     }
+  }
+
+  // ── Edit message (15 min window) ──
+
+  Future<bool> editPost({
+    required String communityId,
+    required String postId,
+    required String newContent,
+  }) async {
+    final text = newContent.trim();
+    if (text.isEmpty) {
+      _setError('Le message ne peut pas être vide.');
+      return false;
+    }
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_edit_community_post',
+        params: {
+          'p_post_id': postId,
+          'p_new_content': text,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError("Réponse invalide du serveur.");
+        return false;
+      }
+      if (response['success'] != true) {
+        final err = response['error']?.toString();
+        if (err == 'edit_window_expired') {
+          _setError('Tu ne peux modifier un message que dans les 15 minutes suivant son envoi.');
+        } else if (err == 'not_author') {
+          _setError('Tu ne peux modifier que tes propres messages.');
+        } else {
+          _setError(err ?? 'Erreur lors de la modification.');
+        }
+        return false;
+      }
+      await loadCommunityPosts(communityId);
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  // ── Pin / unpin message ──
+
+  Future<bool> pinPost({
+    required String communityId,
+    required String postId,
+    bool isPinned = true,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_pin_community_post',
+        params: {
+          'p_post_id': postId,
+          'p_is_pinned': isPinned,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError("Réponse invalide du serveur.");
+        return false;
+      }
+      if (response['success'] != true) {
+        final err = response['error']?.toString();
+        if (err == 'not_authorized') {
+          _setError('Seul le créateur du groupe ou un admin peut épingler un message.');
+        } else {
+          _setError(err ?? 'Erreur lors de l\'épinglage.');
+        }
+        return false;
+      }
+      await loadCommunityPosts(communityId);
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  // ── List community members (for @mentions) ──
+
+  List<Map<String, dynamic>> _communityMembers = [];
+  List<Map<String, dynamic>> get communityMembers => _communityMembers;
+
+  Future<void> loadCommunityMembers(String communityId) async {
+    _setError(null);
+    try {
+      final dynamic response = await _client.rpc(
+        'app_student_list_community_members',
+        params: {
+          'p_community_id': communityId,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        return;
+      }
+      if (response['success'] != true) {
+        return;
+      }
+      final data = response['members'];
+      if (data is List) {
+        _communityMembers = data
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+      } else {
+        _communityMembers = [];
+      }
+      notifyListeners();
+    } catch (e) {
+      _setError(e.toString());
+    }
+  }
+
+  // ── Read receipts ──
+
+  /// Load read counts for all my posts in a community (batch)
+  Future<void> loadMyPostsReadStatus(String communityId) async {
+    try {
+      final result = await _client.rpc(
+        'app_student_get_my_posts_read_status',
+        params: {'p_community_id': communityId},
+      );
+      if (result is Map) {
+        _postReadCounts = {};
+        for (final entry in result.entries) {
+          final key = entry.key.toString();
+          final val = entry.value;
+          _postReadCounts[key] = val is int ? val : 0;
+        }
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('[Communities] loadMyPostsReadStatus error: $e');
+    }
+  }
+
+  /// Get read count for a specific post (from cached data)
+  int readCountForPost(String postId) => _postReadCounts[postId] ?? 0;
+
+  // ── Online Presence (broadcast-based heartbeat) ──
+
+  RealtimeChannel? _onlineChannel;
+  Timer? _heartbeatTimer;
+  final Map<String, Map<String, dynamic>> _onlineMembersMap = {};
+  List<Map<String, dynamic>> get onlineMembers => _onlineMembersMap.values.toList();
+  int get onlineMembersCount => _onlineMembersMap.length;
+
+  /// Join presence channel for a community
+  void joinPresenceChannel(String communityId) {
+    leavePresenceChannel();
+    final uid = currentUserId;
+    if (uid == null) return;
+
+    String displayName = 'Utilisateur';
+    for (final m in _communityMembers) {
+      if (m['user_id']?.toString() == uid) {
+        displayName = m['display_name']?.toString() ?? 'Utilisateur';
+        break;
+      }
+    }
+
+    final channel = _client.channel('online:$communityId');
+
+    channel.onBroadcast(
+      event: 'heartbeat',
+      callback: (payload) {
+        final memberId = payload['user_id']?.toString();
+        if (memberId == null) return;
+        _onlineMembersMap[memberId] = {
+          'user_id': memberId,
+          'display_name': payload['display_name']?.toString() ?? '',
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        };
+        _cleanStaleOnlineMembers();
+        notifyListeners();
+      },
+    );
+
+    channel.onBroadcast(
+      event: 'leave',
+      callback: (payload) {
+        final memberId = payload['user_id']?.toString();
+        if (memberId == null) return;
+        _onlineMembersMap.remove(memberId);
+        notifyListeners();
+      },
+    );
+
+    channel.subscribe();
+    _onlineChannel = channel;
+
+    // Send heartbeat every 10 seconds
+    void sendHeartbeat() {
+      _onlineChannel?.sendBroadcastMessage(
+        event: 'heartbeat',
+        payload: {'user_id': uid, 'display_name': displayName},
+      );
+    }
+
+    sendHeartbeat();
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      sendHeartbeat();
+      _cleanStaleOnlineMembers();
+    });
+  }
+
+  void _cleanStaleOnlineMembers() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    _onlineMembersMap.removeWhere(
+      (_, v) => (now - (v['timestamp'] as int? ?? 0)) > 25000,
+    );
+  }
+
+  /// Leave presence channel
+  void leavePresenceChannel() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
+    if (_onlineChannel != null) {
+      _onlineChannel!.sendBroadcastMessage(
+        event: 'leave',
+        payload: {'user_id': currentUserId},
+      );
+      _client.removeChannel(_onlineChannel!);
+      _onlineChannel = null;
+    }
+    _onlineMembersMap.clear();
+    notifyListeners();
+  }
+
+  /// Check if a specific user is online
+  bool isUserOnline(String userId) {
+    return _onlineMembersMap.containsKey(userId);
+  }
+
+  // ── Media Gallery ──
+
+  /// Get all media posts (images/files) from current posts list
+  List<Map<String, dynamic>> get mediaPosts {
+    return _posts.where((p) {
+      final type = (p['type'] ?? '').toString();
+      final mediaUrl = (p['media_url'] ?? '').toString();
+      return mediaUrl.isNotEmpty && (type == 'image' || type == 'file' || type == 'audio');
+    }).toList();
+  }
+
+  /// Get only image posts for gallery grid
+  List<Map<String, dynamic>> get imagePosts {
+    return _posts.where((p) {
+      final type = (p['type'] ?? '').toString();
+      final mediaUrl = (p['media_url'] ?? '').toString();
+      return mediaUrl.isNotEmpty && type == 'image';
+    }).toList();
   }
 }

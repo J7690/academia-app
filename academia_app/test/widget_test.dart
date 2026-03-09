@@ -26,8 +26,12 @@ void main() {
     // Build the app and trigger a frame.
     await tester.pumpWidget(const AcademiaApp());
 
-    // Let initial async work settle.
-    await tester.pumpAndSettle(const Duration(milliseconds: 100));
+    // Pump a few frames to let the widget tree build.
+    // We avoid pumpAndSettle because the app has persistent timers/animations
+    // (e.g. hero carousel, weather polling) that never fully settle.
+    for (int i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
 
     // Basic smoke check: the app builds and shows a Material widget tree
     // without throwing.

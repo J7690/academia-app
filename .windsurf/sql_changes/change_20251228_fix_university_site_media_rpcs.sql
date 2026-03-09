@@ -139,12 +139,7 @@ BEGIN
     END IF;
   END IF;
 
-  -- Pour les médias vidéo, on exige un VideoAsset
-  IF POSITION('video' IN v_type) > 0 THEN
-    IF p_video_asset_id IS NULL THEN
-      RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_video_asset_id');
-    END IF;
-  END IF;
+  -- Pour les médias vidéo, on peut lier un VideoAsset si fourni, mais ce n'est pas obligatoire.
 
   IF p_media_id IS NULL THEN
     INSERT INTO app.university_media (
@@ -299,12 +294,7 @@ BEGIN
     END IF;
   END IF;
 
-  -- Pour les médias vidéo, on exige un VideoAsset
-  IF POSITION('video' IN v_type) > 0 THEN
-    IF p_video_asset_id IS NULL THEN
-      RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_video_asset_id');
-    END IF;
-  END IF;
+  -- Pour les médias vidéo, on peut lier un VideoAsset si fourni, mais ce n'est pas obligatoire.
 
   IF p_media_id IS NULL THEN
     INSERT INTO app.university_media (

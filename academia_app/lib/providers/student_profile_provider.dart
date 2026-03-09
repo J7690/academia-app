@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,6 +13,8 @@ class StudentProfileProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   Map<String, dynamic>? get profile => _profile;
+  String? get avatarUrl => _profile?['avatar_url']?.toString();
+  String get displayName => _profile?['full_name']?.toString() ?? '';
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -42,6 +46,40 @@ class StudentProfileProvider extends ChangeNotifier {
     }
   }
 
+  /// Upload avatar image to Supabase Storage and update profile
+  Future<bool> uploadAvatar(Uint8List bytes, String fileName) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        _setError('Utilisateur non connecté.');
+        return false;
+      }
+      final ext = fileName.split('.').last.toLowerCase();
+      final path = 'avatars/$userId.$ext';
+      await _client.storage.from('community-media').uploadBinary(
+            path,
+            bytes,
+            fileOptions: FileOptions(
+              upsert: true,
+              contentType: 'image/$ext',
+            ),
+          );
+      final publicUrl =
+          _client.storage.from('community-media').getPublicUrl(path);
+      // Append cache-buster to force refresh
+      final url = '$publicUrl?t=${DateTime.now().millisecondsSinceEpoch}';
+      final ok = await updateProfile(avatarUrl: url);
+      return ok;
+    } catch (e) {
+      _setError('Erreur upload avatar: $e');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   Future<bool> updateProfile({
     String? fullName,
     String? phone,
@@ -62,6 +100,8 @@ class StudentProfileProvider extends ChangeNotifier {
     String? timezone,
     double? geoLatitude,
     double? geoLongitude,
+    String? bio,
+    String? websiteUrl,
   }) async {
     _setLoading(true);
     _setError(null);
@@ -88,6 +128,8 @@ class StudentProfileProvider extends ChangeNotifier {
       if (timezone != null) params['p_timezone'] = timezone;
       if (geoLatitude != null) params['p_geo_latitude'] = geoLatitude;
       if (geoLongitude != null) params['p_geo_longitude'] = geoLongitude;
+      if (bio != null) params['p_bio'] = bio;
+      if (websiteUrl != null) params['p_website_url'] = websiteUrl;
 
       final result = await _client.rpc('app_update_student_profile', params: params);
       if (result is Map) {

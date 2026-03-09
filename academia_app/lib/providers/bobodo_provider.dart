@@ -19,11 +19,15 @@ class BobodoProvider extends ChangeNotifier {
   String? _error;
   String? _currentSessionId;
   final List<Map<String, dynamic>> _messages = [];
+  List<Map<String, dynamic>> _sessions = [];
+  String? _lastFailedMessage;
 
   bool get isLoading => _isLoading;
   String? get error => _error;
   String? get currentSessionId => _currentSessionId;
   List<Map<String, dynamic>> get messages => List.unmodifiable(_messages);
+  List<Map<String, dynamic>> get sessions => List.unmodifiable(_sessions);
+  String? get lastFailedMessage => _lastFailedMessage;
 
   final Map<String, String> _feedbackByMessageId = {};
 
@@ -156,12 +160,16 @@ class BobodoProvider extends ChangeNotifier {
       'safety_flag': null,
       'created_at': DateTime.now().toIso8601String(),
     });
+    _lastFailedMessage = null;
     notifyListeners();
 
-    // 3) Appeler la future Edge Function Supabase `bobodo-chat` qui se charge de :
-    //    - enregistrer le message étudiant via RPC,
-    //    - interroger la base de connaissances Supabase + IA,
-    //    - enregistrer la réponse IA via RPC.
+    await _callEdgeFunction(content);
+  }
+
+  Future<void> _callEdgeFunction(String content) async {
+    final sessionId = _currentSessionId;
+    if (sessionId == null) return;
+
     _setLoading(true);
     var backendOk = true;
     try {
@@ -199,20 +207,94 @@ class BobodoProvider extends ChangeNotifier {
             }
           }
         } catch (_) {}
+        _lastFailedMessage = content;
         _setError(message);
       }
     } catch (e) {
       backendOk = false;
+      _lastFailedMessage = content;
       _setError('Erreur lors de l\'appel Bobodo (Edge Function): $e');
     } finally {
       _setLoading(false);
     }
 
-    // 4) Recharger les messages depuis Supabase (session + réponse IA) uniquement
-    // si le backend a répondu correctement. Sinon on garde le message local.
     if (backendOk) {
+      _lastFailedMessage = null;
       await loadMessages();
     }
+  }
+
+  /// Démarrer une nouvelle conversation (réinitialise la session courante).
+  Future<void> startNewConversation() async {
+    _currentSessionId = null;
+    _messages.clear();
+    _error = null;
+    _lastFailedMessage = null;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_sessionPrefKey);
+    } catch (_) {}
+  }
+
+  /// Charger la liste des sessions de l'étudiant.
+  Future<void> loadSessions() async {
+    try {
+      final data = await _client
+          .from('bobodo_sessions')
+          .select('id, title, created_at, updated_at')
+          .order('updated_at', ascending: false)
+          .limit(50);
+      _sessions = List<Map<String, dynamic>>.from(data);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Bobodo loadSessions error: $e');
+    }
+  }
+
+  /// Charger une session existante par son ID.
+  Future<void> switchToSession(String sessionId) async {
+    _currentSessionId = sessionId;
+    _messages.clear();
+    _error = null;
+    _lastFailedMessage = null;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_sessionPrefKey, sessionId);
+    } catch (_) {}
+    await loadMessages();
+  }
+
+  /// Régénérer la dernière réponse de Bobodo.
+  Future<void> regenerateLastResponse() async {
+    if (_messages.isEmpty) return;
+    // Trouver le dernier message étudiant
+    String? lastUserContent;
+    for (int i = _messages.length - 1; i >= 0; i--) {
+      if (_messages[i]['sender'] == 'student') {
+        lastUserContent = _messages[i]['content']?.toString();
+        break;
+      }
+    }
+    if (lastUserContent == null || lastUserContent.isEmpty) return;
+    // Supprimer la dernière réponse bot locale
+    if (_messages.isNotEmpty && _messages.last['sender'] != 'student') {
+      _messages.removeLast();
+      notifyListeners();
+    }
+    // Ré-envoyer
+    await _callEdgeFunction(lastUserContent);
+  }
+
+  /// Réessayer le dernier message échoué.
+  Future<void> retryLastFailed() async {
+    final msg = _lastFailedMessage;
+    if (msg == null) return;
+    _lastFailedMessage = null;
+    _error = null;
+    notifyListeners();
+    await sendUserMessage(msg);
   }
 
   /// Envoi d'un feedback sur une réponse Bobodo ("up" ou "down").

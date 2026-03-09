@@ -334,17 +334,54 @@ class _AdminTdCatalogScreenState extends State<AdminTdCatalogScreen> {
     BuildContext context,
     AdminTdCatalogProvider provider,
   ) async {
-    final controller = TextEditingController();
+    final nameCtrl = TextEditingController();
+    final colorCtrl = TextEditingController(text: '#4F46E5');
+    final iconCtrl = TextEditingController(text: 'school');
+    final descCtrl = TextEditingController();
     final result = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Nouvelle filière TD'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              labelText: 'Nom de la filière',
-              border: OutlineInputBorder(),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Nom de la filière *',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: colorCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Couleur (hex, ex: #4F46E5)',
+                    border: OutlineInputBorder(),
+                    hintText: '#4F46E5',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: iconCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Icône (nom Material, ex: school)',
+                    border: OutlineInputBorder(),
+                    hintText: 'school',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: descCtrl,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Description (optionnel)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
             ),
           ),
           actions: [
@@ -362,8 +399,13 @@ class _AdminTdCatalogScreenState extends State<AdminTdCatalogScreen> {
     );
 
     if (result != true) return;
-    final name = controller.text.trim();
-    final ok = await provider.createField(name: name);
+    final name = nameCtrl.text.trim();
+    final ok = await provider.createField(
+      name: name,
+      colorHex: colorCtrl.text.trim(),
+      iconName: iconCtrl.text.trim(),
+      description: descCtrl.text.trim(),
+    );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -378,54 +420,103 @@ class _AdminTdCatalogScreenState extends State<AdminTdCatalogScreen> {
     BuildContext context,
     AdminTdCatalogProvider provider,
   ) async {
-    final levelController = TextEditingController();
     final titleController = TextEditingController();
+    final levelController = TextEditingController();
     final priceController = TextEditingController();
+    final descController = TextEditingController();
+    final coverController = TextEditingController();
+    final tagsController = TextEditingController();
+    bool isFeatured = false;
 
     final result = await showDialog<bool>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Nouveau programme TD'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Titre',
-                  border: OutlineInputBorder(),
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: const Text('Nouveau programme TD'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Titre *',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: descController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Description',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: levelController,
+                      decoration: const InputDecoration(
+                        labelText: 'Niveau (ex: L1, L2...)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: priceController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Prix (XOF)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: coverController,
+                      decoration: const InputDecoration(
+                        labelText: 'URL image de couverture',
+                        border: OutlineInputBorder(),
+                        hintText: 'https://...',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: tagsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tags (séparés par virgule)',
+                        border: OutlineInputBorder(),
+                        hintText: 'maths, algèbre, L1',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: isFeatured,
+                          onChanged: (v) => setStateDialog(() => isFeatured = v ?? false),
+                        ),
+                        const Expanded(
+                          child: Text('Programme mis en avant (⭐ Populaire)'),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: levelController,
-                decoration: const InputDecoration(
-                  labelText: 'Niveau (ex: L1, L2...)',
-                  border: OutlineInputBorder(),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Annuler'),
                 ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: priceController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Prix (XOF)',
-                  border: OutlineInputBorder(),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Créer'),
                 ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Créer'),
-            ),
-          ],
+              ],
+            );
+          },
         );
       },
     );
@@ -443,6 +534,10 @@ class _AdminTdCatalogScreenState extends State<AdminTdCatalogScreen> {
       level: level,
       title: title,
       price: price,
+      description: descController.text.trim(),
+      coverImageUrl: coverController.text.trim(),
+      isFeatured: isFeatured,
+      tags: tagsController.text.trim(),
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(

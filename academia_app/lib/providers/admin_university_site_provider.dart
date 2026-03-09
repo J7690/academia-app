@@ -339,35 +339,31 @@ class AdminUniversitySiteProvider extends ChangeNotifier {
 
       if (lowerType.contains('video')) {
         final pathTrim = (storagePath ?? '').trim();
-        if (pathTrim.isEmpty) {
-          _setError(
-              'VideoAsset manquant pour le média vidéo du mini-site (admin).');
-          return false;
-        }
-
-        final publicUrl = _client.storage
-            .from('university-media')
-            .getPublicUrl(pathTrim);
-        debugPrint(
-            '[AdminUniversitySiteProvider.upsertMedia] resolving VideoAsset for publicUrl=$publicUrl');
-
-        final manifest = await _fetchPlaybackForDirectUrl(publicUrl);
-        if (manifest == null) {
+        if (pathTrim.isNotEmpty) {
+          final publicUrl = _client.storage
+              .from('university-media')
+              .getPublicUrl(pathTrim);
           debugPrint(
-              '[AdminUniversitySiteProvider.upsertMedia] aucun manifest résolu pour publicUrl=$publicUrl, on continue sans VideoAsset.');
-        } else {
-          final rawVideoAssetId = manifest['video_asset_id']?.toString();
-          final rawPlayback = manifest['playback'];
+              '[AdminUniversitySiteProvider.upsertMedia] resolving VideoAsset for publicUrl=$publicUrl');
 
-          if (rawVideoAssetId != null &&
-              rawVideoAssetId.trim().isNotEmpty &&
-              rawPlayback is Map<String, dynamic>) {
-            effectiveVideoAssetId = rawVideoAssetId.trim();
-            effectivePlayback = Map<String, dynamic>.from(rawPlayback);
-          } else {
+          final manifest = await _fetchPlaybackForDirectUrl(publicUrl);
+          if (manifest == null) {
             debugPrint(
-              '[AdminUniversitySiteProvider.upsertMedia] manifest sans video_asset_id ou playback invalide, on continue sans VideoAsset. manifest=$manifest',
-            );
+                '[AdminUniversitySiteProvider.upsertMedia] aucun manifest résolu pour publicUrl=$publicUrl, on continue sans VideoAsset.');
+          } else {
+            final rawVideoAssetId = manifest['video_asset_id']?.toString();
+            final rawPlayback = manifest['playback'];
+
+            if (rawVideoAssetId != null &&
+                rawVideoAssetId.trim().isNotEmpty &&
+                rawPlayback is Map<String, dynamic>) {
+              effectiveVideoAssetId = rawVideoAssetId.trim();
+              effectivePlayback = Map<String, dynamic>.from(rawPlayback);
+            } else {
+              debugPrint(
+                '[AdminUniversitySiteProvider.upsertMedia] manifest sans video_asset_id ou playback invalide, on continue sans VideoAsset. manifest=$manifest',
+              );
+            }
           }
         }
       }

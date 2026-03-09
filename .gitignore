@@ -14,10 +14,6 @@ android/.gradle/
 .windsurf/__pycache__/
 *.pyc
 
-.windsurf/*
-!.windsurf/sql_changes/
-!.windsurf/sql_changes/**
-
 # Supabase CLI temp
 supabase/.temp/
 

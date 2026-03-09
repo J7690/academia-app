@@ -1,0 +1,502 @@
+﻿======================================================================
+AUDIT V2 ù COMMUNAUT╔S VOCAUX & DOCS (pg_catalog)
+======================================================================
+
+=== 1. COLONNES app.community_posts ===
+[
+  {
+    "data_type": "uuid",
+    "column_name": "id",
+    "is_nullable": false
+  },
+  {
+    "data_type": "uuid",
+    "column_name": "community_id",
+    "is_nullable": false
+  },
+  {
+    "data_type": "uuid",
+    "column_name": "author_id",
+    "is_nullable": false
+  },
+  {
+    "data_type": "text",
+    "column_name": "content",
+    "is_nullable": false
+  },
+  {
+    "data_type": "boolean",
+    "column_name": "is_pinned",
+    "is_nullable": false
+  },
+  {
+    "data_type": "boolean",
+    "column_name": "is_deleted",
+    "is_nullable": false
+  },
+  {
+    "data_type": "timestamp with time zone",
+    "column_name": "created_at",
+    "is_nullable": false
+  },
+  {
+    "data_type": "timestamp with time zone",
+    "column_name": "updated_at",
+    "is_nullable": false
+  },
+  {
+    "data_type": "text",
+    "column_name": "type",
+    "is_nullable": false
+  },
+  {
+    "data_type": "text",
+    "column_name": "media_url",
+    "is_nullable": true
+  },
+  {
+    "data_type": "uuid",
+    "column_name": "reply_to_post_id",
+    "is_nullable": true
+  },
+  {
+    "data_type": "timestamp with time zone",
+    "column_name": "edited_at",
+    "is_nullable": true
+  }
+]
+
+=== 2. COLONNES app.direct_messages ===
+[
+  {
+    "data_type": "uuid",
+    "column_name": "id",
+    "is_nullable": false
+  },
+  {
+    "data_type": "uuid",
+    "column_name": "conversation_id",
+    "is_nullable": false
+  },
+  {
+    "data_type": "uuid",
+    "column_name": "sender_id",
+    "is_nullable": false
+  },
+  {
+    "data_type": "text",
+    "column_name": "content",
+    "is_nullable": true
+  },
+  {
+    "data_type": "text",
+    "column_name": "type",
+    "is_nullable": false
+  },
+  {
+    "data_type": "text",
+    "column_name": "media_url",
+    "is_nullable": true
+  },
+  {
+    "data_type": "uuid",
+    "column_name": "reply_to_message_id",
+    "is_nullable": true
+  },
+  {
+    "data_type": "boolean",
+    "column_name": "is_deleted",
+    "is_nullable": false
+  },
+  {
+    "data_type": "timestamp with time zone",
+    "column_name": "edited_at",
+    "is_nullable": true
+  },
+  {
+    "data_type": "timestamp with time zone",
+    "column_name": "created_at",
+    "is_nullable": false
+  }
+]
+
+=== 3. COLONNES app.direct_conversations ===
+[
+  {
+    "data_type": "uuid",
+    "column_name": "id",
+    "is_nullable": false
+  },
+  {
+    "data_type": "uuid",
+    "column_name": "user_a",
+    "is_nullable": false
+  },
+  {
+    "data_type": "uuid",
+    "column_name": "user_b",
+    "is_nullable": false
+  },
+  {
+    "data_type": "timestamp with time zone",
+    "column_name": "created_at",
+    "is_nullable": false
+  },
+  {
+    "data_type": "timestamp with time zone",
+    "column_name": "last_message_at",
+    "is_nullable": true
+  }
+]
+
+=== 4. COLONNES app.students ===
+[
+  {
+    "data_type": "uuid",
+    "column_name": "id"
+  },
+  {
+    "data_type": "text",
+    "column_name": "full_name"
+  },
+  {
+    "data_type": "text",
+    "column_name": "phone"
+  },
+  {
+    "data_type": "text",
+    "column_name": "country"
+  },
+  {
+    "data_type": "text",
+    "column_name": "city"
+  },
+  {
+    "data_type": "date",
+    "column_name": "date_of_birth"
+  },
+  {
+    "data_type": "text",
+    "column_name": "avatar_url"
+  },
+  {
+    "data_type": "timestamp with time zone",
+    "column_name": "created_at"
+  },
+  {
+    "data_type": "timestamp with time zone",
+    "column_name": "updated_at"
+  },
+  {
+    "data_type": "integer",
+    "column_name": "bepc_year"
+  },
+  {
+    "data_type": "text",
+    "column_name": "bepc_institution"
+  },
+  {
+    "data_type": "text",
+    "column_name": "bepc_country"
+  },
+  {
+    "data_type": "text",
+    "column_name": "bepc_mention"
+  },
+  {
+    "data_type": "integer",
+    "column_name": "bac_year"
+  },
+  {
+    "data_type": "text",
+    "column_name": "bac_series"
+  },
+  {
+    "data_type": "text",
+    "column_name": "bac_mention"
+  },
+  {
+    "data_type": "text",
+    "column_name": "bac_institution"
+  },
+  {
+    "data_type": "text",
+    "column_name": "bac_country"
+  },
+  {
+    "data_type": "text",
+    "column_name": "study_project_text"
+  },
+  {
+    "data_type": "text",
+    "column_name": "timezone"
+  },
+  {
+    "data_type": "numeric(9,6)",
+    "column_name": "geo_latitude"
+  },
+  {
+    "data_type": "numeric(9,6)",
+    "column_name": "geo_longitude"
+  }
+]
+
+=== 5. SOURCE app_student_list_community_posts ===
+[
+  {
+    "source": "CREATE OR REPLACE FUNCTION public.app_student_list_community_posts(p_community_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_is_member BOOLEAN;\n    v_result JSONB;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN '[]'::JSONB;\n    END IF;\n\n    SELECT EXISTS (\n        SELECT 1\n        FROM app.community_memberships m\n        WHERE m.community_id = p_community_id\n          AND m.user_id = v_user_id\n          AND m.is_active = TRUE\n    ) INTO v_is_member;\n\n    IF NOT v_is_member THEN\n        RETURN '[]'::JSONB;\n    END IF;\n\n    SELECT COALESCE(\n        JSONB_AGG(\n            JSONB_BUILD_OBJECT(\n                'id', p.id,\n                'community_id', p.community_id,\n                'author_id', p.author_id,\n                'content', p.content,\n                'type', p.type,\n                'media_url', p.media_url,\n                'reply_to_post_id', p.reply_to_post_id,\n                'is_pinned', p.is_pinned,\n                'is_deleted', p.is_deleted,\n                'created_at', p.created_at,\n                'updated_at', p.updated_at,\n                'reactions', (\n                    SELECT COALESCE(\n                        JSONB_AGG(\n                            JSONB_BUILD_OBJECT(\n                                'emoji', r.emoji,\n                                'count', r.reaction_count,\n                                'reacted_by_me', r.reacted_by_me\n                            )\n                        ),\n                        '[]'::JSONB\n                    )\n                    FROM (\n                        SELECT\n                            r.emoji,\n                            COUNT(*) AS reaction_count,\n                            BOOL_OR(r.user_id = v_user_id) AS reacted_by_me\n                        FROM app.community_post_reactions r\n                        WHERE r.post_id = p.id\n                        GROUP BY r.emoji\n                    ) r\n                )\n            )\n            ORDER BY p.created_at ASC\n        ),\n        '[]'::JSONB\n    ) INTO v_result\n    FROM app.community_posts p\n    WHERE p.community_id = p_community_id\n      AND p.is_deleted = FALSE;\n\n    RETURN v_result;\nEND;\n$function$\n"
+  }
+]
+
+=== 6. SOURCE app_student_list_direct_messages ===
+[
+  {
+    "source": "CREATE OR REPLACE FUNCTION public.app_student_list_direct_messages(p_conversation_id uuid, p_limit integer DEFAULT 50, p_before timestamp with time zone DEFAULT NULL::timestamp with time zone)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_uid UUID := auth.uid();\n  v_conv RECORD;\n  v_result JSONB;\nBEGIN\n  IF v_uid IS NULL THEN\n    RETURN jsonb_build_object('success', false, 'error', 'not_authenticated');\n  END IF;\n\n  SELECT id, user_a, user_b INTO v_conv\n    FROM app.direct_conversations\n   WHERE id = p_conversation_id;\n\n  IF v_conv IS NULL OR (v_uid != v_conv.user_a AND v_uid != v_conv.user_b) THEN\n    RETURN jsonb_build_object('success', false, 'error', 'not_participant');\n  END IF;\n\n  SELECT COALESCE(jsonb_agg(row_to_json(t)::jsonb ORDER BY t.created_at ASC), '[]'::jsonb)\n  INTO v_result\n  FROM (\n    SELECT dm.id, dm.sender_id, dm.content, dm.type, dm.media_url,\n           dm.reply_to_message_id, dm.is_deleted, dm.edited_at, dm.created_at,\n           COALESCE(s.first_name || ' ' || s.last_name, u.email) AS sender_display_name\n      FROM app.direct_messages dm\n      LEFT JOIN auth.users u ON u.id = dm.sender_id\n      LEFT JOIN app.students s ON s.user_id = dm.sender_id\n     WHERE dm.conversation_id = p_conversation_id\n       AND dm.is_deleted = false\n       AND (p_before IS NULL OR dm.created_at < p_before)\n     ORDER BY dm.created_at DESC\n     LIMIT LEAST(p_limit, 100)\n  ) t;\n\n  RETURN jsonb_build_object('success', true, 'messages', v_result);\nEND;\n$function$\n"
+  }
+]
+
+=== 7. SOURCE app_student_add_community_post ===
+[
+  {
+    "source": "CREATE OR REPLACE FUNCTION public.app_student_add_community_post(p_community_id uuid, p_content text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_is_member BOOLEAN;\n    v_post_id UUID;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    IF p_content IS NULL OR LENGTH(TRIM(p_content)) = 0 THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'empty_content');\n    END IF;\n\n    SELECT EXISTS (\n        SELECT 1\n        FROM app.community_memberships m\n        WHERE m.community_id = p_community_id\n          AND m.user_id = v_user_id\n          AND m.is_active = TRUE\n    ) INTO v_is_member;\n\n    IF NOT v_is_member THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_member');\n    END IF;\n\n    INSERT INTO app.community_posts (community_id, author_id, content)\n    VALUES (p_community_id, v_user_id, TRIM(p_content))\n    RETURNING id INTO v_post_id;\n\n    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'post_id', v_post_id);\nEND;\n$function$\n"
+  },
+  {
+    "source": "CREATE OR REPLACE FUNCTION public.app_student_add_community_post(p_community_id uuid, p_content text, p_type text DEFAULT 'text'::text, p_media_url text DEFAULT NULL::text, p_reply_to_post_id uuid DEFAULT NULL::uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_is_member BOOLEAN;\n    v_post_id UUID;\n    v_type TEXT := NULLIF(TRIM(COALESCE(p_type, '')), '');\n    v_media_url TEXT := NULLIF(TRIM(COALESCE(p_media_url, '')), '');\n    v_reply_to_post_id UUID := p_reply_to_post_id;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    IF (p_content IS NULL OR LENGTH(TRIM(p_content)) = 0)\n       AND (v_media_url IS NULL OR v_media_url = '') THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'empty_content');\n    END IF;\n\n    IF v_type IS NULL THEN\n        v_type := 'text';\n    ELSE\n        v_type := LOWER(v_type);\n        IF v_type NOT IN ('text', 'image', 'file', 'audio') THEN\n            v_type := 'text';\n        END IF;\n    END IF;\n\n    SELECT EXISTS (\n        SELECT 1\n        FROM app.community_memberships m\n        WHERE m.community_id = p_community_id\n          AND m.user_id = v_user_id\n          AND m.is_active = TRUE\n    ) INTO v_is_member;\n\n    IF NOT v_is_member THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_member');\n    END IF;\n\n    INSERT INTO app.community_posts (\n        community_id,\n        author_id,\n        content,\n        type,\n        media_url,\n        reply_to_post_id\n    )\n    VALUES (\n        p_community_id,\n        v_user_id,\n        TRIM(p_content),\n        v_type,\n        v_media_url,\n        v_reply_to_post_id\n    )\n    RETURNING id INTO v_post_id;\n\n    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'post_id', v_post_id);\nEND;\n$function$\n"
+  }
+]
+
+=== 8. SOURCE app_student_send_direct_message ===
+[
+  {
+    "source": "CREATE OR REPLACE FUNCTION public.app_student_send_direct_message(p_conversation_id uuid, p_content text, p_type text DEFAULT 'text'::text, p_media_url text DEFAULT NULL::text, p_reply_to_message_id uuid DEFAULT NULL::uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_uid UUID := auth.uid();\n  v_conv RECORD;\n  v_msg_id UUID;\nBEGIN\n  IF v_uid IS NULL THEN\n    RETURN jsonb_build_object('success', false, 'error', 'not_authenticated');\n  END IF;\n\n  SELECT id, user_a, user_b INTO v_conv\n    FROM app.direct_conversations\n   WHERE id = p_conversation_id;\n\n  IF v_conv IS NULL THEN\n    RETURN jsonb_build_object('success', false, 'error', 'conversation_not_found');\n  END IF;\n\n  IF v_uid != v_conv.user_a AND v_uid != v_conv.user_b THEN\n    RETURN jsonb_build_object('success', false, 'error', 'not_participant');\n  END IF;\n\n  IF TRIM(COALESCE(p_content, '')) = '' AND TRIM(COALESCE(p_media_url, '')) = '' THEN\n    RETURN jsonb_build_object('success', false, 'error', 'empty_message');\n  END IF;\n\n  INSERT INTO app.direct_messages (conversation_id, sender_id, content, type, media_url, reply_to_message_id)\n  VALUES (p_conversation_id, v_uid, TRIM(p_content), COALESCE(p_type, 'text'), p_media_url, p_reply_to_message_id)\n  RETURNING id INTO v_msg_id;\n\n  UPDATE app.direct_conversations\n     SET last_message_at = NOW()\n   WHERE id = p_conversation_id;\n\n  RETURN jsonb_build_object('success', true, 'message_id', v_msg_id);\nEND;\n$function$\n"
+  }
+]
+
+=== 9. TOUTES RPCs COMMUNAUT╔/DM ===
+[
+  {
+    "args": "p_community_id uuid, p_user_id uuid",
+    "schema": "public",
+    "function_name": "app_admin_ban_user_from_community"
+  },
+  {
+    "args": "p_community_id uuid",
+    "schema": "public",
+    "function_name": "app_admin_delete_community"
+  },
+  {
+    "args": "p_post_id uuid",
+    "schema": "public",
+    "function_name": "app_admin_delete_community_post"
+  },
+  {
+    "args": "p_request_id uuid, p_action text, p_role text DEFAULT 'member'::text",
+    "schema": "public",
+    "function_name": "app_admin_handle_community_join_request"
+  },
+  {
+    "args": "",
+    "schema": "public",
+    "function_name": "app_admin_list_communities"
+  },
+  {
+    "args": "p_community_id uuid",
+    "schema": "public",
+    "function_name": "app_admin_list_community_join_requests"
+  },
+  {
+    "args": "p_community_id uuid",
+    "schema": "public",
+    "function_name": "app_admin_list_community_members"
+  },
+  {
+    "args": "p_community_id uuid",
+    "schema": "public",
+    "function_name": "app_admin_list_community_moderation_events"
+  },
+  {
+    "args": "p_community_id uuid",
+    "schema": "public",
+    "function_name": "app_admin_list_community_posts"
+  },
+  {
+    "args": "p_post_id uuid, p_is_pinned boolean",
+    "schema": "public",
+    "function_name": "app_admin_pin_community_post"
+  },
+  {
+    "args": "p_community_id uuid, p_is_active boolean, p_is_featured boolean",
+    "schema": "public",
+    "function_name": "app_admin_update_community_status"
+  },
+  {
+    "args": "p_community_id uuid, p_slug text, p_name text, p_description text, p_category text, p_visibility text, p_is_active boolean, p_is_featured boolean",
+    "schema": "public",
+    "function_name": "app_admin_upsert_community"
+  },
+  {
+    "args": "p_community_id uuid, p_slug text, p_name text, p_description text, p_category text, p_visibility text, p_is_active boolean, p_is_featured boolean, p_kind text DEFAULT NULL::text, p_status text DEFAULT NULL::text, p_moderation_state text DEFAULT NULL::text",
+    "schema": "public",
+    "function_name": "app_admin_upsert_community"
+  },
+  {
+    "args": "p_community_id uuid, p_content text",
+    "schema": "public",
+    "function_name": "app_student_add_community_post"
+  },
+  {
+    "args": "p_community_id uuid, p_content text, p_type text DEFAULT 'text'::text, p_media_url text DEFAULT NULL::text, p_reply_to_post_id uuid DEFAULT NULL::uuid",
+    "schema": "public",
+    "function_name": "app_student_add_community_post"
+  },
+  {
+    "args": "p_community_id uuid, p_question text, p_options text[]",
+    "schema": "public",
+    "function_name": "app_student_create_community_poll"
+  },
+  {
+    "args": "p_post_id uuid",
+    "schema": "public",
+    "function_name": "app_student_delete_own_community_post"
+  },
+  {
+    "args": "p_post_id uuid, p_new_content text",
+    "schema": "public",
+    "function_name": "app_student_edit_community_post"
+  },
+  {
+    "args": "p_other_user_id uuid",
+    "schema": "public",
+    "function_name": "app_student_get_or_create_dm_conversation"
+  },
+  {
+    "args": "p_community_id uuid",
+    "schema": "public",
+    "function_name": "app_student_join_community"
+  },
+  {
+    "args": "p_community_id uuid",
+    "schema": "public",
+    "function_name": "app_student_leave_community"
+  },
+  {
+    "args": "p_search text DEFAULT NULL::text, p_category text DEFAULT NULL::text",
+    "schema": "public",
+    "function_name": "app_student_list_communities"
+  },
+  {
+    "args": "p_community_id uuid",
+    "schema": "public",
+    "function_name": "app_student_list_community_members"
+  },
+  {
+    "args": "p_community_id uuid",
+    "schema": "public",
+    "function_name": "app_student_list_community_polls"
+  },
+  {
+    "args": "p_community_id uuid",
+    "schema": "public",
+    "function_name": "app_student_list_community_posts"
+  },
+  {
+    "args": "p_conversation_id uuid, p_limit integer DEFAULT 50, p_before timestamp with time zone DEFAULT NULL::timestamp with time zone",
+    "schema": "public",
+    "function_name": "app_student_list_direct_messages"
+  },
+  {
+    "args": "",
+    "schema": "public",
+    "function_name": "app_student_list_dm_conversations"
+  },
+  {
+    "args": "",
+    "schema": "public",
+    "function_name": "app_student_list_my_communities"
+  },
+  {
+    "args": "",
+    "schema": "public",
+    "function_name": "app_student_list_my_communities_activity"
+  },
+  {
+    "args": "p_community_id uuid, p_last_read_at timestamp with time zone DEFAULT now()",
+    "schema": "public",
+    "function_name": "app_student_mark_community_read"
+  },
+  {
+    "args": "p_conversation_id uuid",
+    "schema": "public",
+    "function_name": "app_student_mark_dm_read"
+  },
+  {
+    "args": "p_post_id uuid, p_is_pinned boolean DEFAULT true",
+    "schema": "public",
+    "function_name": "app_student_pin_community_post"
+  },
+  {
+    "args": "p_community_id uuid, p_reason text, p_details text DEFAULT NULL::text",
+    "schema": "public",
+    "function_name": "app_student_report_community"
+  },
+  {
+    "args": "p_post_id uuid, p_reason text, p_details text DEFAULT NULL::text",
+    "schema": "public",
+    "function_name": "app_student_report_community_post"
+  },
+  {
+    "args": "p_community_id uuid",
+    "schema": "public",
+    "function_name": "app_student_request_join_community"
+  },
+  {
+    "args": "p_conversation_id uuid, p_content text, p_type text DEFAULT 'text'::text, p_media_url text DEFAULT NULL::text, p_reply_to_message_id uuid DEFAULT NULL::uuid",
+    "schema": "public",
+    "function_name": "app_student_send_direct_message"
+  },
+  {
+    "args": "p_post_id uuid, p_emoji text",
+    "schema": "public",
+    "function_name": "app_student_toggle_community_post_reaction"
+  },
+  {
+    "args": "p_poll_id uuid, p_option_index integer",
+    "schema": "public",
+    "function_name": "app_student_vote_community_poll"
+  }
+]
+
+=== 10. BUCKET community-media ===
+[
+  {
+    "id": "community-media",
+    "name": "community-media",
+    "public": true,
+    "file_size_limit": null,
+    "allowed_mime_types": null
+  }
+]
+
+=== 11. POLICIES STORAGE community-media ===
+  (aucun rÚsultat)
+
+=== 12. POSTS NON-TEXTE (Úchantillon) ===
+  (aucun rÚsultat)
+
+=== 13. DMs NON-TEXTE (Úchantillon) ===
+  (aucun rÚsultat)
+
+=== 14. R╔PARTITION POSTS PAR TYPE ===
+[
+  {
+    "cnt": 2,
+    "type": "text"
+  }
+]
+
+=== 15. R╔PARTITION DMs PAR TYPE ===
+  (aucun rÚsultat)
+
+======================================================================
+FIN AUDIT V2
+======================================================================

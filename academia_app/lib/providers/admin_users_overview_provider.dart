@@ -12,6 +12,7 @@ class AdminUsersOverviewProvider extends ChangeNotifier {
   bool _isUpdating = false;
   List<Map<String, dynamic>>? _commercialsOverview;
   List<Map<String, dynamic>> _deletedUsers = [];
+  List<Map<String, dynamic>> _milestoneClaims = [];
 
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -20,6 +21,7 @@ class AdminUsersOverviewProvider extends ChangeNotifier {
   List<Map<String, dynamic>>? get commercialsOverview =>
       _commercialsOverview == null ? null : List.unmodifiable(_commercialsOverview!);
   List<Map<String, dynamic>> get deletedUsers => List.unmodifiable(_deletedUsers);
+  List<Map<String, dynamic>> get milestoneClaims => List.unmodifiable(_milestoneClaims);
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -361,6 +363,90 @@ class AdminUsersOverviewProvider extends ChangeNotifier {
           response['error']?.toString() ??
               'Erreur lors de la mise à jour de la commission.',
         );
+        return false;
+      }
+      await loadCommercialsOverview();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setUpdating(false);
+    }
+  }
+
+  Future<void> loadMilestoneClaims({String status = 'pending'}) async {
+    try {
+      final response = await _client.rpc(
+        'app_admin_list_milestone_claims',
+        params: {'p_status': status},
+      );
+      if (response is! Map<String, dynamic>) return;
+      if (response['success'] != true) return;
+      final data = response['claims'];
+      if (data is List) {
+        _milestoneClaims = data
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
+  Future<bool> updateMilestoneClaimStatus({
+    required String claimId,
+    required String newStatus,
+  }) async {
+    _setUpdating(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(
+        'app_admin_update_milestone_claim_status',
+        params: {
+          'p_claim_id': claimId,
+          'p_new_status': newStatus,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('R\u00e9ponse invalide du serveur.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ?? 'Erreur lors de la mise \u00e0 jour.');
+        return false;
+      }
+      await loadMilestoneClaims();
+      await loadCommercialsOverview();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setUpdating(false);
+    }
+  }
+
+  Future<bool> updateCommercialCap({
+    required String userId,
+    required int maxCap,
+  }) async {
+    _setUpdating(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(
+        'app_admin_update_commercial_cap',
+        params: {
+          'p_user_id': userId,
+          'p_max_cap': maxCap,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('R\u00e9ponse invalide du serveur.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ?? 'Erreur lors de la mise \u00e0 jour du cap.');
         return false;
       }
       await loadCommercialsOverview();

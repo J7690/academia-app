@@ -1,0 +1,360 @@
+{
+  "MARKETPLACE_TABLES": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 4,
+    "rows": [
+      {
+        "table_name": "merchant_profiles",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "opportunities",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "opportunity_inquiries",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "opportunity_inquiry_messages",
+        "table_schema": "app"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "MARKETPLACE_POLICIES": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 11,
+    "rows": [
+      {
+        "cmd": "SELECT",
+        "qual": "((is_active = true) AND (is_verified = true))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "merchant_profiles",
+        "policyname": "merchant_profiles_public_select_verified",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(user_id = auth.uid())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "merchant_profiles",
+        "policyname": "merchant_profiles_user_select_own",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "(user_id = auth.uid())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "merchant_profiles",
+        "policyname": "merchant_profiles_user_update_own",
+        "schemaname": "app",
+        "with_check": "(user_id = auth.uid())"
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "merchant_profiles",
+        "policyname": "merchant_profiles_user_upsert_own",
+        "schemaname": "app",
+        "with_check": "(user_id = auth.uid())"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((is_active = true) AND (status = 'published'::text) AND ((application_deadline IS NULL) OR (application_deadline >= CURRENT_DATE)))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "opportunities",
+        "policyname": "public_select_published_opportunities",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "opportunity_inquiries",
+        "policyname": "opportunity_inquiries_buyer_insert",
+        "schemaname": "app",
+        "with_check": "(buyer_id = auth.uid())"
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "(buyer_id = auth.uid())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "opportunity_inquiries",
+        "policyname": "opportunity_inquiries_buyer_update_status_own",
+        "schemaname": "app",
+        "with_check": "(buyer_id = auth.uid())"
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "(merchant_id = auth.uid())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "opportunity_inquiries",
+        "policyname": "opportunity_inquiries_merchant_update_status_own",
+        "schemaname": "app",
+        "with_check": "(merchant_id = auth.uid())"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((buyer_id = auth.uid()) OR (merchant_id = auth.uid()))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "opportunity_inquiries",
+        "policyname": "opportunity_inquiries_user_select_own",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "opportunity_inquiry_messages",
+        "policyname": "opportunity_inquiry_messages_insert_participants",
+        "schemaname": "app",
+        "with_check": "((sender_id = auth.uid()) AND (EXISTS ( SELECT 1\n   FROM app.opportunity_inquiries i\n  WHERE ((i.id = opportunity_inquiry_messages.inquiry_id) AND ((i.buyer_id = auth.uid()) OR (i.merchant_id = auth.uid()))))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(EXISTS ( SELECT 1\n   FROM app.opportunity_inquiries i\n  WHERE ((i.id = opportunity_inquiry_messages.inquiry_id) AND ((i.buyer_id = auth.uid()) OR (i.merchant_id = auth.uid())))))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "opportunity_inquiry_messages",
+        "policyname": "opportunity_inquiry_messages_select_participants",
+        "schemaname": "app",
+        "with_check": null
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "ROLE_HELPERS_FUNCTIONS": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 1,
+    "rows": [
+      {
+        "routine_name": "app_get_current_role"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "EXISTING_MARKETPLACE_FUNCTIONS": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 32,
+    "rows": [
+      {
+        "routine_name": "app_admin_list_marketplace_merchants"
+      },
+      {
+        "routine_name": "app_admin_set_merchant_verification"
+      },
+      {
+        "routine_name": "app_admin_update_marketplace_merchant_status"
+      },
+      {
+        "routine_name": "app_get_public_merchant_profile"
+      },
+      {
+        "routine_name": "app_list_marketplace_merchants"
+      },
+      {
+        "routine_name": "app_list_marketplace_products_by_merchant"
+      },
+      {
+        "routine_name": "app_list_opportunity_inquiry_messages"
+      },
+      {
+        "routine_name": "app_merchant_add_marketplace_listing_media"
+      },
+      {
+        "routine_name": "app_merchant_disable_marketplace_listing_media"
+      },
+      {
+        "routine_name": "app_merchant_get_dashboard"
+      },
+      {
+        "routine_name": "app_merchant_get_marketplace_order_detail"
+      },
+      {
+        "routine_name": "app_merchant_list_inquiries"
+      },
+      {
+        "routine_name": "app_merchant_list_marketplace_listing_media"
+      },
+      {
+        "routine_name": "app_merchant_list_my_marketplace_listings"
+      },
+      {
+        "routine_name": "app_merchant_list_my_marketplace_orders"
+      },
+      {
+        "routine_name": "app_merchant_list_my_opportunities"
+      },
+      {
+        "routine_name": "app_merchant_list_orders"
+      },
+      {
+        "routine_name": "app_merchant_list_products"
+      },
+      {
+        "routine_name": "app_merchant_reply_inquiry"
+      },
+      {
+        "routine_name": "app_merchant_submit_marketplace_listing_for_review"
+      },
+      {
+        "routine_name": "app_merchant_submit_opportunity_for_review"
+      },
+      {
+        "routine_name": "app_merchant_update_marketplace_order_status"
+      },
+      {
+        "routine_name": "app_merchant_update_order_status"
+      },
+      {
+        "routine_name": "app_merchant_upsert_marketplace_listing"
+      },
+      {
+        "routine_name": "app_merchant_upsert_opportunity"
+      },
+      {
+        "routine_name": "app_merchant_upsert_product"
+      },
+      {
+        "routine_name": "app_merchant_upsert_profile"
+      },
+      {
+        "routine_name": "app_merchant_upsert_profile"
+      },
+      {
+        "routine_name": "app_student_create_marketplace_listing_inquiry"
+      },
+      {
+        "routine_name": "app_student_create_opportunity_inquiry"
+      },
+      {
+        "routine_name": "app_student_list_my_opportunity_inquiries"
+      },
+      {
+        "routine_name": "app_student_reply_opportunity_inquiry"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "OPPORTUNITIES_MARKETPLACE_COLUMNS": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 12,
+    "rows": [
+      {
+        "data_type": "text",
+        "column_name": "currency",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_ready_to_ship",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "lead_time_days",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "merchant_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "min_order_qty",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "price_from",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "price_to",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "review_reason",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "review_status",
+        "is_nullable": "NO",
+        "column_default": "'draft'::text"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "reviewed_at",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "reviewed_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "submitted_at",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  }
+}

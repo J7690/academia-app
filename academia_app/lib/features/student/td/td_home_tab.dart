@@ -1,0 +1,367 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:animate_do/animate_do.dart';
+
+import '../../../providers/td_gamification_provider.dart';
+import '../../../theme/td_theme.dart';
+import '../../../widgets/bobodo_state.dart';
+import '../../../widgets/bobodo_view.dart';
+
+/// Onglet Accueil — Dashboard gamifié (inspiré Duolingo + Brilliant)
+class TdHomeTab extends StatelessWidget {
+  const TdHomeTab({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.watch<TdGamificationProvider>();
+
+    if (p.homeLoading && p.totalXp == 0) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return RefreshIndicator(
+      onRefresh: p.loadHome,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        physics: const BouncingScrollPhysics(),
+        children: [
+          // ─── Streak + XP hero card ─────────────────────────────
+          FadeInDown(
+            duration: const Duration(milliseconds: 400),
+            child: Container(
+              padding: const EdgeInsets.all(18),
+              decoration: TdTheme.gradientCard(TdTheme.studentTdGradient),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const BobodoView(state: BobodoState.success, size: 48),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              p.currentStreak > 0
+                                  ? '🔥 ${p.currentStreak} jour${p.currentStreak > 1 ? 's' : ''} de suite !'
+                                  : 'Commence ta série !',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Niveau ${p.level} • ${p.totalXp} XP',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.85),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      TdTheme.streakBadge(p.currentStreak),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Daily goal progress
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Objectif du jour',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            '${p.dailyGoalEarned}/${p.dailyGoalTarget} XP',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: SizedBox(
+                          height: 8,
+                          child: LinearProgressIndicator(
+                            value: p.dailyGoalTarget > 0
+                                ? (p.dailyGoalEarned / p.dailyGoalTarget).clamp(0.0, 1.0)
+                                : 0,
+                            backgroundColor: Colors.white.withOpacity(0.2),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              p.dailyGoalCompleted ? const Color(0xFF22C55E) : Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // ─── KPI row ───────────────────────────────────────────
+          FadeInUp(
+            delay: const Duration(milliseconds: 100),
+            duration: const Duration(milliseconds: 350),
+            child: Row(
+              children: [
+                TdTheme.kpiCard(
+                  icon: Icons.school,
+                  value: '${p.activeEnrollments}',
+                  label: 'TD actifs',
+                  color: TdTheme.studentTdPrimary,
+                ),
+                const SizedBox(width: 10),
+                TdTheme.kpiCard(
+                  icon: Icons.bolt,
+                  value: '${p.totalXp}',
+                  label: 'XP total',
+                  color: const Color(0xFFF59E0B),
+                ),
+                const SizedBox(width: 10),
+                TdTheme.kpiCard(
+                  icon: Icons.local_fire_department,
+                  value: '${p.longestStreak}',
+                  label: 'Record',
+                  color: const Color(0xFFEF4444),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // ─── Next session card ─────────────────────────────────
+          if (p.nextSession != null)
+            FadeInUp(
+              delay: const Duration(milliseconds: 200),
+              duration: const Duration(milliseconds: 350),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: TdTheme.success.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(TdTheme.radiusLg),
+                  border: Border.all(color: TdTheme.success.withOpacity(0.2)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: TdTheme.success.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.event, color: TdTheme.success, size: 22),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Prochaine séance',
+                              style: TextStyle(fontSize: 11, color: TdTheme.textSecondary)),
+                          Text(
+                            p.nextSession!['program_title']?.toString() ?? '',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: TdTheme.textPrimary,
+                            ),
+                          ),
+                          if (p.nextSession!['scheduled_at'] != null)
+                            Text(
+                              TdTheme.formatDateTime(p.nextSession!['scheduled_at'].toString()),
+                              style: const TextStyle(fontSize: 12, color: TdTheme.success),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, color: TdTheme.success, size: 20),
+                  ],
+                ),
+              ),
+            ),
+          if (p.nextSession != null) const SizedBox(height: 16),
+
+          // ─── Quick actions ─────────────────────────────────────
+          FadeInUp(
+            delay: const Duration(milliseconds: 300),
+            duration: const Duration(milliseconds: 350),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Actions rapides',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: TdTheme.textPrimary)),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    _QuickAction(
+                      icon: Icons.explore,
+                      label: 'Explorer',
+                      color: TdTheme.studentTdPrimary,
+                      onTap: () => DefaultTabController.of(context).animateTo(1),
+                    ),
+                    const SizedBox(width: 10),
+                    _QuickAction(
+                      icon: Icons.menu_book,
+                      label: 'Mes TD',
+                      color: TdTheme.success,
+                      onTap: () => DefaultTabController.of(context).animateTo(2),
+                    ),
+                    const SizedBox(width: 10),
+                    _QuickAction(
+                      icon: Icons.leaderboard,
+                      label: 'Classement',
+                      color: const Color(0xFFF59E0B),
+                      onTap: () => DefaultTabController.of(context).animateTo(4),
+                    ),
+                    const SizedBox(width: 10),
+                    _QuickAction(
+                      icon: Icons.bar_chart,
+                      label: 'Stats',
+                      color: const Color(0xFFEF4444),
+                      onTap: () => DefaultTabController.of(context).animateTo(5),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // ─── Active enrollments preview ────────────────────────
+          if (p.enrollments.isNotEmpty)
+            FadeInUp(
+              delay: const Duration(milliseconds: 400),
+              duration: const Duration(milliseconds: 350),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Mes TD en cours',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: TdTheme.textPrimary)),
+                      TextButton(
+                        onPressed: () => DefaultTabController.of(context).animateTo(2),
+                        child: const Text('Voir tout'),
+                      ),
+                    ],
+                  ),
+                  ...p.enrollments.where((e) => e['access_status'] == 'active').take(3).map((e) {
+                    final fieldColor = TdTheme.colorFromHex(e['field_color']?.toString());
+                    final pct = (e['progress_pct'] as int? ?? 0) / 100.0;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(14),
+                      decoration: TdTheme.cardDecoration(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: fieldColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(Icons.menu_book, color: fieldColor, size: 18),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      e['program_title']?.toString() ?? '',
+                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                                    ),
+                                    if (e['field_name'] != null)
+                                      Text(
+                                        e['field_name'].toString(),
+                                        style: TextStyle(fontSize: 11, color: fieldColor),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                '${(pct * 100).toInt()}%',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: fieldColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          TdTheme.progressBar(value: pct, color: fieldColor),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(TdTheme.radiusMd),
+            border: Border.all(color: color.withOpacity(0.15)),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 22),
+              const SizedBox(height: 4),
+              Text(label,
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

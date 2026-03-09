@@ -1,0 +1,161 @@
+{
+  "timestamp": "2026-03-04T07:49:48.467373Z",
+  "results": {
+    "NOTIFICATION_EVENTS_COLUMNS": {
+      "label": "NOTIFICATION_EVENTS_COLUMNS",
+      "http": 200,
+      "ok": true,
+      "mode": "select",
+      "rows_count": 9,
+      "rows": [
+        {
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "uuid",
+          "column_name": "user_id",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "text",
+          "column_name": "domain",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "text",
+          "column_name": "event_type",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "jsonb",
+          "column_name": "payload",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "processed_at",
+          "is_nullable": "YES"
+        },
+        {
+          "data_type": "integer",
+          "column_name": "attempt_count",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "text",
+          "column_name": "last_error",
+          "is_nullable": "YES"
+        }
+      ],
+      "error": null,
+      "sqlstate": null
+    },
+    "USER_DEVICE_TOKENS_COLUMNS": {
+      "label": "USER_DEVICE_TOKENS_COLUMNS",
+      "http": 200,
+      "ok": true,
+      "mode": "select",
+      "rows_count": 9,
+      "rows": [
+        {
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "uuid",
+          "column_name": "user_id",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "text",
+          "column_name": "platform",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "text",
+          "column_name": "fcm_token",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "jsonb",
+          "column_name": "device_info",
+          "is_nullable": "YES"
+        },
+        {
+          "data_type": "boolean",
+          "column_name": "is_active",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "last_seen_at",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "NO"
+        }
+      ],
+      "error": null,
+      "sqlstate": null
+    },
+    "MARKETPLACE_RPCS": {
+      "label": "MARKETPLACE_RPCS",
+      "http": 200,
+      "ok": true,
+      "mode": "select",
+      "rows_count": 11,
+      "rows": [
+        {
+          "routine_name": "app_admin_list_marketplace_merchants"
+        },
+        {
+          "routine_name": "app_admin_set_merchant_verification"
+        },
+        {
+          "routine_name": "app_admin_update_marketplace_merchant_status"
+        },
+        {
+          "routine_name": "app_list_marketplace_merchants"
+        },
+        {
+          "routine_name": "app_list_opportunity_inquiry_messages"
+        },
+        {
+          "routine_name": "app_merchant_list_inquiries"
+        },
+        {
+          "routine_name": "app_merchant_list_my_opportunities"
+        },
+        {
+          "routine_name": "app_merchant_reply_inquiry"
+        },
+        {
+          "routine_name": "app_student_create_opportunity_inquiry"
+        },
+        {
+          "routine_name": "app_student_list_my_opportunity_inquiries"
+        },
+        {
+          "routine_name": "app_student_reply_opportunity_inquiry"
+        }
+      ],
+      "error": null,
+      "sqlstate": null
+    }
+  }
+}

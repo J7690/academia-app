@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-03-02T08:19:40.389078Z",
+  "results": {
+    "PHASE5_FUNCTION_EXISTS": {
+      "label": "PHASE5_FUNCTION_EXISTS",
+      "http": 200,
+      "ok": true,
+      "mode": "select",
+      "rows_count": 5,
+      "rows": [
+        {
+          "routine_name": "app_student_create_opportunity_inquiry"
+        },
+        {
+          "routine_name": "app_student_list_bookmarked_opportunities"
+        },
+        {
+          "routine_name": "app_student_list_my_opportunity_inquiries"
+        },
+        {
+          "routine_name": "app_student_list_opportunities"
+        },
+        {
+          "routine_name": "app_student_list_opportunities"
+        }
+      ],
+      "error": null,
+      "sqlstate": null
+    },
+    "STUDENT_OPPORTUNITIES_MARKETPLACE_COLUMNS": {
+      "label": "STUDENT_OPPORTUNITIES_MARKETPLACE_COLUMNS",
+      "http": 200,
+      "ok": true,
+      "mode": "select",
+      "rows_count": 8,
+      "rows": [
+        {
+          "data_type": "text",
+          "column_name": "currency"
+        },
+        {
+          "data_type": "boolean",
+          "column_name": "is_ready_to_ship"
+        },
+        {
+          "data_type": "integer",
+          "column_name": "lead_time_days"
+        },
+        {
+          "data_type": "uuid",
+          "column_name": "merchant_id"
+        },
+        {
+          "data_type": "integer",
+          "column_name": "min_order_qty"
+        },
+        {
+          "data_type": "numeric",
+          "column_name": "price_from"
+        },
+        {
+          "data_type": "numeric",
+          "column_name": "price_to"
+        },
+        {
+          "data_type": "text",
+          "column_name": "review_status"
+        }
+      ],
+      "error": null,
+      "sqlstate": null
+    }
+  }
+}

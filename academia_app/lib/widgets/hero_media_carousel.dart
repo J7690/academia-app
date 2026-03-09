@@ -39,7 +39,7 @@ class HeroMediaCarousel extends StatefulWidget {
     required this.items,
     this.aspectRatio = 16 / 9,
     this.defaultImageDuration = const Duration(seconds: 5),
-    this.videoStartTimeout = const Duration(seconds: 5),
+    this.videoStartTimeout = const Duration(seconds: 12),
     this.loopVideos = false,
     this.autoplay = true,
     this.mutedByDefault = true,
@@ -255,6 +255,7 @@ class _HeroMediaCarouselState extends State<HeroMediaCarousel>
 
   Widget _buildMediaItem(BuildContext context, HeroMediaItem item) {
     if (item.isVideo) {
+      final effectiveLoop = widget.loopVideos && widget.items.length <= 1;
       return Stack(
         fit: StackFit.expand,
         children: [
@@ -266,12 +267,12 @@ class _HeroMediaCarouselState extends State<HeroMediaCarousel>
           AcademiaPlaybackEngine.view(
             url: item.url,
             autoplay: widget.autoplay,
-            looping: widget.loopVideos,
+            looping: effectiveLoop,
             muted: widget.mutedByDefault,
             showControls: widget.showControls,
             showErrorText: false,
             fit: BoxFit.cover,
-            onCompleted: _handleVideoCompleted,
+            onCompleted: effectiveLoop ? null : _handleVideoCompleted,
             onFirstPlay: _handleVideoStarted,
           ),
         ],

@@ -53,6 +53,33 @@ class AdminProgramsProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> deleteProgram(String programId) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(
+        'app_admin_delete_program',
+        params: {'p_program_id': programId},
+      );
+      if (response is! Map<String, dynamic> || response['success'] != true) {
+        _setError(
+          response is Map<String, dynamic>
+              ? response['error']?.toString() ??
+                  'Erreur lors de la suppression du programme.'
+              : 'Erreur lors de la suppression du programme.',
+        );
+        return false;
+      }
+      await loadPrograms();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   Future<bool> updateProgramStatus({
     required String programId,
     bool? isActive,

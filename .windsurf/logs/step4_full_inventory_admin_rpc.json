@@ -1,0 +1,641 @@
+{
+  "TABLES_APP_ALL": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 178,
+    "sample_rows": [
+      {
+        "table_name": "academic_events",
+        "table_type": "BASE TABLE",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "admin_user_action_logs",
+        "table_type": "BASE TABLE",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "admin_users",
+        "table_type": "BASE TABLE",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "application_files",
+        "table_type": "BASE TABLE",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "application_messages",
+        "table_type": "BASE TABLE",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "application_payments",
+        "table_type": "BASE TABLE",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "applications",
+        "table_type": "BASE TABLE",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "bobodo_detected_needs",
+        "table_type": "BASE TABLE",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "bobodo_feedback",
+        "table_type": "BASE TABLE",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "bobodo_knowledge",
+        "table_type": "BASE TABLE",
+        "table_schema": "app"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "COLUMNS_APP_ALL": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 1674,
+    "sample_rows": [
+      {
+        "data_type": "uuid",
+        "table_name": "academic_events",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "text",
+        "table_name": "academic_events",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "academic_events",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "academic_events",
+        "column_name": "event_type",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "academic_events",
+        "column_name": "country",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "academic_events",
+        "column_name": "city",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "academic_events",
+        "column_name": "location",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "academic_events",
+        "column_name": "university_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "academic_events",
+        "column_name": "program_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "academic_events",
+        "column_name": "level",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "ROUTINES_PUBLIC_ALL": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 513,
+    "sample_rows": [
+      {
+        "data_type": "text",
+        "routine_name": "admin_create_storage_policies_for_community_media",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "admin_execute_sql",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_accept_user_invitation",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_add_application_file",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_add_application_message_from_admin_to_student",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_add_application_message_from_admin_to_university",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_add_application_message_from_student",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_add_application_message_from_university",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_add_bobodo_feedback",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      },
+      {
+        "data_type": "jsonb",
+        "routine_name": "app_add_short_training_message_from_admin_to_student",
+        "routine_type": "FUNCTION",
+        "routine_schema": "public"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "FUNCTION_DEFS_PUBLIC_APP_PREFIX": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 499,
+    "sample_rows": [
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_accept_user_invitation(p_token text, p_full_name text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_email TEXT;\n    v_invitation_id UUID;\n    v_inv_email TEXT;\n    v_inv_role TEXT;\n    v_inv_university_id UUID;\n    v_status TEXT;\n    v_expires_at TIMESTAMPTZ;\n    v_now TIMESTAMPTZ := NOW();\n    v_meta JSONB;\n    v_exists BOOLEAN;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    SELECT email, raw_user_meta_data\n    INTO v_email, v_meta\n    FROM auth.users\n    WHERE id = v_user_id;\n\n    IF v_email IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'user_not_found');\n    END IF;\n\n    SELECT id, email, role, university_id, status, expires_at\n    INTO v_invitation_id, v_inv_email, v_inv_role, v_inv_university_id, v_status, v_expires_at\n    FROM app.user_invitations\n    WHERE token = p_token\n    LIMIT 1;\n\n    IF v_invitation_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invitation_not_found');\n    END IF;\n\n    IF LOWER(v_inv_email) <> LOWER(v_email) THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'email_mismatch');\n    END IF;\n\n    IF v_status <> 'pending' THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invitation_not_pending');\n    END IF;\n\n    IF v_expires_at IS NOT NULL AND v_expires_at <= v_now THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invitation_expired');\n    END IF;\n\n    v_meta := COALESCE(v_meta, '{}'::JSONB);\n\n    IF v_inv_role = 'university' THEN\n        IF v_inv_university_id IS NULL THEN\n            RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invitation_missing_university');\n        END IF;\n        v_meta := v_meta\n            || JSONB_BUILD_OBJECT('role', 'university')\n            || JSONB_BUILD_OBJECT('university_id', v_inv_university_id::TEXT);\n    ELSIF v_inv_role = 'instructor' THEN\n        v_meta := v_meta || JSONB_BUILD_OBJECT('role', 'instructor');\n    ELSIF v_inv_role = 'admin' THEN\n        v_meta := v_meta || JSONB_BUILD_OBJECT('role', 'admin');\n    ELSE\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'unsupported_role');\n    END IF;\n\n    IF p_full_name IS NOT NULL AND LENGTH(TRIM(p_full_name)) > 0 THEN\n        v_meta := v_meta || JSONB_BUILD_OBJECT('full_name', TRIM(p_full_name));\n    END IF;\n\n    UPDATE auth.users\n    SET raw_user_meta_data = v_meta\n    WHERE id = v_user_id;\n\n    IF v_inv_role = 'instructor' THEN\n        SELECT EXISTS(SELECT 1 FROM app.instructors WHERE id = v_user_id)\n        INTO v_exists;\n\n        IF NOT v_exists THEN\n            INSERT INTO app.instructors (id, full_name)\n            VALUES (v_user_id, NULLIF(TRIM(p_full_name), ''));\n        ELSE\n            UPDATE app.instructors\n            SET full_name = COALESCE(NULLIF(TRIM(p_full_name), ''), full_name),\n                updated_at = NOW()\n            WHERE id = v_user_id;\n        END IF;\n    END IF;\n\n    UPDATE app.user_invitations\n    SET status = 'used',\n        used_at = v_now,\n        updated_at = v_now\n    WHERE id = v_invitation_id;\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'role', v_inv_role\n    );\nEND;\n$function$\n",
+        "name": "app_accept_user_invitation",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_add_application_file(p_application_id uuid, p_file_type text, p_storage_path text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_student_id UUID;\n    v_file_id UUID;\nBEGIN\n    SELECT student_id INTO v_student_id\n    FROM app.applications\n    WHERE id = p_application_id;\n\n    IF v_student_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'application_not_found');\n    END IF;\n\n    IF v_student_id <> auth.uid() THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_owner');\n    END IF;\n\n    INSERT INTO app.application_files (application_id, file_type, storage_path)\n    VALUES (p_application_id, p_file_type, p_storage_path)\n    RETURNING id INTO v_file_id;\n\n    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'file_id', v_file_id);\nEND;\n$function$\n",
+        "name": "app_add_application_file",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_add_application_message_from_admin_to_student(p_application_id uuid, p_content text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_role TEXT;\n    v_exists BOOLEAN;\n    v_message_id UUID;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    SELECT raw_user_meta_data->>'role'\n    INTO v_role\n    FROM auth.users\n    WHERE id = v_user_id;\n\n    IF v_role <> 'admin' THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');\n    END IF;\n\n    IF p_content IS NULL OR LENGTH(TRIM(p_content)) = 0 THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'empty_content');\n    END IF;\n\n    SELECT EXISTS(SELECT 1 FROM app.applications a WHERE a.id = p_application_id)\n    INTO v_exists;\n\n    IF NOT v_exists THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'application_not_found');\n    END IF;\n\n    INSERT INTO app.application_messages (application_id, sender_role, audience, content)\n    VALUES (p_application_id, 'admin', 'student', p_content)\n    RETURNING id INTO v_message_id;\n\n    UPDATE app.applications\n    SET\n        last_message_at = NOW(),\n        updated_at = NOW()\n    WHERE id = p_application_id;\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'message_id', v_message_id\n    );\nEND;\n$function$\n",
+        "name": "app_add_application_message_from_admin_to_student",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_add_application_message_from_admin_to_university(p_application_id uuid, p_content text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_role TEXT;\n    v_exists BOOLEAN;\n    v_message_id UUID;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    SELECT raw_user_meta_data->>'role'\n    INTO v_role\n    FROM auth.users\n    WHERE id = v_user_id;\n\n    IF v_role <> 'admin' THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');\n    END IF;\n\n    IF p_content IS NULL OR LENGTH(TRIM(p_content)) = 0 THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'empty_content');\n    END IF;\n\n    SELECT EXISTS(SELECT 1 FROM app.applications a WHERE a.id = p_application_id)\n    INTO v_exists;\n\n    IF NOT v_exists THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'application_not_found');\n    END IF;\n\n    INSERT INTO app.application_messages (application_id, sender_role, audience, content)\n    VALUES (p_application_id, 'admin', 'university', p_content)\n    RETURNING id INTO v_message_id;\n\n    UPDATE app.applications\n    SET\n        last_message_at = NOW(),\n        updated_at = NOW()\n    WHERE id = p_application_id;\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'message_id', v_message_id\n    );\nEND;\n$function$\n",
+        "name": "app_add_application_message_from_admin_to_university",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_add_application_message_from_student(p_application_id uuid, p_content text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_app_student_id UUID;\n    v_message_id UUID;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    IF p_content IS NULL OR LENGTH(TRIM(p_content)) = 0 THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'empty_content');\n    END IF;\n\n    SELECT student_id INTO v_app_student_id\n    FROM app.applications\n    WHERE id = p_application_id;\n\n    IF v_app_student_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'application_not_found');\n    END IF;\n\n    IF v_app_student_id <> v_user_id THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_owner');\n    END IF;\n\n    INSERT INTO app.application_messages (application_id, sender_role, audience, content)\n    VALUES (p_application_id, 'student', 'admin_only', p_content)\n    RETURNING id INTO v_message_id;\n\n    UPDATE app.applications\n    SET\n        last_message_at = NOW(),\n        updated_at = NOW()\n    WHERE id = p_application_id;\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'message_id', v_message_id\n    );\nEND;\n$function$\n",
+        "name": "app_add_application_message_from_student",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_add_application_message_from_university(p_application_id uuid, p_content text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_role TEXT;\n    v_university_id UUID;\n    v_exists BOOLEAN;\n    v_message_id UUID;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    SELECT\n        raw_user_meta_data->>'role',\n        (raw_user_meta_data->>'university_id')::UUID\n    INTO v_role, v_university_id\n    FROM auth.users\n    WHERE id = v_user_id;\n\n    IF v_role <> 'university' THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_university');\n    END IF;\n\n    IF v_university_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'university_not_configured');\n    END IF;\n\n    IF p_content IS NULL OR LENGTH(TRIM(p_content)) = 0 THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'empty_content');\n    END IF;\n\n    SELECT EXISTS(\n        SELECT 1\n        FROM app.applications a\n        JOIN app.programs p ON p.id = a.program_id\n        WHERE a.id = p_application_id\n          AND p.university_id = v_university_id\n    ) INTO v_exists;\n\n    IF NOT v_exists THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'application_not_found');\n    END IF;\n\n    INSERT INTO app.application_messages (application_id, sender_role, audience, content)\n    VALUES (p_application_id, 'university', 'admin_only', p_content)\n    RETURNING id INTO v_message_id;\n\n    UPDATE app.applications\n    SET\n        last_message_at = NOW(),\n        updated_at = NOW()\n    WHERE id = p_application_id;\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'message_id', v_message_id\n    );\nEND;\n$function$\n",
+        "name": "app_add_application_message_from_university",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_add_bobodo_feedback(p_session_id uuid, p_message_id uuid, p_rating text, p_comment text DEFAULT NULL::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_student_id UUID;\n    v_feedback_id UUID;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    IF p_rating NOT IN ('up','down') THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_rating');\n    END IF;\n\n    SELECT student_id INTO v_student_id\n    FROM app.bobodo_sessions\n    WHERE id = p_session_id;\n\n    IF v_student_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'session_not_found');\n    END IF;\n\n    IF v_student_id <> v_user_id THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_owner');\n    END IF;\n\n    INSERT INTO app.bobodo_feedback (session_id, message_id, student_id, rating, comment)\n    VALUES (\n        p_session_id,\n        p_message_id,\n        v_student_id,\n        p_rating,\n        NULLIF(TRIM(p_comment), '')\n    )\n    RETURNING id INTO v_feedback_id;\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'feedback_id', v_feedback_id\n    );\nEND;\n$function$\n",
+        "name": "app_add_bobodo_feedback",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_add_short_training_message_from_admin_to_student(p_registration_id uuid, p_content text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_role TEXT;\n    v_exists BOOLEAN;\n    v_message_id UUID;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    SELECT raw_user_meta_data->>'role'\n    INTO v_role\n    FROM auth.users\n    WHERE id = v_user_id;\n\n    IF v_role <> 'admin' THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');\n    END IF;\n\n    IF p_content IS NULL OR LENGTH(TRIM(p_content)) = 0 THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'empty_content');\n    END IF;\n\n    SELECT EXISTS(SELECT 1 FROM app.short_training_registrations r WHERE r.id = p_registration_id)\n    INTO v_exists;\n\n    IF NOT v_exists THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'registration_not_found');\n    END IF;\n\n    INSERT INTO app.short_training_registration_messages (registration_id, sender_role, audience, content)\n    VALUES (p_registration_id, 'admin', 'student', p_content)\n    RETURNING id INTO v_message_id;\n\n    UPDATE app.short_training_registrations\n    SET last_message_at = NOW(), updated_at = NOW()\n    WHERE id = p_registration_id;\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'message_id', v_message_id\n    );\nEND;\n$function$\n",
+        "name": "app_add_short_training_message_from_admin_to_student",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_add_short_training_message_from_student(p_registration_id uuid, p_content text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_owner_id UUID;\n    v_message_id UUID;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    IF p_content IS NULL OR LENGTH(TRIM(p_content)) = 0 THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'empty_content');\n    END IF;\n\n    SELECT user_id\n    INTO v_owner_id\n    FROM app.short_training_registrations\n    WHERE id = p_registration_id;\n\n    IF v_owner_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'registration_not_found');\n    END IF;\n\n    IF v_owner_id <> v_user_id THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_owner');\n    END IF;\n\n    INSERT INTO app.short_training_registration_messages (registration_id, sender_role, audience, content)\n    VALUES (p_registration_id, 'student', 'admin_only', p_content)\n    RETURNING id INTO v_message_id;\n\n    UPDATE app.short_training_registrations\n    SET last_message_at = NOW(), updated_at = NOW()\n    WHERE id = p_registration_id;\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'message_id', v_message_id\n    );\nEND;\n$function$\n",
+        "name": "app_add_short_training_message_from_student",
+        "schema": "public"
+      },
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.app_add_student_dossier_document(p_document_type text, p_storage_path text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_doc_id UUID;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT(\n            'success', FALSE,\n            'error', 'not_authenticated'\n        );\n    END IF;\n\n    IF p_document_type IS NULL OR LENGTH(TRIM(p_document_type)) = 0 THEN\n        RETURN JSONB_BUILD_OBJECT(\n            'success', FALSE,\n            'error', 'invalid_document_type'\n        );\n    END IF;\n\n    IF p_storage_path IS NULL OR LENGTH(TRIM(p_storage_path)) = 0 THEN\n        RETURN JSONB_BUILD_OBJECT(\n            'success', FALSE,\n            'error', 'invalid_storage_path'\n        );\n    END IF;\n\n    INSERT INTO app.student_dossier_documents (student_id, document_type, storage_path)\n    VALUES (v_user_id, p_document_type, p_storage_path)\n    RETURNING id INTO v_doc_id;\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'document_id', v_doc_id\n    );\nEND;\n$function$\n",
+        "name": "app_add_student_dossier_document",
+        "schema": "public"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "TRIGGERS_APP_STORAGE_PUBLIC": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 58,
+    "sample_rows": [
+      {
+        "table_name": "application_messages",
+        "trigger_def": "CREATE TRIGGER trg_admin_application_message_notify AFTER INSERT ON app.application_messages FOR EACH ROW EXECUTE FUNCTION app_notify_admin_application_message()",
+        "table_schema": "app",
+        "trigger_name": "trg_admin_application_message_notify"
+      },
+      {
+        "table_name": "application_messages",
+        "trigger_def": "CREATE TRIGGER trg_app_application_messages_notify AFTER INSERT ON app.application_messages FOR EACH ROW EXECUTE FUNCTION app_notify_application_message()",
+        "table_schema": "app",
+        "trigger_name": "trg_app_application_messages_notify"
+      },
+      {
+        "table_name": "application_messages",
+        "trigger_def": "CREATE TRIGGER trg_uni_application_message_notify AFTER INSERT ON app.application_messages FOR EACH ROW EXECUTE FUNCTION app_notify_university_application_message()",
+        "table_schema": "app",
+        "trigger_name": "trg_uni_application_message_notify"
+      },
+      {
+        "table_name": "application_payments",
+        "trigger_def": "CREATE TRIGGER trg_admin_payment_declared_notify AFTER INSERT OR UPDATE ON app.application_payments FOR EACH ROW EXECUTE FUNCTION app_notify_admin_payment_declared()",
+        "table_schema": "app",
+        "trigger_name": "trg_admin_payment_declared_notify"
+      },
+      {
+        "table_name": "application_payments",
+        "trigger_def": "CREATE TRIGGER trg_app_application_payments_referral_commission AFTER UPDATE ON app.application_payments FOR EACH ROW EXECUTE FUNCTION app_on_payment_confirmed_generate_referral_commission()",
+        "table_schema": "app",
+        "trigger_name": "trg_app_application_payments_referral_commission"
+      },
+      {
+        "table_name": "application_payments",
+        "trigger_def": "CREATE TRIGGER trg_commercial_payment_confirmed_notify AFTER UPDATE ON app.application_payments FOR EACH ROW EXECUTE FUNCTION app_notify_commercial_payment_confirmed()",
+        "table_schema": "app",
+        "trigger_name": "trg_commercial_payment_confirmed_notify"
+      },
+      {
+        "table_name": "application_payments",
+        "trigger_def": "CREATE TRIGGER trg_commercial_prospect_payment_notify AFTER INSERT OR UPDATE ON app.application_payments FOR EACH ROW EXECUTE FUNCTION app_notify_commercial_prospect_payment()",
+        "table_schema": "app",
+        "trigger_name": "trg_commercial_prospect_payment_notify"
+      },
+      {
+        "table_name": "application_payments",
+        "trigger_def": "CREATE TRIGGER trg_student_payment_status_notify AFTER UPDATE ON app.application_payments FOR EACH ROW EXECUTE FUNCTION app_notify_student_payment_status()",
+        "table_schema": "app",
+        "trigger_name": "trg_student_payment_status_notify"
+      },
+      {
+        "table_name": "application_payments",
+        "trigger_def": "CREATE TRIGGER trg_uni_payment_notify AFTER INSERT OR UPDATE ON app.application_payments FOR EACH ROW EXECUTE FUNCTION app_notify_university_payment()",
+        "table_schema": "app",
+        "trigger_name": "trg_uni_payment_notify"
+      },
+      {
+        "table_name": "applications",
+        "trigger_def": "CREATE TRIGGER trg_admin_new_application_notify AFTER INSERT ON app.applications FOR EACH ROW EXECUTE FUNCTION app_notify_admin_new_application()",
+        "table_schema": "app",
+        "trigger_name": "trg_admin_new_application_notify"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "POLICIES_APP_ALL": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 287,
+    "sample_rows": [
+      {
+        "cmd": "SELECT",
+        "qual": "(is_published = true)",
+        "roles": [
+          "public"
+        ],
+        "tablename": "academic_events",
+        "policyname": "student_select_published_academic_events",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "ALL",
+        "qual": "(EXISTS ( SELECT 1\n   FROM auth.users u\n  WHERE ((u.id = auth.uid()) AND ((u.raw_user_meta_data ->> 'role'::text) = 'admin'::text))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "admin_user_action_logs",
+        "policyname": "admin_all_user_action_logs",
+        "schemaname": "app",
+        "with_check": "(EXISTS ( SELECT 1\n   FROM auth.users u\n  WHERE ((u.id = auth.uid()) AND ((u.raw_user_meta_data ->> 'role'::text) = 'admin'::text))))"
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "public"
+        ],
+        "tablename": "application_files",
+        "policyname": "student_insert_own_application_files",
+        "schemaname": "app",
+        "with_check": "(EXISTS ( SELECT 1\n   FROM app.applications a\n  WHERE ((a.id = application_files.application_id) AND (a.student_id = auth.uid()))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(EXISTS ( SELECT 1\n   FROM app.applications a\n  WHERE ((a.id = application_files.application_id) AND (a.student_id = auth.uid()))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "application_files",
+        "policyname": "student_select_own_application_files",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "public"
+        ],
+        "tablename": "application_messages",
+        "policyname": "student_insert_own_application_messages",
+        "schemaname": "app",
+        "with_check": "((EXISTS ( SELECT 1\n   FROM app.applications a\n  WHERE ((a.id = application_messages.application_id) AND (a.student_id = auth.uid())))) AND (sender_role = 'student'::text))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(EXISTS ( SELECT 1\n   FROM app.applications a\n  WHERE ((a.id = application_messages.application_id) AND (a.student_id = auth.uid()))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "application_messages",
+        "policyname": "student_select_own_application_messages",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((auth.jwt() ? 'role'::text) AND ((auth.jwt() ->> 'role'::text) = 'admin'::text))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "application_payments",
+        "policyname": "admin_select_all_payments",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(student_id = auth.uid())",
+        "roles": [
+          "public"
+        ],
+        "tablename": "application_payments",
+        "policyname": "student_select_own_payments",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "\nCASE\n    WHEN ((auth.jwt() ? 'role'::text) AND ((auth.jwt() ->> 'role'::text) = 'university'::text)) THEN (((auth.jwt() ->> 'university_id'::text))::uuid = university_id)\n    ELSE false\nEND",
+        "roles": [
+          "public"
+        ],
+        "tablename": "application_payments",
+        "policyname": "university_select_own_payments",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "public"
+        ],
+        "tablename": "applications",
+        "policyname": "student_insert_own_applications",
+        "schemaname": "app",
+        "with_check": "(student_id = auth.uid())"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "POLICIES_STORAGE_OBJECTS": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 21,
+    "sample_rows": [
+      {
+        "cmd": "DELETE",
+        "qual": "(bucket_id = 'landing-media'::text)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_delete_landing_media",
+        "schemaname": "storage",
+        "with_check": null
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "(bucket_id = 'university-media'::text)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_delete_university_media",
+        "schemaname": "storage",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_insert_landing_media",
+        "schemaname": "storage",
+        "with_check": "(bucket_id = 'landing-media'::text)"
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_insert_university_media",
+        "schemaname": "storage",
+        "with_check": "(bucket_id = 'university-media'::text)"
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "(bucket_id = 'landing-media'::text)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_update_landing_media",
+        "schemaname": "storage",
+        "with_check": "(bucket_id = 'landing-media'::text)"
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "(bucket_id = 'university-media'::text)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_update_university_media",
+        "schemaname": "storage",
+        "with_check": "(bucket_id = 'university-media'::text)"
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "(bucket_id = 'challenge-media'::text)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_write_challenge_media_delete",
+        "schemaname": "storage",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_write_challenge_media_insert",
+        "schemaname": "storage",
+        "with_check": "(bucket_id = 'challenge-media'::text)"
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "(bucket_id = 'challenge-media'::text)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_write_challenge_media_update",
+        "schemaname": "storage",
+        "with_check": "(bucket_id = 'challenge-media'::text)"
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "(bucket_id = 'video-assets'::text)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "policyname": "authenticated_write_video_assets_delete",
+        "schemaname": "storage",
+        "with_check": null
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "STORAGE_BUCKETS": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 7,
+    "sample_rows": [
+      {
+        "id": "application-files",
+        "name": "application-files",
+        "public": false,
+        "created_at": "2025-11-19T08:58:15.032772+00:00",
+        "updated_at": "2025-11-19T08:58:15.032772+00:00"
+      },
+      {
+        "id": "challenge-media",
+        "name": "challenge-media",
+        "public": true,
+        "created_at": "2025-11-30T11:02:28.237745+00:00",
+        "updated_at": "2025-11-30T11:02:28.237745+00:00"
+      },
+      {
+        "id": "community-media",
+        "name": "community-media",
+        "public": true,
+        "created_at": "2026-01-04T14:35:24.372004+00:00",
+        "updated_at": "2026-01-04T14:35:24.372004+00:00"
+      },
+      {
+        "id": "hero_videos",
+        "name": "hero_videos",
+        "public": true,
+        "created_at": "2025-12-30T05:00:34.589014+00:00",
+        "updated_at": "2025-12-30T05:00:34.589014+00:00"
+      },
+      {
+        "id": "landing-media",
+        "name": "landing-media",
+        "public": true,
+        "created_at": "2025-11-19T11:36:20.001896+00:00",
+        "updated_at": "2025-11-19T11:36:20.001896+00:00"
+      },
+      {
+        "id": "university-media",
+        "name": "university-media",
+        "public": true,
+        "created_at": "2025-11-19T11:36:15.176381+00:00",
+        "updated_at": "2025-11-19T11:36:15.176381+00:00"
+      },
+      {
+        "id": "video-assets",
+        "name": "video-assets",
+        "public": true,
+        "created_at": "2025-12-13T16:31:24.965781+00:00",
+        "updated_at": "2025-12-13T16:31:24.965781+00:00"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "schema": "app",
+  "table": "merchant_profiles",
+  "result": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "display_name",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "logo_url",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "bio",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "country",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "city",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_verified",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "text",
+        "column_name": "verification_level",
+        "is_nullable": "NO",
+        "column_default": "'none'::text"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  }
+}

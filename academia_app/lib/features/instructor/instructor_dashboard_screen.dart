@@ -6,11 +6,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../providers/instructor_online_courses_provider.dart';
 import '../../providers/instructor_online_course_live_sessions_provider.dart';
+import '../../providers/teacher_td_assignments_provider.dart';
+import '../../providers/td_messages_provider.dart';
+import '../../theme/td_theme.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart';
 import 'instructor_course_forum_screen.dart';
 import '../live/livekit_room_screen.dart';
 import 'teacher_td_assignments_screen.dart';
+import 'teacher_prep_screen.dart';
+import 'teacher_td_resources_screen.dart';
+import '../../widgets/support_fab.dart';
+import '../../services/push_trigger_service.dart';
 
 class InstructorDashboardScreen extends StatefulWidget {
   const InstructorDashboardScreen({super.key});
@@ -39,6 +46,7 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
         await context.read<InstructorOnlineCoursesProvider>().loadMyCourses();
         await context.read<InstructorOnlineCourseLiveSessionsProvider>().loadMySessions();
       } catch (_) {}
+      PushTriggerService.instance.triggerPendingPush();
     });
   }
 
@@ -62,42 +70,58 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 6,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF3F4F6),
+        backgroundColor: TdTheme.scaffoldBg,
+        floatingActionButton: const SupportFab(),
         appBar: AppBar(
           elevation: 0,
           centerTitle: false,
-          title: const Text('Dashboard Enseignant'),
+          title: const Text('Espace Enseignant',
+              style: TextStyle(fontWeight: FontWeight.w600)),
           foregroundColor: Colors.white,
           flexibleSpace: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFFA3D65C), Color(0xFF1EA75C)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
+            decoration: TdTheme.gradientHeader(TdTheme.instructorGradient),
           ),
           actions: [
+            IconButton(
+              onPressed: () async {
+                await context.read<InstructorOnlineCoursesProvider>().loadMyCourses();
+                await context.read<InstructorOnlineCourseLiveSessionsProvider>().loadMySessions();
+              },
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Actualiser',
+            ),
             IconButton(
               onPressed: _signOut,
               icon: const Icon(Icons.logout),
               tooltip: 'Se déconnecter',
             ),
           ],
-          bottom: const TabBar(
+          bottom: TabBar(
             isScrollable: true,
-            tabs: [
-              Tab(text: 'Accueil'),
-              Tab(text: 'Mes cours en ligne'),
-              Tab(text: 'Sessions live & TD'),
+            indicatorColor: Colors.white,
+            indicatorWeight: 3,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+            tabs: const [
+              Tab(icon: Icon(Icons.dashboard_outlined, size: 18), text: 'Accueil'),
+              Tab(icon: Icon(Icons.assignment_outlined, size: 18), text: 'Mes TD'),
+              Tab(icon: Icon(Icons.people_outlined, size: 18), text: 'Progression'),
+              Tab(icon: Icon(Icons.school_outlined, size: 18), text: 'Prépa'),
+              Tab(icon: Icon(Icons.play_lesson_outlined, size: 18), text: 'Cours'),
+              Tab(icon: Icon(Icons.videocam_outlined, size: 18), text: 'Sessions'),
             ],
           ),
         ),
         body: const TabBarView(
           children: [
             _InstructorHomeTab(),
+            TeacherTdAssignmentsScreen(),
+            TeacherTdResourcesScreen(),
+            TeacherPrepScreen(),
             _InstructorCoursesTab(),
             _InstructorLiveSessionsTab(),
           ],
@@ -118,6 +142,15 @@ class _InstructorHomeTab extends StatelessWidget {
         final courses = coursesProvider.courses;
         final sessions = sessionsProvider.sessions;
 
+        final publishedCount =
+            courses.where((c) => c['is_published'] == true).length;
+        final upcomingSessions = sessions.where((s) {
+          final startAt = s['start_at']?.toString();
+          if (startAt == null) return false;
+          final dt = DateTime.tryParse(startAt);
+          return dt != null && dt.isAfter(DateTime.now());
+        }).toList();
+
         return RefreshIndicator(
           onRefresh: () async {
             await coursesProvider.loadMyCourses();
@@ -126,183 +159,232 @@ class _InstructorHomeTab extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const Text(
-                'Bienvenue dans votre espace enseignant',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              // Welcome header
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: TdTheme.instructorGradient,
+                  ),
+                  borderRadius: BorderRadius.circular(TdTheme.radiusXl),
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Gérez vos cours en ligne, planifiez des lives et suivez vos étudiants.',
-                style: TextStyle(fontSize: 14),
-              ),
-              const SizedBox(height: 16),
-              Card(
-                color: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Mes cours en ligne',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.school, color: Colors.white, size: 24),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      if (coursesProvider.isLoading && courses.isEmpty)
-                        const LoadingWidget(
-                          message: 'Chargement de vos cours en ligne...',
-                        )
-                      else if (coursesProvider.error != null)
-                        CustomErrorWidget(
-                          error: coursesProvider.error!,
-                          onRetry: coursesProvider.loadMyCourses,
-                        )
-                      else if (courses.isEmpty)
-                        const Text(
-                          'Aucun cours en ligne configuré pour le moment.',
-                          style: TextStyle(fontSize: 13),
-                        )
-                      else
-                        ...courses.take(3).map((course) {
-                          final title = (course['title'] ?? '').toString();
-                          final category = (course['category'] ?? '').toString();
-                          final level = (course['level'] ?? '').toString();
-                          final isPublished = course['is_published'] == true;
-                          final metaParts = <String>[];
-                          if (category.isNotEmpty) metaParts.add(category);
-                          if (level.isNotEmpty) metaParts.add(level);
-                          return ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(title),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (metaParts.isNotEmpty)
-                                  Text(
-                                    metaParts.join(' • '),
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                Text(
-                                  isPublished ? 'Publié' : 'Brouillon',
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Bienvenue',
                                   style: TextStyle(
-                                    fontSize: 12,
-                                    color: isPublished
-                                        ? const Color(0xFF1EA75C)
-                                        : const Color(0xFFFF3B30),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Card(
-                color: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Prochaines sessions live & TD',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                                      color: Colors.white70, fontSize: 12)),
+                              Text('Espace Enseignant',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      if (sessionsProvider.isLoading && sessions.isEmpty)
-                        const LoadingWidget(
-                          message: 'Chargement de vos sessions...',
-                        )
-                      else if (sessionsProvider.error != null)
-                        CustomErrorWidget(
-                          error: sessionsProvider.error!,
-                          onRetry: sessionsProvider.loadMySessions,
-                        )
-                      else if (sessions.isEmpty)
-                        const Text(
-                          'Aucune session live ou TD planifiée.',
-                          style: TextStyle(fontSize: 13),
-                        )
-                      else
-                        ...sessions.take(3).map((session) {
-                          final title = (session['title'] ?? '').toString();
-                          final courseTitle =
-                              (session['course_title'] ?? '').toString();
-                          final startAt = session['start_at']?.toString();
-                          return ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(title),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (courseTitle.isNotEmpty)
-                                  Text(
-                                    courseTitle,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                if (startAt != null)
-                                  Text(
-                                    startAt,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                    ],
-                  ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Gérez vos cours, planifiez des sessions et suivez vos TD.',
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),
-              Card(
-                color: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: ListTile(
-                  title: const Text('Mes missions TD'),
-                  subtitle: const Text(
-                    'Voir les TD qui vous ont été assignés par l\'administrateur.',
+
+              // KPI cards
+              Row(
+                children: [
+                  TdTheme.kpiCard(
+                    icon: Icons.play_lesson,
+                    value: courses.length.toString(),
+                    label: 'Cours',
+                    color: TdTheme.instructorPrimary,
                   ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const TeacherTdAssignmentsScreen(),
-                      ),
-                    );
-                  },
-                ),
+                  const SizedBox(width: 10),
+                  TdTheme.kpiCard(
+                    icon: Icons.check_circle,
+                    value: publishedCount.toString(),
+                    label: 'Publiés',
+                    color: TdTheme.success,
+                  ),
+                ],
               ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  TdTheme.kpiCard(
+                    icon: Icons.videocam,
+                    value: upcomingSessions.length.toString(),
+                    label: 'Sessions à venir',
+                    color: TdTheme.info,
+                  ),
+                  const SizedBox(width: 10),
+                  TdTheme.kpiCard(
+                    icon: Icons.event,
+                    value: sessions.length.toString(),
+                    label: 'Total sessions',
+                    color: TdTheme.neutral,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Upcoming sessions
+              const Text('Prochaines sessions',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 10),
+              if (sessionsProvider.isLoading && sessions.isEmpty)
+                const LoadingWidget(message: 'Chargement...')
+              else if (upcomingSessions.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: TdTheme.cardDecoration(),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.event_busy, color: TdTheme.textTertiary, size: 20),
+                      SizedBox(width: 10),
+                      Text('Aucune session à venir.',
+                          style: TextStyle(fontSize: 13, color: TdTheme.textSecondary)),
+                    ],
+                  ),
+                )
+              else
+                ...upcomingSessions.take(3).map((session) {
+                  final title = (session['title'] ?? '').toString();
+                  final courseTitle = (session['course_title'] ?? '').toString();
+                  final startAt = session['start_at']?.toString() ?? '';
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(14),
+                    decoration: TdTheme.cardDecoration(),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: TdTheme.instructorPrimary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.videocam,
+                              color: TdTheme.instructorPrimary, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(title,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600, fontSize: 13)),
+                              if (courseTitle.isNotEmpty)
+                                Text(courseTitle,
+                                    style: const TextStyle(
+                                        fontSize: 11, color: TdTheme.textSecondary)),
+                              if (startAt.isNotEmpty)
+                                Text(TdTheme.formatDateTime(startAt),
+                                    style: const TextStyle(
+                                        fontSize: 11, color: TdTheme.instructorPrimary)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              const SizedBox(height: 20),
+
+              // Recent courses
+              const Text('Mes cours',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 10),
+              if (coursesProvider.isLoading && courses.isEmpty)
+                const LoadingWidget(message: 'Chargement...')
+              else if (courses.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: TdTheme.cardDecoration(),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.play_lesson, color: TdTheme.textTertiary, size: 20),
+                      SizedBox(width: 10),
+                      Text('Aucun cours configuré.',
+                          style: TextStyle(fontSize: 13, color: TdTheme.textSecondary)),
+                    ],
+                  ),
+                )
+              else
+                ...courses.take(4).map((course) {
+                  final title = (course['title'] ?? '').toString();
+                  final category = (course['category'] ?? '').toString();
+                  final level = (course['level'] ?? '').toString();
+                  final isPublished = course['is_published'] == true;
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(14),
+                    decoration: TdTheme.cardDecoration(),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: (isPublished ? TdTheme.success : TdTheme.warning)
+                                .withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            isPublished ? Icons.check_circle : Icons.edit_note,
+                            color: isPublished ? TdTheme.success : TdTheme.warning,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(title,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600, fontSize: 13)),
+                              if (category.isNotEmpty || level.isNotEmpty)
+                                Text(
+                                  [if (category.isNotEmpty) category, if (level.isNotEmpty) level]
+                                      .join(' \u2022 '),
+                                  style: const TextStyle(
+                                      fontSize: 11, color: TdTheme.textSecondary),
+                                ),
+                            ],
+                          ),
+                        ),
+                        TdTheme.statusBadge(
+                          isPublished ? 'Publié' : 'Brouillon',
+                          isPublished ? TdTheme.success : TdTheme.warning,
+                        ),
+                      ],
+                    ),
+                  );
+                }),
             ],
           ),
         );

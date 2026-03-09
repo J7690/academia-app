@@ -36,6 +36,8 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   final TextEditingController _timezoneController = TextEditingController();
   final TextEditingController _geoLatController = TextEditingController();
   final TextEditingController _geoLonController = TextEditingController();
+  final TextEditingController _bioController = TextEditingController();
+  final TextEditingController _websiteUrlController = TextEditingController();
 
   bool _initializedFromProfile = false;
 
@@ -67,6 +69,8 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     _timezoneController.dispose();
     _geoLatController.dispose();
     _geoLonController.dispose();
+    _bioController.dispose();
+    _websiteUrlController.dispose();
     super.dispose();
   }
 
@@ -121,6 +125,8 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 profile['bac_country']?.toString() ?? '';
             _studyProjectController.text =
                 profile['study_project_text']?.toString() ?? '';
+            _bioController.text = profile['bio']?.toString() ?? '';
+            _websiteUrlController.text = profile['website_url']?.toString() ?? '';
             _timezoneController.text = profile['timezone']?.toString() ?? '';
             final geoLat = profile['geo_latitude'];
             if (geoLat != null) {
@@ -165,6 +171,27 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                     labelText: 'Nom complet',
                     border: OutlineInputBorder(),
                   ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _bioController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Bio (visible sur votre profil public)',
+                    hintText: 'Décrivez-vous en quelques mots...',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _websiteUrlController,
+                  decoration: const InputDecoration(
+                    labelText: 'Site web / lien',
+                    hintText: 'https://...',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.link),
+                  ),
+                  keyboardType: TextInputType.url,
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -408,6 +435,8 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                           final timezoneText = _timezoneController.text.trim();
                           final geoLatText = _geoLatController.text.trim();
                           final geoLonText = _geoLonController.text.trim();
+                          final bioText = _bioController.text.trim();
+                          final websiteUrlText = _websiteUrlController.text.trim();
 
                           final success = await provider.updateProfile(
                             fullName: fullName.isEmpty ? null : fullName,
@@ -452,6 +481,8 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                                 : double.tryParse(
                                     geoLonText.replaceAll(',', '.'),
                                   ),
+                            bio: bioText.isEmpty ? null : bioText,
+                            websiteUrl: websiteUrlText.isEmpty ? null : websiteUrlText,
                           );
 
                           if (!mounted) return;

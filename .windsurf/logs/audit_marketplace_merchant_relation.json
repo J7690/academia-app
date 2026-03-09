@@ -1,0 +1,130 @@
+{
+  "LISTINGS_MERCHANT_COL": {
+    "ok": true,
+    "http": 200,
+    "mode": "select",
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "merchant_id"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "FOREIGN_KEYS_ON_MERCHANT_ID": {
+    "ok": true,
+    "http": 200,
+    "mode": "select",
+    "rows": [],
+    "error": null,
+    "sqlstate": null
+  },
+  "CANDIDATE_MERCHANT_TABLES": {
+    "ok": true,
+    "http": 200,
+    "mode": "select",
+    "rows": [
+      {
+        "table_name": "marketplace_merchants",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "merchant_profiles",
+        "table_schema": "app"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "PUBLIC_ROUTINES_MERCHANT": {
+    "ok": true,
+    "http": 200,
+    "mode": "select",
+    "rows": [
+      {
+        "routine_name": "app_admin_list_marketplace_merchants"
+      },
+      {
+        "routine_name": "app_admin_set_merchant_verification"
+      },
+      {
+        "routine_name": "app_admin_update_marketplace_merchant_status"
+      },
+      {
+        "routine_name": "app_get_public_merchant_profile"
+      },
+      {
+        "routine_name": "app_list_marketplace_merchants"
+      },
+      {
+        "routine_name": "app_list_marketplace_products_by_merchant"
+      },
+      {
+        "routine_name": "app_merchant_add_marketplace_listing_media"
+      },
+      {
+        "routine_name": "app_merchant_disable_marketplace_listing_media"
+      },
+      {
+        "routine_name": "app_merchant_get_dashboard"
+      },
+      {
+        "routine_name": "app_merchant_get_marketplace_order_detail"
+      },
+      {
+        "routine_name": "app_merchant_list_inquiries"
+      },
+      {
+        "routine_name": "app_merchant_list_marketplace_listing_media"
+      },
+      {
+        "routine_name": "app_merchant_list_my_marketplace_listings"
+      },
+      {
+        "routine_name": "app_merchant_list_my_marketplace_orders"
+      },
+      {
+        "routine_name": "app_merchant_list_my_opportunities"
+      },
+      {
+        "routine_name": "app_merchant_list_orders"
+      },
+      {
+        "routine_name": "app_merchant_list_products"
+      },
+      {
+        "routine_name": "app_merchant_reply_inquiry"
+      },
+      {
+        "routine_name": "app_merchant_submit_marketplace_listing_for_review"
+      },
+      {
+        "routine_name": "app_merchant_submit_opportunity_for_review"
+      },
+      {
+        "routine_name": "app_merchant_update_marketplace_order_status"
+      },
+      {
+        "routine_name": "app_merchant_update_order_status"
+      },
+      {
+        "routine_name": "app_merchant_upsert_marketplace_listing"
+      },
+      {
+        "routine_name": "app_merchant_upsert_opportunity"
+      },
+      {
+        "routine_name": "app_merchant_upsert_product"
+      },
+      {
+        "routine_name": "app_merchant_upsert_profile"
+      },
+      {
+        "routine_name": "app_merchant_upsert_profile"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  }
+}

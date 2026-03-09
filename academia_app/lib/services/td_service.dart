@@ -476,4 +476,642 @@ class TdService {
         .map((e) => Map<String, dynamic>.from(e as Map))
         .toList(growable: false);
   }
+
+  // ═══════════════════════════════════════════════════════════════
+  // PREP CONCOURS — Quiz, Flashcards, AI, Progress, Admin
+  // ═══════════════════════════════════════════════════════════════
+
+  // ─── Questions ─────────────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> prepListQuestions({
+    String? bankId,
+    String? concoursType,
+    String? subject,
+    int? difficulty,
+    int limit = 20,
+  }) async {
+    final resp = await _client.rpc('app_prep_list_questions', params: {
+      if (bankId != null) 'p_bank_id': bankId,
+      if (concoursType != null) 'p_concours_type': concoursType,
+      if (subject != null) 'p_subject': subject,
+      if (difficulty != null) 'p_difficulty': difficulty,
+      'p_limit': limit,
+    });
+    return _jsonbToList(resp);
+  }
+
+  Future<List<Map<String, dynamic>>> prepListQuestionBanks({
+    String? concoursType,
+    String? subject,
+  }) async {
+    final resp = await _client.rpc('app_prep_list_question_banks', params: {
+      if (concoursType != null) 'p_concours_type': concoursType,
+      if (subject != null) 'p_subject': subject,
+    });
+    return _jsonbToList(resp);
+  }
+
+  Future<Map<String, dynamic>> prepCreateQuestionBank({
+    required String title,
+    String? description,
+    String? concoursType,
+    String? subject,
+  }) async {
+    final resp = await _client.rpc('app_prep_create_question_bank', params: {
+      'p_title': title,
+      if (description != null) 'p_description': description,
+      if (concoursType != null) 'p_concours_type': concoursType,
+      if (subject != null) 'p_subject': subject,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  Future<Map<String, dynamic>> prepCreateQuestion({
+    required String bankId,
+    required String content,
+    required List<String> options,
+    required int correctIndex,
+    String? explanation,
+    int difficulty = 1,
+    String? subject,
+    List<String> tags = const [],
+    String questionType = 'qcm',
+    int points = 10,
+    int timeLimitSeconds = 60,
+  }) async {
+    final resp = await _client.rpc('app_prep_create_question', params: {
+      'p_bank_id': bankId,
+      'p_content': content,
+      'p_options': options,
+      'p_correct_index': correctIndex,
+      if (explanation != null) 'p_explanation': explanation,
+      'p_difficulty': difficulty,
+      if (subject != null) 'p_subject': subject,
+      'p_tags': tags,
+      'p_question_type': questionType,
+      'p_points': points,
+      'p_time_limit_seconds': timeLimitSeconds,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  // ─── Quiz Attempts ─────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> prepSaveQuizAttempt({
+    String? templateId,
+    required List<Map<String, dynamic>> questionsJson,
+    required List<Map<String, dynamic>> answersJson,
+    required double score,
+    required int totalPoints,
+    required int correctCount,
+    required int questionCount,
+    int timeSpentSeconds = 0,
+    String status = 'completed',
+  }) async {
+    final resp = await _client.rpc('app_prep_save_quiz_attempt', params: {
+      if (templateId != null) 'p_template_id': templateId,
+      'p_questions_json': questionsJson,
+      'p_answers_json': answersJson,
+      'p_score': score,
+      'p_total_points': totalPoints,
+      'p_correct_count': correctCount,
+      'p_question_count': questionCount,
+      'p_time_spent_seconds': timeSpentSeconds,
+      'p_status': status,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  // ─── Progress ──────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> prepGetStudentProgress() async {
+    final resp = await _client.rpc('app_prep_get_student_progress');
+    return _jsonbToMap(resp);
+  }
+
+  Future<List<Map<String, dynamic>>> prepGetSubjectStats() async {
+    final resp = await _client.rpc('app_prep_get_subject_stats');
+    return _jsonbToList(resp);
+  }
+
+  Future<List<Map<String, dynamic>>> prepGetLeaderboard({int limit = 20}) async {
+    final resp = await _client.rpc('app_prep_get_leaderboard', params: {
+      'p_limit': limit,
+    });
+    return _jsonbToList(resp);
+  }
+
+  // ─── Flashcards ────────────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> prepListFlashcardDecks({
+    String? subject,
+    String? concoursType,
+  }) async {
+    final resp = await _client.rpc('app_prep_list_flashcard_decks', params: {
+      if (subject != null) 'p_subject': subject,
+      if (concoursType != null) 'p_concours_type': concoursType,
+    });
+    return _jsonbToList(resp);
+  }
+
+  Future<List<Map<String, dynamic>>> prepListFlashcards(String deckId) async {
+    final resp = await _client.rpc('app_prep_list_flashcards', params: {
+      'p_deck_id': deckId,
+    });
+    return _jsonbToList(resp);
+  }
+
+  Future<Map<String, dynamic>> prepSaveFlashcardReview({
+    required String flashcardId,
+    required int quality,
+    double easeFactor = 2.5,
+    int intervalDays = 1,
+    int repetitions = 0,
+  }) async {
+    final resp = await _client.rpc('app_prep_save_flashcard_review', params: {
+      'p_flashcard_id': flashcardId,
+      'p_quality': quality,
+      'p_ease_factor': easeFactor,
+      'p_interval_days': intervalDays,
+      'p_repetitions': repetitions,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  Future<Map<String, dynamic>> prepCreateFlashcardDeck({
+    required String title,
+    String? description,
+    String? subject,
+    String? concoursType,
+  }) async {
+    final resp = await _client.rpc('app_prep_create_flashcard_deck', params: {
+      'p_title': title,
+      if (description != null) 'p_description': description,
+      if (subject != null) 'p_subject': subject,
+      if (concoursType != null) 'p_concours_type': concoursType,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  Future<Map<String, dynamic>> prepCreateFlashcard({
+    required String deckId,
+    required String frontText,
+    required String backText,
+    String? subject,
+    List<String> tags = const [],
+  }) async {
+    final resp = await _client.rpc('app_prep_create_flashcard', params: {
+      'p_deck_id': deckId,
+      'p_front_text': frontText,
+      'p_back_text': backText,
+      if (subject != null) 'p_subject': subject,
+      'p_tags': tags,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  // ─── Exam Papers ───────────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> prepListExamPapers({
+    String? concoursType,
+    String? year,
+    String? subject,
+  }) async {
+    final resp = await _client.rpc('app_prep_list_exam_papers', params: {
+      if (concoursType != null) 'p_concours_type': concoursType,
+      if (year != null) 'p_year': year,
+      if (subject != null) 'p_subject': subject,
+    });
+    return _jsonbToList(resp);
+  }
+
+  Future<Map<String, dynamic>> prepCreateExamPaper({
+    required String title,
+    required String concoursType,
+    String? year,
+    String? subject,
+    String? paperUrl,
+    String? correctionUrl,
+    int difficulty = 1,
+    bool isOfficial = false,
+    bool hasCorrection = false,
+  }) async {
+    final resp = await _client.rpc('app_prep_create_exam_paper', params: {
+      'p_title': title,
+      'p_concours_type': concoursType,
+      if (year != null) 'p_year': year,
+      if (subject != null) 'p_subject': subject,
+      if (paperUrl != null) 'p_paper_url': paperUrl,
+      if (correctionUrl != null) 'p_correction_url': correctionUrl,
+      'p_difficulty': difficulty,
+      'p_is_official': isOfficial,
+      'p_has_correction': hasCorrection,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  // ─── AI Tutor ──────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> prepCreateAiConversation({
+    String? title,
+    String? subject,
+  }) async {
+    final resp = await _client.rpc('app_prep_create_ai_conversation', params: {
+      if (title != null) 'p_title': title,
+      if (subject != null) 'p_subject': subject,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  Future<Map<String, dynamic>> prepSaveAiMessage({
+    required String conversationId,
+    required String role,
+    required String content,
+    int tokensUsed = 0,
+  }) async {
+    final resp = await _client.rpc('app_prep_save_ai_message', params: {
+      'p_conversation_id': conversationId,
+      'p_role': role,
+      'p_content': content,
+      'p_tokens_used': tokensUsed,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  Future<List<Map<String, dynamic>>> prepListAiConversations() async {
+    final resp = await _client.rpc('app_prep_list_ai_conversations');
+    return _jsonbToList(resp);
+  }
+
+  Future<List<Map<String, dynamic>>> prepListAiMessages(String conversationId) async {
+    final resp = await _client.rpc('app_prep_list_ai_messages', params: {
+      'p_conversation_id': conversationId,
+    });
+    return _jsonbToList(resp);
+  }
+
+  Future<Map<String, dynamic>> prepGetAiConfig() async {
+    final resp = await _client.rpc('app_prep_get_ai_config');
+    return _jsonbToMap(resp);
+  }
+
+  // ─── Quiz Templates ────────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> prepListQuizTemplates({
+    String? concoursType,
+    String? subject,
+  }) async {
+    final resp = await _client.rpc('app_prep_list_quiz_templates', params: {
+      if (concoursType != null) 'p_concours_type': concoursType,
+      if (subject != null) 'p_subject': subject,
+    });
+    return _jsonbToList(resp);
+  }
+
+  Future<Map<String, dynamic>> prepCreateQuizTemplate({
+    required String title,
+    String? bankId,
+    String? concoursType,
+    String? subject,
+    int questionCount = 10,
+    int? timeLimitMinutes,
+    bool shuffle = true,
+    bool isExamMode = false,
+    int passingScore = 60,
+    String? description,
+  }) async {
+    final resp = await _client.rpc('app_prep_create_quiz_template', params: {
+      'p_title': title,
+      if (bankId != null) 'p_bank_id': bankId,
+      if (concoursType != null) 'p_concours_type': concoursType,
+      if (subject != null) 'p_subject': subject,
+      'p_question_count': questionCount,
+      if (timeLimitMinutes != null) 'p_time_limit_minutes': timeLimitMinutes,
+      'p_shuffle': shuffle,
+      'p_is_exam_mode': isExamMode,
+      'p_passing_score': passingScore,
+      if (description != null) 'p_description': description,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  // ─── Admin ─────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> prepAdminGetStats() async {
+    final resp = await _client.rpc('app_prep_admin_get_stats');
+    return _jsonbToMap(resp);
+  }
+
+  Future<List<Map<String, dynamic>>> prepAdminListQuestions({
+    String? bankId,
+    String? subject,
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final resp = await _client.rpc('app_prep_admin_list_questions', params: {
+      if (bankId != null) 'p_bank_id': bankId,
+      if (subject != null) 'p_subject': subject,
+      'p_limit': limit,
+      'p_offset': offset,
+    });
+    return _jsonbToList(resp);
+  }
+
+  Future<Map<String, dynamic>> prepAdminToggleQuestion(String questionId, bool isActive) async {
+    final resp = await _client.rpc('app_prep_admin_toggle_question', params: {
+      'p_question_id': questionId,
+      'p_is_active': isActive,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  Future<List<Map<String, dynamic>>> prepAdminListAiConversations({int limit = 50}) async {
+    final resp = await _client.rpc('app_prep_admin_list_ai_conversations', params: {
+      'p_limit': limit,
+    });
+    return _jsonbToList(resp);
+  }
+
+  Future<Map<String, dynamic>> prepUpdateAiConfig(String key, String value) async {
+    final resp = await _client.rpc('app_prep_update_ai_config', params: {
+      'p_key': key,
+      'p_value': value,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  Future<Map<String, dynamic>> prepAdminUpsertBadge({
+    required String code,
+    required String title,
+    String? description,
+    String? emoji,
+    int xpReward = 0,
+    String? conditionType,
+    int conditionValue = 0,
+  }) async {
+    final resp = await _client.rpc('app_prep_admin_upsert_badge', params: {
+      'p_code': code,
+      'p_title': title,
+      if (description != null) 'p_description': description,
+      if (emoji != null) 'p_emoji': emoji,
+      'p_xp_reward': xpReward,
+      if (conditionType != null) 'p_condition_type': conditionType,
+      'p_condition_value': conditionValue,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // TD Gamification RPCs — Student
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Dashboard home data (streak, daily goal, XP, next session)
+  Future<Map<String, dynamic>> tdStudentGetHome() async {
+    final resp = await _client.rpc('app_td_student_get_home');
+    return _jsonbToMap(resp);
+  }
+
+  /// Catalog: list programs with enriched data, filters, sort
+  Future<Map<String, dynamic>> tdStudentListCatalog({
+    String? fieldId,
+    String? level,
+    String? modality,
+    String? search,
+    String sort = 'popular',
+  }) async {
+    final resp = await _client.rpc('app_td_student_list_catalog', params: {
+      if (fieldId != null) 'p_field_id': fieldId,
+      if (level != null) 'p_level': level,
+      if (modality != null) 'p_modality': modality,
+      if (search != null && search.isNotEmpty) 'p_search': search,
+      'p_sort': sort,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  /// List fields/disciplines with colors
+  Future<Map<String, dynamic>> tdStudentListFields() async {
+    final resp = await _client.rpc('app_td_student_list_fields');
+    return _jsonbToMap(resp);
+  }
+
+  /// Record XP gain + update streak
+  Future<Map<String, dynamic>> tdStudentEarnXp({
+    required int amount,
+    required String reason,
+    String? refType,
+    String? refId,
+  }) async {
+    final resp = await _client.rpc('app_td_student_earn_xp', params: {
+      'p_amount': amount,
+      'p_reason': reason,
+      if (refType != null) 'p_ref_type': refType,
+      if (refId != null) 'p_ref_id': refId,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  /// List resources for a program/enrollment
+  Future<Map<String, dynamic>> tdStudentListResources({
+    String? programId,
+    String? enrollmentId,
+  }) async {
+    final resp = await _client.rpc('app_td_student_list_resources', params: {
+      if (programId != null) 'p_program_id': programId,
+      if (enrollmentId != null) 'p_enrollment_id': enrollmentId,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  /// Update resource progress (status, pct, bookmark, time)
+  Future<Map<String, dynamic>> tdStudentUpdateResourceProgress({
+    required String resourceId,
+    String? status,
+    int? progressPct,
+    String? lastPosition,
+    int timeSpentSeconds = 0,
+  }) async {
+    final resp = await _client.rpc('app_td_student_update_resource_progress', params: {
+      'p_resource_id': resourceId,
+      if (status != null) 'p_status': status,
+      if (progressPct != null) 'p_progress_pct': progressPct,
+      if (lastPosition != null) 'p_last_position': lastPosition,
+      'p_time_spent_seconds': timeSpentSeconds,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  /// Get weekly leaderboard
+  Future<Map<String, dynamic>> tdStudentGetLeaderboard({
+    String? programId,
+    int limit = 20,
+  }) async {
+    final resp = await _client.rpc('app_td_student_get_leaderboard', params: {
+      if (programId != null) 'p_program_id': programId,
+      'p_limit': limit,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  /// Get stats & badges
+  Future<Map<String, dynamic>> tdStudentGetStats() async {
+    final resp = await _client.rpc('app_td_student_get_stats');
+    return _jsonbToMap(resp);
+  }
+
+  /// Get my enrollments with progress
+  Future<Map<String, dynamic>> tdStudentGetMyEnrollments() async {
+    final resp = await _client.rpc('app_td_student_get_my_enrollments');
+    return _jsonbToMap(resp);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // TD Gamification RPCs — Teacher
+  // ═══════════════════════════════════════════════════════════════
+
+  /// List students with progress for teacher's enrollments
+  Future<Map<String, dynamic>> tdTeacherListStudents() async {
+    final resp = await _client.rpc('app_td_teacher_list_students');
+    return _jsonbToMap(resp);
+  }
+
+  /// Add a resource to a program
+  Future<Map<String, dynamic>> tdTeacherAddResource({
+    required String programId,
+    required String title,
+    required String kind,
+    required String url,
+    String? description,
+    bool isRequired = false,
+    int position = 0,
+    String? thumbnailUrl,
+    int? durationSeconds,
+    int? fileSizeBytes,
+  }) async {
+    final resp = await _client.rpc('app_td_teacher_add_resource', params: {
+      'p_program_id': programId,
+      'p_title': title,
+      'p_kind': kind,
+      'p_url': url,
+      if (description != null) 'p_description': description,
+      'p_is_required': isRequired,
+      'p_position': position,
+      if (thumbnailUrl != null) 'p_thumbnail_url': thumbnailUrl,
+      if (durationSeconds != null) 'p_duration_seconds': durationSeconds,
+      if (fileSizeBytes != null) 'p_file_size_bytes': fileSizeBytes,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  /// List resources for a program (teacher view)
+  Future<Map<String, dynamic>> tdTeacherListResources(String programId) async {
+    final resp = await _client.rpc('app_td_teacher_list_resources', params: {
+      'p_program_id': programId,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  /// Delete a resource
+  Future<Map<String, dynamic>> tdTeacherDeleteResource(String resourceId) async {
+    final resp = await _client.rpc('app_td_teacher_delete_resource', params: {
+      'p_resource_id': resourceId,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // TD Gamification RPCs — Admin
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Admin analytics dashboard
+  Future<Map<String, dynamic>> tdAdminGetAnalytics() async {
+    final resp = await _client.rpc('app_td_admin_get_analytics');
+    return _jsonbToMap(resp);
+  }
+
+  /// Upsert a badge
+  Future<Map<String, dynamic>> tdAdminUpsertBadge({
+    required String code,
+    required String title,
+    String? description,
+    String? emoji,
+    int xpReward = 0,
+    String? conditionType,
+    int conditionValue = 0,
+    bool isActive = true,
+  }) async {
+    final resp = await _client.rpc('app_td_admin_upsert_badge', params: {
+      'p_code': code,
+      'p_title': title,
+      if (description != null) 'p_description': description,
+      if (emoji != null) 'p_emoji': emoji,
+      'p_xp_reward': xpReward,
+      if (conditionType != null) 'p_condition_type': conditionType,
+      'p_condition_value': conditionValue,
+      'p_is_active': isActive,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  /// Upsert discipline color
+  Future<Map<String, dynamic>> tdAdminUpsertDisciplineColor({
+    required String fieldName,
+    required String colorHex,
+    required String gradientStart,
+    required String gradientEnd,
+    String iconName = 'school',
+    String? fieldId,
+  }) async {
+    final resp = await _client.rpc('app_td_admin_upsert_discipline_color', params: {
+      'p_field_name': fieldName,
+      'p_color_hex': colorHex,
+      'p_gradient_start': gradientStart,
+      'p_gradient_end': gradientEnd,
+      'p_icon_name': iconName,
+      if (fieldId != null) 'p_field_id': fieldId,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  /// Grant XP to a student manually
+  Future<Map<String, dynamic>> tdAdminGrantXp({
+    required String studentId,
+    required int amount,
+    String reason = 'admin_grant',
+  }) async {
+    final resp = await _client.rpc('app_td_admin_grant_xp', params: {
+      'p_student_id': studentId,
+      'p_amount': amount,
+      'p_reason': reason,
+    });
+    return _jsonbToMap(resp);
+  }
+
+  /// List all badges (admin view with earned_count)
+  Future<Map<String, dynamic>> tdAdminListBadges() async {
+    final resp = await _client.rpc('app_td_admin_list_badges');
+    return _jsonbToMap(resp);
+  }
+
+  // ─── Helpers ───────────────────────────────────────────────────
+
+  List<Map<String, dynamic>> _jsonbToList(dynamic resp) {
+    if (resp is List) {
+      return resp
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(growable: false);
+    }
+    // JSONB returned as single value
+    if (resp is Map) {
+      final data = resp as Map<String, dynamic>;
+      return [data];
+    }
+    return [];
+  }
+
+  Map<String, dynamic> _jsonbToMap(dynamic resp) {
+    if (resp is Map) return Map<String, dynamic>.from(resp);
+    return {};
+  }
 }

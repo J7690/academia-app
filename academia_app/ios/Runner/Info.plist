@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Nous avons besoin d’accéder à votre photothèque pour enregistrer des vidéos téléchargées.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Nous avons besoin d’enregistrer des vidéos téléchargées dans votre photothèque.</string>
 </dict>
 </plist>

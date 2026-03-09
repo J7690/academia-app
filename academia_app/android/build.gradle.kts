@@ -11,6 +11,10 @@ val newBuildDir: Directory =
         .get()
 rootProject.layout.buildDirectory.value(newBuildDir)
 
+extra["compileSdkVersion"] = 36
+extra["targetSdkVersion"] = 35
+extra["minSdkVersion"] = 21
+
 subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)

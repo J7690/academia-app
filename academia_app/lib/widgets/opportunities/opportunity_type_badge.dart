@@ -22,12 +22,8 @@ class OpportunityTypeBadge extends StatelessWidget {
         vertical: compact ? 4 : 6,
       ),
       decoration: BoxDecoration(
-        color: config.color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(compact ? 8 : 12),
-        border: Border.all(
-          color: config.color.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        color: config.color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -39,11 +35,12 @@ class OpportunityTypeBadge extends StatelessWidget {
           ),
           SizedBox(width: compact ? 4 : 6),
           Text(
-            config.label,
+            config.label.toUpperCase(),
             style: TextStyle(
-              fontSize: compact ? 10 : 12,
-              fontWeight: FontWeight.w600,
+              fontSize: compact ? 10 : 11,
+              fontWeight: FontWeight.w700,
               color: config.color,
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -56,25 +53,25 @@ class OpportunityTypeBadge extends StatelessWidget {
       case 'job':
         return _TypeConfig(
           label: 'Emploi / Stage',
-          color: const Color(0xFF3275D0),
+          color: const Color(0xFF2196F3),
           icon: Icons.work_outline,
         );
       case 'service':
         return _TypeConfig(
           label: 'Service',
-          color: const Color(0xFF1B8F5A),
+          color: const Color(0xFF66BB6A),
           icon: Icons.handshake_outlined,
         );
       case 'product':
         return _TypeConfig(
           label: 'Bien',
-          color: const Color(0xFFF6A623),
+          color: const Color(0xFFFFB74D),
           icon: Icons.shopping_bag_outlined,
         );
       default:
         return _TypeConfig(
           label: type,
-          color: const Color(0xFF6B7280),
+          color: const Color(0xFF9E9E9E),
           icon: Icons.category_outlined,
         );
     }

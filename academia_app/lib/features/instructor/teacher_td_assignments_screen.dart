@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/teacher_td_assignments_provider.dart';
 import '../../providers/td_messages_provider.dart';
+import '../../theme/td_theme.dart';
 
 class TeacherTdAssignmentsScreen extends StatefulWidget {
   const TeacherTdAssignmentsScreen({super.key});
@@ -48,9 +49,7 @@ class _TeacherTdAssignmentsScreenState extends State<TeacherTdAssignmentsScreen>
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mes missions TD'),
-      ),
+      backgroundColor: TdTheme.scaffoldBg,
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -115,45 +114,52 @@ class _TeacherTdAssignmentsScreenState extends State<TeacherTdAssignmentsScreen>
           'Dès qu\'un admin programme une séance, elle apparaîtra dans ton planning.';
     }
 
-    return Card(
-      elevation: 1,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Tu as $assignmentsCount mission(s) TD assignée(s).',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    upcomingSessionsCount > 0
-                        ? '$upcomingSessionsCount séance(s) à venir.'
-                        : 'Aucune séance planifiée pour le moment.',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    nextLabel,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF4B5563),
-                    ),
-                  ),
-                ],
-              ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: TdTheme.instructorGradient),
+        borderRadius: BorderRadius.circular(TdTheme.radiusLg),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
             ),
-          ],
-        ),
+            child: const Icon(Icons.assignment, color: Colors.white, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$assignmentsCount mission(s) TD',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  upcomingSessionsCount > 0
+                      ? '$upcomingSessionsCount séance(s) à venir'
+                      : 'Aucune séance planifiée',
+                  style: const TextStyle(fontSize: 12, color: Colors.white70),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  nextLabel,
+                  style: const TextStyle(fontSize: 11, color: Colors.white60),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -183,18 +189,7 @@ class _TeacherTdAssignmentsScreenState extends State<TeacherTdAssignmentsScreen>
           final accessScope = a['access_scope']?.toString() ?? '';
           final accessStatus = a['access_status']?.toString() ?? '';
 
-          Color statusColor;
-          if (accessStatus == 'pending_payment') {
-            statusColor = Colors.orange;
-          } else if (accessStatus == 'waiting_admin') {
-            statusColor = Colors.blue;
-          } else if (accessStatus == 'active') {
-            statusColor = Colors.green;
-          } else if (accessStatus == 'completed') {
-            statusColor = Colors.grey;
-          } else {
-            statusColor = Colors.grey;
-          }
+          final (statusLabel, statusColor) = TdTheme.accessStatusInfo(accessStatus);
 
           final isSelected = _selectedEnrollmentId == enrollmentId;
 
@@ -219,6 +214,16 @@ class _TeacherTdAssignmentsScreenState extends State<TeacherTdAssignmentsScreen>
                 children: [
                   Row(
                     children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: statusColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(Icons.menu_book, color: statusColor, size: 18),
+                      ),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           programTitle,
@@ -229,13 +234,7 @@ class _TeacherTdAssignmentsScreenState extends State<TeacherTdAssignmentsScreen>
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Chip(
-                        label: Text(
-                          accessStatus,
-                          style: const TextStyle(color: Colors.white, fontSize: 11),
-                        ),
-                        backgroundColor: statusColor,
-                      ),
+                      TdTheme.statusBadge(statusLabel, statusColor),
                     ],
                   ),
                   const SizedBox(height: 4),

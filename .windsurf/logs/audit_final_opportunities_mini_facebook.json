@@ -1,0 +1,473 @@
+{
+  "ALL_OPPORTUNITY_TABLES": {
+    "label": "ALL_OPPORTUNITY_TABLES",
+    "http": 200,
+    "ok": true,
+    "rows_count": 7,
+    "rows": [
+      {
+        "table_name": "opportunities"
+      },
+      {
+        "table_name": "opportunity_applications"
+      },
+      {
+        "table_name": "opportunity_bookmarks"
+      },
+      {
+        "table_name": "opportunity_comments"
+      },
+      {
+        "table_name": "opportunity_reactions"
+      },
+      {
+        "table_name": "opportunity_types"
+      },
+      {
+        "table_name": "opportunity_views"
+      }
+    ],
+    "error": null
+  },
+  "OPPORTUNITY_TYPES": {
+    "label": "OPPORTUNITY_TYPES",
+    "http": 200,
+    "ok": true,
+    "rows_count": 4,
+    "rows": [
+      {
+        "code": "Cours",
+        "label": "Cours d'appui",
+        "is_active": true,
+        "sort_order": 0
+      },
+      {
+        "code": "job",
+        "label": "Emploi / Stage",
+        "is_active": true,
+        "sort_order": 1
+      },
+      {
+        "code": "service",
+        "label": "Service",
+        "is_active": true,
+        "sort_order": 2
+      },
+      {
+        "code": "product",
+        "label": "Bien à vendre",
+        "is_active": true,
+        "sort_order": 3
+      }
+    ],
+    "error": null
+  },
+  "OPPORTUNITIES_COLUMNS": {
+    "label": "OPPORTUNITIES_COLUMNS",
+    "http": 200,
+    "ok": true,
+    "rows_count": 24,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id"
+      },
+      {
+        "data_type": "text",
+        "column_name": "title"
+      },
+      {
+        "data_type": "text",
+        "column_name": "short_description"
+      },
+      {
+        "data_type": "text",
+        "column_name": "description"
+      },
+      {
+        "data_type": "text",
+        "column_name": "type"
+      },
+      {
+        "data_type": "text",
+        "column_name": "category"
+      },
+      {
+        "data_type": "text",
+        "column_name": "organization_name"
+      },
+      {
+        "data_type": "text",
+        "column_name": "organization_logo_url"
+      },
+      {
+        "data_type": "text",
+        "column_name": "country"
+      },
+      {
+        "data_type": "text",
+        "column_name": "city"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_remote_possible"
+      },
+      {
+        "data_type": "text",
+        "column_name": "contract_type"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "duration_months"
+      },
+      {
+        "data_type": "date",
+        "column_name": "start_date"
+      },
+      {
+        "data_type": "date",
+        "column_name": "application_deadline"
+      },
+      {
+        "data_type": "text",
+        "column_name": "status"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_featured"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "created_by_user_id"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at"
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "price"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "reactions_count"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "comments_count"
+      }
+    ],
+    "error": null
+  },
+  "APPLICATIONS_COLUMNS": {
+    "label": "APPLICATIONS_COLUMNS",
+    "http": 200,
+    "ok": true,
+    "rows_count": 12,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "opportunity_id"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "student_id"
+      },
+      {
+        "data_type": "text",
+        "column_name": "message"
+      },
+      {
+        "data_type": "text",
+        "column_name": "cv_url"
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "extra_data"
+      },
+      {
+        "data_type": "text",
+        "column_name": "status"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at"
+      },
+      {
+        "data_type": "text",
+        "column_name": "admin_notes"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "reviewed_at"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "reviewed_by"
+      }
+    ],
+    "error": null
+  },
+  "REACTIONS_COLUMNS": {
+    "label": "REACTIONS_COLUMNS",
+    "http": 200,
+    "ok": true,
+    "rows_count": 5,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "opportunity_id"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "user_id"
+      },
+      {
+        "data_type": "text",
+        "column_name": "reaction_type"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at"
+      }
+    ],
+    "error": null
+  },
+  "COMMENTS_COLUMNS": {
+    "label": "COMMENTS_COLUMNS",
+    "http": 200,
+    "ok": true,
+    "rows_count": 5,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "opportunity_id"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "user_id"
+      },
+      {
+        "data_type": "text",
+        "column_name": "content"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at"
+      }
+    ],
+    "error": null
+  },
+  "VIEWS_COLUMNS": {
+    "label": "VIEWS_COLUMNS",
+    "http": 200,
+    "ok": true,
+    "rows_count": 3,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "user_id"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "last_viewed_at"
+      }
+    ],
+    "error": null
+  },
+  "ALL_OPPORTUNITY_RPCS": {
+    "label": "ALL_OPPORTUNITY_RPCS",
+    "http": 200,
+    "ok": true,
+    "rows_count": 26,
+    "rows": [
+      {
+        "routine_name": "app_admin_list_opportunities"
+      },
+      {
+        "routine_name": "app_admin_list_opportunity_applications"
+      },
+      {
+        "routine_name": "app_admin_list_opportunity_types"
+      },
+      {
+        "routine_name": "app_admin_update_opportunity_status"
+      },
+      {
+        "routine_name": "app_admin_upsert_opportunity"
+      },
+      {
+        "routine_name": "app_admin_upsert_opportunity_type"
+      },
+      {
+        "routine_name": "app_list_opportunity_types"
+      },
+      {
+        "routine_name": "app_notify_admin_opportunity_application"
+      },
+      {
+        "routine_name": "app_notify_opportunity_change"
+      },
+      {
+        "routine_name": "app_notify_opportunity_comment"
+      },
+      {
+        "routine_name": "app_notify_opportunity_to_students"
+      },
+      {
+        "routine_name": "app_opportunity_add_comment"
+      },
+      {
+        "routine_name": "app_opportunity_count_new"
+      },
+      {
+        "routine_name": "app_opportunity_delete_comment"
+      },
+      {
+        "routine_name": "app_opportunity_get_my_reaction"
+      },
+      {
+        "routine_name": "app_opportunity_get_reactions"
+      },
+      {
+        "routine_name": "app_opportunity_list_comments"
+      },
+      {
+        "routine_name": "app_opportunity_mark_viewed"
+      },
+      {
+        "routine_name": "app_opportunity_toggle_bookmark"
+      },
+      {
+        "routine_name": "app_opportunity_toggle_reaction"
+      },
+      {
+        "routine_name": "app_student_apply_for_opportunity"
+      },
+      {
+        "routine_name": "app_student_get_opportunity_detail"
+      },
+      {
+        "routine_name": "app_student_list_bookmarked_opportunities"
+      },
+      {
+        "routine_name": "app_student_list_my_opportunity_applications"
+      },
+      {
+        "routine_name": "app_student_list_opportunities"
+      },
+      {
+        "routine_name": "app_student_list_opportunities"
+      }
+    ],
+    "error": null
+  },
+  "ALL_OPPORTUNITY_POLICIES": {
+    "label": "ALL_OPPORTUNITY_POLICIES",
+    "http": 200,
+    "ok": true,
+    "rows_count": 11,
+    "rows": [
+      {
+        "cmd": "SELECT",
+        "tablename": "opportunities",
+        "policyname": "public_select_published_opportunities"
+      },
+      {
+        "cmd": "INSERT",
+        "tablename": "opportunity_applications",
+        "policyname": "student_insert_own_opportunity_applications"
+      },
+      {
+        "cmd": "SELECT",
+        "tablename": "opportunity_applications",
+        "policyname": "student_select_own_opportunity_applications"
+      },
+      {
+        "cmd": "ALL",
+        "tablename": "opportunity_bookmarks",
+        "policyname": "user_manage_own_opportunity_bookmarks"
+      },
+      {
+        "cmd": "INSERT",
+        "tablename": "opportunity_comments",
+        "policyname": "authenticated_insert_comments"
+      },
+      {
+        "cmd": "SELECT",
+        "tablename": "opportunity_comments",
+        "policyname": "public_select_opportunity_comments"
+      },
+      {
+        "cmd": "DELETE",
+        "tablename": "opportunity_comments",
+        "policyname": "user_delete_own_comments"
+      },
+      {
+        "cmd": "SELECT",
+        "tablename": "opportunity_reactions",
+        "policyname": "public_select_opportunity_reactions"
+      },
+      {
+        "cmd": "ALL",
+        "tablename": "opportunity_reactions",
+        "policyname": "user_manage_own_reactions"
+      },
+      {
+        "cmd": "SELECT",
+        "tablename": "opportunity_types",
+        "policyname": "public_select_active_opportunity_types"
+      },
+      {
+        "cmd": "ALL",
+        "tablename": "opportunity_views",
+        "policyname": "user_manage_own_views"
+      }
+    ],
+    "error": null
+  },
+  "DATA_COUNTS": {
+    "label": "DATA_COUNTS",
+    "http": 200,
+    "ok": true,
+    "rows_count": 1,
+    "rows": [
+      {
+        "types": 4,
+        "comments": 3,
+        "reactions": 1,
+        "applications": 2,
+        "opportunities": 2
+      }
+    ],
+    "error": null
+  }
+}

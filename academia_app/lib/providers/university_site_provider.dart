@@ -7,6 +7,7 @@ class UniversitySiteProvider extends ChangeNotifier {
 
   bool _isLoading = false;
   bool _isSaving = false;
+  int _loadRequestId = 0;
   String? _error;
   Map<String, dynamic>? _university;
   Map<String, dynamic>? _config;
@@ -45,10 +46,14 @@ class UniversitySiteProvider extends ChangeNotifier {
   }
 
   Future<void> loadSite() async {
+    final requestId = ++_loadRequestId;
     _setLoading(true);
     _setError(null);
     try {
       final dynamic response = await _client.rpc('app_list_university_site_for_management');
+      if (requestId != _loadRequestId) {
+        return;
+      }
       if (response is! Map<String, dynamic>) {
         _university = null;
         _config = null;
@@ -76,6 +81,10 @@ class UniversitySiteProvider extends ChangeNotifier {
       final events = response['events'];
       final news = response['news'];
       final staff = response['staff'];
+
+      if (requestId != _loadRequestId) {
+        return;
+      }
 
       if (uni is Map) {
         _university = Map<String, dynamic>.from(uni);
@@ -145,6 +154,9 @@ class UniversitySiteProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
+      if (requestId != _loadRequestId) {
+        return;
+      }
       _university = null;
       _config = null;
       _blocks = [];
@@ -155,7 +167,9 @@ class UniversitySiteProvider extends ChangeNotifier {
       _staff = [];
       _setError(e.toString());
     } finally {
-      _setLoading(false);
+      if (requestId == _loadRequestId) {
+        _setLoading(false);
+      }
     }
   }
 
@@ -582,6 +596,41 @@ class UniversitySiteProvider extends ChangeNotifier {
     debugPrint(
         '[UniversitySiteProvider.upsertMedia] mediaId=$mediaId, mediaType=$mediaType, title=$title, description=$description, url=$url, storagePath=$storagePath, thumbnailUrl=$thumbnailUrl, sortOrder=$sortOrder, isActive=$isActive');
     try {
+      final lowerType = mediaType.toLowerCase().trim();
+      String? effectiveVideoAssetId;
+      Map<String, dynamic>? effectivePlayback;
+
+      if (lowerType.contains('video')) {
+        final pathTrim = (storagePath ?? '').trim();
+        if (pathTrim.isNotEmpty) {
+          final publicUrl = _client.storage
+              .from('university-media')
+              .getPublicUrl(pathTrim);
+          debugPrint(
+              '[UniversitySiteProvider.upsertMedia] resolving VideoAsset for publicUrl=$publicUrl');
+
+          final manifest = await _fetchPlaybackForDirectUrl(publicUrl);
+          if (manifest == null) {
+            debugPrint(
+                '[UniversitySiteProvider.upsertMedia] aucun manifest résolu pour publicUrl=$publicUrl, on continue sans VideoAsset.');
+          } else {
+            final rawVideoAssetId = manifest['video_asset_id']?.toString();
+            final rawPlayback = manifest['playback'];
+
+            if (rawVideoAssetId != null &&
+                rawVideoAssetId.trim().isNotEmpty &&
+                rawPlayback is Map<String, dynamic>) {
+              effectiveVideoAssetId = rawVideoAssetId.trim();
+              effectivePlayback = Map<String, dynamic>.from(rawPlayback);
+            } else {
+              debugPrint(
+                '[UniversitySiteProvider.upsertMedia] manifest sans video_asset_id ou playback invalide, on continue sans VideoAsset. manifest=$manifest',
+              );
+            }
+          }
+        }
+      }
+
       final dynamic response = await _client.rpc(
         'app_upsert_university_media',
         params: {
@@ -594,6 +643,8 @@ class UniversitySiteProvider extends ChangeNotifier {
           'p_thumbnail_url': thumbnailUrl,
           'p_sort_order': sortOrder,
           'p_is_active': isActive,
+          'p_video_asset_id': effectiveVideoAssetId,
+          'p_playback': effectivePlayback,
         },
       );
       if (response is! Map<String, dynamic>) {
@@ -646,6 +697,39 @@ class UniversitySiteProvider extends ChangeNotifier {
       return false;
     } finally {
       _setSaving(false);
+    }
+  }
+
+  Future<Map<String, dynamic>?> _fetchPlaybackForDirectUrl(String url) async {
+    try {
+      final dynamic response = await _client.rpc(
+        'app_videoasset_get_playback_for_direct_url',
+        params: {
+          'p_direct_url': url,
+        },
+      );
+      if (response is! Map<String, dynamic>) {
+        debugPrint(
+            '[UniversitySiteProvider._fetchPlaybackForDirectUrl] invalid response type: ${response.runtimeType}');
+        return null;
+      }
+      if (response['success'] != true) {
+        final error = response['error']?.toString();
+        debugPrint(
+            '[UniversitySiteProvider._fetchPlaybackForDirectUrl] error from RPC: $error');
+        return null;
+      }
+      final manifest = response['manifest'];
+      if (manifest is! Map<String, dynamic>) {
+        debugPrint(
+            '[UniversitySiteProvider._fetchPlaybackForDirectUrl] manifest manquant ou invalide dans la réponse: $manifest');
+        return null;
+      }
+      return Map<String, dynamic>.from(manifest);
+    } catch (e) {
+      debugPrint(
+          '[UniversitySiteProvider._fetchPlaybackForDirectUrl] exception: $e');
+      return null;
     }
   }
 

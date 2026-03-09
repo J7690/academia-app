@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-02-17T10:25:29.005403",
+  "rpc_functions": {
+    "execute_sql": "error_404",
+    "create_table_safe": "error_404",
+    "list_tables_detailed": "working",
+    "describe_table_detailed": "working",
+    "insert_data_safe": "error_404",
+    "update_data_safe": "error_404",
+    "delete_data_safe": "error_404",
+    "table_exists": "working",
+    "column_exists": "working"
+  },
+  "api_access": true,
+  "overall_status": "limited"
+}

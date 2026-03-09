@@ -1,0 +1,10 @@
+{
+  "MARKETPLACE_LISTINGS_IMAGE_COLUMNS": {
+    "ok": true,
+    "http": 200,
+    "mode": "select",
+    "rows": [],
+    "error": null,
+    "sqlstate": null
+  }
+}

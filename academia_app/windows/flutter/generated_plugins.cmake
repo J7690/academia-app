@@ -6,6 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   app_links
   audioplayers_windows
   connectivity_plus
+  emoji_picker_flutter
   file_selector_windows
   firebase_core
   flutter_webrtc
@@ -13,6 +14,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   livekit_client
   permission_handler_windows
   printing
+  pro_video_editor
   record_windows
   share_plus
   url_launcher_windows

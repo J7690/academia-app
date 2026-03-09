@@ -184,6 +184,31 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
       _videoUrlController.text = publicUrl;
     });
 
+    try {
+      final existing = _heroItems.isNotEmpty ? _heroItems.first : null;
+      await HeroRenderService.upsertPlaylistItemFromUrl(
+        itemId: existing?.id,
+        slot: 'landing_hero_main',
+        mediaType: 'video',
+        url: publicUrl,
+        title: existing?.title ?? 'media',
+        subtitle: existing?.subtitle,
+        sortOrder: existing?.sortOrder ?? 1,
+        isActive: true,
+      );
+      await _loadHeroPlaylist();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Upload ok, mais erreur de synchronisation playlist hero: ${e.toString()}',
+            ),
+          ),
+        );
+      }
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Vidéo uploadée pour la landing, sauvegarde en cours...')), 
     );
@@ -329,34 +354,32 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
                               uploadedUrl = publicUrl;
                             });
                           } else {
-                            try {
-                              final videoAssetId =
-                                  await VideoAssetUploadService.ingestVideoFromBytes(
-                                bytes: Uint8List.fromList(bytes),
-                                fileName: file.name,
-                                mimeType: file.extension,
-                                origin: 'admin_landing_hero_playlist',
-                                contextType: null,
-                                contextId: null,
-                                fileSizeBytes: file.size,
-                              );
+                            final publicUrl = await provider.uploadLandingFile(
+                              bytes: Uint8List.fromList(bytes),
+                              fileName: file.name,
+                              mimeType: file.extension,
+                              folder: 'playlist-videos',
+                            );
 
-                              if (!context.mounted) return;
+                            if (!context.mounted) return;
 
-                              setStateDialog(() {
-                                uploadedVideoAssetId = videoAssetId;
-                                uploadedUrl = 'video_asset:' + videoAssetId;
-                              });
-                            } catch (e) {
+                            if (publicUrl == null) {
                               if (!context.mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    e.toString(),
+                                    provider.error ??
+                                        'Erreur lors de l\'upload du média de playlist.',
                                   ),
                                 ),
                               );
+                              return;
                             }
+
+                            setStateDialog(() {
+                              uploadedVideoAssetId = null;
+                              uploadedUrl = publicUrl;
+                            });
                           }
                         },
                         icon: const Icon(Icons.upload_file),
@@ -426,21 +449,7 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
     );
 
     if (result != true) return;
-    if (mediaType == 'video') {
-      final assetId = uploadedVideoAssetId?.trim() ?? '';
-      if (assetId.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Une vidéo doit être uploadée pour la playlist hero.',
-              ),
-            ),
-          );
-        }
-        return;
-      }
-    } else {
+    if (mediaType != 'video') {
       final url = uploadedUrl.trim();
       if (url.isEmpty) {
         if (mounted) {
@@ -454,6 +463,21 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
         }
         return;
       }
+    } else {
+      final assetId = uploadedVideoAssetId?.trim() ?? '';
+      final url = uploadedUrl.trim();
+      if (assetId.isEmpty && url.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Une vidéo doit être uploadée pour la playlist hero.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
     }
 
     final sortOrder = int.tryParse(sortController.text.trim());
@@ -461,17 +485,34 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
     try {
       String id;
       if (mediaType == 'video') {
-        id = await HeroRenderService.upsertPlaylistItemWithVideoAsset(
-          itemId: existingItem?.id,
-          slot: 'landing_hero_main',
-          videoAssetId: uploadedVideoAssetId!,
-          title: titleController.text.trim().isEmpty
-              ? null
-              : titleController.text.trim(),
-          subtitle: null,
-          sortOrder: sortOrder,
-          isActive: isActive,
-        );
+        final assetId = uploadedVideoAssetId?.trim() ?? '';
+        if (assetId.isNotEmpty) {
+          id = await HeroRenderService.upsertPlaylistItemWithVideoAsset(
+            itemId: existingItem?.id,
+            slot: 'landing_hero_main',
+            videoAssetId: assetId,
+            title: titleController.text.trim().isEmpty
+                ? null
+                : titleController.text.trim(),
+            subtitle: null,
+            sortOrder: sortOrder,
+            isActive: isActive,
+          );
+        } else {
+          final url = uploadedUrl.trim();
+          id = await HeroRenderService.upsertPlaylistItemFromUrl(
+            itemId: existingItem?.id,
+            slot: 'landing_hero_main',
+            mediaType: 'video',
+            url: url,
+            title: titleController.text.trim().isEmpty
+                ? null
+                : titleController.text.trim(),
+            subtitle: null,
+            sortOrder: sortOrder,
+            isActive: isActive,
+          );
+        }
       } else {
         final url = uploadedUrl.trim();
         id = await HeroRenderService.upsertPlaylistItemFromUrl(

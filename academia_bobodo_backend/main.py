@@ -254,7 +254,9 @@ async def supabase_proxy(full_path: str, request: Request) -> Response:
 
     body = await request.body()
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    upstream_timeout = 600.0 if full_path.startswith("storage/") else 60.0
+
+    async with httpx.AsyncClient(timeout=upstream_timeout) as client:
         try:
             upstream_response = await client.request(
                 request.method,
@@ -5132,4 +5134,235 @@ async def bobodo_chat(payload: BobodoChatRequest) -> BobodoChatResponse:
     )
 
     return BobodoChatResponse(session_id=session_id, assistant_message=assistant_message)
+
+
+# ---------------------------------------------------------------------------
+# Challenge TikTok Studio — burn overlays & thumbnail
+# ---------------------------------------------------------------------------
+
+class BurnOverlaysRequest(BaseModel):
+    video_url: str
+    overlays: Dict[str, Any]  # {strokes: [...], annotations: [...]}
+    participation_id: str
+    video_width: int = 1080
+    video_height: int = 1920
+
+
+class BurnOverlaysResponse(BaseModel):
+    video_url: str
+    video_renditions: Dict[str, str]
+
+
+def _build_overlay_filter(overlays: Dict[str, Any], vw: int, vh: int) -> str:
+    """Build an FFmpeg filter_complex string that burns annotations onto video.
+
+    Strokes are rasterised client-side (Flutter CustomPaint) so they are
+    already part of the captured frame.  Annotations (text/equation labels)
+    are burned via drawtext filters so they survive transcoding.
+    """
+    filters: list[str] = []
+    annotations = overlays.get("annotations", [])
+    for ann in annotations:
+        if not isinstance(ann, dict):
+            continue
+        content = str(ann.get("content", "")).replace("'", "'\\''").replace(":", "\\:")
+        if not content:
+            continue
+        x_frac = float(ann.get("x", 0.1))
+        y_frac = float(ann.get("y", 0.1))
+        font_size = int(ann.get("fontSize", 18))
+        color_int = ann.get("color", 0xFFFFFFFF)
+        # Convert ARGB int to FFmpeg hex (FFmpeg uses 0xRRGGBB)
+        r = (color_int >> 16) & 0xFF
+        g = (color_int >> 8) & 0xFF
+        b = color_int & 0xFF
+        hex_color = f"0x{r:02x}{g:02x}{b:02x}"
+
+        bg_int = ann.get("bgColor", 0x88000000)
+        bg_a = (bg_int >> 24) & 0xFF
+        bg_alpha = round(bg_a / 255, 2)
+
+        px = int(x_frac * vw)
+        py = int(y_frac * vh)
+
+        dt = (
+            f"drawtext=text='{content}'"
+            f":x={px}:y={py}"
+            f":fontsize={font_size}"
+            f":fontcolor={hex_color}"
+            f":borderw=1:bordercolor=black@0.5"
+            f":box=1:boxcolor=black@{bg_alpha}:boxborderw=4"
+        )
+        filters.append(dt)
+
+    if not filters:
+        return ""
+    return ",".join(filters)
+
+
+@app.post("/challenge/burn-overlays", response_model=BurnOverlaysResponse)
+async def burn_overlays(req: BurnOverlaysRequest, request: Request):
+    """Download video, burn scientific overlays via FFmpeg, transcode, upload."""
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authorization Bearer manquant.")
+
+    token = auth_header.split(" ", 1)[1].strip()
+    if STUDIO_VIDEO_RENDER_API_KEY and token != STUDIO_VIDEO_RENDER_API_KEY:
+        if SUPABASE_SERVICE_KEY and token != SUPABASE_SERVICE_KEY:
+            raise HTTPException(status_code=403, detail="Clé API invalide.")
+
+    video_url = (req.video_url or "").strip()
+    if not video_url:
+        raise HTTPException(status_code=400, detail="video_url manquant.")
+
+    input_path = None
+    output_paths = []
+
+    try:
+        input_path = await _download_video_to_temp(video_url)
+
+        overlay_filter = _build_overlay_filter(req.overlays, req.video_width, req.video_height)
+
+        if overlay_filter:
+            from studio_video_renderer import _run_ffmpeg_generic
+            burned_path = _run_ffmpeg_generic(
+                input_path=input_path,
+                max_width=720,
+                max_bitrate_k=900,
+                audio_bitrate_k=96,
+                label="burn_overlay",
+                fps=None,
+                extra_filters=overlay_filter,
+            )
+            output_paths.append(burned_path)
+            source_for_transcode = burned_path
+        else:
+            source_for_transcode = input_path
+
+        out_480 = _run_ffmpeg_transcode_480p(source_for_transcode)
+        out_360 = _run_ffmpeg_transcode_360p(source_for_transcode)
+        out_240 = _run_ffmpeg_transcode_240p(source_for_transcode)
+        output_paths.extend([out_480, out_360, out_240])
+
+        url_480 = await _upload_to_supabase_storage(out_480, req.participation_id) if out_480 else None
+        url_360 = await _upload_to_supabase_storage(out_360, req.participation_id) if out_360 else None
+        url_240 = await _upload_to_supabase_storage(out_240, req.participation_id) if out_240 else None
+
+        if overlay_filter and output_paths:
+            url_main = await _upload_to_supabase_storage(output_paths[0], req.participation_id)
+        else:
+            url_main = url_360
+
+        default_url = (url_360 or url_480 or url_main or url_240 or "").strip()
+        if not default_url:
+            raise HTTPException(status_code=500, detail="Aucune URL vidéo rendue.")
+
+        renditions: Dict[str, str] = {"default": default_url}
+        if url_480:
+            renditions["480p"] = url_480
+        if url_360:
+            renditions["360p"] = url_360
+        if url_240:
+            renditions["240p"] = url_240
+        if url_main and url_main != default_url:
+            renditions["source"] = url_main
+
+        return BurnOverlaysResponse(video_url=default_url, video_renditions=renditions)
+
+    finally:
+        if input_path and input_path.exists():
+            try:
+                input_path.unlink()
+            except Exception:
+                pass
+        for p in output_paths:
+            if p and hasattr(p, "exists") and p.exists():
+                try:
+                    p.unlink()
+                except Exception:
+                    pass
+
+
+class ThumbnailRequest(BaseModel):
+    video_url: str
+    position_seconds: float = 1.0
+    participation_id: str
+
+
+class ThumbnailResponse(BaseModel):
+    thumbnail_url: str
+
+
+@app.post("/challenge/generate-thumbnail", response_model=ThumbnailResponse)
+async def generate_thumbnail(req: ThumbnailRequest, request: Request):
+    """Extract a JPEG thumbnail from a video at a given position."""
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authorization Bearer manquant.")
+
+    token = auth_header.split(" ", 1)[1].strip()
+    if STUDIO_VIDEO_RENDER_API_KEY and token != STUDIO_VIDEO_RENDER_API_KEY:
+        if SUPABASE_SERVICE_KEY and token != SUPABASE_SERVICE_KEY:
+            raise HTTPException(status_code=403, detail="Clé API invalide.")
+
+    video_url = (req.video_url or "").strip()
+    if not video_url:
+        raise HTTPException(status_code=400, detail="video_url manquant.")
+
+    input_path = None
+    thumb_path = None
+
+    try:
+        input_path = await _download_video_to_temp(video_url)
+
+        tmp_dir = Path(tempfile.mkdtemp(prefix="thumb_"))
+        thumb_path = tmp_dir / "thumb.jpg"
+
+        cmd = [
+            "ffmpeg", "-y",
+            "-ss", str(req.position_seconds),
+            "-i", str(input_path),
+            "-frames:v", "1",
+            "-q:v", "2",
+            "-vf", "scale='min(480,iw)':-2",
+            str(thumb_path),
+        ]
+
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+        if result.returncode != 0 or not thumb_path.exists():
+            raise HTTPException(status_code=500, detail="Erreur FFmpeg lors de la génération du thumbnail.")
+
+        # Upload thumbnail
+        bucket = "challenge-media"
+        object_key = f"thumbnails/{req.participation_id}/{uuid.uuid4().hex}.jpg"
+        storage_url = f"{SUPABASE_URL}/storage/v1/object/{bucket}/{object_key}"
+
+        headers = {
+            "apikey": SUPABASE_SERVICE_KEY,
+            "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+            "Content-Type": "image/jpeg",
+        }
+
+        data = thumb_path.read_bytes()
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(storage_url, headers=headers, content=data)
+
+        if resp.status_code >= 400:
+            raise HTTPException(status_code=500, detail="Erreur upload thumbnail.")
+
+        public_url = f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{object_key}"
+        return ThumbnailResponse(thumbnail_url=public_url)
+
+    finally:
+        if input_path and input_path.exists():
+            try:
+                input_path.unlink()
+            except Exception:
+                pass
+        if thumb_path and thumb_path.exists():
+            try:
+                thumb_path.unlink()
+            except Exception:
+                pass
 

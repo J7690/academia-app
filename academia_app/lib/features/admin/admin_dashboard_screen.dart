@@ -26,9 +26,15 @@ import 'admin_hero_accueil_screen.dart';
 import 'admin_hero_video_encoder_screen.dart';
 import 'admin_user_invitations_screen.dart';
 import 'admin_commercials_screen.dart';
+import 'admin_commission_rules_screen.dart';
+import '../../providers/admin_commission_rules_provider.dart';
 import 'admin_td_screen.dart';
 import 'admin_academic_communication_screen.dart';
 import 'admin_live_sessions_screen.dart';
+import 'admin_marketplace_control_tower_screen.dart';
+import '../../services/push_trigger_service.dart';
+import 'admin_support_screen.dart';
+import '../../providers/admin_support_provider.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -64,6 +70,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         await _checkAdminUnreadChange();
       } catch (_) {}
       await _loadNotificationSummary();
+      PushTriggerService.instance.triggerPendingPush();
     });
   }
 
@@ -270,7 +277,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 22,
+      length: 25,
       child: Consumer<AdminApplicationsProvider>(
         builder: (context, applicationsProvider, child) {
           final unread = applicationsProvider.unreadCount;
@@ -320,15 +327,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     _markAdminPaymentsSeen();
                   } else if (index == 4) {
                     _markAdminOpportunitiesSeen();
-                  } else if (index == 5) {
+                  } else if (index == 6) {
                     _markAdminCommunitiesSeen();
-                  } else if (index == 10) {
-                    _markAdminShortTrainingsSeen();
                   } else if (index == 11) {
-                    _markAdminUniversityContentSeen();
+                    _markAdminShortTrainingsSeen();
                   } else if (index == 12) {
-                    _markAdminBobodoSeen();
+                    _markAdminUniversityContentSeen();
                   } else if (index == 13) {
+                    _markAdminBobodoSeen();
+                  } else if (index == 14) {
                     _markAdminPrepConcoursSeen();
                   }
                 },
@@ -344,10 +351,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const Tab(text: 'Programmes'),
                   Tab(
                     child: _AdminDotLabel(
-                      text: 'Opportunités',
+                      text: 'Opportunités (Jobs/Services)',
                       hasNew: _hasNewOpportunities,
                     ),
                   ),
+                  const Tab(text: 'Marketplace (Boutique)'),
                   Tab(
                     child: _AdminDotLabel(
                       text: 'Communautés',
@@ -387,19 +395,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const Tab(text: 'Hero / Accueil TV'),
                   const Tab(text: 'Hero Video Studio'),
                   const Tab(text: 'Commerciaux'),
+                  const Tab(text: 'Grille commissions'),
                   const Tab(text: 'Comptes utilisateurs'),
                   const Tab(text: 'TD'),
                   const Tab(text: 'Communication'),
+                  const Tab(text: 'Support'),
                 ],
               ),
             ),
-            body: const TabBarView(
+            body: TabBarView(
               children: [
                 AdminApplicationsScreen(),
                 AdminPaymentsScreen(),
                 AdminPaymentReceiptsScreen(),
                 AdminProgramsScreen(),
                 AdminOpportunitiesScreen(),
+                const AdminMarketplaceControlTowerScreen(),
                 AdminCommunitiesScreen(),
                 AdminChallengesScreen(),
                 AdminCourseLibraryScreen(),
@@ -414,9 +425,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 AdminHeroAccueilScreen(),
                 AdminHeroVideoEncoderScreen(),
                 AdminCommercialsScreen(),
+                ChangeNotifierProvider(
+                  create: (_) => AdminCommissionRulesProvider(),
+                  child: const AdminCommissionRulesScreen(),
+                ),
                 AdminUserInvitationsScreen(),
                 AdminTdScreen(),
                 AdminAcademicCommunicationScreen(),
+                ChangeNotifierProvider(
+                  create: (_) => AdminSupportProvider(),
+                  child: const AdminSupportScreen(),
+                ),
               ],
             ),
           );

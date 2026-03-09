@@ -83,26 +83,52 @@ BEGIN
           (
             TO_JSONB(m)
             || JSONB_BUILD_OBJECT(
-              'playback', JSONB_BUILD_OBJECT(
-                'best_url', (
-                  SELECT r.public_url_hint
-                  FROM app.video_renditions r
-                  WHERE r.video_asset_id = m.video_asset_id
-                    AND r.status = 'ready'
-                    AND r.kind IN ('hls','mp4')
-                  ORDER BY (r.kind = 'hls') DESC, COALESCE(r.width, 0) DESC
-                  LIMIT 1
-                ),
-                'poster_url', (
-                  SELECT r.public_url_hint
-                  FROM app.video_renditions r
-                  WHERE r.video_asset_id = m.video_asset_id
-                    AND r.status = 'ready'
-                    AND r.kind IN ('poster','thumbnail')
-                  ORDER BY (r.kind = 'poster') DESC, COALESCE(r.width, 0) DESC
-                  LIMIT 1
-                )
-              )
+              'playback',
+              CASE
+                WHEN m.video_asset_id IS NOT NULL THEN
+                  -- Cas VideoAsset complet : on dérive playback depuis app.video_renditions
+                  JSONB_BUILD_OBJECT(
+                    'best_url', (
+                      SELECT r.public_url_hint
+                      FROM app.video_renditions r
+                      WHERE r.video_asset_id = m.video_asset_id
+                        AND r.status = 'ready'
+                        AND r.kind IN ('hls','mp4')
+                      ORDER BY (r.kind = 'hls') DESC, COALESCE(r.width, 0) DESC
+                      LIMIT 1
+                    ),
+                    'poster_url', (
+                      SELECT r.public_url_hint
+                      FROM app.video_renditions r
+                      WHERE r.video_asset_id = m.video_asset_id
+                        AND r.status = 'ready'
+                        AND r.kind IN ('poster','thumbnail')
+                      ORDER BY (r.kind = 'poster') DESC, COALESCE(r.width, 0) DESC
+                      LIMIT 1
+                    )
+                  )
+                ELSE
+                  -- Cas sans VideoAsset (video_asset_id NULL) :
+                  -- on essaie de dériver un manifest de playback à partir de l'URL
+                  -- publique Supabase Storage reconstituée à partir de storage_path.
+                  CASE
+                    WHEN POSITION('video' IN LOWER(COALESCE(m.media_type, ''))) > 0
+                         AND TRIM(COALESCE(m.storage_path, '')) <> '' THEN
+                      COALESCE(
+                        (
+                          public.app_videoasset_get_playback_for_direct_url(
+                            'https://thevdfcwlcqzdoybfvgs.supabase.co/storage/v1/object/public/university-media/' || TRIM(m.storage_path)
+                          )->'manifest'->'playback'
+                        ),
+                        JSONB_BUILD_OBJECT(
+                          'best_url',   'https://thevdfcwlcqzdoybfvgs.supabase.co/storage/v1/object/public/university-media/' || TRIM(m.storage_path),
+                          'poster_url', NULL
+                        )
+                      )
+                    ELSE
+                      NULL
+                  END
+              END
             )
           )
           ORDER BY m.sort_order, m.created_at

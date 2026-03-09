@@ -1,0 +1,1151 @@
+{
+  "smoke": {
+    "ok": true,
+    "http_status": 200,
+    "mode": "select",
+    "error": null,
+    "sqlstate": null,
+    "rows": [
+      {
+        "ok": 1
+      }
+    ]
+  },
+  "tables": {
+    "ok": true,
+    "http_status": 200,
+    "mode": "select",
+    "error": null,
+    "sqlstate": null,
+    "rows": [
+      {
+        "table_name": "admin_user_action_logs",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "commercial_profiles",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "referral_commissions",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "td_teachers",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "universities",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "user_admin_status",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "user_invitations",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "user_presence",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "user_referrals",
+        "table_schema": "app"
+      }
+    ]
+  },
+  "columns": {
+    "ok": true,
+    "http_status": 200,
+    "mode": "select",
+    "error": null,
+    "sqlstate": null,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "table_name": "admin_user_action_logs",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "admin_user_action_logs",
+        "column_name": "performed_by",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "admin_user_action_logs",
+        "column_name": "target_user",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "admin_user_action_logs",
+        "column_name": "action",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "admin_user_action_logs",
+        "column_name": "reason",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "admin_user_action_logs",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "jsonb",
+        "table_name": "admin_user_action_logs",
+        "column_name": "meta",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "commercial_profiles",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "commercial_profiles",
+        "column_name": "ref_code",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "commercial_profiles",
+        "column_name": "ref_link",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "table_name": "commercial_profiles",
+        "column_name": "commission_rate",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "5.00"
+      },
+      {
+        "data_type": "boolean",
+        "table_name": "commercial_profiles",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "true"
+      },
+      {
+        "data_type": "text",
+        "table_name": "commercial_profiles",
+        "column_name": "admin_notes",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "commercial_profiles",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "commercial_profiles",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "commercial_profiles",
+        "column_name": "deactivated_at",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "referral_commissions",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "referral_commissions",
+        "column_name": "commercial_user_id",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "referral_commissions",
+        "column_name": "student_id",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "referral_commissions",
+        "column_name": "payment_id",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "table_name": "referral_commissions",
+        "column_name": "commission_rate",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "table_name": "referral_commissions",
+        "column_name": "commission_amount",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "referral_commissions",
+        "column_name": "currency",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "'XOF'::text"
+      },
+      {
+        "data_type": "text",
+        "table_name": "referral_commissions",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "'pending'::text"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "referral_commissions",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "referral_commissions",
+        "column_name": "approved_at",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "referral_commissions",
+        "column_name": "paid_at",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "referral_commissions",
+        "column_name": "admin_note",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "td_teachers",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "td_teachers",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "td_teachers",
+        "column_name": "full_name",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "td_teachers",
+        "column_name": "discipline",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "td_teachers",
+        "column_name": "zone",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "ARRAY",
+        "table_name": "td_teachers",
+        "column_name": "levels",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": "ARRAY[]::text[]"
+      },
+      {
+        "data_type": "text",
+        "table_name": "td_teachers",
+        "column_name": "availability",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "td_teachers",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "'active'::text"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "td_teachers",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "td_teachers",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "universities",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "text",
+        "table_name": "universities",
+        "column_name": "name",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "universities",
+        "column_name": "slug",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "universities",
+        "column_name": "logo_url",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "universities",
+        "column_name": "country",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "universities",
+        "column_name": "city",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "universities",
+        "column_name": "website_url",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "universities",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "table_name": "universities",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "universities",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "universities",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "text",
+        "table_name": "universities",
+        "column_name": "tagline",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "universities",
+        "column_name": "banner_image_url",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "universities",
+        "column_name": "contact_email",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "universities",
+        "column_name": "contact_phone",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "universities",
+        "column_name": "address",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "jsonb",
+        "table_name": "universities",
+        "column_name": "social_links",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "universities",
+        "column_name": "mission",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "universities",
+        "column_name": "vision",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "jsonb",
+        "table_name": "universities",
+        "column_name": "key_figures",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "user_admin_status",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "table_name": "user_admin_status",
+        "column_name": "is_suspended",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "false"
+      },
+      {
+        "data_type": "text",
+        "table_name": "user_admin_status",
+        "column_name": "suspended_reason",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "user_admin_status",
+        "column_name": "suspended_at",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "user_admin_status",
+        "column_name": "reactivated_at",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "user_admin_status",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "boolean",
+        "table_name": "user_admin_status",
+        "column_name": "is_deleted",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "false"
+      },
+      {
+        "data_type": "text",
+        "table_name": "user_admin_status",
+        "column_name": "deleted_reason",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "user_admin_status",
+        "column_name": "deleted_at",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "user_invitations",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "text",
+        "table_name": "user_invitations",
+        "column_name": "token",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "user_invitations",
+        "column_name": "email",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "user_invitations",
+        "column_name": "role",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "user_invitations",
+        "column_name": "university_id",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "user_invitations",
+        "column_name": "full_name",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "user_invitations",
+        "column_name": "notes",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "user_invitations",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "'pending'::text"
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "user_invitations",
+        "column_name": "created_by_admin_id",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "user_invitations",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "user_invitations",
+        "column_name": "used_at",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "user_invitations",
+        "column_name": "expires_at",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "user_invitations",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "user_presence",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "user_presence",
+        "column_name": "last_activity_at",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "user_referrals",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "user_referrals",
+        "column_name": "student_id",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "user_referrals",
+        "column_name": "commercial_user_id",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "user_referrals",
+        "column_name": "ref_code",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "user_referrals",
+        "column_name": "source",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "'link'::text"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "user_referrals",
+        "column_name": "attributed_at",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "table_name": "user_referrals",
+        "column_name": "expires_at",
+        "is_nullable": "YES",
+        "table_schema": "app",
+        "column_default": null
+      },
+      {
+        "data_type": "jsonb",
+        "table_name": "user_referrals",
+        "column_name": "metadata",
+        "is_nullable": "NO",
+        "table_schema": "app",
+        "column_default": "'{}'::jsonb"
+      }
+    ]
+  },
+  "policies": {
+    "ok": true,
+    "http_status": 200,
+    "mode": "select",
+    "error": null,
+    "sqlstate": null,
+    "rows": [
+      {
+        "cmd": "ALL",
+        "qual": "(EXISTS ( SELECT 1\n   FROM auth.users u\n  WHERE ((u.id = auth.uid()) AND ((u.raw_user_meta_data ->> 'role'::text) = 'admin'::text))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "admin_user_action_logs",
+        "policyname": "admin_all_user_action_logs",
+        "schemaname": "app",
+        "with_check": "(EXISTS ( SELECT 1\n   FROM auth.users u\n  WHERE ((u.id = auth.uid()) AND ((u.raw_user_meta_data ->> 'role'::text) = 'admin'::text))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((auth.jwt() ? 'role'::text) AND ((auth.jwt() ->> 'role'::text) = 'admin'::text))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "commercial_profiles",
+        "policyname": "admin_select_commercial_profiles",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(user_id = auth.uid())",
+        "roles": [
+          "public"
+        ],
+        "tablename": "commercial_profiles",
+        "policyname": "commercial_select_own_profile",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((auth.jwt() ? 'role'::text) AND ((auth.jwt() ->> 'role'::text) = 'admin'::text))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "referral_commissions",
+        "policyname": "admin_select_all_referral_commissions",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(commercial_user_id = auth.uid())",
+        "roles": [
+          "public"
+        ],
+        "tablename": "referral_commissions",
+        "policyname": "commercial_select_own_referral_commissions",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "ALL",
+        "qual": "(app.app_td_get_current_role() = 'admin'::text)",
+        "roles": [
+          "public"
+        ],
+        "tablename": "td_teachers",
+        "policyname": "td_teachers_admin_all",
+        "schemaname": "app",
+        "with_check": "(app.app_td_get_current_role() = 'admin'::text)"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(user_id = auth.uid())",
+        "roles": [
+          "public"
+        ],
+        "tablename": "td_teachers",
+        "policyname": "td_teachers_self_select",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(is_active = true)",
+        "roles": [
+          "public"
+        ],
+        "tablename": "universities",
+        "policyname": "public_select_active_universities",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "ALL",
+        "qual": "(EXISTS ( SELECT 1\n   FROM auth.users u\n  WHERE ((u.id = auth.uid()) AND ((u.raw_user_meta_data ->> 'role'::text) = 'admin'::text))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "user_admin_status",
+        "policyname": "admin_manage_user_status",
+        "schemaname": "app",
+        "with_check": "(EXISTS ( SELECT 1\n   FROM auth.users u\n  WHERE ((u.id = auth.uid()) AND ((u.raw_user_meta_data ->> 'role'::text) = 'admin'::text))))"
+      },
+      {
+        "cmd": "ALL",
+        "qual": "(EXISTS ( SELECT 1\n   FROM auth.users u\n  WHERE ((u.id = auth.uid()) AND ((u.raw_user_meta_data ->> 'role'::text) = 'admin'::text))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "user_invitations",
+        "policyname": "admin_all_user_invitations",
+        "schemaname": "app",
+        "with_check": "(EXISTS ( SELECT 1\n   FROM auth.users u\n  WHERE ((u.id = auth.uid()) AND ((u.raw_user_meta_data ->> 'role'::text) = 'admin'::text))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(auth.uid() = user_id)",
+        "roles": [
+          "public"
+        ],
+        "tablename": "user_presence",
+        "policyname": "user_presence_self",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((auth.jwt() ? 'role'::text) AND ((auth.jwt() ->> 'role'::text) = 'admin'::text))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "user_referrals",
+        "policyname": "admin_select_all_user_referrals",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(commercial_user_id = auth.uid())",
+        "roles": [
+          "public"
+        ],
+        "tablename": "user_referrals",
+        "policyname": "commercial_select_own_user_referrals",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(student_id = auth.uid())",
+        "roles": [
+          "public"
+        ],
+        "tablename": "user_referrals",
+        "policyname": "student_select_own_user_referral",
+        "schemaname": "app",
+        "with_check": null
+      }
+    ]
+  },
+  "functions": {
+    "ok": true,
+    "http_status": 200,
+    "mode": "select",
+    "error": null,
+    "sqlstate": null,
+    "rows": [
+      {
+        "name": "app_accept_user_invitation",
+        "schema": "public",
+        "arguments": "p_token text, p_full_name text",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_cancel_user_invitation",
+        "schema": "public",
+        "arguments": "p_invitation_id uuid",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_create_user_invitation",
+        "schema": "public",
+        "arguments": "p_email text, p_role text, p_university_id uuid, p_full_name text, p_notes text, p_expires_at timestamp with time zone",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_delete_user_account",
+        "schema": "public",
+        "arguments": "p_target_user_id uuid, p_reason text",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_get_commercial_detail",
+        "schema": "public",
+        "arguments": "p_commercial_user_id uuid",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_list_commercials_overview",
+        "schema": "public",
+        "arguments": "",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_list_user_action_logs",
+        "schema": "public",
+        "arguments": "p_target_user_id uuid",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_list_user_invitations",
+        "schema": "public",
+        "arguments": "",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_list_users_overview",
+        "schema": "public",
+        "arguments": "",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_set_commercial_commission_rate",
+        "schema": "public",
+        "arguments": "p_user_id uuid, p_rate numeric",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_update_referral_commission_status",
+        "schema": "public",
+        "arguments": "p_commission_id uuid, p_new_status text, p_admin_note text",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_update_university_status",
+        "schema": "public",
+        "arguments": "p_university_id uuid, p_is_active boolean, p_reason text",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_update_user_status",
+        "schema": "public",
+        "arguments": "p_target_user_id uuid, p_action text, p_reason text",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_list_partner_universities",
+        "schema": "public",
+        "arguments": "",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_track_user_activity",
+        "schema": "public",
+        "arguments": "",
+        "result_type": "jsonb",
+        "security_definer": true
+      }
+    ]
+  },
+  "definitions": {
+    "ok": true,
+    "http_status": 200,
+    "mode": "select",
+    "error": null,
+    "sqlstate": null,
+    "rows": [
+      {
+        "name": "app_admin_cancel_user_invitation",
+        "arguments": "p_invitation_id uuid",
+        "definition": "CREATE OR REPLACE FUNCTION public.app_admin_cancel_user_invitation(p_invitation_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_admin_role TEXT;\n    v_updated_id UUID;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    SELECT raw_user_meta_data->>'role'\n    INTO v_admin_role\n    FROM auth.users\n    WHERE id = v_user_id;\n\n    IF v_admin_role <> 'admin' THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');\n    END IF;\n\n    UPDATE app.user_invitations\n    SET status = 'cancelled',\n        updated_at = NOW()\n    WHERE id = p_invitation_id\n      AND status = 'pending'\n    RETURNING id INTO v_updated_id;\n\n    IF v_updated_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invitation_not_found_or_not_pending');\n    END IF;\n\n    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'invitation_id', v_updated_id);\nEND;\n$function$\n",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_create_user_invitation",
+        "arguments": "p_email text, p_role text, p_university_id uuid, p_full_name text, p_notes text, p_expires_at timestamp with time zone",
+        "definition": "CREATE OR REPLACE FUNCTION public.app_admin_create_user_invitation(p_email text, p_role text, p_university_id uuid DEFAULT NULL::uuid, p_full_name text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_expires_at timestamp with time zone DEFAULT NULL::timestamp with time zone)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_admin_role TEXT;\n    v_token TEXT;\n    v_id UUID;\n    v_lower_email TEXT;\n    v_target_role TEXT;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    SELECT raw_user_meta_data->>'role'\n    INTO v_admin_role\n    FROM auth.users\n    WHERE id = v_user_id;\n\n    IF v_admin_role <> 'admin' THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');\n    END IF;\n\n    IF p_email IS NULL OR LENGTH(TRIM(p_email)) = 0 THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_email');\n    END IF;\n\n    v_lower_email := LOWER(TRIM(p_email));\n\n    IF p_role IS NULL OR LENGTH(TRIM(p_role)) = 0 THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_role');\n    END IF;\n\n    v_target_role := TRIM(p_role);\n\n    IF v_target_role NOT IN ('admin', 'university', 'instructor') THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'unsupported_role');\n    END IF;\n\n    IF v_target_role = 'university' AND p_university_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'university_required');\n    END IF;\n\n    v_token := encode(gen_random_bytes(16), 'hex');\n\n    INSERT INTO app.user_invitations (\n        token,\n        email,\n        role,\n        university_id,\n        full_name,\n        notes,\n        status,\n        created_by_admin_id,\n        created_at,\n        used_at,\n        expires_at,\n        updated_at\n    )\n    VALUES (\n        v_token,\n        v_lower_email,\n        v_target_role,\n        p_university_id,\n        p_full_name,\n        p_notes,\n        'pending',\n        v_user_id,\n        NOW(),\n        NULL,\n        p_expires_at,\n        NOW()\n    )\n    RETURNING id INTO v_id;\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'invitation_id', v_id,\n        'token', v_token\n    );\nEND;\n$function$\n",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_delete_user_account",
+        "arguments": "p_target_user_id uuid, p_reason text",
+        "definition": "CREATE OR REPLACE FUNCTION public.app_admin_delete_user_account(p_target_user_id uuid, p_reason text DEFAULT NULL::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_user_id UUID := auth.uid();\n  v_role TEXT;\n  v_target_exists BOOLEAN;\n  v_target_role TEXT;\n  v_target_university_id UUID;\n  v_other_admins_count INTEGER;\n  v_is_deleted BOOLEAN := FALSE;\nBEGIN\n  IF v_user_id IS NULL THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n  END IF;\n\n  SELECT raw_user_meta_data->>'role'\n  INTO v_role\n  FROM auth.users\n  WHERE id = v_user_id;\n\n  IF v_role <> 'admin' THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');\n  END IF;\n\n  IF p_target_user_id IS NULL THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_target_user_id');\n  END IF;\n\n  IF p_target_user_id = v_user_id THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'cannot_delete_self');\n  END IF;\n\n  SELECT EXISTS (SELECT 1 FROM auth.users WHERE id = p_target_user_id)\n  INTO v_target_exists;\n\n  IF NOT v_target_exists THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'user_not_found');\n  END IF;\n\n  SELECT\n    raw_user_meta_data->>'role',\n    (raw_user_meta_data->>'university_id')::UUID\n  INTO v_target_role, v_target_university_id\n  FROM auth.users\n  WHERE id = p_target_user_id;\n\n  IF v_target_role = 'admin' THEN\n    SELECT COUNT(*)\n    INTO v_other_admins_count\n    FROM auth.users u\n    WHERE u.raw_user_meta_data->>'role' = 'admin'\n      AND u.id <> p_target_user_id;\n\n    IF v_other_admins_count = 0 THEN\n      RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'cannot_delete_last_admin');\n    END IF;\n  END IF;\n\n  -- Si on supprime un compte université, désactiver aussi l'université associée\n  -- afin que ses offres et sa fiche disparaissent des vues côté étudiant.\n  IF v_target_role = 'university' AND v_target_university_id IS NOT NULL THEN\n    PERFORM app_admin_update_university_status(\n      v_target_university_id,\n      FALSE,\n      COALESCE(p_reason, 'university_account_deleted')\n    );\n  END IF;\n\n  INSERT INTO app.user_admin_status (\n    user_id,\n    is_suspended,\n    suspended_reason,\n    suspended_at,\n    reactivated_at,\n    updated_at,\n    is_deleted,\n    deleted_reason,\n    deleted_at\n  ) VALUES (\n    p_target_user_id,\n    TRUE,\n    COALESCE(p_reason, 'account_deleted'),\n    NOW(),\n    NULL,\n    NOW(),\n    TRUE,\n    p_reason,\n    NOW()\n  )\n  ON CONFLICT (user_id)\n  DO UPDATE SET\n    is_suspended = TRUE,\n    suspended_reason = COALESCE(EXCLUDED.suspended_reason, app.user_admin_status.suspended_reason),\n    suspended_at = COALESCE(app.user_admin_status.suspended_at, NOW()),\n    reactivated_at = NULL,\n    updated_at = NOW(),\n    is_deleted = TRUE,\n    deleted_reason = COALESCE(EXCLUDED.deleted_reason, app.user_admin_status.deleted_reason),\n    deleted_at = COALESCE(app.user_admin_status.deleted_at, NOW());\n\n  v_is_deleted := TRUE;\n\n  INSERT INTO app.admin_user_action_logs (\n    performed_by,\n    target_user,\n    action,\n    reason,\n    meta\n  ) VALUES (\n    v_user_id,\n    p_target_user_id,\n    'delete',\n    p_reason,\n    JSONB_BUILD_OBJECT(\n      'is_deleted', v_is_deleted,\n      'performed_by', v_user_id,\n      'target_user', p_target_user_id\n    )\n  );\n\n  RETURN JSONB_BUILD_OBJECT(\n    'success', TRUE,\n    'user_id', p_target_user_id,\n    'action', 'delete',\n    'is_deleted', v_is_deleted\n  );\nEND;\n$function$\n",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_get_commercial_detail",
+        "arguments": "p_commercial_user_id uuid",
+        "definition": "CREATE OR REPLACE FUNCTION public.app_admin_get_commercial_detail(p_commercial_user_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_user_id UUID := auth.uid();\n  v_role TEXT;\n  v_result JSONB;\nBEGIN\n  IF v_user_id IS NULL THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n  END IF;\n\n  SELECT raw_user_meta_data->>'role'\n  INTO v_role\n  FROM auth.users\n  WHERE id = v_user_id;\n\n  IF v_role <> 'admin' THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');\n  END IF;\n\n  IF p_commercial_user_id IS NULL THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_commercial_user_id');\n  END IF;\n\n  SELECT JSONB_BUILD_OBJECT(\n    'commercial', JSONB_BUILD_OBJECT(\n      'user_id', u.id,\n      'email', u.email,\n      'role', u.raw_user_meta_data->>'role',\n      'full_name', u.raw_user_meta_data->>'full_name',\n      'ref_code', cp.ref_code,\n      'ref_link', cp.ref_link,\n      'commission_rate', cp.commission_rate,\n      'is_active', cp.is_active,\n      'created_at', cp.created_at,\n      'updated_at', cp.updated_at\n    ),\n    'referrals', COALESCE((\n      SELECT JSONB_AGG(\n               JSONB_BUILD_OBJECT(\n                 'id', r.id,\n                 'student_id', r.student_id,\n                 'ref_code', r.ref_code,\n                 'source', r.source,\n                 'attributed_at', r.attributed_at,\n                 'expires_at', r.expires_at\n               )\n               ORDER BY r.attributed_at DESC\n             )\n      FROM app.user_referrals r\n      WHERE r.commercial_user_id = cp.user_id\n    ), '[]'::JSONB),\n    'commissions', COALESCE((\n      SELECT JSONB_AGG(\n               JSONB_BUILD_OBJECT(\n                 'id', c.id,\n                 'student_id', c.student_id,\n                 'payment_id', c.payment_id,\n                 'commission_rate', c.commission_rate,\n                 'commission_amount', c.commission_amount,\n                 'currency', c.currency,\n                 'status', c.status,\n                 'created_at', c.created_at,\n                 'approved_at', c.approved_at,\n                 'paid_at', c.paid_at\n               )\n               ORDER BY c.created_at DESC\n             )\n      FROM app.referral_commissions c\n      WHERE c.commercial_user_id = cp.user_id\n    ), '[]'::JSONB)\n  )\n  INTO v_result\n  FROM auth.users u\n  JOIN app.commercial_profiles cp ON cp.user_id = u.id\n  WHERE u.id = p_commercial_user_id;\n\n  IF v_result IS NULL THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'commercial_not_found');\n  END IF;\n\n  RETURN JSONB_BUILD_OBJECT('success', TRUE, 'data', v_result);\nEND;\n$function$\n",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_list_commercials_overview",
+        "arguments": "",
+        "definition": "CREATE OR REPLACE FUNCTION public.app_admin_list_commercials_overview()\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_user_id UUID := auth.uid();\n  v_role TEXT;\n  v_result JSONB;\nBEGIN\n  IF v_user_id IS NULL THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n  END IF;\n\n  SELECT raw_user_meta_data->>'role'\n  INTO v_role\n  FROM auth.users\n  WHERE id = v_user_id;\n\n  IF v_role <> 'admin' THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');\n  END IF;\n\n  SELECT COALESCE(\n    JSONB_AGG(\n      JSONB_BUILD_OBJECT(\n        'user_id', u.id,\n        'email', u.email,\n        'role', u.raw_user_meta_data->>'role',\n        'full_name', u.raw_user_meta_data->>'full_name',\n        'ref_code', cp.ref_code,\n        'ref_link', cp.ref_link,\n        'commission_rate', cp.commission_rate,\n        'is_active', cp.is_active,\n        'created_at', cp.created_at,\n        'updated_at', cp.updated_at,\n        'students_count', COALESCE(stats.students_count, 0),\n        'payments_confirmed_count', COALESCE(stats.payments_confirmed_count, 0),\n        'total_commission_pending', COALESCE(stats.total_commission_pending, 0),\n        'total_commission_paid', COALESCE(stats.total_commission_paid, 0)\n      )\n      ORDER BY cp.created_at DESC\n    ),\n    '[]'::JSONB\n  )\n  INTO v_result\n  FROM auth.users u\n  JOIN app.commercial_profiles cp ON cp.user_id = u.id\n  LEFT JOIN LATERAL (\n    SELECT\n      COUNT(DISTINCT r.student_id) AS students_count,\n      COUNT(DISTINCT CASE WHEN p.status = 'confirmed' THEN p.id END) AS payments_confirmed_count,\n      COALESCE(SUM(CASE WHEN c.status = 'pending' THEN c.commission_amount END), 0) AS total_commission_pending,\n      COALESCE(SUM(CASE WHEN c.status = 'paid' THEN c.commission_amount END), 0) AS total_commission_paid\n    FROM app.user_referrals r\n    LEFT JOIN app.referral_commissions c\n      ON c.commercial_user_id = cp.user_id\n     AND c.student_id = r.student_id\n    LEFT JOIN app.application_payments p\n      ON p.id = c.payment_id\n    WHERE r.commercial_user_id = cp.user_id\n  ) AS stats ON TRUE\n  WHERE u.raw_user_meta_data->>'role' = 'commercial';\n\n  RETURN JSONB_BUILD_OBJECT('success', TRUE, 'commercials', v_result);\nEND;\n$function$\n",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_list_user_invitations",
+        "arguments": "",
+        "definition": "CREATE OR REPLACE FUNCTION public.app_admin_list_user_invitations()\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_admin_role TEXT;\n    v_result JSONB;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    SELECT raw_user_meta_data->>'role'\n    INTO v_admin_role\n    FROM auth.users\n    WHERE id = v_user_id;\n\n    IF v_admin_role <> 'admin' THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');\n    END IF;\n\n    SELECT COALESCE(\n        JSONB_AGG(\n            JSONB_BUILD_OBJECT(\n                'id', i.id,\n                'token', i.token,\n                'email', i.email,\n                'role', i.role,\n                'university_id', i.university_id,\n                'full_name', i.full_name,\n                'notes', i.notes,\n                'status', i.status,\n                'created_by_admin_id', i.created_by_admin_id,\n                'created_at', i.created_at,\n                'used_at', i.used_at,\n                'expires_at', i.expires_at,\n                'updated_at', i.updated_at\n            )\n            ORDER BY i.created_at DESC\n        ),\n        '[]'::JSONB\n    ) INTO v_result\n    FROM app.user_invitations i;\n\n    RETURN JSONB_BUILD_OBJECT('success', TRUE, 'invitations', v_result);\nEND;\n$function$\n",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_list_users_overview",
+        "arguments": "",
+        "definition": "CREATE OR REPLACE FUNCTION public.app_admin_list_users_overview()\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_user_id UUID := auth.uid();\n  v_admin_role TEXT;\n  v_result JSONB;\nBEGIN\n  -- Vérifier l'authentification\n  IF v_user_id IS NULL THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n  END IF;\n\n  -- Vérifier le rôle admin\n  SELECT raw_user_meta_data->>'role'\n  INTO v_admin_role\n  FROM auth.users\n  WHERE id = v_user_id;\n\n  IF v_admin_role <> 'admin' THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');\n  END IF;\n\n  -- Construire la liste des comptes utilisateurs avec présence et statut admin\n  SELECT COALESCE(\n    JSONB_AGG(\n      JSONB_BUILD_OBJECT(\n        'id', u.id,\n        'email', u.email,\n        'role', u.raw_user_meta_data->>'role',\n        'full_name', u.raw_user_meta_data->>'full_name',\n        'created_at', u.created_at,\n        'last_activity_at', p.last_activity_at,\n        'is_online', CASE\n          WHEN p.last_activity_at IS NOT NULL\n               AND p.last_activity_at >= NOW() - INTERVAL '5 minutes'\n            THEN TRUE\n          ELSE FALSE\n        END,\n        'is_suspended', COALESCE(s.is_suspended, FALSE),\n        'suspended_reason', s.suspended_reason,\n        'is_deleted', COALESCE(s.is_deleted, FALSE),\n        'deleted_reason', s.deleted_reason\n      )\n      ORDER BY u.created_at DESC\n    ),\n    '[]'::JSONB\n  ) INTO v_result\n  FROM auth.users u\n  LEFT JOIN app.user_presence p ON p.user_id = u.id\n  LEFT JOIN app.user_admin_status s ON s.user_id = u.id;\n\n  RETURN JSONB_BUILD_OBJECT('success', TRUE, 'users', v_result);\nEND;\n$function$\n",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_set_commercial_commission_rate",
+        "arguments": "p_user_id uuid, p_rate numeric",
+        "definition": "CREATE OR REPLACE FUNCTION public.app_admin_set_commercial_commission_rate(p_user_id uuid, p_rate numeric)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_user_id UUID := auth.uid();\n  v_role TEXT;\n  v_existing app.commercial_profiles%ROWTYPE;\n  v_ref_code TEXT;\n  v_base_url TEXT;\nBEGIN\n  -- Base publique de l'app : configurable via le paramètre Postgres\n  --   app.app_public_base_url\n  -- avec repli sur l'URL Netlify actuelle.\n  v_base_url := COALESCE(\n    current_setting('app.app_public_base_url', true),\n    'https://dulcet-snickerdoodle-915a6b.netlify.app'\n  );\n  IF v_user_id IS NULL THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n  END IF;\n\n  SELECT raw_user_meta_data->>'role'\n  INTO v_role\n  FROM auth.users\n  WHERE id = v_user_id;\n\n  IF v_role <> 'admin' THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');\n  END IF;\n\n  IF p_user_id IS NULL THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_user_id');\n  END IF;\n\n  IF p_rate IS NULL OR p_rate < 0 THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_rate');\n  END IF;\n\n  SELECT *\n  INTO v_existing\n  FROM app.commercial_profiles\n  WHERE user_id = p_user_id;\n\n  IF NOT FOUND THEN\n    -- Générer un ref_code simple basé sur un UUID tronqué\n    v_ref_code := 'COMM-' || SUBSTR(REPLACE(gen_random_uuid()::TEXT, '-', ''), 1, 8);\n\n    INSERT INTO app.commercial_profiles (\n      user_id,\n      ref_code,\n      ref_link,\n      commission_rate,\n      is_active,\n      created_at,\n      updated_at\n    ) VALUES (\n      p_user_id,\n      v_ref_code,\n      v_base_url || '/?ref=' || v_ref_code,\n      p_rate,\n      TRUE,\n      NOW(),\n      NOW()\n    );\n  ELSE\n    -- Conserver le ref_code existant si présent, sinon en générer un nouveau\n    IF v_existing.ref_code IS NULL OR TRIM(v_existing.ref_code) = '' THEN\n      v_ref_code := 'COMM-' || SUBSTR(REPLACE(gen_random_uuid()::TEXT, '-', ''), 1, 8);\n    ELSE\n      v_ref_code := v_existing.ref_code;\n    END IF;\n\n    UPDATE app.commercial_profiles\n    SET\n      ref_code = v_ref_code,\n      ref_link = v_base_url || '/?ref=' || v_ref_code,\n      commission_rate = p_rate,\n      updated_at = NOW()\n    WHERE user_id = p_user_id;\n  END IF;\n\n  RETURN JSONB_BUILD_OBJECT('success', TRUE);\nEND;\n$function$\n",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_update_referral_commission_status",
+        "arguments": "p_commission_id uuid, p_new_status text, p_admin_note text",
+        "definition": "CREATE OR REPLACE FUNCTION public.app_admin_update_referral_commission_status(p_commission_id uuid, p_new_status text, p_admin_note text DEFAULT NULL::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_user_id UUID := auth.uid();\n  v_role TEXT;\n  v_comm app.referral_commissions%ROWTYPE;\n  v_now TIMESTAMPTZ := NOW();\n  v_final_status TEXT;\nBEGIN\n  IF v_user_id IS NULL THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n  END IF;\n\n  SELECT raw_user_meta_data->>'role'\n  INTO v_role\n  FROM auth.users\n  WHERE id = v_user_id;\n\n  IF v_role <> 'admin' THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');\n  END IF;\n\n  IF p_commission_id IS NULL THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_commission_id');\n  END IF;\n\n  IF p_new_status IS NULL OR LENGTH(TRIM(p_new_status)) = 0 THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_status');\n  END IF;\n\n  v_final_status := LOWER(TRIM(p_new_status));\n\n  IF v_final_status NOT IN ('pending', 'approved', 'paid', 'rejected') THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'unsupported_status');\n  END IF;\n\n  SELECT *\n  INTO v_comm\n  FROM app.referral_commissions\n  WHERE id = p_commission_id\n  FOR UPDATE;\n\n  IF NOT FOUND THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'commission_not_found');\n  END IF;\n\n  -- Empêcher de modifier une commission déjà payée ou rejetée\n  IF v_comm.status IN ('paid', 'rejected') THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'status_immutable');\n  END IF;\n\n  -- Autoriser :\n  -- pending -> approved / paid / rejected\n  -- approved -> paid / rejected\n  IF v_comm.status = 'pending' THEN\n    IF v_final_status NOT IN ('approved', 'paid', 'rejected') THEN\n      RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_transition');\n    END IF;\n  ELSIF v_comm.status = 'approved' THEN\n    IF v_final_status NOT IN ('paid', 'rejected') THEN\n      RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_transition');\n    END IF;\n  ELSE\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_transition');\n  END IF;\n\n  UPDATE app.referral_commissions\n  SET\n    status = v_final_status,\n    approved_at = CASE\n      WHEN v_final_status IN ('approved', 'paid') AND approved_at IS NULL\n        THEN v_now\n      ELSE approved_at\n    END,\n    paid_at = CASE\n      WHEN v_final_status = 'paid' THEN v_now\n      ELSE paid_at\n    END,\n    admin_note = COALESCE(p_admin_note, admin_note)\n  WHERE id = p_commission_id;\n\n  -- Notification quand la commission est marquée comme payée\n  IF v_final_status = 'paid' THEN\n    BEGIN\n      PERFORM app_queue_notification_event(\n        v_comm.commercial_user_id,\n        'commercial_commissions',\n        'commission_paid',\n        JSONB_BUILD_OBJECT(\n          'commission_id', v_comm.id,\n          'student_id', v_comm.student_id,\n          'payment_id', v_comm.payment_id,\n          'commission_amount', v_comm.commission_amount,\n          'currency', v_comm.currency\n        )\n      );\n    EXCEPTION WHEN OTHERS THEN\n      NULL;\n    END;\n  END IF;\n\n  RETURN JSONB_BUILD_OBJECT('success', TRUE, 'new_status', v_final_status);\nEND;\n$function$\n",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_admin_update_university_status",
+        "arguments": "p_university_id uuid, p_is_active boolean, p_reason text",
+        "definition": "CREATE OR REPLACE FUNCTION public.app_admin_update_university_status(p_university_id uuid, p_is_active boolean, p_reason text DEFAULT NULL::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_user_id UUID := auth.uid();\n    v_role TEXT;\n    v_university_id UUID;\n    v_university_exists BOOLEAN;\n    v_target_user_id UUID;\nBEGIN\n    IF v_user_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n    END IF;\n\n    SELECT raw_user_meta_data->>'role'\n    INTO v_role\n    FROM auth.users\n    WHERE id = v_user_id;\n\n    IF v_role <> 'admin' THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');\n    END IF;\n\n    IF p_university_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_university_id');\n    END IF;\n\n    SELECT id\n    INTO v_university_id\n    FROM app.universities\n    WHERE id = p_university_id;\n\n    IF v_university_id IS NULL THEN\n        RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'university_not_found');\n    END IF;\n\n    UPDATE app.universities\n    SET is_active = COALESCE(p_is_active, is_active),\n        updated_at = NOW()\n    WHERE id = v_university_id;\n\n    IF p_is_active IS FALSE THEN\n        FOR v_target_user_id IN\n            SELECT u.id\n            FROM auth.users u\n            WHERE u.raw_user_meta_data->>'role' = 'university'\n              AND (u.raw_user_meta_data->>'university_id')::UUID = v_university_id\n        LOOP\n            PERFORM app_admin_update_user_status(\n                v_target_user_id,\n                'suspend',\n                COALESCE(p_reason, 'university_deactivated')\n            );\n        END LOOP;\n    END IF;\n\n    RETURN JSONB_BUILD_OBJECT(\n        'success', TRUE,\n        'university_id', v_university_id,\n        'is_active', p_is_active\n    );\nEND;\n$function$\n",
+        "result_type": "jsonb",
+        "security_definer": true
+      },
+      {
+        "name": "app_list_partner_universities",
+        "arguments": "",
+        "definition": "CREATE OR REPLACE FUNCTION public.app_list_partner_universities()\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_result JSONB;\nBEGIN\n    SELECT COALESCE(\n        JSONB_AGG(\n            JSONB_BUILD_OBJECT(\n                'id', u.id,\n                'name', u.name,\n                'slug', u.slug,\n                'logo_url', u.logo_url,\n                'country', u.country,\n                'city', u.city,\n                'website_url', u.website_url,\n                'description', u.description\n            )\n            ORDER BY u.name ASC\n        ),\n        '[]'::JSONB\n    ) INTO v_result\n    FROM app.universities u\n    WHERE u.is_active = TRUE;\n\n    RETURN v_result;\nEND;\n$function$\n",
+        "result_type": "jsonb",
+        "security_definer": true
+      }
+    ]
+  }
+}

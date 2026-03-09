@@ -4,11 +4,13 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_linux
+  emoji_picker_flutter
   file_selector_linux
   flutter_webrtc
   gtk
   livekit_client
   printing
+  pro_video_editor
   record_linux
   url_launcher_linux
 )

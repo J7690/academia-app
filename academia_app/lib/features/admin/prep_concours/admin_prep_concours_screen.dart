@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../providers/admin_prep_concours_provider.dart';
 import '../../../providers/prep_concours_provider.dart';
+import '../admin_prep_screen.dart';
 
 class AdminPrepConcoursScreen extends StatefulWidget {
   const AdminPrepConcoursScreen({super.key});
@@ -895,6 +896,56 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              // ─── Quick access chips ────────────────────────────
+              Card(
+                elevation: 0,
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Outils Prépa', style: Theme.of(context).textTheme.titleSmall),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          _NavChip(
+                            icon: Icons.quiz,
+                            label: 'Questions & Modération',
+                            color: const Color(0xFF7C3AED),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(builder: (_) => const AdminPrepScreen()),
+                            ),
+                          ),
+                          _NavChip(
+                            icon: Icons.auto_awesome,
+                            label: 'IA Config',
+                            color: const Color(0xFF0891B2),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(builder: (_) => const AdminPrepScreen()),
+                            ),
+                          ),
+                          _NavChip(
+                            icon: Icons.emoji_events,
+                            label: 'Badges',
+                            color: const Color(0xFFF59E0B),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(builder: (_) => const AdminPrepScreen()),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // ─── Pilotage card ─────────────────────────────────
               Card(
                 elevation: 0,
                 color: Colors.white,
@@ -1165,6 +1216,44 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _NavChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _NavChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withOpacity(0.2)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 16),
+            const SizedBox(width: 6),
+            Text(label,
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+          ],
+        ),
       ),
     );
   }

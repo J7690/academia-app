@@ -53,6 +53,33 @@ class AdminCoursesProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> deleteCourse(String courseId) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(
+        'app_admin_delete_course',
+        params: {'p_course_id': courseId},
+      );
+      if (response is! Map<String, dynamic> || response['success'] != true) {
+        _setError(
+          response is Map<String, dynamic>
+              ? response['error']?.toString() ??
+                  'Erreur lors de la suppression du cours.'
+              : 'Erreur lors de la suppression du cours.',
+        );
+        return false;
+      }
+      await loadCourses();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   Future<bool> updateCourseStatus({
     required String courseId,
     bool? isActive,

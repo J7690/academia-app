@@ -20,6 +20,7 @@ class _AdminCommercialsScreenState extends State<AdminCommercialsScreen> {
       final provider = context.read<AdminUsersOverviewProvider>();
       provider.loadUsers();
       provider.loadCommercialsOverview();
+      provider.loadMilestoneClaims();
     });
   }
 
@@ -826,6 +827,49 @@ class _AdminCommercialsScreenState extends State<AdminCommercialsScreen> {
                                               ),
                                             ),
                                           ),
+                                        // Tier + Cap info from new system
+                                        Builder(builder: (_) {
+                                          final tier = (overviewItem['tier'] ?? '').toString();
+                                          final cap = overviewItem['max_commissions_per_prospect'];
+                                          final totalConf = overviewItem['total_confirmed_payments'];
+                                          final pendingClaims = overviewItem['pending_milestone_claims'] ?? 0;
+                                          if (tier.isEmpty) return const SizedBox.shrink();
+                                          final tierLabel = {
+                                            'bronze': '🥉 Bronze',
+                                            'silver': '🥈 Argent',
+                                            'gold': '🥇 Or',
+                                            'diamond': '💎 Diamant',
+                                          }[tier] ?? tier;
+                                          return Padding(
+                                            padding: const EdgeInsets.only(top: 4),
+                                            child: Wrap(
+                                              spacing: 8,
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(0xFFF3F4F6),
+                                                    borderRadius: BorderRadius.circular(6),
+                                                  ),
+                                                  child: Text('$tierLabel', style: const TextStyle(fontSize: 10)),
+                                                ),
+                                                if (cap != null)
+                                                  Text('Cap: $cap/prospect', style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
+                                                if (totalConf != null)
+                                                  Text('$totalConf commissions', style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
+                                                if ((pendingClaims is num) && pendingClaims > 0)
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.orange.withOpacity(0.15),
+                                                      borderRadius: BorderRadius.circular(6),
+                                                    ),
+                                                    child: Text('$pendingClaims bonus en attente', style: const TextStyle(fontSize: 10, color: Colors.orange, fontWeight: FontWeight.w600)),
+                                                  ),
+                                              ],
+                                            ),
+                                          );
+                                        }),
                                       ],
                                     ),
                                     trailing: Wrap(
@@ -1076,11 +1120,207 @@ class _AdminCommercialsScreenState extends State<AdminCommercialsScreen> {
                     ),
                   ),
                 ),
+                // ─── Milestone Claims Section ───
+                const SizedBox(height: 16),
+                Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Bonus de palier à traiter',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => usersProvider.loadMilestoneClaims(),
+                              icon: const Icon(Icons.refresh, size: 20),
+                              tooltip: 'Actualiser les bonus',
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        if (usersProvider.milestoneClaims.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Text(
+                              'Aucun bonus en attente de validation.',
+                              style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                            ),
+                          )
+                        else
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: usersProvider.milestoneClaims.length,
+                            itemBuilder: (context, index) {
+                              final claim = usersProvider.milestoneClaims[index];
+                              final claimId = (claim['claim_id'] ?? '').toString();
+                              final commercialEmail = (claim['commercial_email'] ?? '').toString();
+                              final commercialName = (claim['commercial_name'] ?? '').toString();
+                              final refCode = (claim['ref_code'] ?? '').toString();
+                              final tier = (claim['tier'] ?? '').toString();
+                              final milestoneLabel = (claim['milestone_label'] ?? '').toString();
+                              final bonusAmount = claim['bonus_amount'] ?? 0;
+                              final currency = (claim['currency'] ?? 'XOF').toString();
+                              final threshold = claim['threshold'] ?? 0;
+                              final totalConf = claim['total_confirmed_payments'] ?? 0;
+                              final claimedAt = (claim['claimed_at'] ?? '').toString();
+                              final status = (claim['status'] ?? '').toString();
+
+                              final tierLabel = {
+                                'bronze': '🥉',
+                                'silver': '🥈',
+                                'gold': '🥇',
+                                'diamond': '💎',
+                              }[tier] ?? '';
+
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: status == 'pending'
+                                      ? Colors.orange.withOpacity(0.05)
+                                      : const Color(0xFFF9FAFB),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: status == 'pending'
+                                        ? Colors.orange.withOpacity(0.3)
+                                        : const Color(0xFFE5E7EB),
+                                  ),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '$tierLabel ${commercialName.isNotEmpty ? commercialName : commercialEmail}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                          if (refCode.isNotEmpty)
+                                            Text('Code : $refCode',
+                                                style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '$milestoneLabel — $bonusAmount $currency',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xFF2563EB),
+                                            ),
+                                          ),
+                                          Text(
+                                            'Seuil : $threshold commissions • Actuel : $totalConf',
+                                            style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                                          ),
+                                          if (claimedAt.isNotEmpty)
+                                            Text(
+                                              'Réclamé le : ${_formatDate(claimedAt)}',
+                                              style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (status == 'pending')
+                                      Column(
+                                        children: [
+                                          TextButton(
+                                            onPressed: usersProvider.isUpdating
+                                                ? null
+                                                : () async {
+                                                    final ok = await usersProvider.updateMilestoneClaimStatus(
+                                                      claimId: claimId,
+                                                      newStatus: 'paid',
+                                                    );
+                                                    if (!context.mounted) return;
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(ok
+                                                            ? 'Bonus marqué comme payé.'
+                                                            : (usersProvider.error ?? 'Erreur.')),
+                                                      ),
+                                                    );
+                                                  },
+                                            child: const Text('Payer', style: TextStyle(fontSize: 12, color: Color(0xFF16A34A))),
+                                          ),
+                                          TextButton(
+                                            onPressed: usersProvider.isUpdating
+                                                ? null
+                                                : () async {
+                                                    final ok = await usersProvider.updateMilestoneClaimStatus(
+                                                      claimId: claimId,
+                                                      newStatus: 'rejected',
+                                                    );
+                                                    if (!context.mounted) return;
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(ok
+                                                            ? 'Bonus rejeté.'
+                                                            : (usersProvider.error ?? 'Erreur.')),
+                                                      ),
+                                                    );
+                                                  },
+                                            child: const Text('Rejeter', style: TextStyle(fontSize: 12, color: Colors.red)),
+                                          ),
+                                        ],
+                                      )
+                                    else
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: status == 'paid'
+                                              ? const Color(0xFF16A34A).withOpacity(0.1)
+                                              : Colors.red.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          status == 'paid' ? 'Payé' : 'Rejeté',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: status == 'paid' ? const Color(0xFF16A34A) : Colors.red,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
         );
       },
     );
+  }
+
+  String _formatDate(String iso) {
+    try {
+      final dt = DateTime.parse(iso);
+      return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+    } catch (_) {
+      return iso;
+    }
   }
 }

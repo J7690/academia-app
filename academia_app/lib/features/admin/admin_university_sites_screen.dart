@@ -1001,19 +1001,16 @@ class _AdminUniversitySitePreview extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      if (media.isNotEmpty) ...[
-                        MiniSiteHeroVideo(
-                          media: media,
-                          title: heroTitle.isNotEmpty ? heroTitle : name,
-                          location: locationText,
-                          tagline: heroSubtitle.isNotEmpty ? heroSubtitle : null,
-                          logoUrl: logoUrl.isNotEmpty ? logoUrl : null,
-                          heroPosterMediaId: heroPosterMediaId,
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                      if (media.isNotEmpty) ...[
-                        Row(
+                      MiniSiteHeroVideo(
+                        media: media,
+                        title: heroTitle.isNotEmpty ? heroTitle : name,
+                        location: locationText,
+                        tagline: heroSubtitle.isNotEmpty ? heroSubtitle : null,
+                        logoUrl: logoUrl.isNotEmpty ? logoUrl : null,
+                        heroPosterMediaId: heroPosterMediaId,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
                           children: [
                             const Expanded(
                               child: Text(
@@ -1066,35 +1063,55 @@ class _AdminUniversitySitePreview extends StatelessWidget {
                                 child: Padding(
                                   padding: const EdgeInsets.all(12.0),
                                   child: Column(
-                                    children: media.map((m) {
-                                      final title = m['title']?.toString() ?? '';
-                                      final mediaType =
-                                          m['media_type']?.toString() ?? '';
-                                      return Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 4.0),
-                                          child: Wrap(
-                                            spacing: 8,
-                                            crossAxisAlignment:
-                                                WrapCrossAlignment.center,
-                                            children: [
-                                              const Icon(
-                                                Icons.image_outlined,
-                                                size: 18,
-                                                color: Color(0xFF6B7280),
-                                              ),
-                                              Text(title.isNotEmpty
-                                                  ? title
-                                                  : 'Média'),
-                                              if (mediaType.isNotEmpty)
-                                                Chip(label: Text(mediaType)),
-                                            ],
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (media.isEmpty)
+                                        const Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(
+                                            'Aucun média configuré pour le moment.',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Color(0xFF6B7280),
+                                            ),
                                           ),
-                                        ),
-                                      );
-                                    }).toList(),
+                                        )
+                                      else
+                                        ...media.map((m) {
+                                          final title =
+                                              m['title']?.toString() ?? '';
+                                          final mediaType =
+                                              m['media_type']?.toString() ?? '';
+                                          return Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 4.0),
+                                              child: Wrap(
+                                                spacing: 8,
+                                                crossAxisAlignment:
+                                                    WrapCrossAlignment.center,
+                                                children: [
+                                                  const Icon(
+                                                    Icons.image_outlined,
+                                                    size: 18,
+                                                    color: Color(0xFF6B7280),
+                                                  ),
+                                                  Text(title.isNotEmpty
+                                                      ? title
+                                                      : 'Média'),
+                                                  if (mediaType.isNotEmpty)
+                                                    Chip(
+                                                        label:
+                                                            Text(mediaType)),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -1102,7 +1119,6 @@ class _AdminUniversitySitePreview extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 16),
-                      ],
                       Row(
                         children: [
                           const Expanded(
@@ -1217,66 +1233,74 @@ class _AdminUniversitySitePreview extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      if (universityPrograms.isNotEmpty) ...[
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                'Programmes',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF111827),
-                                ),
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Programmes',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF111827),
                               ),
-                            ),
-                            TextButton.icon(
-                              onPressed: () {
-                                // Ouvre l'écran global de gestion des programmes
-                                Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (context) =>
-                                        const AdminProgramsScreen(),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(Icons.school_outlined, size: 16),
-                              label: const Text('Gérer les programmes'),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Card(
-                          color: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(
-                              color: primaryColor.withOpacity(0.35),
-                              width: 1.4,
                             ),
                           ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                width: 4,
-                                decoration: BoxDecoration(
-                                  color: primaryColor.withOpacity(0.9),
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(16),
-                                    bottomLeft: Radius.circular(16),
-                                  ),
+                          TextButton.icon(
+                            onPressed: () {
+                              // Ouvre l'écran global de gestion des programmes
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (context) =>
+                                      const AdminProgramsScreen(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.school_outlined, size: 16),
+                            label: const Text('Gérer les programmes'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Card(
+                        color: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(
+                            color: primaryColor.withOpacity(0.35),
+                            width: 1.4,
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 4,
+                              decoration: BoxDecoration(
+                                color: primaryColor.withOpacity(0.9),
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(16),
+                                  bottomLeft: Radius.circular(16),
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    if (universityPrograms.isEmpty)
+                                      const Text(
+                                        'Aucun programme configuré pour le moment.',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Color(0xFF6B7280),
+                                        ),
+                                      )
+                                    else ...[
                                       if (highlightedPrograms.isNotEmpty) ...[
                                         const Text(
                                           'Programmes phares',
@@ -1297,120 +1321,131 @@ class _AdminUniversitySitePreview extends StatelessWidget {
                                           universityCourses,
                                         ),
                                     ],
-                                  ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                      if (events.isNotEmpty) ...[
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                'Événements',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF111827),
-                                ),
-                              ),
-                            ),
-                            TextButton.icon(
-                              onPressed: () {
-                                DefaultTabController.of(context).animateTo(3);
-                              },
-                              icon: const Icon(Icons.event, size: 16),
-                              label: const Text('Gérer les événements'),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Card(
-                          color: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(
-                              color: primaryColor.withOpacity(0.35),
-                              width: 1.4,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Événements',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF111827),
+                              ),
                             ),
                           ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                width: 4,
-                                decoration: BoxDecoration(
-                                  color: primaryColor.withOpacity(0.9),
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(16),
-                                    bottomLeft: Radius.circular(16),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Column(
-                                    children: events.map((event) {
-                                      final title =
-                                          event['title']?.toString() ?? '';
-                                      final location =
-                                          event['location']?.toString() ?? '';
-                                      final startAt =
-                                          event['start_at']?.toString() ?? '';
-                                      final endAt =
-                                          event['end_at']?.toString() ?? '';
-
-                                      final meta = [
-                                        if (startAt.isNotEmpty)
-                                          'Début: $startAt',
-                                        if (endAt.isNotEmpty) 'Fin: $endAt',
-                                        if (location.isNotEmpty) location,
-                                      ]
-                                          .where((e) => e.isNotEmpty)
-                                          .join(' · ');
-
-                                      return Padding(
-                                        padding: const EdgeInsets.only(
-                                            bottom: 8.0),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              title,
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            if (meta.isNotEmpty) ...[
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                meta,
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Color(0xFF6B7280),
-                                                ),
-                                              ),
-                                            ],
-                                          ],
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ),
-                                ),
-                              ),
-                            ],
+                          TextButton.icon(
+                            onPressed: () {
+                              DefaultTabController.of(context).animateTo(3);
+                            },
+                            icon: const Icon(Icons.event, size: 16),
+                            label: const Text('Gérer les événements'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Card(
+                        color: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(
+                            color: primaryColor.withOpacity(0.35),
+                            width: 1.4,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                      ],
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 4,
+                              decoration: BoxDecoration(
+                                color: primaryColor.withOpacity(0.9),
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(16),
+                                  bottomLeft: Radius.circular(16),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    if (events.isEmpty)
+                                      const Text(
+                                        'Aucun événement configuré pour le moment.',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Color(0xFF6B7280),
+                                        ),
+                                      )
+                                    else
+                                      ...events.map((event) {
+                                        final title =
+                                            event['title']?.toString() ?? '';
+                                        final location =
+                                            event['location']?.toString() ?? '';
+                                        final startAt =
+                                            event['start_at']?.toString() ?? '';
+                                        final endAt =
+                                            event['end_at']?.toString() ?? '';
+
+                                        final meta = [
+                                          if (startAt.isNotEmpty)
+                                            'Début: $startAt',
+                                          if (endAt.isNotEmpty) 'Fin: $endAt',
+                                          if (location.isNotEmpty) location,
+                                        ]
+                                            .where((e) => e.isNotEmpty)
+                                            .join(' · ');
+
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 8.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                title,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                              if (meta.isNotEmpty) ...[
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  meta,
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: Color(0xFF6B7280),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        );
+                                      }).toList(),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                       if (news.isNotEmpty) ...[
                         Row(
                           children: [
@@ -1888,24 +1923,34 @@ class _AdminSiteMediaTab extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(
-              'Médias',
-              style: Theme.of(context).textTheme.titleMedium,
+            Expanded(
+              child: Text(
+                'Médias',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
             ),
             const SizedBox(width: 8),
-            TextButton.icon(
-              onPressed: () =>
-                  _showAdminEditMediaDialog(context, provider),
-              icon: const Icon(Icons.add),
-              label: const Text('Ajouter un média'),
-            ),
-            const Spacer(),
-            TextButton.icon(
-              onPressed: () {
-                _showAdminEditHeroConfigDialog(context, provider);
-              },
-              icon: const Icon(Icons.settings),
-              label: const Text('Configurer le hero'),
+            Flexible(
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                alignment: WrapAlignment.end,
+                children: [
+                  TextButton.icon(
+                    onPressed: () =>
+                        _showAdminEditMediaDialog(context, provider),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Ajouter un média'),
+                  ),
+                  TextButton.icon(
+                    onPressed: () {
+                      _showAdminEditHeroConfigDialog(context, provider);
+                    },
+                    icon: const Icon(Icons.settings),
+                    label: const Text('Configurer le hero'),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -3268,6 +3313,7 @@ Future<void> _showAdminEditMediaDialog(
       String? pickedMimeType;
       final existingStoragePath = media?['storage_path']?.toString();
       String selectedType = initialType;
+      bool isSavingLocal = false;
 
       return StatefulBuilder(
         builder: (context, setState) {
@@ -3437,142 +3483,162 @@ Future<void> _showAdminEditMediaDialog(
                 child: const Text('Annuler'),
               ),
               TextButton(
-                onPressed: () async {
-                  final type = selectedType;
-                  final title = titleController.text.trim();
-                  final description = descriptionController.text.trim();
-                  if (title.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Le titre du média est obligatoire.'),
-                      ),
-                    );
-                    return;
-                  }
-                  final lowerTypeSave = type.toLowerCase();
-                  final isFileMediaSave = lowerTypeSave == 'video' ||
-                      lowerTypeSave == 'image' ||
-                      lowerTypeSave == 'brochure' ||
-                      lowerTypeSave == 'pdf' ||
-                      lowerTypeSave == 'doc';
+                onPressed: isSavingLocal
+                    ? null
+                    : () async {
+                        final type = selectedType;
+                        final title = titleController.text.trim();
+                        final description = descriptionController.text.trim();
+                        if (title.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content:
+                                  Text('Le titre du média est obligatoire.'),
+                            ),
+                          );
+                          return;
+                        }
+                        final lowerTypeSave = type.toLowerCase();
+                        final isFileMediaSave = lowerTypeSave == 'video' ||
+                            lowerTypeSave == 'image' ||
+                            lowerTypeSave == 'brochure' ||
+                            lowerTypeSave == 'pdf' ||
+                            lowerTypeSave == 'doc';
 
-                  String? url;
-                  if (!isFileMediaSave) {
-                    final urlText = urlController.text.trim();
-                    url = urlText.isNotEmpty ? urlText : null;
-                  }
+                        String? url;
+                        if (!isFileMediaSave) {
+                          final urlText = urlController.text.trim();
+                          url = urlText.isNotEmpty ? urlText : null;
+                        }
 
-                  if (type.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Le type de média est obligatoire.'),
-                      ),
-                    );
-                    return;
-                  }
+                        if (type.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content:
+                                  Text('Le type de média est obligatoire.'),
+                            ),
+                          );
+                          return;
+                        }
 
-                  String? storagePath = existingStoragePath;
-                  if (pickedBytes != null && pickedFileName != null) {
-                    final uploadedPath = await provider.uploadMediaFile(
-                      bytes: pickedBytes!,
-                      fileName: pickedFileName!,
-                      mimeType: pickedMimeType,
-                    );
-                    if (!context.mounted) return;
-                    if (uploadedPath == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            provider.error ??
-                                'Erreur lors de l\'upload du fichier média.',
-                          ),
-                        ),
-                      );
-                      return;
-                    }
-                    storagePath = uploadedPath;
-                  }
+                        String? storagePath = existingStoragePath;
 
-                  if (isFileMediaSave) {
-                    final pathTrim = (storagePath ?? '').trim();
-                    if (pathTrim.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Pour les vidéos, images, brochures et documents, un fichier doit être uploadé via Supabase Storage.',
-                          ),
-                        ),
-                      );
-                      return;
-                    }
-                  }
+                        setState(() {
+                          isSavingLocal = true;
+                        });
 
-                  if (url != null && pickedBytes == null && pickedFileName == null) {
-                    storagePath = null;
-                  }
+                        try {
+                          if (pickedBytes != null && pickedFileName != null) {
+                            final uploadedPath = await provider.uploadMediaFile(
+                              bytes: pickedBytes!,
+                              fileName: pickedFileName!,
+                              mimeType: pickedMimeType,
+                            );
+                            if (!context.mounted) return;
+                            if (uploadedPath == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    provider.error ??
+                                        'Erreur lors de l\'upload du fichier média.',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                            storagePath = uploadedPath;
+                          }
 
-                  final ok = await provider.upsertMedia(
-                    mediaId: media?['id']?.toString(),
-                    mediaType: type,
-                    title: title.isNotEmpty ? title : null,
-                    description: description.isNotEmpty ? description : null,
-                    url: url,
-                    storagePath: storagePath,
-                    thumbnailUrl: null,
-                    sortOrder: null,
-                    isActive: isActive,
-                  );
-                  if (!context.mounted) return;
-                  if (ok) {
-                    Navigator.of(context).pop();
-                  } else {
-                    final rawError = provider.error;
-                    String message;
-                    switch (rawError) {
-                      case 'invalid_media_type':
-                        message =
-                            'Supabase: le type de média est invalide ou manquant (invalid_media_type).';
-                        break;
-                      case 'storage_required':
-                        message =
-                            'Supabase: un fichier uploadé (storage_path) est obligatoire pour ce type de média (storage_required).';
-                        break;
-                      case 'mux_not_allowed':
-                        message =
-                            "Supabase: Mux n'est plus autorisé comme source média (mux_not_allowed).";
-                        break;
-                      case 'media_url_not_allowed':
-                        message =
-                            'Supabase: les URLs externes ne sont pas autorisées pour ce type de média (media_url_not_allowed).';
-                        break;
-                      case 'not_authenticated':
-                        message =
-                            "Supabase: l'utilisateur connecté n'est pas authentifié (not_authenticated).";
-                        break;
-                      case 'not_university':
-                        message =
-                            "Supabase: le compte connecté n'a pas le rôle université (not_university).";
-                        break;
-                      case 'university_not_configured':
-                        message =
-                            "Supabase: l'université liée à ce compte n'est pas configurée (university_not_configured).";
-                        break;
-                      case 'media_not_found':
-                        message =
-                            'Supabase: le média ciblé est introuvable (media_not_found).';
-                        break;
-                      default:
-                        message = provider.error ??
-                            'Erreur lors de la sauvegarde du média.';
-                        break;
-                    }
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(message),
-                      ),
-                    );
-                  }
-                },
+                          if (isFileMediaSave) {
+                            final pathTrim = (storagePath ?? '').trim();
+                            if (pathTrim.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Pour les vidéos, images, brochures et documents, un fichier doit être uploadé via Supabase Storage.',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                          }
+
+                          if (url != null &&
+                              pickedBytes == null &&
+                              pickedFileName == null) {
+                            storagePath = null;
+                          }
+
+                          final ok = await provider.upsertMedia(
+                            mediaId: media?['id']?.toString(),
+                            mediaType: type,
+                            title: title.isNotEmpty ? title : null,
+                            description:
+                                description.isNotEmpty ? description : null,
+                            url: url,
+                            storagePath: storagePath,
+                            thumbnailUrl: null,
+                            sortOrder: null,
+                            isActive: isActive,
+                          );
+                          if (!context.mounted) return;
+                          if (ok) {
+                            Navigator.of(context).pop();
+                          } else {
+                            final rawError = provider.error;
+                            String message;
+                            switch (rawError) {
+                              case 'invalid_media_type':
+                                message =
+                                    'Supabase: le type de média est invalide ou manquant (invalid_media_type).';
+                                break;
+                              case 'storage_required':
+                                message =
+                                    'Supabase: un fichier uploadé (storage_path) est obligatoire pour ce type de média (storage_required).';
+                                break;
+                              case 'mux_not_allowed':
+                                message =
+                                    "Supabase: Mux n'est plus autorisé comme source média (mux_not_allowed).";
+                                break;
+                              case 'media_url_not_allowed':
+                                message =
+                                    'Supabase: les URLs externes ne sont pas autorisées pour ce type de média (media_url_not_allowed).';
+                                break;
+                              case 'not_authenticated':
+                                message =
+                                    "Supabase: l'utilisateur connecté n'est pas authentifié (not_authenticated).";
+                                break;
+                              case 'not_university':
+                                message =
+                                    "Supabase: le compte connecté n'a pas le rôle université (not_university).";
+                                break;
+                              case 'university_not_configured':
+                                message =
+                                    "Supabase: l'université liée à ce compte n'est pas configurée (university_not_configured).";
+                                break;
+                              case 'media_not_found':
+                                message =
+                                    'Supabase: le média ciblé est introuvable (media_not_found).';
+                                break;
+                              default:
+                                message = provider.error ??
+                                    'Erreur lors de la sauvegarde du média.';
+                                break;
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(message),
+                              ),
+                            );
+                          }
+                        } finally {
+                          if (context.mounted) {
+                            setState(() {
+                              isSavingLocal = false;
+                            });
+                          }
+                        }
+                      },
                 child: const Text('Enregistrer'),
               ),
             ],

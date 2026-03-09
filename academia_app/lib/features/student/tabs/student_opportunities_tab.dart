@@ -1,17 +1,32 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../providers/student_opportunities_provider.dart';
+import '../../../providers/student_marketplace_listings_provider_v1.dart';
+import '../../../providers/student_marketplace_categories_provider_v1.dart';
+import '../../../providers/student_marketplace_cart_provider_v1.dart';
 import '../../../providers/opportunity_reactions_provider.dart';
 import '../../../widgets/opportunities/opportunity_feed_card.dart';
 import '../../../widgets/opportunities/opportunity_skeleton_loader.dart';
 import '../../../widgets/opportunities/opportunity_comments_sheet.dart';
 import '../../../widgets/bobodo_state.dart';
 import '../../../widgets/bobodo_view.dart';
+import '../../../widgets/marketplace/alibaba_marketplace_tokens.dart';
+import '../../../widgets/marketplace/alibaba_product_tile.dart';
+import '../../../widgets/marketplace/alibaba_search_bar.dart';
+import '../../../widgets/marketplace/alibaba_section_header.dart';
+import '../../../widgets/marketplace/alibaba_marketplace_shimmers.dart';
+import '../marketplace/student_my_inquiries_screen_v1.dart';
+import '../marketplace/student_marketplace_favorites_screen_v1.dart';
+import '../marketplace/student_marketplace_cart_screen_v1.dart';
+import '../marketplace/student_marketplace_categories_screen_alibaba_v1.dart';
+import '../marketplace/student_marketplace_product_detail_screen_v1.dart';
+import '../marketplace/student_marketplace_my_orders_screen_v1.dart';
 import '../../share/share_service.dart';
 import '../../share/share_mode_provider.dart';
-import '../../share/widgets/share_signature.dart';
 
 /// Onglet Opportunités - Feed social style Facebook/LinkedIn
 class StudentOpportunitiesTab extends StatefulWidget {
@@ -25,11 +40,20 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
   String _searchQuery = '';
   String? _selectedType;
   bool _showBookmarksOnly = false;
+  int _tabIndex = 0;
+  String? _selectedMarketplaceCategoryId;
+  String? _selectedMarketplaceSubCategoryId;
+  bool _marketplaceGridMode = true;
+  int _marketplaceHomeTabIndex = 1;
+  String _sort = 'newest';
+  bool _verifiedOnly = false;
+  bool _readyToShipOnly = false;
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
   final GlobalKey _shareBoundaryKey = GlobalKey();
   final ShareService _shareService = ShareService();
+  final GlobalKey _cartIconKey = GlobalKey();
 
   @override
   void initState() {
@@ -37,7 +61,141 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadInitialData();
+      context.read<StudentMarketplaceCartProviderV1>().loadCart();
     });
+  }
+
+  Future<void> _contactMerchant(Map<String, dynamic> opportunity) async {
+    final id = opportunity['id']?.toString();
+    if (id == null) return;
+
+    final messageController = TextEditingController();
+    final qtyController = TextEditingController();
+    final budgetController = TextEditingController();
+
+    bool isSubmitting = false;
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Contacter le vendeur'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: messageController,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        labelText: 'Message',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: qtyController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Quantité (optionnel)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: budgetController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Budget (optionnel)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Annuler'),
+                ),
+                ElevatedButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          final msg = messageController.text.trim();
+                          if (msg.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Le message est obligatoire.'),
+                              ),
+                            );
+                            return;
+                          }
+                          setDialogState(() => isSubmitting = true);
+
+                          try {
+                            final client = Supabase.instance.client;
+                            final response = await client.rpc(
+                              'app_student_create_marketplace_listing_inquiry',
+                              params: {
+                                'p_listing_id': id,
+                                'p_message': msg,
+                                'p_quantity': int.tryParse(qtyController.text.trim()),
+                                'p_budget':
+                                    double.tryParse(budgetController.text.trim()),
+                              },
+                            );
+
+                            if (response is Map && response['success'] == true) {
+                              if (!dialogContext.mounted) return;
+                              Navigator.of(dialogContext).pop(true);
+                              return;
+                            }
+                            setDialogState(() => isSubmitting = false);
+                            if (!dialogContext.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  response is Map
+                                      ? (response['error']?.toString() ??
+                                          'Erreur lors de l\'envoi.')
+                                      : 'Erreur lors de l\'envoi.',
+                                ),
+                              ),
+                            );
+                          } catch (e) {
+                            setDialogState(() => isSubmitting = false);
+                            if (!dialogContext.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(e.toString())),
+                            );
+                          }
+                        },
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Envoyer'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (!mounted) return;
+    if (ok == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Demande envoyée.')),
+      );
+    }
   }
 
   @override
@@ -55,59 +213,493 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
     );
   }
 
+  Widget _buildMarketplaceHomeSection({required int total}) {
+    return Consumer2<StudentMarketplaceCategoriesProviderV1,
+        StudentMarketplaceListingsProviderV1>(
+      builder: (context, categoriesProvider, listingsProvider, child) {
+        final categories = categoriesProvider.rootCategories;
+        final items = listingsProvider.items;
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AlibabaMarketplaceTokens.surface,
+                  borderRadius: BorderRadius.circular(AlibabaMarketplaceTokens.radiusCard),
+                  border: Border.all(color: AlibabaMarketplaceTokens.divider),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.shopping_bag_outlined,
+                          color: AlibabaMarketplaceTokens.primaryOrange,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Produits',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                              color: AlibabaMarketplaceTokens.textPrimary,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '$total',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: AlibabaMarketplaceTokens.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    AlibabaSearchBar(
+                      controller: _searchController,
+                      onChanged: (v) => _onSearchChanged(v),
+                      onSearch: _onRefresh,
+                    ),
+                    const SizedBox(height: 10),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _AlibabaHomeTabChip(
+                            label: 'Mode IA',
+                            selected: _marketplaceHomeTabIndex == 0,
+                            onTap: () => setState(() => _marketplaceHomeTabIndex = 0),
+                          ),
+                          const SizedBox(width: 8),
+                          _AlibabaHomeTabChip(
+                            label: 'Produits',
+                            selected: _marketplaceHomeTabIndex == 1,
+                            onTap: () => setState(() => _marketplaceHomeTabIndex = 1),
+                          ),
+                          const SizedBox(width: 8),
+                          _AlibabaHomeTabChip(
+                            label: 'Fabricants',
+                            selected: _marketplaceHomeTabIndex == 2,
+                            onTap: () => setState(() => _marketplaceHomeTabIndex = 2),
+                          ),
+                          const SizedBox(width: 8),
+                          _AlibabaHomeTabChip(
+                            label: 'Mondial',
+                            selected: _marketplaceHomeTabIndex == 3,
+                            onTap: () => setState(() => _marketplaceHomeTabIndex = 3),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _QuickActionPill(
+                            icon: Icons.verified_outlined,
+                            label: 'Vérifiés',
+                            selected: _verifiedOnly,
+                            onTap: () {
+                              setState(() {
+                                _verifiedOnly = !_verifiedOnly;
+                              });
+                              _onRefresh();
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _QuickActionPill(
+                            icon: Icons.local_shipping_outlined,
+                            label: 'Prêt',
+                            selected: _readyToShipOnly,
+                            onTap: () {
+                              setState(() {
+                                _readyToShipOnly = !_readyToShipOnly;
+                              });
+                              _onRefresh();
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _QuickActionPill(
+                            icon: Icons.favorite_border,
+                            label: 'Favoris',
+                            selected: false,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const StudentMarketplaceFavoritesScreenV1(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              AlibabaSectionHeader(
+                title: 'Catégories',
+                onTap: () {
+                  Navigator.of(context)
+                      .push<Map<String, dynamic>>(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const StudentMarketplaceCategoriesScreenAlibabaV1(),
+                    ),
+                  )
+                      .then((result) {
+                    if (!mounted) return;
+                    if (result == null) return;
+                    final subId = result['subCategoryId']?.toString();
+                    if (subId == null || subId.trim().isEmpty) return;
+                    setState(() {
+                      _selectedMarketplaceSubCategoryId = subId;
+                    });
+                    _onRefresh();
+                  });
+                },
+              ),
+              const SizedBox(height: 6),
+              SizedBox(
+                height: 88,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: categories.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 10),
+                  itemBuilder: (context, index) {
+                    final c = categories[index];
+                    final id = c['id']?.toString();
+                    final label = c['label']?.toString() ?? '';
+                    final selected = id != null && _selectedMarketplaceCategoryId == id;
+
+                    return GestureDetector(
+                      onTap: () async {
+                        if (id == null || id.isEmpty) return;
+                        setState(() {
+                          _selectedMarketplaceCategoryId = id;
+                          _selectedMarketplaceSubCategoryId = null;
+                        });
+                        await context
+                            .read<StudentMarketplaceCategoriesProviderV1>()
+                            .loadSubCategories(id);
+                        if (!mounted) return;
+                        await _onRefresh();
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        width: 120,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? const Color(0xFF2196F3)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(0xFFE0E0E0),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF2196F3).withOpacity(0.08),
+                              blurRadius: 12,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.category_outlined,
+                              size: 20,
+                              color: selected
+                                  ? Colors.white
+                                  : const Color(0xFF424242),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              label,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                height: 1.1,
+                                color: selected
+                                    ? Colors.white
+                                    : const Color(0xFF424242),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (items.isNotEmpty) ...[
+                AlibabaSectionHeader(
+                  title: 'Meilleures offres',
+                  onTap: null,
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 240,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: items.length > 10 ? 10 : items.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                    itemBuilder: (context, index) {
+                      final it = items[index];
+                      final id = it['id']?.toString();
+                      final title = it['title']?.toString() ?? '';
+                      final coverUrl = it['cover_url']?.toString();
+                      final currency = it['currency']?.toString() ?? '';
+                      final priceFrom = it['price_from'];
+                      final minOrderQty = it['min_order_qty'];
+                      final city = it['city']?.toString() ?? '';
+                      final country = it['country']?.toString() ?? '';
+                      final location = [city, country]
+                          .where((s) => s.trim().isNotEmpty)
+                          .join(', ');
+
+                      String? priceText;
+                      if (priceFrom != null) {
+                        priceText = '$priceFrom $currency';
+                      }
+
+                      return SizedBox(
+                        width: 170,
+                        child: AlibabaProductTile(
+                          title: title,
+                          imageUrl: coverUrl,
+                          priceText: priceText,
+                          metaLeft: location,
+                          metaRight: minOrderQty != null
+                              ? 'MOQ $minOrderQty'
+                              : null,
+                          compact: true,
+                          imageAspectRatio: 1.25,
+                          onTap: () {
+                            if (id == null || id.isEmpty) return;
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    StudentMarketplaceProductDetailScreenV1(
+                                  listingId: id,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              const Text(
+                'Pour toi',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF111827),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
-      final provider = context.read<StudentOpportunitiesProvider>();
-      if (provider.hasMore && !provider.isLoadingMore) {
-        if (_showBookmarksOnly) {
-          provider.loadBookmarkedOpportunities(
-            type: _selectedType,
-            search: _searchQuery.isEmpty ? null : _searchQuery,
-            refresh: false,
-          );
-        } else {
+      if (_tabIndex == 0) {
+        final provider = context.read<StudentMarketplaceListingsProviderV1>();
+        if (provider.hasMore && !provider.isLoadingMore) {
           provider.loadMore();
         }
+        return;
       }
     }
   }
 
   Future<void> _loadInitialData() async {
     final provider = context.read<StudentOpportunitiesProvider>();
+    final categoriesProvider =
+        context.read<StudentMarketplaceCategoriesProviderV1>();
+    final marketplaceListingsProvider =
+        context.read<StudentMarketplaceListingsProviderV1>();
     await provider.loadTypes();
-    if (_showBookmarksOnly) {
-      await provider.loadBookmarkedOpportunities(
-        type: _selectedType,
-        search: _searchQuery.isEmpty ? null : _searchQuery,
-        refresh: true,
-      );
-    } else {
-      await provider.loadOpportunities(
-        type: _selectedType,
-        search: _searchQuery.isEmpty ? null : _searchQuery,
-        refresh: true,
-      );
-    }
-    // Marquer les opportunités comme vues (reset badge)
-    provider.markAsViewed();
+    if (!mounted) return;
+
+    await categoriesProvider.loadRootCategories();
+    if (!mounted) return;
+    await marketplaceListingsProvider.loadListings(
+          type: _selectedType,
+          search: _searchQuery.isEmpty ? null : _searchQuery,
+          sort: _sort,
+          verifiedOnly: _verifiedOnly,
+          readyToShipOnly: _readyToShipOnly,
+          categoryId: _selectedMarketplaceCategoryId,
+          subCategoryId: _selectedMarketplaceSubCategoryId,
+          refresh: true,
+        );
   }
 
   Future<void> _onRefresh() async {
-    final provider = context.read<StudentOpportunitiesProvider>();
-    if (_showBookmarksOnly) {
-      await provider.loadBookmarkedOpportunities(
-        type: _selectedType,
-        search: _searchQuery.isEmpty ? null : _searchQuery,
-        refresh: true,
-      );
-    } else {
-      await provider.loadOpportunities(
-        type: _selectedType,
-        search: _searchQuery.isEmpty ? null : _searchQuery,
-        refresh: true,
-      );
+    if (_tabIndex == 0) {
+      await context.read<StudentMarketplaceListingsProviderV1>().loadListings(
+            type: _selectedType,
+            search: _searchQuery.isEmpty ? null : _searchQuery,
+            sort: _sort,
+            verifiedOnly: _verifiedOnly,
+            readyToShipOnly: _readyToShipOnly,
+            categoryId: _selectedMarketplaceCategoryId,
+            subCategoryId: _selectedMarketplaceSubCategoryId,
+            refresh: true,
+          );
+      return;
     }
+  }
+
+  Future<void> _openFiltersSheet() async {
+    final currentSort = _sort;
+    bool verifiedOnly = _verifiedOnly;
+    bool readyToShipOnly = _readyToShipOnly;
+
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        String sort = currentSort;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 14,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE5E7EB),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Filtres & tri',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Tri',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: sort,
+                    items: const [
+                      DropdownMenuItem(value: 'newest', child: Text('Plus récent')),
+                      DropdownMenuItem(value: 'price_asc', child: Text('Prix croissant')),
+                      DropdownMenuItem(value: 'price_desc', child: Text('Prix décroissant')),
+                    ],
+                    onChanged: (v) => setState(() => sort = v ?? 'newest'),
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  SwitchListTile(
+                    value: verifiedOnly,
+                    onChanged: (v) => setState(() => verifiedOnly = v),
+                    title: const Text('Vendeurs vérifiés uniquement'),
+                  ),
+                  SwitchListTile(
+                    value: readyToShipOnly,
+                    onChanged: (v) => setState(() => readyToShipOnly = v),
+                    title: const Text('Prêt à expédier uniquement'),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop({
+                              'sort': 'newest',
+                              'verifiedOnly': false,
+                              'readyToShipOnly': false,
+                              'reset': true,
+                            });
+                          },
+                          child: const Text('Réinitialiser'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop({
+                              'sort': sort,
+                              'verifiedOnly': verifiedOnly,
+                              'readyToShipOnly': readyToShipOnly,
+                            });
+                          },
+                          child: const Text('Appliquer'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (!mounted || result == null) return;
+    setState(() {
+      _sort = result['sort']?.toString() ?? _sort;
+      _verifiedOnly = result['verifiedOnly'] == true;
+      _readyToShipOnly = result['readyToShipOnly'] == true;
+    });
+    await _onRefresh();
   }
 
   void _onSearchChanged(String value) {
@@ -388,58 +980,77 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
   }
 
   Widget _buildCareerTipCard() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFECFDF5),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFA7F3D0),
+    return FadeInUp(
+      duration: const Duration(milliseconds: 400),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFFFFB74D).withOpacity(0.08),
+              const Color(0xFFE3F2FD),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0xFFFFB74D).withOpacity(0.2),
+          ),
         ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: const BoxDecoration(
-              color: Color(0xFF6EE7B7),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.lightbulb,
-              size: 18,
-              color: Color(0xFF047857),
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Astuce carrière',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF065F46),
-                  ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFB74D), Color(0xFF2196F3)],
                 ),
-                SizedBox(height: 4),
-                Text(
-                  'Un message de motivation court et personnalisé augmente fortement tes chances de réponse.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF047857),
-                    height: 1.4,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFFB74D).withOpacity(0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-              ],
+                ],
+              ),
+              child: const Icon(
+                Icons.lightbulb_outline,
+                size: 18,
+                color: Colors.white,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Astuce carrière',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF424242),
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Un message de motivation court et personnalisé augmente fortement tes chances de réponse.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF9E9E9E),
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -457,18 +1068,29 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
 
         return Container(
           margin: const EdgeInsets.only(top: 8, bottom: 8),
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: const Color(0xFFEEF2FF),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF4338CA), Color(0xFF6366F1)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF4338CA).withOpacity(0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             children: [
               Container(
                 width: 32,
                 height: 32,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF4F46E5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -487,7 +1109,7 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF111827),
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -519,168 +1141,334 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
-      body: RepaintBoundary(
-        key: _shareBoundaryKey,
-        child: Stack(
-          children: [
-            NestedScrollView(
-              controller: _scrollController,
-              headerSliverBuilder: (context, innerBoxIsScrolled) {
-                return [
-                  SliverToBoxAdapter(
-                    child: _buildHeader(),
+    return RepaintBoundary(
+      key: _shareBoundaryKey,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFFAFAFA),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _tabIndex,
+          onDestinationSelected: (i) {
+            setState(() => _tabIndex = i);
+          },
+          destinations: [
+            const NavigationDestination(
+              icon: Icon(Icons.storefront_outlined),
+              selectedIcon: Icon(Icons.storefront),
+              label: 'Accueil',
+            ),
+            Consumer<StudentMarketplaceCartProviderV1>(
+              builder: (context, cart, _) {
+                final c = cart.itemsCount;
+                return NavigationDestination(
+                  icon: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Icon(Icons.shopping_cart_outlined),
+                      if (c > 0)
+                        Positioned(
+                          right: -10,
+                          top: -6,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AlibabaMarketplaceTokens.primaryOrange,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              c > 99 ? '99+' : c.toString(),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                ];
+                  selectedIcon: const Icon(Icons.shopping_cart),
+                  label: 'Panier',
+                );
               },
-              body: RefreshIndicator(
-                onRefresh: _onRefresh,
-                child: Consumer<StudentOpportunitiesProvider>(
-                  builder: (context, provider, child) {
-              if (provider.isLoading && provider.opportunities.isEmpty) {
-                return const SingleChildScrollView(
-                  physics: AlwaysScrollableScrollPhysics(),
-                  child: OpportunitySkeletonLoader(count: 3),
-                );
-              }
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person),
+              label: 'Compte',
+            ),
+          ],
+        ),
+        body: _tabIndex == 0
+            ? _buildMarketplaceTabBody()
+            : _tabIndex == 1
+                ? const StudentMarketplaceCartScreenV1(showAppBar: false)
+                : const _OpportunitiesAccountTab(),
+      ),
+    );
+  }
 
-              if (provider.error != null && provider.opportunities.isEmpty) {
-                return SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            size: 48,
-                            color: Color(0xFF9CA3AF),
+  Widget _buildMarketplaceTabBody() {
+    return NestedScrollView(
+      controller: _scrollController,
+      headerSliverBuilder: (context, innerBoxIsScrolled) {
+        return [
+          SliverToBoxAdapter(
+            child: _buildHeader(),
+          ),
+        ];
+      },
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        child: Consumer<StudentMarketplaceListingsProviderV1>(
+          builder: (context, provider, child) {
+            if (provider.isLoading && provider.items.isEmpty) {
+              return const SingleChildScrollView(
+                physics: AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(16, 12, 16, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AlibabaRailShimmer(itemCount: 6),
+                    SizedBox(height: 16),
+                    AlibabaGridShimmer(itemCount: 8),
+                  ],
+                ),
+              );
+            }
+
+            if (provider.error != null && provider.items.isEmpty) {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Color(0xFF9E9E9E),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          provider.error!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xFF9E9E9E),
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            provider.error!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Color(0xFF6B7280)),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _onRefresh,
-                            child: const Text('Réessayer'),
-                          ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _onRefresh,
+                          child: const Text('Réessayer'),
+                        ),
+                      ],
                     ),
                   ),
-                );
-              }
+                ),
+              );
+            }
 
-                    final opportunities = provider.opportunities;
-                    if (opportunities.isEmpty) {
-                return SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.work_off_outlined,
-                            size: 64,
-                            color: Colors.grey[300],
+            final opportunities = provider.items;
+            if (opportunities.isEmpty) {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.shopping_bag_outlined,
+                          size: 64,
+                          color: Colors.grey[300],
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Aucune annonce disponible',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF9E9E9E),
                           ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Aucune opportunité disponible',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF6B7280),
-                            ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Reviens voir régulièrement pour découvrir de nouvelles annonces !',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF9E9E9E),
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Reviens voir régulièrement pour découvrir de nouvelles opportunités !',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF9CA3AF),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                );
-              }
+                ),
+              );
+            }
 
-                    const bool hasTipCard = true;
-                    final int baseItemCount =
-                        opportunities.length + (provider.hasMore ? 1 : 0);
-                    final int itemCount = baseItemCount + (hasTipCard ? 1 : 0);
+            final int itemCount = opportunities.length + (provider.hasMore ? 1 : 0);
 
-                    return ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      itemCount: itemCount,
-                      itemBuilder: (context, index) {
-                        if (hasTipCard && index == 0) {
-                          return _buildCareerTipCard();
-                        }
+            Widget buildCard(Map<String, dynamic> opp, int index) {
+              return FadeInUp(
+                duration: const Duration(milliseconds: 400),
+                delay: Duration(
+                  milliseconds: 60 * (index < 8 ? index : 0),
+                ),
+                child: OpportunityFeedCard(
+                  opportunity: opp,
+                  margin: EdgeInsets.zero,
+                  compact: _marketplaceGridMode,
+                  onTap: () {
+                    final id = opp['id']?.toString();
+                    if (id == null || id.isEmpty) return;
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            StudentMarketplaceProductDetailScreenV1(
+                          listingId: id,
+                        ),
+                      ),
+                    );
+                  },
+                  onLike: () => _onReaction(opp, 'like'),
+                  onLove: () => _onReaction(opp, 'love'),
+                  onComment: () => _onComment(opp),
+                  cartIconKey: _cartIconKey,
+                  onActionAsync: () async {
+                    final id = opp['id']?.toString();
+                    if (id == null || id.isEmpty) return false;
 
-                        final int effectiveIndex =
-                            hasTipCard ? index - 1 : index;
+                    final cart = context.read<StudentMarketplaceCartProviderV1>();
+                    final ok = await cart.addItem(
+                      listingId: id,
+                      quantity: 1,
+                    );
+                    if (!context.mounted) return ok;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          ok
+                              ? 'Ajouté au panier.'
+                              : (cart.errorMessage ?? cart.error ?? 'Erreur panier.'),
+                        ),
+                      ),
+                    );
+                    return ok;
+                  },
+                  onBookmark: () async {
+                    final id = opp['id']?.toString();
+                    if (id == null) return;
+                    final ok = await context
+                        .read<StudentMarketplaceListingsProviderV1>()
+                        .toggleBookmark(id);
+                    if (!ok && context.mounted) {
+                      final msg = context
+                              .read<StudentMarketplaceListingsProviderV1>()
+                              .error ??
+                          'Erreur lors de la mise à jour du favori.';
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(msg)),
+                      );
+                    }
+                    return;
+                  },
+                ),
+              );
+            }
 
-                        if (effectiveIndex >= opportunities.length) {
+            return CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: _buildMarketplaceHomeSection(
+                    total: provider.total,
+                  ),
+                ),
+                if (!_marketplaceGridMode)
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        if (index >= opportunities.length) {
                           return const Padding(
                             padding: EdgeInsets.all(16),
                             child: Center(
                               child: SizedBox(
                                 width: 24,
                                 height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
+                                child: CircularProgressIndicator(strokeWidth: 2),
                               ),
                             ),
                           );
                         }
 
-                        final opp = opportunities[effectiveIndex];
-                        return OpportunityFeedCard(
-                          opportunity: opp,
-                          onTap: () {
-                            // TODO: Navigate to detail screen
-                          },
-                          onLike: () => _onReaction(opp, 'like'),
-                          onLove: () => _onReaction(opp, 'love'),
-                          onComment: () => _onComment(opp),
-                          onAction: () => _applyToOpportunity(opp),
-                          onBookmark: () => _onToggleBookmark(opp),
+                        return Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                          child: buildCard(opportunities[index], index),
                         );
                       },
-                    );
-                  },
-                ),
-              ),
-            ),
-            Positioned(
-              right: 16,
-              bottom: 16,
-              child: IgnorePointer(
-                child: Consumer<ShareModeProvider>(
-                  builder: (context, shareMode, _) {
-                    if (!shareMode.isShareModeEnabled) {
-                      return const SizedBox.shrink();
-                    }
-                    return const ShareSignature();
-                  },
-                ),
-              ),
-            ),
-          ],
+                      childCount: itemCount,
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                    sliver: SliverToBoxAdapter(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          const gap = 12.0;
+                          final maxW = constraints.maxWidth;
+                          final columns = maxW < 360 ? 1 : 2;
+                          final cardW =
+                              columns == 1 ? maxW : (maxW - gap) / 2.0;
+
+                          return Wrap(
+                            spacing: gap,
+                            runSpacing: gap,
+                            children: [
+                              for (var i = 0; i < opportunities.length; i++)
+                                SizedBox(
+                                  width: cardW,
+                                  child: buildCard(opportunities[i], i),
+                                ),
+                              if (provider.hasMore)
+                                SizedBox(
+                                  width: maxW,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Center(
+                                      child: provider.isLoadingMore
+                                          ? const SizedBox(
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                          : OutlinedButton(
+                                              onPressed: provider.isLoadingMore
+                                                  ? null
+                                                  : provider.loadMore,
+                                              child: const Text('Charger plus'),
+                                            ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -688,7 +1476,7 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
 
   Widget _buildHeader() {
     return Container(
-      color: const Color(0xFFF3F4F6),
+      color: const Color(0xFFFAFAFA),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -698,180 +1486,213 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
               const Expanded(
                 child: Text(
                   'Opportunités',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0A2540),
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF424242),
+                    letterSpacing: -0.5,
                   ),
                 ),
               ),
-              Consumer<ShareModeProvider>(
-                builder: (context, shareMode, _) {
-                  if (shareMode.isShareModeEnabled) {
-                    return const SizedBox.shrink();
-                  }
-                  final isBusy = shareMode.isBusy;
-                  return IconButton(
-                    icon: const Icon(Icons.share),
-                    tooltip: 'Partager',
-                    onPressed: isBusy ? null : _shareCurrentView,
+              Flexible(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Consumer<ShareModeProvider>(
+                        builder: (context, shareMode, _) {
+                          if (shareMode.isShareModeEnabled) {
+                            return const SizedBox.shrink();
+                          }
+                          final isBusy = shareMode.isBusy;
+                          return IconButton(
+                            icon: const Icon(Icons.share),
+                            tooltip: 'Partager',
+                            onPressed: isBusy ? null : _shareCurrentView,
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.chat_bubble_outline),
+                        tooltip: 'Mes demandes',
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const StudentMyInquiriesScreenV1(),
+                            ),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.favorite_border),
+                        tooltip: 'Favoris Marketplace',
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const StudentMarketplaceFavoritesScreenV1(),
+                            ),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        tooltip: 'Mes commandes',
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const StudentMarketplaceMyOrdersScreenV1(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.receipt_long_outlined),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          _marketplaceGridMode
+                              ? Icons.view_list
+                              : Icons.grid_view,
+                        ),
+                        tooltip: _marketplaceGridMode
+                            ? 'Afficher en liste'
+                            : 'Afficher en grille',
+                        onPressed: () {
+                          setState(() {
+                            _marketplaceGridMode = !_marketplaceGridMode;
+                          });
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.tune),
+                        tooltip: 'Filtres & tri',
+                        onPressed: _openFiltersSheet,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Expanded(
+                child: Consumer<StudentMarketplaceListingsProviderV1>(
+                  builder: (context, provider, _) {
+                    return Text(
+                      '${provider.total} annonce${provider.total > 1 ? 's' : ''} disponible${provider.total > 1 ? 's' : ''}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF9E9E9E),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OpportunitiesAccountTab extends StatelessWidget {
+  const _OpportunitiesAccountTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(12),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE0E0E0)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2196F3).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.person,
+                  color: Color(0xFF2196F3),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Mon compte',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF424242),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.receipt_long_outlined),
+                title: const Text('Mes commandes'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const StudentMarketplaceMyOrdersScreenV1(),
+                    ),
+                  );
+                },
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.chat_bubble_outline),
+                title: const Text('Mes demandes'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const StudentMyInquiriesScreenV1(),
+                    ),
+                  );
+                },
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.favorite_border),
+                title: const Text('Mes favoris'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const StudentMarketplaceFavoritesScreenV1(),
+                    ),
                   );
                 },
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Consumer<StudentOpportunitiesProvider>(
-            builder: (context, provider, _) {
-              return Text(
-                '${provider.total} opportunité${provider.total > 1 ? 's' : ''} disponible${provider.total > 1 ? 's' : ''}',
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF6B7280),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 6),
-          Consumer<StudentOpportunitiesProvider>(
-            builder: (context, provider, _) {
-              final opportunities = provider.opportunities;
-              int bookmarkedCount = 0;
-              for (final opp in opportunities) {
-                if (opp['is_bookmarked'] == true) {
-                  bookmarkedCount++;
-                }
-              }
-
-              final hasAny = opportunities.isNotEmpty;
-              final hasBookmarked = bookmarkedCount > 0;
-
-              final BobodoState state;
-              if (!hasAny) {
-                state = BobodoState.idle;
-              } else if (hasBookmarked) {
-                state = BobodoState.success;
-              } else {
-                state = BobodoState.thinking;
-              }
-
-              String text;
-              if (!hasAny) {
-                text =
-                    'Dès que tu commences à explorer des opportunités, je t’aide à repérer celles qui collent à ton projet. Sauvegarder et postuler, c’est avancer vers tes prochains badges carrière.';
-              } else if (hasBookmarked) {
-                text =
-                    'Tu as déjà repéré des opportunités intéressantes. En postulent régulièrement, tu construis ton propre parcours et tes badges d’expérience pro.';
-              } else {
-                text =
-                    'Parcours les opportunités, sauvegarde celles qui te parlent et prépare quelques candidatures ciblées : je suis là pour t’aider à garder le cap.';
-              }
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 12.0),
-                        child: BobodoView(
-                          state: state,
-                          size: 52,
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          text,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF6B7280),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  _buildProgressCard(),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.search, color: Color(0xFF9CA3AF)),
-              hintText: 'Rechercher une opportunité...',
-              hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            onChanged: _onSearchChanged,
-          ),
-          const SizedBox(height: 12),
-          Consumer<StudentOpportunitiesProvider>(
-            builder: (context, provider, child) {
-              final types = provider.types;
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _FilterChip(
-                      label: 'Tous',
-                      isSelected: _selectedType == null,
-                      onTap: () => _onTypeSelected(null),
-                    ),
-                    const SizedBox(width: 8),
-                    for (final t in types) ...[
-                      _FilterChip(
-                        label: t['label']?.toString() ?? t['code']?.toString() ?? '',
-                        isSelected: _selectedType == t['code']?.toString(),
-                        onTap: () => _onTypeSelected(t['code']?.toString()),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                  ],
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: FilterChip(
-              label: const Text('Mes favoris'),
-              selected: _showBookmarksOnly,
-              onSelected: (selected) {
-                setState(() {
-                  _showBookmarksOnly = selected;
-                });
-                _onRefresh();
-              },
-              selectedColor: const Color(0xFFEEF2FF),
-              checkmarkColor: const Color(0xFF4F46E5),
-              labelStyle: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: _showBookmarksOnly
-                    ? const Color(0xFF4F46E5)
-                    : const Color(0xFF374151),
-              ),
-              side: BorderSide(
-                color: _showBookmarksOnly
-                    ? const Color(0xFF4F46E5)
-                    : const Color(0xFFE5E7EB),
-              ),
-              backgroundColor: Colors.white,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -892,7 +1713,7 @@ class _ProgressPill extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -900,18 +1721,118 @@ class _ProgressPill extends StatelessWidget {
           Icon(
             icon,
             size: 16,
-            color: const Color(0xFF4F46E5),
+            color: const Color(0xFF2196F3),
           ),
           const SizedBox(width: 6),
           Text(
             label,
             style: const TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF111827),
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF424242),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AlibabaHomeTabChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _AlibabaHomeTabChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected
+          ? const Color(0xFF2196F3)
+          : const Color(0xFFF5F5F5),
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: selected ? Colors.white : const Color(0xFF424242),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickActionPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _QuickActionPill({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF2196F3) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? Colors.transparent : const Color(0xFFE0E0E0),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF2196F3).withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: selected ? Colors.white : const Color(0xFF424242),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: selected ? Colors.white : const Color(0xFF424242),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -935,18 +1856,32 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF3275D0) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          gradient: isSelected
+              ? const LinearGradient(
+                  colors: [Color(0xFF2196F3), Color(0xFF64B5F6)],
+                )
+              : null,
+          color: isSelected ? null : Colors.white,
+          borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: isSelected ? const Color(0xFF3275D0) : const Color(0xFFE5E7EB),
+            color: isSelected ? Colors.transparent : const Color(0xFFE0E0E0),
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF2196F3).withOpacity(0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: isSelected ? Colors.white : const Color(0xFF374151),
+            fontWeight: FontWeight.w600,
+            color: isSelected ? Colors.white : const Color(0xFF9E9E9E),
           ),
         ),
       ),

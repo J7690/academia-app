@@ -59,8 +59,24 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
     Future.microtask(_buildPlaylist);
   }
 
-  String _computeSignature(List<Map<String, dynamic>> media, String? heroPosterMediaId) {
-    return '${heroPosterMediaId ?? ''}:${media.length}';
+  String _computeSignature(
+    List<Map<String, dynamic>> media,
+    String? heroPosterMediaId,
+  ) {
+    // Inclure non seulement le nombre d'éléments mais aussi quelques champs clés
+    // pour détecter les mises à jour d'un média existant (ex: image -> vidéo,
+    // changement de storage_path) et forcer la reconstruction de la playlist.
+    final ids = media
+        .map((m) => (m['id'] ?? '').toString())
+        .join(',');
+    final types = media
+        .map((m) => (m['media_type'] ?? '').toString())
+        .join(',');
+    final storagePaths = media
+        .map((m) => (m['storage_path'] ?? '').toString())
+        .join(',');
+
+    return '${heroPosterMediaId ?? ''}:${media.length}:$ids:$types:$storagePaths';
   }
 
   Future<void> _buildPlaylist() async {
@@ -235,15 +251,23 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
 
     final mediaById = _mediaById;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: HeroMediaCarousel(
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF2E7D32),
+          width: 1.5,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10.5),
+        child: HeroMediaCarousel(
         items: _heroItems,
         aspectRatio: aspectRatio,
         useAspectRatio: true,
         autoplay: true,
         loopVideos: false,
-        mutedByDefault: kIsWeb,
+        mutedByDefault: true,
         showControls: false,
         defaultImageDuration: const Duration(seconds: 5),
         overlayBuilder: (context, currentItem) {
@@ -350,6 +374,7 @@ class _MiniSiteHeroVideoState extends State<MiniSiteHeroVideo> {
             ],
           );
         },
+      ),
       ),
     );
   }

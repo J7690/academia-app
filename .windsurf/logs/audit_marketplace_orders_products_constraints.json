@@ -1,0 +1,96 @@
+{
+  "timestamp": "2026-03-05T16:57:26.384405Z",
+  "constraints": {
+    "app.marketplace_order_items": {
+      "http": 200,
+      "ok": true,
+      "rows": [
+        {
+          "definition": "FOREIGN KEY (order_id) REFERENCES app.marketplace_orders(id) ON DELETE CASCADE",
+          "constraint_name": "marketplace_order_items_order_id_fkey",
+          "constraint_type": "f"
+        },
+        {
+          "definition": "PRIMARY KEY (id)",
+          "constraint_name": "marketplace_order_items_pkey",
+          "constraint_type": "p"
+        },
+        {
+          "definition": "FOREIGN KEY (product_id) REFERENCES app.marketplace_products(id)",
+          "constraint_name": "marketplace_order_items_product_id_fkey",
+          "constraint_type": "f"
+        }
+      ],
+      "error": null,
+      "sqlstate": null,
+      "rows_count": 3
+    },
+    "app.marketplace_orders": {
+      "http": 200,
+      "ok": true,
+      "rows": [
+        {
+          "definition": "FOREIGN KEY (merchant_id) REFERENCES app.marketplace_merchants(id) ON DELETE CASCADE",
+          "constraint_name": "marketplace_orders_merchant_id_fkey",
+          "constraint_type": "f"
+        },
+        {
+          "definition": "PRIMARY KEY (id)",
+          "constraint_name": "marketplace_orders_pkey",
+          "constraint_type": "p"
+        },
+        {
+          "definition": "FOREIGN KEY (student_id) REFERENCES app.students(id) ON DELETE CASCADE",
+          "constraint_name": "marketplace_orders_student_id_fkey",
+          "constraint_type": "f"
+        }
+      ],
+      "error": null,
+      "sqlstate": null,
+      "rows_count": 3
+    },
+    "app.marketplace_products": {
+      "http": 200,
+      "ok": true,
+      "rows": [
+        {
+          "definition": "FOREIGN KEY (merchant_id) REFERENCES app.marketplace_merchants(id) ON DELETE CASCADE",
+          "constraint_name": "marketplace_products_merchant_id_fkey",
+          "constraint_type": "f"
+        },
+        {
+          "definition": "PRIMARY KEY (id)",
+          "constraint_name": "marketplace_products_pkey",
+          "constraint_type": "p"
+        }
+      ],
+      "error": null,
+      "sqlstate": null,
+      "rows_count": 2
+    },
+    "app.marketplace_listings": {
+      "http": 200,
+      "ok": true,
+      "rows": [
+        {
+          "definition": "FOREIGN KEY (category_id) REFERENCES app.marketplace_categories(id)",
+          "constraint_name": "marketplace_listings_category_id_fkey",
+          "constraint_type": "f"
+        },
+        {
+          "definition": "PRIMARY KEY (id)",
+          "constraint_name": "marketplace_listings_pkey",
+          "constraint_type": "p"
+        },
+        {
+          "definition": "FOREIGN KEY (sub_category_id) REFERENCES app.marketplace_categories(id)",
+          "constraint_name": "marketplace_listings_sub_category_id_fkey",
+          "constraint_type": "f"
+        }
+      ],
+      "error": null,
+      "sqlstate": null,
+      "rows_count": 3
+    }
+  }
+}

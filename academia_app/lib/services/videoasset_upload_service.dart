@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../utils/mime_type_helper.dart';
@@ -103,5 +104,41 @@ class VideoAssetUploadService {
     }
 
     return videoAssetId.trim();
+  }
+
+  /// Trigger the transcode-video Edge Function to mark the video_asset as
+  /// ready and create the "original" rendition entry.
+  /// Returns the playback manifest on success, null on failure.
+  static Future<Map<String, dynamic>?> triggerTranscode({
+    required String videoAssetId,
+    String? posterUrl,
+  }) async {
+    try {
+      debugPrint('[VideoAssetUpload] triggerTranscode: videoAssetId=$videoAssetId');
+      final response = await _client.functions.invoke(
+        'transcode-video',
+        body: {
+          'video_asset_id': videoAssetId,
+          if (posterUrl != null) 'poster_url': posterUrl,
+        },
+      );
+
+      if (response.status != 200) {
+        debugPrint('[VideoAssetUpload] triggerTranscode: HTTP ${response.status}');
+        return null;
+      }
+
+      final data = response.data;
+      if (data is Map<String, dynamic> && data['success'] == true) {
+        debugPrint('[VideoAssetUpload] triggerTranscode OK: ${data['playback']}');
+        return data['playback'] as Map<String, dynamic>?;
+      }
+
+      debugPrint('[VideoAssetUpload] triggerTranscode: unexpected response=$data');
+      return null;
+    } catch (e) {
+      debugPrint('[VideoAssetUpload] triggerTranscode error: $e');
+      return null;
+    }
   }
 }

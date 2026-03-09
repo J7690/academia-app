@@ -124,7 +124,8 @@ serve(async (req) => {
       targetRole !== 'admin' &&
       targetRole !== 'university' &&
       targetRole !== 'instructor' &&
-      targetRole !== 'commercial'
+      targetRole !== 'commercial' &&
+      targetRole !== 'merchant'
     ) {
       return new Response(
         JSON.stringify({ error: 'invalid_target_role' }),
@@ -243,6 +244,62 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, user_id: targetUserId, previous_role: currentRole, new_role: 'commercial' }),
+        { status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+      );
+    }
+
+    if (targetRole === 'merchant') {
+      const newMeta: Record<string, unknown> = {
+        ...currentMeta,
+        role: 'merchant',
+      };
+
+      const { data: updatedUser5, error: updateError5 } = await supabaseService.auth.admin.updateUserById(
+        targetUserId,
+        {
+          user_metadata: newMeta,
+        },
+      );
+
+      if (updateError5 || !updatedUser5 || !updatedUser5.user) {
+        console.error('Error promoting user to merchant', updateError5?.message ?? updateError5);
+        return new Response(
+          JSON.stringify({ error: 'promotion_failed' }),
+          { status: 500, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+        );
+      }
+
+      // Initialiser le profil marchand (app.merchant_profiles)
+      try {
+        const inferredName =
+          (currentMeta?.full_name ? String(currentMeta.full_name) : '') ||
+          (email ? email.split('@')[0] : '') ||
+          'Marchand';
+
+        const { error: upsertError } = await supabaseService
+          .schema('app')
+          .from('merchant_profiles')
+          .upsert(
+            {
+              user_id: targetUserId,
+              display_name: inferredName,
+              is_active: true,
+              is_verified: false,
+              verification_level: 'none',
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'user_id' },
+          );
+
+        if (upsertError) {
+          console.error('Error initializing merchant profile', upsertError.message ?? upsertError);
+        }
+      } catch (rpcExc) {
+        console.error('Exception while initializing merchant profile', rpcExc);
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, user_id: targetUserId, previous_role: currentRole, new_role: 'merchant' }),
         { status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
       );
     }

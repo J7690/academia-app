@@ -1,0 +1,368 @@
+{
+  "MARKETPLACE_TABLES_EXIST": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 3,
+    "rows": [
+      {
+        "table_name": "merchant_profiles",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "opportunity_inquiries",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "opportunity_inquiry_messages",
+        "table_schema": "app"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "MERCHANT_PROFILES_COLUMNS": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 11,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "display_name",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "logo_url",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "bio",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "country",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "city",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_verified",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "text",
+        "column_name": "verification_level",
+        "is_nullable": "NO",
+        "column_default": "'none'::text"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "OPPORTUNITIES_MARKETPLACE_COLUMNS": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 12,
+    "rows": [
+      {
+        "data_type": "text",
+        "column_name": "currency",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_ready_to_ship",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "lead_time_days",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "merchant_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "min_order_qty",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "price_from",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "price_to",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "review_reason",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "review_status",
+        "is_nullable": "NO",
+        "column_default": "'draft'::text"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "reviewed_at",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "reviewed_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "submitted_at",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "OPPORTUNITY_INQUIRIES_COLUMNS": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 10,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "opportunity_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "buyer_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "merchant_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "message",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "quantity",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "budget",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'open'::text"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "last_message_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "OPPORTUNITY_INQUIRY_MESSAGES_COLUMNS": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 5,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "inquiry_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "sender_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "content",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "MARKETPLACE_INDEXES": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 11,
+    "rows": [
+      {
+        "indexdef": "CREATE INDEX idx_merchant_profiles_is_active ON app.merchant_profiles USING btree (is_active)",
+        "indexname": "idx_merchant_profiles_is_active",
+        "tablename": "merchant_profiles",
+        "schemaname": "app"
+      },
+      {
+        "indexdef": "CREATE INDEX idx_merchant_profiles_verification ON app.merchant_profiles USING btree (is_verified, verification_level)",
+        "indexname": "idx_merchant_profiles_verification",
+        "tablename": "merchant_profiles",
+        "schemaname": "app"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX merchant_profiles_pkey ON app.merchant_profiles USING btree (user_id)",
+        "indexname": "merchant_profiles_pkey",
+        "tablename": "merchant_profiles",
+        "schemaname": "app"
+      },
+      {
+        "indexdef": "CREATE INDEX idx_opportunities_merchant_id ON app.opportunities USING btree (merchant_id)",
+        "indexname": "idx_opportunities_merchant_id",
+        "tablename": "opportunities",
+        "schemaname": "app"
+      },
+      {
+        "indexdef": "CREATE INDEX idx_opportunities_review_status ON app.opportunities USING btree (review_status)",
+        "indexname": "idx_opportunities_review_status",
+        "tablename": "opportunities",
+        "schemaname": "app"
+      },
+      {
+        "indexdef": "CREATE INDEX idx_opportunity_inquiries_buyer_id ON app.opportunity_inquiries USING btree (buyer_id, last_message_at DESC)",
+        "indexname": "idx_opportunity_inquiries_buyer_id",
+        "tablename": "opportunity_inquiries",
+        "schemaname": "app"
+      },
+      {
+        "indexdef": "CREATE INDEX idx_opportunity_inquiries_merchant_id ON app.opportunity_inquiries USING btree (merchant_id, status, last_message_at DESC)",
+        "indexname": "idx_opportunity_inquiries_merchant_id",
+        "tablename": "opportunity_inquiries",
+        "schemaname": "app"
+      },
+      {
+        "indexdef": "CREATE INDEX idx_opportunity_inquiries_opportunity_id ON app.opportunity_inquiries USING btree (opportunity_id)",
+        "indexname": "idx_opportunity_inquiries_opportunity_id",
+        "tablename": "opportunity_inquiries",
+        "schemaname": "app"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX opportunity_inquiries_pkey ON app.opportunity_inquiries USING btree (id)",
+        "indexname": "opportunity_inquiries_pkey",
+        "tablename": "opportunity_inquiries",
+        "schemaname": "app"
+      },
+      {
+        "indexdef": "CREATE INDEX idx_opportunity_inquiry_messages_inquiry_id ON app.opportunity_inquiry_messages USING btree (inquiry_id, created_at DESC)",
+        "indexname": "idx_opportunity_inquiry_messages_inquiry_id",
+        "tablename": "opportunity_inquiry_messages",
+        "schemaname": "app"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX opportunity_inquiry_messages_pkey ON app.opportunity_inquiry_messages USING btree (id)",
+        "indexname": "opportunity_inquiry_messages_pkey",
+        "tablename": "opportunity_inquiry_messages",
+        "schemaname": "app"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  }
+}

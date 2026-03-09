@@ -1,0 +1,114 @@
+{
+  "TABLES_EXIST": {
+    "ok": true,
+    "http": 200,
+    "mode": "select",
+    "rows": [
+      {
+        "table_name": "marketplace_categories"
+      },
+      {
+        "table_name": "marketplace_listing_bookmarks"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "LISTINGS_COLUMNS": {
+    "ok": true,
+    "http": 200,
+    "mode": "select",
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "category_id"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "sub_category_id"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "POLICIES": {
+    "ok": true,
+    "http": 200,
+    "mode": "select",
+    "rows": [
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_categories",
+        "policyname": "public_select_active_marketplace_categories",
+        "schemaname": "app"
+      },
+      {
+        "cmd": "ALL",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_listing_bookmarks",
+        "policyname": "user_manage_own_marketplace_listing_bookmarks",
+        "schemaname": "app"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "RPC_EXISTS": {
+    "ok": true,
+    "http": 200,
+    "mode": "select",
+    "rows": [
+      {
+        "routine_name": "app_list_marketplace_categories"
+      },
+      {
+        "routine_name": "app_marketplace_listing_toggle_bookmark"
+      },
+      {
+        "routine_name": "app_student_list_bookmarked_marketplace_listings"
+      },
+      {
+        "routine_name": "app_student_list_marketplace_listings"
+      },
+      {
+        "routine_name": "app_student_list_marketplace_listings"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "RPC_SIGNATURES": {
+    "ok": true,
+    "http": 200,
+    "mode": "select",
+    "rows": [
+      {
+        "routine_name": "app_list_marketplace_categories",
+        "identity_args": "p_parent_id uuid"
+      },
+      {
+        "routine_name": "app_marketplace_listing_toggle_bookmark",
+        "identity_args": "p_listing_id uuid"
+      },
+      {
+        "routine_name": "app_student_list_bookmarked_marketplace_listings",
+        "identity_args": "p_limit integer, p_offset integer, p_sort text"
+      },
+      {
+        "routine_name": "app_student_list_marketplace_listings",
+        "identity_args": "p_type text, p_search text, p_limit integer, p_offset integer, p_sort text, p_verified_only boolean, p_ready_to_ship_only boolean"
+      },
+      {
+        "routine_name": "app_student_list_marketplace_listings",
+        "identity_args": "p_type text, p_search text, p_limit integer, p_offset integer, p_sort text, p_verified_only boolean, p_ready_to_ship_only boolean, p_category_id uuid, p_sub_category_id uuid"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  }
+}

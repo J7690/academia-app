@@ -10,6 +10,7 @@ import '../university/university_dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
 import '../instructor/instructor_dashboard_screen.dart';
 import '../commercial/commercial_dashboard_screen.dart';
+import '../merchant/merchant_dashboard_screen_v2.dart';
 import 'auth_landing_screen.dart';
 
 class AuthWrapper extends StatefulWidget {
@@ -36,6 +37,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
         });
       }
       _startActivityTracking();
+      // Re-enregistrer le token FCM après login pour que Supabase
+      // connaisse le device de l'utilisateur connecté.
+      PushNotificationService.instance.reRegisterTokenAfterLogin();
     });
     _startActivityTracking();
 
@@ -168,6 +172,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
         return const AdminDashboardScreen();
       case 'commercial':
         return const CommercialDashboardScreen();
+      case 'merchant':
+        return const MerchantDashboardScreenV2();
       default:
         return const AuthLandingScreen();
     }

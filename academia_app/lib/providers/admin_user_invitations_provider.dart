@@ -19,6 +19,55 @@ class AdminUserInvitationsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<Map<String, dynamic>?> createMerchantAccountDirect({
+    required String email,
+    required String password,
+    required String displayName,
+    String? country,
+    String? city,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final body = <String, dynamic>{
+        'email': email.trim(),
+        'password': password,
+        'display_name': displayName.trim(),
+        'country': country?.trim(),
+        'city': city?.trim(),
+      };
+
+      final response = await _client.functions.invoke(
+        'admin-create-merchant-account',
+        body: body,
+      );
+
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors de la création du compte marchand.',
+        );
+        return null;
+      }
+
+      if (data['success'] != true) {
+        _setError(
+          data['error']?.toString() ??
+              'Erreur lors de la création du compte marchand.',
+        );
+        return null;
+      }
+
+      await loadInvitations();
+      return data;
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
   void _setSaving(bool value) {
     _isSaving = value;
     notifyListeners();

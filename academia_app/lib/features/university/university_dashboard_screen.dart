@@ -10,10 +10,14 @@ import '../../providers/university_applications_provider.dart';
 import '../../providers/selected_university_application_provider.dart';
 import '../../providers/university_site_provider.dart';
 import '../../providers/university_programs_provider.dart';
+import '../../providers/university_payments_provider.dart';
+import 'university_payments_screen.dart';
 import '../../widgets/mini_site_hero_video.dart';
 import 'university_application_detail_screen.dart';
 import '../../services/notification_sound_service.dart';
 import '../../widgets/notification_sound_settings_dialog.dart';
+import '../../widgets/support_fab.dart';
+import '../../services/push_trigger_service.dart';
 
 class UniversityDashboardScreen extends StatefulWidget {
   const UniversityDashboardScreen({super.key});
@@ -36,6 +40,7 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
         await context.read<UniversityApplicationsProvider>().loadApplications();
         await _checkUniversityUnreadChange();
       } catch (_) {}
+      PushTriggerService.instance.triggerPendingPush();
     });
   }
 
@@ -74,7 +79,7 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
     final email = user?.email ?? '';
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Consumer2<UniversityApplicationsProvider, UniversitySiteProvider>(
         builder: (context, applicationsProvider, siteProvider, child) {
           final unread = applicationsProvider.unreadTotal;
@@ -86,6 +91,7 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                   : 'Dashboard Université';
           return Scaffold(
             backgroundColor: const Color(0xFFF3F4F6),
+            floatingActionButton: const SupportFab(),
             appBar: AppBar(
               elevation: 0,
               centerTitle: true,
@@ -162,6 +168,7 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                 unselectedLabelColor: Colors.white.withOpacity(0.85),
                 tabs: [
                   Tab(child: _UniversityTabLabel(text: 'Candidatures', count: unread)),
+                  const Tab(text: 'Paiements'),
                   const Tab(text: 'Mini-site & offres'),
                 ],
               ),
@@ -256,6 +263,10 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                   child: TabBarView(
                     children: [
                       const _UniversityCandidaturesWorkspace(),
+                      ChangeNotifierProvider(
+                        create: (_) => UniversityPaymentsProvider(),
+                        child: const UniversityPaymentsScreen(),
+                      ),
                       const _UniversitySiteWorkspace(),
                     ],
                   ),
@@ -4383,6 +4394,7 @@ Future<void> _showEditMediaDialog(
       String? pickedMimeType;
       final existingStoragePath = media?['storage_path']?.toString();
       String selectedType = initialType;
+      bool isSavingLocal = false;
 
       return StatefulBuilder(
         builder: (context, setState) {
@@ -4544,103 +4556,124 @@ Future<void> _showEditMediaDialog(
                 child: const Text('Annuler'),
               ),
               TextButton(
-                onPressed: () async {
-                  final type = selectedType;
-                  final title = titleController.text.trim();
-                  final description = descriptionController.text.trim();
-                  if (title.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Le titre du média est obligatoire.'),
-                      ),
-                    );
-                    return;
-                  }
-                  final lowerTypeSave = type.toLowerCase();
-                  final isFileMediaSave = lowerTypeSave == 'video' ||
-                      lowerTypeSave == 'image' ||
-                      lowerTypeSave == 'brochure' ||
-                      lowerTypeSave == 'pdf' ||
-                      lowerTypeSave == 'doc';
+                onPressed: isSavingLocal
+                    ? null
+                    : () async {
+                        final type = selectedType;
+                        final title = titleController.text.trim();
+                        final description = descriptionController.text.trim();
+                        if (title.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content:
+                                  Text('Le titre du média est obligatoire.'),
+                            ),
+                          );
+                          return;
+                        }
+                        final lowerTypeSave = type.toLowerCase();
+                        final isFileMediaSave = lowerTypeSave == 'video' ||
+                            lowerTypeSave == 'image' ||
+                            lowerTypeSave == 'brochure' ||
+                            lowerTypeSave == 'pdf' ||
+                            lowerTypeSave == 'doc';
 
-                  String? url;
-                  if (!isFileMediaSave) {
-                    final urlText = urlController.text.trim();
-                    url = urlText.isNotEmpty ? urlText : null;
-                  }
+                        String? url;
+                        if (!isFileMediaSave) {
+                          final urlText = urlController.text.trim();
+                          url = urlText.isNotEmpty ? urlText : null;
+                        }
 
-                  if (type.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Le type de média est obligatoire.'),
-                      ),
-                    );
-                    return;
-                  }
+                        if (type.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content:
+                                  Text('Le type de média est obligatoire.'),
+                            ),
+                          );
+                          return;
+                        }
 
-                  String? storagePath = existingStoragePath;
-                  if (pickedBytes != null && pickedFileName != null) {
-                    final uploadedPath = await provider.uploadMediaFile(
-                      bytes: pickedBytes!,
-                      fileName: pickedFileName!,
-                      mimeType: pickedMimeType,
-                    );
-                    if (!context.mounted) return;
-                    if (uploadedPath == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            provider.error ??
-                                'Erreur lors de l\'upload du fichier média.',
-                          ),
-                        ),
-                      );
-                      return;
-                    }
-                    storagePath = uploadedPath;
-                  }
-                  if (isFileMediaSave) {
-                    final pathTrim = (storagePath ?? '').trim();
-                    if (pathTrim.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Pour les vidéos, images, brochures et documents, un fichier doit être uploadé via Supabase Storage.',
-                          ),
-                        ),
-                      );
-                      return;
-                    }
-                  }
+                        String? storagePath = existingStoragePath;
 
-                  if (url != null && pickedBytes == null && pickedFileName == null) {
-                    storagePath = null;
-                  }
+                        setState(() {
+                          isSavingLocal = true;
+                        });
 
-                  final ok = await provider.upsertMedia(
-                    mediaId: media?['id']?.toString(),
-                    mediaType: type,
-                    title: title.isNotEmpty ? title : null,
-                    description: description.isNotEmpty ? description : null,
-                    url: url,
-                    storagePath: storagePath,
-                    thumbnailUrl: null,
-                    isActive: isActive,
-                  );
-                  if (!context.mounted) return;
-                  if (ok) {
-                    Navigator.of(context).pop();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          provider.error ??
-                              'Erreur lors de la sauvegarde du média.',
-                        ),
-                      ),
-                    );
-                  }
-                },
+                        try {
+                          if (pickedBytes != null && pickedFileName != null) {
+                            final uploadedPath = await provider.uploadMediaFile(
+                              bytes: pickedBytes!,
+                              fileName: pickedFileName!,
+                              mimeType: pickedMimeType,
+                            );
+                            if (!context.mounted) return;
+                            if (uploadedPath == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    provider.error ??
+                                        'Erreur lors de l\'upload du fichier média.',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                            storagePath = uploadedPath;
+                          }
+
+                          if (isFileMediaSave) {
+                            final pathTrim = (storagePath ?? '').trim();
+                            if (pathTrim.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Pour les vidéos, images, brochures et documents, un fichier doit être uploadé via Supabase Storage.',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                          }
+
+                          if (url != null &&
+                              pickedBytes == null &&
+                              pickedFileName == null) {
+                            storagePath = null;
+                          }
+
+                          final ok = await provider.upsertMedia(
+                            mediaId: media?['id']?.toString(),
+                            mediaType: type,
+                            title: title.isNotEmpty ? title : null,
+                            description:
+                                description.isNotEmpty ? description : null,
+                            url: url,
+                            storagePath: storagePath,
+                            thumbnailUrl: null,
+                            isActive: isActive,
+                          );
+                          if (!context.mounted) return;
+                          if (ok) {
+                            Navigator.of(context).pop();
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  provider.error ??
+                                      'Erreur lors de la sauvegarde du média.',
+                                ),
+                              ),
+                            );
+                          }
+                        } finally {
+                          if (context.mounted) {
+                            setState(() {
+                              isSavingLocal = false;
+                            });
+                          }
+                        }
+                      },
                 child: const Text('Enregistrer'),
               ),
             ],

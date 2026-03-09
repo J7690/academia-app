@@ -1,0 +1,869 @@
+{
+  "timestamp": "2026-02-20T21:44:01.104575",
+  "sections": {
+    "challenge_tables": {
+      "success": true,
+      "data": [
+        {
+          "table_name": "challenge_comments"
+        },
+        {
+          "table_name": "challenge_favorites"
+        },
+        {
+          "table_name": "challenge_likes"
+        },
+        {
+          "table_name": "challenge_participation_videos"
+        },
+        {
+          "table_name": "challenge_participations"
+        },
+        {
+          "table_name": "challenge_reports"
+        },
+        {
+          "table_name": "challenge_user_bans"
+        },
+        {
+          "table_name": "challenge_video_assets"
+        },
+        {
+          "table_name": "challenge_video_overlays"
+        },
+        {
+          "table_name": "challenge_video_render_jobs"
+        },
+        {
+          "table_name": "challenges"
+        }
+      ],
+      "message": "SQL exécuté automatiquement: 11 résultat(s)"
+    },
+    "challenges_columns": {
+      "success": true,
+      "data": [
+        {
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "text",
+          "column_name": "slug",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "column_name": "title",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "column_name": "description",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "column_name": "challenge_type",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "column_name": "difficulty",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "column_name": "points",
+          "is_nullable": "NO",
+          "column_default": "0"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "start_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "end_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "column_name": "max_participants",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "column_name": "requires_submission",
+          "is_nullable": "NO",
+          "column_default": "false"
+        },
+        {
+          "data_type": "boolean",
+          "column_name": "requires_admin_review",
+          "is_nullable": "NO",
+          "column_default": "false"
+        },
+        {
+          "data_type": "boolean",
+          "column_name": "is_featured",
+          "is_nullable": "NO",
+          "column_default": "false"
+        },
+        {
+          "data_type": "boolean",
+          "column_name": "is_active",
+          "is_nullable": "NO",
+          "column_default": "true"
+        },
+        {
+          "data_type": "uuid",
+          "column_name": "created_by_user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        }
+      ],
+      "message": "SQL exécuté automatiquement: 17 résultat(s)"
+    },
+    "challenge_participations_columns": {
+      "success": true,
+      "data": [
+        {
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "column_name": "challenge_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "column_name": "user_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "column_name": "status",
+          "is_nullable": "NO",
+          "column_default": "'joined'::text"
+        },
+        {
+          "data_type": "text",
+          "column_name": "submission_text",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "column_name": "score",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "column_name": "rank",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "started_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "submitted_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "completed_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "reviewed_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "column_name": "reviewed_by_user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "column_name": "is_active",
+          "is_nullable": "NO",
+          "column_default": "true"
+        },
+        {
+          "data_type": "text",
+          "column_name": "moderation_status",
+          "is_nullable": "NO",
+          "column_default": "'pending'::text"
+        },
+        {
+          "data_type": "jsonb",
+          "column_name": "moderation_flags",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "column_name": "moderated_by_admin_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "moderated_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "uuid",
+          "column_name": "parent_participation_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "column_name": "remix_type",
+          "is_nullable": "NO",
+          "column_default": "'none'::text"
+        },
+        {
+          "data_type": "uuid",
+          "column_name": "video_asset_id",
+          "is_nullable": "YES",
+          "column_default": null
+        }
+      ],
+      "message": "SQL exécuté automatiquement: 20 résultat(s)"
+    },
+    "challenge_video_overlays_columns": {
+      "success": true,
+      "data": [
+        {
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "column_name": "participation_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "column_name": "layers",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        }
+      ],
+      "message": "SQL exécuté automatiquement: 4 résultat(s)"
+    },
+    "challenge_video_assets_columns": {
+      "success": true,
+      "data": [
+        {
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "text",
+          "column_name": "category",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "column_name": "label",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "column_name": "asset_url",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "column_name": "is_active",
+          "is_nullable": "NO",
+          "column_default": "true"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        }
+      ],
+      "message": "SQL exécuté automatiquement: 7 résultat(s)"
+    },
+    "challenge_video_render_jobs_columns": {
+      "success": true,
+      "data": [
+        {
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "column_name": "participation_id",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "column_name": "job_type",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "column_name": "status",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "column_name": "error_message",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "column_name": "metadata",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "started_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "completed_at",
+          "is_nullable": "YES",
+          "column_default": null
+        }
+      ],
+      "message": "SQL exécuté automatiquement: 9 résultat(s)"
+    },
+    "challenge_rpcs": {
+      "success": true,
+      "data": [
+        {
+          "arguments": "p_user_id uuid, p_reason text, p_banned_until timestamp with time zone",
+          "return_type": "jsonb",
+          "function_name": "app_admin_ban_user_from_challenges"
+        },
+        {
+          "arguments": "p_video_id uuid",
+          "return_type": "jsonb",
+          "function_name": "app_admin_delete_challenge_participation_video"
+        },
+        {
+          "arguments": "p_participation_id uuid",
+          "return_type": "jsonb",
+          "function_name": "app_admin_delete_challenge_video"
+        },
+        {
+          "arguments": "p_asset_id uuid",
+          "return_type": "jsonb",
+          "function_name": "app_admin_delete_challenge_video_asset"
+        },
+        {
+          "arguments": "p_challenge_id uuid DEFAULT NULL::uuid, p_participation_id uuid DEFAULT NULL::uuid",
+          "return_type": "jsonb",
+          "function_name": "app_admin_list_challenge_participation_videos"
+        },
+        {
+          "arguments": "p_challenge_id uuid",
+          "return_type": "jsonb",
+          "function_name": "app_admin_list_challenge_participations"
+        },
+        {
+          "arguments": "p_status text DEFAULT NULL::text",
+          "return_type": "jsonb",
+          "function_name": "app_admin_list_challenge_reports"
+        },
+        {
+          "arguments": "",
+          "return_type": "jsonb",
+          "function_name": "app_admin_list_challenge_video_assets"
+        },
+        {
+          "arguments": "p_challenge_id uuid DEFAULT NULL::uuid, p_moderation_status text DEFAULT NULL::text, p_has_pending_reports boolean DEFAULT NULL::boolean",
+          "return_type": "jsonb",
+          "function_name": "app_admin_list_challenge_videos"
+        },
+        {
+          "arguments": "",
+          "return_type": "jsonb",
+          "function_name": "app_admin_list_challenges"
+        },
+        {
+          "arguments": "p_participation_id uuid, p_status text, p_score integer, p_rank integer",
+          "return_type": "jsonb",
+          "function_name": "app_admin_review_challenge_participation"
+        },
+        {
+          "arguments": "p_participation_id uuid, p_moderation_status text, p_reason text",
+          "return_type": "jsonb",
+          "function_name": "app_admin_review_challenge_video"
+        },
+        {
+          "arguments": "p_report_id uuid, p_status text",
+          "return_type": "jsonb",
+          "function_name": "app_admin_update_challenge_report_status"
+        },
+        {
+          "arguments": "p_challenge_id uuid, p_is_active boolean, p_is_featured boolean",
+          "return_type": "jsonb",
+          "function_name": "app_admin_update_challenge_status"
+        },
+        {
+          "arguments": "p_challenge_id uuid, p_slug text, p_title text, p_description text, p_challenge_type text, p_difficulty text, p_points integer, p_start_at timestamp with time zone, p_end_at timestamp with time zone, p_max_participants integer, p_requires_submission boolean, p_requires_admin_review boolean, p_is_active boolean, p_is_featured boolean",
+          "return_type": "jsonb",
+          "function_name": "app_admin_upsert_challenge"
+        },
+        {
+          "arguments": "p_asset_id uuid, p_category text, p_label text, p_asset_url text, p_is_active boolean",
+          "return_type": "jsonb",
+          "function_name": "app_admin_upsert_challenge_video_asset"
+        },
+        {
+          "arguments": "",
+          "return_type": "trigger",
+          "function_name": "app_notify_admin_challenge_participation"
+        },
+        {
+          "arguments": "",
+          "return_type": "trigger",
+          "function_name": "app_notify_challenge_created"
+        },
+        {
+          "arguments": "p_challenge_id uuid",
+          "return_type": "jsonb",
+          "function_name": "app_public_get_challenge_leaderboard"
+        },
+        {
+          "arguments": "p_participation_id uuid, p_content text",
+          "return_type": "jsonb",
+          "function_name": "app_student_add_challenge_comment"
+        },
+        {
+          "arguments": "p_participation_id uuid, p_video_asset_id uuid, p_playback jsonb",
+          "return_type": "jsonb",
+          "function_name": "app_student_add_challenge_video"
+        },
+        {
+          "arguments": "p_cursor timestamp with time zone DEFAULT NULL::timestamp with time zone, p_limit integer DEFAULT 20, p_challenge_id uuid DEFAULT NULL::uuid",
+          "return_type": "jsonb",
+          "function_name": "app_student_challenge_video_feed"
+        },
+        {
+          "arguments": "p_participation_id uuid",
+          "return_type": "jsonb",
+          "function_name": "app_student_favorite_challenge_video"
+        },
+        {
+          "arguments": "p_participation_id uuid",
+          "return_type": "jsonb",
+          "function_name": "app_student_get_challenge_video"
+        },
+        {
+          "arguments": "",
+          "return_type": "jsonb",
+          "function_name": "app_student_get_my_challenge_stats"
+        },
+        {
+          "arguments": "p_challenge_id uuid",
+          "return_type": "jsonb",
+          "function_name": "app_student_join_challenge"
+        },
+        {
+          "arguments": "p_participation_id uuid",
+          "return_type": "jsonb",
+          "function_name": "app_student_like_challenge_video"
+        },
+        {
+          "arguments": "p_participation_id uuid",
+          "return_type": "jsonb",
+          "function_name": "app_student_list_challenge_comments"
+        },
+        {
+          "arguments": "p_participation_id uuid",
+          "return_type": "jsonb",
+          "function_name": "app_student_list_challenge_video_render_jobs"
+        },
+        {
+          "arguments": "p_type text DEFAULT NULL::text, p_search text DEFAULT NULL::text, p_only_joined boolean DEFAULT false",
+          "return_type": "jsonb",
+          "function_name": "app_student_list_challenges"
+        },
+        {
+          "arguments": "",
+          "return_type": "jsonb",
+          "function_name": "app_student_list_my_challenge_participations"
+        },
+        {
+          "arguments": "p_participation_id uuid",
+          "return_type": "jsonb",
+          "function_name": "app_student_list_my_challenge_videos"
+        },
+        {
+          "arguments": "p_participation_id uuid",
+          "return_type": "jsonb",
+          "function_name": "app_student_mark_challenge_completed"
+        },
+        {
+          "arguments": "p_participation_id uuid, p_reason text, p_details text",
+          "return_type": "jsonb",
+          "function_name": "app_student_report_challenge_video"
+        },
+        {
+          "arguments": "p_participation_id uuid, p_video_asset_id uuid, p_playback jsonb",
+          "return_type": "jsonb",
+          "function_name": "app_student_set_challenge_main_video"
+        },
+        {
+          "arguments": "p_parent_participation_id uuid",
+          "return_type": "jsonb",
+          "function_name": "app_student_start_duo_challenge_video"
+        },
+        {
+          "arguments": "p_participation_id uuid, p_submission_text text, p_submission_url text",
+          "return_type": "jsonb",
+          "function_name": "app_student_submit_challenge"
+        },
+        {
+          "arguments": "p_participation_id uuid",
+          "return_type": "jsonb",
+          "function_name": "app_student_unfavorite_challenge_video"
+        },
+        {
+          "arguments": "p_participation_id uuid",
+          "return_type": "jsonb",
+          "function_name": "app_student_unlike_challenge_video"
+        },
+        {
+          "arguments": "p_participation_id uuid, p_layers jsonb",
+          "return_type": "jsonb",
+          "function_name": "app_student_update_challenge_video_overlays"
+        }
+      ],
+      "message": "SQL exécuté automatiquement: 40 résultat(s)"
+    },
+    "counts": {
+      "success": true,
+      "data": [
+        {
+          "total_likes": 3,
+          "total_reports": 0,
+          "total_comments": 5,
+          "total_overlays": 2,
+          "total_favorites": 2,
+          "total_challenges": 1,
+          "active_challenges": 1,
+          "total_video_assets": 0,
+          "total_participations": 2,
+          "active_participations": 2
+        }
+      ],
+      "message": "SQL exécuté automatiquement: 1 résultat(s)"
+    },
+    "challenges_sample": {
+      "success": true,
+      "data": [
+        {
+          "id": "673c9068-fe64-49ad-9048-eadbd37113f1",
+          "slug": "les-cracs",
+          "title": "les cracs",
+          "end_at": null,
+          "points": 0,
+          "start_at": null,
+          "is_active": true,
+          "created_at": "2025-11-30T13:45:25.613198+00:00",
+          "difficulty": null,
+          "is_featured": false,
+          "challenge_type": "contest"
+        }
+      ],
+      "message": "SQL exécuté automatiquement: 1 résultat(s)"
+    },
+    "participations_sample": {
+      "success": true,
+      "data": [],
+      "message": "SQL exécuté automatiquement: aucun résultat"
+    },
+    "video_assets_columns": {
+      "success": true,
+      "data": [
+        {
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "column_default": "gen_random_uuid()"
+        },
+        {
+          "data_type": "uuid",
+          "column_name": "owner_user_id",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "text",
+          "column_name": "origin",
+          "is_nullable": "NO",
+          "column_default": "'unknown'::text"
+        },
+        {
+          "data_type": "text",
+          "column_name": "status",
+          "is_nullable": "NO",
+          "column_default": "'draft'::text"
+        },
+        {
+          "data_type": "text",
+          "column_name": "canonical_type",
+          "is_nullable": "NO",
+          "column_default": "'video'::text"
+        },
+        {
+          "data_type": "integer",
+          "column_name": "duration_ms",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "column_name": "width",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "column_name": "height",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "integer",
+          "column_name": "rotation",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "boolean",
+          "column_name": "has_audio",
+          "is_nullable": "NO",
+          "column_default": "true"
+        },
+        {
+          "data_type": "text",
+          "column_name": "checksum_sha256",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "jsonb",
+          "column_name": "content_warning_flags",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "deleted_at",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "NO",
+          "column_default": "now()"
+        }
+      ],
+      "message": "SQL exécuté automatiquement: 15 résultat(s)"
+    },
+    "videoasset_rpcs": {
+      "success": true,
+      "data": [
+        {
+          "arguments": "p_asset_id uuid",
+          "return_type": "jsonb",
+          "function_name": "app_admin_delete_challenge_video_asset"
+        },
+        {
+          "arguments": "",
+          "return_type": "jsonb",
+          "function_name": "app_admin_list_challenge_video_assets"
+        },
+        {
+          "arguments": "p_asset_id uuid, p_category text, p_label text, p_asset_url text, p_is_active boolean",
+          "return_type": "jsonb",
+          "function_name": "app_admin_upsert_challenge_video_asset"
+        },
+        {
+          "arguments": "p_locked_by text, p_job_types text[] DEFAULT NULL::text[]",
+          "return_type": "jsonb",
+          "function_name": "app_videoasset_claim_next_job"
+        },
+        {
+          "arguments": "p_job_id uuid, p_status text, p_error text DEFAULT NULL::text",
+          "return_type": "jsonb",
+          "function_name": "app_videoasset_complete_job"
+        },
+        {
+          "arguments": "p_origin text, p_context_type text, p_context_id uuid, p_role text DEFAULT 'primary'::text, p_mime_type text DEFAULT NULL::text, p_expected_size bigint DEFAULT NULL::bigint",
+          "return_type": "jsonb",
+          "function_name": "app_videoasset_create_upload_intent"
+        },
+        {
+          "arguments": "p_video_asset_id uuid, p_job_types text[] DEFAULT ARRAY['extract_metadata'::text, 'generate_mp4'::text, 'generate_thumbs'::text]",
+          "return_type": "jsonb",
+          "function_name": "app_videoasset_enqueue_processing"
+        },
+        {
+          "arguments": "p_direct_url text",
+          "return_type": "jsonb",
+          "function_name": "app_videoasset_get_playback_for_direct_url"
+        },
+        {
+          "arguments": "p_video_asset_id uuid, p_client_capabilities jsonb DEFAULT '{}'::jsonb",
+          "return_type": "jsonb",
+          "function_name": "app_videoasset_get_playback_manifest"
+        },
+        {
+          "arguments": "p_source_id uuid, p_checksum_sha256 text DEFAULT NULL::text, p_width integer DEFAULT NULL::integer, p_height integer DEFAULT NULL::integer, p_duration_ms integer DEFAULT NULL::integer, p_has_audio boolean DEFAULT NULL::boolean, p_validation_report jsonb DEFAULT NULL::jsonb",
+          "return_type": "jsonb",
+          "function_name": "app_videoasset_register_uploaded_source"
+        },
+        {
+          "arguments": "",
+          "return_type": "trigger",
+          "function_name": "tg_video_assets_set_updated_at"
+        }
+      ],
+      "message": "SQL exécuté automatiquement: 11 résultat(s)"
+    },
+    "storage_buckets": {
+      "success": true,
+      "data": [
+        {
+          "id": "challenge-media",
+          "name": "challenge-media",
+          "public": true,
+          "file_size_limit": null,
+          "allowed_mime_types": null
+        },
+        {
+          "id": "community-media",
+          "name": "community-media",
+          "public": true,
+          "file_size_limit": null,
+          "allowed_mime_types": null
+        },
+        {
+          "id": "hero_videos",
+          "name": "hero_videos",
+          "public": true,
+          "file_size_limit": null,
+          "allowed_mime_types": null
+        },
+        {
+          "id": "landing-media",
+          "name": "landing-media",
+          "public": true,
+          "file_size_limit": null,
+          "allowed_mime_types": null
+        },
+        {
+          "id": "university-media",
+          "name": "university-media",
+          "public": true,
+          "file_size_limit": null,
+          "allowed_mime_types": null
+        },
+        {
+          "id": "video-assets",
+          "name": "video-assets",
+          "public": true,
+          "file_size_limit": null,
+          "allowed_mime_types": null
+        }
+      ],
+      "message": "SQL exécuté automatiquement: 6 résultat(s)"
+    }
+  }
+}

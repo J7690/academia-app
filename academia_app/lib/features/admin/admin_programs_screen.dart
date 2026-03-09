@@ -51,7 +51,7 @@ class _AdminProgramsScreenState extends State<AdminProgramsScreen> {
         return AlertDialog(
           title: const Text('Supprimer le programme'),
           content: Text(
-            "Ce programme sera retiré de la plateforme côté étudiant (il ne sera plus proposé dans les offres).\n\nTitre : " +
+            "Ce programme et tous ses cours seront définitivement supprimés de la base de données.\n\nTitre : " +
                 title,
           ),
           actions: [
@@ -73,16 +73,13 @@ class _AdminProgramsScreenState extends State<AdminProgramsScreen> {
 
     if (confirmed != true) return;
 
-    final success = await provider.updateProgramStatus(
-      programId: programId,
-      isActive: false,
-    );
+    final success = await provider.deleteProgram(programId);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           success
-              ? 'Programme supprimé (non visible côté étudiant).'
+              ? 'Programme et ses cours supprimés définitivement.'
               : provider.error ??
                   'Erreur lors de la suppression du programme.',
         ),

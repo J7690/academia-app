@@ -1,15 +1,27 @@
+import 'dart:async';
+import 'dart:io' show File;
 import 'dart:typed_data';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/student_communities_provider.dart';
+import '../../providers/community_stories_provider.dart';
+import '../../providers/student_direct_messages_provider.dart';
+import '../../widgets/community_stories_bar.dart';
+import '../../widgets/community_media_gallery.dart';
+import '../../widgets/mention_text_field.dart';
+import '../../widgets/academia_rich_content.dart';
+import '../../widgets/academia_math_input.dart';
+import '../../widgets/user_avatar.dart';
+import 'student_dm_chat_screen.dart';
 import 'community_audio_recorder.dart'
     if (dart.library.html) 'community_audio_recorder_stub.dart';
 
@@ -32,26 +44,57 @@ class StudentCommunityDetailScreen extends StatefulWidget {
 class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScreen> {
   final TextEditingController _messageController = TextEditingController();
   bool _loadingPosts = false;
+  bool _isUploading = false;
   Map<String, dynamic>? _replyToPost;
   CommunityAudioRecorder? _audioRecorder;
   bool _isRecording = false;
+  Timer? _recordingTimer;
+  int _recordingSeconds = 0;
+  bool _isSearching = false;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _messageController.addListener(_onMessageTextChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final provider = context.read<StudentCommunitiesProvider>();
       await _loadPosts();
       provider.subscribeToCommunityPosts(widget.communityId);
+      provider.subscribeToTypingIndicator(widget.communityId);
+      provider.loadCommunityMembers(widget.communityId);
       await provider.markCommunityRead(widget.communityId);
+      // Load stories for this community
+      context.read<CommunityStoriesProvider>().loadStories(widget.communityId);
+      // Load read receipts for own messages
+      provider.loadMyPostsReadStatus(widget.communityId);
+      // Join online presence channel
+      provider.joinPresenceChannel(widget.communityId);
     });
+  }
+
+  void _onMessageTextChanged() {
+    // Rebuild to toggle send/mic icon
+    setState(() {});
+    final text = _messageController.text.trim();
+    final provider = context.read<StudentCommunitiesProvider>();
+    final profile = provider.currentUserId;
+    if (text.isNotEmpty && profile != null) {
+      provider.broadcastTyping(widget.communityId, widget.initialName);
+    }
   }
 
   @override
   void dispose() {
+    _messageController.removeListener(_onMessageTextChanged);
     final provider = context.read<StudentCommunitiesProvider>();
+    provider.broadcastStopTyping(widget.communityId);
     provider.unsubscribeFromCommunityPosts();
+    provider.leavePresenceChannel();
+    _recordingTimer?.cancel();
     _messageController.dispose();
+    _searchController.dispose();
     _audioRecorder?.dispose();
     super.dispose();
   }
@@ -250,7 +293,7 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
 
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
-      withData: true,
+      withData: kIsWeb,
       type: FileType.custom,
       allowedExtensions: const [
         'jpg',
@@ -271,15 +314,39 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
     }
 
     final file = result.files.first;
-    final bytes = file.bytes;
     final fileName = file.name;
     final ext = (file.extension ?? '').toLowerCase();
 
-    if (bytes == null) {
+    // Sur Android/iOS, file.bytes est souvent null → lire depuis file.path
+    Uint8List? bytes = file.bytes;
+    if (bytes == null && !kIsWeb) {
+      final path = file.path;
+      if (path != null && path.isNotEmpty) {
+        try {
+          bytes = await File(path).readAsBytes();
+          debugPrint('[pickAttachment] Read ${bytes.length} bytes from path: $path');
+        } catch (e) {
+          debugPrint('[pickAttachment] Error reading file path: $e');
+        }
+      }
+    }
+
+    if (bytes == null || bytes.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Impossible de lire le contenu du fichier.'),
+        ),
+      );
+      return;
+    }
+
+    const maxSizeBytes = 10 * 1024 * 1024; // 10 MB
+    if (bytes.length > maxSizeBytes) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Le fichier dépasse la limite de 10 Mo.'),
         ),
       );
       return;
@@ -292,12 +359,14 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
       type = 'audio';
     }
 
+    setState(() => _isUploading = true);
     final url = await provider.uploadCommunityMedia(
       communityId: widget.communityId,
-      bytes: bytes as Uint8List,
+      bytes: bytes,
       fileName: fileName,
       mimeType: ext,
     );
+    if (mounted) setState(() => _isUploading = false);
 
     if (!mounted) return;
 
@@ -342,9 +411,11 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
     _audioRecorder ??= CommunityAudioRecorder();
 
     if (_isRecording) {
+      _recordingTimer?.cancel();
       final bytes = await _audioRecorder!.stop();
       setState(() {
         _isRecording = false;
+        _recordingSeconds = 0;
       });
 
       if (bytes == null) {
@@ -359,15 +430,18 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
         return;
       }
 
+      final ext = _audioRecorder!.fileExtension;
       final fileName =
-          'vocal_${DateTime.now().millisecondsSinceEpoch}.m4a';
+          'vocal_${DateTime.now().millisecondsSinceEpoch}.$ext';
 
+      setState(() => _isUploading = true);
       final url = await provider.uploadCommunityMedia(
         communityId: widget.communityId,
         bytes: bytes,
         fileName: fileName,
-        mimeType: 'm4a',
+        mimeType: ext,
       );
+      if (mounted) setState(() => _isUploading = false);
 
       if (!mounted) return;
 
@@ -412,7 +486,7 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                "L'enregistrement audio n'est pas disponible depuis cette version (navigateur web).",
+                "Permission micro refusée. Autorise l'accès au microphone dans les paramètres de ton téléphone.",
               ),
             ),
           );
@@ -423,13 +497,22 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
         if (!mounted) return;
         setState(() {
           _isRecording = true;
+          _recordingSeconds = 0;
         });
-      } catch (_) {
+        _recordingTimer?.cancel();
+        _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+          if (!mounted) return;
+          setState(() {
+            _recordingSeconds++;
+          });
+        });
+      } catch (e) {
+        debugPrint('[CommunityAudioRecorder] start error: $e');
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Impossible de démarrer l\'enregistrement audio.',
+              'Impossible de démarrer l\'enregistrement : ${e.toString().length > 80 ? e.toString().substring(0, 80) : e}',
             ),
           ),
         );
@@ -647,12 +730,36 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
 
     Widget mainContent;
 
-    // Cas texte simple (comportement existant)
+    // Cas texte simple — avec rendu des @mentions
     if (type == 'text' || mediaUrl.isEmpty) {
-      mainContent = Text(
-        content,
-        style: const TextStyle(fontSize: 14),
-      );
+      if (MentionRenderer.hasMentions(content)) {
+        mainContent = RichText(
+          text: TextSpan(
+            children: MentionRenderer.buildSpans(
+              content,
+              baseStyle: const TextStyle(fontSize: 14, color: Colors.black87),
+              mentionStyle: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF00897B),
+                fontWeight: FontWeight.w600,
+              ),
+              onMentionTap: (userId, displayName) {
+                // Show member profile on mention tap
+                _showMemberProfile({
+                  'author_id': userId,
+                  'author_display_name': displayName,
+                  'author_email': '',
+                });
+              },
+            ),
+          ),
+        );
+      } else {
+        mainContent = AcademiaRichContent(
+          content: content,
+          style: const TextStyle(fontSize: 14),
+        );
+      }
     } else if (type == 'image' && mediaUrl.isNotEmpty) {
       // Cas image
       mainContent = Column(
@@ -667,8 +774,8 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
           ),
           if (content.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(
-              content,
+            AcademiaRichContent(
+              content: content,
               style: const TextStyle(fontSize: 14),
             ),
           ],
@@ -682,8 +789,8 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
           _AudioAttachmentPlayer(url: mediaUrl),
           if (content.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(
-              content,
+            AcademiaRichContent(
+              content: content,
               style: const TextStyle(fontSize: 14),
             ),
           ],
@@ -741,8 +848,8 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
           ),
           if (content.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(
-              content,
+            AcademiaRichContent(
+              content: content,
               style: const TextStyle(fontSize: 14),
             ),
           ],
@@ -1169,69 +1276,280 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
 
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                if (description.isNotEmpty)
-                  Text(
-                    description,
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: [
-                    if (category.isNotEmpty)
-                      Chip(
-                        label: Text(category),
-                        visualDensity: VisualDensity.compact,
+        final members = provider.communityMembers;
+        final currentUid = provider.currentUserId;
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.3,
+          maxChildSize: 0.85,
+          expand: false,
+          builder: (_, scrollController) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: ListView(
+                controller: scrollController,
+                children: [
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                    Chip(
-                      label: Text(
-                        visibility == 'public' ? 'Publique' : 'Privée',
-                      ),
-                      visualDensity: VisualDensity.compact,
                     ),
-                    Chip(
-                      label: Text(
-                        () {
-                          final jp = joinPolicy.toLowerCase();
-                          if (jp == 'request') return 'Adhésion sur demande';
-                          if (jp == 'invite_only') return 'Sur invitation';
-                          return 'Adhésion ouverte';
-                        }(),
+                  ),
+                  // Group avatar + name
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundColor: const Color(0xFF075E54),
+                        child: Text(
+                          name.isNotEmpty ? name[0].toUpperCase() : '?',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
-                      visualDensity: VisualDensity.compact,
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (membersCount is int)
+                              Text(
+                                '$membersCount membre${membersCount > 1 ? 's' : ''}',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (description.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      description,
+                      style: const TextStyle(fontSize: 13),
                     ),
-                    if (membersCount is int)
+                  ],
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      if (category.isNotEmpty)
+                        Chip(
+                          label: Text(category, style: const TextStyle(fontSize: 12)),
+                          visualDensity: VisualDensity.compact,
+                        ),
                       Chip(
                         label: Text(
-                          '$membersCount membre${membersCount > 1 ? 's' : ''}',
+                          visibility == 'public' ? 'Publique' : 'Privée',
+                          style: const TextStyle(fontSize: 12),
                         ),
                         visualDensity: VisualDensity.compact,
                       ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+                      Chip(
+                        label: Text(
+                          () {
+                            final jp = joinPolicy.toLowerCase();
+                            if (jp == 'request') return 'Sur demande';
+                            if (jp == 'invite_only') return 'Sur invitation';
+                            return 'Ouverte';
+                          }(),
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(height: 1),
+                  const SizedBox(height: 12),
+                  // Members section
+                  Text(
+                    'Membres (${members.length})',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (members.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        'Chargement...',
+                        style: TextStyle(fontSize: 13, color: Colors.grey),
+                      ),
+                    )
+                  else
+                    ...members.map((m) {
+                      final mName = m['display_name']?.toString() ?? 'Utilisateur';
+                      final mRole = m['role']?.toString() ?? 'member';
+                      final mUserId = m['user_id']?.toString() ?? '';
+                      final isMe = mUserId == currentUid;
+                      final mAvatarUrl = m['avatar_url']?.toString();
+                      String roleLabel = '';
+                      Color? roleBg;
+                      if (mRole == 'admin') {
+                        roleLabel = 'Admin';
+                        roleBg = const Color(0xFFE74C3C);
+                      } else if (mRole == 'moderator') {
+                        roleLabel = 'Modérateur';
+                        roleBg = const Color(0xFFF39C12);
+                      }
+                      return ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: UserAvatar(
+                          imageUrl: mAvatarUrl,
+                          name: mName,
+                          radius: 18,
+                        ),
+                        title: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                isMe ? '$mName (toi)' : mName,
+                                style: const TextStyle(fontSize: 14),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (roleLabel.isNotEmpty) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: roleBg?.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  roleLabel,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: roleBg,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        trailing: isMe
+                            ? null
+                            : IconButton(
+                                icon: const Icon(
+                                  Icons.mail_outline,
+                                  size: 18,
+                                  color: Color(0xFF25D366),
+                                ),
+                                tooltip: 'Message privé',
+                                onPressed: () async {
+                                  Navigator.of(ctx).pop();
+                                  final dmProvider = context.read<StudentDirectMessagesProvider>();
+                                  final convId = await dmProvider.getOrCreateConversation(mUserId);
+                                  if (!mounted || convId == null) return;
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => StudentDmChatScreen(
+                                        conversationId: convId,
+                                        otherUserName: mName,
+                                        otherUserId: mUserId,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                      );
+                    }),
+                  const SizedBox(height: 16),
+                  const Divider(height: 1),
+                  const SizedBox(height: 12),
+                  // Quitter le groupe
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        Navigator.of(ctx).pop();
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (d) => AlertDialog(
+                            title: const Text('Quitter le groupe'),
+                            content: Text(
+                              'Tu ne recevras plus les messages de "$name". Continuer ?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(d).pop(false),
+                                child: const Text('Annuler'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(d).pop(true),
+                                child: const Text(
+                                  'Quitter',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm != true || !mounted) return;
+                        final ok = await provider.leaveCommunity(
+                          communityId: widget.communityId,
+                        );
+                        if (!mounted) return;
+                        if (ok) {
+                          Navigator.of(context).pop();
+                        } else if (provider.error != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(provider.error!)),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.exit_to_app, size: 18, color: Colors.red),
+                      label: const Text(
+                        'Quitter le groupe',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.red, width: 1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
@@ -1266,108 +1584,412 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
     Share.share(buffer.toString().trim());
   }
 
+  void _openMediaGallery() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          appBar: AppBar(
+            title: const Text('Galerie média'),
+            backgroundColor: const Color(0xFF075E54),
+            foregroundColor: Colors.white,
+          ),
+          body: CommunityMediaGallery(communityId: widget.communityId),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openEditPostDialog(Map<String, dynamic> post) async {
+    final postId = post['id']?.toString() ?? '';
+    if (postId.isEmpty) return;
+    final editController = TextEditingController(
+      text: (post['content'] ?? '').toString(),
+    );
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Modifier le message'),
+          content: TextField(
+            controller: editController,
+            maxLines: 5,
+            autofocus: true,
+            decoration: const InputDecoration(
+              hintText: 'Nouveau contenu...',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Enregistrer'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != true) return;
+    final newContent = editController.text.trim();
+    if (newContent.isEmpty) return;
+
+    final provider = context.read<StudentCommunitiesProvider>();
+    final ok = await provider.editPost(
+      communityId: widget.communityId,
+      postId: postId,
+      newContent: newContent,
+    );
+    if (!mounted) return;
+    if (!ok && provider.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(provider.error!)),
+      );
+    }
+  }
+
+  Future<void> _togglePinPost(Map<String, dynamic> post) async {
+    final postId = post['id']?.toString() ?? '';
+    if (postId.isEmpty) return;
+    final isPinned = post['is_pinned'] == true;
+
+    final provider = context.read<StudentCommunitiesProvider>();
+    final ok = await provider.pinPost(
+      communityId: widget.communityId,
+      postId: postId,
+      isPinned: !isPinned,
+    );
+    if (!mounted) return;
+    if (!ok && provider.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(provider.error!)),
+      );
+    } else if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(!isPinned ? 'Message épinglé' : 'Message désépinglé'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
+  void _showMemberProfile(Map<String, dynamic> post) {
+    final rawDisplay = post['author_display_name']?.toString();
+    final rawEmail = post['author_email']?.toString();
+    final name = (rawDisplay != null && rawDisplay.isNotEmpty)
+        ? rawDisplay
+        : (rawEmail != null ? rawEmail.split('@').first : 'Utilisateur');
+    final email = post['author_email']?.toString() ?? '';
+    final avatarUrl = post['author_avatar_url']?.toString();
+
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              UserAvatar(
+                imageUrl: avatarUrl,
+                name: name,
+                radius: 36,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                name,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (email.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  email,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF25D366).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.groups_rounded,
+                          size: 16,
+                          color: Color(0xFF25D366),
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Membre',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF25D366),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.of(ctx).pop();
+                    final authorId = post['author_id']?.toString();
+                    if (authorId == null || authorId.isEmpty) return;
+                    final dmProvider = context.read<StudentDirectMessagesProvider>();
+                    final convId = await dmProvider.getOrCreateConversation(authorId);
+                    if (!mounted || convId == null) return;
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => StudentDmChatScreen(
+                          conversationId: convId,
+                          otherUserName: name,
+                          otherUserId: authorId,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.mail_outline, size: 18),
+                  label: const Text('Envoyer un message privé'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF25D366),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTypingOrSubtitle(StudentCommunitiesProvider provider) {
+    final typers = provider.typingUsers;
+    if (typers.isNotEmpty) {
+      final names = typers
+          .map((u) => u['display_name']?.toString() ?? '')
+          .where((n) => n.isNotEmpty)
+          .take(3)
+          .toList();
+      final label = names.isEmpty
+          ? 'écrit...'
+          : names.length == 1
+              ? '${names.first} écrit...'
+              : '${names.join(", ")} écrivent...';
+      return Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          fontSize: 13,
+          fontStyle: FontStyle.italic,
+          color: Color(0xFF25D366),
+        ),
+      );
+    }
+    // Show online count
+    final onlineCount = provider.onlineMembersCount;
+    if (onlineCount > 0) {
+      return Text(
+        '$onlineCount en ligne',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 13,
+          color: Colors.white.withValues(alpha: 0.8),
+        ),
+      );
+    }
+    if (widget.initialDescription.isNotEmpty) {
+      return Text(
+        widget.initialDescription,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 13,
+          color: Colors.white.withValues(alpha: 0.8),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<StudentCommunitiesProvider>(
       builder: (context, provider, child) {
-        final posts = provider.posts;
+        final allPosts = provider.posts;
         final currentUserId = provider.currentUserId;
+        final posts = _searchQuery.isEmpty
+            ? allPosts
+            : allPosts.where((p) {
+                final content = (p['content'] ?? '').toString().toLowerCase();
+                final author = (p['author_display_name'] ?? '').toString().toLowerCase();
+                return content.contains(_searchQuery) ||
+                    author.contains(_searchQuery);
+              }).toList();
 
         return Scaffold(
           // Fond type WhatsApp : motif de fond
           backgroundColor: const Color(0xFFECE5DD),
-          appBar: AppBar(
-            elevation: 1,
-            backgroundColor: const Color(0xFF075E54),
-            leadingWidth: 30,
-            titleSpacing: 0,
-            title: Row(
-              children: [
-                // Avatar du groupe style WhatsApp
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.grey.shade300,
-                  child: Text(
-                    widget.initialName.isNotEmpty
-                        ? widget.initialName[0].toUpperCase()
-                        : '?',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      fontSize: 18,
-                    ),
+          appBar: _isSearching
+              ? AppBar(
+                  elevation: 1,
+                  backgroundColor: const Color(0xFF075E54),
+                  leading: IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () {
+                      setState(() {
+                        _isSearching = false;
+                        _searchQuery = '';
+                        _searchController.clear();
+                      });
+                    },
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        widget.initialName,
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                  title: TextField(
+                    controller: _searchController,
+                    autofocus: true,
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                    decoration: InputDecoration(
+                      hintText: 'Rechercher dans la discussion...',
+                      hintStyle: TextStyle(
+                        color: Colors.white.withOpacity(0.6),
+                        fontSize: 15,
                       ),
-                      if (widget.initialDescription.isNotEmpty)
-                        Text(
-                          widget.initialDescription,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.white.withOpacity(0.8),
+                      border: InputBorder.none,
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value.trim().toLowerCase();
+                      });
+                    },
+                  ),
+                  foregroundColor: Colors.white,
+                )
+              : AppBar(
+                  elevation: 1,
+                  backgroundColor: const Color(0xFF075E54),
+                  leadingWidth: 30,
+                  titleSpacing: 0,
+                  title: GestureDetector(
+                    onTap: _openGroupInfoSheet,
+                    child: Row(
+                      children: [
+                        UserAvatar(
+                          name: widget.initialName,
+                          radius: 20,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                widget.initialName,
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              _buildTypingOrSubtitle(provider),
+                            ],
                           ),
                         ),
-                    ],
+                      ],
+                    ),
                   ),
+                  foregroundColor: Colors.white,
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.search, size: 22),
+                      tooltip: 'Rechercher',
+                      onPressed: () {
+                        setState(() {
+                          _isSearching = true;
+                        });
+                      },
+                    ),
+                    PopupMenuButton<String>(
+                      onSelected: (value) {
+                        if (value == 'report_community') {
+                          _openReportCommunityDialog();
+                        } else if (value == 'create_poll') {
+                          _openCreatePollDialog();
+                        } else if (value == 'group_info') {
+                          _openGroupInfoSheet();
+                        } else if (value == 'share_group') {
+                          _shareGroup();
+                        } else if (value == 'media_gallery') {
+                          _openMediaGallery();
+                        }
+                      },
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(
+                          value: 'group_info',
+                          child: Text('Infos du groupe'),
+                        ),
+                        PopupMenuItem(
+                          value: 'share_group',
+                          child: Text('Partager le groupe'),
+                        ),
+                        PopupMenuItem(
+                          value: 'create_poll',
+                          child: Text('Créer un sondage'),
+                        ),
+                        PopupMenuItem(
+                          value: 'media_gallery',
+                          child: Text('Galerie média'),
+                        ),
+                        PopupMenuItem(
+                          value: 'report_community',
+                          child: Text('Signaler la communauté'),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            foregroundColor: Colors.white,
-            actions: [
-              PopupMenuButton<String>(
-                onSelected: (value) {
-                  if (value == 'report_community') {
-                    _openReportCommunityDialog();
-                  } else if (value == 'create_poll') {
-                    _openCreatePollDialog();
-                  } else if (value == 'group_info') {
-                    _openGroupInfoSheet();
-                  } else if (value == 'share_group') {
-                    _shareGroup();
-                  }
-                },
-                itemBuilder: (context) => const [
-                  PopupMenuItem(
-                    value: 'group_info',
-                    child: Text('Infos du groupe'),
-                  ),
-                  PopupMenuItem(
-                    value: 'share_group',
-                    child: Text('Partager le groupe'),
-                  ),
-                  PopupMenuItem(
-                    value: 'create_poll',
-                    child: Text('Créer un sondage'),
-                  ),
-                  PopupMenuItem(
-                    value: 'report_community',
-                    child: Text('Signaler la communauté'),
-                  ),
-                ],
-              ),
-            ],
-          ),
           body: Column(
             children: [
-              // On enlève le bloc descriptif détaillé en haut pour laisser plus
-              // de place au chat, le résumé est désormais dans l'AppBar.
+              // Stories bar
+              CommunityStoriesBar(communityId: widget.communityId),
+              const Divider(height: 1),
               if (posts.isNotEmpty)
                 Builder(
                   builder: (context) {
@@ -1564,12 +2186,15 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
                                           if (!isMine)
                                             Padding(
                                               padding: const EdgeInsets.only(bottom: 2),
-                                              child: Text(
-                                                authorName,
-                                                style: TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: _getAuthorColor(authorName),
+                                              child: GestureDetector(
+                                                onTap: () => _showMemberProfile(p),
+                                                child: Text(
+                                                  authorName,
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: _getAuthorColor(authorName),
+                                                  ),
                                                 ),
                                               ),
                                             ),
@@ -1581,6 +2206,18 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
                                             mainAxisAlignment: MainAxisAlignment.end,
                                             children: [
                                               const Spacer(),
+                                              if (p['edited_at'] != null)
+                                                Padding(
+                                                  padding: const EdgeInsets.only(right: 4),
+                                                  child: Text(
+                                                    'modifié',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      fontStyle: FontStyle.italic,
+                                                      color: Colors.grey.shade500,
+                                                    ),
+                                                  ),
+                                                ),
                                               Text(
                                                 timeText,
                                                 style: TextStyle(
@@ -1588,13 +2225,21 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
                                                   color: Colors.grey.shade600,
                                                 ),
                                               ),
-                                              // Double check pour les messages envoyés
+                                              // Double check pour les messages envoyés (réel)
                                               if (isMine) ...[
                                                 const SizedBox(width: 3),
-                                                Icon(
-                                                  Icons.done_all,
-                                                  size: 16,
-                                                  color: Colors.blue.shade400,
+                                                Builder(
+                                                  builder: (context) {
+                                                    final postId = p['id']?.toString() ?? '';
+                                                    final readCount = provider.readCountForPost(postId);
+                                                    return Icon(
+                                                      readCount > 0 ? Icons.done_all : Icons.done,
+                                                      size: 16,
+                                                      color: readCount > 0
+                                                          ? const Color(0xFF53BDEB)
+                                                          : Colors.grey.shade500,
+                                                    );
+                                                  },
                                                 ),
                                               ],
                                             ],
@@ -1618,6 +2263,23 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
                                           setState(() {
                                             _replyToPost = p;
                                           });
+                                        } else if (value == 'copy') {
+                                          final text = (p['content'] ?? '').toString();
+                                          if (text.isNotEmpty) {
+                                            Clipboard.setData(ClipboardData(text: text));
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Message copié'),
+                                                duration: Duration(seconds: 1),
+                                              ),
+                                            );
+                                          }
+                                        } else if (value == 'react') {
+                                          _showReactionPicker(p);
+                                        } else if (value == 'edit') {
+                                          _openEditPostDialog(p);
+                                        } else if (value == 'pin') {
+                                          _togglePinPost(p);
                                         } else if (value == 'delete') {
                                           _confirmDeleteMyPost(p);
                                         } else if (value == 'report') {
@@ -1630,8 +2292,22 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
                                             value: 'reply',
                                             child: Text('Répondre'),
                                           ),
+                                          const PopupMenuItem(
+                                            value: 'copy',
+                                            child: Text('Copier'),
+                                          ),
+                                          const PopupMenuItem(
+                                            value: 'react',
+                                            child: Text('Réagir'),
+                                          ),
                                         ];
                                         if (isMine) {
+                                          items.add(
+                                            const PopupMenuItem(
+                                              value: 'edit',
+                                              child: Text('Modifier'),
+                                            ),
+                                          );
                                           items.add(
                                             const PopupMenuItem(
                                               value: 'delete',
@@ -1639,6 +2315,14 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
                                             ),
                                           );
                                         }
+                                        items.add(
+                                          PopupMenuItem(
+                                            value: 'pin',
+                                            child: Text(
+                                              p['is_pinned'] == true ? 'Désépingler' : 'Épingler',
+                                            ),
+                                          ),
+                                        );
                                         items.add(
                                           const PopupMenuItem(
                                             value: 'report',
@@ -1660,6 +2344,13 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
                             },
                           ),
               ),
+              // Indicateur d'upload en cours
+              if (_isUploading)
+                const LinearProgressIndicator(
+                  minHeight: 3,
+                  backgroundColor: Color(0xFFE0E0E0),
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF25D366)),
+                ),
               // Zone de saisie style WhatsApp
               Container(
                 color: const Color(0xFFF0F0F0),
@@ -1732,69 +2423,163 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        // Champ de texte style WhatsApp
+                        // Champ de texte ou indicateur d'enregistrement
                         Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                // Bouton emoji (décoratif)
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.emoji_emotions_outlined,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                  onPressed: _showEmojiPickerForInput,
-                                  padding: const EdgeInsets.all(8),
-                                  constraints: const BoxConstraints(),
-                                ),
-                                // Champ de texte
-                                Expanded(
-                                  child: TextField(
-                                    controller: _messageController,
-                                    minLines: 1,
-                                    maxLines: 5,
-                                    textCapitalization: TextCapitalization.sentences,
-                                    decoration: InputDecoration(
-                                      hintText: 'Message',
-                                      hintStyle: TextStyle(
-                                        color: Colors.grey.shade500,
-                                        fontSize: 16,
-                                      ),
-                                      border: InputBorder.none,
-                                      contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 0,
-                                        vertical: 10,
-                                      ),
+                          child: _isRecording
+                              ? Container(
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEE2E2),
+                                    borderRadius: BorderRadius.circular(25),
+                                    border: Border.all(
+                                      color: const Color(0xFFFCA5A5),
                                     ),
                                   ),
-                                ),
-                                // Bouton pièce jointe
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.attach_file,
-                                    color: Colors.grey.shade600,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  child: Row(
+                                    children: [
+                                      // Pulsing red dot
+                                      const _PulsingDot(),
+                                      const SizedBox(width: 8),
+                                      // Timer display
+                                      Text(
+                                        '${(_recordingSeconds ~/ 60).toString().padLeft(2, '0')}:${(_recordingSeconds % 60).toString().padLeft(2, '0')}',
+                                        style: const TextStyle(
+                                          color: Color(0xFFDC2626),
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 15,
+                                          fontFeatures: [FontFeature.tabularFigures()],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      // Animated waveform bars
+                                      Expanded(
+                                        child: _RecordingWaveform(seconds: _recordingSeconds),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      // Cancel button
+                                      GestureDetector(
+                                        onTap: () {
+                                          _recordingTimer?.cancel();
+                                          _audioRecorder?.stop();
+                                          setState(() {
+                                            _isRecording = false;
+                                            _recordingSeconds = 0;
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(0.7),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.delete_outline, size: 16, color: Color(0xFF9CA3AF)),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Annuler',
+                                                style: TextStyle(
+                                                  color: Color(0xFF9CA3AF),
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  onPressed: provider.isSaving
-                                      ? null
-                                      : _pickAndUploadAttachment,
-                                  padding: const EdgeInsets.all(8),
-                                  constraints: const BoxConstraints(),
+                                )
+                              : Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(25),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      // Bouton emoji
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.emoji_emotions_outlined,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                        onPressed: _showEmojiPickerForInput,
+                                        padding: const EdgeInsets.all(8),
+                                        constraints: const BoxConstraints(),
+                                      ),
+                                      // Bouton formule mathématique
+                                      AcademiaMathButton(
+                                        iconSize: 22,
+                                        onInsertFormula: (tex) {
+                                          final current = _messageController.text;
+                                          final selection = _messageController.selection;
+                                          final insert = ' \$${tex}\$ ';
+                                          if (selection.isValid && selection.baseOffset >= 0) {
+                                            final newText = current.replaceRange(
+                                              selection.start, selection.end, insert);
+                                            _messageController.value = TextEditingValue(
+                                              text: newText,
+                                              selection: TextSelection.collapsed(
+                                                offset: selection.start + insert.length),
+                                            );
+                                          } else {
+                                            _messageController.text = current + insert;
+                                            _messageController.selection = TextSelection.collapsed(
+                                              offset: _messageController.text.length);
+                                          }
+                                        },
+                                      ),
+                                      // Champ de texte avec @mentions
+                                      Expanded(
+                                        child: MentionTextField(
+                                          controller: _messageController,
+                                          members: provider.communityMembers,
+                                          minLines: 1,
+                                          maxLines: 5,
+                                          hintText: 'Message',
+                                          textCapitalization: TextCapitalization.sentences,
+                                          decoration: InputDecoration(
+                                            hintText: 'Message',
+                                            hintStyle: TextStyle(
+                                              color: Colors.grey.shade500,
+                                              fontSize: 16,
+                                            ),
+                                            border: InputBorder.none,
+                                            contentPadding: const EdgeInsets.symmetric(
+                                              horizontal: 0,
+                                              vertical: 10,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      // Bouton pièce jointe
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.attach_file,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                        onPressed: provider.isSaving
+                                            ? null
+                                            : _pickAndUploadAttachment,
+                                        padding: const EdgeInsets.all(8),
+                                        constraints: const BoxConstraints(),
+                                      ),
+                                      const SizedBox(width: 4),
+                                    ],
+                                  ),
                                 ),
-                                const SizedBox(width: 4),
-                              ],
-                            ),
-                          ),
                         ),
                         const SizedBox(width: 8),
-                        // Bouton envoyer/micro style WhatsApp
+                        // Bouton envoyer/micro/stop style WhatsApp
                         Container(
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF25D366),
+                          decoration: BoxDecoration(
+                            color: _isRecording
+                                ? const Color(0xFFDC2626)
+                                : const Color(0xFF25D366),
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
@@ -1844,6 +2629,9 @@ class _AudioAttachmentPlayerState extends State<_AudioAttachmentPlayer> {
   late final AudioPlayer _player;
   bool _isPlaying = false;
   bool _isLoading = false;
+  bool _hasError = false;
+  Duration _position = Duration.zero;
+  Duration _duration = Duration.zero;
 
   @override
   void initState() {
@@ -1853,39 +2641,43 @@ class _AudioAttachmentPlayerState extends State<_AudioAttachmentPlayer> {
       if (!mounted) return;
       setState(() {
         _isPlaying = false;
+        _position = Duration.zero;
       });
     });
+    _player.onDurationChanged.listen((d) {
+      if (!mounted) return;
+      setState(() => _duration = d);
+    });
+    _player.onPositionChanged.listen((p) {
+      if (!mounted) return;
+      setState(() => _position = p);
+    });
+  }
+
+  String _fmt(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(1, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
   }
 
   Future<void> _toggle() async {
     if (_isLoading) return;
     setState(() {
       _isLoading = true;
+      _hasError = false;
     });
     try {
       if (_isPlaying) {
         await _player.pause();
-        if (mounted) {
-          setState(() {
-            _isPlaying = false;
-          });
-        }
+        if (mounted) setState(() => _isPlaying = false);
       } else {
         await _player.play(UrlSource(widget.url));
-        if (mounted) {
-          setState(() {
-            _isPlaying = true;
-          });
-        }
+        if (mounted) setState(() => _isPlaying = true);
       }
     } catch (_) {
-      // On reste silencieux côté UI en cas d'erreur ponctuelle de lecture.
+      if (mounted) setState(() => _hasError = true);
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -1897,28 +2689,174 @@ class _AudioAttachmentPlayerState extends State<_AudioAttachmentPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    final progress = (_duration.inMilliseconds > 0)
+        ? (_position.inMilliseconds / _duration.inMilliseconds).clamp(0.0, 1.0)
+        : 0.0;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: const Color(0xFFE5F4EA),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(
-            iconSize: 20,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-            onPressed: _isLoading ? null : _toggle,
+          GestureDetector(
+            onTap: _isLoading ? null : _toggle,
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: const BoxDecoration(
+                color: Color(0xFF25D366),
+                shape: BoxShape.circle,
+              ),
+              child: _isLoading
+                  ? const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Icon(
+                      _isPlaying ? Icons.pause : Icons.play_arrow,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+            ),
           ),
           const SizedBox(width: 8),
-          const Text(
-            'Message vocal',
-            style: TextStyle(fontSize: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 3,
+                    backgroundColor: Colors.black12,
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Color(0xFF25D366),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  _hasError
+                      ? 'Erreur lecture'
+                      : '${_fmt(_position)} / ${_duration.inMilliseconds > 0 ? _fmt(_duration) : '--:--'}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: _hasError ? Colors.red.shade400 : Colors.black54,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RecordingWaveform extends StatefulWidget {
+  final int seconds;
+  const _RecordingWaveform({required this.seconds});
+
+  @override
+  State<_RecordingWaveform> createState() => _RecordingWaveformState();
+}
+
+class _RecordingWaveformState extends State<_RecordingWaveform>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, child) {
+        return SizedBox(
+          height: 24,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(20, (i) {
+              // Create a pseudo-random wave pattern based on index + animation + seconds
+              final phase = (i * 0.3 + _ctrl.value * 3.14 + widget.seconds * 0.5);
+              final sinVal = (phase % 3.14).abs();
+              final height = 4.0 + sinVal * 16.0;
+              return Container(
+                width: 2.5,
+                height: height,
+                margin: const EdgeInsets.symmetric(horizontal: 1),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDC2626).withOpacity(0.5 + _ctrl.value * 0.5),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              );
+            }),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PulsingDot extends StatefulWidget {
+  const _PulsingDot();
+
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: Tween<double>(begin: 0.3, end: 1.0).animate(_ctrl),
+      child: Container(
+        width: 10,
+        height: 10,
+        decoration: const BoxDecoration(
+          color: Color(0xFFDC2626),
+          shape: BoxShape.circle,
+        ),
       ),
     );
   }

@@ -1,7 +1,6 @@
 // Supabase Edge Function: admin-hard-delete-user-account
-// Hard delete for admin-created accounts (admin, university, commercial, instructor),
+// Hard delete for any account type (admin, university, commercial, instructor, student),
 // while keeping a soft-delete + audit trail and inserting an archive row.
-// Students are excluded and must continue to use the soft delete only.
 
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
@@ -141,13 +140,6 @@ serve(async (req) => {
     if (!email) {
       return new Response(
         JSON.stringify({ error: 'user_email_missing' }),
-        { status: 400, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
-      );
-    }
-
-    if (targetRole === 'student') {
-      return new Response(
-        JSON.stringify({ success: false, error: 'student_hard_delete_not_allowed' }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
       );
     }

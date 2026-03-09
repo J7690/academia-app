@@ -65,13 +65,14 @@ class _SkeletonCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFFFAFAFA),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0x0D000000),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: const Color(0xFF2196F3).withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -217,9 +218,9 @@ class _ShimmerBox extends StatelessWidget {
           begin: Alignment(shimmerValue - 1, 0),
           end: Alignment(shimmerValue + 1, 0),
           colors: const [
-            Color(0xFFE5E7EB),
-            Color(0xFFF3F4F6),
-            Color(0xFFE5E7EB),
+            Color(0xFFF5F5F5),
+            Color(0xFFE3F2FD),
+            Color(0xFFF5F5F5),
           ],
         ),
       ),

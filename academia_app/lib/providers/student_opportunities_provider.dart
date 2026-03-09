@@ -25,6 +25,9 @@ class StudentOpportunitiesProvider extends ChangeNotifier {
   // Filtres actuels (pour refresh)
   String? _currentType;
   String? _currentSearch;
+  String _currentSort = 'newest';
+  bool _currentVerifiedOnly = false;
+  bool _currentReadyToShipOnly = false;
 
   bool get isLoading => _isLoading;
   bool get isLoadingMore => _isLoadingMore;
@@ -54,6 +57,9 @@ class StudentOpportunitiesProvider extends ChangeNotifier {
   Future<void> loadOpportunities({
     String? type,
     String? search,
+    String? sort,
+    bool? verifiedOnly,
+    bool? readyToShipOnly,
     bool refresh = true,
   }) async {
     if (refresh) {
@@ -61,6 +67,9 @@ class StudentOpportunitiesProvider extends ChangeNotifier {
       _hasMore = true;
       _currentType = type;
       _currentSearch = search;
+      _currentSort = sort ?? _currentSort;
+      _currentVerifiedOnly = verifiedOnly ?? _currentVerifiedOnly;
+      _currentReadyToShipOnly = readyToShipOnly ?? _currentReadyToShipOnly;
       _setLoading(true);
     } else {
       if (!_hasMore || _isLoadingMore) return;
@@ -77,6 +86,9 @@ class StudentOpportunitiesProvider extends ChangeNotifier {
           'p_search': search ?? _currentSearch,
           'p_limit': _pageSize,
           'p_offset': _currentOffset,
+          'p_sort': sort ?? _currentSort,
+          'p_verified_only': verifiedOnly ?? _currentVerifiedOnly,
+          'p_ready_to_ship_only': readyToShipOnly ?? _currentReadyToShipOnly,
         },
       );
 
@@ -117,6 +129,9 @@ class StudentOpportunitiesProvider extends ChangeNotifier {
   Future<void> loadBookmarkedOpportunities({
     String? type,
     String? search,
+    String? sort,
+    bool? verifiedOnly,
+    bool? readyToShipOnly,
     bool refresh = true,
   }) async {
     if (refresh) {
@@ -124,6 +139,9 @@ class StudentOpportunitiesProvider extends ChangeNotifier {
       _hasMore = true;
       _currentType = type;
       _currentSearch = search;
+      _currentSort = sort ?? _currentSort;
+      _currentVerifiedOnly = verifiedOnly ?? _currentVerifiedOnly;
+      _currentReadyToShipOnly = readyToShipOnly ?? _currentReadyToShipOnly;
       _setLoading(true);
     } else {
       if (!_hasMore || _isLoadingMore) return;
@@ -140,6 +158,9 @@ class StudentOpportunitiesProvider extends ChangeNotifier {
           'p_search': search ?? _currentSearch,
           'p_limit': _pageSize,
           'p_offset': _currentOffset,
+          'p_sort': sort ?? _currentSort,
+          'p_verified_only': verifiedOnly ?? _currentVerifiedOnly,
+          'p_ready_to_ship_only': readyToShipOnly ?? _currentReadyToShipOnly,
         },
       );
 
@@ -179,6 +200,9 @@ class StudentOpportunitiesProvider extends ChangeNotifier {
     await loadOpportunities(
       type: _currentType,
       search: _currentSearch,
+      sort: _currentSort,
+      verifiedOnly: _currentVerifiedOnly,
+      readyToShipOnly: _currentReadyToShipOnly,
       refresh: false,
     );
   }
@@ -188,6 +212,9 @@ class StudentOpportunitiesProvider extends ChangeNotifier {
     await loadOpportunities(
       type: _currentType,
       search: _currentSearch,
+      sort: _currentSort,
+      verifiedOnly: _currentVerifiedOnly,
+      readyToShipOnly: _currentReadyToShipOnly,
       refresh: true,
     );
   }

@@ -14,26 +14,32 @@ import 'web_update_stub.dart' if (dart.library.html) 'web_update_html.dart' as w
 import 'config/supabase_config.dart';
 import 'providers/supabase_provider.dart';
 import 'providers/student_offers_provider.dart';
+import 'providers/student_profile_provider.dart';
+import 'providers/student_weather_provider.dart';
+import 'providers/student_marketplace_listings_provider_v1.dart';
+import 'providers/student_marketplace_categories_provider_v1.dart';
+import 'providers/student_marketplace_bookmarked_listings_provider_v1.dart';
+import 'providers/student_marketplace_cart_provider_v1.dart';
 import 'providers/home_formations_provider.dart';
 import 'providers/student_opportunities_provider.dart';
-import 'providers/student_announcements_provider.dart';
-import 'providers/student_academic_calendar_provider.dart';
-import 'providers/student_weather_provider.dart';
-import 'providers/student_communities_provider.dart';
-import 'providers/student_challenges_provider.dart';
-import 'providers/student_applications_provider.dart';
-import 'providers/student_application_files_provider.dart';
+import 'providers/university_programs_provider.dart';
 import 'providers/student_application_messages_provider.dart';
 import 'providers/student_dossier_documents_provider.dart';
 import 'providers/student_courses_provider.dart';
 import 'providers/student_course_library_provider.dart';
 import 'providers/online_courses_catalog_provider.dart';
+import 'providers/student_announcements_provider.dart';
+import 'providers/student_academic_calendar_provider.dart';
+import 'providers/student_communities_provider.dart';
+import 'providers/student_direct_messages_provider.dart';
+import 'providers/student_challenges_provider.dart';
+import 'providers/student_applications_provider.dart';
+import 'providers/student_application_files_provider.dart';
 import 'providers/student_online_courses_provider.dart';
 import 'providers/online_course_detail_provider.dart';
 import 'providers/online_course_live_sessions_provider.dart';
 import 'providers/online_course_forum_provider.dart';
 import 'providers/student_live_sessions_provider.dart';
-import 'providers/student_profile_provider.dart';
 import 'providers/student_university_site_provider.dart';
 import 'providers/university_site_provider.dart';
 import 'providers/admin_applications_provider.dart';
@@ -57,7 +63,6 @@ import 'providers/university_applications_provider.dart';
 import 'providers/university_application_messages_provider.dart';
 import 'providers/university_application_detail_provider.dart';
 import 'providers/selected_university_application_provider.dart';
-import 'providers/university_programs_provider.dart';
 import 'providers/bobodo_provider.dart';
 import 'providers/landing_content_provider.dart';
 import 'providers/student_home_content_provider.dart';
@@ -89,6 +94,10 @@ import 'providers/admin_td_enrollments_provider.dart';
 import 'providers/td_messages_provider.dart';
 import 'providers/commercial_dashboard_provider.dart';
 import 'features/share/share_mode_provider.dart';
+import 'providers/prep_quiz_provider.dart';
+import 'providers/prep_flashcard_provider.dart';
+import 'providers/td_gamification_provider.dart';
+import 'providers/community_stories_provider.dart';
 import 'features/auth/auth_wrapper.dart';
 import 'features/auth/auth_callback_screen.dart';
 
@@ -168,9 +177,14 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => StudentOffersProvider()),
       ChangeNotifierProvider(create: (_) => HomeFormationsProvider()),
       ChangeNotifierProvider(create: (_) => StudentOpportunitiesProvider()),
+      ChangeNotifierProvider(create: (_) => StudentMarketplaceListingsProviderV1()),
+      ChangeNotifierProvider(create: (_) => StudentMarketplaceCategoriesProviderV1()),
+      ChangeNotifierProvider(create: (_) => StudentMarketplaceBookmarkedListingsProviderV1()),
+      ChangeNotifierProvider(create: (_) => StudentMarketplaceCartProviderV1()),
       ChangeNotifierProvider(create: (_) => OpportunityReactionsProvider()),
       ChangeNotifierProvider(create: (_) => OpportunityCommentsProvider()),
       ChangeNotifierProvider(create: (_) => StudentCommunitiesProvider()),
+      ChangeNotifierProvider(create: (_) => StudentDirectMessagesProvider()),
       ChangeNotifierProvider(create: (_) => StudentChallengesProvider()),
       ChangeNotifierProvider(create: (_) => StudentApplicationsProvider()),
       ChangeNotifierProvider(create: (_) => StudentApplicationFilesProvider()),
@@ -235,6 +249,10 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => TdMessagesProvider()),
       ChangeNotifierProvider(create: (_) => CommercialDashboardProvider()),
       ChangeNotifierProvider(create: (_) => ShareModeProvider()),
+      ChangeNotifierProvider(create: (_) => PrepQuizProvider()),
+      ChangeNotifierProvider(create: (_) => PrepFlashcardProvider()),
+      ChangeNotifierProvider(create: (_) => TdGamificationProvider()),
+      ChangeNotifierProvider(create: (_) => CommunityStoriesProvider()),
     ];
 
     if (kDebugMode) {

@@ -1,0 +1,55 @@
+{
+  "project_id": "thevdfcwlcqzdoybfvgs",
+  "url": "https://thevdfcwlcqzdoybfvgs.supabase.co",
+  "service_role_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoZXZkZmN3bGNxemRveWJmdmdzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzA1NjU2MCwiZXhwIjoyMDc4NjMyNTYwfQ.U0xz7oHnUISnxzAG8ehm_gRzoOlQPucj61i2f-1FjgM",
+  "database_url": "postgres://postgres:Azert0Yuiop@db.thevdfcwlcqzdoybfvgs.supabase.co:5432/postgres",
+  "connection_procedures": {
+    "primary": {
+      "method": "rpc_functions",
+      "description": "Utiliser les fonctions RPC personnalisées (méthode principale)",
+      "functions": [
+        "execute_sql",
+        "create_table_safe",
+        "insert_data_safe",
+        "update_data_safe",
+        "delete_data_safe",
+        "list_tables_detailed",
+        "describe_table_detailed",
+        "table_exists",
+        "column_exists"
+      ],
+      "endpoint": "/rest/v1/rpc/",
+      "auth": "service_role_key",
+      "success_rate": "100%"
+    },
+    "secondary": {
+      "method": "postgrest_api",
+      "description": "API REST PostgREST directe (fallback)",
+      "endpoint": "/rest/v1/",
+      "auth": "service_role_key",
+      "operations": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    "emergency": {
+      "method": "python_client",
+      "description": "Client Python Supabase (urgence)",
+      "library": "supabase-py",
+      "auth": "service_role_key"
+    }
+  },
+  "permanent_lock": {
+    "enabled": true,
+    "created_at": "2025-11-13T19:48:53.688216",
+    "auto_renew": true,
+    "health_check_interval": 3600,
+    "backup_methods": [
+      "api",
+      "rpc",
+      "client"
+    ]
+  }
+}

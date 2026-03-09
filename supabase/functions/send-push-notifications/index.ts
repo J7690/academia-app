@@ -10,13 +10,6 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-// Supporte deux noms possibles pour le secret du compte de service FCM v1
-// 1) FCMServiceAccountJohnson (nom personnalisé initial)
-// 2) FCM_SERVICE_ACCOUNT_JSON (nom plus standard)
-const FCM_SERVICE_ACCOUNT_JSON =
-  Deno.env.get("FCMServiceAccountJohnson") ??
-  Deno.env.get("FCM_SERVICE_ACCOUNT_JSON");
-
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars");
 }
@@ -28,27 +21,14 @@ type FcmServiceAccount = {
   token_uri?: string;
 };
 
-let fcmServiceAccount: FcmServiceAccount | null = null;
-
-if (!FCM_SERVICE_ACCOUNT_JSON) {
-  console.error(
-    "Missing FCM service account JSON env var (FCMServiceAccountJohnson or FCM_SERVICE_ACCOUNT_JSON)",
-  );
-} else {
-  try {
-    const parsed = JSON.parse(FCM_SERVICE_ACCOUNT_JSON) as FcmServiceAccount;
-    if (!parsed.project_id || !parsed.client_email || !parsed.private_key) {
-      console.error(
-        "FCM service account JSON is missing project_id, client_email or private_key",
-        "FCMServiceAccountJohnson JSON is missing project_id, client_email or private_key",
-      );
-    } else {
-      fcmServiceAccount = parsed;
-    }
-  } catch (err) {
-    console.error("Failed to parse FCMServiceAccountJohnson JSON", err);
-  }
-}
+// Hardcoded FCM service account (bypass env var issue)
+const fcmServiceAccount: FcmServiceAccount = {
+  project_id: "academia-e2c41",
+  client_email: "firebase-adminsdk-fbsvc@academia-e2c41.iam.gserviceaccount.com",
+  private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDGZpajtvuc2WRL\nk8VufyesySYq/a30mzLdPg/rbpfTfZI6pd1f4LclTFN52ipKhnNTmOc9bnoo6WXc\nseyCjfGCPYzysIXSs2IOI/ky3Xw4W0fnRlGMbMcn7XwkmcJ9zlXI9ulVyTDPIJ7B\nCGeHPqPa+PQ5yuzeU2WBTRo2li0aWLlEnXXj6gCSmBuiRQmO6We0hOVVKLCrFhIJ\nf+l85/Y2zOVRijGdP2xLPeVnM8ZlTQ2cNaH48oiyZroN7EzS9Eo3UFpXkSBNI6lL\nOuNdoLb26Sx8a3avWa0oNSnagHHJt5hUshnKTOlLyCbNfYN98Fby+hc3VOJKs8I9\nMNg0iN1ZAgMBAAECggEADVAF7J9TG8+0fKPCPCtZEK2Am6LhAMhHLfRDojMOCflj\njf7iL1RHRb/s3ADJFK4X3/SjE4qttMAQfzILIil/GpOhuQkiOaSiwDsmtgSJmMh7\nNygPQcJszJ+RVG1i0Qk+1VjICGMTHNrd/Crhs3//A6rvzE7y/OoQpg/z4dTK2vkZ\n0zsuO+/ILITxa5S/8foNHQWuasyOSE3Dwccaal+6FyDCTddH+2K1W87qRn+w8jtK\nzAEjt3HbPCMK7Jpd+zy2TGhDJumFyGoTMnygNb80Kt+VQeDV3n+9gjmAkGKZZPWj\nreWhPPaA8zdvizOdGj/FRQ3kcOWfFu+JPcXVUcWu/wKBgQDriUCv1Ima24UK65mc\nujpYlq+xARrSczaPfOptE149EwiX2J5Fj8Bz7PmgvXjPwr6ahIzPikYZbhUntbZd\n2UPbm1YwYMuIZChZGu0XFqA4yPmZyGnzIVdiBPyDocDY4acNQCq+UOle03aQ7bLG\nn8r510codEqI+xxMNITVwQhPpwKBgQDXo2CloKagjYgFxItChkTA3xbQ7XO100Zm\nuE+7uOfb2CAVFd0sxylK8fEh6eoIimIleYW8EqkikbL9oEr5KCmaszsDCYHC/iat\nRUz4s+XdU8LMVpDLomgrS8vjF4b/AxMJ10w7c1l5i7X9sUTiTtQJUWv/gsvxezdl\nbLW54VMK/wKBgG7Gq8TGmj1Z91Wufx3GPIDDxjfihCHsjAGqR3sre8wPsp/wAmhG\n9sXO84zU8AgO2KRFqRBHQTbenlaB0RaMg6y6fyvbqn4oVQ2ra0zLmGl8pF/ecW4n\nBTkVjUm/frrCTlYeErxVw5yUqhP5p3ZhWw5sYIw3PYL1T1bL8Jmz4tvLAoGBAIxw\n6JIWlk88vllbT4ONJRwkb5y0+cZzCof+BFfzrnY9RW/WJI10TM1106FN0lGrpw5X\nHiWGVceg8t1CV3H8mVQa5RUuTOftVM1GtEHKEKxcUCN7QaSOap/AJtMJUK+nle+z\n2/9gOebyeh33JTDrPCexctAfpKnqoQKakaS1PruLAoGAYvDR1CtFtS7ENYYwMLbq\nSkVYalMunHSQy1jkiUe48JYjcfa/D+lUD2C3NO/YPikLEh1YJYrKbFHB/Ce51eec\nlCwFJU+NTybtQO9M33bqu3g73K89+aXR7LN9zWnau1V04zLyiqdpFxgMClynueDx\nP1YvEYxnsFkebj/SJZ3hSoM=\n-----END PRIVATE KEY-----\n",
+  token_uri: "https://oauth2.googleapis.com/token",
+};
+console.log("[FCM] Service account hardcoded OK for project:", fcmServiceAccount.project_id);
 
 let cachedAccessToken: string | null = null;
 let cachedAccessTokenExpiry: number | null = null;
@@ -211,6 +191,24 @@ async function markProcessed(id: string) {
   }
 }
 
+async function deactivateToken(tokenId: string) {
+  const url = `${SUPABASE_URL}/rest/v1/user_device_tokens?id=eq.${tokenId}`;
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: {
+      apikey: SUPABASE_SERVICE_ROLE_KEY!,
+      Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      "Content-Type": "application/json",
+      Prefer: "return=minimal",
+      "Content-Profile": "app",
+    },
+    body: JSON.stringify({ is_active: false }),
+  });
+  if (!res.ok) {
+    console.error("Failed to deactivateToken", tokenId, await res.text());
+  }
+}
+
 async function markFailed(id: string, error: unknown) {
   const url = `${SUPABASE_URL}/rest/v1/notification_events?id=eq.${id}`;
   const res = await fetch(url, {
@@ -240,42 +238,328 @@ function buildFcmMessage(event: any) {
   let title = "Academia";
   let body = "";
 
+  // --- Candidatures ---
   if (domain === "student_applications" && type === "message") {
-    title = "Nouvelle réponse à ta candidature";
+    title = "💬 Nouvelle réponse à ta candidature";
     body = "Un message a été ajouté à ton dossier";
   } else if (domain === "admin_applications" && type === "message") {
     title = "Nouvelle activité sur une candidature";
     body = "Un étudiant a envoyé un message";
-  } else if (domain === "student_payments" && type === "payment") {
-    title = "Mise à jour de paiement";
-    body = "Un paiement ou reçu a été mis à jour";
-  } else if (domain === "admin_payments" && type === "payment") {
-    title = "Paiement mis à jour";
-    body = "Un paiement étudiant a changé de statut";
+
+  // --- Paiements étudiant (statut précis) ---
+  } else if (domain === "student_payments" && type === "payment_status_changed") {
+    const newStatus = payload.new_status || "";
+    const reasonLabel = payload.reason_label || payload.payment_reason || "";
+    const programName = payload.program_name || "";
+    const refCode = payload.reference_code || "";
+    if (newStatus === "confirmed") {
+      title = "✅ Paiement confirmé !";
+      body = reasonLabel ? `${reasonLabel} confirmé` + (programName ? ` — ${programName}` : "") : "Ton paiement a été confirmé";
+    } else if (newStatus === "rejected") {
+      title = "❌ Paiement rejeté";
+      body = reasonLabel ? `${reasonLabel} rejeté` + (refCode ? ` (réf. ${refCode})` : "") : "Ton paiement a été rejeté. Contacte l'administration.";
+    } else if (newStatus === "under_verification") {
+      title = "🔍 Paiement en vérification";
+      body = reasonLabel ? `${reasonLabel} est en cours de vérification` : "Ton paiement est en cours de vérification";
+    } else {
+      title = "💳 Mise à jour de paiement";
+      body = "Le statut de ton paiement a changé";
+    }
+  } else if (domain === "student_payments") {
+    title = "💳 Paiement";
+    body = "Une mise à jour sur tes paiements";
+
+  // --- Communautés ---
   } else if (domain === "student_communities" && type === "message") {
-    title = "Nouveau message dans tes communautés";
+    title = "👥 Nouveau dans tes communautés";
     body = "Une nouvelle publication est disponible";
+
+  // --- Bobodo ---
   } else if (domain === "student_bobodo" && type === "message") {
-    title = "Bobodo a répondu";
+    title = "🤖 Bobodo a répondu";
     body = "Une nouvelle réponse est disponible";
+
+  // --- Opportunités ---
+  } else if (domain === "student_opportunities" && type === "new_opportunity") {
+    const oppTitle = payload.title || "";
+    title = "🔥 Nouvelle opportunité !";
+    body = oppTitle ? `${oppTitle}` : "Une nouvelle opportunité a été publiée";
+  } else if (domain === "student_opportunities" && type === "opportunity_comment") {
+    const oppTitle = payload.opportunity_title || "";
+    title = "💬 Nouveau commentaire";
+    body = oppTitle ? `Commentaire sur : ${oppTitle}` : "Un commentaire a été ajouté à une opportunité";
   } else if (domain === "student_opportunities") {
-    title = "Nouvelle opportunité";
-    body = "Une nouvelle opportunité a été publiée";
+    title = "📢 Opportunités";
+    body = "De nouvelles opportunités sont disponibles";
+
+  // --- Marketplace (inquiries + review) ---
+  } else if (domain === "marketplace_inquiries" && type === "message") {
+    title = "💬 Nouveau message (Marketplace)";
+    body = "Vous avez un nouveau message sur une demande";
+  } else if (domain === "marketplace_opportunities" && type === "review") {
+    const reviewStatus = payload.review_status || "";
+    if (reviewStatus === "approved") {
+      title = "✅ Annonce approuvée";
+      body = "Votre annonce a été approuvée et publiée";
+    } else if (reviewStatus === "rejected") {
+      title = "❌ Annonce rejetée";
+      body = payload.review_reason
+        ? `Motif: ${payload.review_reason}`
+        : "Votre annonce a été rejetée";
+    } else {
+      title = "📌 Mise à jour annonce";
+      body = "Le statut de votre annonce a changé";
+    }
+
+  // --- Universités (news + events) ---
+  } else if (domain === "student_universities" && type === "university_news") {
+    const uniName = payload.university_name || "";
+    const newsTitle = payload.news_title || "";
+    title = `🏫 ${uniName || "Université"} — Actualité`;
+    body = newsTitle || "Une nouvelle actualité est disponible";
+  } else if (domain === "student_universities" && type === "university_event") {
+    const uniName = payload.university_name || "";
+    const eventTitle = payload.event_title || "";
+    title = `📅 ${uniName || "Université"} — Événement`;
+    body = eventTitle || "Un nouvel événement est programmé";
+  } else if (domain === "student_universities") {
+    title = "🏫 Actualité universitaire";
+    body = "Du nouveau dans tes universités";
+
+  // --- Annonces officielles ---
+  } else if (domain === "student_announcements") {
+    const annTitle = payload.title || "";
+    const urgency = payload.urgency || "normal";
+    title = urgency === "critical" ? "🚨 Annonce importante !" : "📣 Annonce officielle";
+    body = annTitle || "Une nouvelle annonce est disponible";
+
+  // --- Challenges ---
+  } else if (domain === "student_challenges") {
+    const chalTitle = payload.title || "";
+    title = "🏆 Nouveau challenge !";
+    body = chalTitle || "Un nouveau challenge est disponible";
+
+  // --- Cours en ligne ---
+  } else if (domain === "student_online_courses" && type === "new_course") {
+    const courseTitle = payload.title || "";
+    title = "📚 Nouveau cours disponible";
+    body = courseTitle || "Un nouveau cours en ligne a été ajouté";
+  } else if (domain === "student_online_courses" && type === "new_lesson") {
+    const courseTitle = payload.course_title || "";
+    const lessonTitle = payload.lesson_title || "";
+    title = `📖 Nouvelle leçon — ${courseTitle || "Cours"}`;
+    body = lessonTitle || "Une nouvelle leçon est disponible";
+  } else if (domain === "student_online_courses") {
+    title = "📚 Cours en ligne";
+    body = "Du nouveau dans tes cours";
+
+  // --- Lives ---
+  } else if (domain === "student_lives") {
+    const courseTitle = payload.course_title || "";
+    const sessionTitle = payload.session_title || "";
+    title = `🔴 Live en direct — ${courseTitle || "Cours"}`;
+    body = sessionTitle || "Une session live commence bientôt !";
+
+  // --- Formations courtes (TD) ---
+  } else if (domain === "student_short_trainings" && type === "new_training") {
+    const trainingTitle = payload.title || "";
+    title = "🎓 Nouvelle formation courte";
+    body = trainingTitle || "Une nouvelle formation est disponible";
+  } else if (domain === "student_short_trainings" && type === "new_session") {
+    const trainingTitle = payload.training_title || "";
+    title = `🎓 Nouvelle session — ${trainingTitle || "Formation"}`;
+    body = "Une nouvelle session de formation est ouverte";
+  } else if (domain === "student_short_trainings") {
+    title = "🎓 Formations";
+    body = "Du nouveau dans tes formations";
+
+  // --- Accueil étudiant ---
+  } else if (domain === "student_home") {
+    title = "🏠 Nouveau contenu";
+    body = "Du nouveau sur ton accueil Academia";
+
+  // --- Prépa concours ---
   } else if (domain === "student_prep_concours") {
-    title = "Nouveau contenu Prépa concours";
+    title = "📝 Prépa concours";
     body = "De nouveaux contenus sont disponibles";
-  } else if (domain === "admin_opportunities") {
-    title = "Opportunités mises à jour";
-    body = "Les opportunités ont été modifiées";
+
+  // --- Admin: comptes ---
+  } else if (domain === "admin_accounts" && type === "new_account") {
+    const role = payload.role || "";
+    const email = payload.email || "";
+    title = "👤 Nouveau compte créé";
+    body = `${role} — ${email}`;
+
+  // --- Admin: candidatures ---
+  } else if (domain === "admin_applications" && type === "new_application") {
+    const studentName = payload.student_name || "";
+    const programName = payload.program_name || "";
+    title = "📋 Nouvelle candidature";
+    body = studentName ? `${studentName} → ${programName || "programme"}` : "Un étudiant a soumis une candidature";
+  } else if (domain === "admin_applications" && type === "message") {
+    const senderRole = payload.sender_role || "";
+    title = "💬 Message candidature";
+    body = senderRole === "student" ? "Un étudiant a envoyé un message" : senderRole === "university" ? "Une université a répondu" : "Nouveau message sur une candidature";
+  } else if (domain === "admin_applications") {
+    title = "📋 Candidatures";
+    body = "Nouvelle activité sur les candidatures";
+
+  // --- Admin: paiements (enrichi) ---
+  } else if (domain === "admin_payments") {
+    const studentName = payload.student_name || "";
+    const status = payload.status || "";
+    const reasonLabel = payload.reason_label || "";
+    const programName = payload.program_name || "";
+    const statusLabel = status === "declared_by_student" ? "déclaré" : status === "confirmed" ? "confirmé" : status === "rejected" ? "rejeté" : status === "under_verification" ? "en vérification" : status;
+    if (status === "declared_by_student") {
+      title = "💰 Paiement déclaré";
+      body = studentName ? `${studentName} a déclaré un paiement` + (reasonLabel ? ` (${reasonLabel})` : "") : "Un étudiant a déclaré un paiement";
+    } else if (status === "confirmed") {
+      title = "✅ Paiement confirmé";
+      body = studentName ? `${studentName} — ${reasonLabel || "paiement"} confirmé` : "Un paiement a été confirmé";
+    } else {
+      title = "💰 Paiement";
+      body = studentName ? `${studentName} — ${statusLabel}` + (reasonLabel ? ` (${reasonLabel})` : "") : "Un paiement a été mis à jour";
+    }
+
+  // --- Admin: challenges ---
+  } else if (domain === "admin_challenges") {
+    title = "🏆 Participation challenge";
+    body = payload.challenge_title || "Un étudiant a participé à un challenge";
+
+  // --- Admin: formations courtes ---
+  } else if (domain === "admin_short_trainings") {
+    title = "🎓 Inscription formation";
+    body = payload.training_title ? `Inscription à : ${payload.training_title}` : "Nouvelle inscription à une formation";
+
+  // --- Admin: cours en ligne ---
+  } else if (domain === "admin_online_courses") {
+    title = "📚 Inscription cours";
+    body = payload.course_title ? `Inscription à : ${payload.course_title}` : "Nouvelle inscription à un cours";
+
+  // --- Admin: TD ---
+  } else if (domain === "admin_td" && type === "new_request") {
+    title = "📝 Demande TD";
+    body = "Un étudiant a fait une demande de TD";
+  } else if (domain === "admin_td" && type === "new_message") {
+    title = "💬 Message TD";
+    body = "Nouveau message dans un TD";
+  } else if (domain === "admin_td") {
+    title = "📝 TD";
+    body = "Nouvelle activité TD";
+
+  // --- Admin: communautés ---
+  } else if (domain === "admin_communities" && type === "join_request") {
+    title = "👥 Demande communauté";
+    body = payload.community_name ? `Demande pour : ${payload.community_name}` : "Demande d'adhésion à une communauté";
   } else if (domain === "admin_communities") {
-    title = "Communautés mises à jour";
-    body = "De nouvelles publications sont disponibles";
+    title = "👥 Communautés";
+    body = "Nouvelle activité dans les communautés";
+
+  // --- Admin: marketplace ---
+  } else if (domain === "admin_marketplace") {
+    title = "🛒 Nouvelle commande";
+    body = "Un étudiant a passé une commande";
+
+  // --- Admin: opportunités ---
+  } else if (domain === "admin_opportunities" && type === "new_application") {
+    title = "📢 Candidature opportunité";
+    body = payload.opportunity_title ? `Candidature sur : ${payload.opportunity_title}` : "Un étudiant a postulé à une opportunité";
+  } else if (domain === "admin_opportunities") {
+    title = "📢 Opportunités";
+    body = "Nouvelle activité sur les opportunités";
+
+  // --- Admin: bobodo ---
   } else if (domain === "admin_bobodo") {
-    title = "Nouvelles activités Bobodo";
-    body = "Une nouvelle activité Bobodo est disponible";
+    title = "🤖 Bobodo";
+    body = "Nouvelle activité Bobodo";
+
+  // --- Admin: prépa concours ---
   } else if (domain === "admin_prep_concours") {
-    title = "Prépa concours mise à jour";
+    title = "📝 Prépa concours";
     body = "De nouveaux contenus sont disponibles";
+
+  // --- University: candidatures ---
+  } else if (domain === "university_applications" && type === "new_application") {
+    const studentName = payload.student_name || "";
+    const programName = payload.program_name || "";
+    title = "📋 Nouvelle candidature";
+    body = studentName ? `${studentName} → ${programName || "votre programme"}` : "Un étudiant a candidaté à votre programme";
+  } else if (domain === "university_applications" && type === "message") {
+    title = "💬 Message candidature";
+    body = payload.sender_role === "student" ? "Un étudiant a envoyé un message" : "Nouveau message sur une candidature";
+  } else if (domain === "university_applications") {
+    title = "📋 Candidatures";
+    body = "Nouvelle activité sur vos candidatures";
+
+  // --- University: paiements (enrichi) ---
+  } else if (domain === "university_payments") {
+    const studentName = payload.student_name || "";
+    const status = payload.status || "";
+    const reasonLabel = payload.reason_label || "";
+    const programName = payload.program_name || "";
+    if (status === "confirmed") {
+      title = "✅ Paiement confirmé";
+      body = studentName ? `${studentName} a réglé : ${reasonLabel || "paiement"}` + (programName ? ` — ${programName}` : "") : "Un paiement étudiant a été confirmé";
+    } else if (status === "declared_by_student") {
+      title = "💰 Paiement déclaré";
+      body = studentName ? `${studentName} a déclaré : ${reasonLabel || "paiement"}` : "Un étudiant a déclaré un paiement";
+    } else {
+      title = "💰 Paiement";
+      body = studentName ? `${studentName} — ${reasonLabel || "paiement"}` : "Un paiement étudiant a été mis à jour";
+    }
+
+  // --- Instructor: TD ---
+  } else if (domain === "instructor_td" && type === "new_message") {
+    title = "💬 Message TD";
+    body = "Un étudiant vous a envoyé un message";
+  } else if (domain === "instructor_td" && type === "new_enrollment") {
+    title = "👨‍🎓 Nouvel élève TD";
+    body = "Un nouvel élève vous a été assigné";
+  } else if (domain === "instructor_td") {
+    title = "📝 TD";
+    body = "Nouvelle activité dans vos TD";
+
+  // --- Instructor: cours en ligne ---
+  } else if (domain === "instructor_courses" && type === "new_enrollment") {
+    const courseTitle = payload.course_title || "";
+    title = "👨‍🎓 Nouvel inscrit";
+    body = courseTitle ? `Inscription à : ${courseTitle}` : "Un étudiant s'est inscrit à votre cours";
+  } else if (domain === "instructor_courses" && type === "forum_message") {
+    const courseTitle = payload.course_title || "";
+    title = `💬 Forum — ${courseTitle || "Cours"}`;
+    body = "Un étudiant a posté dans le forum";
+  } else if (domain === "instructor_courses") {
+    title = "📚 Cours";
+    body = "Nouvelle activité dans vos cours";
+
+  // --- Commercial: prospect payments ---
+  } else if (domain === "commercial_prospect_payments" && type === "prospect_declared_payment") {
+    const studentName = payload.student_name || "";
+    const reasonLabel = payload.reason_label || "";
+    const programName = payload.program_name || "";
+    title = "💰 Prospect a payé !";
+    body = studentName ? `${studentName} a déclaré : ${reasonLabel || "paiement"}` + (programName ? ` — ${programName}` : "") : "Un de vos prospects a déclaré un paiement";
+  } else if (domain === "commercial_prospect_payments" && type === "prospect_payment_confirmed") {
+    const studentName = payload.student_name || "";
+    const reasonLabel = payload.reason_label || payload.payment_reason || "";
+    title = "✅ Paiement prospect confirmé !";
+    body = studentName ? `Le paiement de ${studentName} a été confirmé` : "Le paiement d'un prospect a été confirmé";
+  } else if (domain === "commercial_prospect_payments") {
+    title = "💰 Activité prospect";
+    body = "Nouvelle activité de paiement d'un prospect";
+
+  // --- Commercial: parrainages ---
+  } else if (domain === "commercial_referrals") {
+    title = "🤝 Nouveau parrainage";
+    body = "Un nouvel étudiant a été parrainé";
+
+  // --- Commercial: commissions ---
+  } else if (domain === "commercial_commissions") {
+    const amount = payload.commission_amount || "";
+    const currency = payload.currency || "XOF";
+    title = "💵 Nouvelle commission";
+    body = amount ? `Commission de ${amount} ${currency} générée` : "Vous avez reçu une nouvelle commission";
   }
 
   return {
@@ -283,11 +567,10 @@ function buildFcmMessage(event: any) {
       title,
       body,
     },
-    data: {
-      domain,
-      event_type: type,
-      ...payload,
-    },
+    data: Object.fromEntries(
+      Object.entries({ domain, event_type: type, ...payload })
+        .map(([k, v]) => [k, String(v ?? "")])
+    ),
   };
 }
 
@@ -311,6 +594,18 @@ async function sendFcm(token: string, message: { notification: any; data: any })
         token,
         notification: message.notification,
         data: message.data,
+        android: {
+          priority: "HIGH",
+          notification: {
+            channel_id: "academia_default",
+            notification_count: 1,
+            sound: "default",
+            default_vibrate_timings: true,
+            default_light_settings: true,
+            visibility: "PUBLIC",
+            notification_priority: "PRIORITY_MAX",
+          },
+        },
       },
     }),
   });
@@ -318,8 +613,10 @@ async function sendFcm(token: string, message: { notification: any; data: any })
   if (!res.ok) {
     const text = await res.text();
     console.error("FCM v1 error", res.status, text);
-    throw new Error(`FCM v1 error ${res.status}: ${text}`);
+    // Return error info instead of throwing so caller can handle UNREGISTERED tokens
+    return { ok: false, status: res.status, text, token };
   }
+  return { ok: true, status: res.status, text: "", token };
 }
 
 serve(async (_req) => {
@@ -334,9 +631,20 @@ serve(async (_req) => {
         }
 
         const msg = buildFcmMessage(event);
+        let anySent = false;
         for (const t of tokens) {
-          await sendFcm(t.fcm_token, msg);
+          const result = await sendFcm(t.fcm_token, msg);
+          if (result.ok) {
+            anySent = true;
+          } else if (result.status === 404 || result.text.includes("UNREGISTERED") || result.text.includes("NOT_FOUND")) {
+            // Token expired/unregistered — deactivate it
+            console.log(`[PUSH] Deactivating expired token ${t.fcm_token.substring(0, 20)}... for user ${event.user_id}`);
+            await deactivateToken(t.id);
+          } else {
+            console.error(`[PUSH] FCM error for event ${event.id}:`, result.status, result.text.substring(0, 200));
+          }
         }
+        // Always mark as processed (avoid infinite retry on permanent errors)
         await markProcessed(event.id);
       } catch (err) {
         console.error("Error processing event", event.id, err);

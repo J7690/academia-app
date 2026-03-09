@@ -1,0 +1,85 @@
+{
+  "RPC_EXISTS": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 9,
+    "rows": [
+      {
+        "routine_name": "app_admin_list_pending_marketplace_listings"
+      },
+      {
+        "routine_name": "app_admin_review_marketplace_listing"
+      },
+      {
+        "routine_name": "app_merchant_list_my_marketplace_listings"
+      },
+      {
+        "routine_name": "app_merchant_submit_marketplace_listing_for_review"
+      },
+      {
+        "routine_name": "app_merchant_upsert_marketplace_listing"
+      },
+      {
+        "routine_name": "app_student_create_marketplace_listing_inquiry"
+      },
+      {
+        "routine_name": "app_student_get_marketplace_listing_detail"
+      },
+      {
+        "routine_name": "app_student_list_marketplace_listings"
+      },
+      {
+        "routine_name": "app_student_list_marketplace_listings"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "RPC_SIGNATURES": {
+    "http": 200,
+    "ok": true,
+    "mode": "select",
+    "rows_count": 9,
+    "rows": [
+      {
+        "routine_name": "app_admin_list_pending_marketplace_listings",
+        "identity_args": ""
+      },
+      {
+        "routine_name": "app_admin_review_marketplace_listing",
+        "identity_args": "p_listing_id uuid, p_decision text, p_reason text"
+      },
+      {
+        "routine_name": "app_merchant_list_my_marketplace_listings",
+        "identity_args": "p_review_status text, p_limit integer, p_offset integer"
+      },
+      {
+        "routine_name": "app_merchant_submit_marketplace_listing_for_review",
+        "identity_args": "p_listing_id uuid"
+      },
+      {
+        "routine_name": "app_merchant_upsert_marketplace_listing",
+        "identity_args": "p_listing_id uuid, p_title text, p_short_description text, p_description text, p_type text, p_category text, p_organization_name text, p_organization_logo_url text, p_country text, p_city text, p_price_from numeric, p_price_to numeric, p_currency text, p_min_order_qty integer, p_lead_time_days integer, p_is_ready_to_ship boolean"
+      },
+      {
+        "routine_name": "app_student_create_marketplace_listing_inquiry",
+        "identity_args": "p_listing_id uuid, p_message text, p_quantity integer, p_budget numeric"
+      },
+      {
+        "routine_name": "app_student_get_marketplace_listing_detail",
+        "identity_args": "p_listing_id uuid"
+      },
+      {
+        "routine_name": "app_student_list_marketplace_listings",
+        "identity_args": "p_type text, p_search text, p_limit integer, p_offset integer, p_sort text, p_verified_only boolean, p_ready_to_ship_only boolean"
+      },
+      {
+        "routine_name": "app_student_list_marketplace_listings",
+        "identity_args": "p_type text, p_search text, p_limit integer, p_offset integer, p_sort text, p_verified_only boolean, p_ready_to_ship_only boolean, p_category_id uuid, p_sub_category_id uuid"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  }
+}

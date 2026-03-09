@@ -1,0 +1,592 @@
+{
+  "legacy_columns_in_app": [
+    {
+      "data_type": "text",
+      "table_name": "challenge_participation_videos",
+      "column_name": "thumbnail_url",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "text",
+      "table_name": "challenge_participation_videos",
+      "column_name": "video_url",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "text",
+      "table_name": "challenge_participations",
+      "column_name": "submission_url",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "text",
+      "table_name": "challenge_participations",
+      "column_name": "thumbnail_url",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "jsonb",
+      "table_name": "challenge_participations",
+      "column_name": "video_renditions",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "text",
+      "table_name": "challenge_participations",
+      "column_name": "video_url",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "text",
+      "table_name": "free_videos",
+      "column_name": "thumbnail_url",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "jsonb",
+      "table_name": "free_videos",
+      "column_name": "video_renditions",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "text",
+      "table_name": "free_videos",
+      "column_name": "video_url",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "text",
+      "table_name": "hero_renders",
+      "column_name": "thumbnail_url",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "text",
+      "table_name": "hero_renders_tv",
+      "column_name": "thumbnail_url",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "text",
+      "table_name": "landing_config",
+      "column_name": "video_url",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "text",
+      "table_name": "landing_videos",
+      "column_name": "video_url",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "text",
+      "table_name": "student_home_videos",
+      "column_name": "video_url",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "text",
+      "table_name": "university_media",
+      "column_name": "thumbnail_url",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "text",
+      "table_name": "video_playback_errors",
+      "column_name": "video_url",
+      "table_schema": "app"
+    }
+  ],
+  "legacy_tables_present": [],
+  "matched_routines": [
+    {
+      "schema": "public",
+      "name": "app_public_landing_content",
+      "matched": [
+        "video_renditions"
+      ]
+    },
+    {
+      "schema": "app",
+      "name": "tg_freeze_legacy_challenge_participations",
+      "matched": [
+        "video_url",
+        "video_renditions",
+        "thumbnail_url",
+        "submission_url"
+      ]
+    },
+    {
+      "schema": "app",
+      "name": "tg_freeze_legacy_free_videos",
+      "matched": [
+        "video_url",
+        "video_renditions",
+        "thumbnail_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_upsert_landing_partner",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_upsert_landing_video",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_upsert_student_home_announcement",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_upsert_student_home_video",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_upsert_student_home_video",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_get_university_site",
+      "matched": [
+        "video_renditions"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_list_online_course_live_sessions",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_upsert_university_media",
+      "matched": [
+        "thumbnail_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_list_my_challenge_videos",
+      "matched": [
+        "video_url",
+        "video_renditions",
+        "thumbnail_url",
+        "challenge_videos"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_upsert_landing_config",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_list_challenge_participation_videos",
+      "matched": [
+        "video_url",
+        "video_renditions",
+        "thumbnail_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_public_student_home_content",
+      "matched": [
+        "video_renditions"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_upsert_hero_playlist_item",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_upsert_university_media",
+      "matched": [
+        "thumbnail_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_upsert_landing_announcement",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_list_online_course_live_sessions",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_challenge_video_feed",
+      "matched": [
+        "video_url",
+        "video_renditions",
+        "thumbnail_url",
+        "submission_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_get_student_home_content",
+      "matched": [
+        "video_renditions"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_upsert_landing_video",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_add_challenge_video",
+      "matched": [
+        "video_url",
+        "thumbnail_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_get_landing_content",
+      "matched": [
+        "video_renditions"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_video_favorite",
+      "matched": [
+        "video_url",
+        "submission_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_start_duo_video",
+      "matched": [
+        "video_url",
+        "video_renditions",
+        "thumbnail_url",
+        "submission_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_favorite_challenge_video",
+      "matched": [
+        "video_url",
+        "submission_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_ci_upsert_online_course_live_session",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_ci_list_my_online_course_live_sessions",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "app",
+      "name": "tg_freeze_legacy_landing_config",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_list_my_online_course_live_sessions",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "app",
+      "name": "tg_freeze_legacy_landing_videos",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_set_challenge_main_video",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "app",
+      "name": "tg_freeze_legacy_student_home_videos",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_submit_challenge",
+      "matched": [
+        "video_url",
+        "submission_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_unified_video_feed",
+      "matched": [
+        "video_url",
+        "video_renditions",
+        "thumbnail_url",
+        "submission_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_list_challenge_videos",
+      "matched": [
+        "video_url",
+        "video_renditions",
+        "thumbnail_url",
+        "submission_url",
+        "challenge_videos"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_video_like",
+      "matched": [
+        "video_url",
+        "submission_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_list_challenge_video_render_jobs",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "app",
+      "name": "tg_freeze_legacy_university_media",
+      "matched": [
+        "thumbnail_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_add_challenge_comment",
+      "matched": [
+        "video_url",
+        "submission_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_list_challenge_participations",
+      "matched": [
+        "submission_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_set_challenge_main_video",
+      "matched": [
+        "video_url",
+        "video_renditions"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_add_video_comment",
+      "matched": [
+        "video_url",
+        "submission_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_list_challenge_reports",
+      "matched": [
+        "video_url",
+        "submission_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_report_video",
+      "matched": [
+        "video_url",
+        "submission_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_public_hero_playlist",
+      "matched": [
+        "video_renditions"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_create_free_video",
+      "matched": [
+        "video_url",
+        "video_renditions",
+        "thumbnail_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_videoasset_get_playback_manifest",
+      "matched": [
+        "video_renditions"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_list_university_site_for_management",
+      "matched": [
+        "video_renditions"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_videoasset_claim_next_job",
+      "matched": [
+        "video_renditions"
+      ]
+    },
+    {
+      "schema": "app",
+      "name": "tg_freeze_legacy_challenge_participation_videos",
+      "matched": [
+        "video_url",
+        "thumbnail_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_list_free_video_render_jobs",
+      "matched": [
+        "video_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_report_challenge_video",
+      "matched": [
+        "video_url",
+        "submission_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_get_free_video",
+      "matched": [
+        "video_url",
+        "video_renditions",
+        "thumbnail_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_get_hero_playlist",
+      "matched": [
+        "video_renditions"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_like_challenge_video",
+      "matched": [
+        "video_url",
+        "submission_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_get_challenge_video",
+      "matched": [
+        "video_url",
+        "video_renditions",
+        "thumbnail_url",
+        "submission_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_set_free_video_main_renditions",
+      "matched": [
+        "video_url",
+        "video_renditions"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_student_start_duo_challenge_video",
+      "matched": [
+        "video_url",
+        "submission_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_admin_get_hero_playlist_item_config",
+      "matched": [
+        "video_url",
+        "video_renditions",
+        "thumbnail_url"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_public_university_site",
+      "matched": [
+        "video_renditions"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "app_videoasset_complete_job",
+      "matched": [
+        "video_renditions"
+      ]
+    }
+  ],
+  "matched_views": []
+}

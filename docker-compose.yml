@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  academia-backend:
+    build:
+      context: ./academia_bobodo_backend
+      dockerfile: Dockerfile
+    container_name: academia-backend
+    ports:
+      - "8001:8000"
+    env_file:
+      - ./academia_bobodo_backend/.env
+    environment:
+      - PORT=8000
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    restart: unless-stopped
+    volumes:
+      # Mount tmp for video processing (optional, helps with large files)
+      - /tmp/academia_render:/tmp
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/debug/ffmpeg"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  academia-videoasset-worker:
+    build:
+      context: ./academia_bobodo_backend
+      dockerfile: Dockerfile
+    container_name: academia-videoasset-worker
+    env_file:
+      - ./academia_bobodo_backend/.env
+    environment:
+      - SUPABASE_PROXY_URL=http://academia-backend:8000
+      - WATERMARK_LOGO_PATH=/assets/images/academia.png
+      - WORKER_LOOP=1
+      - WORKER_INTERVAL_SECONDS=2
+      - WORKER_MAX_JOBS=3
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    command: ["python", "-u", "videoasset_worker.py"]
+    depends_on:
+      - academia-backend
+    restart: unless-stopped
+    volumes:
+      - /tmp/academia_render:/tmp
+      - ./assets/images:/assets/images:ro

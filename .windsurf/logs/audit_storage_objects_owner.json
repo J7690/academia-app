@@ -1,0 +1,27 @@
+{
+  "WHOAMI": {
+    "ok": true,
+    "http": 200,
+    "rows": [
+      {
+        "current_user": "postgres",
+        "session_user": "authenticator"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "STORAGE_OBJECTS_OWNER": {
+    "ok": true,
+    "http": 200,
+    "rows": [
+      {
+        "owner": "supabase_storage_admin",
+        "table": "objects",
+        "schema": "storage"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  }
+}
