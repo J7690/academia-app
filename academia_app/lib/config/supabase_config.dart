@@ -12,4 +12,5 @@ class SupabaseConfig {
 
   static const String frontendBaseUrl = 'https://dulcet-snickerdoodle-915a6b.netlify.app';
   static const String authCallbackUrl = '${frontendBaseUrl}/auth/callback';
+  static const String mobileAuthCallbackUrl = 'academia://auth/callback';
 }

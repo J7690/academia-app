@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../config/supabase_config.dart';
@@ -55,7 +56,7 @@ class _SignupScreenState extends State<SignupScreen> {
       await client.auth.signUp(
         email: email,
         password: password,
-        emailRedirectTo: SupabaseConfig.authCallbackUrl,
+        emailRedirectTo: kIsWeb ? SupabaseConfig.authCallbackUrl : SupabaseConfig.mobileAuthCallbackUrl,
         data: {
           'role': 'student',
           'full_name': fullName,
