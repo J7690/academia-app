@@ -10,6 +10,7 @@ import '../../providers/student_application_messages_provider.dart';
 import '../../providers/student_applications_provider.dart';
 import '../../providers/student_application_payments_provider.dart';
 import '../../widgets/bobodo_state.dart';
+import '../../widgets/ligdicash_payment_sheet.dart';
 import '../../widgets/bobodo_view.dart';
 
 class StudentApplicationDetailScreen extends StatefulWidget {
@@ -260,8 +261,7 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Choisissez le canal utilisé et indiquez le montant réellement payé.'
-                      '\nLe paiement se fait en dehors de la plateforme, ici vous enregistrez seulement la preuve.',
+                      'Indiquez le montant et le canal utilisé pour le paiement.',
                       style: TextStyle(fontSize: 12),
                     ),
                     const SizedBox(height: 12),
@@ -269,16 +269,6 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                       'Canal de paiement',
                       style:
                           TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                    ),
-                    RadioListTile<String>(
-                      title: const Text('Espèces (cash)'),
-                      value: 'cash',
-                      groupValue: selectedChannel,
-                      onChanged: (value) {
-                        setState(() {
-                          selectedChannel = value;
-                        });
-                      },
                     ),
                     RadioListTile<String>(
                       title: const Text('Orange Money'),
@@ -602,9 +592,37 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                 TextButton.icon(
                                   onPressed: appId.isEmpty
                                       ? null
-                                      : () => _showDeclarePaymentSheet(context),
+                                      : () {
+                                          // Déterminer le montant dû
+                                          final rawDue = payments.isNotEmpty
+                                              ? payments.first['amount_due']
+                                              : null;
+                                          double amountDue = 0;
+                                          if (rawDue is num) amountDue = rawDue.toDouble();
+                                          if (rawDue is String) amountDue = double.tryParse(rawDue) ?? 0;
+
+                                          if (amountDue <= 0) {
+                                            // Pas encore de paiement créé — créer d'abord
+                                            _showDeclarePaymentSheet(context);
+                                            return;
+                                          }
+
+                                          final paymentId = payments.first['id']?.toString() ?? '';
+                                          if (paymentId.isEmpty) return;
+
+                                          LigdiCashPaymentSheet.show(
+                                            context: context,
+                                            paymentType: 'application',
+                                            paymentId: paymentId,
+                                            amount: amountDue,
+                                            description: 'Frais de candidature',
+                                            onSuccess: () {
+                                              paymentsProvider.loadPayments(appId);
+                                            },
+                                          );
+                                        },
                                   icon: const Icon(Icons.payment),
-                                  label: const Text('Déclarer un paiement'),
+                                  label: const Text('Payer maintenant'),
                                 ),
                               ],
                             ),

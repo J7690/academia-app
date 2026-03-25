@@ -1,0 +1,781 @@
+{
+  "marketplace_payments_cols": [
+    {
+      "data_type": "uuid",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "order_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "buyer_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "merchant_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "gross_amount",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "commission_rate",
+      "is_nullable": "NO",
+      "column_default": "0.10"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "commission_amount",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "net_amount",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "data_type": "text",
+      "column_name": "currency",
+      "is_nullable": "NO",
+      "column_default": "'XOF'::text"
+    },
+    {
+      "data_type": "text",
+      "column_name": "payment_method",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "payment_provider",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "payment_provider_ref",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "status",
+      "is_nullable": "NO",
+      "column_default": "'pending'::text"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "escrow_released_at",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    }
+  ],
+  "marketplace_orders_cols": [
+    {
+      "data_type": "uuid",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "student_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "merchant_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "status",
+      "is_nullable": "NO",
+      "column_default": "'pending'::text"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "total_amount",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "currency",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "delivery_mode",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "shipping_address",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "student_notes",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    }
+  ],
+  "marketplace_order_items_cols": [
+    {
+      "data_type": "uuid",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "order_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "product_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "integer",
+      "column_name": "quantity",
+      "is_nullable": "NO",
+      "column_default": "1"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "unit_price",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "currency",
+      "is_nullable": "YES",
+      "column_default": null
+    }
+  ],
+  "commercial_tables": [
+    {
+      "table_name": "commercial_milestone_claims",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "commercial_milestones",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "commercial_profiles",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "commission_rules",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "referral_commissions",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "user_referrals",
+      "table_schema": "app"
+    }
+  ],
+  "referral_commissions_cols": [
+    {
+      "data_type": "uuid",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "commercial_user_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "student_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "payment_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "commission_rate",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "commission_amount",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "currency",
+      "is_nullable": "NO",
+      "column_default": "'XOF'::text"
+    },
+    {
+      "data_type": "text",
+      "column_name": "status",
+      "is_nullable": "NO",
+      "column_default": "'pending'::text"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "approved_at",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "paid_at",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "admin_note",
+      "is_nullable": "YES",
+      "column_default": null
+    }
+  ],
+  "commercial_profiles_cols": [
+    {
+      "data_type": "uuid",
+      "column_name": "user_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "ref_code",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "ref_link",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "commission_rate",
+      "is_nullable": "NO",
+      "column_default": "5.00"
+    },
+    {
+      "data_type": "boolean",
+      "column_name": "is_active",
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "data_type": "text",
+      "column_name": "admin_notes",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "deactivated_at",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "tier",
+      "is_nullable": "NO",
+      "column_default": "'bronze'::text"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "max_commissions_per_prospect",
+      "is_nullable": "NO",
+      "column_default": "3"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "total_confirmed_payments",
+      "is_nullable": "NO",
+      "column_default": "0"
+    }
+  ],
+  "subscription_tables": [
+    {
+      "table_name": "pg_stat_subscription",
+      "table_schema": "pg_catalog"
+    },
+    {
+      "table_name": "pg_stat_subscription_stats",
+      "table_schema": "pg_catalog"
+    },
+    {
+      "table_name": "pg_subscription",
+      "table_schema": "pg_catalog"
+    },
+    {
+      "table_name": "pg_subscription_rel",
+      "table_schema": "pg_catalog"
+    },
+    {
+      "table_name": "subscription",
+      "table_schema": "realtime"
+    }
+  ],
+  "td_enrollment_payment_rpc": [
+    {
+      "routine_name": "app_notify_instructor_td_enrollment"
+    },
+    {
+      "routine_name": "app_td_admin_list_enrollments_with_context"
+    },
+    {
+      "routine_name": "app_td_list_messages_for_enrollment"
+    },
+    {
+      "routine_name": "app_td_student_create_enrollment_and_payment"
+    },
+    {
+      "routine_name": "app_td_student_get_my_enrollments"
+    },
+    {
+      "routine_name": "app_td_student_list_my_enrollments"
+    },
+    {
+      "routine_name": "app_td_student_list_resources_for_enrollment"
+    },
+    {
+      "routine_name": "app_td_teacher_list_resources_for_enrollment"
+    }
+  ],
+  "marketplace_rpcs": [
+    {
+      "routine_name": "app_admin_add_marketplace_listing_media"
+    },
+    {
+      "routine_name": "app_admin_disable_marketplace_listing_media"
+    },
+    {
+      "routine_name": "app_admin_list_marketplace_listing_media"
+    },
+    {
+      "routine_name": "app_admin_list_marketplace_merchants"
+    },
+    {
+      "routine_name": "app_admin_list_marketplace_orders"
+    },
+    {
+      "routine_name": "app_admin_list_marketplace_payments"
+    },
+    {
+      "routine_name": "app_admin_list_marketplace_products"
+    },
+    {
+      "routine_name": "app_admin_list_pending_marketplace_listings"
+    },
+    {
+      "routine_name": "app_admin_list_published_marketplace_listings"
+    },
+    {
+      "routine_name": "app_admin_review_marketplace_listing"
+    },
+    {
+      "routine_name": "app_admin_update_marketplace_merchant_status"
+    },
+    {
+      "routine_name": "app_admin_update_marketplace_product_status"
+    },
+    {
+      "routine_name": "app_create_marketplace_order_simple"
+    },
+    {
+      "routine_name": "app_list_marketplace_categories"
+    },
+    {
+      "routine_name": "app_list_marketplace_home"
+    },
+    {
+      "routine_name": "app_list_marketplace_merchants"
+    },
+    {
+      "routine_name": "app_list_marketplace_products_by_merchant"
+    },
+    {
+      "routine_name": "app_list_student_marketplace_orders"
+    },
+    {
+      "routine_name": "app_marketplace_listing_toggle_bookmark"
+    },
+    {
+      "routine_name": "app_marketplace_process_payment"
+    },
+    {
+      "routine_name": "app_marketplace_release_escrow"
+    },
+    {
+      "routine_name": "app_merchant_add_marketplace_listing_media"
+    },
+    {
+      "routine_name": "app_merchant_disable_marketplace_listing_media"
+    },
+    {
+      "routine_name": "app_merchant_get_marketplace_order_detail"
+    },
+    {
+      "routine_name": "app_merchant_list_marketplace_listing_media"
+    },
+    {
+      "routine_name": "app_merchant_list_my_marketplace_listings"
+    },
+    {
+      "routine_name": "app_merchant_list_my_marketplace_orders"
+    },
+    {
+      "routine_name": "app_merchant_submit_marketplace_listing_for_review"
+    },
+    {
+      "routine_name": "app_merchant_update_marketplace_order_status"
+    },
+    {
+      "routine_name": "app_merchant_upsert_marketplace_listing"
+    },
+    {
+      "routine_name": "app_notify_admin_marketplace_order"
+    },
+    {
+      "routine_name": "app_storage_setup_marketplace_media_policies"
+    },
+    {
+      "routine_name": "app_student_create_marketplace_listing_inquiry"
+    },
+    {
+      "routine_name": "app_student_get_marketplace_listing_detail"
+    },
+    {
+      "routine_name": "app_student_get_marketplace_order_detail"
+    },
+    {
+      "routine_name": "app_student_list_bookmarked_marketplace_listings"
+    },
+    {
+      "routine_name": "app_student_list_marketplace_listings"
+    },
+    {
+      "routine_name": "app_student_list_marketplace_listings"
+    },
+    {
+      "routine_name": "app_student_list_my_marketplace_orders"
+    }
+  ],
+  "marketplace_payments_data": [
+    {
+      "total": 0
+    }
+  ],
+  "marketplace_orders_data": [
+    {
+      "total": 3
+    }
+  ],
+  "payment_channel_enum": [
+    {
+      "enumlabel": "cash"
+    },
+    {
+      "enumlabel": "orange_money"
+    },
+    {
+      "enumlabel": "moov_money"
+    },
+    {
+      "enumlabel": "telecel_money"
+    }
+  ],
+  "payment_status_enum": [
+    {
+      "enumlabel": "pending"
+    },
+    {
+      "enumlabel": "declared_by_student"
+    },
+    {
+      "enumlabel": "under_verification"
+    },
+    {
+      "enumlabel": "confirmed"
+    },
+    {
+      "enumlabel": "rejected"
+    },
+    {
+      "enumlabel": "cancelled"
+    }
+  ],
+  "payment_reason_enum": [
+    {
+      "enumlabel": "application_fee"
+    },
+    {
+      "enumlabel": "registration_fee"
+    },
+    {
+      "enumlabel": "tuition_deposit"
+    },
+    {
+      "enumlabel": "other"
+    },
+    {
+      "enumlabel": "td_access"
+    }
+  ],
+  "commission_rules_data": [
+    {
+      "id": "ff9dbabc-8c49-4795-bf10-cd00dba10f25",
+      "currency": "XOF",
+      "priority": 30,
+      "is_active": true,
+      "max_amount": 25000,
+      "degree_level": "LMD",
+      "payment_reason": "registration_fee",
+      "commission_rate": 0.12
+    },
+    {
+      "id": "f180b842-d114-4c8b-89a3-19d5f70f6a25",
+      "currency": "XOF",
+      "priority": 30,
+      "is_active": true,
+      "max_amount": 15000,
+      "degree_level": "BTS",
+      "payment_reason": "registration_fee",
+      "commission_rate": 0.1
+    },
+    {
+      "id": "ec9aac46-49da-4947-8e3d-a88e787a8113",
+      "currency": "XOF",
+      "priority": 30,
+      "is_active": true,
+      "max_amount": 25000,
+      "degree_level": "Licence",
+      "payment_reason": "registration_fee",
+      "commission_rate": 0.12
+    },
+    {
+      "id": "18a4fbe4-345c-42a7-a512-6b1b1a48b821",
+      "currency": "XOF",
+      "priority": 30,
+      "is_active": true,
+      "max_amount": 50000,
+      "degree_level": "doctorat",
+      "payment_reason": "registration_fee",
+      "commission_rate": 0.15
+    },
+    {
+      "id": "e6c0a095-3a35-402b-acb8-3448b1546c7e",
+      "currency": "XOF",
+      "priority": 30,
+      "is_active": true,
+      "max_amount": 40000,
+      "degree_level": "Master",
+      "payment_reason": "registration_fee",
+      "commission_rate": 0.15
+    },
+    {
+      "id": "eaa2aba9-e415-4066-b730-177698e30a0f",
+      "currency": "XOF",
+      "priority": 30,
+      "is_active": true,
+      "max_amount": 40000,
+      "degree_level": "Master1",
+      "payment_reason": "registration_fee",
+      "commission_rate": 0.15
+    },
+    {
+      "id": "983fc1bb-dca1-4a7c-adf8-5b519aaec07c",
+      "currency": "XOF",
+      "priority": 20,
+      "is_active": true,
+      "max_amount": 25000,
+      "degree_level": "*",
+      "payment_reason": "registration_fee",
+      "commission_rate": 0.12
+    },
+    {
+      "id": "e2a9cdf4-d738-4746-8b47-79f52a360960",
+      "currency": "XOF",
+      "priority": 10,
+      "is_active": true,
+      "max_amount": 5000,
+      "degree_level": "*",
+      "payment_reason": "application_fee",
+      "commission_rate": 0.2
+    },
+    {
+      "id": "9b12bb70-eca3-4c9c-97ad-e2246c9b68a2",
+      "currency": "XOF",
+      "priority": 10,
+      "is_active": true,
+      "max_amount": 3000,
+      "degree_level": "*",
+      "payment_reason": "td_access",
+      "commission_rate": 0.15
+    },
+    {
+      "id": "26c649cc-eb71-4d64-ade1-ec87046332a0",
+      "currency": "XOF",
+      "priority": 10,
+      "is_active": true,
+      "max_amount": 20000,
+      "degree_level": "*",
+      "payment_reason": "tuition_deposit",
+      "commission_rate": 0.05
+    },
+    {
+      "id": "527d9094-b8bc-4413-bdea-e25dc627fc52",
+      "currency": "XOF",
+      "priority": 0,
+      "is_active": true,
+      "max_amount": 10000,
+      "degree_level": "*",
+      "payment_reason": "*",
+      "commission_rate": 0.08
+    }
+  ],
+  "commercial_milestones": [
+    {
+      "id": "3d275638-f6ce-470e-ac92-82493c3a9334",
+      "label": "Premier palier",
+      "currency": "XOF",
+      "threshold": 5,
+      "created_at": "2026-02-19T09:07:09.930733+00:00",
+      "description": "5 paiements confirmés — Bonus de 5 000 XOF",
+      "bonus_amount": 5000
+    },
+    {
+      "id": "c24f931b-2976-4792-aff8-6a0f6d820e50",
+      "label": "Palier Argent",
+      "currency": "XOF",
+      "threshold": 15,
+      "created_at": "2026-02-19T09:07:09.930733+00:00",
+      "description": "15 paiements confirmés — Bonus de 20 000 XOF",
+      "bonus_amount": 20000
+    },
+    {
+      "id": "e856e78f-da5a-4495-ae61-e8d0d5e9c463",
+      "label": "Palier Or",
+      "currency": "XOF",
+      "threshold": 30,
+      "created_at": "2026-02-19T09:07:09.930733+00:00",
+      "description": "30 paiements confirmés — Bonus de 50 000 XOF",
+      "bonus_amount": 50000
+    },
+    {
+      "id": "0f09c338-6387-4171-86db-35573d64a592",
+      "label": "Palier Diamant",
+      "currency": "XOF",
+      "threshold": 50,
+      "created_at": "2026-02-19T09:07:09.930733+00:00",
+      "description": "50 paiements confirmés — Bonus de 100 000 XOF",
+      "bonus_amount": 100000
+    }
+  ],
+  "marketplace_process_payment_src": [
+    {
+      "proname": "app_marketplace_process_payment",
+      "func_def": "CREATE OR REPLACE FUNCTION public.app_marketplace_process_payment(p_order_id uuid, p_payment_method text DEFAULT 'pending'::text, p_payment_provider text DEFAULT NULL::text, p_payment_provider_ref text DEFAULT NULL::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_user UUID := auth.uid();\n  v_order app.marketplace_orders%ROWTYPE;\n  v_commission_rate NUMERIC := 0.10;\n  v_gross NUMERIC;\n  v_commission NUMERIC;\n  v_net NUMERIC;\n  v_payment_id UUID;\nBEGIN\n  IF v_user IS NULL THEN\n    RETURN jsonb_build_object('success', false, 'error', 'not_authenticated');\n  END IF;\n\n  SELECT * INTO v_order FROM app.marketplace_orders WHERE id = p_order_id AND student_id = v_user;\n  IF v_order IS NULL THEN\n    RETURN jsonb_build_object('success', false, 'error', 'order_not_found');\n  END IF;\n\n  IF EXISTS (SELECT 1 FROM app.marketplace_payments WHERE order_id = p_order_id AND status != 'failed') THEN\n    RETURN jsonb_build_object('success', false, 'error', 'payment_already_exists');\n  END IF;\n\n  v_gross := COALESCE(v_order.total_amount, 0);\n  v_commission := ROUND(v_gross * v_commission_rate, 2);\n  v_net := v_gross - v_commission;\n\n  INSERT INTO app.marketplace_payments (\n    order_id, buyer_id, merchant_id,\n    gross_amount, commission_rate, commission_amount, net_amount,\n    currency, payment_method, payment_provider, payment_provider_ref,\n    status\n  ) VALUES (\n    p_order_id, v_user, v_order.merchant_id,\n    v_gross, v_commission_rate, v_commission, v_net,\n    COALESCE(v_order.currency, 'XOF'), p_payment_method, p_payment_provider, p_payment_provider_ref,\n    'pending'\n  ) RETURNING id INTO v_payment_id;\n\n  RETURN jsonb_build_object(\n    'success', true,\n    'payment_id', v_payment_id,\n    'gross_amount', v_gross,\n    'commission_amount', v_commission,\n    'net_amount', v_net,\n    'status', 'pending'\n  );\nEND;\n$function$\n"
+    }
+  ],
+  "td_enrollment_payment_src": [
+    {
+      "proname": "app_td_student_create_enrollment_and_payment",
+      "func_def": "CREATE OR REPLACE FUNCTION public.app_td_student_create_enrollment_and_payment(p_program_id uuid, p_collection_id uuid DEFAULT NULL::uuid, p_access_scope text DEFAULT 'program'::text, p_amount_due numeric DEFAULT NULL::numeric, p_student_notes text DEFAULT NULL::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_user_id UUID := auth.uid();\n  v_role TEXT;\n  v_program app.td_programs%ROWTYPE;\n  v_dummy_collection app.td_collections%ROWTYPE;\n  v_enrollment_id UUID;\n  v_payment_id UUID;\n  v_reference_code TEXT;\nBEGIN\n  IF v_user_id IS NULL THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');\n  END IF;\n\n  v_role := app.app_td_get_current_role();\n  IF v_role <> 'student' THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_student');\n  END IF;\n\n  IF p_program_id IS NULL THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_program_id');\n  END IF;\n\n  IF p_amount_due IS NULL OR p_amount_due <= 0 THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_amount_due');\n  END IF;\n\n  IF p_access_scope NOT IN ('program', 'collection', 'document', 'certification') THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'invalid_access_scope');\n  END IF;\n\n  SELECT *\n  INTO v_program\n  FROM app.td_programs\n  WHERE id = p_program_id\n    AND status = 'published';\n\n  IF NOT FOUND THEN\n    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'program_not_found_or_not_published');\n  END IF;\n\n  IF p_collection_id IS NOT NULL THEN\n    SELECT *\n    INTO v_dummy_collection\n    FROM app.td_collections\n    WHERE id = p_collection_id\n      AND program_id = p_program_id;\n\n    IF NOT FOUND THEN\n      RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'collection_not_in_program');\n    END IF;\n  END IF;\n\n  INSERT INTO app.td_enrollments (\n    student_id,\n    program_id,\n    collection_id,\n    access_scope,\n    payment_id,\n    access_status,\n    assignment_status,\n    assigned_teacher_id,\n    student_notes,\n    admin_notes,\n    created_at,\n    updated_at,\n    activated_at,\n    completed_at\n  ) VALUES (\n    v_user_id,\n    p_program_id,\n    p_collection_id,\n    p_access_scope,\n    NULL,\n    'pending_payment',\n    'unassigned',\n    NULL,\n    p_student_notes,\n    NULL,\n    NOW(),\n    NOW(),\n    NULL,\n    NULL\n  )\n  RETURNING id INTO v_enrollment_id;\n\n  v_reference_code := 'TD-' || TO_CHAR(NOW(), 'YYYYMMDDHH24MISS') || '-' ||\n                      SUBSTR(REPLACE(gen_random_uuid()::TEXT, '-', ''), 1, 6);\n\n  INSERT INTO app.application_payments (\n    application_id,\n    student_id,\n    university_id,\n    amount_due,\n    currency,\n    payment_reason,\n    status,\n    reference_code,\n    created_by\n  ) VALUES (\n    NULL,\n    v_user_id,\n    NULL,\n    p_amount_due,\n    v_program.currency,\n    'td_access',\n    'pending',\n    v_reference_code,\n    v_user_id\n  )\n  RETURNING id INTO v_payment_id;\n\n  UPDATE app.td_enrollments\n  SET\n    payment_id = v_payment_id,\n    updated_at = NOW()\n  WHERE id = v_enrollment_id;\n\n  RETURN JSONB_BUILD_OBJECT(\n    'success', TRUE,\n    'enrollment_id', v_enrollment_id,\n    'payment_id', v_payment_id,\n    'reference_code', v_reference_code,\n    'amount_due', p_amount_due,\n    'currency', v_program.currency\n  );\nEND;\n$function$\n"
+    }
+  ],
+  "payout_tables": [],
+  "marketplace_listings_price": [
+    {
+      "data_type": "numeric",
+      "column_name": "price_from"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "price_to"
+    }
+  ]
+}

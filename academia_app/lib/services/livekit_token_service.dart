@@ -1,13 +1,19 @@
-import 'dart:convert';
-
-import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import '../config/supabase_config.dart';
 
 class LivekitTokenService {
   LivekitTokenService._();
 
+  /// Appelle l'Edge Function `livekit-token` pour obtenir un token
+  /// d'accès LiveKit pour la session donnée.
+  ///
+  /// Retourne un Map contenant :
+  /// - `token` : le JWT LiveKit
+  /// - `url` : l'URL WebSocket du serveur LiveKit (wss://...)
+  /// - `room_name` : le nom de la room
+  /// - `identity` : l'identité du participant
+  /// - `display_name` : le nom affiché
+  /// - `is_host` : true si l'utilisateur est l'hôte (enseignant)
   static Future<Map<String, dynamic>> getTokenForSession(String sessionId) async {
     final client = Supabase.instance.client;
     final session = client.auth.currentSession;
@@ -15,50 +21,34 @@ class LivekitTokenService {
       throw Exception('Utilisateur non authentifié.');
     }
 
-    final jwt = session.accessToken;
-    if (jwt.isEmpty) {
-      throw Exception('Jeton utilisateur invalide.');
-    }
+    debugPrint('[LivekitToken] Requesting token for session=$sessionId');
 
-    final supabaseUrl = SupabaseConfig.url;
-    final baseUri = Uri.parse(supabaseUrl);
-    final backendBase = Uri(
-      scheme: baseUri.scheme,
-      host: baseUri.host,
-      port: baseUri.hasPort ? baseUri.port : null,
-    );
-
-    final uri = backendBase.replace(path: '/livekit/token');
-
-    final response = await http.post(
-      uri,
-      headers: {
-        'Authorization': 'Bearer $jwt',
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: jsonEncode({
+    final response = await client.functions.invoke(
+      'livekit-token',
+      body: {
         'session_id': sessionId,
-      }),
+      },
     );
 
-    if (response.statusCode != 200) {
-      try {
-        final body = jsonDecode(response.body) as Map<String, dynamic>;
-        final detail = body['detail'];
-        if (detail is Map && detail['message'] is String) {
-          throw Exception(detail['message'] as String);
-        }
-      } catch (_) {}
+    if (response.status != 200) {
+      debugPrint('[LivekitToken] HTTP ${response.status}: ${response.data}');
       throw Exception(
-        'Erreur LiveKit (${response.statusCode}).',
+        'Erreur LiveKit (${response.status}).',
       );
     }
 
-    final data = jsonDecode(response.body);
+    final data = response.data;
     if (data is! Map<String, dynamic>) {
       throw Exception('Réponse LiveKit invalide.');
     }
+
+    if (data['success'] != true) {
+      final error = data['error']?.toString() ?? 'Erreur inconnue';
+      debugPrint('[LivekitToken] Error: $error');
+      throw Exception(error);
+    }
+
+    debugPrint('[LivekitToken] Token obtained: room=${data['room_name']}, host=${data['is_host']}');
     return data;
   }
 }

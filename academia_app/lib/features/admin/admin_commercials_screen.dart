@@ -658,10 +658,17 @@ class _AdminCommercialsScreenState extends State<AdminCommercialsScreen> {
                                       user['role']?.toString() ?? '';
                                   final fullName =
                                       user['full_name']?.toString();
+                                  // ref_code/ref_link come from commercialsOverview, not from users list
+                                  final overviewItemForRef = overview.firstWhere(
+                                    (item) =>
+                                        (item['user_id']?.toString() ?? '') ==
+                                        (user['id']?.toString() ?? ''),
+                                    orElse: () => const <String, dynamic>{},
+                                  );
                                   final refCode =
-                                      user['ref_code']?.toString() ?? '';
+                                      overviewItemForRef['ref_code']?.toString() ?? '';
                                   final refLink =
-                                      user['ref_link']?.toString() ?? '';
+                                      overviewItemForRef['ref_link']?.toString() ?? '';
                                   final createdAt = user['created_at']
                                           ?.toString() ??
                                       '';
@@ -680,13 +687,8 @@ class _AdminCommercialsScreenState extends State<AdminCommercialsScreen> {
                                       user['is_deleted'] == true;
                                   final deletedReason = user['deleted_reason']
                                       ?.toString();
-                                  // Stats par commercial depuis l'overview
-                                  final overviewItem = overview.firstWhere(
-                                    (item) =>
-                                        (item['user_id']?.toString() ?? '') ==
-                                        (user['id']?.toString() ?? ''),
-                                    orElse: () => const <String, dynamic>{},
-                                  );
+                                  // Stats par commercial depuis l'overview (reuse overviewItemForRef)
+                                  final overviewItem = overviewItemForRef;
                                   final perStudentsCount =
                                       overviewItem['students_count'] as num? ??
                                           0;

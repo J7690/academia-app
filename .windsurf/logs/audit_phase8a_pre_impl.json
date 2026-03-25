@@ -1,0 +1,387 @@
+{
+  "exists_revenue_split_rules": [
+    {
+      "cnt": 0
+    }
+  ],
+  "exists_actor_balances": [
+    {
+      "cnt": 0
+    }
+  ],
+  "cols_instructors": [
+    {
+      "column_name": "id"
+    },
+    {
+      "column_name": "full_name"
+    },
+    {
+      "column_name": "bio"
+    },
+    {
+      "column_name": "created_at"
+    },
+    {
+      "column_name": "updated_at"
+    }
+  ],
+  "cols_td_teachers": [
+    {
+      "column_name": "id"
+    },
+    {
+      "column_name": "user_id"
+    },
+    {
+      "column_name": "full_name"
+    },
+    {
+      "column_name": "discipline"
+    },
+    {
+      "column_name": "zone"
+    },
+    {
+      "column_name": "levels"
+    },
+    {
+      "column_name": "availability"
+    },
+    {
+      "column_name": "status"
+    },
+    {
+      "column_name": "created_at"
+    },
+    {
+      "column_name": "updated_at"
+    }
+  ],
+  "cols_marketplace_merchants": [
+    {
+      "column_name": "id"
+    },
+    {
+      "column_name": "owner_user_id"
+    },
+    {
+      "column_name": "name"
+    },
+    {
+      "column_name": "slug"
+    },
+    {
+      "column_name": "logo_url"
+    },
+    {
+      "column_name": "banner_url"
+    },
+    {
+      "column_name": "description"
+    },
+    {
+      "column_name": "country"
+    },
+    {
+      "column_name": "city"
+    },
+    {
+      "column_name": "address"
+    },
+    {
+      "column_name": "contact_email"
+    },
+    {
+      "column_name": "contact_phone"
+    },
+    {
+      "column_name": "whatsapp_url"
+    },
+    {
+      "column_name": "status"
+    },
+    {
+      "column_name": "is_active"
+    },
+    {
+      "column_name": "created_at"
+    },
+    {
+      "column_name": "updated_at"
+    },
+    {
+      "column_name": "is_verified"
+    },
+    {
+      "column_name": "verification_level"
+    },
+    {
+      "column_name": "bio"
+    },
+    {
+      "column_name": "display_name"
+    },
+    {
+      "column_name": "rating_avg"
+    },
+    {
+      "column_name": "total_sales"
+    },
+    {
+      "column_name": "total_products"
+    }
+  ],
+  "cols_universities": [
+    {
+      "column_name": "id"
+    },
+    {
+      "column_name": "name"
+    },
+    {
+      "column_name": "slug"
+    },
+    {
+      "column_name": "logo_url"
+    },
+    {
+      "column_name": "country"
+    },
+    {
+      "column_name": "city"
+    },
+    {
+      "column_name": "website_url"
+    },
+    {
+      "column_name": "description"
+    },
+    {
+      "column_name": "is_active"
+    },
+    {
+      "column_name": "created_at"
+    },
+    {
+      "column_name": "updated_at"
+    },
+    {
+      "column_name": "tagline"
+    },
+    {
+      "column_name": "banner_image_url"
+    },
+    {
+      "column_name": "contact_email"
+    },
+    {
+      "column_name": "contact_phone"
+    },
+    {
+      "column_name": "address"
+    },
+    {
+      "column_name": "social_links"
+    },
+    {
+      "column_name": "mission"
+    },
+    {
+      "column_name": "vision"
+    },
+    {
+      "column_name": "key_figures"
+    }
+  ],
+  "cols_commercial_profiles": [
+    {
+      "column_name": "user_id"
+    },
+    {
+      "column_name": "ref_code"
+    },
+    {
+      "column_name": "ref_link"
+    },
+    {
+      "column_name": "commission_rate"
+    },
+    {
+      "column_name": "is_active"
+    },
+    {
+      "column_name": "admin_notes"
+    },
+    {
+      "column_name": "created_at"
+    },
+    {
+      "column_name": "updated_at"
+    },
+    {
+      "column_name": "deactivated_at"
+    },
+    {
+      "column_name": "tier"
+    },
+    {
+      "column_name": "max_commissions_per_prospect"
+    },
+    {
+      "column_name": "total_confirmed_payments"
+    },
+    {
+      "column_name": "payout_phone"
+    }
+  ],
+  "missing_instructors": [
+    "phone",
+    "payout_phone",
+    "payout_operator",
+    "speciality"
+  ],
+  "already_instructors": [],
+  "missing_td_teachers": [
+    "phone",
+    "payout_phone",
+    "payout_operator"
+  ],
+  "already_td_teachers": [],
+  "missing_marketplace_merchants": [
+    "payout_phone",
+    "payout_operator"
+  ],
+  "already_marketplace_merchants": [],
+  "missing_universities": [
+    "payout_phone",
+    "payout_operator",
+    "bank_name",
+    "bank_account"
+  ],
+  "already_universities": [],
+  "rpc_app_admin_list_revenue_split_rules": 0,
+  "rpc_app_admin_upsert_revenue_split_rule": 0,
+  "rpc_app_admin_delete_revenue_split_rule": 0,
+  "rpc_app_admin_validate_split_totals": 0,
+  "rpc_app_resolve_revenue_split": 0,
+  "rpc_app_instructor_get_my_balance": 0,
+  "rpc_app_instructor_request_payout": 0,
+  "rpc_app_university_get_balance": 0,
+  "rpc_app_university_request_payout": 0,
+  "rpc_app_admin_list_actor_balances": 0,
+  "confirm_rpc_params": [
+    {
+      "args": "p_payment_id uuid, p_ligdicash_token text DEFAULT NULL::text, p_ligdicash_transaction_id text DEFAULT NULL::text, p_ligdicash_operator text DEFAULT NULL::text, p_payment_type text DEFAULT 'application'::text",
+      "proname": "app_confirm_ligdicash_payment"
+    }
+  ],
+  "fk_instructors": [
+    {
+      "ref_col": null,
+      "ref_table": null,
+      "column_name": "id",
+      "constraint_name": "instructors_id_fkey"
+    },
+    {
+      "ref_col": "id",
+      "ref_table": "instructors",
+      "column_name": "id",
+      "constraint_name": "instructors_pkey"
+    }
+  ],
+  "fk_td_teachers": [
+    {
+      "ref_col": null,
+      "ref_table": null,
+      "column_name": "user_id",
+      "constraint_name": "td_teachers_user_id_fkey"
+    },
+    {
+      "ref_col": "id",
+      "ref_table": "td_teachers",
+      "column_name": "id",
+      "constraint_name": "td_teachers_pkey"
+    },
+    {
+      "ref_col": "user_id",
+      "ref_table": "td_teachers",
+      "column_name": "user_id",
+      "constraint_name": "uq_td_teachers_user"
+    }
+  ],
+  "rls_actors": [
+    {
+      "tablename": "instructors",
+      "rowsecurity": true
+    },
+    {
+      "tablename": "marketplace_merchants",
+      "rowsecurity": true
+    },
+    {
+      "tablename": "td_teachers",
+      "rowsecurity": true
+    },
+    {
+      "tablename": "universities",
+      "rowsecurity": true
+    }
+  ],
+  "count_instructors": [
+    {
+      "cnt": 3
+    }
+  ],
+  "count_td_teachers": [
+    {
+      "cnt": 2
+    }
+  ],
+  "count_marketplace_merchants": [
+    {
+      "cnt": 2
+    }
+  ],
+  "count_universities": [
+    {
+      "cnt": 24
+    }
+  ],
+  "count_commercial_profiles": [
+    {
+      "cnt": 7
+    }
+  ],
+  "mmb_data": [
+    {
+      "cnt": 0
+    }
+  ],
+  "payment_reason_enum": [
+    {
+      "enumlabel": "application_fee"
+    },
+    {
+      "enumlabel": "registration_fee"
+    },
+    {
+      "enumlabel": "tuition_deposit"
+    },
+    {
+      "enumlabel": "other"
+    },
+    {
+      "enumlabel": "td_access"
+    },
+    {
+      "enumlabel": "subscription"
+    },
+    {
+      "enumlabel": "marketplace_purchase"
+    },
+    {
+      "enumlabel": "online_course"
+    }
+  ]
+}

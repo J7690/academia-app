@@ -11,6 +11,9 @@ import 'prep/prep_quiz_tab.dart';
 import 'prep/prep_subjects_tab.dart';
 import 'prep/prep_ai_tab.dart';
 import 'prep/prep_stats_tab.dart';
+import 'prep/prep_exercises_tab.dart';
+import 'prep/prep_lives_tab.dart';
+import 'prep/psychotech/prep_psychotech_tab.dart';
 
 /// Écran principal Préparation Concours — 5 onglets dédiés.
 /// Affiché dans l'onglet "Concours" (index 6) du dashboard étudiant.
@@ -31,7 +34,9 @@ class _StudentPrepConcoursScreenState extends State<StudentPrepConcoursScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<PrepQuizProvider>().loadProgress();
+      final provider = context.read<PrepQuizProvider>();
+      provider.loadProgress();
+      provider.loadSubjectStats();
     });
   }
 
@@ -44,6 +49,15 @@ class _StudentPrepConcoursScreenState extends State<StudentPrepConcoursScreen> {
     );
   }
 
+  Future<void> _shareSelectedZone() async {
+    await _shareService.shareSelectedZone(
+      context: context,
+      boundaryKey: _shareBoundaryKey,
+      shareText:
+          'Zone sélectionnée de mon espace Préparation Concours Academia.',
+    );
+  }
+
   void _openShareOptions() {
     showModalBottomSheet<void>(
       context: context,
@@ -51,6 +65,23 @@ class _StudentPrepConcoursScreenState extends State<StudentPrepConcoursScreen> {
         return SafeArea(
           child: Wrap(
             children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Row(
+                  children: const [
+                    Icon(Icons.share, size: 20, color: Colors.grey),
+                    SizedBox(width: 8),
+                    Text(
+                      'Options de partage',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               ListTile(
                 leading: const Icon(Icons.web),
                 title: const Text('Vue complète Prépa Concours'),
@@ -64,6 +95,19 @@ class _StudentPrepConcoursScreenState extends State<StudentPrepConcoursScreen> {
                   _shareCurrentView();
                 },
               ),
+              ListTile(
+                leading: const Icon(Icons.crop_free),
+                title: const Text('Sélection de zone'),
+                subtitle: const Text(
+                  'Sélectionnez une zone spécifique à partager (ex: une question du quiz).',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _shareSelectedZone();
+                },
+              ),
             ],
           ),
         );
@@ -74,7 +118,7 @@ class _StudentPrepConcoursScreenState extends State<StudentPrepConcoursScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 5,
+      length: 8,
       child: RepaintBoundary(
         key: _shareBoundaryKey,
         child: Stack(
@@ -121,14 +165,23 @@ class _StudentPrepConcoursScreenState extends State<StudentPrepConcoursScreen> {
                         icon: Icon(Icons.quiz_outlined, size: 18),
                         text: 'Quiz'),
                     Tab(
-                        icon: Icon(Icons.description_outlined, size: 18),
-                        text: 'Sujets'),
+                        icon: Icon(Icons.edit_document, size: 18),
+                        text: 'Exercices'),
+                    Tab(
+                        icon: Icon(Icons.cast_for_education, size: 18),
+                        text: 'Lives'),
                     Tab(
                         icon: Icon(Icons.auto_awesome_outlined, size: 18),
                         text: 'IA Tutor'),
                     Tab(
+                        icon: Icon(Icons.description_outlined, size: 18),
+                        text: 'Sujets'),
+                    Tab(
                         icon: Icon(Icons.bar_chart_outlined, size: 18),
                         text: 'Stats'),
+                    Tab(
+                        icon: Icon(Icons.psychology, size: 18),
+                        text: 'Psychotech'),
                   ],
                 ),
               ),
@@ -136,9 +189,12 @@ class _StudentPrepConcoursScreenState extends State<StudentPrepConcoursScreen> {
                 children: [
                   PrepHomeTab(),
                   PrepQuizTab(),
-                  PrepSubjectsTab(),
+                  PrepExercisesTab(),
+                  PrepLivesTab(),
                   PrepAiTab(),
+                  PrepSubjectsTab(),
                   PrepStatsTab(),
+                  PrepPsychotechTab(),
                 ],
               ),
             ),

@@ -1,0 +1,384 @@
+{
+  "video_assets_cols": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "owner_user_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "origin",
+        "is_nullable": "NO",
+        "column_default": "'unknown'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'draft'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "canonical_type",
+        "is_nullable": "NO",
+        "column_default": "'video'::text"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "duration_ms",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "width",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "height",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "rotation",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "has_audio",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "text",
+        "column_name": "checksum_sha256",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "content_warning_flags",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "deleted_at",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ]
+  },
+  "video_renditions_cols": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "video_asset_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "rendition_key",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "kind",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "width",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "height",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "bitrate_kbps",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "fps",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "codec",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "storage_bucket",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "storage_path",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "public_url_hint",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'pending'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "error",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ]
+  },
+  "video_sources_cols": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "video_asset_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "storage_bucket",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "storage_path",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "mime_type",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "bigint",
+        "column_name": "file_size_bytes",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "ingest_profile",
+        "is_nullable": "NO",
+        "column_default": "'unknown'::text"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "ingested_at",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "validation_report",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ]
+  },
+  "video_processing_jobs_cols": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "video_asset_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "job_type",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'queued'::text"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "attempts",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "locked_at",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "locked_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "payload",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
+        "data_type": "text",
+        "column_name": "error",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ]
+  },
+  "rpcs_videoasset": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "routine_name": "app_student_set_free_video_main_renditions"
+      },
+      {
+        "routine_name": "app_videoasset_claim_next_job"
+      },
+      {
+        "routine_name": "app_videoasset_complete_job"
+      },
+      {
+        "routine_name": "app_videoasset_create_upload_intent"
+      },
+      {
+        "routine_name": "app_videoasset_enqueue_processing"
+      },
+      {
+        "routine_name": "app_videoasset_get_playback_for_direct_url"
+      },
+      {
+        "routine_name": "app_videoasset_get_playback_manifest"
+      },
+      {
+        "routine_name": "app_videoasset_get_playback_manifest"
+      },
+      {
+        "routine_name": "app_videoasset_register_uploaded_source"
+      }
+    ]
+  },
+  "sample_video_renditions": {
+    "ok": false,
+    "error": "column \"label\" does not exist",
+    "sqlstate": "42703"
+  },
+  "sample_video_assets": {
+    "ok": false,
+    "error": "column \"owner_id\" does not exist",
+    "sqlstate": "42703"
+  },
+  "transcode_edge_fn": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "note": "check_edge_functions"
+      }
+    ]
+  }
+}

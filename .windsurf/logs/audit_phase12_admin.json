@@ -1,0 +1,46 @@
+{
+  "admin_rpcs": [
+    {
+      "routine_name": "app_admin_prep_ai_get_usage_summary"
+    },
+    {
+      "routine_name": "app_admin_prep_create_ai_generation"
+    },
+    {
+      "routine_name": "app_admin_prep_create_subject"
+    },
+    {
+      "routine_name": "app_admin_prep_get_attempts_summary"
+    },
+    {
+      "routine_name": "app_admin_prep_list_ai_generations"
+    },
+    {
+      "routine_name": "app_admin_prep_list_doc_chunks"
+    },
+    {
+      "routine_name": "app_admin_prep_list_entitlements"
+    },
+    {
+      "routine_name": "app_admin_prep_list_source_documents"
+    },
+    {
+      "routine_name": "app_admin_prep_publish_ai_generation"
+    },
+    {
+      "routine_name": "app_admin_prep_set_ai_generation_status"
+    },
+    {
+      "routine_name": "app_admin_prep_set_source_document_status"
+    },
+    {
+      "routine_name": "app_admin_prep_update_source_document_text"
+    },
+    {
+      "routine_name": "app_admin_prep_upsert_doc_chunk"
+    },
+    {
+      "routine_name": "app_admin_prep_upsert_source_document"
+    }
+  ]
+}

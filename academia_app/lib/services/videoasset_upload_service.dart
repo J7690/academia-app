@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../utils/mime_type_helper.dart';
+import 'chunked_upload_service.dart';
 
 class VideoAssetUploadService {
   VideoAssetUploadService._();
@@ -18,6 +19,7 @@ class VideoAssetUploadService {
     String? contextId,
     String? mimeType,
     int? fileSizeBytes,
+    ValueChanged<double>? onUploadProgress,
   }) async {
     final user = _client.auth.currentUser;
     if (user == null) {
@@ -63,14 +65,31 @@ class VideoAssetUploadService {
     }
 
     try {
-      await _client.storage.from(bucket).uploadBinary(
-            path,
-            bytes,
-            fileOptions: FileOptions(
-              contentType: normalizedMime,
-              upsert: true,
-            ),
-          );
+      // Use chunked upload for files > 4MB
+      if (bytes.length > 4 * 1024 * 1024) {
+        debugPrint('[VideoAssetUpload] Using chunked upload for ${(bytes.length / 1024 / 1024).toStringAsFixed(1)} MB file');
+        final publicUrl = await ChunkedUploadService.uploadInChunks(
+          bytes: bytes,
+          bucket: bucket,
+          basePath: path,
+          contentType: normalizedMime,
+          onProgress: onUploadProgress,
+        );
+        if (publicUrl == null) {
+          throw Exception('Chunked upload failed');
+        }
+      } else {
+        // Direct upload for small files
+        await _client.storage.from(bucket).uploadBinary(
+              path,
+              bytes,
+              fileOptions: FileOptions(
+                contentType: normalizedMime,
+                upsert: true,
+              ),
+            );
+        onUploadProgress?.call(1.0);
+      }
     } on StorageException catch (e) {
       throw Exception(e.toString());
     }
@@ -131,6 +150,10 @@ class VideoAssetUploadService {
       final data = response.data;
       if (data is Map<String, dynamic> && data['success'] == true) {
         debugPrint('[VideoAssetUpload] triggerTranscode OK: ${data['playback']}');
+
+        // Fire-and-forget: trigger multi-resolution transcoding
+        _triggerMultiResolution(videoAssetId);
+
         return data['playback'] as Map<String, dynamic>?;
       }
 
@@ -139,6 +162,26 @@ class VideoAssetUploadService {
     } catch (e) {
       debugPrint('[VideoAssetUpload] triggerTranscode error: $e');
       return null;
+    }
+  }
+
+  /// Fire-and-forget: enqueue multi-resolution transcoding jobs (720p, 480p, 240p).
+  /// Runs asynchronously after the original transcode succeeds.
+  static Future<void> _triggerMultiResolution(String videoAssetId) async {
+    try {
+      debugPrint('[VideoAssetUpload] triggerMultiResolution: videoAssetId=$videoAssetId');
+      final response = await _client.functions.invoke(
+        'transcode-multi-resolution',
+        body: {'video_asset_id': videoAssetId},
+      );
+      if (response.status == 200) {
+        final data = response.data;
+        debugPrint('[VideoAssetUpload] multiResolution OK: jobs=${data is Map ? data['jobs_created'] : '?'}');
+      } else {
+        debugPrint('[VideoAssetUpload] multiResolution: HTTP ${response.status}');
+      }
+    } catch (e) {
+      debugPrint('[VideoAssetUpload] multiResolution error (non-blocking): $e');
     }
   }
 }

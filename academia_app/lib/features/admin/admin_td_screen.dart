@@ -8,6 +8,8 @@ import 'admin_td_analytics_screen.dart';
 import 'admin_td_catalog_screen.dart';
 import 'admin_td_teachers_screen.dart';
 import 'admin_td_student_requests_screen.dart';
+import 'admin_td_local_groups_screen.dart';
+import 'admin_td_upload_screen.dart';
 
 class AdminTdScreen extends StatefulWidget {
   const AdminTdScreen({super.key});
@@ -125,6 +127,22 @@ class _AdminTdScreenState extends State<AdminTdScreen> {
                       color: const Color(0xFFF59E0B),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(builder: (_) => const AdminTdAnalyticsScreen()),
+                      ),
+                    ),
+                    _NavChip(
+                      icon: Icons.location_on,
+                      label: 'Groupes Locaux',
+                      color: const Color(0xFF0891B2),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(builder: (_) => const AdminTdLocalGroupsScreen()),
+                      ),
+                    ),
+                    _NavChip(
+                      icon: Icons.upload_file,
+                      label: 'Upload & IA TD',
+                      color: const Color(0xFF7C3AED),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(builder: (_) => const AdminTdUploadScreen()),
                       ),
                     ),
                   ],

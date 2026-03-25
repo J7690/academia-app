@@ -72,16 +72,26 @@ class _AuthWrapperState extends State<AuthWrapper> {
     try {
       debugPrint('ReferralAttach: session userId=' + session.user.id);
       final prefs = await SharedPreferences.getInstance();
-      final refCode = prefs.getString('pending_referral_code_v1');
-      debugPrint('ReferralAttach: pending_referral_code_v1=' +
-          (refCode ?? 'null'));
+      String? refCode = prefs.getString('pending_referral_code_v1');
+      String source = prefs.getString('pending_referral_source_v1') ?? 'link';
+      debugPrint('ReferralAttach: SharedPrefs refCode=' + (refCode ?? 'null'));
+
+      // Fallback: read ref_code from server-side user_metadata
+      // (set during signUp when ?ref= was in the URL)
+      if (refCode == null || refCode.trim().isEmpty) {
+        final metadata = session.user.userMetadata;
+        final metaRef = metadata?['ref_code']?.toString();
+        debugPrint('ReferralAttach: user_metadata ref_code=' + (metaRef ?? 'null'));
+        if (metaRef != null && metaRef.trim().isNotEmpty) {
+          refCode = metaRef.trim();
+          source = 'metadata';
+        }
+      }
+
       if (refCode == null || refCode.trim().isEmpty) {
         _referralHandledForSession = true;
         return;
       }
-
-      final source =
-          prefs.getString('pending_referral_source_v1') ?? 'link';
 
       debugPrint('ReferralAttach: calling app_register_referral_for_current_user '
           'with refCode=' +
@@ -143,11 +153,38 @@ class _AuthWrapperState extends State<AuthWrapper> {
     });
   }
 
+  bool _accountStatusChecked = false;
+  bool _accountBlocked = false;
+
+  Future<void> _checkAccountStatus() async {
+    if (_accountStatusChecked) return;
+    try {
+      final result = await _client.rpc('app_check_account_status');
+      if (result is Map && result['active'] == false) {
+        _accountBlocked = true;
+        await _client.auth.signOut();
+        debugPrint('AuthWrapper: account blocked (${result['reason']}), signed out.');
+      }
+    } catch (e) {
+      debugPrint('AuthWrapper: account status check error: $e');
+    } finally {
+      _accountStatusChecked = true;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = _client.auth.currentSession;
 
     if (session == null) {
+      return const AuthLandingScreen();
+    }
+
+    // Check if account is deleted/suspended server-side
+    if (!_accountStatusChecked) {
+      _checkAccountStatus();
+    }
+    if (_accountBlocked) {
       return const AuthLandingScreen();
     }
 

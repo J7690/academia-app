@@ -1,0 +1,68 @@
+{
+  "student_cols": [
+    {
+      "column_name": "availability_days"
+    },
+    {
+      "column_name": "availability_times"
+    },
+    {
+      "column_name": "is_seeking_group"
+    },
+    {
+      "column_name": "neighborhood"
+    },
+    {
+      "column_name": "study_year"
+    },
+    {
+      "column_name": "subjects_needed"
+    },
+    {
+      "column_name": "university"
+    }
+  ],
+  "teacher_cols": [
+    {
+      "column_name": "availability_days"
+    },
+    {
+      "column_name": "availability_times"
+    },
+    {
+      "column_name": "is_available"
+    },
+    {
+      "column_name": "neighborhoods"
+    },
+    {
+      "column_name": "specialties"
+    }
+  ],
+  "group_cols": [
+    {
+      "data_type": "uuid",
+      "column_name": "assigned_teacher_id"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "current_members"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "max_members"
+    },
+    {
+      "data_type": "text",
+      "column_name": "neighborhood"
+    },
+    {
+      "data_type": "text",
+      "column_name": "status"
+    },
+    {
+      "data_type": "text",
+      "column_name": "subject"
+    }
+  ]
+}

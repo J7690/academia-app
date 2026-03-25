@@ -1,0 +1,2828 @@
+{
+  "prep_tables": {
+    "ok": true,
+    "rows": [
+      {
+        "table_name": "prep_ai_generations",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "prep_ai_usage_logs",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "prep_attempts",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "prep_chapters",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "prep_doc_chunks",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "prep_exam_items",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "prep_exams",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "prep_question_choices",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "prep_questions",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "prep_source_documents",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "prep_subjects",
+        "table_schema": "app"
+      }
+    ],
+    "mode": "select"
+  },
+  "related_tables": {
+    "ok": true,
+    "rows": [
+      {
+        "table_name": "bobodo_unanswered_questions",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "commercial_milestone_claims",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "course_domains",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "prep_ai_generations",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "prep_ai_usage_logs",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "prep_exam_items",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "prep_exams",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "prep_question_choices",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "prep_questions",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "prep_source_documents",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "short_training_registration_messages",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "short_training_registrations",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "short_training_sessions",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "short_trainings",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "td_ai_config",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "td_ai_conversations",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "td_ai_messages",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "td_badges",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "td_daily_goals",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "td_exam_papers",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "td_flashcard_decks",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "td_flashcard_progress",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "td_flashcards",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "td_question_banks",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "td_questions",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "td_quiz_attempts",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "td_quiz_templates",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "td_student_badges",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "td_teacher_availability",
+        "table_schema": "app"
+      },
+      {
+        "table_name": "user_feature_entitlements",
+        "table_schema": "app"
+      }
+    ],
+    "mode": "select"
+  },
+  "prep_rpcs": {
+    "ok": true,
+    "rows": [
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_ai_get_usage_summary",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_create_ai_generation",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_create_subject",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_get_attempts_summary",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_list_ai_generations",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_list_doc_chunks",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_list_entitlements",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_list_source_documents",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_publish_ai_generation",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_set_ai_generation_status",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_set_source_document_status",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_update_source_document_text",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_upsert_doc_chunk",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_upsert_source_document",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_prep_concours_change",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_admin_get_stats",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_admin_list_ai_conversations",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_admin_list_questions",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_admin_toggle_question",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_admin_upsert_badge",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_ai_check_rate_limit",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_ai_log_usage",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_create_ai_conversation",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_create_attempt",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_create_exam_paper",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_create_flashcard",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_create_flashcard_deck",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_create_question",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_create_question_bank",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_create_quiz_template",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_ai_config",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_leaderboard",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_my_entitlement",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_my_subject_stats",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_rag_chunks",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_student_progress",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_subject_stats",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_ai_conversations",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_ai_messages",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_chapters",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_exam_papers",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_flashcard_decks",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_flashcards",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_my_attempts",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_published_questions",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_published_questions",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_question_banks",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_question_choices",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_questions",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_quiz_templates",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_subjects",
+        "routine_schema": "public"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_save_ai_message",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_save_flashcard_review",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_save_quiz_attempt",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_update_ai_config",
+        "routine_schema": "app"
+      },
+      {
+        "return_type": "anycompatiblearray",
+        "routine_name": "array_prepend",
+        "routine_schema": "pg_catalog"
+      },
+      {
+        "return_type": "text",
+        "routine_name": "build_prepared_statement_sql",
+        "routine_schema": "realtime"
+      },
+      {
+        "return_type": "record",
+        "routine_name": "pg_prepared_statement",
+        "routine_schema": "pg_catalog"
+      },
+      {
+        "return_type": "record",
+        "routine_name": "pg_prepared_xact",
+        "routine_schema": "pg_catalog"
+      }
+    ],
+    "mode": "select"
+  },
+  "columns_prep_ai_generations": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "subject_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "generation_type",
+        "is_nullable": "NO",
+        "column_default": "'mcq'::text"
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "input_params",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "output_json",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'proposed'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "error_message",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "mode": "select"
+  },
+  "columns_prep_ai_usage_logs": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "generation_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "subject_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "endpoint",
+        "is_nullable": "NO",
+        "column_default": "'ai/prep/generate'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "input_hash",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'started'::text"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "duration_ms",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "metadata",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "mode": "select"
+  },
+  "columns_prep_attempts": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "student_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "question_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "attempt_type",
+        "is_nullable": "NO",
+        "column_default": "'training'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "selected_answer",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_correct",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "time_spent_sec",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "mode": "select"
+  },
+  "columns_prep_chapters": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "subject_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "slug",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "sort_order",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "mode": "select"
+  },
+  "columns_prep_doc_chunks": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "source_document_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "chunk_index",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "content",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "metadata",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "mode": "select"
+  },
+  "columns_prep_exam_items": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "exam_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "question_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "sort_order",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "mode": "select"
+  },
+  "columns_prep_exams": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "student_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "subject_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "level",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "mode",
+        "is_nullable": "NO",
+        "column_default": "'practice'::text"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "duration_sec",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_published",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "mode": "select"
+  },
+  "columns_prep_question_choices": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "question_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "choice_label",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "choice_text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_correct",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "sort_order",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "mode": "select"
+  },
+  "columns_prep_questions": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "subject_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "chapter_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "source",
+        "is_nullable": "NO",
+        "column_default": "'manual'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "question_type",
+        "is_nullable": "NO",
+        "column_default": "'mcq'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "level",
+        "is_nullable": "NO",
+        "column_default": "'beginner'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "mechanism",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "prompt_context",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "question",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "explanation",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "correct_answer",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "estimated_time_sec",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_published",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "mode": "select"
+  },
+  "columns_prep_source_documents": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "subject_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "year",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "doc_type",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "source_type",
+        "is_nullable": "NO",
+        "column_default": "'pdf'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "storage_bucket",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "storage_path",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "extracted_text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'received'::text"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "mode": "select"
+  },
+  "columns_prep_subjects": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "text",
+        "column_name": "slug",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "sort_order",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "mode": "select"
+  },
+  "rls_policies": {
+    "ok": true,
+    "rows": [
+      {
+        "cmd": "ALL",
+        "qual": "(EXISTS ( SELECT 1\n   FROM auth.users u\n  WHERE ((u.id = auth.uid()) AND ((u.raw_user_meta_data ->> 'role'::text) = 'admin'::text))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "prep_ai_generations",
+        "permissive": "PERMISSIVE",
+        "policyname": "admin_all_prep_ai_generations",
+        "schemaname": "app",
+        "with_check": "(EXISTS ( SELECT 1\n   FROM auth.users u\n  WHERE ((u.id = auth.uid()) AND ((u.raw_user_meta_data ->> 'role'::text) = 'admin'::text))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(auth.uid() IS NOT NULL)",
+        "roles": [
+          "public"
+        ],
+        "tablename": "prep_ai_generations",
+        "permissive": "PERMISSIVE",
+        "policyname": "authenticated_select_prep_ai_generations",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "public"
+        ],
+        "tablename": "prep_ai_usage_logs",
+        "permissive": "PERMISSIVE",
+        "policyname": "user_insert_own_prep_ai_usage_logs",
+        "schemaname": "app",
+        "with_check": "(user_id = auth.uid())"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(user_id = auth.uid())",
+        "roles": [
+          "public"
+        ],
+        "tablename": "prep_ai_usage_logs",
+        "permissive": "PERMISSIVE",
+        "policyname": "user_select_own_prep_ai_usage_logs",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(EXISTS ( SELECT 1\n   FROM auth.users u\n  WHERE ((u.id = auth.uid()) AND ((u.raw_user_meta_data ->> 'role'::text) = 'admin'::text))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "prep_attempts",
+        "permissive": "PERMISSIVE",
+        "policyname": "admin_select_all_prep_attempts",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "public"
+        ],
+        "tablename": "prep_attempts",
+        "permissive": "PERMISSIVE",
+        "policyname": "student_insert_own_prep_attempts",
+        "schemaname": "app",
+        "with_check": "((student_id = auth.uid()) AND app_has_feature_access('prep_concours'::text))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((student_id = auth.uid()) AND app_has_feature_access('prep_concours'::text))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "prep_attempts",
+        "permissive": "PERMISSIVE",
+        "policyname": "student_select_own_prep_attempts",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((is_active = true) AND app_has_feature_access('prep_concours'::text))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "prep_chapters",
+        "permissive": "PERMISSIVE",
+        "policyname": "public_select_active_prep_chapters",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "ALL",
+        "qual": "(EXISTS ( SELECT 1\n   FROM auth.users u\n  WHERE ((u.id = auth.uid()) AND ((u.raw_user_meta_data ->> 'role'::text) = 'admin'::text))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "prep_doc_chunks",
+        "permissive": "PERMISSIVE",
+        "policyname": "admin_all_prep_doc_chunks",
+        "schemaname": "app",
+        "with_check": "(EXISTS ( SELECT 1\n   FROM auth.users u\n  WHERE ((u.id = auth.uid()) AND ((u.raw_user_meta_data ->> 'role'::text) = 'admin'::text))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(auth.uid() IS NOT NULL)",
+        "roles": [
+          "public"
+        ],
+        "tablename": "prep_doc_chunks",
+        "permissive": "PERMISSIVE",
+        "policyname": "authenticated_select_prep_doc_chunks",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(app_has_feature_access('prep_concours'::text) AND (EXISTS ( SELECT 1\n   FROM app.prep_exams e\n  WHERE ((e.id = prep_exam_items.exam_id) AND (e.is_published = true)))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "prep_exam_items",
+        "permissive": "PERMISSIVE",
+        "policyname": "public_select_published_prep_exam_items",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((is_published = true) AND app_has_feature_access('prep_concours'::text))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "prep_exams",
+        "permissive": "PERMISSIVE",
+        "policyname": "public_select_published_prep_exams",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(app_has_feature_access('prep_concours'::text) AND (EXISTS ( SELECT 1\n   FROM app.prep_questions q\n  WHERE ((q.id = prep_question_choices.question_id) AND (q.is_published = true)))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "prep_question_choices",
+        "permissive": "PERMISSIVE",
+        "policyname": "public_select_published_prep_question_choices",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((is_published = true) AND app_has_feature_access('prep_concours'::text))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "prep_questions",
+        "permissive": "PERMISSIVE",
+        "policyname": "public_select_published_prep_questions",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "ALL",
+        "qual": "(EXISTS ( SELECT 1\n   FROM auth.users u\n  WHERE ((u.id = auth.uid()) AND ((u.raw_user_meta_data ->> 'role'::text) = 'admin'::text))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "prep_source_documents",
+        "permissive": "PERMISSIVE",
+        "policyname": "admin_all_prep_source_documents",
+        "schemaname": "app",
+        "with_check": "(EXISTS ( SELECT 1\n   FROM auth.users u\n  WHERE ((u.id = auth.uid()) AND ((u.raw_user_meta_data ->> 'role'::text) = 'admin'::text))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(auth.uid() IS NOT NULL)",
+        "roles": [
+          "public"
+        ],
+        "tablename": "prep_source_documents",
+        "permissive": "PERMISSIVE",
+        "policyname": "authenticated_select_prep_source_documents",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((is_active = true) AND app_has_feature_access('prep_concours'::text))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "prep_subjects",
+        "permissive": "PERMISSIVE",
+        "policyname": "public_select_active_prep_subjects",
+        "schemaname": "app",
+        "with_check": null
+      },
+      {
+        "cmd": "ALL",
+        "qual": "true",
+        "roles": [
+          "service_role"
+        ],
+        "tablename": "td_ai_conversations",
+        "permissive": "PERMISSIVE",
+        "policyname": "service_role_all",
+        "schemaname": "app",
+        "with_check": "true"
+      },
+      {
+        "cmd": "ALL",
+        "qual": "true",
+        "roles": [
+          "service_role"
+        ],
+        "tablename": "td_ai_messages",
+        "permissive": "PERMISSIVE",
+        "policyname": "service_role_all",
+        "schemaname": "app",
+        "with_check": "true"
+      },
+      {
+        "cmd": "ALL",
+        "qual": "true",
+        "roles": [
+          "service_role"
+        ],
+        "tablename": "td_badges",
+        "permissive": "PERMISSIVE",
+        "policyname": "service_role_all",
+        "schemaname": "app",
+        "with_check": "true"
+      },
+      {
+        "cmd": "ALL",
+        "qual": "true",
+        "roles": [
+          "service_role"
+        ],
+        "tablename": "td_exam_papers",
+        "permissive": "PERMISSIVE",
+        "policyname": "service_role_all",
+        "schemaname": "app",
+        "with_check": "true"
+      },
+      {
+        "cmd": "ALL",
+        "qual": "true",
+        "roles": [
+          "service_role"
+        ],
+        "tablename": "td_flashcard_decks",
+        "permissive": "PERMISSIVE",
+        "policyname": "service_role_all",
+        "schemaname": "app",
+        "with_check": "true"
+      },
+      {
+        "cmd": "ALL",
+        "qual": "true",
+        "roles": [
+          "service_role"
+        ],
+        "tablename": "td_flashcard_progress",
+        "permissive": "PERMISSIVE",
+        "policyname": "service_role_all",
+        "schemaname": "app",
+        "with_check": "true"
+      },
+      {
+        "cmd": "ALL",
+        "qual": "true",
+        "roles": [
+          "service_role"
+        ],
+        "tablename": "td_flashcards",
+        "permissive": "PERMISSIVE",
+        "policyname": "service_role_all",
+        "schemaname": "app",
+        "with_check": "true"
+      },
+      {
+        "cmd": "ALL",
+        "qual": "true",
+        "roles": [
+          "service_role"
+        ],
+        "tablename": "td_question_banks",
+        "permissive": "PERMISSIVE",
+        "policyname": "service_role_all",
+        "schemaname": "app",
+        "with_check": "true"
+      },
+      {
+        "cmd": "ALL",
+        "qual": "true",
+        "roles": [
+          "service_role"
+        ],
+        "tablename": "td_questions",
+        "permissive": "PERMISSIVE",
+        "policyname": "service_role_all",
+        "schemaname": "app",
+        "with_check": "true"
+      },
+      {
+        "cmd": "ALL",
+        "qual": "true",
+        "roles": [
+          "service_role"
+        ],
+        "tablename": "td_quiz_attempts",
+        "permissive": "PERMISSIVE",
+        "policyname": "service_role_all",
+        "schemaname": "app",
+        "with_check": "true"
+      },
+      {
+        "cmd": "ALL",
+        "qual": "true",
+        "roles": [
+          "service_role"
+        ],
+        "tablename": "td_quiz_templates",
+        "permissive": "PERMISSIVE",
+        "policyname": "service_role_all",
+        "schemaname": "app",
+        "with_check": "true"
+      },
+      {
+        "cmd": "ALL",
+        "qual": "true",
+        "roles": [
+          "service_role"
+        ],
+        "tablename": "td_student_badges",
+        "permissive": "PERMISSIVE",
+        "policyname": "service_role_all",
+        "schemaname": "app",
+        "with_check": "true"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(user_id = auth.uid())",
+        "roles": [
+          "public"
+        ],
+        "tablename": "user_feature_entitlements",
+        "permissive": "PERMISSIVE",
+        "policyname": "user_select_own_feature_entitlements",
+        "schemaname": "app",
+        "with_check": null
+      }
+    ],
+    "mode": "select"
+  },
+  "count_prep_ai_generations": {
+    "ok": true,
+    "rows": [
+      {
+        "cnt": 1
+      }
+    ],
+    "mode": "select"
+  },
+  "count_prep_ai_usage_logs": {
+    "ok": true,
+    "rows": [
+      {
+        "cnt": 4
+      }
+    ],
+    "mode": "select"
+  },
+  "count_prep_attempts": {
+    "ok": true,
+    "rows": [
+      {
+        "cnt": 0
+      }
+    ],
+    "mode": "select"
+  },
+  "count_prep_chapters": {
+    "ok": true,
+    "rows": [
+      {
+        "cnt": 0
+      }
+    ],
+    "mode": "select"
+  },
+  "count_prep_doc_chunks": {
+    "ok": true,
+    "rows": [
+      {
+        "cnt": 0
+      }
+    ],
+    "mode": "select"
+  },
+  "count_prep_exam_items": {
+    "ok": true,
+    "rows": [
+      {
+        "cnt": 0
+      }
+    ],
+    "mode": "select"
+  },
+  "count_prep_exams": {
+    "ok": true,
+    "rows": [
+      {
+        "cnt": 0
+      }
+    ],
+    "mode": "select"
+  },
+  "count_prep_question_choices": {
+    "ok": true,
+    "rows": [
+      {
+        "cnt": 0
+      }
+    ],
+    "mode": "select"
+  },
+  "count_prep_questions": {
+    "ok": true,
+    "rows": [
+      {
+        "cnt": 0
+      }
+    ],
+    "mode": "select"
+  },
+  "count_prep_source_documents": {
+    "ok": true,
+    "rows": [
+      {
+        "cnt": 0
+      }
+    ],
+    "mode": "select"
+  },
+  "count_prep_subjects": {
+    "ok": true,
+    "rows": [
+      {
+        "cnt": 1
+      }
+    ],
+    "mode": "select"
+  },
+  "edge_function_prep_tutor": {
+    "status": 200
+  },
+  "rpc_parameters": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "integer",
+        "specific_name": "app_admin_prep_ai_get_usage_summary_124330",
+        "parameter_mode": "IN",
+        "parameter_name": "p_days"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_ai_get_usage_summary_124330",
+        "parameter_mode": "IN",
+        "parameter_name": "p_endpoint"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_admin_prep_create_ai_generation_53349",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_create_ai_generation_53349",
+        "parameter_mode": "IN",
+        "parameter_name": "p_generation_type"
+      },
+      {
+        "data_type": "jsonb",
+        "specific_name": "app_admin_prep_create_ai_generation_53349",
+        "parameter_mode": "IN",
+        "parameter_name": "p_input_params"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_create_subject_53420",
+        "parameter_mode": "IN",
+        "parameter_name": "p_title"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_create_subject_53420",
+        "parameter_mode": "IN",
+        "parameter_name": "p_slug"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_create_subject_53420",
+        "parameter_mode": "IN",
+        "parameter_name": "p_description"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_admin_prep_create_subject_53420",
+        "parameter_mode": "IN",
+        "parameter_name": "p_sort_order"
+      },
+      {
+        "data_type": "boolean",
+        "specific_name": "app_admin_prep_create_subject_53420",
+        "parameter_mode": "IN",
+        "parameter_name": "p_is_active"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_admin_prep_get_attempts_summary_124332",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject_id"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_admin_prep_get_attempts_summary_124332",
+        "parameter_mode": "IN",
+        "parameter_name": "p_days"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_admin_prep_list_ai_generations_53348",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_list_ai_generations_53348",
+        "parameter_mode": "IN",
+        "parameter_name": "p_status"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_admin_prep_list_doc_chunks_53347",
+        "parameter_mode": "IN",
+        "parameter_name": "p_source_document_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_list_entitlements_124333",
+        "parameter_mode": "IN",
+        "parameter_name": "p_feature_key"
+      },
+      {
+        "data_type": "boolean",
+        "specific_name": "app_admin_prep_list_entitlements_124333",
+        "parameter_mode": "IN",
+        "parameter_name": "p_only_active"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_admin_prep_list_source_documents_53343",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_list_source_documents_53343",
+        "parameter_mode": "IN",
+        "parameter_name": "p_status"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_admin_prep_publish_ai_generation_53415",
+        "parameter_mode": "IN",
+        "parameter_name": "p_generation_id"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_admin_prep_set_ai_generation_status_53350",
+        "parameter_mode": "IN",
+        "parameter_name": "p_generation_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_set_ai_generation_status_53350",
+        "parameter_mode": "IN",
+        "parameter_name": "p_status"
+      },
+      {
+        "data_type": "jsonb",
+        "specific_name": "app_admin_prep_set_ai_generation_status_53350",
+        "parameter_mode": "IN",
+        "parameter_name": "p_output_json"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_set_ai_generation_status_53350",
+        "parameter_mode": "IN",
+        "parameter_name": "p_error_message"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_admin_prep_set_source_document_status_53346",
+        "parameter_mode": "IN",
+        "parameter_name": "p_document_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_set_source_document_status_53346",
+        "parameter_mode": "IN",
+        "parameter_name": "p_status"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_admin_prep_update_source_document_text_53345",
+        "parameter_mode": "IN",
+        "parameter_name": "p_document_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_update_source_document_text_53345",
+        "parameter_mode": "IN",
+        "parameter_name": "p_extracted_text"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_admin_prep_upsert_doc_chunk_53351",
+        "parameter_mode": "IN",
+        "parameter_name": "p_source_document_id"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_admin_prep_upsert_doc_chunk_53351",
+        "parameter_mode": "IN",
+        "parameter_name": "p_chunk_index"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_upsert_doc_chunk_53351",
+        "parameter_mode": "IN",
+        "parameter_name": "p_content"
+      },
+      {
+        "data_type": "jsonb",
+        "specific_name": "app_admin_prep_upsert_doc_chunk_53351",
+        "parameter_mode": "IN",
+        "parameter_name": "p_metadata"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_admin_prep_upsert_doc_chunk_53351",
+        "parameter_mode": "IN",
+        "parameter_name": "p_chunk_id"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_admin_prep_upsert_source_document_53344",
+        "parameter_mode": "IN",
+        "parameter_name": "p_document_id"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_admin_prep_upsert_source_document_53344",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject_id"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_admin_prep_upsert_source_document_53344",
+        "parameter_mode": "IN",
+        "parameter_name": "p_year"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_upsert_source_document_53344",
+        "parameter_mode": "IN",
+        "parameter_name": "p_doc_type"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_upsert_source_document_53344",
+        "parameter_mode": "IN",
+        "parameter_name": "p_source_type"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_upsert_source_document_53344",
+        "parameter_mode": "IN",
+        "parameter_name": "p_storage_bucket"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_upsert_source_document_53344",
+        "parameter_mode": "IN",
+        "parameter_name": "p_storage_path"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_upsert_source_document_53344",
+        "parameter_mode": "IN",
+        "parameter_name": "p_extracted_text"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_admin_prep_upsert_source_document_53344",
+        "parameter_mode": "IN",
+        "parameter_name": "p_status"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_admin_list_ai_conversations_132963",
+        "parameter_mode": "IN",
+        "parameter_name": "p_limit"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_admin_list_questions_132961",
+        "parameter_mode": "IN",
+        "parameter_name": "p_bank_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_admin_list_questions_132961",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_admin_list_questions_132961",
+        "parameter_mode": "IN",
+        "parameter_name": "p_limit"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_admin_list_questions_132961",
+        "parameter_mode": "IN",
+        "parameter_name": "p_offset"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_admin_toggle_question_132962",
+        "parameter_mode": "IN",
+        "parameter_name": "p_question_id"
+      },
+      {
+        "data_type": "boolean",
+        "specific_name": "app_prep_admin_toggle_question_132962",
+        "parameter_mode": "IN",
+        "parameter_name": "p_is_active"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_admin_upsert_badge_132964",
+        "parameter_mode": "IN",
+        "parameter_name": "p_code"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_admin_upsert_badge_132964",
+        "parameter_mode": "IN",
+        "parameter_name": "p_title"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_admin_upsert_badge_132964",
+        "parameter_mode": "IN",
+        "parameter_name": "p_description"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_admin_upsert_badge_132964",
+        "parameter_mode": "IN",
+        "parameter_name": "p_emoji"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_admin_upsert_badge_132964",
+        "parameter_mode": "IN",
+        "parameter_name": "p_xp_reward"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_admin_upsert_badge_132964",
+        "parameter_mode": "IN",
+        "parameter_name": "p_condition_type"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_admin_upsert_badge_132964",
+        "parameter_mode": "IN",
+        "parameter_name": "p_condition_value"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_ai_check_rate_limit_53414",
+        "parameter_mode": "IN",
+        "parameter_name": "p_endpoint"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_ai_check_rate_limit_53414",
+        "parameter_mode": "IN",
+        "parameter_name": "p_window_seconds"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_ai_check_rate_limit_53414",
+        "parameter_mode": "IN",
+        "parameter_name": "p_max_calls"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_ai_log_usage_53413",
+        "parameter_mode": "IN",
+        "parameter_name": "p_generation_id"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_ai_log_usage_53413",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_ai_log_usage_53413",
+        "parameter_mode": "IN",
+        "parameter_name": "p_input_hash"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_ai_log_usage_53413",
+        "parameter_mode": "IN",
+        "parameter_name": "p_endpoint"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_ai_log_usage_53413",
+        "parameter_mode": "IN",
+        "parameter_name": "p_status"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_ai_log_usage_53413",
+        "parameter_mode": "IN",
+        "parameter_name": "p_duration_ms"
+      },
+      {
+        "data_type": "jsonb",
+        "specific_name": "app_prep_ai_log_usage_53413",
+        "parameter_mode": "IN",
+        "parameter_name": "p_metadata"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_ai_conversation_132954",
+        "parameter_mode": "IN",
+        "parameter_name": "p_title"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_ai_conversation_132954",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_create_attempt_53336",
+        "parameter_mode": "IN",
+        "parameter_name": "p_question_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_attempt_53336",
+        "parameter_mode": "IN",
+        "parameter_name": "p_attempt_type"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_attempt_53336",
+        "parameter_mode": "IN",
+        "parameter_name": "p_selected_answer"
+      },
+      {
+        "data_type": "boolean",
+        "specific_name": "app_prep_create_attempt_53336",
+        "parameter_mode": "IN",
+        "parameter_name": "p_is_correct"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_create_attempt_53336",
+        "parameter_mode": "IN",
+        "parameter_name": "p_time_spent_sec"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_exam_paper_132953",
+        "parameter_mode": "IN",
+        "parameter_name": "p_title"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_exam_paper_132953",
+        "parameter_mode": "IN",
+        "parameter_name": "p_concours_type"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_exam_paper_132953",
+        "parameter_mode": "IN",
+        "parameter_name": "p_year"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_exam_paper_132953",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_exam_paper_132953",
+        "parameter_mode": "IN",
+        "parameter_name": "p_paper_url"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_exam_paper_132953",
+        "parameter_mode": "IN",
+        "parameter_name": "p_correction_url"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_create_exam_paper_132953",
+        "parameter_mode": "IN",
+        "parameter_name": "p_difficulty"
+      },
+      {
+        "data_type": "boolean",
+        "specific_name": "app_prep_create_exam_paper_132953",
+        "parameter_mode": "IN",
+        "parameter_name": "p_is_official"
+      },
+      {
+        "data_type": "boolean",
+        "specific_name": "app_prep_create_exam_paper_132953",
+        "parameter_mode": "IN",
+        "parameter_name": "p_has_correction"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_create_flashcard_132968",
+        "parameter_mode": "IN",
+        "parameter_name": "p_deck_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_flashcard_132968",
+        "parameter_mode": "IN",
+        "parameter_name": "p_front_text"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_flashcard_132968",
+        "parameter_mode": "IN",
+        "parameter_name": "p_back_text"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_flashcard_132968",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject"
+      },
+      {
+        "data_type": "ARRAY",
+        "specific_name": "app_prep_create_flashcard_132968",
+        "parameter_mode": "IN",
+        "parameter_name": "p_tags"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_flashcard_deck_132967",
+        "parameter_mode": "IN",
+        "parameter_name": "p_title"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_flashcard_deck_132967",
+        "parameter_mode": "IN",
+        "parameter_name": "p_description"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_flashcard_deck_132967",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_flashcard_deck_132967",
+        "parameter_mode": "IN",
+        "parameter_name": "p_concours_type"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_create_question_132944",
+        "parameter_mode": "IN",
+        "parameter_name": "p_bank_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_question_132944",
+        "parameter_mode": "IN",
+        "parameter_name": "p_content"
+      },
+      {
+        "data_type": "jsonb",
+        "specific_name": "app_prep_create_question_132944",
+        "parameter_mode": "IN",
+        "parameter_name": "p_options"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_create_question_132944",
+        "parameter_mode": "IN",
+        "parameter_name": "p_correct_index"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_question_132944",
+        "parameter_mode": "IN",
+        "parameter_name": "p_explanation"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_create_question_132944",
+        "parameter_mode": "IN",
+        "parameter_name": "p_difficulty"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_question_132944",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject"
+      },
+      {
+        "data_type": "ARRAY",
+        "specific_name": "app_prep_create_question_132944",
+        "parameter_mode": "IN",
+        "parameter_name": "p_tags"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_question_132944",
+        "parameter_mode": "IN",
+        "parameter_name": "p_question_type"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_create_question_132944",
+        "parameter_mode": "IN",
+        "parameter_name": "p_points"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_create_question_132944",
+        "parameter_mode": "IN",
+        "parameter_name": "p_time_limit_seconds"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_question_132944",
+        "parameter_mode": "IN",
+        "parameter_name": "p_image_url"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_question_bank_132945",
+        "parameter_mode": "IN",
+        "parameter_name": "p_title"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_question_bank_132945",
+        "parameter_mode": "IN",
+        "parameter_name": "p_description"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_question_bank_132945",
+        "parameter_mode": "IN",
+        "parameter_name": "p_concours_type"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_question_bank_132945",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_quiz_template_132965",
+        "parameter_mode": "IN",
+        "parameter_name": "p_title"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_create_quiz_template_132965",
+        "parameter_mode": "IN",
+        "parameter_name": "p_bank_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_quiz_template_132965",
+        "parameter_mode": "IN",
+        "parameter_name": "p_concours_type"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_quiz_template_132965",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_create_quiz_template_132965",
+        "parameter_mode": "IN",
+        "parameter_name": "p_question_count"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_create_quiz_template_132965",
+        "parameter_mode": "IN",
+        "parameter_name": "p_time_limit_minutes"
+      },
+      {
+        "data_type": "boolean",
+        "specific_name": "app_prep_create_quiz_template_132965",
+        "parameter_mode": "IN",
+        "parameter_name": "p_shuffle"
+      },
+      {
+        "data_type": "boolean",
+        "specific_name": "app_prep_create_quiz_template_132965",
+        "parameter_mode": "IN",
+        "parameter_name": "p_is_exam_mode"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_create_quiz_template_132965",
+        "parameter_mode": "IN",
+        "parameter_name": "p_passing_score"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_create_quiz_template_132965",
+        "parameter_mode": "IN",
+        "parameter_name": "p_description"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_get_leaderboard_132969",
+        "parameter_mode": "IN",
+        "parameter_name": "p_limit"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_get_my_entitlement_124329",
+        "parameter_mode": "IN",
+        "parameter_name": "p_feature_key"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_get_my_subject_stats_53418",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject_id"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_get_my_subject_stats_53418",
+        "parameter_mode": "IN",
+        "parameter_name": "p_days"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_get_rag_chunks_53416",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject_id"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_get_rag_chunks_53416",
+        "parameter_mode": "IN",
+        "parameter_name": "p_limit"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_get_rag_chunks_53416",
+        "parameter_mode": "IN",
+        "parameter_name": "p_max_chars"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_list_ai_messages_132957",
+        "parameter_mode": "IN",
+        "parameter_name": "p_conversation_id"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_list_chapters_53333",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_list_exam_papers_132952",
+        "parameter_mode": "IN",
+        "parameter_name": "p_concours_type"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_list_exam_papers_132952",
+        "parameter_mode": "IN",
+        "parameter_name": "p_year"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_list_exam_papers_132952",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_list_flashcard_decks_132949",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_list_flashcard_decks_132949",
+        "parameter_mode": "IN",
+        "parameter_name": "p_concours_type"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_list_flashcards_132950",
+        "parameter_mode": "IN",
+        "parameter_name": "p_deck_id"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_list_my_attempts_53417",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_list_my_attempts_53417",
+        "parameter_mode": "IN",
+        "parameter_name": "p_attempt_type"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_list_my_attempts_53417",
+        "parameter_mode": "IN",
+        "parameter_name": "p_limit"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_list_published_questions_53419",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject_id"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_list_published_questions_53334",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_list_published_questions_53334",
+        "parameter_mode": "IN",
+        "parameter_name": "p_level"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_list_published_questions_53419",
+        "parameter_mode": "IN",
+        "parameter_name": "p_level"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_list_published_questions_53334",
+        "parameter_mode": "IN",
+        "parameter_name": "p_limit"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_list_published_questions_53419",
+        "parameter_mode": "IN",
+        "parameter_name": "p_limit"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_list_published_questions_53419",
+        "parameter_mode": "IN",
+        "parameter_name": "p_chapter_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_list_question_banks_132942",
+        "parameter_mode": "IN",
+        "parameter_name": "p_concours_type"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_list_question_banks_132942",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_list_question_choices_53335",
+        "parameter_mode": "IN",
+        "parameter_name": "p_question_id"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_list_questions_132943",
+        "parameter_mode": "IN",
+        "parameter_name": "p_bank_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_list_questions_132943",
+        "parameter_mode": "IN",
+        "parameter_name": "p_concours_type"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_list_questions_132943",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_list_questions_132943",
+        "parameter_mode": "IN",
+        "parameter_name": "p_difficulty"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_list_questions_132943",
+        "parameter_mode": "IN",
+        "parameter_name": "p_limit"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_list_quiz_templates_132966",
+        "parameter_mode": "IN",
+        "parameter_name": "p_concours_type"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_list_quiz_templates_132966",
+        "parameter_mode": "IN",
+        "parameter_name": "p_subject"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_save_ai_message_132955",
+        "parameter_mode": "IN",
+        "parameter_name": "p_conversation_id"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_save_ai_message_132955",
+        "parameter_mode": "IN",
+        "parameter_name": "p_role"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_save_ai_message_132955",
+        "parameter_mode": "IN",
+        "parameter_name": "p_content"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_save_ai_message_132955",
+        "parameter_mode": "IN",
+        "parameter_name": "p_tokens_used"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_save_flashcard_review_132951",
+        "parameter_mode": "IN",
+        "parameter_name": "p_flashcard_id"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_save_flashcard_review_132951",
+        "parameter_mode": "IN",
+        "parameter_name": "p_quality"
+      },
+      {
+        "data_type": "numeric",
+        "specific_name": "app_prep_save_flashcard_review_132951",
+        "parameter_mode": "IN",
+        "parameter_name": "p_ease_factor"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_save_flashcard_review_132951",
+        "parameter_mode": "IN",
+        "parameter_name": "p_interval_days"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_save_flashcard_review_132951",
+        "parameter_mode": "IN",
+        "parameter_name": "p_repetitions"
+      },
+      {
+        "data_type": "uuid",
+        "specific_name": "app_prep_save_quiz_attempt_132946",
+        "parameter_mode": "IN",
+        "parameter_name": "p_template_id"
+      },
+      {
+        "data_type": "jsonb",
+        "specific_name": "app_prep_save_quiz_attempt_132946",
+        "parameter_mode": "IN",
+        "parameter_name": "p_questions_json"
+      },
+      {
+        "data_type": "jsonb",
+        "specific_name": "app_prep_save_quiz_attempt_132946",
+        "parameter_mode": "IN",
+        "parameter_name": "p_answers_json"
+      },
+      {
+        "data_type": "numeric",
+        "specific_name": "app_prep_save_quiz_attempt_132946",
+        "parameter_mode": "IN",
+        "parameter_name": "p_score"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_save_quiz_attempt_132946",
+        "parameter_mode": "IN",
+        "parameter_name": "p_total_points"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_save_quiz_attempt_132946",
+        "parameter_mode": "IN",
+        "parameter_name": "p_correct_count"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_save_quiz_attempt_132946",
+        "parameter_mode": "IN",
+        "parameter_name": "p_question_count"
+      },
+      {
+        "data_type": "integer",
+        "specific_name": "app_prep_save_quiz_attempt_132946",
+        "parameter_mode": "IN",
+        "parameter_name": "p_time_spent_seconds"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_save_quiz_attempt_132946",
+        "parameter_mode": "IN",
+        "parameter_name": "p_status"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_update_ai_config_132959",
+        "parameter_mode": "IN",
+        "parameter_name": "p_key"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "app_prep_update_ai_config_132959",
+        "parameter_mode": "IN",
+        "parameter_name": "p_value"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "build_prepared_statement_sql_17363",
+        "parameter_mode": "IN",
+        "parameter_name": "prepared_statement_name"
+      },
+      {
+        "data_type": "regclass",
+        "specific_name": "build_prepared_statement_sql_17363",
+        "parameter_mode": "IN",
+        "parameter_name": "entity"
+      },
+      {
+        "data_type": "ARRAY",
+        "specific_name": "build_prepared_statement_sql_17363",
+        "parameter_mode": "IN",
+        "parameter_name": "columns"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "pg_prepared_statement_2510",
+        "parameter_mode": "OUT",
+        "parameter_name": "name"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "pg_prepared_statement_2510",
+        "parameter_mode": "OUT",
+        "parameter_name": "statement"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "specific_name": "pg_prepared_statement_2510",
+        "parameter_mode": "OUT",
+        "parameter_name": "prepare_time"
+      },
+      {
+        "data_type": "ARRAY",
+        "specific_name": "pg_prepared_statement_2510",
+        "parameter_mode": "OUT",
+        "parameter_name": "parameter_types"
+      },
+      {
+        "data_type": "ARRAY",
+        "specific_name": "pg_prepared_statement_2510",
+        "parameter_mode": "OUT",
+        "parameter_name": "result_types"
+      },
+      {
+        "data_type": "boolean",
+        "specific_name": "pg_prepared_statement_2510",
+        "parameter_mode": "OUT",
+        "parameter_name": "from_sql"
+      },
+      {
+        "data_type": "bigint",
+        "specific_name": "pg_prepared_statement_2510",
+        "parameter_mode": "OUT",
+        "parameter_name": "generic_plans"
+      },
+      {
+        "data_type": "bigint",
+        "specific_name": "pg_prepared_statement_2510",
+        "parameter_mode": "OUT",
+        "parameter_name": "custom_plans"
+      },
+      {
+        "data_type": "xid",
+        "specific_name": "pg_prepared_xact_1065",
+        "parameter_mode": "OUT",
+        "parameter_name": "transaction"
+      },
+      {
+        "data_type": "text",
+        "specific_name": "pg_prepared_xact_1065",
+        "parameter_mode": "OUT",
+        "parameter_name": "gid"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "specific_name": "pg_prepared_xact_1065",
+        "parameter_mode": "OUT",
+        "parameter_name": "prepared"
+      },
+      {
+        "data_type": "oid",
+        "specific_name": "pg_prepared_xact_1065",
+        "parameter_mode": "OUT",
+        "parameter_name": "ownerid"
+      },
+      {
+        "data_type": "oid",
+        "specific_name": "pg_prepared_xact_1065",
+        "parameter_mode": "OUT",
+        "parameter_name": "dbid"
+      }
+    ],
+    "mode": "select"
+  },
+  "triggers": {
+    "ok": true,
+    "rows": [
+      {
+        "trigger_name": "trg_app_prep_chapters_notify",
+        "trigger_schema": "app",
+        "action_statement": "EXECUTE FUNCTION app_notify_prep_concours_change()",
+        "event_manipulation": "INSERT",
+        "event_object_table": "prep_chapters",
+        "event_object_schema": "app"
+      },
+      {
+        "trigger_name": "trg_app_prep_chapters_notify",
+        "trigger_schema": "app",
+        "action_statement": "EXECUTE FUNCTION app_notify_prep_concours_change()",
+        "event_manipulation": "UPDATE",
+        "event_object_table": "prep_chapters",
+        "event_object_schema": "app"
+      },
+      {
+        "trigger_name": "trg_app_prep_exams_notify",
+        "trigger_schema": "app",
+        "action_statement": "EXECUTE FUNCTION app_notify_prep_concours_change()",
+        "event_manipulation": "INSERT",
+        "event_object_table": "prep_exams",
+        "event_object_schema": "app"
+      },
+      {
+        "trigger_name": "trg_app_prep_exams_notify",
+        "trigger_schema": "app",
+        "action_statement": "EXECUTE FUNCTION app_notify_prep_concours_change()",
+        "event_manipulation": "UPDATE",
+        "event_object_table": "prep_exams",
+        "event_object_schema": "app"
+      },
+      {
+        "trigger_name": "trg_app_prep_questions_notify",
+        "trigger_schema": "app",
+        "action_statement": "EXECUTE FUNCTION app_notify_prep_concours_change()",
+        "event_manipulation": "INSERT",
+        "event_object_table": "prep_questions",
+        "event_object_schema": "app"
+      },
+      {
+        "trigger_name": "trg_app_prep_questions_notify",
+        "trigger_schema": "app",
+        "action_statement": "EXECUTE FUNCTION app_notify_prep_concours_change()",
+        "event_manipulation": "UPDATE",
+        "event_object_table": "prep_questions",
+        "event_object_schema": "app"
+      },
+      {
+        "trigger_name": "trg_app_prep_subjects_notify",
+        "trigger_schema": "app",
+        "action_statement": "EXECUTE FUNCTION app_notify_prep_concours_change()",
+        "event_manipulation": "INSERT",
+        "event_object_table": "prep_subjects",
+        "event_object_schema": "app"
+      },
+      {
+        "trigger_name": "trg_app_prep_subjects_notify",
+        "trigger_schema": "app",
+        "action_statement": "EXECUTE FUNCTION app_notify_prep_concours_change()",
+        "event_manipulation": "UPDATE",
+        "event_object_table": "prep_subjects",
+        "event_object_schema": "app"
+      }
+    ],
+    "mode": "select"
+  },
+  "storage_buckets": {
+    "ok": true,
+    "rows": [],
+    "mode": "select"
+  }
+}

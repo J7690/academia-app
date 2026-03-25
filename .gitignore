@@ -21,3 +21,7 @@ supabase/.temp/
 *.env
 .env
 keys.dart
+**/secrets/
+**/google-cloud-key.json
+*-key.json
+*-credentials.json

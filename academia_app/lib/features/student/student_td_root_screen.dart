@@ -9,6 +9,7 @@ import '../../providers/td_messages_provider.dart';
 import '../../theme/td_theme.dart';
 
 import '../../widgets/bobodo_state.dart';
+import '../../widgets/ligdicash_payment_sheet.dart';
 import '../../widgets/bobodo_view.dart';
 import '../share/share_service.dart';
 import '../share/share_mode_provider.dart';
@@ -19,6 +20,10 @@ import 'td/td_my_enrollments_tab.dart';
 import 'td/td_resources_tab.dart';
 import 'td/td_leaderboard_tab.dart';
 import 'td/td_stats_tab.dart';
+import 'td/td_ai_tutor_tab.dart';
+import 'td/td_local_groups_tab.dart';
+import 'td/td_exercises_tab.dart';
+import 'td/td_quiz_tab.dart';
 
 class StudentTdRootScreen extends StatefulWidget {
   const StudentTdRootScreen({super.key});
@@ -52,6 +57,15 @@ class _StudentTdRootScreenState extends State<StudentTdRootScreen> {
     );
   }
 
+  Future<void> _shareSelectedZone() async {
+    await _shareService.shareSelectedZone(
+      context: context,
+      boundaryKey: _shareBoundaryKey,
+      shareText:
+          'Zone sélectionnée de mon espace TD Academia – Module Travaux dirigés.',
+    );
+  }
+
   void _openShareOptions() {
     showModalBottomSheet<void>(
       context: context,
@@ -59,6 +73,24 @@ class _StudentTdRootScreenState extends State<StudentTdRootScreen> {
         return SafeArea(
           child: Wrap(
             children: [
+              // Section: Partage complet
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Row(
+                  children: const [
+                    Icon(Icons.share, size: 20, color: Colors.grey),
+                    SizedBox(width: 8),
+                    Text(
+                      'Options de partage',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               ListTile(
                 leading: const Icon(Icons.web),
                 title: const Text('Vue complète de l\'espace TD'),
@@ -72,7 +104,38 @@ class _StudentTdRootScreenState extends State<StudentTdRootScreen> {
                   _shareCurrentView();
                 },
               ),
+              ListTile(
+                leading: const Icon(Icons.crop_free),
+                title: const Text('Sélection de zone'),
+                subtitle: const Text(
+                  'Choisissez une zone spécifique à partager.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _shareSelectedZone();
+                },
+              ),
               const Divider(height: 0),
+              // Section: Cartes personnalisées
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Row(
+                  children: const [
+                    Icon(Icons.dashboard, size: 20, color: Colors.grey),
+                    SizedBox(width: 8),
+                    Text(
+                      'Cartes personnalisées',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               ListTile(
                 leading: const Icon(Icons.school_outlined),
                 title: const Text('Carte "Mes TD actifs"'),
@@ -177,7 +240,7 @@ class _StudentTdRootScreenState extends State<StudentTdRootScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 6,
+      length: 10,
       child: RepaintBoundary(
         key: _shareBoundaryKey,
         child: Stack(
@@ -215,22 +278,30 @@ class _StudentTdRootScreenState extends State<StudentTdRootScreen> {
                   labelPadding: EdgeInsets.symmetric(horizontal: 12),
                   tabs: [
                     Tab(icon: Icon(Icons.home_outlined, size: 18), text: 'Accueil'),
+                    Tab(icon: Icon(Icons.quiz, size: 18), text: 'Quiz'),
                     Tab(icon: Icon(Icons.explore_outlined, size: 18), text: 'Catalogue'),
                     Tab(icon: Icon(Icons.school_outlined, size: 18), text: 'Mes TD'),
                     Tab(icon: Icon(Icons.folder_outlined, size: 18), text: 'Ressources'),
                     Tab(icon: Icon(Icons.leaderboard_outlined, size: 18), text: 'Classement'),
                     Tab(icon: Icon(Icons.bar_chart_outlined, size: 18), text: 'Stats'),
+                    Tab(icon: Icon(Icons.auto_awesome, size: 18), text: 'IA Tuteur'),
+                    Tab(icon: Icon(Icons.location_on, size: 18), text: 'Groupes'),
+                    Tab(icon: Icon(Icons.edit_document, size: 18), text: 'Exercices'),
                   ],
                 ),
               ),
               body: const TabBarView(
                 children: [
                   TdHomeTab(),
+                  TdQuizTab(),
                   TdCatalogTab(),
                   TdMyEnrollmentsTab(),
                   TdResourcesTab(),
                   TdLeaderboardTab(),
                   TdStatsTab(),
+                  TdAiTutorTab(),
+                  TdLocalGroupsTab(),
+                  TdExercisesTab(),
                 ],
               ),
             ),
@@ -958,16 +1029,44 @@ class _StudentTdProgramDetailScreenState extends State<_StudentTdProgramDetailSc
                           studentNotes: studentNotes,
                         );
                         if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              ok
-                                  ? 'Demande TD enregistr\u00e9e. D\u00e9clare ton paiement dans l\'onglet Paiements.'
-                                  : enrollmentsProvider.error ??
-                                      'Erreur lors de la cr\u00e9ation de la demande TD.',
+                        if (!ok) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                enrollmentsProvider.error ??
+                                    'Erreur lors de la création de la demande TD.',
+                              ),
                             ),
-                          ),
-                        );
+                          );
+                          return;
+                        }
+                        // Récupérer le payment_id créé par la RPC
+                        final enrollments = enrollmentsProvider.enrollments;
+                        String? paymentId;
+                        for (final e in enrollments) {
+                          if (e['program_id']?.toString() == programId && e['payment_id'] != null) {
+                            paymentId = e['payment_id'].toString();
+                            break;
+                          }
+                        }
+                        if (paymentId != null && paymentId.isNotEmpty && context.mounted) {
+                          await LigdiCashPaymentSheet.show(
+                            context: context,
+                            paymentType: 'td',
+                            paymentId: paymentId,
+                            amount: numericPrice.toDouble(),
+                            description: 'Inscription TD : ${program['title'] ?? 'Programme'}',
+                            onSuccess: () {
+                              enrollmentsProvider.loadMyEnrollments();
+                            },
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Inscription TD créée. Procédez au paiement.'),
+                            ),
+                          );
+                        }
                       },
                       icon: const Icon(Icons.payments_outlined),
                       label: const Text('Je veux ce TD'),

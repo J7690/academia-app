@@ -1,0 +1,44 @@
+{
+  "td_ai_config": [
+    {
+      "preview": "",
+      "config_key": "gemini_api_key"
+    },
+    {
+      "preview": "gemini-2.0-flash",
+      "config_key": "ai_model"
+    },
+    {
+      "preview": "50",
+      "config_key": "max_messages_per_day"
+    },
+    {
+      "preview": "Tu es un tuteur expert en préparation aux concours camerounais (ENAM, ENS, ENSET",
+      "config_key": "system_prompt"
+    }
+  ],
+  "conversations": [
+    {
+      "cnt": 0
+    }
+  ],
+  "messages": [
+    {
+      "cnt": 0
+    }
+  ],
+  "ai_rpcs": [
+    {
+      "routine_name": "app_notify_admin_td_message"
+    },
+    {
+      "routine_name": "app_notify_instructor_td_message"
+    },
+    {
+      "routine_name": "app_td_list_messages_for_enrollment"
+    },
+    {
+      "routine_name": "app_td_send_message"
+    }
+  ]
+}

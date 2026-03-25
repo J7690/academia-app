@@ -1,0 +1,19 @@
+{
+  "admin_rpcs": [
+    "app_td_admin_assign_teacher",
+    "app_td_admin_assign_teacher_to_group",
+    "app_td_admin_cancel_session_occurrence",
+    "app_td_admin_get_analytics",
+    "app_td_admin_get_dashboard",
+    "app_td_admin_grant_xp",
+    "app_td_admin_list_badges",
+    "app_td_admin_list_enrollments_with_context",
+    "app_td_admin_list_local_groups",
+    "app_td_admin_list_session_occurrences",
+    "app_td_admin_list_student_requests",
+    "app_td_admin_mark_request_converted",
+    "app_td_admin_upsert_badge",
+    "app_td_admin_upsert_discipline_color",
+    "app_td_admin_upsert_session_occurrence"
+  ]
+}

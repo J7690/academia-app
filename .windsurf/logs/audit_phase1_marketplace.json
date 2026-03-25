@@ -1,0 +1,2335 @@
+{
+  "ml_cols": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "merchant_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "review_status",
+        "is_nullable": "NO",
+        "column_default": "'draft'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "review_reason",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "submitted_at",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "reviewed_at",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "reviewed_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "short_description",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "type",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "category",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "organization_name",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "organization_logo_url",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "country",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "city",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "price_from",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "price_to",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "currency",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "min_order_qty",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "lead_time_days",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_ready_to_ship",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "reactions_count",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "comments_count",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'draft'::text"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_featured",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "category_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "sub_category_id",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "error": null
+  },
+  "mm_cols": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "owner_user_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "name",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "slug",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "logo_url",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "banner_url",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "country",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "city",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "address",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "contact_email",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "contact_phone",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "whatsapp_url",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'pending'::text"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null
+  },
+  "mp_cols": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "display_name",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "logo_url",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "bio",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "country",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "city",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_verified",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "text",
+        "column_name": "verification_level",
+        "is_nullable": "NO",
+        "column_default": "'none'::text"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null
+  },
+  "mlm_cols": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "listing_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "media_type",
+        "is_nullable": "NO",
+        "column_default": "'image'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "storage_bucket",
+        "is_nullable": "NO",
+        "column_default": "'marketplace-media'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "storage_path",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "external_url",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "sort_order",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null
+  },
+  "mc_cols": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "parent_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "code",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "label",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "sort_order",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null
+  },
+  "cart_cols": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'open'::text"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null
+  },
+  "cart_items_cols": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "cart_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "listing_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "quantity",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "unit_price",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "currency",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null
+  },
+  "orders_cols": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "student_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "merchant_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'pending'::text"
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "total_amount",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "currency",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "delivery_mode",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "shipping_address",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "student_notes",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null
+  },
+  "order_items_cols": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "order_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "product_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "quantity",
+        "is_nullable": "NO",
+        "column_default": "1"
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "unit_price",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "currency",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "error": null
+  },
+  "bookmarks_cols": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "listing_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null
+  },
+  "inq_cols": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "opportunity_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "buyer_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "merchant_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "message",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "quantity",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "budget",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'open'::text"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "last_message_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "listing_id",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "error": null
+  },
+  "inq_msg_cols": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "inquiry_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "sender_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "content",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null
+  },
+  "opportunity_reactions_cols": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "opportunity_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "reaction_type",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null
+  },
+  "opportunity_comments_cols": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "opportunity_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "content",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null
+  },
+  "opportunity_bookmarks_cols": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "opportunity_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null
+  },
+  "opportunity_views_cols": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "last_viewed_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null
+  },
+  "opp_cols": {
+    "ok": true,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "short_description",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "type",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "category",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "organization_name",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "organization_logo_url",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "country",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "city",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_remote_possible",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "text",
+        "column_name": "contract_type",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "duration_months",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "date",
+        "column_name": "start_date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "date",
+        "column_name": "application_deadline",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'draft'::text"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_featured",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "created_by_user_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "price",
+        "is_nullable": "YES",
+        "column_default": "NULL::numeric"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "reactions_count",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "comments_count",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "merchant_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "review_status",
+        "is_nullable": "NO",
+        "column_default": "'draft'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "review_reason",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "submitted_at",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "reviewed_at",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "reviewed_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "price_from",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "price_to",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "currency",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "min_order_qty",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "lead_time_days",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_ready_to_ship",
+        "is_nullable": "NO",
+        "column_default": "false"
+      }
+    ],
+    "error": null
+  },
+  "fk": {
+    "ok": true,
+    "rows": [
+      {
+        "table_name": "marketplace_cart_items",
+        "column_name": "cart_id",
+        "foreign_table_name": "marketplace_carts",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "marketplace_cart_items",
+        "column_name": "listing_id",
+        "foreign_table_name": "marketplace_listings",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "marketplace_categories",
+        "column_name": "parent_id",
+        "foreign_table_name": "marketplace_categories",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "marketplace_listing_bookmarks",
+        "column_name": "listing_id",
+        "foreign_table_name": "marketplace_listings",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "marketplace_listing_media",
+        "column_name": "listing_id",
+        "foreign_table_name": "marketplace_listings",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "marketplace_listings",
+        "column_name": "category_id",
+        "foreign_table_name": "marketplace_categories",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "marketplace_listings",
+        "column_name": "sub_category_id",
+        "foreign_table_name": "marketplace_categories",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "marketplace_order_items",
+        "column_name": "order_id",
+        "foreign_table_name": "marketplace_orders",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "marketplace_order_items",
+        "column_name": "product_id",
+        "foreign_table_name": "marketplace_listings",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "marketplace_orders",
+        "column_name": "merchant_id",
+        "foreign_table_name": "marketplace_merchants",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "marketplace_orders",
+        "column_name": "student_id",
+        "foreign_table_name": "students",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "marketplace_products",
+        "column_name": "merchant_id",
+        "foreign_table_name": "marketplace_merchants",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "opportunity_applications",
+        "column_name": "opportunity_id",
+        "foreign_table_name": "opportunities",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "opportunity_applications",
+        "column_name": "student_id",
+        "foreign_table_name": "students",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "opportunity_bookmarks",
+        "column_name": "opportunity_id",
+        "foreign_table_name": "opportunities",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "opportunity_comments",
+        "column_name": "opportunity_id",
+        "foreign_table_name": "opportunities",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "opportunity_inquiries",
+        "column_name": "listing_id",
+        "foreign_table_name": "marketplace_listings",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "opportunity_inquiries",
+        "column_name": "opportunity_id",
+        "foreign_table_name": "opportunities",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "opportunity_inquiry_messages",
+        "column_name": "inquiry_id",
+        "foreign_table_name": "opportunity_inquiries",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      },
+      {
+        "table_name": "opportunity_reactions",
+        "column_name": "opportunity_id",
+        "foreign_table_name": "opportunities",
+        "foreign_column_name": "id",
+        "foreign_table_schema": "app"
+      }
+    ],
+    "error": null
+  },
+  "counts": {
+    "ok": true,
+    "rows": [
+      {
+        "carts": 20,
+        "views": 9,
+        "orders": 3,
+        "comments": 5,
+        "listings": 4,
+        "bookmarks": 1,
+        "inquiries": 2,
+        "merchants": 2,
+        "opp_types": 4,
+        "reactions": 1,
+        "cart_items": 3,
+        "categories": 0,
+        "order_items": 4,
+        "listing_media": 3,
+        "opportunities": 3,
+        "opp_applications": 2,
+        "listing_bookmarks": 0,
+        "merchant_profiles": 2
+      }
+    ],
+    "error": null
+  },
+  "check_reviews": {
+    "ok": true,
+    "rows": [],
+    "error": null
+  },
+  "rpcs": {
+    "ok": true,
+    "rows": [
+      {
+        "args": "p_listing_id uuid, p_storage_path text, p_sort_order integer DEFAULT 0, p_media_type text DEFAULT 'image'::text, p_external_url text DEFAULT NULL::text, p_title text DEFAULT NULL::text, p_description text DEFAULT NULL::text",
+        "name": "app_admin_add_marketplace_listing_media"
+      },
+      {
+        "args": "p_media_id uuid",
+        "name": "app_admin_disable_marketplace_listing_media"
+      },
+      {
+        "args": "p_listing_id uuid",
+        "name": "app_admin_list_marketplace_listing_media"
+      },
+      {
+        "args": "",
+        "name": "app_admin_list_marketplace_merchants"
+      },
+      {
+        "args": "p_limit integer DEFAULT 50, p_offset integer DEFAULT 0, p_status text DEFAULT NULL::text",
+        "name": "app_admin_list_marketplace_orders"
+      },
+      {
+        "args": "",
+        "name": "app_admin_list_marketplace_products"
+      },
+      {
+        "args": "",
+        "name": "app_admin_list_opportunities"
+      },
+      {
+        "args": "p_opportunity_id uuid",
+        "name": "app_admin_list_opportunity_applications"
+      },
+      {
+        "args": "",
+        "name": "app_admin_list_opportunity_types"
+      },
+      {
+        "args": "",
+        "name": "app_admin_list_pending_marketplace_listings"
+      },
+      {
+        "args": "",
+        "name": "app_admin_list_pending_opportunities"
+      },
+      {
+        "args": "p_limit integer DEFAULT 50, p_offset integer DEFAULT 0",
+        "name": "app_admin_list_published_marketplace_listings"
+      },
+      {
+        "args": "p_listing_id uuid, p_decision text, p_reason text DEFAULT NULL::text",
+        "name": "app_admin_review_marketplace_listing"
+      },
+      {
+        "args": "p_opportunity_id uuid, p_decision text, p_reason text DEFAULT NULL::text",
+        "name": "app_admin_review_opportunity"
+      },
+      {
+        "args": "p_merchant_id uuid, p_is_verified boolean, p_verification_level text DEFAULT 'none'::text",
+        "name": "app_admin_set_merchant_verification"
+      },
+      {
+        "args": "p_merchant_id uuid, p_status text, p_is_active boolean",
+        "name": "app_admin_update_marketplace_merchant_status"
+      },
+      {
+        "args": "p_product_id uuid, p_status text, p_is_featured boolean",
+        "name": "app_admin_update_marketplace_product_status"
+      },
+      {
+        "args": "p_opportunity_id uuid, p_status text, p_is_featured boolean, p_is_active boolean",
+        "name": "app_admin_update_opportunity_status"
+      },
+      {
+        "args": "p_opportunity_id uuid, p_title text, p_short_description text, p_description text, p_type text, p_category text, p_organization_name text, p_organization_logo_url text, p_country text, p_city text, p_is_remote_possible boolean, p_contract_type text, p_duration_months integer, p_start_date date, p_application_deadline date, p_status text, p_is_featured boolean, p_is_active boolean, p_price numeric DEFAULT NULL::numeric",
+        "name": "app_admin_upsert_opportunity"
+      },
+      {
+        "args": "p_type_id uuid, p_code text, p_label text, p_sort_order integer, p_is_active boolean",
+        "name": "app_admin_upsert_opportunity_type"
+      },
+      {
+        "args": "p_product_id uuid, p_quantity integer, p_delivery_mode text, p_shipping_address text, p_student_notes text",
+        "name": "app_create_marketplace_order_simple"
+      },
+      {
+        "args": "p_merchant_id uuid",
+        "name": "app_get_public_merchant_profile"
+      },
+      {
+        "args": "p_parent_id uuid DEFAULT NULL::uuid",
+        "name": "app_list_marketplace_categories"
+      },
+      {
+        "args": "",
+        "name": "app_list_marketplace_home"
+      },
+      {
+        "args": "",
+        "name": "app_list_marketplace_merchants"
+      },
+      {
+        "args": "p_merchant_id uuid",
+        "name": "app_list_marketplace_products_by_merchant"
+      },
+      {
+        "args": "p_inquiry_id uuid, p_limit integer DEFAULT 50, p_before timestamp with time zone DEFAULT NULL::timestamp with time zone",
+        "name": "app_list_opportunity_inquiry_messages"
+      },
+      {
+        "args": "",
+        "name": "app_list_opportunity_types"
+      },
+      {
+        "args": "",
+        "name": "app_list_student_marketplace_orders"
+      },
+      {
+        "args": "p_listing_id uuid",
+        "name": "app_marketplace_listing_toggle_bookmark"
+      },
+      {
+        "args": "p_listing_id uuid, p_storage_path text, p_sort_order integer DEFAULT 0, p_media_type text DEFAULT 'image'::text, p_external_url text DEFAULT NULL::text, p_title text DEFAULT NULL::text, p_description text DEFAULT NULL::text",
+        "name": "app_merchant_add_marketplace_listing_media"
+      },
+      {
+        "args": "p_media_id uuid",
+        "name": "app_merchant_disable_marketplace_listing_media"
+      },
+      {
+        "args": "",
+        "name": "app_merchant_get_dashboard"
+      },
+      {
+        "args": "p_order_id uuid",
+        "name": "app_merchant_get_marketplace_order_detail"
+      },
+      {
+        "args": "p_status text DEFAULT NULL::text, p_limit integer DEFAULT 30, p_offset integer DEFAULT 0",
+        "name": "app_merchant_list_inquiries"
+      },
+      {
+        "args": "p_listing_id uuid",
+        "name": "app_merchant_list_marketplace_listing_media"
+      },
+      {
+        "args": "p_review_status text DEFAULT NULL::text, p_limit integer DEFAULT 50, p_offset integer DEFAULT 0",
+        "name": "app_merchant_list_my_marketplace_listings"
+      },
+      {
+        "args": "p_limit integer DEFAULT 50, p_offset integer DEFAULT 0, p_status text DEFAULT NULL::text",
+        "name": "app_merchant_list_my_marketplace_orders"
+      },
+      {
+        "args": "p_review_status text DEFAULT NULL::text, p_limit integer DEFAULT 30, p_offset integer DEFAULT 0",
+        "name": "app_merchant_list_my_opportunities"
+      },
+      {
+        "args": "",
+        "name": "app_merchant_list_orders"
+      },
+      {
+        "args": "",
+        "name": "app_merchant_list_products"
+      },
+      {
+        "args": "p_inquiry_id uuid, p_message text",
+        "name": "app_merchant_reply_inquiry"
+      },
+      {
+        "args": "p_listing_id uuid",
+        "name": "app_merchant_submit_marketplace_listing_for_review"
+      },
+      {
+        "args": "p_opportunity_id uuid",
+        "name": "app_merchant_submit_opportunity_for_review"
+      },
+      {
+        "args": "p_order_id uuid, p_status text",
+        "name": "app_merchant_update_marketplace_order_status"
+      },
+      {
+        "args": "p_order_id uuid, p_status text",
+        "name": "app_merchant_update_order_status"
+      },
+      {
+        "args": "p_listing_id uuid, p_title text, p_short_description text, p_description text, p_type text, p_category text, p_organization_name text, p_organization_logo_url text, p_country text, p_city text, p_price_from numeric, p_price_to numeric, p_currency text, p_min_order_qty integer, p_lead_time_days integer, p_is_ready_to_ship boolean",
+        "name": "app_merchant_upsert_marketplace_listing"
+      },
+      {
+        "args": "p_opportunity_id uuid, p_title text, p_short_description text, p_description text, p_type text, p_category text, p_organization_name text, p_organization_logo_url text, p_country text, p_city text, p_is_remote_possible boolean, p_contract_type text, p_duration_months integer, p_start_date date, p_application_deadline date, p_price_from numeric, p_price_to numeric, p_currency text, p_min_order_qty integer, p_lead_time_days integer, p_is_ready_to_ship boolean",
+        "name": "app_merchant_upsert_opportunity"
+      },
+      {
+        "args": "p_product_id uuid, p_title text, p_description text, p_price numeric, p_currency text, p_category text, p_main_image_url text, p_stock_status text",
+        "name": "app_merchant_upsert_product"
+      },
+      {
+        "args": "p_display_name text, p_logo_url text DEFAULT NULL::text, p_bio text DEFAULT NULL::text, p_country text DEFAULT NULL::text, p_city text DEFAULT NULL::text",
+        "name": "app_merchant_upsert_profile"
+      },
+      {
+        "args": "p_name text, p_description text, p_country text, p_city text, p_address text, p_contact_email text, p_contact_phone text, p_whatsapp_url text, p_logo_url text, p_banner_url text",
+        "name": "app_merchant_upsert_profile"
+      },
+      {
+        "args": "",
+        "name": "app_notify_admin_marketplace_order"
+      },
+      {
+        "args": "",
+        "name": "app_notify_admin_opportunity_application"
+      },
+      {
+        "args": "",
+        "name": "app_notify_opportunity_change"
+      },
+      {
+        "args": "",
+        "name": "app_notify_opportunity_comment"
+      },
+      {
+        "args": "",
+        "name": "app_notify_opportunity_to_students"
+      },
+      {
+        "args": "p_opportunity_id uuid, p_content text",
+        "name": "app_opportunity_add_comment"
+      },
+      {
+        "args": "",
+        "name": "app_opportunity_count_new"
+      },
+      {
+        "args": "p_comment_id uuid",
+        "name": "app_opportunity_delete_comment"
+      },
+      {
+        "args": "p_opportunity_id uuid",
+        "name": "app_opportunity_get_my_reaction"
+      },
+      {
+        "args": "p_opportunity_id uuid",
+        "name": "app_opportunity_get_reactions"
+      },
+      {
+        "args": "p_opportunity_id uuid, p_limit integer DEFAULT 20, p_offset integer DEFAULT 0",
+        "name": "app_opportunity_list_comments"
+      },
+      {
+        "args": "",
+        "name": "app_opportunity_mark_viewed"
+      },
+      {
+        "args": "p_opportunity_id uuid",
+        "name": "app_opportunity_toggle_bookmark"
+      },
+      {
+        "args": "p_opportunity_id uuid, p_reaction_type text",
+        "name": "app_opportunity_toggle_reaction"
+      },
+      {
+        "args": "p_opportunity_id uuid, p_message text, p_cv_url text, p_extra_data jsonb",
+        "name": "app_student_apply_for_opportunity"
+      },
+      {
+        "args": "p_listing_id uuid, p_quantity integer DEFAULT 1",
+        "name": "app_student_cart_add_item"
+      },
+      {
+        "args": "",
+        "name": "app_student_cart_clear"
+      },
+      {
+        "args": "p_item_id uuid",
+        "name": "app_student_cart_remove_item"
+      },
+      {
+        "args": "p_item_id uuid, p_quantity integer",
+        "name": "app_student_cart_update_quantity"
+      },
+      {
+        "args": "",
+        "name": "app_student_checkout_create_order_from_cart"
+      },
+      {
+        "args": "p_listing_id uuid, p_message text, p_quantity integer DEFAULT NULL::integer, p_budget numeric DEFAULT NULL::numeric",
+        "name": "app_student_create_marketplace_listing_inquiry"
+      },
+      {
+        "args": "p_opportunity_id uuid, p_message text, p_quantity integer DEFAULT NULL::integer, p_budget numeric DEFAULT NULL::numeric",
+        "name": "app_student_create_opportunity_inquiry"
+      },
+      {
+        "args": "",
+        "name": "app_student_get_cart"
+      },
+      {
+        "args": "p_listing_id uuid",
+        "name": "app_student_get_marketplace_listing_detail"
+      },
+      {
+        "args": "p_order_id uuid",
+        "name": "app_student_get_marketplace_order_detail"
+      },
+      {
+        "args": "p_opportunity_id uuid",
+        "name": "app_student_get_opportunity_detail"
+      },
+      {
+        "args": "p_limit integer DEFAULT 20, p_offset integer DEFAULT 0, p_sort text DEFAULT 'newest'::text",
+        "name": "app_student_list_bookmarked_marketplace_listings"
+      },
+      {
+        "args": "p_type text DEFAULT NULL::text, p_search text DEFAULT NULL::text, p_limit integer DEFAULT 20, p_offset integer DEFAULT 0, p_sort text DEFAULT 'newest'::text, p_verified_only boolean DEFAULT false, p_ready_to_ship_only boolean DEFAULT false",
+        "name": "app_student_list_bookmarked_opportunities"
+      },
+      {
+        "args": "p_type text DEFAULT NULL::text, p_search text DEFAULT NULL::text, p_limit integer DEFAULT 20, p_offset integer DEFAULT 0, p_sort text DEFAULT 'newest'::text, p_verified_only boolean DEFAULT false, p_ready_to_ship_only boolean DEFAULT false, p_category_id uuid DEFAULT NULL::uuid, p_sub_category_id uuid DEFAULT NULL::uuid",
+        "name": "app_student_list_marketplace_listings"
+      },
+      {
+        "args": "p_type text DEFAULT NULL::text, p_search text DEFAULT NULL::text, p_limit integer DEFAULT 20, p_offset integer DEFAULT 0, p_sort text DEFAULT 'newest'::text, p_verified_only boolean DEFAULT false, p_ready_to_ship_only boolean DEFAULT false",
+        "name": "app_student_list_marketplace_listings"
+      },
+      {
+        "args": "p_limit integer DEFAULT 50, p_offset integer DEFAULT 0",
+        "name": "app_student_list_my_marketplace_orders"
+      },
+      {
+        "args": "",
+        "name": "app_student_list_my_opportunity_applications"
+      },
+      {
+        "args": "p_limit integer DEFAULT 30, p_offset integer DEFAULT 0",
+        "name": "app_student_list_my_opportunity_inquiries"
+      },
+      {
+        "args": "p_type text DEFAULT NULL::text, p_search text DEFAULT NULL::text, p_limit integer DEFAULT 20, p_offset integer DEFAULT 0, p_sort text DEFAULT 'newest'::text, p_verified_only boolean DEFAULT false, p_ready_to_ship_only boolean DEFAULT false",
+        "name": "app_student_list_opportunities"
+      },
+      {
+        "args": "p_inquiry_id uuid, p_message text",
+        "name": "app_student_reply_opportunity_inquiry"
+      }
+    ],
+    "error": null
+  },
+  "rls": {
+    "ok": true,
+    "rows": [
+      {
+        "cmd": "ALL",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "marketplace_cart_items",
+        "policyname": "user_manage_own_marketplace_cart_items"
+      },
+      {
+        "cmd": "ALL",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "marketplace_carts",
+        "policyname": "user_manage_own_marketplace_carts"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_categories",
+        "policyname": "public_select_active_marketplace_categories"
+      },
+      {
+        "cmd": "ALL",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_listing_bookmarks",
+        "policyname": "user_manage_own_marketplace_listing_bookmarks"
+      },
+      {
+        "cmd": "ALL",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "marketplace_listing_media",
+        "policyname": "merchant_manage_own_marketplace_listing_media"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "anon",
+          "authenticated"
+        ],
+        "tablename": "marketplace_listing_media",
+        "policyname": "public_select_marketplace_listing_media"
+      },
+      {
+        "cmd": "INSERT",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "marketplace_listings",
+        "policyname": "merchant_insert_own_marketplace_listings"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "marketplace_listings",
+        "policyname": "merchant_select_own_marketplace_listings"
+      },
+      {
+        "cmd": "UPDATE",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "marketplace_listings",
+        "policyname": "merchant_update_own_marketplace_listings"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_listings",
+        "policyname": "public_select_published_marketplace_listings"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_merchants",
+        "policyname": "public_select_active_marketplace_merchants"
+      },
+      {
+        "cmd": "INSERT",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_order_items",
+        "policyname": "student_insert_own_marketplace_order_items"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_order_items",
+        "policyname": "student_select_own_marketplace_order_items"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "marketplace_order_items",
+        "policyname": "user_select_own_marketplace_order_items"
+      },
+      {
+        "cmd": "INSERT",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_orders",
+        "policyname": "student_insert_own_marketplace_orders"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_orders",
+        "policyname": "student_select_own_marketplace_orders"
+      },
+      {
+        "cmd": "UPDATE",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_orders",
+        "policyname": "student_update_own_marketplace_orders"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "marketplace_orders",
+        "policyname": "user_select_own_marketplace_orders"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "public"
+        ],
+        "tablename": "marketplace_products",
+        "policyname": "public_select_published_marketplace_products"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "public"
+        ],
+        "tablename": "merchant_profiles",
+        "policyname": "merchant_profiles_public_select_verified"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "merchant_profiles",
+        "policyname": "merchant_profiles_user_select_own"
+      },
+      {
+        "cmd": "UPDATE",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "merchant_profiles",
+        "policyname": "merchant_profiles_user_update_own"
+      },
+      {
+        "cmd": "INSERT",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "merchant_profiles",
+        "policyname": "merchant_profiles_user_upsert_own"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "public"
+        ],
+        "tablename": "opportunities",
+        "policyname": "public_select_published_opportunities"
+      },
+      {
+        "cmd": "INSERT",
+        "roles": [
+          "public"
+        ],
+        "tablename": "opportunity_applications",
+        "policyname": "student_insert_own_opportunity_applications"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "public"
+        ],
+        "tablename": "opportunity_applications",
+        "policyname": "student_select_own_opportunity_applications"
+      },
+      {
+        "cmd": "ALL",
+        "roles": [
+          "public"
+        ],
+        "tablename": "opportunity_bookmarks",
+        "policyname": "user_manage_own_opportunity_bookmarks"
+      },
+      {
+        "cmd": "INSERT",
+        "roles": [
+          "public"
+        ],
+        "tablename": "opportunity_comments",
+        "policyname": "authenticated_insert_comments"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "public"
+        ],
+        "tablename": "opportunity_comments",
+        "policyname": "public_select_opportunity_comments"
+      },
+      {
+        "cmd": "DELETE",
+        "roles": [
+          "public"
+        ],
+        "tablename": "opportunity_comments",
+        "policyname": "user_delete_own_comments"
+      },
+      {
+        "cmd": "INSERT",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "opportunity_inquiries",
+        "policyname": "opportunity_inquiries_buyer_insert"
+      },
+      {
+        "cmd": "UPDATE",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "opportunity_inquiries",
+        "policyname": "opportunity_inquiries_buyer_update_status_own"
+      },
+      {
+        "cmd": "UPDATE",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "opportunity_inquiries",
+        "policyname": "opportunity_inquiries_merchant_update_status_own"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "opportunity_inquiries",
+        "policyname": "opportunity_inquiries_user_select_own"
+      },
+      {
+        "cmd": "INSERT",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "opportunity_inquiry_messages",
+        "policyname": "opportunity_inquiry_messages_insert_participants"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "opportunity_inquiry_messages",
+        "policyname": "opportunity_inquiry_messages_select_participants"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "public"
+        ],
+        "tablename": "opportunity_reactions",
+        "policyname": "public_select_opportunity_reactions"
+      },
+      {
+        "cmd": "ALL",
+        "roles": [
+          "public"
+        ],
+        "tablename": "opportunity_reactions",
+        "policyname": "user_manage_own_reactions"
+      },
+      {
+        "cmd": "SELECT",
+        "roles": [
+          "public"
+        ],
+        "tablename": "opportunity_types",
+        "policyname": "public_select_active_opportunity_types"
+      },
+      {
+        "cmd": "ALL",
+        "roles": [
+          "public"
+        ],
+        "tablename": "opportunity_views",
+        "policyname": "user_manage_own_views"
+      }
+    ],
+    "error": null
+  },
+  "indexes": {
+    "ok": true,
+    "rows": [
+      {
+        "indexname": "marketplace_cart_items_cart_id_idx",
+        "tablename": "marketplace_cart_items",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_cart_items_cart_id_listing_id_key",
+        "tablename": "marketplace_cart_items",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_cart_items_pkey",
+        "tablename": "marketplace_cart_items",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_carts_one_open_per_user",
+        "tablename": "marketplace_carts",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_carts_pkey",
+        "tablename": "marketplace_carts",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_categories_code_uq",
+        "tablename": "marketplace_categories",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_categories_parent_idx",
+        "tablename": "marketplace_categories",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_categories_pkey",
+        "tablename": "marketplace_categories",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_listing_bookmarks_listing_idx",
+        "tablename": "marketplace_listing_bookmarks",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_listing_bookmarks_pkey",
+        "tablename": "marketplace_listing_bookmarks",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_listing_media_active_sort_idx",
+        "tablename": "marketplace_listing_media",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_listing_media_listing_id_idx",
+        "tablename": "marketplace_listing_media",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_listing_media_pkey",
+        "tablename": "marketplace_listing_media",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_marketplace_listings_merchant_id",
+        "tablename": "marketplace_listings",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_marketplace_listings_review_status",
+        "tablename": "marketplace_listings",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_marketplace_listings_status_active",
+        "tablename": "marketplace_listings",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_listings_category_id_idx",
+        "tablename": "marketplace_listings",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_listings_pkey",
+        "tablename": "marketplace_listings",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_listings_sub_category_id_idx",
+        "tablename": "marketplace_listings",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_merchants_pkey",
+        "tablename": "marketplace_merchants",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_merchants_slug_key",
+        "tablename": "marketplace_merchants",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_order_items_order_id_idx",
+        "tablename": "marketplace_order_items",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_order_items_pkey",
+        "tablename": "marketplace_order_items",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_orders_merchant_id_created_at_idx",
+        "tablename": "marketplace_orders",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_orders_pkey",
+        "tablename": "marketplace_orders",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_orders_student_id_created_at_idx",
+        "tablename": "marketplace_orders",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_products_merchant_id_idx",
+        "tablename": "marketplace_products",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "marketplace_products_pkey",
+        "tablename": "marketplace_products",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_merchant_profiles_is_active",
+        "tablename": "merchant_profiles",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_merchant_profiles_verification",
+        "tablename": "merchant_profiles",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "merchant_profiles_pkey",
+        "tablename": "merchant_profiles",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_opportunities_merchant_id",
+        "tablename": "opportunities",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_opportunities_review_status",
+        "tablename": "opportunities",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "opportunities_pkey",
+        "tablename": "opportunities",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "opportunity_applications_pkey",
+        "tablename": "opportunity_applications",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "opportunity_bookmarks_opportunity_id_user_id_key",
+        "tablename": "opportunity_bookmarks",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "opportunity_bookmarks_pkey",
+        "tablename": "opportunity_bookmarks",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_opportunity_comments_created",
+        "tablename": "opportunity_comments",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_opportunity_comments_opportunity",
+        "tablename": "opportunity_comments",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_opportunity_comments_user",
+        "tablename": "opportunity_comments",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "opportunity_comments_pkey",
+        "tablename": "opportunity_comments",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_opportunity_inquiries_buyer_id",
+        "tablename": "opportunity_inquiries",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_opportunity_inquiries_listing_id",
+        "tablename": "opportunity_inquiries",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_opportunity_inquiries_merchant_id",
+        "tablename": "opportunity_inquiries",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_opportunity_inquiries_opportunity_id",
+        "tablename": "opportunity_inquiries",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "opportunity_inquiries_pkey",
+        "tablename": "opportunity_inquiries",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_opportunity_inquiry_messages_inquiry_id",
+        "tablename": "opportunity_inquiry_messages",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "opportunity_inquiry_messages_pkey",
+        "tablename": "opportunity_inquiry_messages",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_opportunity_reactions_opportunity",
+        "tablename": "opportunity_reactions",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_opportunity_reactions_user",
+        "tablename": "opportunity_reactions",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "opportunity_reactions_opportunity_id_user_id_key",
+        "tablename": "opportunity_reactions",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "opportunity_reactions_pkey",
+        "tablename": "opportunity_reactions",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "opportunity_types_code_key",
+        "tablename": "opportunity_types",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "opportunity_types_pkey",
+        "tablename": "opportunity_types",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "idx_opportunity_views_user",
+        "tablename": "opportunity_views",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "opportunity_views_pkey",
+        "tablename": "opportunity_views",
+        "schemaname": "app"
+      },
+      {
+        "indexname": "opportunity_views_user_id_key",
+        "tablename": "opportunity_views",
+        "schemaname": "app"
+      }
+    ],
+    "error": null
+  }
+}

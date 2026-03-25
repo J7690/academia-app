@@ -1,0 +1,493 @@
+import 'package:flutter/material.dart';
+import '../providers/tournament_provider.dart';
+
+class TournamentBracketWidget extends StatelessWidget {
+  final List<TournamentMatch> matches;
+  
+  const TournamentBracketWidget({required this.matches});
+  
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: _buildRounds(),
+      ),
+    );
+  }
+  
+  List<Widget> _buildRounds() {
+    final rounds = <int, List<TournamentMatch>>{};
+    for (final match in matches) {
+      rounds.putIfAbsent(match.round, () => []).add(match);
+    }
+    
+    return rounds.entries.map((entry) {
+      return _buildRoundColumn(entry.key, entry.value);
+    }).toList();
+  }
+  
+  Widget _buildRoundColumn(int round, List<TournamentMatch> matches) {
+    return Container(
+      width: 200,
+      margin: EdgeInsets.symmetric(horizontal: 10),
+      child: Column(
+        children: [
+          Text(
+            'Round $round',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 20),
+          ...matches.map((match) => _matchCard(match)),
+        ],
+      ),
+    );
+  }
+  
+  Widget _matchCard(TournamentMatch match) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 10),
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+      ),
+      child: Column(
+        children: [
+          Text(
+            'Match ${match.matchNumber}',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Player 1'),
+              Text('Player 2'),
+            ],
+          ),
+          SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                width: 60,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: match.winnerId == match.player1Id ? Colors.green : Colors.grey,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Center(child: Text('P1')),
+              ),
+              Container(
+                width: 60,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: match.winnerId == match.player2Id ? Colors.green : Colors.grey,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Center(child: Text('P2')),
+              ),
+            ],
+          ),
+          if (match.status == 'completed') ...[
+            SizedBox(height: 8),
+            Text(
+              'Score: ${match.player1Score} - ${match.player2Score}',
+              style: TextStyle(fontSize: 12),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class TournamentCard extends StatelessWidget {
+  final Tournament tournament;
+  final VoidCallback onTap;
+  
+  const TournamentCard({required this.tournament, required this.onTap});
+  
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    tournament.name,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(tournament.status),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      tournament.status.toUpperCase(),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              Text(
+                tournament.description,
+                style: TextStyle(color: Colors.grey[600]),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(Icons.sports_esports, size: 16),
+                  SizedBox(width: 4),
+                  Text(tournament.gameType),
+                  SizedBox(width: 16),
+                  Icon(Icons.people, size: 16),
+                  SizedBox(width: 4),
+                  Text('${tournament.currentParticipants}/${tournament.maxParticipants}'),
+                ],
+              ),
+              SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.emoji_events, size: 16),
+                  SizedBox(width: 4),
+                  Text('Prize: ${tournament.prizePool}'),
+                  SizedBox(width: 16),
+                  Icon(Icons.attach_money, size: 16),
+                  SizedBox(width: 4),
+                  Text('Entry: ${tournament.entryFee}'),
+                ],
+              ),
+              if (tournament.isFeatured) ...[
+                SizedBox(height: 8),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.amber,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'FEATURED',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'registration':
+        return Colors.blue;
+      case 'active':
+        return Colors.green;
+      case 'completed':
+        return Colors.grey;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+}
+
+class LeagueCard extends StatelessWidget {
+  final League league;
+  final VoidCallback onTap;
+  
+  const LeagueCard({required this.league, required this.onTap});
+  
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    league.name,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _getDivisionColor(league.division),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      league.division.toUpperCase(),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              Text(
+                league.description,
+                style: TextStyle(color: Colors.grey[600]),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(Icons.sports_esports, size: 16),
+                  SizedBox(width: 4),
+                  Text(league.gameType),
+                  SizedBox(width: 16),
+                  Icon(Icons.emoji_events, size: 16),
+                  SizedBox(width: 4),
+                  Text('Season ${league.seasonNumber}'),
+                ],
+              ),
+              SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.calendar_today, size: 16),
+                  SizedBox(width: 4),
+                  Text('Ends: ${_formatDate(league.endDate)}'),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Color _getDivisionColor(String division) {
+    switch (division) {
+      case 'bronze':
+        return Colors.brown;
+      case 'silver':
+        return Colors.grey;
+      case 'gold':
+        return Colors.amber;
+      case 'platinum':
+        return Colors.blueGrey;
+      case 'diamond':
+        return Colors.purple;
+      case 'master':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+  
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+}
+
+class CreateTournamentDialog extends StatefulWidget {
+  @override
+  _CreateTournamentDialogState createState() => _CreateTournamentDialogState();
+}
+
+class _CreateTournamentDialogState extends State<CreateTournamentDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _maxParticipantsController = TextEditingController(text: '16');
+  String _selectedGameType = 'Market Master';
+  String _selectedTournamentType = 'elimination';
+  String _selectedFormat = 'single_elimination';
+  
+  final List<String> _gameTypes = [
+    'Market Master',
+    'Consumer Choice',
+    'Firm Tycoon',
+    'Market Structures',
+  ];
+  
+  final List<String> _tournamentTypes = [
+    'elimination',
+    'round_robin',
+    'swiss',
+  ];
+  
+  final List<String> _formats = [
+    'single_elimination',
+    'double_elimination',
+    'best_of_3',
+    'best_of_5',
+  ];
+  
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Create Tournament'),
+      content: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: 'Tournament Name',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a tournament name';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+              ),
+              SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedGameType,
+                decoration: InputDecoration(
+                  labelText: 'Game Type',
+                  border: OutlineInputBorder(),
+                ),
+                items: _gameTypes.map((game) {
+                  return DropdownMenuItem(
+                    value: game,
+                    child: Text(game),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedGameType = value!;
+                  });
+                },
+              ),
+              SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedTournamentType,
+                decoration: InputDecoration(
+                  labelText: 'Tournament Type',
+                  border: OutlineInputBorder(),
+                ),
+                items: _tournamentTypes.map((type) {
+                  return DropdownMenuItem(
+                    value: type,
+                    child: Text(type),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedTournamentType = value!;
+                  });
+                },
+              ),
+              SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedFormat,
+                decoration: InputDecoration(
+                  labelText: 'Format',
+                  border: OutlineInputBorder(),
+                ),
+                items: _formats.map((format) {
+                  return DropdownMenuItem(
+                    value: format,
+                    child: Text(format),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedFormat = value!;
+                  });
+                },
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _maxParticipantsController,
+                decoration: InputDecoration(
+                  labelText: 'Max Participants',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter max participants';
+                  }
+                  final number = int.tryParse(value);
+                  if (number == null || number < 2) {
+                    return 'Please enter a valid number (min 2)';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            if (_formKey.currentState!.validate()) {
+              // TODO: Create tournament
+              Navigator.of(context).pop();
+            }
+          },
+          child: Text('Create'),
+        ),
+      ],
+    );
+  }
+}

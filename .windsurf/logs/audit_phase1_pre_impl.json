@@ -1,0 +1,384 @@
+{
+  "exists_subscription_plans": [
+    {
+      "cnt": 0
+    }
+  ],
+  "exists_subscriptions": [
+    {
+      "cnt": 0
+    }
+  ],
+  "exists_payout_queue": [
+    {
+      "cnt": 0
+    }
+  ],
+  "exists_platform_ledger": [
+    {
+      "cnt": 0
+    }
+  ],
+  "enum_payment_channel": [
+    {
+      "enumlabel": "cash"
+    },
+    {
+      "enumlabel": "orange_money"
+    },
+    {
+      "enumlabel": "moov_money"
+    },
+    {
+      "enumlabel": "telecel_money"
+    }
+  ],
+  "enum_payment_status": [
+    {
+      "enumlabel": "pending"
+    },
+    {
+      "enumlabel": "declared_by_student"
+    },
+    {
+      "enumlabel": "under_verification"
+    },
+    {
+      "enumlabel": "confirmed"
+    },
+    {
+      "enumlabel": "rejected"
+    },
+    {
+      "enumlabel": "cancelled"
+    }
+  ],
+  "enum_payment_reason": [
+    {
+      "enumlabel": "application_fee"
+    },
+    {
+      "enumlabel": "registration_fee"
+    },
+    {
+      "enumlabel": "tuition_deposit"
+    },
+    {
+      "enumlabel": "other"
+    },
+    {
+      "enumlabel": "td_access"
+    }
+  ],
+  "ap_columns": [
+    {
+      "column_name": "id"
+    },
+    {
+      "column_name": "application_id"
+    },
+    {
+      "column_name": "student_id"
+    },
+    {
+      "column_name": "university_id"
+    },
+    {
+      "column_name": "amount_due"
+    },
+    {
+      "column_name": "amount_paid"
+    },
+    {
+      "column_name": "currency"
+    },
+    {
+      "column_name": "payment_reason"
+    },
+    {
+      "column_name": "channel"
+    },
+    {
+      "column_name": "status"
+    },
+    {
+      "column_name": "reference_code"
+    },
+    {
+      "column_name": "external_reference"
+    },
+    {
+      "column_name": "student_note"
+    },
+    {
+      "column_name": "created_by"
+    },
+    {
+      "column_name": "verified_by"
+    },
+    {
+      "column_name": "confirmed_by"
+    },
+    {
+      "column_name": "created_at"
+    },
+    {
+      "column_name": "updated_at"
+    },
+    {
+      "column_name": "verified_at"
+    },
+    {
+      "column_name": "confirmed_at"
+    },
+    {
+      "column_name": "declared_at"
+    }
+  ],
+  "mp_columns": [
+    {
+      "column_name": "id"
+    },
+    {
+      "column_name": "order_id"
+    },
+    {
+      "column_name": "buyer_id"
+    },
+    {
+      "column_name": "merchant_id"
+    },
+    {
+      "column_name": "gross_amount"
+    },
+    {
+      "column_name": "commission_rate"
+    },
+    {
+      "column_name": "commission_amount"
+    },
+    {
+      "column_name": "net_amount"
+    },
+    {
+      "column_name": "currency"
+    },
+    {
+      "column_name": "payment_method"
+    },
+    {
+      "column_name": "payment_provider"
+    },
+    {
+      "column_name": "payment_provider_ref"
+    },
+    {
+      "column_name": "status"
+    },
+    {
+      "column_name": "escrow_released_at"
+    },
+    {
+      "column_name": "created_at"
+    },
+    {
+      "column_name": "updated_at"
+    }
+  ],
+  "cp_columns": [
+    {
+      "column_name": "user_id"
+    },
+    {
+      "column_name": "ref_code"
+    },
+    {
+      "column_name": "ref_link"
+    },
+    {
+      "column_name": "commission_rate"
+    },
+    {
+      "column_name": "is_active"
+    },
+    {
+      "column_name": "admin_notes"
+    },
+    {
+      "column_name": "created_at"
+    },
+    {
+      "column_name": "updated_at"
+    },
+    {
+      "column_name": "deactivated_at"
+    },
+    {
+      "column_name": "tier"
+    },
+    {
+      "column_name": "max_commissions_per_prospect"
+    },
+    {
+      "column_name": "total_confirmed_payments"
+    }
+  ],
+  "mmb_columns": [
+    {
+      "data_type": "uuid",
+      "column_name": "id"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "merchant_id"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "available_balance"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "pending_balance"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "total_earned"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "total_commission"
+    },
+    {
+      "data_type": "text",
+      "column_name": "currency"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at"
+    }
+  ],
+  "rpc_exists_app_student_check_subscription": [
+    {
+      "cnt": 0
+    }
+  ],
+  "rpc_exists_app_admin_list_payout_queue": [
+    {
+      "cnt": 0
+    }
+  ],
+  "rpc_exists_app_admin_get_treasury_summary": [
+    {
+      "cnt": 0
+    }
+  ],
+  "rpc_exists_app_admin_list_ledger": [
+    {
+      "cnt": 0
+    }
+  ],
+  "rpc_exists_app_commercial_request_payout": [
+    {
+      "cnt": 0
+    }
+  ],
+  "rpc_exists_app_merchant_request_payout": [
+    {
+      "cnt": 0
+    }
+  ],
+  "rpc_exists_app_admin_manage_subscription_plan": [
+    {
+      "cnt": 0
+    }
+  ],
+  "rpc_exists_app_admin_list_subscriptions": [
+    {
+      "cnt": 0
+    }
+  ],
+  "rpc_exists_app_confirm_ligdicash_payment": [
+    {
+      "cnt": 0
+    }
+  ],
+  "schemas": [
+    {
+      "table_name": "application_payments",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "commercial_profiles",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "commission_rules",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "marketplace_merchant_balances",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "marketplace_orders",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "marketplace_payments",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "payment_proofs",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "payment_receipts",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "referral_commissions",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "td_enrollments",
+      "table_schema": "app"
+    }
+  ],
+  "rls_enabled": [
+    {
+      "tablename": "application_payments",
+      "schemaname": "app",
+      "rowsecurity": true
+    },
+    {
+      "tablename": "commercial_profiles",
+      "schemaname": "app",
+      "rowsecurity": true
+    },
+    {
+      "tablename": "marketplace_orders",
+      "schemaname": "app",
+      "rowsecurity": true
+    },
+    {
+      "tablename": "marketplace_payments",
+      "schemaname": "app",
+      "rowsecurity": true
+    },
+    {
+      "tablename": "payment_receipts",
+      "schemaname": "app",
+      "rowsecurity": true
+    },
+    {
+      "tablename": "referral_commissions",
+      "schemaname": "app",
+      "rowsecurity": true
+    },
+    {
+      "tablename": "td_enrollments",
+      "schemaname": "app",
+      "rowsecurity": true
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "question_rpcs": [
+    {
+      "routine_name": "app_prep_admin_list_questions",
+      "routine_schema": "app"
+    },
+    {
+      "routine_name": "app_prep_admin_toggle_question",
+      "routine_schema": "app"
+    },
+    {
+      "routine_name": "app_prep_create_question",
+      "routine_schema": "app"
+    },
+    {
+      "routine_name": "app_prep_create_question",
+      "routine_schema": "app"
+    },
+    {
+      "routine_name": "app_prep_create_question_bank",
+      "routine_schema": "app"
+    },
+    {
+      "routine_name": "app_prep_get_quiz_questions",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_prep_list_published_questions",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_prep_list_published_questions",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_prep_list_question_banks",
+      "routine_schema": "app"
+    },
+    {
+      "routine_name": "app_prep_list_question_choices",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_prep_list_questions",
+      "routine_schema": "app"
+    }
+  ],
+  "create_question_body": "prep_questions",
+  "publish_inserts_questions": true,
+  "edge_fn_status": 404,
+  "banks": [
+    {
+      "id": "2aec9a19-0282-4b3f-a748-6d5ad4571ed9",
+      "title": "Culture Générale BF — Tronc commun",
+      "subject": "Culture Générale",
+      "concours_type": "TOUS"
+    }
+  ]
+}

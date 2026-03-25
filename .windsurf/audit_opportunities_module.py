@@ -5,6 +5,7 @@ Interroge Supabase pour voir l'état réel du backend
 """
 
 import json
+from pathlib import Path
 from typing import Any, Dict, List, Tuple
 import requests
 
@@ -60,14 +61,23 @@ def main() -> int:
     m = SupabaseAutoManager()
 
     queries: List[Tuple[str, str]] = [
-        # 1. Vérifier si les tables opportunities existent
+        # 1. Vérifier si les tables opportunities + marketplace existent
         (
-            "OPPORTUNITIES_TABLES_EXIST",
+            "ALL_OPP_MARKETPLACE_TABLES",
             """
             SELECT table_schema, table_name, table_type
             FROM information_schema.tables
             WHERE table_schema = 'app'
-              AND table_name IN ('opportunities', 'opportunity_applications', 'opportunity_types')
+              AND (table_name ILIKE '%opportunit%'
+                OR table_name ILIKE '%marketplace%'
+                OR table_name ILIKE '%listing%'
+                OR table_name ILIKE '%inquiry%'
+                OR table_name ILIKE '%bookmark%'
+                OR table_name ILIKE '%reaction%'
+                OR table_name ILIKE '%comment%'
+                OR table_name ILIKE '%cart%'
+                OR table_name ILIKE '%order%'
+                OR table_name ILIKE '%categor%')
             ORDER BY table_name
             """.strip(),
         ),
@@ -104,39 +114,90 @@ def main() -> int:
             ORDER BY ordinal_position
             """.strip(),
         ),
-        # 5. Fonctions RPC liées aux opportunités
+        # 5. Fonctions RPC liées aux opportunités ET marketplace
         (
-            "OPPORTUNITIES_RPC_FUNCTIONS",
+            "ALL_RPC_FUNCTIONS",
             """
             SELECT routine_schema, routine_name, routine_type, data_type
             FROM information_schema.routines
             WHERE routine_schema = 'public'
-              AND (routine_name ILIKE '%opportunit%' OR routine_name ILIKE '%opportunity%')
+              AND (routine_name ILIKE '%opportunit%'
+                OR routine_name ILIKE '%opportunity%'
+                OR routine_name ILIKE '%marketplace%'
+                OR routine_name ILIKE '%listing%'
+                OR routine_name ILIKE '%inquiry%'
+                OR routine_name ILIKE '%bookmark%')
             ORDER BY routine_name
             """.strip(),
         ),
-        # 6. Définitions des fonctions RPC opportunités
+        # 6. Définitions des fonctions RPC opportunités + marketplace
         (
-            "OPPORTUNITIES_RPC_DEFINITIONS",
+            "ALL_RPC_DEFINITIONS",
             """
             SELECT n.nspname AS schema,
                    p.proname AS name,
-                   pg_get_functiondef(p.oid) AS def
+                   pg_get_function_arguments(p.oid) AS args,
+                   pg_get_function_result(p.oid) AS return_type
             FROM pg_proc p
             JOIN pg_namespace n ON n.oid = p.pronamespace
             WHERE n.nspname = 'public'
-              AND (p.proname ILIKE '%opportunit%' OR p.proname ILIKE '%opportunity%')
+              AND (p.proname ILIKE '%opportunit%'
+                OR p.proname ILIKE '%opportunity%'
+                OR p.proname ILIKE '%marketplace%'
+                OR p.proname ILIKE '%listing%'
+                OR p.proname ILIKE '%inquiry%'
+                OR p.proname ILIKE '%bookmark%')
             ORDER BY p.proname
             """.strip(),
         ),
-        # 7. Policies RLS sur les tables opportunités
+        # 6b. Marketplace listings table columns
         (
-            "OPPORTUNITIES_RLS_POLICIES",
+            "MARKETPLACE_LISTINGS_COLUMNS",
             """
-            SELECT schemaname, tablename, policyname, roles, cmd, qual, with_check
+            SELECT table_name, column_name, data_type, is_nullable, column_default
+            FROM information_schema.columns
+            WHERE table_schema = 'app'
+              AND table_name = 'marketplace_listings'
+            ORDER BY ordinal_position
+            """.strip(),
+        ),
+        # 6c. Marketplace categories table columns
+        (
+            "MARKETPLACE_CATEGORIES_COLUMNS",
+            """
+            SELECT table_name, column_name, data_type, is_nullable, column_default
+            FROM information_schema.columns
+            WHERE table_schema = 'app'
+              AND table_name = 'marketplace_categories'
+            ORDER BY ordinal_position
+            """.strip(),
+        ),
+        # 6d. All marketplace-related table columns
+        (
+            "ALL_MARKETPLACE_TABLE_COLUMNS",
+            """
+            SELECT table_name, column_name, data_type, is_nullable
+            FROM information_schema.columns
+            WHERE table_schema = 'app'
+              AND (table_name ILIKE '%marketplace%'
+                OR table_name ILIKE '%listing%'
+                OR table_name ILIKE '%cart%'
+                OR table_name ILIKE '%inquiry%')
+            ORDER BY table_name, ordinal_position
+            """.strip(),
+        ),
+        # 7. Policies RLS sur les tables opportunités + marketplace
+        (
+            "ALL_RLS_POLICIES",
+            """
+            SELECT schemaname, tablename, policyname, roles, cmd
             FROM pg_policies
             WHERE schemaname = 'app'
-              AND tablename IN ('opportunities', 'opportunity_applications', 'opportunity_types')
+              AND (tablename ILIKE '%opportunit%'
+                OR tablename ILIKE '%marketplace%'
+                OR tablename ILIKE '%listing%'
+                OR tablename ILIKE '%cart%'
+                OR tablename ILIKE '%inquiry%')
             ORDER BY tablename, policyname
             """.strip(),
         ),
@@ -183,12 +244,58 @@ def main() -> int:
         (
             "STORAGE_POLICIES_APPLICATION_FILES",
             """
-            SELECT schemaname, tablename, policyname, roles, cmd, qual, with_check
+            SELECT schemaname, tablename, policyname, roles, cmd
             FROM pg_policies
             WHERE schemaname = 'storage'
               AND tablename = 'objects'
-              AND (policyname ILIKE '%application%' OR policyname ILIKE '%cv%')
+              AND (policyname ILIKE '%application%' OR policyname ILIKE '%cv%'
+                OR policyname ILIKE '%landing%' OR policyname ILIKE '%marketplace%')
             ORDER BY policyname
+            """.strip(),
+        ),
+        # 13. Marketplace orders table columns
+        (
+            "MARKETPLACE_ORDERS_COLUMNS",
+            """
+            SELECT table_name, column_name, data_type, is_nullable, column_default
+            FROM information_schema.columns
+            WHERE table_schema = 'app'
+              AND (table_name ILIKE '%order%' AND table_name ILIKE '%marketplace%')
+            ORDER BY table_name, ordinal_position
+            """.strip(),
+        ),
+        # 14. Merchant profiles table
+        (
+            "MERCHANT_PROFILES_COLUMNS",
+            """
+            SELECT table_name, column_name, data_type, is_nullable
+            FROM information_schema.columns
+            WHERE table_schema = 'app'
+              AND table_name = 'merchant_profiles'
+            ORDER BY ordinal_position
+            """.strip(),
+        ),
+        # 15. Opportunity reactions/comments/bookmarks tables
+        (
+            "OPP_SOCIAL_TABLES_COLUMNS",
+            """
+            SELECT table_name, column_name, data_type, is_nullable
+            FROM information_schema.columns
+            WHERE table_schema = 'app'
+              AND (table_name ILIKE '%opportunity_reaction%'
+                OR table_name ILIKE '%opportunity_comment%'
+                OR table_name ILIKE '%opportunity_bookmark%')
+            ORDER BY table_name, ordinal_position
+            """.strip(),
+        ),
+        # 16. Sample marketplace listings
+        (
+            "MARKETPLACE_LISTINGS_SAMPLE",
+            """
+            SELECT id, title, merchant_id, review_status, is_active, created_at
+            FROM app.marketplace_listings
+            ORDER BY created_at DESC
+            LIMIT 10
             """.strip(),
         ),
     ]
@@ -215,7 +322,7 @@ def main() -> int:
         else:
             print(f"  ✗ {label}: erreur - {res.get('error')}")
 
-    out_path = ".windsurf/logs/audit_opportunities_module.json"
+    out_path = str(Path(__file__).parent / "logs" / "audit_opportunities_module.json")
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 

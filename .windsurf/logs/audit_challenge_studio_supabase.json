@@ -1,0 +1,1026 @@
+{
+  "challenge_tables": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "col_count": 7,
+        "table_name": "challenge_comments"
+      },
+      {
+        "col_count": 4,
+        "table_name": "challenge_favorites"
+      },
+      {
+        "col_count": 4,
+        "table_name": "challenge_likes"
+      },
+      {
+        "col_count": 4,
+        "table_name": "challenge_participation_videos"
+      },
+      {
+        "col_count": 23,
+        "table_name": "challenge_participations"
+      },
+      {
+        "col_count": 9,
+        "table_name": "challenge_reports"
+      },
+      {
+        "col_count": 6,
+        "table_name": "challenge_user_bans"
+      },
+      {
+        "col_count": 7,
+        "table_name": "challenge_video_assets"
+      },
+      {
+        "col_count": 4,
+        "table_name": "challenge_video_overlays"
+      },
+      {
+        "col_count": 9,
+        "table_name": "challenge_video_render_jobs"
+      },
+      {
+        "col_count": 17,
+        "table_name": "challenges"
+      },
+      {
+        "col_count": 4,
+        "table_name": "free_video_overlays"
+      },
+      {
+        "col_count": 9,
+        "table_name": "free_video_render_jobs"
+      },
+      {
+        "col_count": 18,
+        "table_name": "free_videos"
+      },
+      {
+        "col_count": 9,
+        "table_name": "hero_video_jobs"
+      },
+      {
+        "col_count": 11,
+        "table_name": "hero_videos"
+      },
+      {
+        "col_count": 8,
+        "table_name": "landing_videos"
+      },
+      {
+        "col_count": 23,
+        "table_name": "league_participations"
+      },
+      {
+        "col_count": 11,
+        "table_name": "legacy_video_write_attempts"
+      },
+      {
+        "col_count": 8,
+        "table_name": "student_home_videos"
+      },
+      {
+        "col_count": 6,
+        "table_name": "video_asset_contexts"
+      },
+      {
+        "col_count": 6,
+        "table_name": "video_asset_legacy_map"
+      },
+      {
+        "col_count": 15,
+        "table_name": "video_assets"
+      },
+      {
+        "col_count": 8,
+        "table_name": "video_comments"
+      },
+      {
+        "col_count": 5,
+        "table_name": "video_favorites"
+      },
+      {
+        "col_count": 5,
+        "table_name": "video_likes"
+      },
+      {
+        "col_count": 9,
+        "table_name": "video_moderation_history"
+      },
+      {
+        "col_count": 9,
+        "table_name": "video_playback_errors"
+      },
+      {
+        "col_count": 11,
+        "table_name": "video_processing_jobs"
+      },
+      {
+        "col_count": 15,
+        "table_name": "video_renditions"
+      },
+      {
+        "col_count": 10,
+        "table_name": "video_reports"
+      },
+      {
+        "col_count": 10,
+        "table_name": "video_sources"
+      },
+      {
+        "col_count": 8,
+        "table_name": "video_upload_events"
+      }
+    ]
+  },
+  "cols_challenges": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "text",
+        "column_name": "slug",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "challenge_type",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "difficulty",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "points",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "start_at",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "end_at",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "max_participants",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "requires_submission",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "requires_admin_review",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_featured",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "created_by_user_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ]
+  },
+  "cols_challenge_participations": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "challenge_id",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "user_id",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "text",
+        "column_name": "submission_text",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "score",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "rank",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "started_at",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "submitted_at",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "completed_at",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "reviewed_at",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "reviewed_by_user_id",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "text",
+        "column_name": "moderation_status",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "moderation_flags",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "moderated_by_admin_id",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "moderated_at",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "parent_participation_id",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "text",
+        "column_name": "remix_type",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "video_asset_id",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_deleted",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "deleted_at",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "allow_download",
+        "is_nullable": "NO"
+      }
+    ]
+  },
+  "cols_video_assets": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "owner_user_id",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "text",
+        "column_name": "origin",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "text",
+        "column_name": "canonical_type",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "duration_ms",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "width",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "height",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "rotation",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "has_audio",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "text",
+        "column_name": "checksum_sha256",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "content_warning_flags",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "deleted_at",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO"
+      }
+    ]
+  },
+  "cols_video_asset_sources": {
+    "ok": true,
+    "mode": "select",
+    "rows": []
+  },
+  "cols_free_videos": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "user_id",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "text",
+        "column_name": "description",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "text",
+        "column_name": "moderation_status",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "moderation_flags",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "moderated_by_admin_id",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "moderated_at",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "text",
+        "column_name": "parent_video_type",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "parent_video_id",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "text",
+        "column_name": "remix_type",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "video_asset_id",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_deleted",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "deleted_at",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "allow_download",
+        "is_nullable": "NO"
+      }
+    ]
+  },
+  "cols_challenge_video_assets": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "text",
+        "column_name": "category",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "text",
+        "column_name": "label",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "text",
+        "column_name": "asset_url",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO"
+      }
+    ]
+  },
+  "rpcs_challenge_video": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "routine_name": "app_admin_ban_user_from_challenges"
+      },
+      {
+        "routine_name": "app_admin_delete_challenge_participation_video"
+      },
+      {
+        "routine_name": "app_admin_delete_challenge_video"
+      },
+      {
+        "routine_name": "app_admin_delete_challenge_video_asset"
+      },
+      {
+        "routine_name": "app_admin_delete_landing_video"
+      },
+      {
+        "routine_name": "app_admin_delete_student_home_video"
+      },
+      {
+        "routine_name": "app_admin_list_challenge_participation_videos"
+      },
+      {
+        "routine_name": "app_admin_list_challenge_participations"
+      },
+      {
+        "routine_name": "app_admin_list_challenge_reports"
+      },
+      {
+        "routine_name": "app_admin_list_challenge_video_assets"
+      },
+      {
+        "routine_name": "app_admin_list_challenge_videos"
+      },
+      {
+        "routine_name": "app_admin_list_challenges"
+      },
+      {
+        "routine_name": "app_admin_review_challenge_participation"
+      },
+      {
+        "routine_name": "app_admin_review_challenge_video"
+      },
+      {
+        "routine_name": "app_admin_update_challenge_report_status"
+      },
+      {
+        "routine_name": "app_admin_update_challenge_status"
+      },
+      {
+        "routine_name": "app_admin_upsert_challenge"
+      },
+      {
+        "routine_name": "app_admin_upsert_challenge_video_asset"
+      },
+      {
+        "routine_name": "app_admin_upsert_landing_video"
+      },
+      {
+        "routine_name": "app_admin_upsert_landing_video"
+      },
+      {
+        "routine_name": "app_admin_upsert_student_home_video"
+      },
+      {
+        "routine_name": "app_admin_upsert_student_home_video"
+      },
+      {
+        "routine_name": "app_notify_admin_challenge_participation"
+      },
+      {
+        "routine_name": "app_notify_challenge_created"
+      },
+      {
+        "routine_name": "app_public_get_challenge_leaderboard"
+      },
+      {
+        "routine_name": "app_student_add_challenge_comment"
+      },
+      {
+        "routine_name": "app_student_add_challenge_video"
+      },
+      {
+        "routine_name": "app_student_add_video_comment"
+      },
+      {
+        "routine_name": "app_student_challenge_video_feed"
+      },
+      {
+        "routine_name": "app_student_create_free_video"
+      },
+      {
+        "routine_name": "app_student_delete_video_comment"
+      },
+      {
+        "routine_name": "app_student_favorite_challenge_video"
+      },
+      {
+        "routine_name": "app_student_get_challenge_video"
+      },
+      {
+        "routine_name": "app_student_get_free_video"
+      },
+      {
+        "routine_name": "app_student_get_my_challenge_stats"
+      },
+      {
+        "routine_name": "app_student_get_video_export_watermarked_status"
+      },
+      {
+        "routine_name": "app_student_join_challenge"
+      },
+      {
+        "routine_name": "app_student_like_challenge_video"
+      },
+      {
+        "routine_name": "app_student_list_challenge_comments"
+      },
+      {
+        "routine_name": "app_student_list_challenge_video_render_jobs"
+      },
+      {
+        "routine_name": "app_student_list_challenges"
+      },
+      {
+        "routine_name": "app_student_list_free_video_render_jobs"
+      },
+      {
+        "routine_name": "app_student_list_my_challenge_participations"
+      },
+      {
+        "routine_name": "app_student_list_my_challenge_videos"
+      },
+      {
+        "routine_name": "app_student_list_recently_deleted_videos"
+      },
+      {
+        "routine_name": "app_student_list_user_videos"
+      },
+      {
+        "routine_name": "app_student_list_video_comments"
+      },
+      {
+        "routine_name": "app_student_mark_challenge_completed"
+      },
+      {
+        "routine_name": "app_student_report_challenge_video"
+      },
+      {
+        "routine_name": "app_student_report_video"
+      },
+      {
+        "routine_name": "app_student_request_video_export_watermarked"
+      },
+      {
+        "routine_name": "app_student_restore_video"
+      },
+      {
+        "routine_name": "app_student_set_challenge_main_video"
+      },
+      {
+        "routine_name": "app_student_set_free_video_main_renditions"
+      },
+      {
+        "routine_name": "app_student_set_video_allow_download"
+      },
+      {
+        "routine_name": "app_student_soft_delete_video"
+      },
+      {
+        "routine_name": "app_student_start_duo_challenge_video"
+      },
+      {
+        "routine_name": "app_student_start_duo_video"
+      },
+      {
+        "routine_name": "app_student_submit_challenge"
+      },
+      {
+        "routine_name": "app_student_unfavorite_challenge_video"
+      },
+      {
+        "routine_name": "app_student_unified_video_feed"
+      },
+      {
+        "routine_name": "app_student_unlike_challenge_video"
+      },
+      {
+        "routine_name": "app_student_update_challenge_video_overlays"
+      },
+      {
+        "routine_name": "app_student_update_free_video_overlays"
+      },
+      {
+        "routine_name": "app_student_video_favorite"
+      },
+      {
+        "routine_name": "app_student_video_like"
+      },
+      {
+        "routine_name": "app_student_video_unfavorite"
+      },
+      {
+        "routine_name": "app_student_video_unlike"
+      },
+      {
+        "routine_name": "app_videoasset_claim_next_job"
+      },
+      {
+        "routine_name": "app_videoasset_complete_job"
+      },
+      {
+        "routine_name": "app_videoasset_create_upload_intent"
+      },
+      {
+        "routine_name": "app_videoasset_enqueue_processing"
+      },
+      {
+        "routine_name": "app_videoasset_get_playback_for_direct_url"
+      },
+      {
+        "routine_name": "app_videoasset_get_playback_manifest"
+      },
+      {
+        "routine_name": "app_videoasset_get_playback_manifest"
+      },
+      {
+        "routine_name": "app_videoasset_register_uploaded_source"
+      }
+    ]
+  },
+  "data_counts": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "challenges": 1,
+        "free_videos": 103,
+        "video_assets": 181,
+        "participations": 2
+      }
+    ]
+  },
+  "storage_buckets": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "id": "challenge-media",
+        "name": "challenge-media",
+        "public": true,
+        "file_size_limit": null,
+        "allowed_mime_types": null
+      },
+      {
+        "id": "community-media",
+        "name": "community-media",
+        "public": true,
+        "file_size_limit": null,
+        "allowed_mime_types": null
+      },
+      {
+        "id": "hero_videos",
+        "name": "hero_videos",
+        "public": true,
+        "file_size_limit": null,
+        "allowed_mime_types": null
+      },
+      {
+        "id": "landing-media",
+        "name": "landing-media",
+        "public": true,
+        "file_size_limit": null,
+        "allowed_mime_types": null
+      },
+      {
+        "id": "marketplace-media",
+        "name": "marketplace-media",
+        "public": true,
+        "file_size_limit": null,
+        "allowed_mime_types": null
+      },
+      {
+        "id": "university-media",
+        "name": "university-media",
+        "public": true,
+        "file_size_limit": null,
+        "allowed_mime_types": null
+      },
+      {
+        "id": "video-assets",
+        "name": "video-assets",
+        "public": true,
+        "file_size_limit": null,
+        "allowed_mime_types": null
+      }
+    ]
+  },
+  "cols_video_comments": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "text",
+        "column_name": "video_type",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "video_id",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "user_id",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "text",
+        "column_name": "content",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_deleted",
+        "is_nullable": "NO"
+      }
+    ]
+  },
+  "cols_video_likes": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "text",
+        "column_name": "video_type",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "video_id",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "user_id",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO"
+      }
+    ]
+  },
+  "cols_video_reports": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "text",
+        "column_name": "video_type",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "video_id",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "reporter_id",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "text",
+        "column_name": "reason",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "text",
+        "column_name": "details",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "handled_by_admin_id",
+        "is_nullable": "YES"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "handled_at",
+        "is_nullable": "YES"
+      }
+    ]
+  }
+}

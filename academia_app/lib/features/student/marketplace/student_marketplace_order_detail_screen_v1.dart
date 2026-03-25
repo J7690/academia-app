@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'student_marketplace_add_review_screen.dart';
+
 class StudentMarketplaceOrderDetailScreenV1 extends StatefulWidget {
   final String orderId;
 
@@ -174,6 +176,8 @@ class _StudentMarketplaceOrderDetailScreenV1State
                             final qty = it['quantity']?.toString() ?? '';
                             final unit = it['unit_price'];
                             final cur = it['currency']?.toString();
+                            final productId = it['product_id']?.toString();
+                            final canReview = status == 'delivered' || status == 'completed';
                             return Container(
                               margin: const EdgeInsets.only(bottom: 10),
                               padding: const EdgeInsets.all(12),
@@ -184,27 +188,52 @@ class _StudentMarketplaceOrderDetailScreenV1State
                                   color: const Color(0xFFE5E7EB),
                                 ),
                               ),
-                              child: Row(
+                              child: Column(
                                 children: [
-                                  Expanded(
-                                    child: Text(
-                                      title,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          title,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text('x$qty'),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        _formatMoney(unit, cur),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (canReview && productId != null && productId.isNotEmpty) ...[
+                                    const SizedBox(height: 10),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: OutlinedButton.icon(
+                                        onPressed: () {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (_) => StudentMarketplaceAddReviewScreen(
+                                                listingId: productId,
+                                                orderId: widget.orderId,
+                                                listingTitle: title,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        icon: const Icon(Icons.rate_review_outlined, size: 18),
+                                        label: const Text('Laisser un avis'),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text('x$qty'),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    _formatMoney(unit, cur),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
+                                  ],
                                 ],
                               ),
                             );

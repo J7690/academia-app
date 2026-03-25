@@ -196,6 +196,8 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
   static const String _pendingReferralCodeKey = 'pending_referral_code_v1';
   static const String _pendingReferralSourceKey = 'pending_referral_source_v1';
 
+  String? _capturedRefCode;
+
   Future<void> _captureReferralFromUrlIfPresent() async {
     try {
       final uri = Uri.base;
@@ -203,6 +205,12 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
       final rawRef = uri.queryParameters['ref']?.trim();
       debugPrint('ReferralLanding: rawRef=' + (rawRef ?? 'null'));
       if (rawRef == null || rawRef.isEmpty) return;
+
+      if (mounted) {
+        setState(() {
+          _capturedRefCode = rawRef;
+        });
+      }
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_pendingReferralCodeKey, rawRef);
@@ -528,7 +536,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                 Navigator.of(context).pop();
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => const SignupScreen(),
+                    builder: (_) => SignupScreen(initialRefCode: _capturedRefCode),
                   ),
                 );
               },
@@ -1373,7 +1381,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                                     onPressed: () {
                                       Navigator.of(context).push(
                                         MaterialPageRoute(
-                                          builder: (_) => const SignupScreen(),
+                                          builder: (_) => SignupScreen(initialRefCode: _capturedRefCode),
                                         ),
                                       );
                                     },
@@ -1796,7 +1804,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                         onPressed: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => const SignupScreen(),
+                              builder: (_) => SignupScreen(initialRefCode: _capturedRefCode),
                             ),
                           );
                         },

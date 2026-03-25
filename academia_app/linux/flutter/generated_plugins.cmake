@@ -6,16 +6,19 @@ list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_linux
   emoji_picker_flutter
   file_selector_linux
+  flutter_secure_storage_linux
   flutter_webrtc
   gtk
   livekit_client
   printing
   pro_video_editor
   record_linux
+  sentry_flutter
   url_launcher_linux
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
+  tflite_flutter
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)

@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/commercial_dashboard_provider.dart';
 import '../../widgets/support_fab.dart';
+import '../student/student_settings_screen.dart';
 import '../../services/push_trigger_service.dart';
 
 class CommercialDashboardScreen extends StatefulWidget {
@@ -17,9 +18,6 @@ class CommercialDashboardScreen extends StatefulWidget {
 }
 
 class _CommercialDashboardScreenState extends State<CommercialDashboardScreen> {
-  Future<void> _signOut() async {
-    await Supabase.instance.client.auth.signOut();
-  }
 
   @override
   void initState() {
@@ -135,8 +133,14 @@ class _CommercialDashboardScreenState extends State<CommercialDashboardScreen> {
                   case _CommercialDashboardMenuAction.changePassword:
                     _showCommercialChangePasswordDialog(context);
                     break;
-                  case _CommercialDashboardMenuAction.signOut:
-                    _signOut();
+                  case _CommercialDashboardMenuAction.settings:
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const StudentSettingsScreen(
+                          showProfile: false,
+                        ),
+                      ),
+                    );
                     break;
                 }
               },
@@ -149,10 +153,10 @@ class _CommercialDashboardScreenState extends State<CommercialDashboardScreen> {
                   ),
                 ),
                 PopupMenuItem<_CommercialDashboardMenuAction>(
-                  value: _CommercialDashboardMenuAction.signOut,
+                  value: _CommercialDashboardMenuAction.settings,
                   child: ListTile(
-                    leading: Icon(Icons.logout),
-                    title: Text('Se déconnecter'),
+                    leading: Icon(Icons.settings),
+                    title: Text('Paramètres'),
                   ),
                 ),
               ],
@@ -875,6 +879,75 @@ class _FinancesTabState extends State<_FinancesTab>
     super.dispose();
   }
 
+  Future<void> _requestPayout(BuildContext context) async {
+    final phoneController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Demander un versement'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Saisissez votre numéro mobile money pour recevoir le versement de vos commissions approuvées.',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Numéro mobile money',
+                hintText: '226 7X XX XX XX',
+                prefixIcon: Icon(Icons.phone_android),
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white),
+            child: const Text('Confirmer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+    final phone = phoneController.text.trim();
+    if (phone.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Numéro de téléphone invalide.')),
+      );
+      return;
+    }
+
+    try {
+      final client = Supabase.instance.client;
+      final resp = await client.rpc('app_commercial_request_payout', params: {'p_phone': phone});
+      final data = resp as Map<String, dynamic>?;
+      if (!context.mounted) return;
+      if (data != null && data['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Versement demandé : ${data['amount']} XOF vers $phone')),
+        );
+      } else {
+        final err = data?['error']?.toString() ?? 'Erreur';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(err == 'no_funds_available' ? 'Aucune commission approuvée à verser.' : 'Erreur : $err')),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur : $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final currency = (widget.summary['currency'] ?? 'XOF').toString();
@@ -933,6 +1006,33 @@ class _FinancesTabState extends State<_FinancesTab>
                 ],
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // Payout button
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: totalApproved is num && (totalApproved as num) > 0
+                  ? () => _requestPayout(context)
+                  : null,
+              icon: const Icon(Icons.account_balance_wallet, size: 18),
+              label: Text(
+                totalApproved is num && (totalApproved as num) > 0
+                    ? 'Demander le versement (${widget.formatAmount(totalApproved)} $currency)'
+                    : 'Aucune commission à verser',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF16A34A),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 12),
@@ -1169,10 +1269,9 @@ class _ProspectPaymentsList extends StatelessWidget {
         final p = payments[index];
         final prospectId = (p['prospect_id'] ?? '').toString();
         final reason = (p['payment_reason'] ?? '').toString();
-        final amountPaid = p['amount_paid'];
+        final amountRange = (p['amount_range'] ?? '').toString();
         final currency = (p['currency'] ?? 'XOF').toString();
         final status = (p['status'] ?? '').toString();
-        final channel = (p['channel'] ?? '').toString();
         final programName = (p['program_name'] ?? '').toString();
         final createdAt = (p['created_at'] ?? '').toString();
         final confirmedAt = (p['confirmed_at'] ?? '').toString();
@@ -1234,20 +1333,15 @@ class _ProspectPaymentsList extends StatelessWidget {
               Row(
                 children: [
                   _InfoChip(icon: Icons.receipt, text: _reasonLabel(reason)),
-                  const SizedBox(width: 8),
-                  if (channel.isNotEmpty)
-                    _InfoChip(icon: Icons.credit_card, text: _channelLabel(channel)),
+                  if (amountRange.isNotEmpty && amountRange != 'null') ...[
+                    const SizedBox(width: 8),
+                    _InfoChip(icon: Icons.account_balance_wallet, text: '$amountRange $currency'),
+                  ],
                 ],
               ),
               const SizedBox(height: 8),
               Row(
                 children: [
-                  if (amountPaid != null && amountPaid.toString() != 'null')
-                    Text('${formatAmount(amountPaid)} $currency',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: statusColor)),
                   const Spacer(),
                   if (createdAt.isNotEmpty)
                     Text(formatDate(createdAt),
@@ -1765,7 +1859,7 @@ class _MilestonesAndLeaderboard extends StatelessWidget {
 
 enum _CommercialDashboardMenuAction {
   changePassword,
-  signOut,
+  settings,
 }
 
 Future<void> _showCommercialChangePasswordDialog(BuildContext context) async {

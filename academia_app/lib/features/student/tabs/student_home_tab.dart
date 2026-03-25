@@ -26,7 +26,7 @@ import '../../../providers/student_academic_calendar_provider.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
 import '../../../widgets/hero_media_carousel.dart';
-import '../../../widgets/notification_sound_settings_dialog.dart';
+import '../student_settings_screen.dart';
 import '../widgets/student_short_trainings_section.dart';
 import '../widgets/student_home_online_courses_section.dart';
 import '../../../providers/student_application_payments_provider.dart';
@@ -1631,15 +1631,11 @@ class _ProfileHeader extends StatelessWidget {
                     tooltip: 'Paramètres',
                     icon: const Icon(Icons.settings),
                     onPressed: () {
-                      NotificationSoundSettingsDialog.show(context);
-                    },
-                  ),
-                  IconButton(
-                    tooltip: 'Se déconnecter',
-                    icon: const Icon(Icons.logout),
-                    onPressed: () async {
-                      final client = Supabase.instance.client;
-                      await client.auth.signOut();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const StudentSettingsScreen(),
+                        ),
+                      );
                     },
                   ),
                 ],

@@ -133,17 +133,15 @@ class _QuizMenuView extends StatelessWidget {
     );
   }
 
-  void _startQuiz(BuildContext context, {int count = 10}) {
+  void _startQuiz(BuildContext context, {int count = 10, String? subject, String? concoursType}) {
     final provider = context.read<PrepQuizProvider>();
-    final questions = PrepQuizProvider.generateDemoQuestions(count: count);
-    provider.startQuiz(questions: questions);
+    provider.startQuizFromServer(count: count, subject: subject, concoursType: concoursType);
   }
 
   void _startExam(BuildContext context) {
     final provider = context.read<PrepQuizProvider>();
-    final questions = PrepQuizProvider.generateDemoQuestions(count: 15);
-    provider.startQuiz(
-      questions: questions,
+    provider.startQuizFromServer(
+      count: 20,
       timeLimitSeconds: 30 * 60,
       examMode: true,
     );
@@ -232,11 +230,7 @@ class _SubjectChip extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         final provider = context.read<PrepQuizProvider>();
-        final questions = PrepQuizProvider.generateDemoQuestions(
-          subject: label,
-          count: 10,
-        );
-        provider.startQuiz(questions: questions);
+        provider.startQuizFromServer(subject: label, count: 10);
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -264,12 +258,12 @@ class _ConcoursGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final concours = [
-      ('ENAM', 'Administration', Icons.account_balance, const Color(0xFF7C3AED)),
-      ('ENS', 'Enseignement', Icons.school, const Color(0xFF0891B2)),
-      ('ENSET', 'Technique', Icons.engineering, const Color(0xFFEA580C)),
-      ('BAC', 'Baccalauréat', Icons.menu_book, const Color(0xFF059669)),
-      ('BEPC', 'Brevet', Icons.edit_note, const Color(0xFF6366F1)),
-      ('IRIC', 'Rel. Internationales', Icons.public, const Color(0xFFDB2777)),
+      ('ENAREF', 'Régies financières', Icons.account_balance, const Color(0xFF7C3AED)),
+      ('ADMIN_CIVIL', 'Administration', Icons.gavel, const Color(0xFF0891B2)),
+      ('DOUANE', 'Douane', Icons.local_shipping, const Color(0xFFEA580C)),
+      ('GREFFIERS', 'Justice', Icons.balance, const Color(0xFF059669)),
+      ('SANTE', 'Santé', Icons.local_hospital, const Color(0xFF6366F1)),
+      ('EDUCATION', 'Éducation', Icons.school, const Color(0xFFDB2777)),
     ];
 
     return GridView.builder(
@@ -287,8 +281,7 @@ class _ConcoursGrid extends StatelessWidget {
         return GestureDetector(
           onTap: () {
             final provider = context.read<PrepQuizProvider>();
-            final questions = PrepQuizProvider.generateDemoQuestions(count: 10);
-            provider.startQuiz(questions: questions);
+            provider.startQuizFromServer(concoursType: name, count: 10);
           },
           child: Container(
             decoration: PrepTheme.cardBox(borderColor: color.withOpacity(0.2)),

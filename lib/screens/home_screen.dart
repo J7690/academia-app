@@ -240,6 +240,24 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.pushNamed(context, '/data');
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.sports_esports),
+            title: const Text('Kellenge Games'),
+            subtitle: const Text('Accéder aux jeux économiques'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/games');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.people),
+            title: const Text('Multiplayer'),
+            subtitle: const Text('Jouer avec d\'autres joueurs'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/multiplayer');
+            },
+          ),
         ],
       ),
     );

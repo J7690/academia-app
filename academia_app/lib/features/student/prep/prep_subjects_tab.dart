@@ -16,19 +16,20 @@ class _PrepSubjectsTabState extends State<PrepSubjectsTab> {
   String _selectedYear = 'Toutes';
   String _selectedSubject = 'Toutes';
 
-  static const _concoursList = ['Tous', 'ENAM', 'ENS', 'ENSET', 'BAC', 'BEPC', 'IRIC'];
-  static const _yearsList = ['Toutes', '2025', '2024', '2023', '2022', '2021', '2020'];
+  static const _concoursList = ['Tous', 'ENAREF', 'ADMIN_CIVIL', 'DOUANE', 'GREFFIERS', 'SANTE', 'EDUCATION', 'GRH', 'PARAMILITAIRE'];
+  static const _yearsList = ['Toutes', '2026', '2025', '2024', '2023', '2022', '2021'];
   static const _subjectsList = [
     'Toutes',
     'Culture Générale',
-    'Mathématiques',
-    'Droit',
+    'Actualités BF',
+    'Droit Constitutionnel',
+    'Droit Administratif',
     'Économie',
+    'Finances Publiques',
+    'Fiscalité',
     'Français',
-    'Anglais',
-    'Physique-Chimie',
-    'Biologie',
-    'Histoire-Géo',
+    'Tests Psychotechniques',
+    'Mathématiques',
   ];
 
   @override

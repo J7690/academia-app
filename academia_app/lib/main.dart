@@ -73,12 +73,12 @@ import 'providers/student_online_course_messages_provider.dart';
 import 'providers/admin_short_trainings_provider.dart';
 import 'providers/admin_short_training_messages_provider.dart';
 import 'providers/admin_online_course_messages_provider.dart';
-import 'providers/admin_opportunities_provider.dart';
 import 'providers/admin_academic_announcements_provider.dart';
 import 'providers/admin_academic_events_provider.dart';
 import 'providers/admin_student_home_slots_provider.dart';
 import 'providers/opportunity_reactions_provider.dart';
 import 'providers/opportunity_comments_provider.dart';
+import 'providers/listing_reviews_provider.dart';
 import 'providers/admin_communities_provider.dart';
 import 'providers/admin_challenges_provider.dart';
 import 'providers/admin_prep_concours_provider.dart';
@@ -90,14 +90,21 @@ import 'providers/student_td_catalog_provider.dart';
 import 'providers/student_td_enrollments_provider.dart';
 import 'providers/student_td_requests_provider.dart';
 import 'providers/teacher_td_assignments_provider.dart';
+import 'providers/teacher_prep_assignments_provider.dart';
+import 'providers/teacher_prep_live_sessions_provider.dart';
 import 'providers/admin_td_enrollments_provider.dart';
 import 'providers/td_messages_provider.dart';
 import 'providers/commercial_dashboard_provider.dart';
+import 'providers/subscription_provider.dart';
 import 'features/share/share_mode_provider.dart';
 import 'providers/prep_quiz_provider.dart';
 import 'providers/prep_flashcard_provider.dart';
 import 'providers/td_gamification_provider.dart';
 import 'providers/community_stories_provider.dart';
+import 'games/providers/tournament_provider.dart';
+import 'games/screens/tournament_list_screen.dart';
+import 'games/screens/leaderboard_screen.dart';
+import 'games/screens/games_domain_hub_screen.dart';
 import 'features/auth/auth_wrapper.dart';
 import 'features/auth/auth_callback_screen.dart';
 
@@ -183,6 +190,7 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => StudentMarketplaceCartProviderV1()),
       ChangeNotifierProvider(create: (_) => OpportunityReactionsProvider()),
       ChangeNotifierProvider(create: (_) => OpportunityCommentsProvider()),
+      ChangeNotifierProvider(create: (_) => ListingReviewsProvider()),
       ChangeNotifierProvider(create: (_) => StudentCommunitiesProvider()),
       ChangeNotifierProvider(create: (_) => StudentDirectMessagesProvider()),
       ChangeNotifierProvider(create: (_) => StudentChallengesProvider()),
@@ -206,7 +214,6 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => AdminApplicationsProvider()),
       ChangeNotifierProvider(create: (_) => AdminApplicationMessagesProvider()),
       ChangeNotifierProvider(create: (_) => AdminProgramsProvider()),
-      ChangeNotifierProvider(create: (_) => AdminOpportunitiesProvider()),
       ChangeNotifierProvider(create: (_) => AdminAcademicAnnouncementsProvider()),
       ChangeNotifierProvider(create: (_) => AdminAcademicEventsProvider()),
       ChangeNotifierProvider(create: (_) => AdminStudentHomeSlotsProvider()),
@@ -245,6 +252,8 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => StudentTdEnrollmentsProvider()),
       ChangeNotifierProvider(create: (_) => StudentTdRequestsProvider()),
       ChangeNotifierProvider(create: (_) => TeacherTdAssignmentsProvider()),
+      ChangeNotifierProvider(create: (_) => TeacherPrepAssignmentsProvider()),
+      ChangeNotifierProvider(create: (_) => TeacherPrepLiveSessionsProvider()),
       ChangeNotifierProvider(create: (_) => AdminTdEnrollmentsProvider()),
       ChangeNotifierProvider(create: (_) => TdMessagesProvider()),
       ChangeNotifierProvider(create: (_) => CommercialDashboardProvider()),
@@ -253,6 +262,8 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => PrepFlashcardProvider()),
       ChangeNotifierProvider(create: (_) => TdGamificationProvider()),
       ChangeNotifierProvider(create: (_) => CommunityStoriesProvider()),
+      ChangeNotifierProvider(create: (_) => TournamentProvider()),
+      ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
     ];
 
     if (kDebugMode) {
@@ -271,6 +282,9 @@ class AcademiaApp extends StatelessWidget {
         home: const AuthWrapper(),
         routes: {
           '/auth/callback': (_) => const AuthCallbackScreen(),
+          '/games': (_) => const GamesDomainHubScreen(),
+          '/tournaments': (_) => const TournamentListScreen(),
+          '/leaderboard': (_) => const LeaderboardScreen(),
         },
       ),
     );

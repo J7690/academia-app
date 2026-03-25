@@ -1,13 +1,11 @@
-import 'dart:convert';
-
-import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import '../config/supabase_config.dart';
 
 class LivekitAdminService {
   LivekitAdminService._();
 
+  /// Exclut un participant d'une session live via l'Edge Function.
+  /// Nécessite que l'utilisateur soit admin ou hôte de la session.
   static Future<bool> kickParticipant({
     required String sessionId,
     required String userId,
@@ -18,53 +16,28 @@ class LivekitAdminService {
       throw Exception('Administrateur non authentifié.');
     }
 
-    final jwt = session.accessToken;
-    if (jwt.isEmpty) {
-      throw Exception('Jeton administrateur invalide.');
-    }
+    debugPrint('[LivekitAdmin] Kick participant=$userId from session=$sessionId');
 
-    final supabaseUrl = SupabaseConfig.url;
-    final baseUri = Uri.parse(supabaseUrl);
-    final backendBase = Uri(
-      scheme: baseUri.scheme,
-      host: baseUri.host,
-      port: baseUri.hasPort ? baseUri.port : null,
-    );
-
-    final uri = backendBase.replace(path: '/livekit/admin/kick');
-
-    final response = await http.post(
-      uri,
-      headers: {
-        'Authorization': 'Bearer $jwt',
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: jsonEncode({
-        'session_id': sessionId,
-        'user_id': userId,
-      }),
-    );
-
-    if (response.statusCode != 200) {
-      try {
-        final body = jsonDecode(response.body) as Map<String, dynamic>;
-        final detail = body['detail'];
-        if (detail is Map && detail['message'] is String) {
-          throw Exception(detail['message'] as String);
-        }
-      } catch (_) {}
-      throw Exception(
-        'Erreur lors du bannissement LiveKit (${response.statusCode}).',
+    // Utiliser la RPC admin existante pour bannir
+    try {
+      final response = await client.rpc(
+        'app_admin_ban_user_from_online_course_live_session',
+        params: {
+          'p_session_id': sessionId,
+          'p_user_id': userId,
+        },
       );
-    }
 
-    final data = jsonDecode(response.body);
-    if (data is! Map<String, dynamic>) {
-      throw Exception('Réponse LiveKit admin invalide.');
-    }
+      if (response is Map<String, dynamic> && response['success'] == true) {
+        debugPrint('[LivekitAdmin] Kick OK');
+        return true;
+      }
 
-    final success = data['success'] == true;
-    return success;
+      debugPrint('[LivekitAdmin] Kick failed: $response');
+      return false;
+    } catch (e) {
+      debugPrint('[LivekitAdmin] Kick error: $e');
+      throw Exception('Erreur lors de l\'exclusion du participant.');
+    }
   }
 }

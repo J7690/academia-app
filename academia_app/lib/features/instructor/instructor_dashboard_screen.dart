@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../student/student_settings_screen.dart';
 
 import '../../providers/instructor_online_courses_provider.dart';
 import '../../providers/instructor_online_course_live_sessions_provider.dart';
@@ -15,8 +16,13 @@ import 'instructor_course_forum_screen.dart';
 import '../live/livekit_room_screen.dart';
 import 'teacher_td_assignments_screen.dart';
 import 'teacher_prep_screen.dart';
+import 'teacher_prep_assignments_screen.dart';
+import 'teacher_prep_live_sessions_screen.dart';
+import 'teacher_td_local_groups_screen.dart';
+import 'teacher_td_exercises_screen.dart';
 import 'teacher_td_resources_screen.dart';
 import '../../widgets/support_fab.dart';
+import 'instructor_revenue_tab.dart';
 import '../../services/push_trigger_service.dart';
 
 class InstructorDashboardScreen extends StatefulWidget {
@@ -57,9 +63,6 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
     } catch (_) {}
   }
 
-  Future<void> _signOut() async {
-    await Supabase.instance.client.auth.signOut();
-  }
 
   @override
   void dispose() {
@@ -70,7 +73,7 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 6,
+      length: 11,
       child: Scaffold(
         backgroundColor: TdTheme.scaffoldBg,
         floatingActionButton: const SupportFab(),
@@ -93,9 +96,18 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
               tooltip: 'Actualiser',
             ),
             IconButton(
-              onPressed: _signOut,
-              icon: const Icon(Icons.logout),
-              tooltip: 'Se déconnecter',
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const StudentSettingsScreen(
+                      showDeleteAccount: false,
+                      showProfile: false,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.settings),
+              tooltip: 'Paramètres',
             ),
           ],
           bottom: TabBar(
@@ -110,9 +122,14 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
               Tab(icon: Icon(Icons.dashboard_outlined, size: 18), text: 'Accueil'),
               Tab(icon: Icon(Icons.assignment_outlined, size: 18), text: 'Mes TD'),
               Tab(icon: Icon(Icons.people_outlined, size: 18), text: 'Progression'),
+              Tab(icon: Icon(Icons.location_on, size: 18), text: 'Groupes'),
+              Tab(icon: Icon(Icons.edit_note, size: 18), text: 'Exo TD'),
               Tab(icon: Icon(Icons.school_outlined, size: 18), text: 'Prépa'),
+              Tab(icon: Icon(Icons.edit_document, size: 18), text: 'Exercices'),
+              Tab(icon: Icon(Icons.cast_for_education, size: 18), text: 'Lives'),
               Tab(icon: Icon(Icons.play_lesson_outlined, size: 18), text: 'Cours'),
               Tab(icon: Icon(Icons.videocam_outlined, size: 18), text: 'Sessions'),
+              Tab(icon: Icon(Icons.account_balance_wallet, size: 18), text: 'Revenus'),
             ],
           ),
         ),
@@ -121,9 +138,14 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
             _InstructorHomeTab(),
             TeacherTdAssignmentsScreen(),
             TeacherTdResourcesScreen(),
+            TeacherTdLocalGroupsScreen(),
+            TeacherTdExercisesScreen(),
             TeacherPrepScreen(),
+            TeacherPrepAssignmentsScreen(),
+            TeacherPrepLiveSessionsScreen(),
             _InstructorCoursesTab(),
             _InstructorLiveSessionsTab(),
+            InstructorRevenueTab(),
           ],
         ),
       ),

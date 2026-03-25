@@ -1,0 +1,270 @@
+{
+  "prep_subjects": [
+    {
+      "id": "b703e1e5-a4ee-4e81-8a3b-eaff51359b05",
+      "slug": "maths",
+      "title": "maths",
+      "is_active": true,
+      "description": null
+    }
+  ],
+  "prep_badges": [
+    {
+      "id": "eda45cb8-4bae-438a-bd6e-b22566f5c12c",
+      "code": "first_star",
+      "emoji": "🌟",
+      "title": "Première étoile",
+      "xp_reward": 10,
+      "condition_type": "quiz_count",
+      "condition_value": 1
+    },
+    {
+      "id": "38f863b9-2c58-4521-9336-3c3fe9fadf1a",
+      "code": "flame_7",
+      "emoji": "🔥",
+      "title": "Flamme",
+      "xp_reward": 50,
+      "condition_type": "streak",
+      "condition_value": 7
+    },
+    {
+      "id": "8339636c-03a3-4a1a-99b1-585c5d8d671c",
+      "code": "bookworm",
+      "emoji": "📚",
+      "title": "Rat de bibliothèque",
+      "xp_reward": 100,
+      "condition_type": "correct_count",
+      "condition_value": 100
+    },
+    {
+      "id": "5062ea79-d840-4e28-adf8-9fe389903f21",
+      "code": "sharpshooter",
+      "emoji": "🎯",
+      "title": "Tireur d'élite",
+      "xp_reward": 200,
+      "condition_type": "perfect_score",
+      "condition_value": 10
+    },
+    {
+      "id": "b4742296-c39b-4ffc-a27f-f4b2e8d2448f",
+      "code": "genius",
+      "emoji": "🧠",
+      "title": "Génie",
+      "xp_reward": 500,
+      "condition_type": "correct_count",
+      "condition_value": 500
+    },
+    {
+      "id": "e24ec881-fa77-4c3f-b74a-c26fe95596ba",
+      "code": "champion",
+      "emoji": "🏆",
+      "title": "Champion",
+      "xp_reward": 300,
+      "condition_type": "xp",
+      "condition_value": 0
+    },
+    {
+      "id": "fe3c60f8-0f01-4f73-9309-105ebb7fc668",
+      "code": "diamond",
+      "emoji": "💎",
+      "title": "Diamant",
+      "xp_reward": 1000,
+      "condition_type": "xp",
+      "condition_value": 1000
+    },
+    {
+      "id": "10b5284b-a47b-47f5-8d4e-d6b4761b7b1f",
+      "code": "lightning",
+      "emoji": "⚡",
+      "title": "Éclair",
+      "xp_reward": 150,
+      "condition_type": "correct_count",
+      "condition_value": 50
+    }
+  ],
+  "prep_ai_config": [
+    {
+      "config_key": "gemini_api_key",
+      "config_value": ""
+    },
+    {
+      "config_key": "ai_model",
+      "config_value": "gemini-2.0-flash"
+    },
+    {
+      "config_key": "max_messages_per_day",
+      "config_value": "50"
+    },
+    {
+      "config_key": "system_prompt",
+      "config_value": "Tu es un tuteur expert en préparation aux concours camerounais (ENAM, ENS, ENSET, BAC, BEPC, IRIC). Tu expliques les concepts pas à pas, tu proposes des exercices, tu corriges les erreurs avec bienveillance. Tu t'adaptes au niveau de l'étudiant. Langue : français. Contexte : système éducatif camerounais."
+    }
+  ],
+  "prep_questions_count": [
+    {
+      "cnt": 0
+    }
+  ],
+  "prep_questions_columns": [
+    {
+      "data_type": "uuid",
+      "column_name": "id"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "subject_id"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "chapter_id"
+    },
+    {
+      "data_type": "text",
+      "column_name": "source"
+    },
+    {
+      "data_type": "text",
+      "column_name": "question_type"
+    },
+    {
+      "data_type": "text",
+      "column_name": "level"
+    },
+    {
+      "data_type": "text",
+      "column_name": "mechanism"
+    },
+    {
+      "data_type": "text",
+      "column_name": "prompt_context"
+    },
+    {
+      "data_type": "text",
+      "column_name": "question"
+    },
+    {
+      "data_type": "text",
+      "column_name": "explanation"
+    },
+    {
+      "data_type": "text",
+      "column_name": "correct_answer"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "estimated_time_sec"
+    },
+    {
+      "data_type": "boolean",
+      "column_name": "is_published"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "created_by"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "bank_id"
+    },
+    {
+      "data_type": "text",
+      "column_name": "content"
+    },
+    {
+      "data_type": "jsonb",
+      "column_name": "options"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "correct_index"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "difficulty"
+    },
+    {
+      "data_type": "text",
+      "column_name": "subject"
+    },
+    {
+      "data_type": "ARRAY",
+      "column_name": "tags"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "points"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "time_limit_seconds"
+    },
+    {
+      "data_type": "text",
+      "column_name": "image_url"
+    },
+    {
+      "data_type": "boolean",
+      "column_name": "is_active"
+    },
+    {
+      "data_type": "text",
+      "column_name": "concours_type"
+    }
+  ],
+  "prep_question_banks_count": [
+    {
+      "cnt": 0
+    }
+  ],
+  "prep_question_banks_columns": [
+    {
+      "data_type": "uuid",
+      "column_name": "id"
+    },
+    {
+      "data_type": "text",
+      "column_name": "title"
+    },
+    {
+      "data_type": "text",
+      "column_name": "description"
+    },
+    {
+      "data_type": "text",
+      "column_name": "concours_type"
+    },
+    {
+      "data_type": "text",
+      "column_name": "subject"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "created_by"
+    },
+    {
+      "data_type": "boolean",
+      "column_name": "is_active"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at"
+    }
+  ],
+  "system_prompt": [
+    {
+      "config_value": "Tu es un tuteur expert en préparation aux concours camerounais (ENAM, ENS, ENSET, BAC, BEPC, IRIC). Tu expliques les concepts pas à pas, tu proposes des exercices, tu corriges les erreurs avec bienveillance. Tu t'adaptes au niveau de l'étudiant. Langue : français. Contexte : système éducatif camerounais."
+    }
+  ]
+}

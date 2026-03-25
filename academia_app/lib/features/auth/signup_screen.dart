@@ -1,11 +1,15 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/supabase_config.dart';
 
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
+  final String? initialRefCode;
+  const SignupScreen({super.key, this.initialRefCode});
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
@@ -17,9 +21,26 @@ class _SignupScreenState extends State<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _invitationCodeController = TextEditingController();
+  late final TextEditingController _referralCodeController;
   bool _isLoading = false;
   String? _error;
   bool _isPasswordVisible = false;
+  bool _acceptedTerms = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _referralCodeController = TextEditingController(text: widget.initialRefCode ?? '');
+    // Also try to load from SharedPreferences if no initial code provided
+    if (widget.initialRefCode == null || widget.initialRefCode!.isEmpty) {
+      SharedPreferences.getInstance().then((prefs) {
+        final saved = prefs.getString('pending_referral_code_v1');
+        if (saved != null && saved.isNotEmpty && _referralCodeController.text.isEmpty) {
+          _referralCodeController.text = saved;
+        }
+      }).catchError((_) {});
+    }
+  }
 
   @override
   void dispose() {
@@ -28,6 +49,7 @@ class _SignupScreenState extends State<SignupScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _invitationCodeController.dispose();
+    _referralCodeController.dispose();
     super.dispose();
   }
 
@@ -37,6 +59,7 @@ class _SignupScreenState extends State<SignupScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final invitationCode = _invitationCodeController.text.trim();
+    final referralCode = _referralCodeController.text.trim();
 
     if (lastName.isEmpty || firstName.isEmpty || email.isEmpty || password.isEmpty) {
       setState(() {
@@ -53,15 +76,30 @@ class _SignupScreenState extends State<SignupScreen> {
     try {
       final fullName = '$firstName $lastName';
       final client = Supabase.instance.client;
+      final signUpData = <String, dynamic>{
+        'role': 'student',
+        'full_name': fullName,
+      };
+      // Inject ref_code into user_metadata so it's stored SERVER-SIDE
+      // This survives domain changes, app reinstalls, SharedPreferences loss
+      if (referralCode.isNotEmpty) {
+        signUpData['ref_code'] = referralCode;
+      }
       await client.auth.signUp(
         email: email,
         password: password,
         emailRedirectTo: kIsWeb ? SupabaseConfig.authCallbackUrl : SupabaseConfig.mobileAuthCallbackUrl,
-        data: {
-          'role': 'student',
-          'full_name': fullName,
-        },
+        data: signUpData,
       );
+
+      // Store referral code in SharedPreferences for auth_wrapper to attach after login
+      if (referralCode.isNotEmpty) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('pending_referral_code_v1', referralCode);
+          await prefs.setString('pending_referral_source_v1', 'manual');
+        } catch (_) {}
+      }
 
       if (invitationCode.isNotEmpty) {
         try {
@@ -194,10 +232,84 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       const SizedBox(height: 16),
                       TextField(
+                        controller: _referralCodeController,
+                        decoration: const InputDecoration(
+                          labelText: 'Code de parrainage (optionnel)',
+                          hintText: 'Ex: COMM-xxxxxxxx',
+                          prefixIcon: Icon(Icons.people_outline, size: 20),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
                         controller: _invitationCodeController,
                         decoration: const InputDecoration(
                           labelText: 'Code d\'invitation (optionnel)',
                         ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: Checkbox(
+                              value: _acceptedTerms,
+                              onChanged: (v) {
+                                setState(() => _acceptedTerms = v ?? false);
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: RichText(
+                              text: TextSpan(
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.black87,
+                                  height: 1.4,
+                                ),
+                                children: [
+                                  const TextSpan(
+                                    text: 'En cr\u00e9ant un compte, vous acceptez les ',
+                                  ),
+                                  TextSpan(
+                                    text: "Conditions d'utilisation",
+                                    style: const TextStyle(
+                                      color: Colors.blue,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        launchUrl(
+                                          Uri.parse('https://nexiomgroup.space/terms'),
+                                          mode: LaunchMode.externalApplication,
+                                        );
+                                      },
+                                  ),
+                                  const TextSpan(text: ' et la '),
+                                  TextSpan(
+                                    text: 'Politique de confidentialit\u00e9',
+                                    style: const TextStyle(
+                                      color: Colors.blue,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        launchUrl(
+                                          Uri.parse('https://nexiomgroup.space/privacy'),
+                                          mode: LaunchMode.externalApplication,
+                                        );
+                                      },
+                                  ),
+                                  const TextSpan(
+                                    text: ' de Nexiom Group.',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 24),
                       if (_error != null) ...[
@@ -210,7 +322,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       SizedBox(
                         height: 48,
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : _submit,
+                          onPressed: (_isLoading || !_acceptedTerms) ? null : _submit,
                           child: _isLoading
                               ? const CircularProgressIndicator(strokeWidth: 2)
                               : const Text('Créer le compte'),

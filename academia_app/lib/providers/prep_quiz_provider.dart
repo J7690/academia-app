@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Modèle d'une question QCM.
 class PrepQuestion {
@@ -108,6 +109,28 @@ class PrepQuizProvider extends ChangeNotifier {
 
   // ─── Initialisation ────────────────────────────────────────────
   Future<void> loadProgress() async {
+    // Try server first, fallback to local
+    try {
+      final client = Supabase.instance.client;
+      if (client.auth.currentSession != null) {
+        final res = await client.rpc('app_prep_get_student_progress');
+        if (res is Map) {
+          final m = Map<String, dynamic>.from(res);
+          _totalXp = (m['total_xp'] as int?) ?? 0;
+          _currentStreak = (m['current_streak'] as int?) ?? 0;
+          _longestStreak = (m['longest_streak'] as int?) ?? 0;
+          _totalCorrect = (m['total_correct'] as int?) ?? 0;
+          _totalAnswered = (m['total_answered'] as int?) ?? 0;
+          _lastActivityDate = m['last_activity_date']?.toString();
+          _checkStreak();
+          notifyListeners();
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('[PrepQuizProvider] Server load failed, using local: $e');
+    }
+    // Fallback to local SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     _totalXp = prefs.getInt('prep_total_xp') ?? 0;
     _currentStreak = prefs.getInt('prep_current_streak') ?? 0;
@@ -126,7 +149,27 @@ class PrepQuizProvider extends ChangeNotifier {
     await prefs.setInt('prep_longest_streak', _longestStreak);
     await prefs.setInt('prep_total_correct', _totalCorrect);
     await prefs.setInt('prep_total_answered', _totalAnswered);
-    await prefs.setString('prep_last_activity', DateTime.now().toIso8601String().substring(0, 10));
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    await prefs.setString('prep_last_activity', today);
+    // Sync to server
+    _syncProgressToServer(today);
+  }
+
+  Future<void> _syncProgressToServer(String lastActivityDate) async {
+    try {
+      final client = Supabase.instance.client;
+      if (client.auth.currentSession == null) return;
+      await client.rpc('app_prep_sync_student_progress', params: {
+        'p_total_xp': _totalXp,
+        'p_current_streak': _currentStreak,
+        'p_longest_streak': _longestStreak,
+        'p_total_correct': _totalCorrect,
+        'p_total_answered': _totalAnswered,
+        'p_last_activity_date': lastActivityDate,
+      });
+    } catch (e) {
+      debugPrint('[PrepQuizProvider] Server sync failed: $e');
+    }
   }
 
   void _checkStreak() {
@@ -149,6 +192,86 @@ class PrepQuizProvider extends ChangeNotifier {
     }
   }
 
+  // ─── Stats par matière (depuis Supabase) ─────────────────────────
+  List<Map<String, dynamic>> _subjectStats = [];
+  List<Map<String, dynamic>> get subjectStats => _subjectStats;
+
+  Future<void> loadSubjectStats() async {
+    try {
+      final client = Supabase.instance.client;
+      if (client.auth.currentSession == null) return;
+      final res = await client.rpc('app_prep_get_subject_stats');
+      if (res is List) {
+        _subjectStats = res
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('[PrepQuizProvider] loadSubjectStats error: $e');
+    }
+  }
+
+  // ─── Chargement des questions depuis Supabase ────────────────────
+  bool _isLoadingQuestions = false;
+  bool get isLoadingQuestions => _isLoadingQuestions;
+
+  Future<List<PrepQuestion>> loadQuestionsFromServer({
+    String? subject,
+    String? concoursType,
+    int? difficulty,
+    int count = 10,
+  }) async {
+    try {
+      final client = Supabase.instance.client;
+      if (client.auth.currentSession == null) return [];
+      final res = await client.rpc('app_prep_get_quiz_questions', params: {
+        if (subject != null) 'p_subject': subject,
+        if (concoursType != null) 'p_concours_type': concoursType,
+        if (difficulty != null) 'p_difficulty': difficulty,
+        'p_count': count,
+      });
+      if (res is List && res.isNotEmpty) {
+        return res.whereType<Map>().map((m) {
+          final map = Map<String, dynamic>.from(m);
+          // Build options from choices or options field
+          List<String> opts = [];
+          int correctIdx = (map['correct_index'] as int?) ?? 0;
+          final choices = map['choices'];
+          if (choices is List && choices.isNotEmpty) {
+            final sorted = List<Map<String, dynamic>>.from(
+                choices.whereType<Map>().map((c) => Map<String, dynamic>.from(c)));
+            sorted.sort((a, b) => ((a['sort_order'] ?? 0) as int).compareTo((b['sort_order'] ?? 0) as int));
+            opts = sorted.map((c) => (c['text'] ?? '').toString()).toList();
+            // Find correct index from choices
+            for (int i = 0; i < sorted.length; i++) {
+              if (sorted[i]['is_correct'] == true) {
+                correctIdx = i;
+                break;
+              }
+            }
+          } else if (map['options'] is List) {
+            opts = (map['options'] as List).map((e) => e.toString()).toList();
+          }
+          return PrepQuestion(
+            id: (map['id'] ?? '').toString(),
+            content: (map['content'] ?? map['question'] ?? '').toString(),
+            options: opts,
+            correctIndex: correctIdx,
+            explanation: map['explanation']?.toString(),
+            subject: (map['subject'] ?? '').toString(),
+            difficulty: (map['difficulty'] as int?) ?? 1,
+            imageUrl: map['image_url']?.toString(),
+          );
+        }).toList();
+      }
+    } catch (e) {
+      debugPrint('[PrepQuizProvider] loadQuestionsFromServer error: $e');
+    }
+    return [];
+  }
+
   // ─── Démarrer un quiz ──────────────────────────────────────────
   void startQuiz({
     required List<PrepQuestion> questions,
@@ -164,6 +287,32 @@ class PrepQuizProvider extends ChangeNotifier {
     _status = QuizStatus.inProgress;
     _questionStartTime = DateTime.now();
     notifyListeners();
+  }
+
+  /// Start a quiz, loading from Supabase first; falls back to demo if DB is empty.
+  Future<void> startQuizFromServer({
+    String? subject,
+    String? concoursType,
+    int count = 10,
+    int? timeLimitSeconds,
+    bool examMode = false,
+  }) async {
+    _isLoadingQuestions = true;
+    notifyListeners();
+    try {
+      var questions = await loadQuestionsFromServer(
+        subject: subject,
+        concoursType: concoursType,
+        count: count,
+      );
+      if (questions.isEmpty) {
+        questions = generateDemoQuestions(subject: subject ?? 'Culture Générale', count: count);
+      }
+      startQuiz(questions: questions, timeLimitSeconds: timeLimitSeconds, examMode: examMode);
+    } finally {
+      _isLoadingQuestions = false;
+      notifyListeners();
+    }
   }
 
   // ─── Répondre à une question ───────────────────────────────────
@@ -278,10 +427,10 @@ class PrepQuizProvider extends ChangeNotifier {
       ),
       PrepQuestion(
         id: 'q2',
-        content: 'En quelle année le Cameroun a-t-il obtenu son indépendance ?',
+        content: 'En quelle année le Burkina Faso a-t-il obtenu son indépendance ?',
         options: ['1958', '1960', '1962', '1956'],
         correctIndex: 1,
-        explanation: 'Le Cameroun français a obtenu son indépendance le 1er janvier 1960.',
+        explanation: 'La Haute-Volta (ancien nom du Burkina Faso) a obtenu son indépendance le 5 août 1960.',
         subject: 'Histoire',
         difficulty: 1,
       ),
@@ -305,10 +454,10 @@ class PrepQuizProvider extends ChangeNotifier {
       ),
       PrepQuestion(
         id: 'q5',
-        content: 'Quelle institution camerounaise forme les administrateurs civils ?',
-        options: ['IRIC', 'ENAM', 'ENS', 'ENSET'],
+        content: 'Quelle institution burkinabè forme les agents des régies financières ?',
+        options: ['ENAM', 'ENAREF', 'ENS', 'Université Ki-Zerbo'],
         correctIndex: 1,
-        explanation: 'L\'ENAM (École Nationale d\'Administration et de Magistrature) forme les administrateurs civils et les magistrats.',
+        explanation: 'L\'ENAREF (École Nationale des Régies Financières) forme les agents des douanes, des impôts et du trésor public au Burkina Faso.',
         subject: 'Culture Générale',
         difficulty: 2,
       ),
@@ -328,10 +477,10 @@ class PrepQuizProvider extends ChangeNotifier {
       ),
       PrepQuestion(
         id: 'q7',
-        content: 'Quelle est la capitale politique du Cameroun ?',
-        options: ['Douala', 'Yaoundé', 'Bafoussam', 'Garoua'],
+        content: 'Quelle est la capitale du Burkina Faso ?',
+        options: ['Bobo-Dioulasso', 'Ouagadougou', 'Koudougou', 'Banfora'],
         correctIndex: 1,
-        explanation: 'Yaoundé est la capitale politique du Cameroun, tandis que Douala est la capitale économique.',
+        explanation: 'Ouagadougou est la capitale politique et administrative du Burkina Faso. Bobo-Dioulasso est la capitale économique.',
         subject: 'Géographie',
         difficulty: 1,
       ),
@@ -369,12 +518,12 @@ class PrepQuizProvider extends ChangeNotifier {
       ),
       PrepQuestion(
         id: 'q11',
-        content: 'Quel est le PIB par habitant approximatif du Cameroun (2024) ?',
-        options: ['500 USD', '1 600 USD', '3 200 USD', '5 000 USD'],
+        content: 'Quelle est la monnaie utilisée au Burkina Faso ?',
+        options: ['Le Naira', 'Le Franc CFA (XOF)', 'Le Cedi', 'Le Dalasi'],
         correctIndex: 1,
-        explanation: 'Le PIB par habitant du Cameroun est d\'environ 1 600 USD (Banque Mondiale, 2024).',
+        explanation: 'Le Burkina Faso utilise le Franc CFA de l\'Afrique de l\'Ouest (XOF), émis par la BCEAO. Le pays est membre de l\'UEMOA.',
         subject: 'Économie',
-        difficulty: 3,
+        difficulty: 1,
       ),
       PrepQuestion(
         id: 'q12',
@@ -396,12 +545,12 @@ class PrepQuizProvider extends ChangeNotifier {
       ),
       PrepQuestion(
         id: 'q14',
-        content: 'Quelle est la langue officielle de l\'Union Africaine qui n\'est PAS une langue officielle du Cameroun ?',
-        options: ['Français', 'Anglais', 'Arabe', 'Espagnol'],
-        correctIndex: 2,
-        explanation: 'Le Cameroun a deux langues officielles : le français et l\'anglais. L\'arabe est une langue officielle de l\'UA mais pas du Cameroun.',
+        content: 'Que signifie "Burkina Faso" ?',
+        options: ['Terre des hommes libres', 'Pays des hommes intègres', 'Nation des braves', 'Terre de paix'],
+        correctIndex: 1,
+        explanation: '"Burkina Faso" signifie "Pays des hommes intègres". "Burkina" vient du mooré (intégrité) et "Faso" du dioula (patrie).',
         subject: 'Culture Générale',
-        difficulty: 2,
+        difficulty: 1,
       ),
       PrepQuestion(
         id: 'q15',

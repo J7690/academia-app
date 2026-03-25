@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../providers/admin_prep_concours_provider.dart';
 import '../../../providers/prep_concours_provider.dart';
 import '../admin_prep_screen.dart';
+import 'admin_prep_import_screen.dart';
+import 'admin_prep_upload_screen.dart';
 
 class AdminPrepConcoursScreen extends StatefulWidget {
   const AdminPrepConcoursScreen({super.key});
@@ -836,6 +838,24 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AdminPrepImportScreen()),
+              );
+            },
+            icon: const Icon(Icons.file_download_rounded),
+            tooltip: 'Importer document scanné',
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AdminPrepUploadScreen()),
+              );
+            },
+            icon: const Icon(Icons.upload_file),
+            tooltip: 'Upload & IA',
+          ),
           IconButton(
             onPressed: _reload,
             icon: const Icon(Icons.refresh),

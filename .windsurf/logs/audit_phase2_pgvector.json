@@ -1,0 +1,115 @@
+{
+  "pgvector_extension": [
+    {
+      "extname": "vector",
+      "extversion": "0.8.0"
+    }
+  ],
+  "prep_doc_chunks_columns": [
+    {
+      "data_type": "uuid",
+      "column_name": "id"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "source_document_id"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "chunk_index"
+    },
+    {
+      "data_type": "text",
+      "column_name": "content"
+    },
+    {
+      "data_type": "jsonb",
+      "column_name": "metadata"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at"
+    }
+  ],
+  "prep_source_documents_columns": [
+    {
+      "data_type": "uuid",
+      "column_name": "id"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "created_by"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "subject_id"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "year"
+    },
+    {
+      "data_type": "text",
+      "column_name": "doc_type"
+    },
+    {
+      "data_type": "text",
+      "column_name": "source_type"
+    },
+    {
+      "data_type": "text",
+      "column_name": "storage_bucket"
+    },
+    {
+      "data_type": "text",
+      "column_name": "storage_path"
+    },
+    {
+      "data_type": "text",
+      "column_name": "extracted_text"
+    },
+    {
+      "data_type": "text",
+      "column_name": "status"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at"
+    }
+  ],
+  "table_prep_topics": 0,
+  "table_prep_question_topics": 0,
+  "table_prep_topic_predictions": 0,
+  "table_prep_ai_corrections": 0,
+  "rpcs_using_doc_chunks": [],
+  "prep_doc_chunks_count": [
+    {
+      "cnt": 0
+    }
+  ],
+  "prep_source_documents_count": [
+    {
+      "cnt": 0
+    }
+  ],
+  "rls_prep_doc_chunks": [
+    {
+      "cmd": "ALL",
+      "roles": [
+        "public"
+      ],
+      "policyname": "admin_all_prep_doc_chunks"
+    },
+    {
+      "cmd": "SELECT",
+      "roles": [
+        "public"
+      ],
+      "policyname": "authenticated_select_prep_doc_chunks"
+    }
+  ]
+}

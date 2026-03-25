@@ -542,4 +542,62 @@ class MerchantMarketplaceConsoleProviderV2 extends ChangeNotifier {
       _setLoading(false);
     }
   }
+
+  // === Reviews ===
+  List<Map<String, dynamic>> _myReviews = [];
+  List<Map<String, dynamic>> get myReviews => List.unmodifiable(_myReviews);
+
+  Future<void> loadMyReviews({int limit = 30, int offset = 0}) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(
+        'app_merchant_list_my_reviews',
+        params: {'p_limit': limit, 'p_offset': offset},
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur.');
+        return;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ?? 'Erreur serveur.');
+        return;
+      }
+      final data = response['reviews'];
+      _myReviews = (data is List)
+          ? data.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList(growable: false)
+          : <Map<String, dynamic>>[];
+      notifyListeners();
+    } catch (e) {
+      _setError(e.toString());
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<bool> replyToReview({required String reviewId, required String reply}) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(
+        'app_merchant_reply_review',
+        params: {'p_review_id': reviewId, 'p_reply': reply},
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide du serveur.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ?? 'Erreur.');
+        return false;
+      }
+      await loadMyReviews();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
 }

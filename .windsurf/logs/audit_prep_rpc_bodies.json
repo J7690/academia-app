@@ -1,0 +1,269 @@
+{
+  "app_prep_create_question_bank": {
+    "schema": "app",
+    "tables": [
+      "td_question_banks"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_create_question": {
+    "schema": "app",
+    "tables": [
+      "td_questions"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_list_question_banks": {
+    "schema": "app",
+    "tables": [
+      "td_question_banks",
+      "td_questions"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_list_questions": {
+    "schema": "app",
+    "tables": [
+      "td_question_banks",
+      "td_questions"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_create_exam_paper": {
+    "schema": "app",
+    "tables": [
+      "td_exam_papers"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_list_exam_papers": {
+    "schema": "app",
+    "tables": [
+      "td_exam_papers"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_create_flashcard_deck": {
+    "schema": "app",
+    "tables": [
+      "td_flashcard_decks"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_list_flashcard_decks": {
+    "schema": "app",
+    "tables": [
+      "td_flashcard_decks",
+      "td_flashcards"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_create_flashcard": {
+    "schema": "app",
+    "tables": [
+      "td_flashcard_decks",
+      "td_flashcards"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_list_flashcards": {
+    "schema": "app",
+    "tables": [
+      "td_flashcards",
+      "td_flashcard_progress"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_save_quiz_attempt": {
+    "schema": "app",
+    "tables": [
+      "td_quiz_attempts"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_save_flashcard_review": {
+    "schema": "app",
+    "tables": [
+      "td_flashcard_progress"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_admin_get_stats": {
+    "schema": "app",
+    "tables": [
+      "td_question_banks",
+      "td_questions",
+      "td_quiz_attempts",
+      "td_exam_papers",
+      "td_flashcard_decks",
+      "td_badges",
+      "td_ai_conversations",
+      "td_ai_messages"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_admin_list_questions": {
+    "schema": "app",
+    "tables": [
+      "td_question_banks",
+      "td_questions"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_admin_toggle_question": {
+    "schema": "app",
+    "tables": [
+      "td_questions"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_admin_upsert_badge": {
+    "schema": "app",
+    "tables": [
+      "td_badges"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_get_student_progress": {
+    "schema": "app",
+    "tables": [
+      "td_quiz_attempts",
+      "td_badges",
+      "td_student_badges"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_get_subject_stats": {
+    "schema": "app",
+    "tables": [],
+    "security": "DEFINER"
+  },
+  "app_prep_get_leaderboard": {
+    "schema": "app",
+    "tables": [],
+    "security": "DEFINER"
+  },
+  "app_prep_get_ai_config": {
+    "schema": "app",
+    "tables": [
+      "td_ai_config"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_create_ai_conversation": {
+    "schema": "app",
+    "tables": [
+      "td_ai_conversations"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_save_ai_message": {
+    "schema": "app",
+    "tables": [
+      "td_ai_conversations",
+      "td_ai_messages"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_list_ai_conversations": {
+    "schema": "app",
+    "tables": [
+      "td_ai_conversations"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_list_ai_messages": {
+    "schema": "app",
+    "tables": [
+      "td_ai_messages"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_update_ai_config": {
+    "schema": "app",
+    "tables": [
+      "td_ai_config"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_admin_list_ai_conversations": {
+    "schema": "app",
+    "tables": [
+      "td_ai_conversations"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_list_quiz_templates": {
+    "schema": "app",
+    "tables": [
+      "td_question_banks",
+      "td_quiz_templates"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_create_quiz_template": {
+    "schema": "app",
+    "tables": [
+      "td_quiz_templates"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_list_subjects": {
+    "schema": "public",
+    "tables": [
+      "prep_subjects"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_list_chapters": {
+    "schema": "public",
+    "tables": [
+      "prep_chapters"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_list_published_questions": {
+    "schema": "public",
+    "tables": [
+      "prep_questions"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_list_question_choices": {
+    "schema": "public",
+    "tables": [
+      "prep_question_choices"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_create_attempt": {
+    "schema": "public",
+    "tables": [
+      "prep_attempts"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_list_my_attempts": {
+    "schema": "public",
+    "tables": [
+      "prep_questions",
+      "prep_attempts"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_get_my_subject_stats": {
+    "schema": "public",
+    "tables": [
+      "prep_questions",
+      "prep_attempts"
+    ],
+    "security": "DEFINER"
+  },
+  "app_prep_get_my_entitlement": {
+    "schema": "public",
+    "tables": [
+      "user_feature_entitlements"
+    ],
+    "security": "DEFINER"
+  }
+}

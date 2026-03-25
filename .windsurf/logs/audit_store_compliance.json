@@ -1,0 +1,2377 @@
+{
+  "1_all_app_tables": [
+    {
+      "table_name": "academic_events"
+    },
+    {
+      "table_name": "admin_user_action_logs"
+    },
+    {
+      "table_name": "admin_users"
+    },
+    {
+      "table_name": "application_files"
+    },
+    {
+      "table_name": "application_messages"
+    },
+    {
+      "table_name": "application_payments"
+    },
+    {
+      "table_name": "applications"
+    },
+    {
+      "table_name": "bobodo_detected_needs"
+    },
+    {
+      "table_name": "bobodo_feedback"
+    },
+    {
+      "table_name": "bobodo_knowledge"
+    },
+    {
+      "table_name": "bobodo_messages"
+    },
+    {
+      "table_name": "bobodo_sessions"
+    },
+    {
+      "table_name": "bobodo_unanswered_questions"
+    },
+    {
+      "table_name": "challenge_comments"
+    },
+    {
+      "table_name": "challenge_favorites"
+    },
+    {
+      "table_name": "challenge_likes"
+    },
+    {
+      "table_name": "challenge_participation_videos"
+    },
+    {
+      "table_name": "challenge_participations"
+    },
+    {
+      "table_name": "challenge_reports"
+    },
+    {
+      "table_name": "challenge_user_bans"
+    },
+    {
+      "table_name": "challenge_video_assets"
+    },
+    {
+      "table_name": "challenge_video_overlays"
+    },
+    {
+      "table_name": "challenge_video_render_jobs"
+    },
+    {
+      "table_name": "challenges"
+    },
+    {
+      "table_name": "commercial_milestone_claims"
+    },
+    {
+      "table_name": "commercial_milestones"
+    },
+    {
+      "table_name": "commercial_profiles"
+    },
+    {
+      "table_name": "commission_rules"
+    },
+    {
+      "table_name": "communities"
+    },
+    {
+      "table_name": "community_join_requests"
+    },
+    {
+      "table_name": "community_memberships"
+    },
+    {
+      "table_name": "community_poll_votes"
+    },
+    {
+      "table_name": "community_polls"
+    },
+    {
+      "table_name": "community_post_reactions"
+    },
+    {
+      "table_name": "community_posts"
+    },
+    {
+      "table_name": "community_read_states"
+    },
+    {
+      "table_name": "community_stories"
+    },
+    {
+      "table_name": "community_story_views"
+    },
+    {
+      "table_name": "competitive_events"
+    },
+    {
+      "table_name": "course_domains"
+    },
+    {
+      "table_name": "course_enrollments"
+    },
+    {
+      "table_name": "course_resources"
+    },
+    {
+      "table_name": "course_units"
+    },
+    {
+      "table_name": "courses"
+    },
+    {
+      "table_name": "direct_conversations"
+    },
+    {
+      "table_name": "direct_message_read_states"
+    },
+    {
+      "table_name": "direct_messages"
+    },
+    {
+      "table_name": "exercises"
+    },
+    {
+      "table_name": "free_video_overlays"
+    },
+    {
+      "table_name": "free_video_render_jobs"
+    },
+    {
+      "table_name": "free_videos"
+    },
+    {
+      "table_name": "hero_overlay_animations"
+    },
+    {
+      "table_name": "hero_overlays"
+    },
+    {
+      "table_name": "hero_overlays_tv"
+    },
+    {
+      "table_name": "hero_playlist"
+    },
+    {
+      "table_name": "hero_renders"
+    },
+    {
+      "table_name": "hero_renders_tv"
+    },
+    {
+      "table_name": "hero_video_jobs"
+    },
+    {
+      "table_name": "hero_videos"
+    },
+    {
+      "table_name": "instructors"
+    },
+    {
+      "table_name": "landing_announcements"
+    },
+    {
+      "table_name": "landing_config"
+    },
+    {
+      "table_name": "landing_partners"
+    },
+    {
+      "table_name": "landing_videos"
+    },
+    {
+      "table_name": "landing_why_cards"
+    },
+    {
+      "table_name": "league_matches"
+    },
+    {
+      "table_name": "league_participations"
+    },
+    {
+      "table_name": "leagues"
+    },
+    {
+      "table_name": "legacy_video_write_attempts"
+    },
+    {
+      "table_name": "marketplace_cart_items"
+    },
+    {
+      "table_name": "marketplace_carts"
+    },
+    {
+      "table_name": "marketplace_categories"
+    },
+    {
+      "table_name": "marketplace_listing_bookmarks"
+    },
+    {
+      "table_name": "marketplace_listing_media"
+    },
+    {
+      "table_name": "marketplace_listings"
+    },
+    {
+      "table_name": "marketplace_merchant_balances"
+    },
+    {
+      "table_name": "marketplace_merchants"
+    },
+    {
+      "table_name": "marketplace_order_items"
+    },
+    {
+      "table_name": "marketplace_orders"
+    },
+    {
+      "table_name": "marketplace_payments"
+    },
+    {
+      "table_name": "marketplace_products"
+    },
+    {
+      "table_name": "marketplace_reviews"
+    },
+    {
+      "table_name": "merchant_profiles"
+    },
+    {
+      "table_name": "moderation_events"
+    },
+    {
+      "table_name": "notification_events"
+    },
+    {
+      "table_name": "official_announcements"
+    },
+    {
+      "table_name": "online_course_certificates"
+    },
+    {
+      "table_name": "online_course_enrollment_messages"
+    },
+    {
+      "table_name": "online_course_enrollments"
+    },
+    {
+      "table_name": "online_course_forum_messages"
+    },
+    {
+      "table_name": "online_course_forum_threads"
+    },
+    {
+      "table_name": "online_course_instructors"
+    },
+    {
+      "table_name": "online_course_lesson_media"
+    },
+    {
+      "table_name": "online_course_lesson_progress"
+    },
+    {
+      "table_name": "online_course_lessons"
+    },
+    {
+      "table_name": "online_course_live_session_participants"
+    },
+    {
+      "table_name": "online_course_live_sessions"
+    },
+    {
+      "table_name": "online_course_sections"
+    },
+    {
+      "table_name": "online_courses"
+    },
+    {
+      "table_name": "opportunities"
+    },
+    {
+      "table_name": "opportunity_applications"
+    },
+    {
+      "table_name": "opportunity_bookmarks"
+    },
+    {
+      "table_name": "opportunity_comments"
+    },
+    {
+      "table_name": "opportunity_inquiries"
+    },
+    {
+      "table_name": "opportunity_inquiry_messages"
+    },
+    {
+      "table_name": "opportunity_reactions"
+    },
+    {
+      "table_name": "opportunity_types"
+    },
+    {
+      "table_name": "opportunity_views"
+    },
+    {
+      "table_name": "payment_proofs"
+    },
+    {
+      "table_name": "payment_receipts"
+    },
+    {
+      "table_name": "prep_ai_config"
+    },
+    {
+      "table_name": "prep_ai_conversations"
+    },
+    {
+      "table_name": "prep_ai_corrections"
+    },
+    {
+      "table_name": "prep_ai_generations"
+    },
+    {
+      "table_name": "prep_ai_messages"
+    },
+    {
+      "table_name": "prep_ai_usage_logs"
+    },
+    {
+      "table_name": "prep_assignment_submissions"
+    },
+    {
+      "table_name": "prep_assignments"
+    },
+    {
+      "table_name": "prep_attempts"
+    },
+    {
+      "table_name": "prep_badges"
+    },
+    {
+      "table_name": "prep_chapters"
+    },
+    {
+      "table_name": "prep_doc_chunks"
+    },
+    {
+      "table_name": "prep_exam_items"
+    },
+    {
+      "table_name": "prep_exam_papers"
+    },
+    {
+      "table_name": "prep_exams"
+    },
+    {
+      "table_name": "prep_flashcard_decks"
+    },
+    {
+      "table_name": "prep_flashcard_progress"
+    },
+    {
+      "table_name": "prep_flashcards"
+    },
+    {
+      "table_name": "prep_live_participants"
+    },
+    {
+      "table_name": "prep_live_sessions"
+    },
+    {
+      "table_name": "prep_psychotech_profiles"
+    },
+    {
+      "table_name": "prep_psychotech_results"
+    },
+    {
+      "table_name": "prep_question_banks"
+    },
+    {
+      "table_name": "prep_question_choices"
+    },
+    {
+      "table_name": "prep_question_topics"
+    },
+    {
+      "table_name": "prep_questions"
+    },
+    {
+      "table_name": "prep_quiz_attempts"
+    },
+    {
+      "table_name": "prep_quiz_templates"
+    },
+    {
+      "table_name": "prep_source_documents"
+    },
+    {
+      "table_name": "prep_student_badges"
+    },
+    {
+      "table_name": "prep_student_progress"
+    },
+    {
+      "table_name": "prep_subjects"
+    },
+    {
+      "table_name": "prep_topic_predictions"
+    },
+    {
+      "table_name": "prep_topics"
+    },
+    {
+      "table_name": "programs"
+    },
+    {
+      "table_name": "referral_commissions"
+    },
+    {
+      "table_name": "short_training_registration_messages"
+    },
+    {
+      "table_name": "short_training_registrations"
+    },
+    {
+      "table_name": "short_training_sessions"
+    },
+    {
+      "table_name": "short_trainings"
+    },
+    {
+      "table_name": "student_dossier_documents"
+    },
+    {
+      "table_name": "student_home_announcements"
+    },
+    {
+      "table_name": "student_home_slots"
+    },
+    {
+      "table_name": "student_home_videos"
+    },
+    {
+      "table_name": "students"
+    },
+    {
+      "table_name": "support_conversations"
+    },
+    {
+      "table_name": "support_messages"
+    },
+    {
+      "table_name": "support_read_states"
+    },
+    {
+      "table_name": "td_ai_config"
+    },
+    {
+      "table_name": "td_ai_conversations"
+    },
+    {
+      "table_name": "td_ai_messages"
+    },
+    {
+      "table_name": "td_attendance"
+    },
+    {
+      "table_name": "td_badges"
+    },
+    {
+      "table_name": "td_collections"
+    },
+    {
+      "table_name": "td_daily_goals"
+    },
+    {
+      "table_name": "td_discipline_colors"
+    },
+    {
+      "table_name": "td_enrollments"
+    },
+    {
+      "table_name": "td_exam_papers"
+    },
+    {
+      "table_name": "td_fields"
+    },
+    {
+      "table_name": "td_flashcard_decks"
+    },
+    {
+      "table_name": "td_flashcard_progress"
+    },
+    {
+      "table_name": "td_flashcards"
+    },
+    {
+      "table_name": "td_leaderboard_cache"
+    },
+    {
+      "table_name": "td_messages"
+    },
+    {
+      "table_name": "td_programs"
+    },
+    {
+      "table_name": "td_question_banks"
+    },
+    {
+      "table_name": "td_questions"
+    },
+    {
+      "table_name": "td_quiz_attempts"
+    },
+    {
+      "table_name": "td_quiz_templates"
+    },
+    {
+      "table_name": "td_resource_progress"
+    },
+    {
+      "table_name": "td_resources"
+    },
+    {
+      "table_name": "td_session_occurrences"
+    },
+    {
+      "table_name": "td_sessions"
+    },
+    {
+      "table_name": "td_streaks"
+    },
+    {
+      "table_name": "td_student_badges"
+    },
+    {
+      "table_name": "td_student_progress"
+    },
+    {
+      "table_name": "td_student_requests"
+    },
+    {
+      "table_name": "td_teacher_availability"
+    },
+    {
+      "table_name": "td_teachers"
+    },
+    {
+      "table_name": "td_xp_log"
+    },
+    {
+      "table_name": "tournament_matches"
+    },
+    {
+      "table_name": "tournament_participants"
+    },
+    {
+      "table_name": "tournament_rewards"
+    },
+    {
+      "table_name": "tournaments"
+    },
+    {
+      "table_name": "universities"
+    },
+    {
+      "table_name": "university_events"
+    },
+    {
+      "table_name": "university_media"
+    },
+    {
+      "table_name": "university_news"
+    },
+    {
+      "table_name": "university_site_banners"
+    },
+    {
+      "table_name": "university_site_blocks"
+    },
+    {
+      "table_name": "university_site_config"
+    },
+    {
+      "table_name": "university_staff"
+    },
+    {
+      "table_name": "user_admin_status"
+    },
+    {
+      "table_name": "user_announcement_reads"
+    },
+    {
+      "table_name": "user_device_tokens"
+    },
+    {
+      "table_name": "user_event_follows"
+    },
+    {
+      "table_name": "user_feature_entitlements"
+    },
+    {
+      "table_name": "user_invitations"
+    },
+    {
+      "table_name": "user_notification_state"
+    },
+    {
+      "table_name": "user_presence"
+    },
+    {
+      "table_name": "user_referrals"
+    },
+    {
+      "table_name": "video_asset_contexts"
+    },
+    {
+      "table_name": "video_asset_legacy_map"
+    },
+    {
+      "table_name": "video_assets"
+    },
+    {
+      "table_name": "video_comments"
+    },
+    {
+      "table_name": "video_favorites"
+    },
+    {
+      "table_name": "video_likes"
+    },
+    {
+      "table_name": "video_moderation_history"
+    },
+    {
+      "table_name": "video_playback_errors"
+    },
+    {
+      "table_name": "video_processing_jobs"
+    },
+    {
+      "table_name": "video_renditions"
+    },
+    {
+      "table_name": "video_reports"
+    },
+    {
+      "table_name": "video_sources"
+    },
+    {
+      "table_name": "video_upload_events"
+    }
+  ],
+  "2_students_columns": [
+    {
+      "data_type": "uuid",
+      "column_name": "id",
+      "is_nullable": "NO"
+    },
+    {
+      "data_type": "text",
+      "column_name": "full_name",
+      "is_nullable": "NO"
+    },
+    {
+      "data_type": "text",
+      "column_name": "phone",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "text",
+      "column_name": "country",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "text",
+      "column_name": "city",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "date",
+      "column_name": "date_of_birth",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "text",
+      "column_name": "avatar_url",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at",
+      "is_nullable": "NO"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at",
+      "is_nullable": "NO"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "bepc_year",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "text",
+      "column_name": "bepc_institution",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "text",
+      "column_name": "bepc_country",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "text",
+      "column_name": "bepc_mention",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "bac_year",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "text",
+      "column_name": "bac_series",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "text",
+      "column_name": "bac_mention",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "text",
+      "column_name": "bac_institution",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "text",
+      "column_name": "bac_country",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "text",
+      "column_name": "study_project_text",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "text",
+      "column_name": "timezone",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "geo_latitude",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "geo_longitude",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "text",
+      "column_name": "bio",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "text",
+      "column_name": "website_url",
+      "is_nullable": "YES"
+    }
+  ],
+  "3_auth_users_columns": [
+    {
+      "data_type": "uuid",
+      "column_name": "instance_id"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "id"
+    },
+    {
+      "data_type": "character varying",
+      "column_name": "aud"
+    },
+    {
+      "data_type": "character varying",
+      "column_name": "role"
+    },
+    {
+      "data_type": "character varying",
+      "column_name": "email"
+    },
+    {
+      "data_type": "character varying",
+      "column_name": "encrypted_password"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "email_confirmed_at"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "invited_at"
+    },
+    {
+      "data_type": "character varying",
+      "column_name": "confirmation_token"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "confirmation_sent_at"
+    },
+    {
+      "data_type": "character varying",
+      "column_name": "recovery_token"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "recovery_sent_at"
+    },
+    {
+      "data_type": "character varying",
+      "column_name": "email_change_token_new"
+    },
+    {
+      "data_type": "character varying",
+      "column_name": "email_change"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "email_change_sent_at"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "last_sign_in_at"
+    },
+    {
+      "data_type": "jsonb",
+      "column_name": "raw_app_meta_data"
+    },
+    {
+      "data_type": "jsonb",
+      "column_name": "raw_user_meta_data"
+    },
+    {
+      "data_type": "boolean",
+      "column_name": "is_super_admin"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at"
+    },
+    {
+      "data_type": "text",
+      "column_name": "phone"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "phone_confirmed_at"
+    },
+    {
+      "data_type": "text",
+      "column_name": "phone_change"
+    },
+    {
+      "data_type": "character varying",
+      "column_name": "phone_change_token"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "phone_change_sent_at"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "confirmed_at"
+    },
+    {
+      "data_type": "character varying",
+      "column_name": "email_change_token_current"
+    },
+    {
+      "data_type": "smallint",
+      "column_name": "email_change_confirm_status"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "banned_until"
+    },
+    {
+      "data_type": "character varying",
+      "column_name": "reauthentication_token"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "reauthentication_sent_at"
+    },
+    {
+      "data_type": "boolean",
+      "column_name": "is_sso_user"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "deleted_at"
+    },
+    {
+      "data_type": "boolean",
+      "column_name": "is_anonymous"
+    }
+  ],
+  "4_delete_related_rpcs": [
+    {
+      "routine_name": "app_admin_delete_academic_event"
+    },
+    {
+      "routine_name": "app_admin_delete_challenge_participation_video"
+    },
+    {
+      "routine_name": "app_admin_delete_challenge_video"
+    },
+    {
+      "routine_name": "app_admin_delete_challenge_video_asset"
+    },
+    {
+      "routine_name": "app_admin_delete_commission_rule"
+    },
+    {
+      "routine_name": "app_admin_delete_community"
+    },
+    {
+      "routine_name": "app_admin_delete_community_post"
+    },
+    {
+      "routine_name": "app_admin_delete_hero_playlist_item"
+    },
+    {
+      "routine_name": "app_admin_delete_landing_announcement"
+    },
+    {
+      "routine_name": "app_admin_delete_landing_partner"
+    },
+    {
+      "routine_name": "app_admin_delete_landing_video"
+    },
+    {
+      "routine_name": "app_admin_delete_landing_why_card"
+    },
+    {
+      "routine_name": "app_admin_delete_official_announcement"
+    },
+    {
+      "routine_name": "app_admin_delete_student_home_announcement"
+    },
+    {
+      "routine_name": "app_admin_delete_student_home_slot"
+    },
+    {
+      "routine_name": "app_admin_delete_student_home_video"
+    },
+    {
+      "routine_name": "app_admin_delete_university_event"
+    },
+    {
+      "routine_name": "app_admin_delete_university_media"
+    },
+    {
+      "routine_name": "app_admin_delete_university_news"
+    },
+    {
+      "routine_name": "app_admin_delete_university_site_banner"
+    },
+    {
+      "routine_name": "app_admin_delete_university_site_block"
+    },
+    {
+      "routine_name": "app_admin_delete_university_staff"
+    },
+    {
+      "routine_name": "app_admin_delete_user_account"
+    },
+    {
+      "routine_name": "app_admin_tv_delete_overlay"
+    },
+    {
+      "routine_name": "app_admin_tv_delete_overlay"
+    },
+    {
+      "routine_name": "app_delete_application_file"
+    },
+    {
+      "routine_name": "app_delete_student_dossier_document"
+    },
+    {
+      "routine_name": "app_delete_university_event"
+    },
+    {
+      "routine_name": "app_delete_university_media"
+    },
+    {
+      "routine_name": "app_delete_university_news"
+    },
+    {
+      "routine_name": "app_delete_university_site_banner"
+    },
+    {
+      "routine_name": "app_delete_university_site_block"
+    },
+    {
+      "routine_name": "app_delete_university_staff"
+    },
+    {
+      "routine_name": "app_opportunity_delete_comment"
+    },
+    {
+      "routine_name": "app_student_delete_own_community_post"
+    },
+    {
+      "routine_name": "app_student_delete_own_story"
+    },
+    {
+      "routine_name": "app_student_delete_video_comment"
+    },
+    {
+      "routine_name": "app_student_list_recently_deleted_videos"
+    },
+    {
+      "routine_name": "app_student_soft_delete_video"
+    },
+    {
+      "routine_name": "app_td_teacher_delete_resource"
+    },
+    {
+      "routine_name": "delete_data_safe"
+    }
+  ],
+  "5_pii_tables_with_user_id": [
+    {
+      "table_name": "admin_users",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "application_payments",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "applications",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "bobodo_feedback",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "bobodo_sessions",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "challenge_comments",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "challenge_favorites",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "challenge_likes",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "challenge_participations",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "challenge_user_bans",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "challenges",
+      "column_name": "created_by_user_id"
+    },
+    {
+      "table_name": "commercial_milestone_claims",
+      "column_name": "commercial_user_id"
+    },
+    {
+      "table_name": "commercial_profiles",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "communities",
+      "column_name": "created_by_user_id"
+    },
+    {
+      "table_name": "community_join_requests",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "community_memberships",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "community_poll_votes",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "community_polls",
+      "column_name": "created_by_user_id"
+    },
+    {
+      "table_name": "community_post_reactions",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "community_posts",
+      "column_name": "author_id"
+    },
+    {
+      "table_name": "community_read_states",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "community_stories",
+      "column_name": "author_id"
+    },
+    {
+      "table_name": "course_enrollments",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "direct_message_read_states",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "direct_messages",
+      "column_name": "sender_id"
+    },
+    {
+      "table_name": "free_videos",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "league_participations",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "marketplace_carts",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "marketplace_listing_bookmarks",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "marketplace_merchants",
+      "column_name": "owner_user_id"
+    },
+    {
+      "table_name": "marketplace_orders",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "merchant_profiles",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "moderation_events",
+      "column_name": "created_by_user_id"
+    },
+    {
+      "table_name": "notification_events",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "online_course_enrollments",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "online_course_forum_messages",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "online_course_forum_threads",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "online_course_live_session_participants",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "opportunities",
+      "column_name": "created_by_user_id"
+    },
+    {
+      "table_name": "opportunity_applications",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "opportunity_bookmarks",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "opportunity_comments",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "opportunity_inquiry_messages",
+      "column_name": "sender_id"
+    },
+    {
+      "table_name": "opportunity_reactions",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "opportunity_views",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "prep_ai_conversations",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "prep_ai_corrections",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "prep_ai_usage_logs",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "prep_assignment_submissions",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "prep_attempts",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "prep_exams",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "prep_flashcard_progress",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "prep_live_participants",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "prep_psychotech_profiles",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "prep_psychotech_results",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "prep_quiz_attempts",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "prep_student_badges",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "prep_student_progress",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "referral_commissions",
+      "column_name": "commercial_user_id"
+    },
+    {
+      "table_name": "referral_commissions",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "short_training_registrations",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "student_dossier_documents",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "support_read_states",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "td_ai_conversations",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "td_attendance",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "td_daily_goals",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "td_enrollments",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "td_flashcard_progress",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "td_leaderboard_cache",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "td_quiz_attempts",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "td_resource_progress",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "td_streaks",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "td_student_badges",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "td_student_progress",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "td_student_requests",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "td_teachers",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "td_xp_log",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "tournament_participants",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "user_admin_status",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "user_announcement_reads",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "user_device_tokens",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "user_event_follows",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "user_feature_entitlements",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "user_notification_state",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "user_presence",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "user_referrals",
+      "column_name": "commercial_user_id"
+    },
+    {
+      "table_name": "user_referrals",
+      "column_name": "student_id"
+    },
+    {
+      "table_name": "video_assets",
+      "column_name": "owner_user_id"
+    },
+    {
+      "table_name": "video_comments",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "video_favorites",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "video_likes",
+      "column_name": "user_id"
+    },
+    {
+      "table_name": "video_upload_events",
+      "column_name": "user_id"
+    }
+  ],
+  "6_pii_columns": [
+    {
+      "table_name": "communities",
+      "column_name": "name"
+    },
+    {
+      "table_name": "competitive_events",
+      "column_name": "tournament_id"
+    },
+    {
+      "table_name": "hero_overlay_animations",
+      "column_name": "name"
+    },
+    {
+      "table_name": "hero_video_jobs",
+      "column_name": "source_filename"
+    },
+    {
+      "table_name": "instructors",
+      "column_name": "bio"
+    },
+    {
+      "table_name": "instructors",
+      "column_name": "full_name"
+    },
+    {
+      "table_name": "landing_partners",
+      "column_name": "name"
+    },
+    {
+      "table_name": "leagues",
+      "column_name": "name"
+    },
+    {
+      "table_name": "legacy_video_write_attempts",
+      "column_name": "column_name"
+    },
+    {
+      "table_name": "legacy_video_write_attempts",
+      "column_name": "table_name"
+    },
+    {
+      "table_name": "marketplace_listings",
+      "column_name": "organization_name"
+    },
+    {
+      "table_name": "marketplace_merchants",
+      "column_name": "address"
+    },
+    {
+      "table_name": "marketplace_merchants",
+      "column_name": "bio"
+    },
+    {
+      "table_name": "marketplace_merchants",
+      "column_name": "contact_email"
+    },
+    {
+      "table_name": "marketplace_merchants",
+      "column_name": "contact_phone"
+    },
+    {
+      "table_name": "marketplace_merchants",
+      "column_name": "display_name"
+    },
+    {
+      "table_name": "marketplace_merchants",
+      "column_name": "name"
+    },
+    {
+      "table_name": "marketplace_orders",
+      "column_name": "shipping_address"
+    },
+    {
+      "table_name": "merchant_profiles",
+      "column_name": "bio"
+    },
+    {
+      "table_name": "merchant_profiles",
+      "column_name": "display_name"
+    },
+    {
+      "table_name": "online_course_enrollments",
+      "column_name": "company_name"
+    },
+    {
+      "table_name": "online_course_enrollments",
+      "column_name": "contact_phone"
+    },
+    {
+      "table_name": "online_course_live_sessions",
+      "column_name": "livekit_room_name"
+    },
+    {
+      "table_name": "online_courses",
+      "column_name": "contact_email"
+    },
+    {
+      "table_name": "online_courses",
+      "column_name": "contact_phone"
+    },
+    {
+      "table_name": "opportunities",
+      "column_name": "organization_name"
+    },
+    {
+      "table_name": "opportunity_applications",
+      "column_name": "cv_url"
+    },
+    {
+      "table_name": "prep_assignments",
+      "column_name": "subject_name"
+    },
+    {
+      "table_name": "prep_doc_chunks",
+      "column_name": "source_document_id"
+    },
+    {
+      "table_name": "prep_doc_chunks",
+      "column_name": "subject_name"
+    },
+    {
+      "table_name": "prep_live_sessions",
+      "column_name": "subject_name"
+    },
+    {
+      "table_name": "prep_source_documents",
+      "column_name": "original_filename"
+    },
+    {
+      "table_name": "prep_source_documents",
+      "column_name": "subject_name"
+    },
+    {
+      "table_name": "prep_topics",
+      "column_name": "name"
+    },
+    {
+      "table_name": "short_training_registrations",
+      "column_name": "company_name"
+    },
+    {
+      "table_name": "short_training_registrations",
+      "column_name": "contact_phone"
+    },
+    {
+      "table_name": "student_dossier_documents",
+      "column_name": "document_type"
+    },
+    {
+      "table_name": "students",
+      "column_name": "avatar_url"
+    },
+    {
+      "table_name": "students",
+      "column_name": "bio"
+    },
+    {
+      "table_name": "students",
+      "column_name": "date_of_birth"
+    },
+    {
+      "table_name": "students",
+      "column_name": "full_name"
+    },
+    {
+      "table_name": "students",
+      "column_name": "phone"
+    },
+    {
+      "table_name": "support_conversations",
+      "column_name": "requester_display_name"
+    },
+    {
+      "table_name": "support_conversations",
+      "column_name": "requester_email"
+    },
+    {
+      "table_name": "td_discipline_colors",
+      "column_name": "field_name"
+    },
+    {
+      "table_name": "td_discipline_colors",
+      "column_name": "icon_name"
+    },
+    {
+      "table_name": "td_fields",
+      "column_name": "icon_name"
+    },
+    {
+      "table_name": "td_fields",
+      "column_name": "name"
+    },
+    {
+      "table_name": "td_sessions",
+      "column_name": "document_url"
+    },
+    {
+      "table_name": "td_teachers",
+      "column_name": "full_name"
+    },
+    {
+      "table_name": "tournament_matches",
+      "column_name": "tournament_id"
+    },
+    {
+      "table_name": "tournament_participants",
+      "column_name": "tournament_id"
+    },
+    {
+      "table_name": "tournament_rewards",
+      "column_name": "reward_name"
+    },
+    {
+      "table_name": "tournament_rewards",
+      "column_name": "tournament_id"
+    },
+    {
+      "table_name": "tournaments",
+      "column_name": "name"
+    },
+    {
+      "table_name": "tournaments",
+      "column_name": "tournament_type"
+    },
+    {
+      "table_name": "universities",
+      "column_name": "address"
+    },
+    {
+      "table_name": "universities",
+      "column_name": "contact_email"
+    },
+    {
+      "table_name": "universities",
+      "column_name": "contact_phone"
+    },
+    {
+      "table_name": "universities",
+      "column_name": "name"
+    },
+    {
+      "table_name": "university_staff",
+      "column_name": "bio"
+    },
+    {
+      "table_name": "university_staff",
+      "column_name": "email"
+    },
+    {
+      "table_name": "university_staff",
+      "column_name": "full_name"
+    },
+    {
+      "table_name": "university_staff",
+      "column_name": "phone"
+    },
+    {
+      "table_name": "user_invitations",
+      "column_name": "email"
+    },
+    {
+      "table_name": "user_invitations",
+      "column_name": "full_name"
+    }
+  ],
+  "7_storage_buckets": [
+    {
+      "id": "application-files",
+      "name": "application-files",
+      "public": false,
+      "file_size_limit": null,
+      "allowed_mime_types": null
+    },
+    {
+      "id": "challenge-media",
+      "name": "challenge-media",
+      "public": true,
+      "file_size_limit": null,
+      "allowed_mime_types": null
+    },
+    {
+      "id": "community-media",
+      "name": "community-media",
+      "public": true,
+      "file_size_limit": null,
+      "allowed_mime_types": null
+    },
+    {
+      "id": "hero_videos",
+      "name": "hero_videos",
+      "public": true,
+      "file_size_limit": null,
+      "allowed_mime_types": null
+    },
+    {
+      "id": "landing-media",
+      "name": "landing-media",
+      "public": true,
+      "file_size_limit": null,
+      "allowed_mime_types": null
+    },
+    {
+      "id": "marketplace-media",
+      "name": "marketplace-media",
+      "public": true,
+      "file_size_limit": null,
+      "allowed_mime_types": null
+    },
+    {
+      "id": "prep-documents",
+      "name": "prep-documents",
+      "public": true,
+      "file_size_limit": 52428800,
+      "allowed_mime_types": [
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+      ]
+    },
+    {
+      "id": "university-media",
+      "name": "university-media",
+      "public": true,
+      "file_size_limit": null,
+      "allowed_mime_types": null
+    },
+    {
+      "id": "video-assets",
+      "name": "video-assets",
+      "public": true,
+      "file_size_limit": null,
+      "allowed_mime_types": null
+    }
+  ],
+  "8_device_tokens_table": [
+    {
+      "data_type": "uuid",
+      "column_name": "id"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "user_id"
+    },
+    {
+      "data_type": "text",
+      "column_name": "platform"
+    },
+    {
+      "data_type": "text",
+      "column_name": "fcm_token"
+    },
+    {
+      "data_type": "jsonb",
+      "column_name": "device_info"
+    },
+    {
+      "data_type": "boolean",
+      "column_name": "is_active"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "last_seen_at"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at"
+    }
+  ],
+  "9_notification_state_table": [
+    {
+      "data_type": "uuid",
+      "column_name": "user_id"
+    },
+    {
+      "data_type": "text",
+      "column_name": "domain"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "last_seen_at"
+    }
+  ],
+  "10_account_status_columns": [
+    {
+      "table_name": "application_payments",
+      "column_name": "status"
+    },
+    {
+      "table_name": "applications",
+      "column_name": "status"
+    },
+    {
+      "table_name": "bobodo_knowledge",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "bobodo_unanswered_questions",
+      "column_name": "status"
+    },
+    {
+      "table_name": "challenge_comments",
+      "column_name": "is_deleted"
+    },
+    {
+      "table_name": "challenge_participations",
+      "column_name": "deleted_at"
+    },
+    {
+      "table_name": "challenge_participations",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "challenge_participations",
+      "column_name": "is_deleted"
+    },
+    {
+      "table_name": "challenge_participations",
+      "column_name": "moderation_status"
+    },
+    {
+      "table_name": "challenge_participations",
+      "column_name": "status"
+    },
+    {
+      "table_name": "challenge_reports",
+      "column_name": "status"
+    },
+    {
+      "table_name": "challenge_user_bans",
+      "column_name": "banned_until"
+    },
+    {
+      "table_name": "challenge_video_assets",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "challenge_video_render_jobs",
+      "column_name": "status"
+    },
+    {
+      "table_name": "challenges",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "commercial_milestone_claims",
+      "column_name": "status"
+    },
+    {
+      "table_name": "commercial_profiles",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "commission_rules",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "communities",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "communities",
+      "column_name": "status"
+    },
+    {
+      "table_name": "community_join_requests",
+      "column_name": "status"
+    },
+    {
+      "table_name": "community_memberships",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "community_memberships",
+      "column_name": "is_banned"
+    },
+    {
+      "table_name": "community_posts",
+      "column_name": "is_deleted"
+    },
+    {
+      "table_name": "community_stories",
+      "column_name": "is_deleted"
+    },
+    {
+      "table_name": "course_domains",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "course_resources",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "course_units",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "courses",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "direct_messages",
+      "column_name": "is_deleted"
+    },
+    {
+      "table_name": "free_video_render_jobs",
+      "column_name": "status"
+    },
+    {
+      "table_name": "free_videos",
+      "column_name": "deleted_at"
+    },
+    {
+      "table_name": "free_videos",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "free_videos",
+      "column_name": "is_deleted"
+    },
+    {
+      "table_name": "free_videos",
+      "column_name": "moderation_status"
+    },
+    {
+      "table_name": "hero_playlist",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "hero_renders",
+      "column_name": "status"
+    },
+    {
+      "table_name": "hero_renders_tv",
+      "column_name": "status"
+    },
+    {
+      "table_name": "hero_video_jobs",
+      "column_name": "status"
+    },
+    {
+      "table_name": "landing_announcements",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "landing_partners",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "landing_videos",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "landing_why_cards",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "league_matches",
+      "column_name": "status"
+    },
+    {
+      "table_name": "league_participations",
+      "column_name": "status"
+    },
+    {
+      "table_name": "leagues",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "marketplace_carts",
+      "column_name": "status"
+    },
+    {
+      "table_name": "marketplace_categories",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "marketplace_listing_media",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "marketplace_listings",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "marketplace_listings",
+      "column_name": "review_status"
+    },
+    {
+      "table_name": "marketplace_listings",
+      "column_name": "status"
+    },
+    {
+      "table_name": "marketplace_merchants",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "marketplace_merchants",
+      "column_name": "status"
+    },
+    {
+      "table_name": "marketplace_orders",
+      "column_name": "status"
+    },
+    {
+      "table_name": "marketplace_payments",
+      "column_name": "status"
+    },
+    {
+      "table_name": "marketplace_products",
+      "column_name": "status"
+    },
+    {
+      "table_name": "marketplace_products",
+      "column_name": "stock_status"
+    },
+    {
+      "table_name": "marketplace_reviews",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "merchant_profiles",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "online_course_lesson_media",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "online_course_live_session_participants",
+      "column_name": "is_banned"
+    },
+    {
+      "table_name": "online_course_live_sessions",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "online_course_live_sessions",
+      "column_name": "status"
+    },
+    {
+      "table_name": "opportunities",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "opportunities",
+      "column_name": "review_status"
+    },
+    {
+      "table_name": "opportunities",
+      "column_name": "status"
+    },
+    {
+      "table_name": "opportunity_applications",
+      "column_name": "status"
+    },
+    {
+      "table_name": "opportunity_inquiries",
+      "column_name": "status"
+    },
+    {
+      "table_name": "opportunity_types",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "prep_ai_generations",
+      "column_name": "status"
+    },
+    {
+      "table_name": "prep_ai_usage_logs",
+      "column_name": "status"
+    },
+    {
+      "table_name": "prep_assignment_submissions",
+      "column_name": "status"
+    },
+    {
+      "table_name": "prep_badges",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "prep_chapters",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "prep_exam_papers",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "prep_flashcard_decks",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "prep_flashcards",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "prep_live_sessions",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "prep_live_sessions",
+      "column_name": "status"
+    },
+    {
+      "table_name": "prep_question_banks",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "prep_questions",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "prep_quiz_attempts",
+      "column_name": "status"
+    },
+    {
+      "table_name": "prep_quiz_templates",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "prep_source_documents",
+      "column_name": "status"
+    },
+    {
+      "table_name": "prep_subjects",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "programs",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "referral_commissions",
+      "column_name": "status"
+    },
+    {
+      "table_name": "short_training_registrations",
+      "column_name": "status"
+    },
+    {
+      "table_name": "short_training_sessions",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "short_training_sessions",
+      "column_name": "status"
+    },
+    {
+      "table_name": "short_trainings",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "student_dossier_documents",
+      "column_name": "status"
+    },
+    {
+      "table_name": "student_home_announcements",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "student_home_slots",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "student_home_videos",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "support_conversations",
+      "column_name": "status"
+    },
+    {
+      "table_name": "td_attendance",
+      "column_name": "status"
+    },
+    {
+      "table_name": "td_badges",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "td_enrollments",
+      "column_name": "access_status"
+    },
+    {
+      "table_name": "td_enrollments",
+      "column_name": "assignment_status"
+    },
+    {
+      "table_name": "td_exam_papers",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "td_fields",
+      "column_name": "status"
+    },
+    {
+      "table_name": "td_flashcard_decks",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "td_flashcards",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "td_programs",
+      "column_name": "status"
+    },
+    {
+      "table_name": "td_question_banks",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "td_questions",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "td_quiz_attempts",
+      "column_name": "status"
+    },
+    {
+      "table_name": "td_quiz_templates",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "td_resource_progress",
+      "column_name": "status"
+    },
+    {
+      "table_name": "td_session_occurrences",
+      "column_name": "status"
+    },
+    {
+      "table_name": "td_student_requests",
+      "column_name": "status"
+    },
+    {
+      "table_name": "td_teachers",
+      "column_name": "status"
+    },
+    {
+      "table_name": "tournament_matches",
+      "column_name": "status"
+    },
+    {
+      "table_name": "tournament_participants",
+      "column_name": "status"
+    },
+    {
+      "table_name": "tournaments",
+      "column_name": "status"
+    },
+    {
+      "table_name": "universities",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "university_events",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "university_media",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "university_news",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "university_site_banners",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "university_site_blocks",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "university_staff",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "user_admin_status",
+      "column_name": "deleted_at"
+    },
+    {
+      "table_name": "user_admin_status",
+      "column_name": "deleted_reason"
+    },
+    {
+      "table_name": "user_admin_status",
+      "column_name": "is_deleted"
+    },
+    {
+      "table_name": "user_device_tokens",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "user_feature_entitlements",
+      "column_name": "is_active"
+    },
+    {
+      "table_name": "user_invitations",
+      "column_name": "status"
+    },
+    {
+      "table_name": "video_assets",
+      "column_name": "deleted_at"
+    },
+    {
+      "table_name": "video_assets",
+      "column_name": "status"
+    },
+    {
+      "table_name": "video_comments",
+      "column_name": "is_deleted"
+    },
+    {
+      "table_name": "video_moderation_history",
+      "column_name": "new_status"
+    },
+    {
+      "table_name": "video_moderation_history",
+      "column_name": "previous_status"
+    },
+    {
+      "table_name": "video_processing_jobs",
+      "column_name": "status"
+    },
+    {
+      "table_name": "video_renditions",
+      "column_name": "status"
+    },
+    {
+      "table_name": "video_reports",
+      "column_name": "status"
+    }
+  ]
+}

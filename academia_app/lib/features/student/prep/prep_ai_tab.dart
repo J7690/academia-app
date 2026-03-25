@@ -187,8 +187,8 @@ class _PrepAiTabState extends State<PrepAiTab> {
                   _controller.text = 'Quelle est la méthode pour une bonne dissertation ?';
                   _sendMessage();
                 }),
-                _SuggestionChip('Préparer l\'ENAM', onTap: () {
-                  _controller.text = 'Comment bien préparer le concours de l\'ENAM ?';
+                _SuggestionChip('Préparer l\'ENAREF', onTap: () {
+                  _controller.text = 'Comment bien préparer le concours de l\'ENAREF au Burkina Faso ?';
                   _sendMessage();
                 }),
                 _SuggestionChip('Résoudre une équation', onTap: () {

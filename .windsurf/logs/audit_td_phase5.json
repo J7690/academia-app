@@ -1,0 +1,12 @@
+{
+  "teacher_group_rpcs": [
+    {
+      "routine_name": "app_td_teacher_list_local_groups"
+    }
+  ],
+  "teacher_assignment_rpcs": [
+    {
+      "routine_name": "app_td_teacher_list_assignments"
+    }
+  ]
+}

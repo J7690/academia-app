@@ -1,24 +1,17 @@
 import 'package:animate_do/animate_do.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../providers/student_opportunities_provider.dart';
 import '../../../providers/student_marketplace_listings_provider_v1.dart';
 import '../../../providers/student_marketplace_categories_provider_v1.dart';
 import '../../../providers/student_marketplace_cart_provider_v1.dart';
-import '../../../providers/opportunity_reactions_provider.dart';
-import '../../../widgets/opportunities/opportunity_feed_card.dart';
-import '../../../widgets/opportunities/opportunity_skeleton_loader.dart';
-import '../../../widgets/opportunities/opportunity_comments_sheet.dart';
-import '../../../widgets/bobodo_state.dart';
-import '../../../widgets/bobodo_view.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+
 import '../../../widgets/marketplace/alibaba_marketplace_tokens.dart';
-import '../../../widgets/marketplace/alibaba_product_tile.dart';
 import '../../../widgets/marketplace/alibaba_search_bar.dart';
 import '../../../widgets/marketplace/alibaba_section_header.dart';
 import '../../../widgets/marketplace/alibaba_marketplace_shimmers.dart';
+import '../../../widgets/marketplace/marketplace_product_card.dart';
 import '../marketplace/student_my_inquiries_screen_v1.dart';
 import '../marketplace/student_marketplace_favorites_screen_v1.dart';
 import '../marketplace/student_marketplace_cart_screen_v1.dart';
@@ -39,7 +32,6 @@ class StudentOpportunitiesTab extends StatefulWidget {
 class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
   String _searchQuery = '';
   String? _selectedType;
-  bool _showBookmarksOnly = false;
   int _tabIndex = 0;
   String? _selectedMarketplaceCategoryId;
   String? _selectedMarketplaceSubCategoryId;
@@ -53,7 +45,6 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
 
   final GlobalKey _shareBoundaryKey = GlobalKey();
   final ShareService _shareService = ShareService();
-  final GlobalKey _cartIconKey = GlobalKey();
 
   @override
   void initState() {
@@ -63,139 +54,6 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
       _loadInitialData();
       context.read<StudentMarketplaceCartProviderV1>().loadCart();
     });
-  }
-
-  Future<void> _contactMerchant(Map<String, dynamic> opportunity) async {
-    final id = opportunity['id']?.toString();
-    if (id == null) return;
-
-    final messageController = TextEditingController();
-    final qtyController = TextEditingController();
-    final budgetController = TextEditingController();
-
-    bool isSubmitting = false;
-
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Contacter le vendeur'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: messageController,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                        labelText: 'Message',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    TextField(
-                      controller: qtyController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Quantité (optionnel)',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    TextField(
-                      controller: budgetController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Budget (optionnel)',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isSubmitting
-                      ? null
-                      : () => Navigator.of(dialogContext).pop(false),
-                  child: const Text('Annuler'),
-                ),
-                ElevatedButton(
-                  onPressed: isSubmitting
-                      ? null
-                      : () async {
-                          final msg = messageController.text.trim();
-                          if (msg.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Le message est obligatoire.'),
-                              ),
-                            );
-                            return;
-                          }
-                          setDialogState(() => isSubmitting = true);
-
-                          try {
-                            final client = Supabase.instance.client;
-                            final response = await client.rpc(
-                              'app_student_create_marketplace_listing_inquiry',
-                              params: {
-                                'p_listing_id': id,
-                                'p_message': msg,
-                                'p_quantity': int.tryParse(qtyController.text.trim()),
-                                'p_budget':
-                                    double.tryParse(budgetController.text.trim()),
-                              },
-                            );
-
-                            if (response is Map && response['success'] == true) {
-                              if (!dialogContext.mounted) return;
-                              Navigator.of(dialogContext).pop(true);
-                              return;
-                            }
-                            setDialogState(() => isSubmitting = false);
-                            if (!dialogContext.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  response is Map
-                                      ? (response['error']?.toString() ??
-                                          'Erreur lors de l\'envoi.')
-                                      : 'Erreur lors de l\'envoi.',
-                                ),
-                              ),
-                            );
-                          } catch (e) {
-                            setDialogState(() => isSubmitting = false);
-                            if (!dialogContext.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(e.toString())),
-                            );
-                          }
-                        },
-                  child: isSubmitting
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Envoyer'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (!mounted) return;
-    if (ok == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Demande envoyée.')),
-      );
-    }
   }
 
   @override
@@ -469,34 +327,12 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
                     itemBuilder: (context, index) {
                       final it = items[index];
                       final id = it['id']?.toString();
-                      final title = it['title']?.toString() ?? '';
-                      final coverUrl = it['cover_url']?.toString();
-                      final currency = it['currency']?.toString() ?? '';
-                      final priceFrom = it['price_from'];
-                      final minOrderQty = it['min_order_qty'];
-                      final city = it['city']?.toString() ?? '';
-                      final country = it['country']?.toString() ?? '';
-                      final location = [city, country]
-                          .where((s) => s.trim().isNotEmpty)
-                          .join(', ');
-
-                      String? priceText;
-                      if (priceFrom != null) {
-                        priceText = '$priceFrom $currency';
-                      }
 
                       return SizedBox(
                         width: 170,
-                        child: AlibabaProductTile(
-                          title: title,
-                          imageUrl: coverUrl,
-                          priceText: priceText,
-                          metaLeft: location,
-                          metaRight: minOrderQty != null
-                              ? 'MOQ $minOrderQty'
-                              : null,
+                        child: MarketplaceProductCard(
+                          listing: it,
                           compact: true,
-                          imageAspectRatio: 1.25,
                           onTap: () {
                             if (id == null || id.isEmpty) return;
                             Navigator.of(context).push(
@@ -544,13 +380,10 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
   }
 
   Future<void> _loadInitialData() async {
-    final provider = context.read<StudentOpportunitiesProvider>();
     final categoriesProvider =
         context.read<StudentMarketplaceCategoriesProviderV1>();
     final marketplaceListingsProvider =
         context.read<StudentMarketplaceListingsProviderV1>();
-    await provider.loadTypes();
-    if (!mounted) return;
 
     await categoriesProvider.loadRootCategories();
     if (!mounted) return;
@@ -705,438 +538,6 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
   void _onSearchChanged(String value) {
     setState(() => _searchQuery = value);
     _onRefresh();
-  }
-
-  void _onTypeSelected(String? type) {
-    setState(() => _selectedType = type);
-    _onRefresh();
-  }
-
-  Future<void> _onToggleBookmark(Map<String, dynamic> opportunity) async {
-    final id = opportunity['id']?.toString();
-    if (id == null) return;
-
-    final provider = context.read<StudentOpportunitiesProvider>();
-    final success = await provider.toggleBookmark(id);
-
-    if (!success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Erreur lors de la mise à jour du favori.'),
-        ),
-      );
-    }
-  }
-
-  Future<void> _applyToOpportunity(Map<String, dynamic> opportunity) async {
-    final provider = context.read<StudentOpportunitiesProvider>();
-    final id = opportunity['id']?.toString();
-    if (id == null) return;
-
-    final messageController = TextEditingController();
-    String? cvStoragePath;
-    String? cvFileName;
-    bool isSubmitting = false;
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Postuler à cette opportunité'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextField(
-                      controller: messageController,
-                      decoration: const InputDecoration(
-                        labelText: 'Message de motivation (optionnel)',
-                        hintText: 'Présentez-vous brièvement...',
-                      ),
-                      maxLines: 4,
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: cvFileName != null
-                            ? const Color(0xFFE8F5E9)
-                            : const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: cvFileName != null
-                              ? const Color(0xFF4CAF50)
-                              : const Color(0xFFE0E0E0),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            cvFileName != null
-                                ? Icons.check_circle
-                                : Icons.attach_file,
-                            color: cvFileName != null
-                                ? const Color(0xFF4CAF50)
-                                : const Color(0xFF757575),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  cvFileName ?? 'Joindre un CV',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    color: cvFileName != null
-                                        ? const Color(0xFF2E7D32)
-                                        : const Color(0xFF424242),
-                                  ),
-                                ),
-                                if (cvFileName == null)
-                                  const Text(
-                                    'PDF, image ou Word',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF9E9E9E),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () async {
-                              final result = await FilePicker.platform.pickFiles(
-                                allowMultiple: false,
-                                withData: true,
-                                type: FileType.custom,
-                                allowedExtensions: const [
-                                  'pdf',
-                                  'jpg',
-                                  'jpeg',
-                                  'png',
-                                  'doc',
-                                  'docx',
-                                ],
-                              );
-
-                              if (result == null || result.files.isEmpty) {
-                                return;
-                              }
-
-                              final file = result.files.first;
-                              final bytes = file.bytes;
-                              final fileName = file.name;
-
-                              if (bytes == null) {
-                                if (!context.mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Impossible de lire le contenu du fichier.',
-                                    ),
-                                  ),
-                                );
-                                return;
-                              }
-
-                              setDialogState(() {
-                                cvFileName = 'Envoi en cours...';
-                              });
-
-                              final path = await provider.uploadCvFile(
-                                opportunityId: id,
-                                bytes: bytes,
-                                fileName: fileName,
-                                mimeType: file.extension,
-                              );
-
-                              if (!context.mounted) return;
-
-                              if (path != null) {
-                                setDialogState(() {
-                                  cvStoragePath = path;
-                                  cvFileName = fileName;
-                                });
-                              } else {
-                                setDialogState(() {
-                                  cvFileName = null;
-                                });
-                                if (provider.error != null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(provider.error!)),
-                                  );
-                                }
-                              }
-                            },
-                            child: Text(
-                              cvFileName != null ? 'Changer' : 'Parcourir',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isSubmitting
-                      ? null
-                      : () {
-                          Navigator.of(context).pop(false);
-                        },
-                  child: const Text('Annuler'),
-                ),
-                ElevatedButton(
-                  onPressed: isSubmitting
-                      ? null
-                      : () async {
-                          setDialogState(() {
-                            isSubmitting = true;
-                          });
-
-                          final success = await provider.applyForOpportunity(
-                            opportunityId: id,
-                            message: messageController.text.trim().isEmpty
-                                ? null
-                                : messageController.text.trim(),
-                            cvUrl: cvStoragePath,
-                          );
-
-                          if (!context.mounted) return;
-
-                          if (success) {
-                            Navigator.of(context).pop(true);
-                          } else {
-                            setDialogState(() {
-                              isSubmitting = false;
-                            });
-                            if (provider.error != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(provider.error!)),
-                              );
-                            }
-                          }
-                        },
-                  child: isSubmitting
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Envoyer'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (!mounted) return;
-    if (result == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Candidature envoyée avec succès.')),
-      );
-    } else if (provider.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.error!)),
-      );
-    }
-  }
-
-  void _onReaction(Map<String, dynamic> opportunity, String reactionType) async {
-    final opportunityId = opportunity['id']?.toString();
-    if (opportunityId == null) return;
-
-    final reactionsProvider = context.read<OpportunityReactionsProvider>();
-    final success = await reactionsProvider.toggleReaction(opportunityId, reactionType);
-
-    if (success && mounted) {
-      final counts = reactionsProvider.getReactionCounts(opportunityId);
-      final myReaction = reactionsProvider.getMyReaction(opportunityId);
-      context.read<StudentOpportunitiesProvider>().updateOpportunityCounters(
-            opportunityId,
-            reactionsCount: counts['total'],
-            myReaction: myReaction,
-          );
-    }
-  }
-
-  void _onComment(Map<String, dynamic> opportunity) {
-    final opportunityId = opportunity['id']?.toString();
-    final title = opportunity['title']?.toString() ?? '';
-    if (opportunityId == null) return;
-
-    OpportunityCommentsSheet.show(
-      context,
-      opportunityId: opportunityId,
-      opportunityTitle: title,
-    );
-  }
-
-  Widget _buildCareerTipCard() {
-    return FadeInUp(
-      duration: const Duration(milliseconds: 400),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              const Color(0xFFFFB74D).withOpacity(0.08),
-              const Color(0xFFE3F2FD),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: const Color(0xFFFFB74D).withOpacity(0.2),
-          ),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFFB74D), Color(0xFF2196F3)],
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFFFB74D).withOpacity(0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.lightbulb_outline,
-                size: 18,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Astuce carrière',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF424242),
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Un message de motivation court et personnalisé augmente fortement tes chances de réponse.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF9E9E9E),
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProgressCard() {
-    return Consumer<StudentOpportunitiesProvider>(
-      builder: (context, provider, _) {
-        final opportunities = provider.opportunities;
-        int bookmarkedCount = 0;
-        for (final opp in opportunities) {
-          if (opp['is_bookmarked'] == true) {
-            bookmarkedCount++;
-          }
-        }
-
-        return Container(
-          margin: const EdgeInsets.only(top: 8, bottom: 8),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF4338CA), Color(0xFF6366F1)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF4338CA).withOpacity(0.25),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.trending_up,
-                  size: 18,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Mon avancée carrière',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 4,
-                      children: [
-                        _ProgressPill(
-                          icon: Icons.work_outline,
-                          label:
-                              '${provider.total} opportunité${provider.total > 1 ? 's' : ''}',
-                        ),
-                        _ProgressPill(
-                          icon: Icons.bookmark_outline,
-                          label:
-                              '$bookmarkedCount favori${bookmarkedCount > 1 ? 's' : ''}',
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   @override
@@ -1317,13 +718,10 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
 
             Widget buildCard(Map<String, dynamic> opp, int index) {
               return FadeInUp(
-                duration: const Duration(milliseconds: 400),
-                delay: Duration(
-                  milliseconds: 60 * (index < 8 ? index : 0),
-                ),
-                child: OpportunityFeedCard(
-                  opportunity: opp,
-                  margin: EdgeInsets.zero,
+                duration: const Duration(milliseconds: 350),
+                delay: Duration(milliseconds: 50 * (index < 10 ? index : 0)),
+                child: MarketplaceProductCard(
+                  listing: opp,
                   compact: _marketplaceGridMode,
                   onTap: () {
                     final id = opp['id']?.toString();
@@ -1337,20 +735,12 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
                       ),
                     );
                   },
-                  onLike: () => _onReaction(opp, 'like'),
-                  onLove: () => _onReaction(opp, 'love'),
-                  onComment: () => _onComment(opp),
-                  cartIconKey: _cartIconKey,
-                  onActionAsync: () async {
+                  onAddToCart: () async {
                     final id = opp['id']?.toString();
-                    if (id == null || id.isEmpty) return false;
-
+                    if (id == null || id.isEmpty) return;
                     final cart = context.read<StudentMarketplaceCartProviderV1>();
-                    final ok = await cart.addItem(
-                      listingId: id,
-                      quantity: 1,
-                    );
-                    if (!context.mounted) return ok;
+                    final ok = await cart.addItem(listingId: id, quantity: 1);
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -1360,7 +750,6 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
                         ),
                       ),
                     );
-                    return ok;
                   },
                   onBookmark: () async {
                     final id = opp['id']?.toString();
@@ -1369,15 +758,15 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
                         .read<StudentMarketplaceListingsProviderV1>()
                         .toggleBookmark(id);
                     if (!ok && context.mounted) {
-                      final msg = context
-                              .read<StudentMarketplaceListingsProviderV1>()
-                              .error ??
-                          'Erreur lors de la mise à jour du favori.';
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(msg)),
+                        SnackBar(
+                          content: Text(
+                            context.read<StudentMarketplaceListingsProviderV1>().error ??
+                                'Erreur favori.',
+                          ),
+                        ),
                       );
                     }
-                    return;
                   },
                 ),
               );
@@ -1391,81 +780,35 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
                     total: provider.total,
                   ),
                 ),
-                if (!_marketplaceGridMode)
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        if (index >= opportunities.length) {
-                          return const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Center(
-                              child: SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            ),
-                          );
-                        }
-
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                  sliver: SliverMasonryGrid.count(
+                    crossAxisCount: _marketplaceGridMode ? 2 : 1,
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childCount: itemCount,
+                    itemBuilder: (context, index) {
+                      if (index >= opportunities.length) {
                         return Padding(
-                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                          child: buildCard(opportunities[index], index),
-                        );
-                      },
-                      childCount: itemCount,
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-                    sliver: SliverToBoxAdapter(
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          const gap = 12.0;
-                          final maxW = constraints.maxWidth;
-                          final columns = maxW < 360 ? 1 : 2;
-                          final cardW =
-                              columns == 1 ? maxW : (maxW - gap) / 2.0;
-
-                          return Wrap(
-                            spacing: gap,
-                            runSpacing: gap,
-                            children: [
-                              for (var i = 0; i < opportunities.length; i++)
-                                SizedBox(
-                                  width: cardW,
-                                  child: buildCard(opportunities[i], i),
-                                ),
-                              if (provider.hasMore)
-                                SizedBox(
-                                  width: maxW,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12),
-                                    child: Center(
-                                      child: provider.isLoadingMore
-                                          ? const SizedBox(
-                                              width: 24,
-                                              height: 24,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                              ),
-                                            )
-                                          : OutlinedButton(
-                                              onPressed: provider.isLoadingMore
-                                                  ? null
-                                                  : provider.loadMore,
-                                              child: const Text('Charger plus'),
-                                            ),
-                                    ),
+                          padding: const EdgeInsets.all(16),
+                          child: Center(
+                            child: provider.isLoadingMore
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : OutlinedButton(
+                                    onPressed: provider.loadMore,
+                                    child: const Text('Charger plus'),
                                   ),
-                                ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
+                          ),
+                        );
+                      }
+                      return buildCard(opportunities[index], index);
+                    },
                   ),
+                ),
               ],
             );
           },
@@ -1485,7 +828,7 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
             children: [
               const Expanded(
                 child: Text(
-                  'Opportunités',
+                  'Marketplace',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -1697,47 +1040,6 @@ class _OpportunitiesAccountTab extends StatelessWidget {
   }
 }
 
-class _ProgressPill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _ProgressPill({
-    required this.icon,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 16,
-            color: const Color(0xFF2196F3),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF424242),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _AlibabaHomeTabChip extends StatelessWidget {
   final String label;
   final bool selected;
@@ -1838,53 +1140,3 @@ class _QuickActionPill extends StatelessWidget {
   }
 }
 
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _FilterChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: isSelected
-              ? const LinearGradient(
-                  colors: [Color(0xFF2196F3), Color(0xFF64B5F6)],
-                )
-              : null,
-          color: isSelected ? null : Colors.white,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: isSelected ? Colors.transparent : const Color(0xFFE0E0E0),
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFF2196F3).withOpacity(0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : const Color(0xFF9E9E9E),
-          ),
-        ),
-      ),
-    );
-  }
-}

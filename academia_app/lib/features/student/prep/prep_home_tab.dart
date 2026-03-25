@@ -74,8 +74,7 @@ class PrepHomeTab extends StatelessWidget {
 
   void _startDailyQuiz(BuildContext context) {
     final provider = context.read<PrepQuizProvider>();
-    final questions = PrepQuizProvider.generateDemoQuestions(count: 5);
-    provider.startQuiz(questions: questions);
+    provider.startQuizFromServer(count: 5);
     DefaultTabController.of(context).animateTo(1); // Go to Quiz tab
   }
 }

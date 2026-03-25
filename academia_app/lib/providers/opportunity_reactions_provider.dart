@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Provider pour les réactions sur les opportunités (like/love)
-/// Utilise les RPC: app_opportunity_toggle_reaction, app_opportunity_get_reactions, app_opportunity_get_my_reaction
+/// Provider pour les réactions sur les listings marketplace (like/love)
+/// Utilise les RPC: app_listing_toggle_reaction, app_listing_get_reactions
 class OpportunityReactionsProvider extends ChangeNotifier {
   final SupabaseClient _client = Supabase.instance.client;
 
@@ -61,12 +61,17 @@ class OpportunityReactionsProvider extends ChangeNotifier {
     _setError(null);
     try {
       final response = await _client.rpc(
-        'app_opportunity_get_my_reaction',
-        params: {'p_opportunity_id': opportunityId},
+        'app_listing_get_reactions',
+        params: {'p_listing_id': opportunityId},
       );
 
       if (response is Map<String, dynamic> && response['success'] == true) {
         _myReactions[opportunityId] = response['my_reaction']?.toString();
+        _reactionCounts[opportunityId] = {
+          'likes': response['likes'] as int? ?? 0,
+          'loves': response['loves'] as int? ?? 0,
+          'total': response['total'] as int? ?? 0,
+        };
         notifyListeners();
       }
     } catch (e) {
@@ -79,8 +84,8 @@ class OpportunityReactionsProvider extends ChangeNotifier {
     _setError(null);
     try {
       final response = await _client.rpc(
-        'app_opportunity_get_reactions',
-        params: {'p_opportunity_id': opportunityId},
+        'app_listing_get_reactions',
+        params: {'p_listing_id': opportunityId},
       );
 
       if (response is Map<String, dynamic> && response['success'] == true) {
@@ -137,9 +142,9 @@ class OpportunityReactionsProvider extends ChangeNotifier {
 
     try {
       final response = await _client.rpc(
-        'app_opportunity_toggle_reaction',
+        'app_listing_toggle_reaction',
         params: {
-          'p_opportunity_id': opportunityId,
+          'p_listing_id': opportunityId,
           'p_reaction_type': reactionType,
         },
       );

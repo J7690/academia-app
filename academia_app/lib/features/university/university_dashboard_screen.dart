@@ -12,10 +12,11 @@ import '../../providers/university_site_provider.dart';
 import '../../providers/university_programs_provider.dart';
 import '../../providers/university_payments_provider.dart';
 import 'university_payments_screen.dart';
+import 'university_revenue_tab.dart';
 import '../../widgets/mini_site_hero_video.dart';
 import 'university_application_detail_screen.dart';
 import '../../services/notification_sound_service.dart';
-import '../../widgets/notification_sound_settings_dialog.dart';
+import '../student/student_settings_screen.dart';
 import '../../widgets/support_fab.dart';
 import '../../services/push_trigger_service.dart';
 
@@ -44,9 +45,6 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
     });
   }
 
-  Future<void> _signOut() async {
-    await Supabase.instance.client.auth.signOut();
-  }
 
   @override
   void dispose() {
@@ -79,7 +77,7 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
     final email = user?.email ?? '';
 
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Consumer2<UniversityApplicationsProvider, UniversitySiteProvider>(
         builder: (context, applicationsProvider, siteProvider, child) {
           final unread = applicationsProvider.unreadTotal;
@@ -117,23 +115,27 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                   tooltip: 'Options du compte',
                   onSelected: (value) {
                     switch (value) {
-                      case _UniversityDashboardMenuAction.notifications:
-                        NotificationSoundSettingsDialog.show(context);
+                      case _UniversityDashboardMenuAction.settings:
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const StudentSettingsScreen(
+                              showDeleteAccount: false,
+                              showProfile: false,
+                            ),
+                          ),
+                        );
                         break;
                       case _UniversityDashboardMenuAction.changePassword:
                         _showChangePasswordDialog(context);
-                        break;
-                      case _UniversityDashboardMenuAction.signOut:
-                        _signOut();
                         break;
                     }
                   },
                   itemBuilder: (context) => const [
                     PopupMenuItem<_UniversityDashboardMenuAction>(
-                      value: _UniversityDashboardMenuAction.notifications,
+                      value: _UniversityDashboardMenuAction.settings,
                       child: ListTile(
-                        leading: Icon(Icons.notifications_active_outlined),
-                        title: Text('Paramètres des notifications'),
+                        leading: Icon(Icons.settings),
+                        title: Text('Paramètres'),
                       ),
                     ),
                     PopupMenuItem<_UniversityDashboardMenuAction>(
@@ -141,13 +143,6 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                       child: ListTile(
                         leading: Icon(Icons.lock_outline),
                         title: Text('Changer le mot de passe'),
-                      ),
-                    ),
-                    PopupMenuItem<_UniversityDashboardMenuAction>(
-                      value: _UniversityDashboardMenuAction.signOut,
-                      child: ListTile(
-                        leading: Icon(Icons.logout),
-                        title: Text('Se déconnecter'),
                       ),
                     ),
                   ],
@@ -169,6 +164,7 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                 tabs: [
                   Tab(child: _UniversityTabLabel(text: 'Candidatures', count: unread)),
                   const Tab(text: 'Paiements'),
+                  const Tab(text: 'Revenus'),
                   const Tab(text: 'Mini-site & offres'),
                 ],
               ),
@@ -267,6 +263,7 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                         create: (_) => UniversityPaymentsProvider(),
                         child: const UniversityPaymentsScreen(),
                       ),
+                      const UniversityRevenueTab(),
                       const _UniversitySiteWorkspace(),
                     ],
                   ),
@@ -281,9 +278,8 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
 }
 
 enum _UniversityDashboardMenuAction {
-  notifications,
+  settings,
   changePassword,
-  signOut,
 }
 
 Future<void> _showChangePasswordDialog(BuildContext context) async {

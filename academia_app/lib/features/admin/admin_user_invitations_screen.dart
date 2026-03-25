@@ -6,6 +6,8 @@ import '../../providers/admin_user_invitations_provider.dart';
 import '../../providers/admin_universities_provider.dart';
 import '../../providers/admin_users_overview_provider.dart';
 import '../../providers/admin_td_teachers_provider.dart';
+import '../../providers/admin_support_provider.dart';
+import 'admin_support_chat_screen.dart';
 
 class AdminUserInvitationsScreen extends StatefulWidget {
   const AdminUserInvitationsScreen({super.key});
@@ -863,6 +865,59 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
     );
   }
 
+  Future<void> _initiateSupportChat(String email) async {
+    try {
+      final usersProvider = context.read<AdminUsersOverviewProvider>();
+      
+      // Étape 1: Vérifier si conversation existe
+      final existingConvId = await usersProvider.checkSupportConversationExists(email);
+      
+      String? conversationId;
+      if (existingConvId != null) {
+        // Conversation existe → ouvrir directement
+        conversationId = existingConvId;
+      } else {
+        // Créer nouvelle conversation
+        conversationId = await usersProvider.createSupportConversation(
+          email: email,
+          initialMessage: null, // Pas de message initial automatique
+        );
+      }
+      
+      if (!context.mounted) return;
+      
+      if (conversationId != null) {
+        // Ouvrir l'écran de chat support
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ChangeNotifierProvider(
+              create: (_) => AdminSupportProvider(),
+              child: AdminSupportChatScreen(
+                conversationId: conversationId!,
+                requesterName: email, // Utiliser l'email comme nom par défaut
+                requesterRole: 'student',
+                status: 'open',
+              ),
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erreur lors de l\'ouverture de la conversation support.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur: $e'),
+        ),
+      );
+    }
+  }
+
   Future<void> _promoteUserToAdmin(BuildContext context, String userId) async {
     final usersProvider = context.read<AdminUsersOverviewProvider>();
     final confirm = await showDialog<bool>(
@@ -1470,6 +1525,30 @@ class _AdminUserInvitationsScreenState extends State<AdminUserInvitationsScreen>
                                                         'Rendre université',
                                                       ),
                                                     ),
+                                                  // NOUVEAU: Menu dropdown pour actions avancées
+                                                  PopupMenuButton<String>(
+                                                    icon: const Icon(Icons.more_vert),
+                                                    onSelected: (value) async {
+                                                      final email = user['email']?.toString() ?? '';
+                                                      switch (value) {
+                                                        case 'support':
+                                                          await _initiateSupportChat(email);
+                                                          break;
+                                                      }
+                                                    },
+                                                    itemBuilder: (context) => [
+                                                      const PopupMenuItem(
+                                                        value: 'support',
+                                                        child: Row(
+                                                          children: [
+                                                            Icon(Icons.chat_outlined, size: 20),
+                                                            SizedBox(width: 8),
+                                                            Text('Contacter via Support'),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
                                                   TextButton(
                                                     onPressed: usersProvider
                                                                 .isUpdating ||

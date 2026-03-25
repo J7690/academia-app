@@ -1,0 +1,311 @@
+{
+  "metadata": {
+    "title": "Questions de Préparation au Concours - Burkina Faso",
+    "date_created": "2026-03-24",
+    "subjects": ["mathématiques", "physique", "chimie", "biologie", "économie", "droit"],
+    "level": "concours_professionnel",
+    "country": "BF"
+  },
+  "questions": [
+    {
+      "id": "math_001",
+      "subject": "mathématiques",
+      "topic": "suites",
+      "question": "Soit une suite définie par $u_0 = 2$ et $u_{n+1} = \\frac{2u_n + 1}{u_n + 2}$. Quelle est la nature de cette suite?",
+      "options": [
+        "Suite arithmétique",
+        "Suite géométrique", 
+        "Suite arithmético-géométrique",
+        "Suite convergente"
+      ],
+      "correct_answer": 3,
+      "explanation": "La suite converge vers $\\sqrt{2}$ - 1",
+      "difficulty": "medium"
+    },
+    {
+      "id": "math_002",
+      "subject": "mathématiques",
+      "topic": "fonctions",
+      "question": "Calculer la dérivée de $f(x) = x \\ln(x) - x$",
+      "options": [
+        "$\\ln(x)$",
+        "$\\ln(x) - 1$",
+        "$\\frac{1}{x} - 1$",
+        "$x + \\ln(x)$"
+      ],
+      "correct_answer": 0,
+      "explanation": "$f'(x) = \\ln(x) + x \\cdot \\frac{1}{x} - 1 = \\ln(x)$",
+      "difficulty": "easy"
+    },
+    {
+      "id": "math_003",
+      "subject": "mathématiques",
+      "topic": "nombres_complexes",
+      "question": "Quel est l'argument du nombre complexe $z = 1 + i$?",
+      "options": [
+        "$\\frac{\\pi}{6}$",
+        "$\\frac{\\pi}{4}$",
+        "$\\frac{\\pi}{3}$",
+        "$\\frac{\\pi}{2}$"
+      ],
+      "correct_answer": 1,
+      "explanation": "$\\arg(1 + i) = \\arctan(\\frac{1}{1}) = \\frac{\\pi}{4}$",
+      "difficulty": "easy"
+    },
+    {
+      "id": "phys_001",
+      "subject": "physique",
+      "topic": "mécanique",
+      "question": "Un cycliste parcourt 90 km en 2h30. Quelle est sa vitesse moyenne?",
+      "options": [
+        "30 km/h",
+        "36 km/h",
+        "40 km/h",
+        "45 km/h"
+      ],
+      "correct_answer": 1,
+      "explanation": "Vitesse = Distance / Temps = 90 km / 2.5 h = 36 km/h",
+      "difficulty": "easy"
+    },
+    {
+      "id": "phys_002",
+      "subject": "physique",
+      "topic": "électricité",
+      "question": "Dans un circuit électrique, que représente I?",
+      "options": [
+        "La tension",
+        "La résistance",
+        "L'intensité du courant",
+        "La puissance"
+      ],
+      "correct_answer": 2,
+      "explanation": "I représente l'intensité du courant électrique, mesurée en ampères (A)",
+      "difficulty": "easy"
+    },
+    {
+      "id": "chem_001",
+      "subject": "chimie",
+      "topic": "réactions",
+      "question": "La saponification est une réaction entre:",
+      "options": [
+        "Un acide et une base",
+        "Un ester et une base forte",
+        "Un alcool et un acide",
+        "Deux acides"
+      ],
+      "correct_answer": 1,
+      "explanation": "La saponification est la réaction d'un ester avec une base forte (NaOH ou KOH) pour former un savon",
+      "difficulty": "medium"
+    },
+    {
+      "id": "chem_002",
+      "subject": "chimie",
+      "topic": "pH",
+      "question": "Quel est le pH d'une solution d'acide chlorhydrique de concentration 0,1 mol/L?",
+      "options": [
+        "0",
+        "1", 
+        "2",
+        "3"
+      ],
+      "correct_answer": 1,
+      "explanation": "pH = -log[H+] = -log(0,1) = 1",
+      "difficulty": "medium"
+    },
+    {
+      "id": "bio_001",
+      "subject": "biologie",
+      "topic": "cellule",
+      "question": "Où s'effectue la synthèse des protéines dans la cellule?",
+      "options": [
+        "Dans le noyau",
+        "Dans les mitochondries",
+        "Dans les ribosomes",
+        "Dans l'appareil de Golgi"
+      ],
+      "correct_answer": 2,
+      "explanation": "Les ribosomes sont les organites responsables de la synthèse des protéines",
+      "difficulty": "easy"
+    },
+    {
+      "id": "bio_002",
+      "subject": "biologie",
+      "topic": "sang",
+      "question": "Les globules blancs responsables de la défense de l'organisme sont:",
+      "options": [
+        "Les hématies",
+        "Les plaquettes",
+        "Les leucocytes",
+        "Les lymphocytes"
+      ],
+      "correct_answer": 2,
+      "explanation": "Les leucocytes (globules blancs) sont responsables de la défense immunitaire",
+      "difficulty": "easy"
+    },
+    {
+      "id": "eco_001",
+      "subject": "économie",
+      "topic": "PIB",
+      "question": "Le PIB mesure:",
+      "options": [
+        "La richesse accumulée par un pays",
+        "La production de richesses sur un territoire en un an",
+        "Le niveau de vie des habitants",
+        "Les exportations moins les importations"
+      ],
+      "correct_answer": 1,
+      "explanation": "Le PIB (Produit Intérieur Brut) mesure la valeur totale de la production de biens et services sur un territoire pendant une période donnée",
+      "difficulty": "medium"
+    },
+    {
+      "id": "eco_002",
+      "subject": "économie",
+      "topic": "inflation",
+      "question": "L'inflation est:",
+      "options": [
+        "Une baisse des prix",
+        "Une hausse générale et durable des prix",
+        "Une augmentation du chômage",
+        "Une baisse de la production"
+      ],
+      "correct_answer": 1,
+      "explanation": "L'inflation est une hausse générale et durable du niveau des prix",
+      "difficulty": "easy"
+    },
+    {
+      "id": "law_001",
+      "subject": "droit",
+      "topic": "constitution",
+      "question": "Au Burkina Faso, qui est le chef de l'État?",
+      "options": [
+        "Le Premier ministre",
+        "Le Président de l'Assemblée",
+        "Le Président du Faso",
+        "Le Ministre de la Justice"
+      ],
+      "correct_answer": 2,
+      "explanation": "Le Président du Faso est le chef de l'État au Burkina Faso",
+      "difficulty": "easy"
+    },
+    {
+      "id": "law_002",
+      "subject": "droit",
+      "topic": "majorité",
+      "question": "À quel âge atteint-on la majorité civile au Burkina Faso?",
+      "options": [
+        "16 ans",
+        "18 ans",
+        "20 ans",
+        "21 ans"
+      ],
+      "correct_answer": 1,
+      "explanation": "La majorité civile est fixée à 18 ans au Burkina Faso",
+      "difficulty": "easy"
+    },
+    {
+      "id": "math_004",
+      "subject": "mathématiques",
+      "topic": "probabilités",
+      "question": "Une urne contient 3 boules blanches et 5 boules noires. Quelle est la probabilité de tirer une boule blanche?",
+      "options": [
+        "$\\frac{3}{5}$",
+        "$\\frac{5}{8}$",
+        "$\\frac{3}{8}$",
+        "$\\frac{5}{3}$"
+      ],
+      "correct_answer": 2,
+      "explanation": "P(blanche) = $\\frac{3}{3+5} = \\frac{3}{8}$",
+      "difficulty": "easy"
+    },
+    {
+      "id": "math_005",
+      "subject": "mathématiques",
+      "topic": "géométrie",
+      "question": "Le volume d'un cylindre de rayon r = 5 cm et de hauteur h = 10 cm est:",
+      "options": [
+        "250π cm³",
+        "150π cm³",
+        "500π cm³",
+        "50π cm³"
+      ],
+      "correct_answer": 0,
+      "explanation": "V = πr²h = π × 5² × 10 = 250π cm³",
+      "difficulty": "medium"
+    },
+    {
+      "id": "phys_003",
+      "subject": "physique",
+      "topic": "optique",
+      "question": "Un objet placé devant une lentille convergente à une distance supérieure à 2f donne une image:",
+      "options": [
+        "Virtuelle et droite",
+        "Réelle et renversée",
+        "Virtuelle et renversée",
+        "Réelle et droite"
+      ],
+      "correct_answer": 1,
+      "explanation": "Pour un objet placé au-delà de 2f d'une lentille convergente, l'image est réelle et renversée",
+      "difficulty": "medium"
+    },
+    {
+      "id": "chem_003",
+      "subject": "chimie",
+      "topic": "solutions",
+      "question": "La dissolution du chlorure de sodium (NaCl) dans l'eau produit:",
+      "options": [
+        "Des molécules de NaCl",
+        "Des ions Na⁺ et Cl⁻",
+        "Du sodium métallique et du chlore gazeux",
+        "De l'hydroxyde de sodium"
+      ],
+      "correct_answer": 1,
+      "explanation": "NaCl se dissocie en ions Na⁺ et Cl⁻ dans l'eau",
+      "difficulty": "easy"
+    },
+    {
+      "id": "bio_003",
+      "subject": "biologie",
+      "topic": "génétique",
+      "question": "L'ADN contient toutes les informations génétiques et se trouve principalement dans:",
+      "options": [
+        "Le cytoplasme",
+        "Les ribosomes",
+        "Le noyau",
+        "Les mitochondries"
+      ],
+      "correct_answer": 2,
+      "explanation": "L'ADN se trouve principalement dans le noyau cellulaire",
+      "difficulty": "easy"
+    },
+    {
+      "id": "eco_003",
+      "subject": "économie",
+      "topic": "marché",
+      "question": "Sur un marché concurrentiel, le prix d'équilibre est déterminé par:",
+      "options": [
+        "L'État uniquement",
+        "Les producteurs uniquement",
+        "L'offre et la demande",
+        "Les consommateurs uniquement"
+      ],
+      "correct_answer": 2,
+      "explanation": "Le prix d'équilibre résulte de la confrontation entre l'offre et la demande",
+      "difficulty": "medium"
+    },
+    {
+      "id": "math_006",
+      "subject": "mathématiques",
+      "topic": "statistiques",
+      "question": "La médiane de la série: 5, 8, 9, 11, 14, 17, 21 est:",
+      "options": [
+        "9",
+        "11",
+        "14",
+        "12"
+      ],
+      "correct_answer": 1,
+      "explanation": "Pour une série de 7 valeurs ordonnées, la médiane est la 4ème valeur: 11",
+      "difficulty": "easy"
+    }
+  ]
+}

@@ -33,8 +33,21 @@ dependencies:
   
   # Utils
   intl: ^0.18.1
-
   url_launcher: ^6.2.5
+  
+  # Gaming Engine - Flame et composants
+  flame: ^1.10.1
+  flame_behaviors: ^0.2.0
+  flame_audio: ^2.1.2
+  
+  # Gaming Services (Leaderboards, Achievements)
+  games_services: ^4.0.0
+  
+  # Multiplayer et temps réel
+  web_socket_channel: ^2.4.0
+  
+  # Animations gaming
+  simple_animations: ^5.0.2
 
 dev_dependencies:
   flutter_test:
@@ -48,3 +61,6 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/bobodo/
+    - assets/games/images/
+    - assets/games/sounds/
+    - assets/games/ui/

@@ -14,6 +14,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 // tiktoklikescroller retiré : incompatible avec AndroidView PlatformViews.
 // On utilise PageView.builder + _TikTokScrollPhysics custom à la place.
 import '../../../providers/student_challenges_provider.dart';
+import '../../../services/adaptive_quality_service.dart';
+import '../../../services/video_analytics_service.dart';
+import '../../../services/video_cache_service.dart';
+import '../../../services/video_preload_service.dart';
+import '../../../services/video_share_service.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
 import '../../../video/academia_playback_engine.dart';
@@ -26,6 +31,7 @@ import '../challenge_camera_capture_screen.dart';
 import '../student_social_profile_screen.dart';
 import '../student_dashboard_nav_controller.dart';
 import '../student_recently_deleted_videos_screen.dart';
+import '../challenge_live_screen.dart';
 
 class StudentChallengesFeedScreen extends StatelessWidget {
   const StudentChallengesFeedScreen({super.key});
@@ -1034,6 +1040,8 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted || _initialized) return;
       _initialized = true;
+      // Initialize adaptive quality monitoring
+      AdaptiveQualityService.init();
       final provider = context.read<StudentChallengesProvider>();
       await provider.loadChallengeVideos(limit: _pageSize);
       if (!mounted) return;
@@ -1042,6 +1050,8 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
       setState(() {
         _hasMore = videos.length >= _pageSize;
       });
+      // Preload first few videos
+      _preloadAdjacentVideos(0, videos);
     });
   }
 
@@ -1053,6 +1063,14 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
 
   void _onPageChanged(int newIndex) {
     debugPrint('[FEED] Page changed: $_currentPage -> $newIndex');
+
+    // Stop analytics for previous video
+    final provider = context.read<StudentChallengesProvider>();
+    final videos = provider.videos;
+    if (_currentPage < videos.length) {
+      VideoAnalyticsService.onVideoStopped();
+    }
+
     // Pause all controllers except the new active one
     for (final entry in _controllers.entries) {
       if (entry.key != newIndex && entry.value.isAttached) {
@@ -1061,6 +1079,19 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
       }
     }
     _currentPage = newIndex;
+
+    // Start analytics for new video
+    if (newIndex < videos.length) {
+      final video = videos[newIndex];
+      final videoId = video['participation_id']?.toString() ?? video['video_id']?.toString() ?? '';
+      if (videoId.isNotEmpty) {
+        VideoAnalyticsService.onVideoStarted(
+          videoId: videoId,
+          videoType: video['video_type']?.toString() ?? 'challenge',
+          participationId: video['participation_id']?.toString(),
+        );
+      }
+    }
     final newCtrl = _controllers[newIndex];
     if (newCtrl != null && newCtrl.isAttached) {
       newCtrl.play();
@@ -1080,12 +1111,37 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
     if (removed.isNotEmpty) {
       debugPrint('[FEED]   Cleaned up controllers: $removed');
     }
+
+    // Preload adjacent videos
+    _preloadAdjacentVideos(newIndex, videos);
+  }
+
+  void _preloadAdjacentVideos(int currentIndex, List<Map<String, dynamic>> videos) {
+    final urlsToPreload = <String>[];
+    for (int i = 1; i <= 3; i++) {
+      final nextIdx = currentIndex + i;
+      if (nextIdx < videos.length) {
+        final url = AdaptiveQualityService.selectBestUrlFromVideo(videos[nextIdx]);
+        if (url.isNotEmpty) {
+          // Cache best URL for quick access
+          final videoId = videos[nextIdx]['participation_id']?.toString() ?? videos[nextIdx]['video_id']?.toString() ?? '';
+          if (videoId.isNotEmpty) {
+            VideoCacheService.putBestUrl(videoId, url);
+          }
+          urlsToPreload.add(url);
+        }
+      }
+    }
+    if (urlsToPreload.isNotEmpty) {
+      VideoPreloadService.preloadUrls(urlsToPreload);
+    }
   }
 
   Future<void> _reloadAfterDeletion() async {
     final provider = context.read<StudentChallengesProvider>();
     _controllers.clear();
     _currentPage = 0;
+    VideoPreloadService.clear();
     await provider.loadChallengeVideos(limit: _pageSize);
     if (!mounted) return;
     final videos = provider.videos;
@@ -1360,17 +1416,37 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
                     ),
                   ),
                 ),
-                // 4. Messages (placeholder)
+                // 4. Jeux
                 buildNavItem(
-                  icon: Icons.chat_bubble_outline,
-                  label: 'Messages',
+                  icon: Icons.sports_esports,
+                  label: 'Jeux',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Messagerie — bientôt disponible')),
-                    );
+                    _pauseAllControllers();
+                    Navigator.of(context).pushNamed('/games').then((_) {
+                      if (!mounted) return;
+                      final ctrl = _controllers[_currentPage];
+                      if (ctrl != null && ctrl.isAttached) ctrl.play();
+                    });
                   },
                 ),
-                // 5. Profil TikTok-like
+                // 5. Live TikTok
+                buildNavItem(
+                  icon: Icons.sensors,
+                  label: 'Live',
+                  onTap: () {
+                    _pauseAllControllers();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ChallengeLiveScreen(),
+                      ),
+                    ).then((_) {
+                      if (!mounted) return;
+                      final ctrl = _controllers[_currentPage];
+                      if (ctrl != null && ctrl.isAttached) ctrl.play();
+                    });
+                  },
+                ),
+                // 6. Profil TikTok-like
                 buildNavItem(
                   icon: Icons.person_outline,
                   label: 'Profil',
@@ -1609,42 +1685,24 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
   Future<void> _startInit() async {
     String url = '';
 
-    // 1) playback.best_url
-    final playback = widget.video['playback'];
-    if (playback is Map) {
-      final playbackMap = Map<String, dynamic>.from(playback);
-      url = playbackMap['best_url']?.toString().trim() ?? '';
-    }
-
-    // 2) video_renditions (480p, default, legacy_primary, or first available)
-    if (url.isEmpty) {
-      final renditions = widget.video['video_renditions'];
-      if (renditions is Map) {
-        final r = Map<String, dynamic>.from(renditions);
-        final url480 = r['480p']?.toString() ?? '';
-        final urlDefault = r['default']?.toString() ?? '';
-        final urlLegacy = r['legacy_primary']?.toString() ?? '';
-        if (url480.isNotEmpty) {
-          url = url480;
-        } else if (urlDefault.isNotEmpty) {
-          url = urlDefault;
-        } else if (urlLegacy.isNotEmpty) {
-          url = urlLegacy;
-        } else {
-          for (final v in r.values) {
-            final s = v?.toString() ?? '';
-            if (s.isNotEmpty && s.startsWith('http')) {
-              url = s;
-              break;
-            }
-          }
-        }
+    // 0) Check cache first
+    final videoId = widget.video['participation_id']?.toString() ?? widget.video['video_id']?.toString() ?? '';
+    if (videoId.isNotEmpty) {
+      final cached = VideoCacheService.getBestUrl(videoId);
+      if (cached != null && cached.isNotEmpty) {
+        url = cached;
+        debugPrint('[VIDEO_ITEM] Cache hit for $videoId');
       }
     }
 
-    // 3) video_url direct
+    // 1) Use AdaptiveQualityService for smart URL selection
     if (url.isEmpty) {
-      url = widget.video['video_url']?.toString().trim() ?? '';
+      url = AdaptiveQualityService.selectBestUrlFromVideo(widget.video);
+    }
+
+    // Cache the resolved URL
+    if (url.isNotEmpty && videoId.isNotEmpty) {
+      VideoCacheService.putBestUrl(videoId, url);
     }
 
     _selectedUrl = url;
@@ -2935,12 +2993,19 @@ class _ChallengeVideoActions extends StatelessWidget {
               return;
             }
             try {
-              await Share.share(
-                videoUrl,
-                subject: 'Vidéo de challenge Academia',
+              await VideoShareService.shareVideo(
+                videoUrl: videoUrl,
+                videoId: videoId.isNotEmpty ? videoId : participationId,
+                participationId: participationId.isNotEmpty ? participationId : null,
+                title: 'Vidéo de challenge Academia',
               );
             } catch (_) {
               await Clipboard.setData(ClipboardData(text: videoUrl));
+              await VideoShareService.copyLink(
+                videoUrl: videoUrl,
+                videoId: videoId.isNotEmpty ? videoId : participationId,
+              );
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content:

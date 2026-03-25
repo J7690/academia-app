@@ -1,0 +1,42 @@
+{
+  "live_tables": {
+    "ok": true,
+    "mode": "exec",
+    "affected_rows": 15
+  },
+  "online_course_live_sessions_cols": {
+    "ok": true,
+    "mode": "exec",
+    "affected_rows": 20
+  },
+  "online_course_live_session_participants_cols": {
+    "ok": true,
+    "mode": "exec",
+    "affected_rows": 9
+  },
+  "live_rpcs": {
+    "ok": true,
+    "mode": "exec",
+    "affected_rows": 40
+  },
+  "course_rpcs": {
+    "ok": true,
+    "mode": "exec",
+    "affected_rows": 5
+  },
+  "online_courses_cols": {
+    "ok": true,
+    "mode": "exec",
+    "affected_rows": 19
+  },
+  "rls_policies": {
+    "ok": true,
+    "mode": "exec",
+    "affected_rows": 32
+  },
+  "data_counts": {
+    "ok": true,
+    "mode": "exec",
+    "affected_rows": 1
+  }
+}

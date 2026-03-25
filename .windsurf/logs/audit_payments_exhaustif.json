@@ -1,0 +1,1741 @@
+{
+  "all_financial_tables": [
+    {
+      "table_name": "application_payments",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "bobodo_feedback",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "commercial_milestone_claims",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "commercial_milestones",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "commercial_profiles",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "commission_rules",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "course_enrollments",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "marketplace_cart_items",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "marketplace_carts",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "marketplace_categories",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "marketplace_listing_bookmarks",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "marketplace_listing_media",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "marketplace_listings",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "marketplace_merchant_balances",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "marketplace_merchants",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "marketplace_order_items",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "marketplace_orders",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "marketplace_payments",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "marketplace_products",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "marketplace_reviews",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "online_course_enrollment_messages",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "online_course_enrollments",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "payment_proofs",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "payment_receipts",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "referral_commissions",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "td_enrollments",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "user_referrals",
+      "table_schema": "app"
+    }
+  ],
+  "all_payment_enums": [
+    {
+      "values": [
+        "unverified",
+        "verified"
+      ],
+      "enum_name": "factor_status"
+    },
+    {
+      "values": [
+        "pending",
+        "approved",
+        "denied",
+        "expired"
+      ],
+      "enum_name": "oauth_authorization_status"
+    },
+    {
+      "values": [
+        "cash",
+        "orange_money",
+        "moov_money",
+        "telecel_money"
+      ],
+      "enum_name": "payment_channel"
+    },
+    {
+      "values": [
+        "application_fee",
+        "registration_fee",
+        "tuition_deposit",
+        "other",
+        "td_access"
+      ],
+      "enum_name": "payment_reason"
+    },
+    {
+      "values": [
+        "pending",
+        "declared_by_student",
+        "under_verification",
+        "confirmed",
+        "rejected",
+        "cancelled"
+      ],
+      "enum_name": "payment_status"
+    },
+    {
+      "values": [
+        "PENDING",
+        "SUCCESS",
+        "ERROR"
+      ],
+      "enum_name": "request_status"
+    },
+    {
+      "values": [
+        "unassigned",
+        "assigned",
+        "closed"
+      ],
+      "enum_name": "td_assignment_status"
+    },
+    {
+      "values": [
+        "present",
+        "late",
+        "absent",
+        "excused"
+      ],
+      "enum_name": "td_attendance_status"
+    },
+    {
+      "values": [
+        "pending_payment",
+        "waiting_admin",
+        "active",
+        "completed",
+        "cancelled"
+      ],
+      "enum_name": "td_enrollment_status"
+    },
+    {
+      "values": [
+        "draft",
+        "published",
+        "inactive"
+      ],
+      "enum_name": "td_program_status"
+    },
+    {
+      "values": [
+        "planned",
+        "confirmed",
+        "completed",
+        "cancelled"
+      ],
+      "enum_name": "td_session_occurrence_status"
+    }
+  ],
+  "all_financial_rpcs": [
+    {
+      "routine_name": "app_admin_add_marketplace_listing_media",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_add_online_course_enrollment_message_to_student",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_confirm_payment",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_delete_commission_rule",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_disable_marketplace_listing_media",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_get_commercial_detail",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_get_payment_detail",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_list_commercials_overview",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_list_commission_rules",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_list_marketplace_listing_media",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_list_marketplace_merchants",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_list_marketplace_orders",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_list_marketplace_payments",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_list_marketplace_products",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_list_milestone_claims",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_list_online_course_enrollment_messages",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_list_online_course_enrollments",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_list_payment_receipts_with_context",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_list_payments_with_context",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_list_pending_marketplace_listings",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_list_published_marketplace_listings",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_review_marketplace_listing",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_set_commercial_commission_rate",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_update_commercial_cap",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_update_marketplace_merchant_status",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_update_marketplace_product_status",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_update_milestone_claim_status",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_update_referral_commission_status",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_upsert_commission_rule",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_admin_verify_payment",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_commercial_claim_milestone",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_commercial_get_dashboard",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_create_application_payment",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_create_marketplace_order_simple",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_generate_referral_commission_for_payment",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_list_marketplace_categories",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_list_marketplace_home",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_list_marketplace_merchants",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_list_marketplace_products_by_merchant",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_list_student_marketplace_orders",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_marketplace_listing_toggle_bookmark",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_marketplace_process_payment",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_marketplace_release_escrow",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_merchant_add_marketplace_listing_media",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_merchant_disable_marketplace_listing_media",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_merchant_get_marketplace_order_detail",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_merchant_list_marketplace_listing_media",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_merchant_list_my_marketplace_listings",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_merchant_list_my_marketplace_orders",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_merchant_list_orders",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_merchant_submit_marketplace_listing_for_review",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_merchant_update_marketplace_order_status",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_merchant_update_order_status",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_merchant_upsert_marketplace_listing",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_notify_admin_course_enrollment",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_notify_admin_marketplace_order",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_notify_admin_payment_declared",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_notify_commercial_commission",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_notify_commercial_payment_confirmed",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_notify_commercial_prospect_payment",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_notify_commercial_referral",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_notify_instructor_course_enrollment",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_notify_instructor_td_enrollment",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_notify_student_payment_status",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_notify_university_payment",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_on_payment_confirmed_generate_referral_commission",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_register_referral_for_current_user",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_storage_setup_marketplace_media_policies",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_student_add_online_course_enrollment_message",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_student_checkout_create_order_from_cart",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_student_create_marketplace_listing_inquiry",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_student_create_profile_payment",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_student_declare_payment",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_student_enroll_online_course",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_student_get_marketplace_listing_detail",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_student_get_marketplace_order_detail",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_student_list_bookmarked_marketplace_listings",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_student_list_marketplace_listings",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_student_list_marketplace_listings",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_student_list_my_marketplace_orders",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_student_list_online_course_enrollment_messages",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_td_admin_list_enrollments_with_context",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_td_list_messages_for_enrollment",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_td_student_create_enrollment_and_payment",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_td_student_get_my_enrollments",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_td_student_list_my_enrollments",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_td_student_list_resources_for_enrollment",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_td_teacher_list_resources_for_enrollment",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "app_university_list_payments",
+      "routine_schema": "public"
+    },
+    {
+      "routine_name": "fn_check_commission_cap",
+      "routine_schema": "app"
+    },
+    {
+      "routine_name": "fn_resolve_commission_rate",
+      "routine_schema": "app"
+    },
+    {
+      "routine_name": "fn_update_commercial_tier",
+      "routine_schema": "app"
+    },
+    {
+      "routine_name": "ordered_set_transition",
+      "routine_schema": "pg_catalog"
+    },
+    {
+      "routine_name": "ordered_set_transition_multi",
+      "routine_schema": "pg_catalog"
+    },
+    {
+      "routine_name": "payment_receipts_block_changes",
+      "routine_schema": "app"
+    },
+    {
+      "routine_name": "pg_stat_get_subscription",
+      "routine_schema": "pg_catalog"
+    },
+    {
+      "routine_name": "pg_stat_get_subscription_stats",
+      "routine_schema": "pg_catalog"
+    },
+    {
+      "routine_name": "subscription_check_filters",
+      "routine_schema": "realtime"
+    }
+  ],
+  "all_financial_triggers": [
+    {
+      "trigger_name": "trg_admin_payment_declared_notify",
+      "action_statement": "EXECUTE FUNCTION app_notify_admin_payment_declared()",
+      "event_manipulation": "INSERT",
+      "event_object_table": "application_payments"
+    },
+    {
+      "trigger_name": "trg_admin_payment_declared_notify",
+      "action_statement": "EXECUTE FUNCTION app_notify_admin_payment_declared()",
+      "event_manipulation": "UPDATE",
+      "event_object_table": "application_payments"
+    },
+    {
+      "trigger_name": "trg_app_application_payments_referral_commission",
+      "action_statement": "EXECUTE FUNCTION app_on_payment_confirmed_generate_referral_commission()",
+      "event_manipulation": "UPDATE",
+      "event_object_table": "application_payments"
+    },
+    {
+      "trigger_name": "trg_commercial_payment_confirmed_notify",
+      "action_statement": "EXECUTE FUNCTION app_notify_commercial_payment_confirmed()",
+      "event_manipulation": "UPDATE",
+      "event_object_table": "application_payments"
+    },
+    {
+      "trigger_name": "trg_commercial_prospect_payment_notify",
+      "action_statement": "EXECUTE FUNCTION app_notify_commercial_prospect_payment()",
+      "event_manipulation": "INSERT",
+      "event_object_table": "application_payments"
+    },
+    {
+      "trigger_name": "trg_commercial_prospect_payment_notify",
+      "action_statement": "EXECUTE FUNCTION app_notify_commercial_prospect_payment()",
+      "event_manipulation": "UPDATE",
+      "event_object_table": "application_payments"
+    },
+    {
+      "trigger_name": "trg_student_payment_status_notify",
+      "action_statement": "EXECUTE FUNCTION app_notify_student_payment_status()",
+      "event_manipulation": "UPDATE",
+      "event_object_table": "application_payments"
+    },
+    {
+      "trigger_name": "trg_uni_payment_notify",
+      "action_statement": "EXECUTE FUNCTION app_notify_university_payment()",
+      "event_manipulation": "INSERT",
+      "event_object_table": "application_payments"
+    },
+    {
+      "trigger_name": "trg_uni_payment_notify",
+      "action_statement": "EXECUTE FUNCTION app_notify_university_payment()",
+      "event_manipulation": "UPDATE",
+      "event_object_table": "application_payments"
+    },
+    {
+      "trigger_name": "trg_admin_marketplace_order_notify",
+      "action_statement": "EXECUTE FUNCTION app_notify_admin_marketplace_order()",
+      "event_manipulation": "INSERT",
+      "event_object_table": "marketplace_orders"
+    },
+    {
+      "trigger_name": "payment_receipts_no_delete",
+      "action_statement": "EXECUTE FUNCTION app.payment_receipts_block_changes()",
+      "event_manipulation": "DELETE",
+      "event_object_table": "payment_receipts"
+    },
+    {
+      "trigger_name": "payment_receipts_no_update",
+      "action_statement": "EXECUTE FUNCTION app.payment_receipts_block_changes()",
+      "event_manipulation": "UPDATE",
+      "event_object_table": "payment_receipts"
+    },
+    {
+      "trigger_name": "trg_commercial_commission_notify",
+      "action_statement": "EXECUTE FUNCTION app_notify_commercial_commission()",
+      "event_manipulation": "INSERT",
+      "event_object_table": "referral_commissions"
+    },
+    {
+      "trigger_name": "trg_update_commercial_tier",
+      "action_statement": "EXECUTE FUNCTION app.fn_update_commercial_tier()",
+      "event_manipulation": "INSERT",
+      "event_object_table": "referral_commissions"
+    },
+    {
+      "trigger_name": "trg_update_commercial_tier",
+      "action_statement": "EXECUTE FUNCTION app.fn_update_commercial_tier()",
+      "event_manipulation": "DELETE",
+      "event_object_table": "referral_commissions"
+    },
+    {
+      "trigger_name": "trg_update_commercial_tier",
+      "action_statement": "EXECUTE FUNCTION app.fn_update_commercial_tier()",
+      "event_manipulation": "UPDATE",
+      "event_object_table": "referral_commissions"
+    },
+    {
+      "trigger_name": "trg_instructor_td_enrollment_notify",
+      "action_statement": "EXECUTE FUNCTION app_notify_instructor_td_enrollment()",
+      "event_manipulation": "INSERT",
+      "event_object_table": "td_enrollments"
+    },
+    {
+      "trigger_name": "trg_instructor_td_enrollment_notify",
+      "action_statement": "EXECUTE FUNCTION app_notify_instructor_td_enrollment()",
+      "event_manipulation": "UPDATE",
+      "event_object_table": "td_enrollments"
+    },
+    {
+      "trigger_name": "trg_commercial_referral_notify",
+      "action_statement": "EXECUTE FUNCTION app_notify_commercial_referral()",
+      "event_manipulation": "INSERT",
+      "event_object_table": "user_referrals"
+    }
+  ],
+  "all_financial_rls": [
+    {
+      "cmd": "SELECT",
+      "qual": "((auth.jwt() ? 'role'::text) AND ((auth.jwt() ->> 'role'::text) = 'admin'::text))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "application_payments",
+      "permissive": "PERMISSIVE",
+      "policyname": "admin_select_all_payments",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(student_id = auth.uid())",
+      "roles": [
+        "public"
+      ],
+      "tablename": "application_payments",
+      "permissive": "PERMISSIVE",
+      "policyname": "student_select_own_payments",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "\nCASE\n    WHEN ((auth.jwt() ? 'role'::text) AND ((auth.jwt() ->> 'role'::text) = 'university'::text)) THEN (((auth.jwt() ->> 'university_id'::text))::uuid = university_id)\n    ELSE false\nEND",
+      "roles": [
+        "public"
+      ],
+      "tablename": "application_payments",
+      "permissive": "PERMISSIVE",
+      "policyname": "university_select_own_payments",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((auth.jwt() ? 'role'::text) AND ((auth.jwt() ->> 'role'::text) = 'admin'::text))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "commercial_profiles",
+      "permissive": "PERMISSIVE",
+      "policyname": "admin_select_commercial_profiles",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(user_id = auth.uid())",
+      "roles": [
+        "public"
+      ],
+      "tablename": "commercial_profiles",
+      "permissive": "PERMISSIVE",
+      "policyname": "commercial_select_own_profile",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "marketplace_listings",
+      "permissive": "PERMISSIVE",
+      "policyname": "merchant_insert_own_marketplace_listings",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(merchant_id = auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "marketplace_listings",
+      "permissive": "PERMISSIVE",
+      "policyname": "merchant_select_own_marketplace_listings",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "(merchant_id = auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "marketplace_listings",
+      "permissive": "PERMISSIVE",
+      "policyname": "merchant_update_own_marketplace_listings",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((is_active = true) AND (status = 'published'::text) AND (review_status = 'approved'::text))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "marketplace_listings",
+      "permissive": "PERMISSIVE",
+      "policyname": "public_select_published_marketplace_listings",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "public"
+      ],
+      "tablename": "marketplace_order_items",
+      "permissive": "PERMISSIVE",
+      "policyname": "student_insert_own_marketplace_order_items",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM app.marketplace_orders o\n  WHERE ((o.id = marketplace_order_items.order_id) AND (o.student_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "marketplace_order_items",
+      "permissive": "PERMISSIVE",
+      "policyname": "student_select_own_marketplace_order_items",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM app.marketplace_orders o\n  WHERE ((o.id = marketplace_order_items.order_id) AND (o.student_id = auth.uid()))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "marketplace_order_items",
+      "permissive": "PERMISSIVE",
+      "policyname": "user_select_own_marketplace_order_items",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "public"
+      ],
+      "tablename": "marketplace_orders",
+      "permissive": "PERMISSIVE",
+      "policyname": "student_insert_own_marketplace_orders",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(student_id = auth.uid())",
+      "roles": [
+        "public"
+      ],
+      "tablename": "marketplace_orders",
+      "permissive": "PERMISSIVE",
+      "policyname": "student_select_own_marketplace_orders",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "(student_id = auth.uid())",
+      "roles": [
+        "public"
+      ],
+      "tablename": "marketplace_orders",
+      "permissive": "PERMISSIVE",
+      "policyname": "student_update_own_marketplace_orders",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(student_id = auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "marketplace_orders",
+      "permissive": "PERMISSIVE",
+      "policyname": "user_select_own_marketplace_orders",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((buyer_id = auth.uid()) OR (merchant_id IN ( SELECT marketplace_merchants.id\n   FROM app.marketplace_merchants\n  WHERE (marketplace_merchants.owner_user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "marketplace_payments",
+      "permissive": "PERMISSIVE",
+      "policyname": "marketplace_payments_select",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM app.application_payments p\n  WHERE ((p.id = payment_proofs.payment_id) AND (p.student_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "payment_proofs",
+      "permissive": "PERMISSIVE",
+      "policyname": "student_select_own_payment_proofs",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "true",
+      "roles": [
+        "public"
+      ],
+      "tablename": "payment_receipts",
+      "permissive": "PERMISSIVE",
+      "policyname": "authenticated_select_payment_receipts",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((auth.jwt() ? 'role'::text) AND ((auth.jwt() ->> 'role'::text) = 'admin'::text))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "referral_commissions",
+      "permissive": "PERMISSIVE",
+      "policyname": "admin_select_all_referral_commissions",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(commercial_user_id = auth.uid())",
+      "roles": [
+        "public"
+      ],
+      "tablename": "referral_commissions",
+      "permissive": "PERMISSIVE",
+      "policyname": "commercial_select_own_referral_commissions",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(app.app_td_get_current_role() = 'admin'::text)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "td_enrollments",
+      "permissive": "PERMISSIVE",
+      "policyname": "td_enrollments_admin_all",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(student_id = auth.uid())",
+      "roles": [
+        "public"
+      ],
+      "tablename": "td_enrollments",
+      "permissive": "PERMISSIVE",
+      "policyname": "td_enrollments_student_select",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((assigned_teacher_id IS NOT NULL) AND (EXISTS ( SELECT 1\n   FROM app.td_teachers t\n  WHERE ((t.id = td_enrollments.assigned_teacher_id) AND (t.user_id = auth.uid())))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "td_enrollments",
+      "permissive": "PERMISSIVE",
+      "policyname": "td_enrollments_teacher_select",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((auth.jwt() ? 'role'::text) AND ((auth.jwt() ->> 'role'::text) = 'admin'::text))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "user_referrals",
+      "permissive": "PERMISSIVE",
+      "policyname": "admin_select_all_user_referrals",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(commercial_user_id = auth.uid())",
+      "roles": [
+        "public"
+      ],
+      "tablename": "user_referrals",
+      "permissive": "PERMISSIVE",
+      "policyname": "commercial_select_own_user_referrals",
+      "schemaname": "app"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(student_id = auth.uid())",
+      "roles": [
+        "public"
+      ],
+      "tablename": "user_referrals",
+      "permissive": "PERMISSIVE",
+      "policyname": "student_select_own_user_referral",
+      "schemaname": "app"
+    }
+  ],
+  "td_enrollments_cols": [
+    {
+      "data_type": "uuid",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "student_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "program_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "collection_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "access_scope",
+      "is_nullable": "NO",
+      "column_default": "'program'::text"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "payment_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "USER-DEFINED",
+      "column_name": "access_status",
+      "is_nullable": "NO",
+      "column_default": "'pending_payment'::td_enrollment_status"
+    },
+    {
+      "data_type": "USER-DEFINED",
+      "column_name": "assignment_status",
+      "is_nullable": "NO",
+      "column_default": "'unassigned'::td_assignment_status"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "assigned_teacher_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "student_notes",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "admin_notes",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "activated_at",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "completed_at",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "integer",
+      "column_name": "progress_pct",
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "completed_sessions",
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "total_sessions",
+      "is_nullable": "YES",
+      "column_default": "0"
+    }
+  ],
+  "amount_columns": [
+    {
+      "data_type": "numeric",
+      "table_name": "application_payments",
+      "column_name": "amount_due",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "application_payments",
+      "column_name": "amount_paid",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "commercial_milestones",
+      "column_name": "bonus_amount",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "commercial_profiles",
+      "column_name": "commission_rate",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "integer",
+      "table_name": "commercial_profiles",
+      "column_name": "max_commissions_per_prospect",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "commission_rules",
+      "column_name": "commission_rate",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "commission_rules",
+      "column_name": "max_amount",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "marketplace_cart_items",
+      "column_name": "unit_price",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "marketplace_listings",
+      "column_name": "price_from",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "marketplace_listings",
+      "column_name": "price_to",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "marketplace_merchant_balances",
+      "column_name": "total_commission",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "marketplace_order_items",
+      "column_name": "unit_price",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "marketplace_orders",
+      "column_name": "total_amount",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "marketplace_payments",
+      "column_name": "commission_amount",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "marketplace_payments",
+      "column_name": "commission_rate",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "marketplace_payments",
+      "column_name": "gross_amount",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "marketplace_payments",
+      "column_name": "net_amount",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "marketplace_products",
+      "column_name": "price",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "online_courses",
+      "column_name": "price",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "opportunities",
+      "column_name": "price",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "opportunities",
+      "column_name": "price_from",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "opportunities",
+      "column_name": "price_to",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "programs",
+      "column_name": "tuition_fees",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "referral_commissions",
+      "column_name": "commission_amount",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "referral_commissions",
+      "column_name": "commission_rate",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "short_trainings",
+      "column_name": "price",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "integer",
+      "table_name": "td_local_groups",
+      "column_name": "price_per_student",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "numeric",
+      "table_name": "td_programs",
+      "column_name": "price",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "integer",
+      "table_name": "td_xp_log",
+      "column_name": "amount",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "integer",
+      "table_name": "tournaments",
+      "column_name": "entry_fee",
+      "table_schema": "app"
+    }
+  ],
+  "marketplace_listings_cols": [
+    {
+      "data_type": "uuid",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "merchant_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "review_status",
+      "is_nullable": "NO",
+      "column_default": "'draft'::text"
+    },
+    {
+      "data_type": "text",
+      "column_name": "review_reason",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "submitted_at",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "reviewed_at",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "reviewed_by",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "title",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "short_description",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "description",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "type",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "category",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "organization_name",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "organization_logo_url",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "country",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "city",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "price_from",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "price_to",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "currency",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "integer",
+      "column_name": "min_order_qty",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "integer",
+      "column_name": "lead_time_days",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "boolean",
+      "column_name": "is_ready_to_ship",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "reactions_count",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "comments_count",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "data_type": "text",
+      "column_name": "status",
+      "is_nullable": "NO",
+      "column_default": "'draft'::text"
+    },
+    {
+      "data_type": "boolean",
+      "column_name": "is_active",
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "data_type": "boolean",
+      "column_name": "is_featured",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "category_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "sub_category_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "cover_url",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "text",
+      "column_name": "video_url",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "rating_avg",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "rating_count",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "sales_count",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "views_count",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "data_type": "ARRAY",
+      "column_name": "tags",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "jsonb",
+      "column_name": "specifications",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "data_type": "jsonb",
+      "column_name": "variants",
+      "is_nullable": "YES",
+      "column_default": null
+    }
+  ],
+  "cart_tables": [
+    {
+      "table_name": "marketplace_cart_items",
+      "table_schema": "app"
+    },
+    {
+      "table_name": "marketplace_carts",
+      "table_schema": "app"
+    }
+  ],
+  "cart_items_cols": [
+    {
+      "data_type": "uuid",
+      "column_name": "id"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "cart_id"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "listing_id"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "quantity"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "unit_price"
+    },
+    {
+      "data_type": "text",
+      "column_name": "currency"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at"
+    }
+  ],
+  "marketplace_fk": [
+    {
+      "table_name": "marketplace_cart_items",
+      "column_name": "cart_id",
+      "constraint_name": "marketplace_cart_items_cart_id_fkey",
+      "foreign_table_name": "marketplace_carts",
+      "foreign_column_name": "id"
+    },
+    {
+      "table_name": "marketplace_cart_items",
+      "column_name": "listing_id",
+      "constraint_name": "marketplace_cart_items_listing_id_fkey",
+      "foreign_table_name": "marketplace_listings",
+      "foreign_column_name": "id"
+    },
+    {
+      "table_name": "marketplace_order_items",
+      "column_name": "order_id",
+      "constraint_name": "marketplace_order_items_order_id_fkey",
+      "foreign_table_name": "marketplace_orders",
+      "foreign_column_name": "id"
+    },
+    {
+      "table_name": "marketplace_order_items",
+      "column_name": "product_id",
+      "constraint_name": "marketplace_order_items_product_id_fkey",
+      "foreign_table_name": "marketplace_listings",
+      "foreign_column_name": "id"
+    },
+    {
+      "table_name": "marketplace_orders",
+      "column_name": "merchant_id",
+      "constraint_name": "marketplace_orders_merchant_id_fkey",
+      "foreign_table_name": "marketplace_merchants",
+      "foreign_column_name": "id"
+    },
+    {
+      "table_name": "marketplace_orders",
+      "column_name": "student_id",
+      "constraint_name": "marketplace_orders_student_id_fkey",
+      "foreign_table_name": "students",
+      "foreign_column_name": "id"
+    },
+    {
+      "table_name": "marketplace_payments",
+      "column_name": "buyer_id",
+      "constraint_name": "marketplace_payments_buyer_id_fkey",
+      "foreign_table_name": null,
+      "foreign_column_name": null
+    },
+    {
+      "table_name": "marketplace_payments",
+      "column_name": "merchant_id",
+      "constraint_name": "marketplace_payments_merchant_id_fkey",
+      "foreign_table_name": "marketplace_merchants",
+      "foreign_column_name": "id"
+    },
+    {
+      "table_name": "marketplace_payments",
+      "column_name": "order_id",
+      "constraint_name": "marketplace_payments_order_id_fkey",
+      "foreign_table_name": "marketplace_orders",
+      "foreign_column_name": "id"
+    }
+  ],
+  "referral_commissions_data": [],
+  "commercial_profiles_data": [
+    {
+      "cnt": 7,
+      "tier": "bronze",
+      "is_active": true
+    }
+  ],
+  "user_referrals_cols": [
+    {
+      "data_type": "uuid",
+      "column_name": "id"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "student_id"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "commercial_user_id"
+    },
+    {
+      "data_type": "text",
+      "column_name": "ref_code"
+    },
+    {
+      "data_type": "text",
+      "column_name": "source"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "attributed_at"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "expires_at"
+    },
+    {
+      "data_type": "jsonb",
+      "column_name": "metadata"
+    }
+  ],
+  "user_referrals_data": [
+    {
+      "total": 1
+    }
+  ],
+  "td_programs_price": [
+    {
+      "data_type": "numeric",
+      "column_name": "price"
+    }
+  ],
+  "programs_fee": [
+    {
+      "data_type": "numeric",
+      "column_name": "tuition_fees"
+    }
+  ],
+  "fn_resolve_commission_rate": [
+    {
+      "proname": "fn_resolve_commission_rate",
+      "func_def": "CREATE OR REPLACE FUNCTION app.fn_resolve_commission_rate(p_payment_reason text, p_degree_level text)\n RETURNS TABLE(resolved_rate numeric, resolved_max_amount numeric, resolved_currency text, rule_id uuid)\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_rule RECORD;\nBEGIN\n    -- Priority order: exact match > payment_reason match > degree_level match > wildcard\n    SELECT cr.commission_rate, cr.max_amount, cr.currency, cr.id\n    INTO v_rule\n    FROM app.commission_rules cr\n    WHERE cr.is_active = TRUE\n      AND (cr.payment_reason = p_payment_reason OR cr.payment_reason = '*')\n      AND (cr.degree_level = p_degree_level OR cr.degree_level = '*')\n    ORDER BY\n        CASE WHEN cr.payment_reason = p_payment_reason AND cr.degree_level = p_degree_level THEN 0\n             WHEN cr.payment_reason = p_payment_reason AND cr.degree_level = '*' THEN 1\n             WHEN cr.payment_reason = '*' AND cr.degree_level = p_degree_level THEN 2\n             ELSE 3\n        END,\n        cr.priority DESC\n    LIMIT 1;\n\n    IF v_rule IS NULL THEN\n        RETURN QUERY SELECT 0.08::NUMERIC, 10000::NUMERIC, 'XOF'::TEXT, NULL::UUID;\n        RETURN;\n    END IF;\n\n    RETURN QUERY SELECT v_rule.commission_rate, v_rule.max_amount, v_rule.currency, v_rule.id;\n    RETURN;\nEND;\n$function$\n"
+    }
+  ],
+  "fn_check_commission_cap": [
+    {
+      "proname": "fn_check_commission_cap",
+      "func_def": "CREATE OR REPLACE FUNCTION app.fn_check_commission_cap(p_commercial_user_id uuid, p_student_id uuid)\n RETURNS TABLE(allowed boolean, commission_number integer, adjusted_rate numeric)\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_max_cap INTEGER;\n    v_existing_count INTEGER;\n    v_base_rate NUMERIC;\n    v_adjusted NUMERIC;\nBEGIN\n    SELECT max_commissions_per_prospect, commission_rate\n    INTO v_max_cap, v_base_rate\n    FROM app.commercial_profiles\n    WHERE user_id = p_commercial_user_id;\n\n    IF v_max_cap IS NULL THEN v_max_cap := 3; END IF;\n    -- commission_rate in commercial_profiles is stored as PERCENTAGE (5.0 = 5%)\n    -- Convert to fraction for consistency with commission_rules (0.05 = 5%)\n    IF v_base_rate IS NULL THEN v_base_rate := 5.0; END IF;\n    v_base_rate := v_base_rate / 100.0;\n\n    SELECT COUNT(*) INTO v_existing_count\n    FROM app.referral_commissions\n    WHERE commercial_user_id = p_commercial_user_id\n      AND student_id = p_student_id;\n\n    IF v_existing_count >= v_max_cap THEN\n        RETURN QUERY SELECT FALSE, v_existing_count + 1, 0::NUMERIC;\n        RETURN;\n    END IF;\n\n    -- Degressive rate: base * 0.85^n (in fraction units now)\n    v_adjusted := v_base_rate * POWER(0.85, v_existing_count);\n    IF v_adjusted < 0.005 THEN v_adjusted := 0.005; END IF;\n\n    RETURN QUERY SELECT TRUE, v_existing_count + 1, ROUND(v_adjusted, 4);\n    RETURN;\nEND;\n$function$\n"
+    }
+  ],
+  "marketplace_release_escrow": [
+    {
+      "proname": "app_marketplace_release_escrow",
+      "func_def": "CREATE OR REPLACE FUNCTION public.app_marketplace_release_escrow(p_payment_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_payment app.marketplace_payments%ROWTYPE;\nBEGIN\n  SELECT * INTO v_payment FROM app.marketplace_payments WHERE id = p_payment_id;\n  IF v_payment IS NULL THEN\n    RETURN jsonb_build_object('success', false, 'error', 'payment_not_found');\n  END IF;\n\n  IF v_payment.status != 'captured' THEN\n    RETURN jsonb_build_object('success', false, 'error', 'payment_not_captured');\n  END IF;\n\n  UPDATE app.marketplace_payments\n  SET status = 'released', escrow_released_at = NOW(), updated_at = NOW()\n  WHERE id = p_payment_id;\n\n  INSERT INTO app.marketplace_merchant_balances (merchant_id, available_balance, pending_balance, total_earned, total_commission, currency)\n  VALUES (v_payment.merchant_id, v_payment.net_amount, 0, v_payment.net_amount, v_payment.commission_amount, v_payment.currency)\n  ON CONFLICT (merchant_id) DO UPDATE SET\n    available_balance = app.marketplace_merchant_balances.available_balance + v_payment.net_amount,\n    total_earned = app.marketplace_merchant_balances.total_earned + v_payment.net_amount,\n    total_commission = app.marketplace_merchant_balances.total_commission + v_payment.commission_amount,\n    updated_at = NOW();\n\n  RETURN jsonb_build_object('success', true, 'released', true);\nEND;\n$function$\n"
+    }
+  ]
+}

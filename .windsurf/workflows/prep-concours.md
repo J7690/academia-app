@@ -109,6 +109,39 @@ Elle réutilise automatiquement les mêmes variables d'environnement que `bobodo
 1. Onglet **Badges** dans le dashboard admin Prépa Quiz/IA
 2. **Créer un badge** → code unique, titre, emoji, XP récompense, condition
 
+## Injecter les questions du document scanné (2026-03-24)
+
+### Source
+Document de préparation au concours (Burkina Faso) scanné à l'envers, reconverti et extrait.  
+**20 questions QCM** couvrant 6 matières : Mathématiques, Physique, Chimie, Biologie, Économie, Droit.
+
+### Méthode 1 — SQL direct (recommandée)
+
+1. Ouvrir l'**éditeur SQL de Supabase** (dashboard → SQL Editor)
+2. Coller et exécuter :  
+   `.windsurf/sql_changes/20260324_inject_scanned_questions.sql`
+3. Ce script crée : matières → chapitres → questions publiées → choix QCM
+4. Vérification finale incluse dans le script (SELECT par matière)
+
+### Méthode 2 — Via l'admin Flutter (injection par RPC)
+
+1. Se connecter en tant qu'**admin** dans l'app
+2. Aller dans **Admin → Prépa concours**
+3. Taper le bouton **téléchargement** (icône `file_download_rounded`) en haut à droite
+4. Suivre les instructions à l'écran → **Lancer l'injection**
+5. Les questions sont créées via `app_admin_prep_create_ai_generation` + `app_admin_prep_publish_ai_generation`
+
+> ⚠️ La **Méthode 2** nécessite que les matières existent déjà (exécuter d'abord la Méthode 1 ou créer les matières manuellement via le bouton "+ Matière").
+
+### Fichiers créés lors de l'injection
+
+| Fichier | Rôle |
+|---|---|
+| `assets/data/prep_concours_questions_burkina.json` | 20 questions structurées (source vérité) |
+| `lib/services/prep_concours_questions_service.dart` | Service Flutter pour charger/filtrer les questions localement |
+| `lib/features/admin/prep_concours/admin_prep_import_screen.dart` | Écran admin d'injection via RPCs |
+| `.windsurf/sql_changes/20260324_inject_scanned_questions.sql` | Script SQL d'injection directe Supabase |
+
 ## Réappliquer le schéma SQL
 
 ```bash

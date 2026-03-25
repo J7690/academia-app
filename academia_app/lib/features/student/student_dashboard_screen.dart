@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../providers/student_applications_provider.dart';
-import '../../providers/student_opportunities_provider.dart';
 import '../../providers/student_application_payments_provider.dart';
 import '../../providers/student_communities_provider.dart';
 import '../../services/app_badge_service.dart';
@@ -22,10 +21,11 @@ import 'tabs/student_partners_tab.dart';
 import 'tabs/student_bobodo_tab.dart';
 import 'student_prep_concours_screen.dart';
 import 'student_dashboard_nav_controller.dart';
-import 'student_payments_screen.dart';
 import 'student_td_root_screen.dart';
 import 'student_application_detail_screen.dart';
 import 'tabs/student_challenges_tab.dart';
+import 'tabs/student_courses_tab.dart';
+import 'tabs/student_live_sessions_tab.dart';
 import '../share/share_mode_provider.dart';
 import '../../widgets/student_assistant_overlay.dart';
 import '../../services/push_trigger_service.dart';
@@ -85,7 +85,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         await _checkStudentUnreadChange();
       } catch (_) {}
       try {
-        await context.read<StudentOpportunitiesProvider>().loadTypes();
+        // Marketplace categories are loaded by the opportunities tab itself
       } catch (_) {}
       await _loadNotificationSummary();
       PushTriggerService.instance.triggerPendingPush();
@@ -266,19 +266,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     });
   }
 
-  Future<void> _markStudentPaymentsSeen() async {
-    final client = Supabase.instance.client;
-    try {
-      await client.rpc('app_mark_domain_seen', params: {
-        'p_domain': 'student_payments',
-      });
-    } catch (_) {}
-    if (!mounted) return;
-    setState(() {
-      _countPayments = 0;
-    });
-  }
-
   Future<void> _markStudentCommunitiesSeen() async {
     final client = Supabase.instance.client;
     try {
@@ -449,30 +436,24 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           child = const StudentPrepConcoursScreen();
           break;
         case 6:
-          child = ChangeNotifierProvider(
-            create: (_) => StudentApplicationPaymentsProvider(),
-            child: const StudentPaymentsScreen(),
-          );
-          break;
-        case 7:
           child = const StudentTdRootScreen();
           break;
-        case 8:
+        case 7:
           child = const StudentChallengesTab();
           break;
-        case 9:
-          child = const _FeatureComingSoonTab(title: 'Cours');
+        case 8:
+          child = const StudentCoursesTab();
           break;
-        case 10:
-          child = const _FeatureComingSoonTab(title: 'Lives');
+        case 9:
+          child = const StudentLiveSessionsTab();
           break;
         default:
           child = const StudentHomeMobileTab();
       }
 
-      // Le feed vidéo Challenges (index 8) gère son propre plein écran
+      // Le feed vidéo Challenges (index 7) gère son propre plein écran
       // et sa propre barre TikTok — pas de SafeArea.
-      if (_currentIndex == 8) {
+      if (_currentIndex == 7) {
         return child;
       }
 
@@ -504,22 +485,16 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           child = const StudentPrepConcoursScreen();
           break;
         case 6:
-          child = ChangeNotifierProvider(
-            create: (_) => StudentApplicationPaymentsProvider(),
-            child: const StudentPaymentsScreen(),
-          );
-          break;
-        case 7:
           child = const StudentTdRootScreen();
           break;
-        case 8:
+        case 7:
           child = const StudentChallengesTab();
           break;
-        case 9:
-          child = const _FeatureComingSoonTab(title: 'Cours');
+        case 8:
+          child = const StudentCoursesTab();
           break;
-        case 10:
-          child = const _FeatureComingSoonTab(title: 'Lives');
+        case 9:
+          child = const StudentLiveSessionsTab();
           break;
         default:
           child = const StudentHomeTab();
@@ -549,8 +524,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       _markStudentPartnersSeen();
     } else if (index == 5) {
       _markStudentPrepConcoursSeen();
-    } else if (index == 6) {
-      _markStudentPaymentsSeen();
     }
   }
 
@@ -624,17 +597,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             icon: Icon(Icons.school_outlined),
             selectedIcon: Icon(Icons.school),
             label: 'Concours',
-          ),
-          NavigationDestination(
-            icon: _NavBadgeIcon(
-              icon: Icons.payments_outlined,
-              count: _countPayments,
-            ),
-            selectedIcon: _NavBadgeIcon(
-              icon: Icons.payments,
-              count: _countPayments,
-            ),
-            label: 'Paiements',
           ),
           NavigationDestination(
             icon: _NavBadgeIcon(
@@ -777,18 +739,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                         ),
                         _buildMobileNavItem(
                           index: 6,
-                          label: 'Paiements',
-                          icon: _NavBadgeIcon(
-                            icon: Icons.payments_outlined,
-                            count: _countPayments,
-                          ),
-                          selectedIcon: _NavBadgeIcon(
-                            icon: Icons.payments,
-                            count: _countPayments,
-                          ),
-                        ),
-                        _buildMobileNavItem(
-                          index: 7,
                           label: 'TD',
                           icon: _NavBadgeIcon(
                             icon: Icons.school_outlined,
@@ -800,7 +750,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                           ),
                         ),
                         _buildMobileNavItem(
-                          index: 8,
+                          index: 7,
                           label: 'Challenges',
                           icon: _NavBadgeIcon(
                             icon: Icons.emoji_events_outlined,
@@ -812,7 +762,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                           ),
                         ),
                         _buildMobileNavItem(
-                          index: 9,
+                          index: 8,
                           label: 'Cours',
                           icon: _NavBadgeIcon(
                             icon: Icons.menu_book_outlined,
@@ -824,7 +774,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                           ),
                         ),
                         _buildMobileNavItem(
-                          index: 10,
+                          index: 9,
                           label: 'Lives',
                           icon: _NavBadgeIcon(
                             icon: Icons.videocam_outlined,

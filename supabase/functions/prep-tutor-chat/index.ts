@@ -1,7 +1,7 @@
 // Supabase Edge Function: prep-tutor-chat
 // AI Tutor for "Préparation Concours" module.
 // Reuses the same OPENROUTER_API_KEY as bobodo-chat.
-// Specialized system prompt for Cameroonian competitive exams (ENAM, ENS, ENSET, BAC, BEPC, IRIC).
+// Specialized system prompt for Burkina Faso public service competitive exams (ENAREF, Admin Civil, Douane, Greffiers, etc.).
 
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
@@ -10,6 +10,7 @@ const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY') ?? '';
 const OPENROUTER_MODEL = Deno.env.get('OPENROUTER_MODEL') ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const EMBEDDING_MODEL = 'openai/text-embedding-3-small';
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -19,14 +20,16 @@ const CORS_HEADERS: Record<string, string> = {
 
 // Default system prompt — can be overridden from td_ai_config table
 const DEFAULT_SYSTEM_PROMPT =
-  "Tu es un tuteur expert en préparation aux concours camerounais (ENAM, ENS, ENSET, BAC, BEPC, IRIC). " +
+  "Tu es un tuteur expert en préparation aux concours de la fonction publique du Burkina Faso " +
+  "(ENAREF, Administrateurs Civils, Douane, Greffiers, ENS, Éducation, Santé, Agriculture, Eaux et Forêts, GRH, Paramilitaire). " +
   "Tu expliques les concepts pas à pas, tu proposes des exercices, tu corriges les erreurs avec bienveillance. " +
-  "Tu t'adaptes au niveau de l'étudiant. Langue : français. Contexte : système éducatif camerounais. " +
-  "Tu peux aider en : culture générale, mathématiques, droit (constitutionnel, administratif, civil), " +
-  "économie, français (dissertation, résumé), physique-chimie, biologie, histoire-géographie, philosophie. " +
+  "Tu t'adaptes au niveau de l'étudiant. Langue : français. Contexte : système administratif et éducatif burkinabè. " +
+  "Tu peux aider en : culture générale, actualités du Burkina Faso, droit (constitutionnel, administratif, civil, pénal, fiscal, du travail), " +
+  "économie générale, finances publiques, fiscalité, comptabilité, français, tests psychotechniques, " +
+  "mathématiques, sciences naturelles, informatique, GRH et management, pédagogie. " +
   "Quand tu donnes une réponse à un exercice, montre le raisonnement étape par étape. " +
   "Si l'étudiant fait une erreur, corrige-le avec bienveillance en expliquant pourquoi. " +
-  "Utilise des exemples concrets du contexte camerounais quand c'est pertinent. " +
+  "Utilise des exemples concrets du contexte burkinabè quand c'est pertinent (institutions, lois, géographie du Burkina Faso). " +
   "Adapte la longueur de ta réponse : courte pour les questions simples, détaillée pour les exercices et explications.";
 
 type ChatMessage = { role: 'user' | 'assistant' | 'system'; content: string };
@@ -241,21 +244,73 @@ serve(async (req) => {
       });
     }
 
-    // ─── Load system prompt from config ──────────────────────────
+    // ─── Load system prompt from config ──────────────────────
     const systemPrompt = await loadSystemPrompt(supabaseService);
 
-    // ─── Load conversation history ───────────────────────────────
+    // ─── Load conversation history ─────────────────────────
     const history = conversationId
       ? await loadConversationHistory(supabaseService, conversationId)
       : [];
 
-    // ─── Build messages array ────────────────────────────────────
+    // ─── RAG: Semantic search for relevant chunks ───────────
+    let ragContext = '';
+    try {
+      // Generate embedding for the user message
+      const embResp = await fetch('https://openrouter.ai/api/v1/embeddings', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ model: EMBEDDING_MODEL, input: [message] }),
+      });
+
+      if (embResp.ok) {
+        const embData = await embResp.json();
+        const embedding = embData?.data?.[0]?.embedding;
+
+        if (Array.isArray(embedding) && embedding.length > 0) {
+          const { data: searchResult } = await supabaseService.rpc('app_prep_semantic_search', {
+            p_query_embedding: `[${embedding.join(',')}]`,
+            p_subject_id: null,
+            p_concours_type: null,
+            p_limit: 5,
+            p_threshold: 0.3,
+          });
+
+          const sr = searchResult as Record<string, unknown> | null;
+          if (sr?.success && Array.isArray(sr.chunks)) {
+            const chunks = sr.chunks as Array<Record<string, unknown>>;
+            if (chunks.length > 0) {
+              ragContext = '\n\n=== CONTEXTE DES VRAIS SUJETS DE CONCOURS ===\n';
+              ragContext += 'Utilise ces extraits de sujets réels pour enrichir ta réponse. Cite les sources quand pertinent.\n\n';
+              for (const chunk of chunks) {
+                const src = chunk.concours_type && chunk.year
+                  ? ` [${chunk.concours_type} ${chunk.year}]`
+                  : chunk.original_filename
+                    ? ` [${chunk.original_filename}]`
+                    : '';
+                ragContext += `---${src}\n${(chunk.content as string || '').slice(0, 600)}\n\n`;
+              }
+            }
+          }
+        }
+      }
+    } catch (ragErr) {
+      console.error('RAG search failed (non-blocking):', ragErr);
+    }
+
+    // ─── Build messages array ──────────────────────────────
     const messages: ChatMessage[] = [];
 
-    // System prompt with optional subject context
+    // System prompt with subject context + RAG context
     let finalSystemPrompt = systemPrompt;
     if (subject) {
       finalSystemPrompt += `\n\nL'étudiant travaille actuellement sur la matière : ${subject}. Adapte tes réponses en conséquence.`;
+    }
+    if (ragContext) {
+      finalSystemPrompt += ragContext;
+      finalSystemPrompt += '\nQuand tu utilises ces extraits, indique la source (ex: "D\'après le sujet ENAREF 2023..."). Si l\'extrait ne correspond pas à la question, ignore-le.';
     }
     messages.push({ role: 'system', content: finalSystemPrompt });
 

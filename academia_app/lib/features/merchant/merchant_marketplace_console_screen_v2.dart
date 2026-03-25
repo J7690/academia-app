@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:typed_data';
 
 import '../../providers/merchant_marketplace_console_provider_v2.dart';
 import '../../widgets/support_fab.dart';
+import '../student/student_settings_screen.dart';
 import '../../services/push_trigger_service.dart';
 import 'merchant_inquiry_chat_screen_v1.dart';
 import '../../widgets/marketplace/marketplace_shimmer.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MerchantMarketplaceConsoleScreenV2 extends StatefulWidget {
   const MerchantMarketplaceConsoleScreenV2({super.key});
@@ -22,9 +23,6 @@ class _MerchantMarketplaceConsoleScreenV2State
     extends State<MerchantMarketplaceConsoleScreenV2> {
   late final MerchantMarketplaceConsoleProviderV2 _provider;
 
-  Future<void> _signOut() async {
-    await Supabase.instance.client.auth.signOut();
-  }
 
   String _formatMoney(dynamic v, String? currency) {
     if (v is num) {
@@ -1122,6 +1120,343 @@ class _MerchantMarketplaceConsoleScreenV2State
     );
   }
 
+  Widget _buildReviews(MerchantMarketplaceConsoleProviderV2 provider) {
+    final items = provider.myReviews;
+
+    if (provider.isLoading && items.isEmpty) {
+      return const MarketplaceShimmerList();
+    }
+
+    if (items.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: provider.loadMyReviews,
+        child: ListView(
+          children: const [
+            SizedBox(height: 80),
+            Center(child: Text('Aucun avis reçu.')),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: provider.loadMyReviews,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(12),
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (context, index) {
+          final r = items[index];
+          final reviewId = r['id']?.toString() ?? '';
+          final rating = r['rating'] as int? ?? 5;
+          final reviewTitle = r['review_title']?.toString() ?? '';
+          final content = r['content']?.toString() ?? '';
+          final buyerName = r['buyer_name']?.toString() ?? 'Acheteur';
+          final listingTitle = r['listing_title']?.toString() ?? '';
+          final verified = r['is_verified_purchase'] == true;
+          final sellerReply = r['seller_reply']?.toString();
+          final hasReply = sellerReply != null && sellerReply.isNotEmpty;
+
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      ...List.generate(5, (i) => Icon(
+                        i < rating ? Icons.star : Icons.star_border,
+                        size: 16,
+                        color: const Color(0xFFF59E0B),
+                      )),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          buyerName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                        ),
+                      ),
+                      if (verified)
+                        const Icon(Icons.verified, size: 16, color: Color(0xFF10B981)),
+                    ],
+                  ),
+                  if (listingTitle.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      listingTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                    ),
+                  ],
+                  if (reviewTitle.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(reviewTitle, style: const TextStyle(fontWeight: FontWeight.w800)),
+                  ],
+                  if (content.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(content, style: const TextStyle(fontSize: 13, color: Color(0xFF374151), height: 1.4)),
+                  ],
+                  if (hasReply) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3F4F6),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.reply, size: 14, color: Color(0xFF6B7280)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(sellerReply, style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: provider.isLoading || reviewId.isEmpty
+                        ? null
+                        : () => _showReplyDialog(provider, reviewId, hasReply ? sellerReply : null),
+                    icon: Icon(hasReply ? Icons.edit : Icons.reply, size: 16),
+                    label: Text(hasReply ? 'Modifier la réponse' : 'Répondre'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _showReplyDialog(
+    MerchantMarketplaceConsoleProviderV2 provider,
+    String reviewId,
+    String? currentReply,
+  ) async {
+    final controller = TextEditingController(text: currentReply ?? '');
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Répondre à l\'avis'),
+          content: TextField(
+            controller: controller,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              labelText: 'Votre réponse',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Envoyer'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+    final reply = controller.text.trim();
+    if (reply.isEmpty) return;
+
+    final ok = await provider.replyToReview(reviewId: reviewId, reply: reply);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ok ? 'Réponse envoyée.' : (provider.error ?? 'Erreur.'))),
+    );
+  }
+
+  Widget _buildRevenueTab(MerchantMarketplaceConsoleProviderV2 provider) {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _loadMerchantBalance(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+        }
+        final balance = snapshot.data ?? {};
+        final available = balance['available_balance'] ?? 0;
+        final totalEarned = balance['total_earned'] ?? 0;
+        final totalCommission = balance['total_commission'] ?? 0;
+        final currency = balance['currency']?.toString() ?? 'XOF';
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Balance card
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFF1E3A5F), Color(0xFF2563EB)]),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  children: [
+                    const Text('Solde disponible', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                    const SizedBox(height: 6),
+                    Text('${_formatMoney(available, currency)}',
+                        style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Column(children: [
+                          Text(_formatMoney(totalEarned, currency),
+                              style: const TextStyle(color: Color(0xFF4ADE80), fontSize: 14, fontWeight: FontWeight.bold)),
+                          const Text('Total gagné', style: TextStyle(color: Colors.white60, fontSize: 10)),
+                        ]),
+                        Container(width: 1, height: 30, color: Colors.white24),
+                        Column(children: [
+                          Text(_formatMoney(totalCommission, currency),
+                              style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 14, fontWeight: FontWeight.bold)),
+                          const Text('Commission plateforme', style: TextStyle(color: Colors.white60, fontSize: 10)),
+                        ]),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Payout button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: available is num && (available as num) > 0
+                      ? () => _requestMerchantPayout(context)
+                      : null,
+                  icon: const Icon(Icons.account_balance_wallet, size: 18),
+                  label: Text(
+                    available is num && (available as num) > 0
+                        ? 'Retirer ${_formatMoney(available, currency)}'
+                        : 'Aucun solde à retirer',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF16A34A),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text('Comment ça marche', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 8),
+              _revenueInfoRow(Icons.shopping_cart, 'Un client passe commande et paie via LigdiCash'),
+              _revenueInfoRow(Icons.lock, 'Le montant est bloqué en escrow jusqu\'à la livraison'),
+              _revenueInfoRow(Icons.check_circle, 'Après livraison, l\'escrow est libéré'),
+              _revenueInfoRow(Icons.account_balance_wallet, 'Vous pouvez retirer votre solde disponible'),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _revenueInfoRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF6B7280)),
+          const SizedBox(width: 10),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 13, color: Color(0xFF374151)))),
+        ],
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> _loadMerchantBalance() async {
+    try {
+      final client = Supabase.instance.client;
+      final userId = client.auth.currentUser?.id;
+      if (userId == null) return {};
+      final merchant = await client.schema('app').from('marketplace_merchants')
+          .select('id').eq('owner_user_id', userId).limit(1).maybeSingle();
+      if (merchant == null) return {};
+      final balance = await client.schema('app').from('marketplace_merchant_balances')
+          .select().eq('merchant_id', merchant['id']).maybeSingle();
+      return balance ?? {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<void> _requestMerchantPayout(BuildContext context) async {
+    final phoneController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Retirer mes revenus'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Saisissez votre numéro mobile money pour recevoir vos revenus.', style: TextStyle(fontSize: 13)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Numéro mobile money',
+                hintText: '226 7X XX XX XX',
+                prefixIcon: Icon(Icons.phone_android),
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white),
+            child: const Text('Retirer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final phone = phoneController.text.trim();
+    if (phone.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Numéro invalide.')));
+      return;
+    }
+    try {
+      final client = Supabase.instance.client;
+      final resp = await client.rpc('app_merchant_request_payout', params: {'p_phone': phone});
+      final data = resp as Map<String, dynamic>?;
+      if (!context.mounted) return;
+      if (data != null && data['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Retrait demandé : ${data['amount']} XOF vers $phone')),
+        );
+        setState(() {}); // refresh
+      } else {
+        final err = data?['error']?.toString() ?? 'Erreur';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err == 'no_funds_available' ? 'Aucun solde à retirer.' : 'Erreur : $err')));
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur : $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
@@ -1129,16 +1464,19 @@ class _MerchantMarketplaceConsoleScreenV2State
       child: Consumer<MerchantMarketplaceConsoleProviderV2>(
         builder: (context, provider, child) {
           return DefaultTabController(
-            length: 3,
+            length: 5,
             child: Scaffold(
               backgroundColor: const Color(0xFFF3F4F6),
               appBar: AppBar(
                 title: const Text('Console Marchand'),
                 bottom: const TabBar(
+                  isScrollable: true,
                   tabs: [
                     Tab(text: 'Mes annonces'),
                     Tab(text: 'Demandes'),
                     Tab(text: 'Commandes'),
+                    Tab(text: 'Avis'),
+                    Tab(text: 'Mes revenus'),
                   ],
                 ),
                 actions: [
@@ -1148,9 +1486,17 @@ class _MerchantMarketplaceConsoleScreenV2State
                     tooltip: 'Rafraîchir',
                   ),
                   IconButton(
-                    onPressed: _signOut,
-                    icon: const Icon(Icons.logout),
-                    tooltip: 'Se déconnecter',
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const StudentSettingsScreen(
+                            showProfile: false,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.settings),
+                    tooltip: 'Paramètres',
                   ),
                 ],
               ),
@@ -1190,6 +1536,8 @@ class _MerchantMarketplaceConsoleScreenV2State
                         _buildMyOpportunities(provider),
                         _buildInquiries(provider),
                         _buildOrders(provider),
+                        _buildReviews(provider),
+                        _buildRevenueTab(provider),
                       ],
                     ),
                   ),

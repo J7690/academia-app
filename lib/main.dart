@@ -6,6 +6,12 @@ import 'config/supabase_config.dart';
 import 'providers/supabase_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/data_screen.dart';
+import 'games/providers/game_provider.dart';
+import 'games/screens/games_hub_screen.dart';
+import 'games/screens/multiplayer_hub_screen.dart';
+import 'games/providers/tournament_provider.dart';
+import 'games/screens/tournament_list_screen.dart';
+import 'games/screens/leaderboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +33,8 @@ class AcademiaApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SupabaseProvider()),
+        ChangeNotifierProvider(create: (_) => GameProvider()),
+        ChangeNotifierProvider(create: (_) => TournamentProvider()),
       ],
       child: MaterialApp(
         title: 'Academia - Projet Supabase',
@@ -37,7 +45,11 @@ class AcademiaApp extends StatelessWidget {
         home: const HomeScreen(),
         routes: {
           '/data': (context) => const DataScreen(),
-        },
+          '/games': (context) => const GamesHubScreen(),
+          '/multiplayer': (context) => const MultiplayerHubScreen(),
+          '/tournaments': (context) => const TournamentListScreen(),
+          '/leaderboard': (context) => const LeaderboardScreen(),
+        }
       ),
     );
   }

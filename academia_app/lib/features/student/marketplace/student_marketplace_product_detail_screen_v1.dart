@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:provider/provider.dart';
+import 'package:readmore/readmore.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../providers/student_marketplace_cart_provider_v1.dart';
 import '../../../providers/student_marketplace_listings_provider_v1.dart';
+import '../../../widgets/marketplace/marketplace_seller_badge.dart';
 import 'student_marketplace_cart_screen_v1.dart';
 import 'student_merchant_profile_screen_v1.dart';
 
@@ -32,6 +36,8 @@ class _StudentMarketplaceProductDetailScreenV1State
 
   Map<String, dynamic>? _listing;
   List<Map<String, dynamic>> _media = const [];
+  Map<String, dynamic>? _merchant;
+  List<Map<String, dynamic>> _reviews = const [];
   bool _isBookmarked = false;
 
   bool _isAddingToCart = false;
@@ -100,7 +106,7 @@ class _StudentMarketplaceProductDetailScreenV1State
     try {
       final client = Supabase.instance.client;
       final response = await client.rpc(
-        'app_student_get_marketplace_listing_detail',
+        'app_student_get_listing_detail_v2',
         params: {
           'p_listing_id': id,
         },
@@ -122,11 +128,20 @@ class _StudentMarketplaceProductDetailScreenV1State
 
       final listingRaw = response['listing'];
       final mediaRaw = response['media'];
+      final merchantRaw = response['merchant'];
+      final reviewsRaw = response['reviews'];
 
       setState(() {
         _listing = listingRaw is Map ? Map<String, dynamic>.from(listingRaw) : null;
         _media = (mediaRaw is List)
             ? mediaRaw
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList(growable: false)
+            : <Map<String, dynamic>>[];
+        _merchant = merchantRaw is Map ? Map<String, dynamic>.from(merchantRaw) : null;
+        _reviews = (reviewsRaw is List)
+            ? reviewsRaw
                 .whereType<Map>()
                 .map((e) => Map<String, dynamic>.from(e))
                 .toList(growable: false)
@@ -302,6 +317,100 @@ class _StudentMarketplaceProductDetailScreenV1State
     }
   }
 
+  Widget _buildReviewItem(Map<String, dynamic> review) {
+    final rating = review['rating'] as int? ?? 5;
+    final content = review['content']?.toString() ?? '';
+    final buyerName = review['buyer_name']?.toString() ?? 'Acheteur';
+    final verified = review['is_verified_purchase'] == true;
+    final sellerReply = review['seller_reply']?.toString();
+    final createdAt = review['created_at']?.toString();
+
+    String timeAgo = '';
+    if (createdAt != null) {
+      try {
+        final dt = DateTime.parse(createdAt);
+        final diff = DateTime.now().difference(dt);
+        if (diff.inDays > 30) {
+          timeAgo = '${diff.inDays ~/ 30} mois';
+        } else if (diff.inDays > 0) {
+          timeAgo = '${diff.inDays}j';
+        } else if (diff.inHours > 0) {
+          timeAgo = '${diff.inHours}h';
+        } else {
+          timeAgo = 'maintenant';
+        }
+      } catch (_) {}
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            CircleAvatar(
+              radius: 14,
+              backgroundColor: const Color(0xFFE5E7EB),
+              child: Text(
+                buyerName.isNotEmpty ? buyerName[0].toUpperCase() : '?',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF374151)),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(buyerName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                      if (verified) ...[
+                        const SizedBox(width: 4),
+                        const Icon(Icons.verified, size: 14, color: Color(0xFF10B981)),
+                      ],
+                      const Spacer(),
+                      if (timeAgo.isNotEmpty) Text(timeAgo, style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+                    ],
+                  ),
+                  RatingBarIndicator(
+                    rating: rating.toDouble(),
+                    itemBuilder: (_, __) => const Icon(Icons.star, color: Color(0xFFF59E0B)),
+                    itemCount: 5,
+                    itemSize: 14,
+                    unratedColor: const Color(0xFFE5E7EB),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (content.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text(content, style: const TextStyle(fontSize: 13, color: Color(0xFF374151), height: 1.4)),
+        ],
+        if (sellerReply != null && sellerReply.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.storefront, size: 14, color: Color(0xFF6B7280)),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(sellerReply, style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280), height: 1.4)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   String _formatMoney(dynamic v, String? currency) {
     if (v is num) {
       final cur = (currency ?? '').trim();
@@ -326,6 +435,8 @@ class _StudentMarketplaceProductDetailScreenV1State
     final minQty = listing?['min_order_qty'];
     final leadTime = listing?['lead_time_days'];
     final readyToShip = listing?['is_ready_to_ship'] == true;
+    final ratingAvg = (listing?['rating_avg'] is num) ? (listing!['rating_avg'] as num).toDouble() : 0.0;
+    final ratingCount = listing?['rating_count'] as int? ?? 0;
 
     final urls = _buildOrderedUrls(
       listingId: widget.listingId,
@@ -498,40 +609,19 @@ class _StudentMarketplaceProductDetailScreenV1State
                                               left: 0,
                                               right: 0,
                                               bottom: 10,
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: List.generate(urls.length,
-                                                    (i) {
-                                                  final active =
-                                                      i == _activeMediaIndex;
-                                                  return AnimatedContainer(
-                                                    duration: const Duration(
-                                                      milliseconds: 160,
-                                                    ),
-                                                    margin:
-                                                        const EdgeInsets.symmetric(
-                                                      horizontal: 4,
-                                                    ),
-                                                    height: 8,
-                                                    width: active ? 18 : 8,
-                                                    decoration: BoxDecoration(
-                                                      color: active
-                                                          ? Colors.white
-                                                          : Colors.white
-                                                              .withOpacity(0.55),
-                                                      borderRadius:
-                                                          BorderRadius.circular(999),
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                          color: Colors.black
-                                                              .withOpacity(0.25),
-                                                          blurRadius: 8,
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                }),
+                                              child: Center(
+                                                child: SmoothPageIndicator(
+                                                  controller: _pageController,
+                                                  count: urls.length,
+                                                  effect: const ExpandingDotsEffect(
+                                                    dotWidth: 7,
+                                                    dotHeight: 7,
+                                                    activeDotColor: Colors.white,
+                                                    dotColor: Colors.white54,
+                                                    expansionFactor: 2.5,
+                                                    spacing: 5,
+                                                  ),
+                                                ),
                                               ),
                                             ),
                                         ],
@@ -556,17 +646,35 @@ class _StudentMarketplaceProductDetailScreenV1State
                                         color: Color(0xFF111827),
                                       ),
                                     ),
+                                  // Rating
+                                  if (ratingCount > 0) ...[
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        RatingBarIndicator(
+                                          rating: ratingAvg,
+                                          itemBuilder: (_, __) => const Icon(Icons.star, color: Color(0xFFF59E0B)),
+                                          itemCount: 5,
+                                          itemSize: 18,
+                                          unratedColor: const Color(0xFFE5E7EB),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          '$ratingAvg ($ratingCount avis)',
+                                          style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                   if (shortDesc.trim().isNotEmpty) ...[
                                     const SizedBox(height: 8),
                                     Text(
                                       shortDesc,
-                                      style: const TextStyle(
-                                        color: Color(0xFF64748B),
-                                        height: 1.4,
-                                      ),
+                                      style: const TextStyle(color: Color(0xFF64748B), height: 1.4),
                                     ),
                                   ],
                                   const SizedBox(height: 12),
+                                  // Price + info pills
                                   Wrap(
                                     spacing: 8,
                                     runSpacing: 8,
@@ -578,60 +686,97 @@ class _StudentMarketplaceProductDetailScreenV1State
                                           color: const Color(0xFFF97316),
                                         ),
                                       if (minQty != null)
-                                        _InfoChip(
-                                          icon: Icons.inventory_2_outlined,
-                                          label: 'MOQ ${minQty.toString()}',
-                                        ),
+                                        _InfoChip(icon: Icons.inventory_2_outlined, label: 'MOQ ${minQty.toString()}'),
                                       if (leadTime != null)
-                                        _InfoChip(
-                                          icon: Icons.timelapse,
-                                          label: 'Délai ${leadTime.toString()}j',
-                                        ),
+                                        _InfoChip(icon: Icons.timelapse, label: 'Délai ${leadTime.toString()}j'),
                                       if (readyToShip)
-                                        const _InfoChip(
-                                          icon: Icons.local_shipping_outlined,
-                                          label: 'Prêt à expédier',
-                                          color: Color(0xFF059669),
-                                        ),
+                                        const _InfoChip(icon: Icons.local_shipping_outlined, label: 'Prêt à expédier', color: Color(0xFF059669)),
                                     ],
                                   ),
+                                  // Description with ReadMore
                                   if (desc.trim().isNotEmpty) ...[
                                     const SizedBox(height: 14),
-                                    const Text(
-                                      'Description',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w900,
-                                        color: Color(0xFF111827),
-                                      ),
-                                    ),
+                                    const Text('Description', style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF111827))),
                                     const SizedBox(height: 6),
-                                    Text(
+                                    ReadMoreText(
                                       desc,
-                                      style: const TextStyle(
-                                        color: Color(0xFF1F2937),
-                                        height: 1.5,
-                                      ),
-                                    ),
-                                  ],
-                                  if (merchantId != null && merchantId.trim().isNotEmpty) ...[
-                                    const SizedBox(height: 14),
-                                    OutlinedButton.icon(
-                                      onPressed: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (_) => StudentMerchantProfileScreenV1(
-                                              merchantId: merchantId,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      icon: const Icon(Icons.storefront_outlined),
-                                      label: const Text('Voir le vendeur'),
+                                      trimLines: 4,
+                                      trimMode: TrimMode.Line,
+                                      trimCollapsedText: '  Voir plus',
+                                      trimExpandedText: '  Voir moins',
+                                      moreStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF2563EB)),
+                                      lessStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF2563EB)),
+                                      style: const TextStyle(color: Color(0xFF1F2937), height: 1.5),
                                     ),
                                   ],
                                   ],
                                 ),
                               ),
+                              // Seller card
+                              if (_merchant != null) ...[
+                                const SizedBox(height: 12),
+                                MarketplaceSellerBadge(
+                                  name: _merchant!['name']?.toString() ?? _merchant!['display_name']?.toString(),
+                                  logoUrl: _merchant!['logo_url']?.toString(),
+                                  isVerified: _merchant!['is_verified'] == true,
+                                  verificationLevel: _merchant!['verification_level']?.toString() ?? 'none',
+                                  ratingAvg: (_merchant!['rating_avg'] is num) ? (_merchant!['rating_avg'] as num).toDouble() : null,
+                                  compact: false,
+                                  onTap: () {
+                                    final mid = _merchant!['id']?.toString() ?? merchantId;
+                                    if (mid == null || mid.trim().isEmpty) return;
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => StudentMerchantProfileScreenV1(merchantId: mid),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ] else if (merchantId != null && merchantId.trim().isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                OutlinedButton.icon(
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => StudentMerchantProfileScreenV1(merchantId: merchantId),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.storefront_outlined),
+                                  label: const Text('Voir le vendeur'),
+                                ),
+                              ],
+                              // Reviews section
+                              if (_reviews.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.rate_review_outlined, size: 18, color: Color(0xFFF59E0B)),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Avis clients ($ratingCount)',
+                                            style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF111827)),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      for (final review in _reviews) ...[
+                                        _buildReviewItem(review),
+                                        if (review != _reviews.last) const Divider(height: 20),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                           Positioned(

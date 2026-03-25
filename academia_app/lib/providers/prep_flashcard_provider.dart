@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import '../services/td_service.dart';
 
 /// Modèle d'une flashcard avec algorithme SM-2.
 class PrepFlashcard {
@@ -52,23 +53,86 @@ class PrepFlashcard {
 }
 
 class PrepFlashcardProvider extends ChangeNotifier {
+  final TdService _service = TdService();
+
   List<PrepFlashcard> _allCards = [];
   List<PrepFlashcard> _dueCards = [];
   int _currentIndex = 0;
   int _reviewedToday = 0;
   bool _isFlipped = false;
+  bool _isLoading = false;
+  List<Map<String, dynamic>> _decks = [];
 
   List<PrepFlashcard> get allCards => List.unmodifiable(_allCards);
   List<PrepFlashcard> get dueCards => List.unmodifiable(_dueCards);
   int get currentIndex => _currentIndex;
   int get reviewedToday => _reviewedToday;
   bool get isFlipped => _isFlipped;
+  bool get isLoading => _isLoading;
+  List<Map<String, dynamic>> get decks => _decks;
 
   PrepFlashcard? get currentCard =>
       _currentIndex < _dueCards.length ? _dueCards[_currentIndex] : null;
 
   bool get hasNext => _currentIndex < _dueCards.length - 1;
   bool get isSessionComplete => _currentIndex >= _dueCards.length && _dueCards.isNotEmpty;
+
+  /// Load flashcard decks from Supabase.
+  Future<void> loadDecks() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      _decks = await _service.prepListFlashcardDecks();
+    } catch (e) {
+      debugPrint('[PrepFlashcardProvider] loadDecks error: $e');
+      _decks = [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Load flashcards for a specific deck from Supabase; fallback to demo.
+  Future<void> loadCardsFromServer({String? deckId}) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      if (deckId != null) {
+        final cards = await _service.prepListFlashcards(deckId);
+        if (cards.isNotEmpty) {
+          _allCards = cards.map((m) {
+            final nextReview = m['next_review_at'] != null
+                ? DateTime.tryParse(m['next_review_at'].toString())
+                : null;
+            return PrepFlashcard(
+              id: (m['id'] ?? '').toString(),
+              front: (m['front_text'] ?? '').toString(),
+              back: (m['back_text'] ?? '').toString(),
+              subject: (m['subject'] ?? '').toString(),
+              imageUrl: m['image_url']?.toString(),
+              easeFactor: (m['ease_factor'] as num?)?.toDouble() ?? 2.5,
+              interval: (m['interval_days'] as int?) ?? 1,
+              repetitions: (m['repetitions'] as int?) ?? 0,
+              nextReview: nextReview,
+            );
+          }).toList();
+          _dueCards = _allCards.where((c) => c.isDueForReview).toList();
+          _currentIndex = 0;
+          _reviewedToday = 0;
+          _isFlipped = false;
+          _isLoading = false;
+          notifyListeners();
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('[PrepFlashcardProvider] loadCardsFromServer error: $e');
+    }
+    // Fallback to demo
+    loadDemoCards();
+    _isLoading = false;
+    notifyListeners();
+  }
 
   void loadDemoCards() {
     _allCards = _generateDemoCards();
@@ -86,15 +150,34 @@ class PrepFlashcardProvider extends ChangeNotifier {
 
   void reviewCurrent(int quality) {
     if (_currentIndex >= _dueCards.length) return;
-    _dueCards[_currentIndex].review(quality);
+    final card = _dueCards[_currentIndex];
+    card.review(quality);
     _reviewedToday++;
     _isFlipped = false;
+
+    // Save review to Supabase (fire-and-forget)
+    _saveReviewToServer(card, quality);
+
     if (_currentIndex < _dueCards.length - 1) {
       _currentIndex++;
     } else {
       _currentIndex = _dueCards.length; // session complete
     }
     notifyListeners();
+  }
+
+  Future<void> _saveReviewToServer(PrepFlashcard card, int quality) async {
+    try {
+      await _service.prepSaveFlashcardReview(
+        flashcardId: card.id,
+        quality: quality,
+        easeFactor: card.easeFactor,
+        intervalDays: card.interval,
+        repetitions: card.repetitions,
+      );
+    } catch (e) {
+      debugPrint('[PrepFlashcardProvider] saveReview error: $e');
+    }
   }
 
   void resetSession() {

@@ -495,4 +495,52 @@ class AdminUsersOverviewProvider extends ChangeNotifier {
       _setUpdating(false);
     }
   }
+
+  /// Vérifie si une conversation support existe pour un email
+  Future<String?> checkSupportConversationExists(String email) async {
+    try {
+      final response = await _client.rpc(
+        'app_admin_check_support_conversation',
+        params: {'p_user_email': email},
+      );
+      if (response is! Map<String, dynamic>) {
+        return null;
+      }
+      if (response['success'] != true) {
+        return null;
+      }
+      return response['conversation_id']?.toString();
+    } catch (e) {
+      debugPrint('[AdminUsersOverview] checkSupportConversationExists error: $e');
+      return null;
+    }
+  }
+
+  /// Crée une nouvelle conversation support avec un utilisateur
+  Future<String?> createSupportConversation({
+    required String email,
+    String? initialMessage,
+  }) async {
+    try {
+      final params = <String, dynamic>{'p_user_email': email};
+      if (initialMessage != null && initialMessage.trim().isNotEmpty) {
+        params['p_initial_message'] = initialMessage.trim();
+      }
+      
+      final response = await _client.rpc(
+        'app_admin_create_support_conversation',
+        params: params,
+      );
+      if (response is! Map<String, dynamic>) {
+        return null;
+      }
+      if (response['success'] != true) {
+        return null;
+      }
+      return response['conversation_id']?.toString();
+    } catch (e) {
+      debugPrint('[AdminUsersOverview] createSupportConversation error: $e');
+      return null;
+    }
+  }
 }

@@ -6,12 +6,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../providers/admin_applications_provider.dart';
 import '../../services/notification_sound_service.dart';
-import '../../widgets/notification_sound_settings_dialog.dart';
+import '../student/student_settings_screen.dart';
 import 'admin_applications_screen.dart';
 import 'admin_payments_screen.dart';
 import 'admin_payment_receipts_screen.dart';
 import 'admin_programs_screen.dart';
-import 'admin_opportunities_screen.dart';
 import 'admin_communities_screen.dart';
 import 'admin_challenges_screen.dart';
 import 'admin_course_library_screen.dart';
@@ -35,6 +34,11 @@ import 'admin_marketplace_control_tower_screen.dart';
 import '../../services/push_trigger_service.dart';
 import 'admin_support_screen.dart';
 import '../../providers/admin_support_provider.dart';
+import 'admin_treasury_screen.dart';
+import 'admin_payouts_screen.dart';
+import 'admin_subscriptions_screen.dart';
+import 'admin_revenue_split_screen.dart';
+import 'admin_actor_balances_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -72,10 +76,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       await _loadNotificationSummary();
       PushTriggerService.instance.triggerPendingPush();
     });
-  }
-
-  Future<void> _signOut() async {
-    await Supabase.instance.client.auth.signOut();
   }
 
   Future<void> _loadNotificationSummary() async {
@@ -277,7 +277,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 25,
+      length: 29,
       child: Consumer<AdminApplicationsProvider>(
         builder: (context, applicationsProvider, child) {
           final unread = applicationsProvider.unreadCount;
@@ -300,15 +300,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               actions: [
                 IconButton(
                   onPressed: () {
-                    NotificationSoundSettingsDialog.show(context);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const StudentSettingsScreen(
+                          showDeleteAccount: false,
+                          showProfile: false,
+                        ),
+                      ),
+                    );
                   },
                   icon: const Icon(Icons.settings),
                   tooltip: 'Paramètres',
-                ),
-                IconButton(
-                  onPressed: _signOut,
-                  icon: const Icon(Icons.logout),
-                  tooltip: 'Se déconnecter',
                 ),
               ],
               bottom: TabBar(
@@ -327,15 +329,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     _markAdminPaymentsSeen();
                   } else if (index == 4) {
                     _markAdminOpportunitiesSeen();
-                  } else if (index == 6) {
+                  } else if (index == 5) {
                     _markAdminCommunitiesSeen();
-                  } else if (index == 11) {
+                  } else if (index == 10) {
                     _markAdminShortTrainingsSeen();
-                  } else if (index == 12) {
+                  } else if (index == 11) {
                     _markAdminUniversityContentSeen();
-                  } else if (index == 13) {
+                  } else if (index == 12) {
                     _markAdminBobodoSeen();
-                  } else if (index == 14) {
+                  } else if (index == 13) {
                     _markAdminPrepConcoursSeen();
                   }
                 },
@@ -351,11 +353,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const Tab(text: 'Programmes'),
                   Tab(
                     child: _AdminDotLabel(
-                      text: 'Opportunités (Jobs/Services)',
+                      text: 'Marketplace',
                       hasNew: _hasNewOpportunities,
                     ),
                   ),
-                  const Tab(text: 'Marketplace (Boutique)'),
                   Tab(
                     child: _AdminDotLabel(
                       text: 'Communautés',
@@ -400,6 +401,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const Tab(text: 'TD'),
                   const Tab(text: 'Communication'),
                   const Tab(text: 'Support'),
+                  const Tab(text: 'Trésorerie'),
+                  const Tab(text: 'Payouts'),
+                  const Tab(text: 'Abonnements'),
+                  const Tab(text: 'Répartition revenus'),
+                  const Tab(text: 'Soldes acteurs'),
                 ],
               ),
             ),
@@ -409,7 +415,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 AdminPaymentsScreen(),
                 AdminPaymentReceiptsScreen(),
                 AdminProgramsScreen(),
-                AdminOpportunitiesScreen(),
                 const AdminMarketplaceControlTowerScreen(),
                 AdminCommunitiesScreen(),
                 AdminChallengesScreen(),
@@ -436,6 +441,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   create: (_) => AdminSupportProvider(),
                   child: const AdminSupportScreen(),
                 ),
+                const AdminTreasuryScreen(),
+                const AdminPayoutsScreen(),
+                const AdminSubscriptionsScreen(),
+                const AdminRevenueSplitScreen(),
+                const AdminActorBalancesScreen(),
               ],
             ),
           );

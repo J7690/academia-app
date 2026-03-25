@@ -6,6 +6,7 @@ import 'package:camera/camera.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:video_compress/video_compress.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,6 +14,7 @@ import 'package:video_thumbnail/video_thumbnail.dart' as vt;
 
 import '../../providers/student_challenges_provider.dart';
 import '../../services/videoasset_upload_service.dart';
+import '../../services/video_segment_merge_service.dart';
 import '../../video/academia_playback_engine.dart';
 import '../../video/audio_mix_service.dart';
 import '../../video/overlay_burn_in_service.dart';
@@ -82,9 +84,16 @@ class _StudentChallengeVideoEditorScreenState
   String? _localVideoPath;
   String? _pendingChallengeVideoAssetId;
   Map<String, dynamic>? _pendingChallengePlayback;
+  
+  // Multi-segments support
+  List<XFile>? _capturedSegments;
+  String _selectedTransition = 'none';
 
   bool _isUploading = false;
   bool _isSubmitting = false;
+  double _uploadProgress = 0.0;
+  bool _isMerging = false;
+  double _mergeProgress = 0.0;
 
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _overlayTextController = TextEditingController();
@@ -224,28 +233,38 @@ class _StudentChallengeVideoEditorScreenState
   }
 
   Future<void> _processSegments(List<XFile> segments) async {
-    try {
-      final firstFile = segments.first;
-      final bytes = await firstFile.readAsBytes();
-      final name = firstFile.name.isNotEmpty ? firstFile.name : 'video.mp4';
-      final ext = name.contains('.') ? name.split('.').last : 'mp4';
+    setState(() {
+      _capturedSegments = segments;
+    });
 
-      if (!mounted) return;
-      setState(() {
-        _videoBytes = bytes;
-        _fileName = name;
-        _mimeType = ext;
-        _uploadedUrl = null;
-        _videoInitialized = false;
-        _localVideoPath = firstFile.path;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Erreur lors du traitement de la vidéo capturée.'),
-        ),
-      );
+    if (segments.length == 1) {
+      // Single segment, use directly
+      try {
+        final firstFile = segments.first;
+        final bytes = await firstFile.readAsBytes();
+        final name = firstFile.name.isNotEmpty ? firstFile.name : 'video.mp4';
+        final ext = name.contains('.') ? name.split('.').last : 'mp4';
+
+        if (!mounted) return;
+        setState(() {
+          _videoBytes = bytes;
+          _fileName = name;
+          _mimeType = ext;
+          _uploadedUrl = null;
+          _videoInitialized = false;
+          _localVideoPath = firstFile.path;
+        });
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erreur lors du traitement de la vidéo capturée.'),
+          ),
+        );
+      }
+    } else {
+      // Multiple segments, show merge dialog
+      await _showMergeSegmentsDialog(segments);
     }
   }
 
@@ -271,21 +290,8 @@ class _StudentChallengeVideoEditorScreenState
         return;
       }
 
-      // Multi-segment : pour l'instant on utilise le premier segment.
-      // La fusion multi-segments sera gérée en Phase 3 (éditeur CapCut).
-      final firstFile = result.first;
-      final bytes = await firstFile.readAsBytes();
-      final name = firstFile.name.isNotEmpty ? firstFile.name : 'video.mp4';
-      final ext = name.contains('.') ? name.split('.').last : 'mp4';
-
-      setState(() {
-        _videoBytes = bytes;
-        _fileName = name;
-        _mimeType = ext;
-        _uploadedUrl = null;
-        _videoInitialized = false;
-        _localVideoPath = firstFile.path;
-      });
+      // Process captured segments
+      await _processSegments(result);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -413,9 +419,8 @@ class _StudentChallengeVideoEditorScreenState
       return;
     }
 
-    // Use the last recorded segment (multi-segment merge handled by editor).
-    final picked = segments.last;
-    await _compressAndSetVideo(picked.path, picked.name);
+    // Process all segments
+    await _processSegments(segments);
   }
 
   Future<void> _pickVideo() async {
@@ -572,6 +577,7 @@ class _StudentChallengeVideoEditorScreenState
 
     setState(() {
       _isUploading = true;
+      _uploadProgress = 0.0;
     });
 
     String? url;
@@ -599,6 +605,13 @@ class _StudentChallengeVideoEditorScreenState
           contextId: contextId,
           mimeType: _mimeType,
           fileSizeBytes: _videoBytes!.length,
+          onUploadProgress: (progress) {
+            if (mounted) {
+              setState(() {
+                _uploadProgress = progress;
+              });
+            }
+          },
         );
         debugPrint('[Studio] PIPELINE OK: videoAssetId=$videoAssetId');
       } catch (e) {
@@ -4062,13 +4075,56 @@ class _StudentChallengeVideoEditorScreenState
   Widget _buildStudioToolbar() {
     final busy = _isSubmitting;
     return Container(
-      color: Colors.black.withValues(alpha: 0.6),
+      color: Colors.black.withAlpha(153),
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Row(
           children: [
+            // Upload button with progress indicator
+            if (_videoBytes != null && _uploadedUrl == null)
+              _isUploading
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                CircularProgressIndicator(
+                                  value: _uploadProgress,
+                                  strokeWidth: 3,
+                                  color: const Color(0xFF00D2FF),
+                                ),
+                                Text(
+                                  '${(_uploadProgress * 100).toInt()}%',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Upload...',
+                            style: TextStyle(color: Colors.white70, fontSize: 10),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _buildStudioToolbarItem(
+                      icon: Icons.cloud_upload,
+                      label: 'Upload',
+                      onTap: busy ? null : _uploadVideo,
+                    ),
             _buildStudioToolbarItem(
               icon: Icons.add_box_outlined,
               label: '+ Zone',
@@ -4157,6 +4213,26 @@ class _StudentChallengeVideoEditorScreenState
               label: 'Changer',
               onTap: busy ? null : _pickVideo,
             ),
+            // Show merge button if multiple segments captured
+            if (_capturedSegments != null && _capturedSegments!.length > 1 && !_isUploading)
+              _buildStudioToolbarItem(
+                icon: Icons.merge,
+                label: 'Fusionner',
+                onTap: busy || _isMerging ? null : () => _showMergeSegmentsDialog(_capturedSegments!),
+              ),
+            // Buttons for initial capture if no video yet
+            if (_videoBytes == null && _uploadedUrl == null) ...[
+              _buildStudioToolbarItem(
+                icon: Icons.videocam,
+                label: 'Filmer',
+                onTap: busy || _isCompressing ? null : _recordVideoWithCamera,
+              ),
+              _buildStudioToolbarItem(
+                icon: Icons.photo_library,
+                label: 'Galerie',
+                onTap: busy || _isCompressing ? null : _pickVideo,
+              ),
+            ],
           ],
         ),
       ),
@@ -4175,6 +4251,130 @@ class _StudentChallengeVideoEditorScreenState
         ),
       ],
     );
+  }
+
+  Future<void> _showMergeSegmentsDialog(List<XFile> segments) async {
+    setState(() {
+      _isMerging = true;
+      _mergeProgress = 0.0;
+    });
+
+    // Show transition selector dialog
+    final selectedTransition = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Fusionner les segments'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('${segments.length} segments capturés'),
+            const SizedBox(height: 16),
+            const Text('Choisir une transition:'),
+            const SizedBox(height: 8),
+            ...VideoSegmentMergeService.availableTransitions.map((transition) {
+              return RadioListTile<String>(
+                title: Text(transition.label),
+                value: transition.value,
+                groupValue: _selectedTransition,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedTransition = value ?? 'none';
+                  });
+                  Navigator.of(ctx).pop(value);
+                },
+              );
+            }),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(null),
+            child: const Text('Annuler'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || selectedTransition == null) {
+      setState(() {
+        _isMerging = false;
+      });
+      return;
+    }
+
+    // Show progress dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          title: const Text('Fusion en cours...'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(value: _mergeProgress),
+              const SizedBox(height: 16),
+              Text('${(_mergeProgress * 100).toInt()}%'),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      // Convert XFiles to Files
+      final segmentFiles = segments.map((xFile) => File(xFile.path)).toList();
+      
+      final mergedUrl = await VideoSegmentMergeService.mergeSegments(
+        segmentFiles: segmentFiles,
+        transition: selectedTransition,
+        transitionDurationMs: 300,
+        onProgress: (progress) {
+          if (mounted) {
+            setState(() {
+              _mergeProgress = progress;
+            });
+          }
+        },
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).pop(); // Close progress dialog
+
+      if (mergedUrl != null) {
+        // Download merged video to process it
+        final response = await http.get(Uri.parse(mergedUrl));
+        final bytes = response.bodyBytes;
+        
+        setState(() {
+          _videoBytes = bytes;
+          _fileName = 'merged_${DateTime.now().millisecondsSinceEpoch}.mp4';
+          _mimeType = 'mp4';
+          _uploadedUrl = mergedUrl;
+          _videoInitialized = false;
+          _localVideoPath = null;
+          _isMerging = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Segments fusionnés avec succès!')),
+        );
+      } else {
+        throw Exception('Échec de la fusion');
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Close progress dialog
+        setState(() {
+          _isMerging = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de la fusion: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   Future<void> _openPublishScreen() async {

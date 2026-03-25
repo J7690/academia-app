@@ -1,0 +1,1514 @@
+{
+  "td_question_banks": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "concours_type",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "subject",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "td_questions": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "bank_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "question_type",
+        "is_nullable": "NO",
+        "column_default": "'qcm'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "content",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "options",
+        "is_nullable": "YES",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "correct_index",
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "data_type": "text",
+        "column_name": "explanation",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "difficulty",
+        "is_nullable": "YES",
+        "column_default": "1"
+      },
+      {
+        "data_type": "text",
+        "column_name": "subject",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "ARRAY",
+        "column_name": "tags",
+        "is_nullable": "YES",
+        "column_default": "'{}'::text[]"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "points",
+        "is_nullable": "YES",
+        "column_default": "10"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "time_limit_seconds",
+        "is_nullable": "YES",
+        "column_default": "60"
+      },
+      {
+        "data_type": "text",
+        "column_name": "image_url",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "td_quiz_attempts": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "template_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "student_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "questions_json",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "answers_json",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "score",
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "total_points",
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "correct_count",
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "question_count",
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "time_spent_seconds",
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "YES",
+        "column_default": "'in_progress'::text"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "started_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "finished_at",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "td_quiz_templates": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "bank_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "concours_type",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "subject",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "question_count",
+        "is_nullable": "YES",
+        "column_default": "10"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "time_limit_minutes",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "shuffle_questions",
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_exam_mode",
+        "is_nullable": "YES",
+        "column_default": "false"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "passing_score",
+        "is_nullable": "YES",
+        "column_default": "60"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "td_exam_papers": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "concours_type",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "year",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "subject",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "paper_url",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "correction_url",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "difficulty",
+        "is_nullable": "YES",
+        "column_default": "1"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_official",
+        "is_nullable": "YES",
+        "column_default": "false"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "has_correction",
+        "is_nullable": "YES",
+        "column_default": "false"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "uploaded_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "td_flashcard_decks": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "subject",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "concours_type",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "card_count",
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_public",
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "td_flashcards": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "deck_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "front_text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "back_text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "subject",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "ARRAY",
+        "column_name": "tags",
+        "is_nullable": "YES",
+        "column_default": "'{}'::text[]"
+      },
+      {
+        "data_type": "text",
+        "column_name": "image_url",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "td_flashcard_progress": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "flashcard_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "student_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "numeric",
+        "column_name": "ease_factor",
+        "is_nullable": "YES",
+        "column_default": "2.50"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "interval_days",
+        "is_nullable": "YES",
+        "column_default": "1"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "repetitions",
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "next_review_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "last_reviewed_at",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "quality_history",
+        "is_nullable": "YES",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "td_badges": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "text",
+        "column_name": "code",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "emoji",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "xp_reward",
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "data_type": "text",
+        "column_name": "condition_type",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "condition_value",
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 8
+  },
+  "td_student_badges": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "student_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "badge_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "earned_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "td_ai_conversations": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "student_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "subject",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "message_count",
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "total_tokens_used",
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "td_ai_messages": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "conversation_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "role",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "content",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "tokens_used",
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "td_ai_config": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "text",
+        "column_name": "config_key",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "config_value",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "updated_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 4
+  },
+  "prep_subjects": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "text",
+        "column_name": "slug",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "sort_order",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 1
+  },
+  "prep_chapters": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "subject_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "slug",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "sort_order",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "prep_questions": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "subject_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "chapter_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "source",
+        "is_nullable": "NO",
+        "column_default": "'manual'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "question_type",
+        "is_nullable": "NO",
+        "column_default": "'mcq'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "level",
+        "is_nullable": "NO",
+        "column_default": "'beginner'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "mechanism",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "prompt_context",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "question",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "explanation",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "correct_answer",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "estimated_time_sec",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_published",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "prep_question_choices": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "question_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "choice_label",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "choice_text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_correct",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "sort_order",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "prep_attempts": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "student_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "question_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "attempt_type",
+        "is_nullable": "NO",
+        "column_default": "'training'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "selected_answer",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_correct",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "time_spent_sec",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "prep_exams": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "student_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "subject_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "level",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "mode",
+        "is_nullable": "NO",
+        "column_default": "'practice'::text"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "duration_sec",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_published",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "prep_exam_items": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "exam_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "question_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "sort_order",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "prep_source_documents": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "subject_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "year",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "doc_type",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "source_type",
+        "is_nullable": "NO",
+        "column_default": "'pdf'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "storage_bucket",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "storage_path",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "extracted_text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'received'::text"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "prep_doc_chunks": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "source_document_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "chunk_index",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "content",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "metadata",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 0
+  },
+  "prep_ai_generations": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "subject_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "generation_type",
+        "is_nullable": "NO",
+        "column_default": "'mcq'::text"
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "input_params",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "output_json",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'proposed'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "error_message",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 1
+  },
+  "prep_ai_usage_logs": {
+    "columns": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "user_id",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "generation_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "subject_id",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "endpoint",
+        "is_nullable": "NO",
+        "column_default": "'ai/prep/generate'::text"
+      },
+      {
+        "data_type": "text",
+        "column_name": "input_hash",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'started'::text"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "duration_ms",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "metadata",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "row_count": 4
+  }
+}

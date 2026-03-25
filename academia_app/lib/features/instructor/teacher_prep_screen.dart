@@ -230,7 +230,7 @@ class _QuestionsTab extends StatelessWidget {
                 DropdownButtonFormField<String>(
                   value: selectedConcours,
                   decoration: const InputDecoration(labelText: 'Concours', border: OutlineInputBorder()),
-                  items: ['ENAM', 'ENS', 'ENSET', 'BAC', 'BEPC', 'IRIC']
+                  items: ['ENAREF', 'ADMIN_CIVIL', 'DOUANE', 'GREFFIERS', 'SANTE', 'EDUCATION', 'GRH', 'PARAMILITAIRE']
                       .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                       .toList(),
                   onChanged: (v) => setDialogState(() => selectedConcours = v),
@@ -622,7 +622,7 @@ class _FlashcardsTab extends StatelessWidget {
                 DropdownButtonFormField<String>(
                   value: selectedConcours,
                   decoration: const InputDecoration(labelText: 'Concours', border: OutlineInputBorder()),
-                  items: ['ENAM', 'ENS', 'ENSET', 'BAC', 'BEPC', 'IRIC']
+                  items: ['ENAREF', 'ADMIN_CIVIL', 'DOUANE', 'GREFFIERS', 'SANTE', 'EDUCATION', 'GRH', 'PARAMILITAIRE']
                       .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                       .toList(),
                   onChanged: (v) => setDialogState(() => selectedConcours = v),

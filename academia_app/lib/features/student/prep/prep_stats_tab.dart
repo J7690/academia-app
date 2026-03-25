@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../../providers/prep_quiz_provider.dart';
 import '../../../theme/prep_theme.dart';
+import 'psychotech/psychotech_profile_widget.dart';
 
 /// Onglet Stats — Analytics de progression, forces/faiblesses, historique.
 class PrepStatsTab extends StatelessWidget {
@@ -48,9 +49,17 @@ class PrepStatsTab extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        // ─── Badges ──────────────────────────────────────────────
+        // ─── Profil Psychotechnique ────────────────────────────────
         FadeInUp(
           delay: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 400),
+          child: const PsychotechProfileWidget(compact: true),
+        ),
+        const SizedBox(height: 16),
+
+        // ─── Badges ──────────────────────────────────────────────
+        FadeInUp(
+          delay: const Duration(milliseconds: 400),
           duration: const Duration(milliseconds: 400),
           child: _BadgesSection(
             totalCorrect: quizProvider.totalCorrect,
@@ -329,17 +338,43 @@ class _ProgressChart extends StatelessWidget {
 class _SubjectBreakdown extends StatelessWidget {
   const _SubjectBreakdown();
 
+  static const _subjectColors = <String, Color>{
+    'Mathématiques': PrepTheme.primary,
+    'Droit': PrepTheme.xpPurple,
+    'Culture Générale': PrepTheme.success,
+    'Économie': PrepTheme.accent,
+    'Physique-Chimie': PrepTheme.coral,
+    'Histoire-Géo': PrepTheme.streakOrange,
+    'Biologie': Color(0xFFDB2777),
+    'Philosophie': Color(0xFF64748B),
+    'Français': Color(0xFF0891B2),
+    'Anglais': Color(0xFF6366F1),
+  };
+
   @override
   Widget build(BuildContext context) {
-    // Demo data
-    final subjects = [
-      ('Mathématiques', 0.85, PrepTheme.primary),
-      ('Droit', 0.72, PrepTheme.xpPurple),
-      ('Culture Générale', 0.68, PrepTheme.success),
-      ('Économie', 0.55, PrepTheme.accent),
-      ('Physique-Chimie', 0.45, PrepTheme.coral),
-      ('Histoire-Géo', 0.62, PrepTheme.streakOrange),
-    ];
+    final quizProvider = context.watch<PrepQuizProvider>();
+    final serverStats = quizProvider.subjectStats;
+
+    // Use server data if available, otherwise show demo
+    final List<(String, double, Color)> subjects;
+    if (serverStats.isNotEmpty) {
+      subjects = serverStats.map((s) {
+        final name = (s['subject'] ?? 'Autre').toString();
+        final accuracy = ((s['accuracy'] as num?)?.toDouble() ?? 0) / 100;
+        final color = _subjectColors[name] ?? PrepTheme.primary;
+        return (name, accuracy, color);
+      }).toList();
+    } else {
+      subjects = [
+        ('Mathématiques', 0.85, PrepTheme.primary),
+        ('Droit', 0.72, PrepTheme.xpPurple),
+        ('Culture Générale', 0.68, PrepTheme.success),
+        ('Économie', 0.55, PrepTheme.accent),
+        ('Physique-Chimie', 0.45, PrepTheme.coral),
+        ('Histoire-Géo', 0.62, PrepTheme.streakOrange),
+      ];
+    }
 
     return Container(
       padding: const EdgeInsets.all(18),

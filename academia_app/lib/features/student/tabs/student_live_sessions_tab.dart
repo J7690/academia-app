@@ -220,41 +220,49 @@ class _StudentLiveSessionsTabState extends State<StudentLiveSessionsTab> {
                                           ),
                                         ),
                                       const Spacer(),
-                                      if (isLivekit)
-                                        ElevatedButton(
+                                      if (status == 'ended' && replayUrl.isNotEmpty && !replayUrl.startsWith('recording:'))
+                                        ElevatedButton.icon(
+                                          onPressed: () => _openExternalUrl(replayUrl),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFF6366F1),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          ),
+                                          icon: const Icon(Icons.replay, size: 16),
+                                          label: const Text('Voir le replay', style: TextStyle(fontSize: 12)),
+                                        )
+                                      else if (isLivekit && status != 'ended')
+                                        ElevatedButton.icon(
                                           onPressed: () {
-                                            if (sessionId == null || sessionId.isEmpty) {
-                                              return;
-                                            }
+                                            if (sessionId == null || sessionId.isEmpty) return;
                                             Navigator.of(context).push(
                                               MaterialPageRoute(
-                                                builder: (_) => LivekitRoomScreen(
-                                                  sessionId: sessionId,
-                                                ),
+                                                builder: (_) => LivekitRoomScreen(sessionId: sessionId),
                                               ),
                                             );
                                           },
-                                          child: const Text('Rejoindre'),
-                                        )
-                                      else if (urlToOpen.isEmpty)
-                                        const Text(
-                                          'Lien de réunion non disponible',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.grey,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: status == 'running'
+                                                ? const Color(0xFFEF4444)
+                                                : const Color(0xFF1EA75C),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          ),
+                                          icon: Icon(status == 'running' ? Icons.videocam : Icons.login, size: 16),
+                                          label: Text(
+                                            status == 'running' ? 'LIVE' : 'Rejoindre',
+                                            style: const TextStyle(fontSize: 12),
                                           ),
                                         )
-                                      else
+                                      else if (urlToOpen.isNotEmpty)
                                         ElevatedButton(
-                                          onPressed: () {
-                                            _openExternalUrl(urlToOpen);
-                                          },
-                                          child: Text(
-                                            joinUrl.isNotEmpty
-                                                ? 'Rejoindre'
-                                                : 'Voir le replay',
-                                          ),
-                                        ),
+                                          onPressed: () => _openExternalUrl(urlToOpen),
+                                          child: Text(joinUrl.isNotEmpty ? 'Rejoindre' : 'Voir le replay'),
+                                        )
+                                      else if (status == 'ended')
+                                        const Text('Replay en préparation...', style: TextStyle(fontSize: 11, color: Colors.grey))
+                                      else
+                                        const Text('Lien non disponible', style: TextStyle(fontSize: 11, color: Colors.grey)),
                                     ],
                                   ),
                                 ],

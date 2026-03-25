@@ -25,7 +25,7 @@ import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart';
 import '../../widgets/bobodo_state.dart';
 import '../../widgets/bobodo_view.dart';
-import '../../widgets/notification_sound_settings_dialog.dart';
+import 'student_settings_screen.dart';
 import 'student_application_detail_screen.dart';
 import 'tabs/student_applications_tab.dart';
 import 'tabs/student_opportunities_tab.dart';
@@ -292,16 +292,11 @@ class _MobileTopNavBarState extends State<_MobileTopNavBar>
                 title: const Text('Paramètres'),
                 onTap: () {
                   Navigator.of(ctx).pop();
-                  NotificationSoundSettingsDialog.show(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text('Déconnexion'),
-                onTap: () async {
-                  Navigator.of(ctx).pop();
-                  final client = Supabase.instance.client;
-                  await client.auth.signOut();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const StudentSettingsScreen(),
+                    ),
+                  );
                 },
               ),
             ],

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +7,7 @@ import '../../../providers/student_marketplace_cart_provider_v1.dart';
 import '../../../widgets/marketplace/alibaba_marketplace_tokens.dart';
 import '../../../widgets/marketplace/alibaba_marketplace_shimmers.dart';
 import 'student_marketplace_order_confirmation_screen_v1.dart';
+import '../../../widgets/ligdicash_payment_sheet.dart';
 
 class StudentMarketplaceCartScreenV1 extends StatefulWidget {
   final bool showAppBar;
@@ -240,15 +242,37 @@ class _StudentMarketplaceCartScreenV1State
                                     return;
                                   }
 
+                                  // Ouvrir LigdiCash pour chaque commande avec paiement
+                                  final ordersList = orders
+                                      .whereType<Map>()
+                                      .map((e) => Map<String, dynamic>.from(e))
+                                      .toList(growable: false);
+
+                                  for (final order in ordersList) {
+                                    final mpPaymentId = order['marketplace_payment_id']?.toString();
+                                    final totalAmount = order['total_amount'];
+                                    double amount = 0;
+                                    if (totalAmount is num) amount = totalAmount.toDouble();
+                                    if (totalAmount is String) amount = double.tryParse(totalAmount) ?? 0;
+
+                                    if (mpPaymentId != null && mpPaymentId.isNotEmpty && amount > 0 && context.mounted) {
+                                      await LigdiCashPaymentSheet.show(
+                                        context: context,
+                                        paymentType: 'marketplace',
+                                        paymentId: mpPaymentId,
+                                        amount: amount,
+                                        description: 'Commande Marketplace',
+                                        onSuccess: () {},
+                                      );
+                                    }
+                                  }
+
+                                  if (!context.mounted) return;
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (_) =>
                                           StudentMarketplaceOrderConfirmationScreenV1(
-                                        orders: orders
-                                            .whereType<Map>()
-                                            .map((e) =>
-                                                Map<String, dynamic>.from(e))
-                                            .toList(growable: false),
+                                        orders: ordersList,
                                       ),
                                     ),
                                   );
@@ -292,6 +316,7 @@ class _AlibabaCartItemCard extends StatelessWidget {
 
     final itemId = item['id']?.toString() ?? '';
     final title = item['title']?.toString() ?? '';
+    final coverUrl = item['cover_url']?.toString();
     final q = (item['quantity'] is num)
         ? (item['quantity'] as num).toInt()
         : (item['quantity'] as int? ?? 1);
@@ -317,19 +342,31 @@ class _AlibabaCartItemCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              height: 92,
-              width: double.infinity,
-              decoration: BoxDecoration(
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                height: 92,
+                width: double.infinity,
                 color: const Color(0xFFF3F4F6),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.image_outlined,
-                  size: 34,
-                  color: Color(0xFF9CA3AF),
-                ),
+                child: coverUrl != null && coverUrl.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: coverUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => const Center(
+                          child: SizedBox(
+                            width: 20, height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                        errorWidget: (_, __, ___) => const Center(
+                          child: Icon(Icons.image_not_supported_outlined,
+                              color: Color(0xFF9CA3AF), size: 28),
+                        ),
+                      )
+                    : const Center(
+                        child: Icon(Icons.shopping_bag_outlined,
+                            size: 34, color: Color(0xFF9CA3AF)),
+                      ),
               ),
             ),
             const SizedBox(height: 10),
