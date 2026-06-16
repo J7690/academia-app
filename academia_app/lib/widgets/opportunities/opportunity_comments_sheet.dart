@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/opportunity_comments_provider.dart';
+import '../report_content_sheet.dart';
 
 /// Bottom sheet pour afficher et gérer les commentaires d'une opportunité
 class OpportunityCommentsSheet extends StatefulWidget {
@@ -414,6 +415,28 @@ class _CommentItem extends StatelessWidget {
               color: const Color(0xFF9CA3AF),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            ),
+          // Report button (non-owner)
+          if (!isOwner)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, size: 16, color: Color(0xFF9CA3AF)),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              onSelected: (val) {
+                final commentId = comment['id']?.toString();
+                if (val == 'report' && commentId != null) {
+                  ReportContentSheet.show(context,
+                    contentType: 'comment', contentId: commentId,
+                    targetUserId: userId,
+                    contentPreview: content.length > 80 ? '${content.substring(0, 80)}...' : content);
+                } else if (val == 'block') {
+                  UserModerationSheet.show(context, userId: userId, userName: userName);
+                }
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'report', child: Text('Signaler', style: TextStyle(fontSize: 13))),
+                PopupMenuItem(value: 'block', child: Text('Bloquer', style: TextStyle(fontSize: 13, color: Colors.red))),
+              ],
             ),
         ],
       ),

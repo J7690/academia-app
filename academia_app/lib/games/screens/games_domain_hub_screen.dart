@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'auto_record_game_wrapper.dart';
+import 'brain_type_game.dart';
+import 'speed_challenge_game.dart';
+import 'student_type_game.dart';
 import 'games_hub_screen.dart';
 import 'tournament_list_screen.dart';
 import 'leaderboard_screen.dart';
+import '../widgets/live_game_feed_card.dart';
 
 /// Hub principal multi-domaines des jeux Academia.
 /// Accessible depuis le bouton "Jeux" dans l'onglet Challenge.
@@ -31,6 +36,51 @@ class GamesDomainHubScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // --- En direct maintenant ---
+          const LiveGameFeedSection(),
+          // --- Défis Rapides (jeux viraux) ---
+          _SectionTitle(title: 'Défis Rapides', icon: Icons.bolt, color: const Color(0xFF6C63FF)),
+          const SizedBox(height: 8),
+          _MiniGameCard(
+            title: 'Type de Cerveau',
+            subtitle: 'Découvre ton profil cognitif',
+            icon: Icons.psychology,
+            color: const Color(0xFF6C63FF),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AutoRecordGameWrapper(
+                gameType: 'Type de Cerveau',
+                child: BrainTypeGameScreen(),
+              )),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _MiniGameCard(
+            title: 'Défi 10 Secondes',
+            subtitle: 'Quiz chrono par matière',
+            icon: Icons.bolt,
+            color: const Color(0xFFE53935),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AutoRecordGameWrapper(
+                gameType: 'Défi 10 Secondes',
+                child: SpeedChallengeGameScreen(),
+              )),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _MiniGameCard(
+            title: 'Quel Étudiant Es-Tu ?',
+            subtitle: 'Ton profil étudiant + conseils',
+            icon: Icons.school,
+            color: const Color(0xFFFF6B35),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AutoRecordGameWrapper(
+                gameType: 'Quel Étudiant Es-Tu',
+                child: StudentTypeGameScreen(),
+              )),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // --- Économie ---
           _DomainCard(
             title: 'Economie',
             subtitle: '4 jeux disponibles',
@@ -202,6 +252,91 @@ class _DomainCard extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Color color;
+
+  const _SectionTitle({required this.title, required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 22),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: color),
+        ),
+      ],
+    );
+  }
+}
+
+class _MiniGameCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _MiniGameCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text('Jouer', style: TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
+              ),
+            ],
           ),
         ),
       ),

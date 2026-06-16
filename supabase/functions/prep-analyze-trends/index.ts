@@ -6,7 +6,8 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
 const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY') ?? '';
-const OPENROUTER_MODEL = Deno.env.get('OPENROUTER_MODEL') ?? 'google/gemini-2.0-flash-001';
+const OPENROUTER_MODEL = Deno.env.get('OPENROUTER_MODEL') ?? '';
+const OPENROUTER_FALLBACK_MODEL = Deno.env.get('OPENROUTER_FALLBACK_MODEL') ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
@@ -24,28 +25,38 @@ function jsonResponse(data: unknown, status = 200): Response {
 }
 
 async function callLLM(systemPrompt: string, userPrompt: string, maxTokens = 6000): Promise<string> {
-  const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: OPENROUTER_MODEL,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.3,
-      max_tokens: maxTokens,
-    }),
-  });
-  if (!resp.ok) {
-    const text = await resp.text();
-    throw new Error(`LLM error (${resp.status}): ${text.slice(0, 500)}`);
+  const modelsToTry = [OPENROUTER_MODEL, OPENROUTER_FALLBACK_MODEL].filter(m => m);
+  const errors: string[] = [];
+  
+  for (const model of modelsToTry) {
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.3,
+        max_tokens: maxTokens,
+      }),
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      errors.push(`${model} (${resp.status}): ${text.slice(0, 100)}`);
+      continue;
+    }
+    const data = await resp.json();
+    const content = (data?.choices?.[0]?.message?.content ?? '').toString().trim();
+    if (content) return content;
+    errors.push(`${model}: empty content`);
   }
-  const data = await resp.json();
-  return data?.choices?.[0]?.message?.content?.trim() ?? '';
+  
+  throw new Error(`All models failed: ${errors.join(' | ')}`);
 }
 
 function escapeSql(text: string): string {
@@ -69,14 +80,17 @@ serve(async (req: Request) => {
       auth: { persistSession: false },
     });
 
-    // Verify auth
-    const supabaseUser = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-      auth: { persistSession: false },
-      global: { headers: { Authorization: `Bearer ${jwt}` } },
-    });
-    const { data: userData, error: userError } = await supabaseUser.auth.getUser(jwt);
-    if (userError || !userData?.user) {
-      return jsonResponse({ error: 'not_authenticated' }, 401);
+    // Allow service_role key (for cron jobs / admin calls)
+    const isServiceRole = jwt === SUPABASE_SERVICE_ROLE_KEY;
+    if (!isServiceRole) {
+      const supabaseUser = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+        auth: { persistSession: false },
+        global: { headers: { Authorization: `Bearer ${jwt}` } },
+      });
+      const { data: userData, error: userError } = await supabaseUser.auth.getUser(jwt);
+      if (userError || !userData?.user) {
+        return jsonResponse({ error: 'not_authenticated' }, 401);
+      }
     }
 
     const body = await req.json();

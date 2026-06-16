@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
 import '../utils/url_normalizer.dart';
+import '../services/video_orientation_service.dart';
 
 /// Controller that allows external code (e.g. the TikTok feed) to
 /// toggle play/pause on an [AcademiaPlaybackView].
@@ -44,6 +45,7 @@ class AcademiaPlaybackView extends StatefulWidget {
   final bool showErrorText;
   final VoidCallback? onFirstPlay;
   final AcademiaPlaybackController? playbackController;
+  final double? videoAspectRatio;
 
   const AcademiaPlaybackView({
     super.key,
@@ -59,6 +61,7 @@ class AcademiaPlaybackView extends StatefulWidget {
     this.showErrorText = true,
     this.onFirstPlay,
     this.playbackController,
+    this.videoAspectRatio,
   });
 
   @override
@@ -97,11 +100,34 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
   void didUpdateWidget(covariant AcademiaPlaybackView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.url != widget.url) {
-      _disposeController();
-      _hasCompleted = false;
-      _init();
+      if (_shouldUseNativeAndroid && _nativeChannel != null) {
+        // Hot-switch URL on existing native player — no PlatformView recreation
+        final newUrl = UrlNormalizer.normalize(widget.url.trim());
+        if (newUrl.isNotEmpty) {
+          _nativeChannel!.invokeMethod('setUrl', {
+            'url': newUrl,
+            'autoplay': widget.autoplay,
+          });
+          debugPrint('[AcademiaPlaybackView] setUrl on existing player: ${newUrl.length > 60 ? '${newUrl.substring(0, 60)}...' : newUrl}');
+        }
+        _hasCompleted = false;
+      } else {
+        _disposeController();
+        _hasCompleted = false;
+        _init();
+      }
     } else if (oldWidget.muted != widget.muted) {
       _controller?.setVolume(widget.muted ? 0.0 : 1.0);
+      if (_shouldUseNativeAndroid && _nativeChannel != null) {
+        _nativeChannel!.invokeMethod('setVolume', {'volume': widget.muted ? 0.0 : 1.0});
+      }
+    } else if (oldWidget.autoplay != widget.autoplay && _shouldUseNativeAndroid && _nativeChannel != null) {
+      // Autoplay state changed (e.g. page became active/inactive)
+      if (widget.autoplay) {
+        _nativeChannel!.invokeMethod('play');
+      } else {
+        _nativeChannel!.invokeMethod('pause');
+      }
     }
   }
 
@@ -372,6 +398,13 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
         return Container(color: Colors.black);
       }
 
+      // Determine optimal resize mode based on video orientation
+      final orientation = VideoOrientationService.detectFromRatio(
+        widget.videoAspectRatio ?? (16.0 / 9.0),
+      );
+      final optimalResizeMode = VideoOrientationService.getOptimalAndroidResizeMode(orientation);
+      
+      // Map BoxFit to resize mode, but override with orientation-aware mode for contain
       final resizeMode = widget.fit == BoxFit.cover
           ? 'cover'
           : widget.fit == BoxFit.fill
@@ -380,12 +413,11 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
                   ? 'fitWidth'
                   : widget.fit == BoxFit.fitHeight
                       ? 'fitHeight'
-                      : 'contain';
+                      : optimalResizeMode; // Use orientation-aware mode for contain
 
       debugPrint('[AcademiaPlaybackView] build AndroidView url=${url.length > 60 ? '${url.substring(0, 60)}...' : url}  autoplay=${widget.autoplay}');
 
       return AndroidView(
-        key: ValueKey('android_video_$url'),
         viewType: 'academia_android_video',
         creationParams: <String, dynamic>{
           'url': url,
@@ -462,7 +494,15 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
     }
 
     final v = controller.value;
-    final aspectRatio = v.aspectRatio == 0 || v.aspectRatio.isNaN ? (16 / 9) : v.aspectRatio;
+    
+    // Intelligent fallback: detect orientation from dimensions if aspectRatio is invalid
+    final aspectRatio = (v.aspectRatio == 0 || v.aspectRatio.isNaN)
+        ? VideoOrientationService.calculateAspectRatio(
+            v.size.width.toInt(),
+            v.size.height.toInt(),
+            fallbackRatio: 16.0 / 9.0,
+          )
+        : v.aspectRatio;
 
     Widget content;
     if (kIsWeb) {

@@ -142,26 +142,26 @@ class _InstructorRevenueTabState extends State<InstructorRevenueTab> {
           ),
           const SizedBox(height: 16),
 
-          // Payout button
-          SizedBox(
+          // Auto-payout info
+          Container(
             width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: available is num && available > 0 && !needsPayoutInfo
-                  ? () => _requestPayout(context)
-                  : null,
-              icon: const Icon(Icons.account_balance_wallet, size: 18),
-              label: Text(
-                available is num && available > 0
-                    ? 'Retirer ${_fmt(available)} $currency'
-                    : 'Aucun solde à retirer',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0D9488),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF6EE7B7)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.autorenew, color: Color(0xFF059669), size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Les versements sont automatiques vers votre compte LigdiCash.',
+                    style: TextStyle(fontSize: 12, color: const Color(0xFF065F46)),
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -189,7 +189,7 @@ class _InstructorRevenueTabState extends State<InstructorRevenueTab> {
           _infoRow(Icons.school, 'Un étudiant paie pour un TD ou un cours en ligne'),
           _infoRow(Icons.pie_chart, 'La plateforme calcule automatiquement votre part selon les règles de répartition'),
           _infoRow(Icons.account_balance_wallet, 'Votre part est créditée dans votre solde disponible'),
-          _infoRow(Icons.send, 'Vous demandez un retrait → l\'argent est envoyé sur votre mobile money'),
+          _infoRow(Icons.send, 'Votre part est automatiquement transférée vers votre compte LigdiCash'),
         ],
       ),
     );
@@ -278,26 +278,6 @@ class _InstructorRevenueTabState extends State<InstructorRevenueTab> {
     }
   }
 
-  Future<void> _requestPayout(BuildContext context) async {
-    try {
-      final client = Supabase.instance.client;
-      final resp = await client.rpc('app_instructor_request_payout', params: {'p_phone': _payoutPhone});
-      final data = resp as Map<String, dynamic>?;
-      if (!mounted) return;
-      if (data != null && data['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Retrait demandé : ${data['amount']} XOF vers $_payoutPhone')),
-        );
-        _loadData();
-      } else {
-        final err = data?['error']?.toString() ?? 'Erreur';
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
-          err == 'no_funds_available' ? 'Aucun solde à retirer.' : 'Erreur : $err')));
-      }
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur : $e')));
-    }
-  }
 }
 
 class _MiniStat extends StatelessWidget {

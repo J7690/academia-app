@@ -1,0 +1,3430 @@
+{
+  "public_functions": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "return_type": "jsonb",
+        "routine_name": "_tmp_ay_432210802"
+      },
+      {
+        "return_type": "text",
+        "routine_name": "admin_create_storage_policies_for_community_media"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "admin_execute_sql"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_accept_user_invitation"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_add_application_file"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_add_application_message_from_admin_to_student"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_add_application_message_from_admin_to_university"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_add_application_message_from_student"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_add_application_message_from_university"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_add_bobodo_feedback"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_add_short_training_message_from_admin_to_student"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_add_short_training_message_from_student"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_add_student_dossier_document"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_add_marketplace_listing_media"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_add_online_course_enrollment_message_to_student"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_auto_tag_questions_to_topics"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_backfill_article_scores"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_ban_user_from_challenges"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_ban_user_from_community"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_ban_user_from_online_course_live_session"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_cancel_user_invitation"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_check_support_conversation"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_clone_university_from_template"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_confirm_payment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_create_support_conversation"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_create_user_invitation"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_academic_event"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_challenge_participation_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_challenge_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_challenge_video_asset"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_commission_rule"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_community"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_community_post"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_hero_playlist_item"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_landing_announcement"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_landing_partner"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_landing_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_landing_why_card"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_official_announcement"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_revenue_split_rule"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_student_home_announcement"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_student_home_slot"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_student_home_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_university_event"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_university_media"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_university_news"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_university_site_banner"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_university_site_block"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_university_staff"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_delete_user_account"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_disable_marketplace_listing_media"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_finance_actor_history"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_finance_live_feed"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_finance_overview"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_finance_payout_feed"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_forward_application"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_get_ai_usage_stats"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_get_commercial_detail"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_get_hero_playlist"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_get_hero_playlist_item_config"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_get_landing_content"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_get_live_session_participant_livekit_identity"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_get_payment_detail"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_get_student_home_content"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_get_treasury_summary"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_get_university_site"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_grant_feature_access"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_handle_community_join_request"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_academic_events"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_actor_balances"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_ai_action_prices"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_all_courses"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_all_programs"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_bobodo_detected_needs"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_bobodo_messages"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_bobodo_sessions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_bobodo_unanswered_questions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_challenge_participation_videos"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_challenge_participations"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_challenge_reports"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_challenge_video_assets"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_challenge_videos"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_challenges"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_commercials_overview"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_commission_rules"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_communities"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_community_join_requests"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_community_members"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_community_moderation_events"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_community_posts"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_content_reports"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_course_library"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_credit_packs"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_ledger"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_marketplace_listing_media"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_marketplace_merchants"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_marketplace_orders"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_marketplace_payments"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_marketplace_products"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_milestone_claims"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_official_announcements"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_online_course_enrollment_messages"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_online_course_enrollments"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_online_course_live_session_participants"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_online_course_live_sessions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_online_courses"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_opportunities"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_opportunity_applications"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_opportunity_types"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_payment_receipts_with_context"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_payments_with_context"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_payout_queue"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_pending_marketplace_listings"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_pending_opportunities"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_programs_pricing"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_published_marketplace_listings"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_revenue_split_rules"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_short_training_registrations"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_short_trainings"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_short_trainings_pricing"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_student_home_slots"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_subscription_plans"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_subscriptions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_support_conversations"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_support_messages"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_td_programs_pricing"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_user_action_logs"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_user_invitations"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_users_overview"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_manage_ai_action_price"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_manage_credit_pack"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_manage_subscription_plan"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_mark_application_seen"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_moderate_review"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_pin_community_post"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_ai_get_usage_summary"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_create_ai_generation"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_create_subject"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_get_attempts_summary"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_import_questions_json"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_import_text_bulk"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_list_ai_generations"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_list_doc_chunks"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_list_entitlements"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_list_news_articles"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_list_news_sources"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_list_source_documents"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_news_stats"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_publish_ai_generation"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_set_ai_generation_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_set_source_document_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_update_source_document_text"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_upsert_doc_chunk"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_prep_upsert_source_document"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_purge_deleted_accounts"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_resolve_content_report"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_resolve_moderation_event"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_review_challenge_participation"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_review_challenge_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_review_marketplace_listing"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_review_opportunity"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_revoke_feature_access"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_send_support_message"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_send_support_message"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_set_commercial_commission_rate"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_set_merchant_verification"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_set_support_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_start_hero_render"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_suspend_user"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_tv_delete_overlay"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_tv_get_timeline"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_tv_get_timeline_json"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_tv_request_render"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_tv_upsert_overlay"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_tv_upsert_timeline_json"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_unsuspend_user"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_application_preferences"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_application_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_challenge_report_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_challenge_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_commercial_cap"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_community_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_course_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_marketplace_merchant_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_marketplace_product_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_milestone_claim_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_online_course_live_session_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_opportunity_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_program_fees"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_program_fees"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_program_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_referral_commission_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_td_program_price"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_university_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_update_user_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_academic_event"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_challenge"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_challenge_video_asset"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_commission_rule"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_community"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_community"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_course_domain"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_course_resource"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_course_resource"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_course_unit"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_hero_overlays"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_hero_playlist_item"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_hero_playlist_item_from_url"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_landing_announcement"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_landing_config"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_landing_config"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_landing_partner"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_landing_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_landing_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_landing_why_card"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_official_announcement"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_online_course"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_online_course"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_opportunity"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_opportunity_type"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_revenue_split_rule"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_short_training"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_short_training_session"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_student_home_announcement"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_student_home_slot"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_student_home_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_student_home_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_university_event"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_university_media"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_university_news"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_university_site_banner"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_university_site_block"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_university_site_config"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_upsert_university_staff"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_validate_split_totals"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_verify_payment"
+      },
+      {
+        "return_type": "uuid",
+        "routine_name": "app_append_bobodo_message"
+      },
+      {
+        "return_type": "uuid",
+        "routine_name": "app_auto_queue_payout"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_check_account_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_check_content_for_banned_words"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_ci_add_online_course_forum_message"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_ci_create_online_course_forum_thread"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_ci_ensure_instructor_profile"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_ci_list_my_online_course_live_sessions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_ci_list_my_online_courses"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_ci_list_online_course_forum_messages"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_ci_list_online_course_forum_threads"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_ci_start_online_course_live_session"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_ci_submit_online_course_live_session"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_ci_upsert_online_course"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_ci_upsert_online_course"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_ci_upsert_online_course_live_session"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_commercial_claim_milestone"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_commercial_get_dashboard"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_commercial_request_payout"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_community_get_signed_upload_url"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_confirm_ligdicash_payment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_confirm_short_training_payment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_create_application"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_create_application"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_create_application_payment"
+      },
+      {
+        "return_type": "uuid",
+        "routine_name": "app_create_bobodo_session"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_create_marketplace_order_simple"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_delete_application_file"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_delete_student_dossier_document"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_delete_university_event"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_delete_university_media"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_delete_university_news"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_delete_university_site_banner"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_delete_university_site_block"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_delete_university_staff"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_ensure_student_profile"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_follow_academic_event"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_generate_referral_commission_for_payment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_get_academic_events_summary"
+      },
+      {
+        "return_type": "text",
+        "routine_name": "app_get_bobodo_student_first_name"
+      },
+      {
+        "return_type": "text",
+        "routine_name": "app_get_current_role"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_get_notification_summary"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_get_official_announcements_summary"
+      },
+      {
+        "return_type": "uuid",
+        "routine_name": "app_get_or_create_bobodo_session"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_get_or_create_support_conversation"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_get_program_brokerage_fee"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_get_public_merchant_profile"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_get_public_user_profile"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_get_student_profile"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_get_support_unread_count"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_get_university_application_detail"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_handle_new_auth_user"
+      },
+      {
+        "return_type": "boolean",
+        "routine_name": "app_has_bobodo_assistant_message"
+      },
+      {
+        "return_type": "boolean",
+        "routine_name": "app_has_feature_access"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_instructor_get_my_balance"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_instructor_request_payout"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_is_student_dossier_complete"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_academic_events_for_student"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_admin_applications"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_application_files"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_application_messages_for_admin"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_application_messages_for_student"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_application_messages_for_university"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_bobodo_messages"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_course_exercises"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_course_library"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_home_offers"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_marketplace_categories"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_marketplace_home"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_marketplace_merchants"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_marketplace_products_by_merchant"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_my_followed_academic_events"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_my_short_trainings"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_official_announcements_for_current_user"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_opportunity_inquiry_messages"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_opportunity_types"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_partner_universities"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_programs_by_university"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_public_short_training_sessions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_short_training_messages_for_admin"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_short_training_messages_for_student"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_student_applications"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_student_courses"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_student_dossier_documents"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_student_home_slot_items"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_student_marketplace_orders"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_support_messages"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_university_applications"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_university_courses_for_management"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_university_programs_for_management"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_list_university_site_for_management"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_listing_get_reactions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_listing_toggle_reaction"
+      },
+      {
+        "return_type": "void",
+        "routine_name": "app_log_bobodo_detected_need"
+      },
+      {
+        "return_type": "void",
+        "routine_name": "app_log_bobodo_unanswered_question"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_mark_application_messages_read_for_admin"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_mark_application_messages_read_for_student"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_mark_application_messages_read_for_university"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_mark_domain_seen"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_mark_official_announcement_read"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_mark_support_read"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_marketplace_listing_toggle_bookmark"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_marketplace_process_payment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_marketplace_release_escrow"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_add_marketplace_listing_media"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_disable_marketplace_listing_media"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_get_dashboard"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_get_marketplace_order_detail"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_get_my_balance"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_list_inquiries"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_list_marketplace_listing_media"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_list_my_marketplace_listings"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_list_my_marketplace_orders"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_list_my_opportunities"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_list_my_reviews"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_list_orders"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_list_products"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_reply_inquiry"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_reply_review"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_request_payout"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_submit_marketplace_listing_for_review"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_submit_opportunity_for_review"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_update_marketplace_order_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_update_order_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_upsert_marketplace_listing"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_upsert_opportunity"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_upsert_product"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_upsert_profile"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_merchant_upsert_profile"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_admin_application_message"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_admin_challenge_participation"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_admin_community_join"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_admin_course_enrollment"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_admin_marketplace_order"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_admin_new_account"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_admin_new_application"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_admin_new_support_conversation"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_admin_opportunity_application"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_admin_payment_declared"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_admin_support_message"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_admin_td_message"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_admin_td_request"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_admin_training_registration"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_application_message"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_bobodo_message"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_challenge_created"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_commercial_commission"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_commercial_payment_confirmed"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_commercial_prospect_payment"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_commercial_referral"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_notify_community_mention"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_community_post"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_instructor_course_enrollment"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_instructor_forum_message"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_instructor_td_enrollment"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_instructor_td_message"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_official_announcement"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_online_course_created"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_online_course_lesson"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_online_course_live"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_opportunity_change"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_opportunity_comment"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_opportunity_to_students"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_prep_concours_change"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_short_training_created"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_short_training_session"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_student_home_content"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_student_payment_status"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_university_application_message"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_university_events"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_university_new_application"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_university_news"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_university_payment"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_on_payment_confirmed_generate_referral_commission"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_opportunity_add_comment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_opportunity_count_new"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_opportunity_delete_comment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_opportunity_get_my_reaction"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_opportunity_get_reactions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_opportunity_list_comments"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_opportunity_mark_viewed"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_opportunity_toggle_bookmark"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_opportunity_toggle_reaction"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_ai_check_rate_limit"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_ai_log_usage"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_create_attempt"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_adaptive_quiz"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_exam_blanc"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_my_entitlement"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_my_subject_stats"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_predictions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_psychotech_profile"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_psychotech_stats"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_quiz_questions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_rag_chunks"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_rag_chunks_by_name"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_student_progress"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_subject_stats"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_weakness_analysis"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_chapters"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_exam_blancs"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_my_attempts"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_published_questions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_published_questions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_question_choices"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_subjects"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_notify_relevant_article"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_save_psychotech_result"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_score_article_relevance"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_semantic_search"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_student_get_submission"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_student_join_live_session"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_student_list_assignments"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_student_list_live_sessions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_student_submit_assignment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_submit_exam_blanc"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_sync_student_progress"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_update_psychotech_profile"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_public_get_challenge_leaderboard"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_public_get_online_course_detail"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_public_hero_playlist"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_public_landing_content"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_public_list_online_courses"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_public_student_home_content"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_public_university_site"
+      },
+      {
+        "return_type": "void",
+        "routine_name": "app_queue_notification_event"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_register_device_token"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_register_online_course_live_session_participant"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_register_referral_for_current_user"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_register_short_training"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_register_short_training_full"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_resolve_revenue_split"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_search_bobodo_knowledge"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_search_bobodo_knowledge_vector"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_send_support_message"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_send_support_message"
+      },
+      {
+        "return_type": "void",
+        "routine_name": "app_storage_setup_marketplace_media_policies"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_add_challenge_comment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_add_challenge_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_add_community_post"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_add_community_post"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_add_listing_review"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_add_online_course_enrollment_message"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_add_online_course_forum_message"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_add_video_comment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_apply_for_opportunity"
+      },
+      {
+        "return_type": "integer",
+        "routine_name": "app_student_auto_weekly_bonus"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_block_user"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_cart_add_item"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_cart_clear"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_cart_remove_item"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_cart_update_quantity"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_challenge_video_feed"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_check_ai_access"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_check_ai_access"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_check_subscription"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_checkout_create_order_from_cart"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_claim_weekly_bonus"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_confirm_credits"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_create_community_poll"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_create_community_story"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_create_free_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_create_group"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_create_marketplace_listing_inquiry"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_create_online_course_forum_thread"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_create_opportunity_inquiry"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_create_profile_payment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_create_short_training_payment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_declare_payment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_delete_own_community_post"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_delete_own_story"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_delete_video_comment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_edit_community_post"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_enroll_online_course"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_favorite_challenge_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_get_actuality_preferences"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_get_cart"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_get_challenge_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_get_credit_balance"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_get_free_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_get_listing_detail_v2"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_get_marketplace_listing_detail"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_get_marketplace_order_detail"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_get_my_challenge_stats"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_get_my_posts_read_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_get_opportunity_detail"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_get_or_create_dm_conversation"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_get_post_read_info"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_get_video_analytics"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_get_video_export_watermarked_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_get_video_reactions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_join_challenge"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_join_community"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_leave_community"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_like_challenge_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_ai_action_prices"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_blocked_users"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_bookmarked_marketplace_listings"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_bookmarked_opportunities"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_challenge_comments"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_challenge_video_render_jobs"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_challenges"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_communities"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_community_members"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_community_polls"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_community_posts"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_community_stories"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_concours_actualities"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_credit_packs"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_credit_transactions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_direct_messages"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_dm_conversations"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_free_video_render_jobs"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_listing_reviews"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_marketplace_listings"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_marketplace_listings"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_my_challenge_participations"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_my_challenge_videos"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_my_chats"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_my_communities"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_my_communities_activity"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_my_marketplace_orders"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_my_online_certificates"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_my_online_course_live_sessions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_my_online_courses"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_my_opportunity_applications"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_my_opportunity_inquiries"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_online_course_enrollment_messages"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_online_course_forum_messages"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_online_course_forum_threads"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_online_course_live_sessions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_opportunities"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_recently_deleted_videos"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_story_viewers"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_user_videos"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_list_video_comments"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_log_heatmap_event"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_log_video_share"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_log_video_view"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_mark_challenge_completed"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_mark_community_read"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_mark_dm_read"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_mark_story_viewed"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_mute_user"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_pin_community_post"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_purchase_credits"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_refund_credits"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_reply_opportunity_inquiry"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_report_challenge_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_report_community"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_report_community_post"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_report_content"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_report_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_request_account_deletion"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_request_join_community"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_request_video_export_watermarked"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_reserve_credits"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_reserve_credits"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_restore_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_send_direct_message"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_set_challenge_main_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_set_free_video_main_renditions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_set_video_allow_download"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_soft_delete_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_start_duo_challenge_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_start_duo_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_submit_challenge"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_toggle_actuality_notifications"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_toggle_community_post_reaction"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_toggle_video_reaction"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_unblock_user"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_unfavorite_challenge_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_unified_video_feed"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_unlike_challenge_video"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_unmute_user"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_update_challenge_video_overlays"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_update_free_video_overlays"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_update_lesson_progress"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_update_my_profile"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_video_favorite"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_video_like"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_video_unfavorite"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_video_unlike"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_vote_community_poll"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_assign_teacher"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_assign_teacher_to_group"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_cancel_session_occurrence"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_get_analytics"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_get_dashboard"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_grant_xp"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_import_questions_json"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_import_text_bulk"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_list_badges"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_list_enrollments_with_context"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_list_local_groups"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_list_session_occurrences"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_list_source_documents"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_list_student_requests"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_mark_request_converted"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_set_source_document_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_upsert_badge"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_upsert_discipline_color"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_upsert_session_occurrence"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_auto_assign_teacher"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_auto_match_groups"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_get_program_detail"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_list_messages_for_enrollment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_list_public_programs"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_semantic_search"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_send_message"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_create_enrollment_and_payment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_create_group"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_create_request"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_earn_xp"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_get_dashboard"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_get_exercise_detail"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_get_generated_assignment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_get_home"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_get_leaderboard"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_get_my_enrollments"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_get_profile"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_get_quiz_questions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_get_stats"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_join_group"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_list_catalog"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_list_exercises"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_list_fields"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_list_filtered_questions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_list_generated_assignments"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_list_local_groups"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_list_my_enrollments"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_list_my_requests"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_list_my_session_occurrences"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_list_resources"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_list_resources_for_enrollment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_list_subjects"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_rate_session"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_submit_exercise"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_update_resource_progress"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_student_upsert_profile"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_suggest_groups_for_student"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_teacher_add_resource"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_teacher_complete_session"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_teacher_create_exercise"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_teacher_create_physical_session"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_teacher_delete_resource"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_teacher_get_dashboard"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_teacher_grade_exercise"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_teacher_list_assignments"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_teacher_list_exercise_submissions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_teacher_list_exercises"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_teacher_list_local_groups"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_teacher_list_resources"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_teacher_list_resources_for_enrollment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_teacher_list_students"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_teacher_list_upcoming_sessions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_teacher_update_attendance"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_teacher_upsert_profile"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_track_user_activity"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_trigger_update_listing_rating"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_unfollow_academic_event"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_university_get_balance"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_university_list_payments"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_university_mark_application_seen"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_university_request_payout"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_university_update_application_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_unregister_device_token"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_update_payment_amount_from_brokerage"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_update_student_profile"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_update_student_profile"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_update_student_profile"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_upload_community_media"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_upsert_university_course"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_upsert_university_event"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_upsert_university_media"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_upsert_university_news"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_upsert_university_program"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_upsert_university_site_banner"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_upsert_university_site_block"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_upsert_university_site_config"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_upsert_university_staff"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_videoasset_claim_next_job"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_videoasset_complete_job"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_videoasset_create_upload_intent"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_videoasset_enqueue_processing"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_videoasset_get_playback_for_direct_url"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_videoasset_get_playback_manifest"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_videoasset_get_playback_manifest"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_videoasset_register_uploaded_source"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "challenge_game_end_live"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "challenge_game_list_live"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "challenge_game_start_live"
+      },
+      {
+        "return_type": "boolean",
+        "routine_name": "column_exists"
+      },
+      {
+        "return_type": "text",
+        "routine_name": "create_table_safe"
+      },
+      {
+        "return_type": "bigint",
+        "routine_name": "delete_data_safe"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "describe_table_detailed"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "execute_ddl"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "execute_sql"
+      },
+      {
+        "return_type": "bigint",
+        "routine_name": "insert_data_safe"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "list_tables_detailed"
+      },
+      {
+        "return_type": "text",
+        "routine_name": "livekit_get_user_display_name"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "livekit_lookup_session"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "send_sms_hook"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "serve_bobodo_chat"
+      },
+      {
+        "return_type": "text",
+        "routine_name": "setup_community_media_policies"
+      },
+      {
+        "return_type": "boolean",
+        "routine_name": "table_exists"
+      },
+      {
+        "return_type": "bigint",
+        "routine_name": "update_data_safe"
+      }
+    ]
+  },
+  "app_functions": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "return_type": "record",
+        "routine_name": "app_admin_bobodo_cache_stats"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_get_navigation_stats"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_list_audit_log"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_log_action"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_resolve_content_report"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_suspend_user"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_tv_delete_overlay"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_tv_get_timeline"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_tv_request_render"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_admin_tv_upsert_overlay"
+      },
+      {
+        "return_type": "void",
+        "routine_name": "app_bobodo_cache_hit"
+      },
+      {
+        "return_type": "uuid",
+        "routine_name": "app_get_or_create_bobodo_session"
+      },
+      {
+        "return_type": "uuid",
+        "routine_name": "app_get_or_create_bobodo_session_admin"
+      },
+      {
+        "return_type": "void",
+        "routine_name": "app_insert_bobodo_answer_cache"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_td_group_member_joined"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_td_group_status_change"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "app_notify_td_group_teacher_assigned"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_admin_get_stats"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_admin_list_ai_conversations"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_admin_list_questions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_admin_toggle_question"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_admin_update_live_session_status"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_admin_upsert_badge"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_create_ai_conversation"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_create_exam_paper"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_create_flashcard"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_create_flashcard_deck"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_create_question"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_create_question"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_create_question_bank"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_create_quiz_template"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_adaptive_quiz"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_ai_config"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_leaderboard"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_student_progress"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_subject_stats"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_get_weakness_analysis"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_ai_conversations"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_ai_messages"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_exam_papers"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_flashcard_decks"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_flashcards"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_question_banks"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_questions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_list_quiz_templates"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_save_ai_message"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_save_flashcard_review"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_save_quiz_attempt"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_save_quiz_attempt"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_teacher_end_live_session"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_teacher_grade_submission"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_teacher_list_assignments"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_teacher_list_live_sessions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_teacher_list_submissions"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_teacher_start_live_session"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_teacher_upsert_assignment"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_teacher_upsert_live_session"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_prep_update_ai_config"
+      },
+      {
+        "return_type": "void",
+        "routine_name": "app_run_send_push_notifications"
+      },
+      {
+        "return_type": "record",
+        "routine_name": "app_search_bobodo_answer_cache"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_delete_dm_message"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_student_delete_forum_message"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_import_questions_json"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_td_admin_import_text_bulk"
+      },
+      {
+        "return_type": "text",
+        "routine_name": "app_td_get_current_role"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "app_track_navigation_event"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "challenge_game_end_live"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "challenge_game_list_live"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "challenge_game_start_live"
+      },
+      {
+        "return_type": "record",
+        "routine_name": "fn_check_commission_cap"
+      },
+      {
+        "return_type": "void",
+        "routine_name": "fn_enqueue_notification_event"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "fn_hero_playlist_autofill_base_video_url_from_rendition"
+      },
+      {
+        "return_type": "record",
+        "routine_name": "fn_resolve_commission_rate"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "fn_update_commercial_tier"
+      },
+      {
+        "return_type": "record",
+        "routine_name": "generate_tournament_bracket"
+      },
+      {
+        "return_type": "USER-DEFINED",
+        "routine_name": "hero_get_video"
+      },
+      {
+        "return_type": "record",
+        "routine_name": "hero_list_videos"
+      },
+      {
+        "return_type": "boolean",
+        "routine_name": "is_admin"
+      },
+      {
+        "return_type": "text",
+        "routine_name": "landing_media_public_url"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "league_create"
+      },
+      {
+        "return_type": "record",
+        "routine_name": "league_get_standings"
+      },
+      {
+        "return_type": "record",
+        "routine_name": "league_join"
+      },
+      {
+        "return_type": "record",
+        "routine_name": "league_list_available"
+      },
+      {
+        "return_type": "record",
+        "routine_name": "league_report_match_result"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "on_landing_media_object_insert"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "payment_receipts_block_changes"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "tg_block_legacy_video_writes"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "tg_hero_overlays_tv_set_updated_at"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "tg_hero_renders_tv_set_updated_at"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "tg_video_assets_set_updated_at"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "tg_video_processing_jobs_set_updated_at"
+      },
+      {
+        "return_type": "record",
+        "routine_name": "tournament_create"
+      },
+      {
+        "return_type": "record",
+        "routine_name": "tournament_get_details"
+      },
+      {
+        "return_type": "record",
+        "routine_name": "tournament_get_standings"
+      },
+      {
+        "return_type": "record",
+        "routine_name": "tournament_list_available"
+      },
+      {
+        "return_type": "record",
+        "routine_name": "tournament_register"
+      },
+      {
+        "return_type": "jsonb",
+        "routine_name": "tournament_report_match_result"
+      },
+      {
+        "return_type": "record",
+        "routine_name": "tournament_start"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "trg_auto_queue_payout"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "trg_instant_push_notification"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "trg_notify_inquiry_message"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "trg_notify_opportunity_review"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "update_league_player_count"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "update_student_weaknesses_from_attempt"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "update_tournament_participant_count"
+      },
+      {
+        "return_type": "trigger",
+        "routine_name": "update_updated_at_column"
+      }
+    ]
+  },
+  "public_parameters": {
+    "ok": false,
+    "error": "column p.routine_name does not exist",
+    "sqlstate": "42703"
+  },
+  "app_parameters": {
+    "ok": false,
+    "error": "column p.routine_name does not exist",
+    "sqlstate": "42703"
+  },
+  "public_grants": {
+    "ok": true,
+    "mode": "exec",
+    "affected_rows": 3712
+  },
+  "app_grants": {
+    "ok": true,
+    "mode": "exec",
+    "affected_rows": 230
+  }
+}

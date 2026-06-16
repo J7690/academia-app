@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../theme/td_theme.dart';
+import 'td_scan_subject_screen.dart';
 
 /// Onglet Quiz TD — Questions universitaires depuis td_questions (séparé du concours).
 class TdQuizTab extends StatefulWidget {
@@ -123,6 +124,30 @@ class _TdQuizTabState extends State<TdQuizTab> {
             ]),
           ),
           const SizedBox(height: 20),
+
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const TdScanSubjectScreen(),
+                  ),
+                );
+              },
+              icon: Icon(Icons.document_scanner, color: TdTheme.studentTdGradient[1], size: 18),
+              label: Text(
+                'Scanner un exercice (correction IA)',
+                style: TextStyle(color: TdTheme.studentTdGradient[1], fontWeight: FontWeight.w700),
+              ),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                side: BorderSide(color: TdTheme.studentTdGradient[1].withAlpha(120)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
 
           const Text('Par matière', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),

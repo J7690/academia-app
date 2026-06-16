@@ -1,0 +1,13 @@
+=== CHECK CONSTRAINTS admin_user_action_logs ===
+{
+  "ok": true,
+  "mode": "exec",
+  "affected_rows": 1
+}
+
+=== ENUM TYPES ===
+{
+  "ok": true,
+  "mode": "exec",
+  "affected_rows": 1
+}

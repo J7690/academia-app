@@ -1,0 +1,27 @@
+{
+  "prep_assignment_submissions": {
+    "exists": true,
+    "schema": "app",
+    "count": -1
+  },
+  "prep_assignments": {
+    "exists": true,
+    "schema": "app",
+    "count": -1
+  },
+  "prep_live_participants": {
+    "exists": true,
+    "schema": "app",
+    "count": -1
+  },
+  "prep_live_sessions": {
+    "exists": true,
+    "schema": "app",
+    "count": -1
+  },
+  "students": {
+    "exists": true,
+    "schema": "app",
+    "count": 57
+  }
+}

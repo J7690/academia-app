@@ -1,0 +1,65 @@
+[
+  {
+    "label": "ARGS app_track_navigation_event",
+    "ok": true,
+    "mode": "exec",
+    "rows": null,
+    "affected": 1
+  },
+  {
+    "label": "PARAMETERS app_track_navigation_event",
+    "ok": true,
+    "mode": "exec",
+    "rows": null,
+    "affected": 5
+  },
+  {
+    "label": "SOURCE app_track_navigation_event (pg_proc)",
+    "ok": true,
+    "mode": "exec",
+    "rows": null,
+    "affected": 1
+  },
+  {
+    "label": "TABLE WITH screen_name",
+    "ok": true,
+    "mode": "exec",
+    "rows": null,
+    "affected": 1
+  },
+  {
+    "label": "APP TABLES event/screen/activity names",
+    "ok": true,
+    "mode": "exec",
+    "rows": null,
+    "affected": 9
+  },
+  {
+    "label": "COLUMNS of screen_name table",
+    "ok": true,
+    "mode": "exec",
+    "rows": null,
+    "affected": 8
+  },
+  {
+    "label": "COUNT screen_name table",
+    "ok": false,
+    "mode": null,
+    "rows": null,
+    "affected": null
+  },
+  {
+    "label": "PARAMETERS public.app_track_user_activity",
+    "ok": true,
+    "mode": "exec",
+    "rows": null,
+    "affected": 0
+  },
+  {
+    "label": "SOURCE public.app_track_user_activity",
+    "ok": true,
+    "mode": "exec",
+    "rows": null,
+    "affected": 1
+  }
+]

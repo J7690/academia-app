@@ -93,25 +93,31 @@ class StudentChallengesProvider extends ChangeNotifier {
     required String videoAssetId,
   }) async {
     final id = videoAssetId.trim();
+    debugPrint('[DL-PROVIDER] getStatus called, assetId="$id"');
     if (id.isEmpty) {
+      debugPrint('[DL-PROVIDER] getStatus ABORT: empty assetId');
       _setError('Identifiant vidéo manquant.');
       return null;
     }
 
     _setError(null);
     try {
+      debugPrint('[DL-PROVIDER] getStatus RPC call...');
       final dynamic response = await _client.rpc(
         'app_student_get_video_export_watermarked_status',
         params: {
           'p_video_asset_id': id,
         },
       );
+      debugPrint('[DL-PROVIDER] getStatus RPC raw response type=${response.runtimeType} value=$response');
 
       if (response is! Map<String, dynamic>) {
+        debugPrint('[DL-PROVIDER] getStatus FAIL: response is not Map');
         _setError('Réponse invalide du serveur.');
         return null;
       }
       if (response['success'] != true) {
+        debugPrint('[DL-PROVIDER] getStatus FAIL: success!=true, error=${response['error']}');
         _setError(
           response['error']?.toString() ??
               'Erreur lors de la vérification de l\'export.',
@@ -119,8 +125,10 @@ class StudentChallengesProvider extends ChangeNotifier {
         return null;
       }
 
+      debugPrint('[DL-PROVIDER] getStatus OK: status=${response['status']} url=${(response['url']?.toString() ?? '').length > 20 ? response['url'].toString().substring(0, 20) + '...' : response['url']}');
       return Map<String, dynamic>.from(response);
     } catch (e) {
+      debugPrint('[DL-PROVIDER] getStatus EXCEPTION: $e');
       _setError(e.toString());
       return null;
     }
@@ -187,7 +195,9 @@ class StudentChallengesProvider extends ChangeNotifier {
     required String videoAssetId,
   }) async {
     final id = videoAssetId.trim();
+    debugPrint('[DL-PROVIDER] requestExport called, assetId="$id"');
     if (id.isEmpty) {
+      debugPrint('[DL-PROVIDER] requestExport ABORT: empty assetId');
       _setError('Identifiant vidéo manquant.');
       return null;
     }
@@ -195,18 +205,22 @@ class StudentChallengesProvider extends ChangeNotifier {
     _setSaving(true);
     _setError(null);
     try {
+      debugPrint('[DL-PROVIDER] requestExport RPC call...');
       final dynamic response = await _client.rpc(
         'app_student_request_video_export_watermarked',
         params: {
           'p_video_asset_id': id,
         },
       );
+      debugPrint('[DL-PROVIDER] requestExport RPC raw response type=${response.runtimeType} value=$response');
 
       if (response is! Map<String, dynamic>) {
+        debugPrint('[DL-PROVIDER] requestExport FAIL: response is not Map');
         _setError('Réponse invalide du serveur.');
         return null;
       }
       if (response['success'] != true) {
+        debugPrint('[DL-PROVIDER] requestExport FAIL: success!=true, error=${response['error']}');
         _setError(
           response['error']?.toString() ??
               'Erreur lors de la préparation du téléchargement.',
@@ -214,8 +228,10 @@ class StudentChallengesProvider extends ChangeNotifier {
         return null;
       }
 
+      debugPrint('[DL-PROVIDER] requestExport OK: status=${response['status']} url=${(response['url']?.toString() ?? '').length > 20 ? response['url'].toString().substring(0, 20) + '...' : response['url']}');
       return Map<String, dynamic>.from(response);
     } catch (e) {
+      debugPrint('[DL-PROVIDER] requestExport EXCEPTION: $e');
       _setError(e.toString());
       return null;
     } finally {

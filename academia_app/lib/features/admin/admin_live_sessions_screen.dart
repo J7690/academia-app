@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../providers/admin_live_sessions_provider.dart';
-import '../live/livekit_room_screen.dart';
+import '../../models/academia_session.dart';
+import '../live/academia_classroom_screen.dart';
 
 class AdminLiveSessionsScreen extends StatefulWidget {
   const AdminLiveSessionsScreen({super.key});
@@ -257,6 +260,7 @@ class _AdminLiveSessionsScreenState extends State<AdminLiveSessionsScreen> {
                                               sessionId,
                                               status,
                                               providerName,
+                                              title,
                                             ),
                                     ),
                                   );
@@ -276,6 +280,7 @@ class _AdminLiveSessionsScreenState extends State<AdminLiveSessionsScreen> {
     String sessionId,
     String status,
     String providerName,
+    String title,
   ) {
     final actions = <Widget>[];
 
@@ -340,10 +345,23 @@ class _AdminLiveSessionsScreenState extends State<AdminLiveSessionsScreen> {
       actions.addAll([
         TextButton(
           onPressed: () {
+            final desc = '';
+            final academiaSession = AcademiaSession(
+              id: sessionId,
+              type: SessionType.course,
+              status: SessionStatus.running,
+              provider: SessionProvider.livekit,
+              title: title,
+              description: desc.isNotEmpty ? desc : null,
+              hostId: Supabase.instance.client.auth.currentUser?.id ?? '',
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            );
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => LivekitRoomScreen(
-                  sessionId: sessionId,
+                builder: (_) => AcademiaClassroomScreen(
+                  session: academiaSession,
+                  isHost: true,
                 ),
               ),
             );

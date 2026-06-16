@@ -4,6 +4,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'alibaba_marketplace_tokens.dart';
 import 'marketplace_media_carousel.dart';
 import 'marketplace_seller_badge.dart';
+import '../report_content_sheet.dart';
 
 /// Card produit style Amazon — carousel photos, rating, prix, MOQ, badge vendeur.
 class MarketplaceProductCard extends StatelessWidget {
@@ -124,6 +125,35 @@ class MarketplaceProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                // Report button
+                Positioned(
+                  top: onBookmark != null ? 38 : 6,
+                  right: 6,
+                  child: GestureDetector(
+                    onTap: () {
+                      final listingId = listing['id']?.toString();
+                      final merchantId = listing['merchant_id']?.toString();
+                      if (listingId != null) {
+                        ReportContentSheet.show(
+                          context,
+                          contentType: 'listing',
+                          contentId: listingId,
+                          targetUserId: merchantId,
+                          contentPreview: listing['title']?.toString(),
+                        );
+                      }
+                    },
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.flag_outlined, size: 14, color: Color(0xFF9CA3AF)),
+                    ),
+                  ),
+                ),
                 // Ready to ship badge
                 if (isReadyToShip)
                   Positioned(

@@ -1,214 +1,183 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:provider/provider.dart';
 
+import '../../../providers/prep_quiz_provider.dart';
 import '../../../theme/prep_theme.dart';
 
-/// Onglet Exercices — Exercices envoyés par l'enseignant concours, soumission, corrections.
-class PrepExercisesTab extends StatefulWidget {
+/// Onglet Exercices — Exercices isolés par matière (QCM cliquables).
+/// Chaque carte représente une matière ; un tap lance un quiz rapide
+/// de 10–15 questions QCM via PrepQuizProvider.
+class PrepExercisesTab extends StatelessWidget {
   const PrepExercisesTab({super.key});
 
-  @override
-  State<PrepExercisesTab> createState() => _PrepExercisesTabState();
-}
-
-class _PrepExercisesTabState extends State<PrepExercisesTab> {
-  bool _loading = true;
-  List<Map<String, dynamic>> _assignments = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    setState(() => _loading = true);
-    try {
-      final res = await Supabase.instance.client.rpc('app_prep_student_list_assignments');
-      if (res is List) {
-        _assignments = res.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
-      }
-    } catch (e) {
-      debugPrint('[PrepExercisesTab] load error: $e');
-    }
-    if (mounted) setState(() => _loading = false);
-  }
+  static const _subjects = <_SubjectDef>[
+    _SubjectDef('Culture Générale', Icons.public, Color(0xFF6366F1), 15),
+    _SubjectDef('Actualités du Burkina Faso', Icons.newspaper, Color(0xFF0891B2), 10),
+    _SubjectDef('Français', Icons.menu_book, Color(0xFFDB2777), 10),
+    _SubjectDef('Mathématiques', Icons.calculate, Color(0xFF059669), 10),
+    _SubjectDef('Histoire-Géographie', Icons.map, Color(0xFFEA580C), 10),
+    _SubjectDef('Tests Psychotechniques', Icons.psychology, Color(0xFF7C3AED), 10),
+    _SubjectDef('Informatique', Icons.computer, Color(0xFF0E7490), 10),
+    _SubjectDef('Droit Constitutionnel', Icons.gavel, Color(0xFF6D28D9), 10),
+    _SubjectDef('Droit Administratif', Icons.account_balance, Color(0xFF1D4ED8), 10),
+    _SubjectDef('Fiscalité', Icons.receipt_long, Color(0xFFB45309), 10),
+    _SubjectDef('Économie Générale', Icons.trending_up, Color(0xFFF59E0B), 10),
+    _SubjectDef('Pédagogie', Icons.school, Color(0xFFEC4899), 10),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: PrepTheme.success));
-    }
-
-    return RefreshIndicator(
-      color: PrepTheme.success,
-      onRefresh: _load,
-      child: _assignments.isEmpty
-          ? ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      children: [
+        // Header
+        FadeInDown(
+          duration: const Duration(milliseconds: 400),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: PrepTheme.gradientBox(PrepTheme.quizGradient, radius: 16),
+            child: Row(
               children: [
-                const SizedBox(height: 80),
-                Center(
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.bolt, color: Colors.white, size: 28),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.assignment_outlined, size: 48, color: PrepTheme.textTertiary),
-                      const SizedBox(height: 12),
-                      const Text('Aucun exercice disponible',
-                          style: TextStyle(color: PrepTheme.textTertiary, fontSize: 14)),
-                      const SizedBox(height: 6),
-                      const Text('Les enseignants publieront bientôt des exercices.',
-                          style: TextStyle(color: PrepTheme.textTertiary, fontSize: 12)),
+                      const Text(
+                        'Exercices par matière',
+                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'QCM rapides · 10–15 questions · Correction immédiate',
+                        style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
+                      ),
                     ],
                   ),
                 ),
               ],
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-              itemCount: _assignments.length,
-              itemBuilder: (context, index) {
-                final a = _assignments[index];
-                return FadeInUp(
-                  delay: Duration(milliseconds: 40 * index),
-                  duration: const Duration(milliseconds: 350),
-                  child: _AssignmentCard(
-                    assignment: a,
-                    onTap: () => _showSubmitDialog(a),
-                  ),
-                );
-              },
             ),
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // Subject grid
+        FadeInUp(
+          delay: const Duration(milliseconds: 100),
+          duration: const Duration(milliseconds: 400),
+          child: const Text(
+            'Choisis une matière',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: PrepTheme.textPrimary),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.5,
+          ),
+          itemCount: _subjects.length,
+          itemBuilder: (context, index) {
+            final s = _subjects[index];
+            return FadeInUp(
+              delay: Duration(milliseconds: 50 * index),
+              duration: const Duration(milliseconds: 350),
+              child: _SubjectCard(def: s),
+            );
+          },
+        ),
+        const SizedBox(height: 24),
+
+        // Concours-specific exercises
+        FadeInUp(
+          delay: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 400),
+          child: const Text(
+            'Par concours',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: PrepTheme.textPrimary),
+          ),
+        ),
+        const SizedBox(height: 12),
+        FadeInUp(
+          delay: const Duration(milliseconds: 350),
+          duration: const Duration(milliseconds: 400),
+          child: const _ConcoursExerciseGrid(),
+        ),
+        const SizedBox(height: 24),
+      ],
     );
   }
+}
 
-  void _showSubmitDialog(Map<String, dynamic> assignment) {
-    final title = (assignment['title'] ?? '').toString();
-    final desc = (assignment['description'] ?? '').toString();
-    final maxScore = (assignment['max_score'] as int?) ?? 20;
-    final mySubmission = assignment['my_submission'];
-    final hasSubmitted = mySubmission != null;
-    final teacherScore = mySubmission is Map ? mySubmission['teacher_score'] : null;
-    final status = mySubmission is Map ? mySubmission['status']?.toString() : null;
+class _SubjectDef {
+  final String name;
+  final IconData icon;
+  final Color color;
+  final int defaultCount;
 
-    final answerCtrl = TextEditingController();
+  const _SubjectDef(this.name, this.icon, this.color, this.defaultCount);
+}
 
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          left: 20, right: 20, top: 20,
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-        ),
+class _SubjectCard extends StatelessWidget {
+  final _SubjectDef def;
+
+  const _SubjectCard({required this.def});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        final provider = context.read<PrepQuizProvider>();
+        provider.startQuizFromServer(subject: def.name, count: def.defaultCount);
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: PrepTheme.cardBox(borderColor: def.color.withOpacity(0.2)),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Center(
-              child: Container(width: 40, height: 4,
-                  decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: def.color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(def.icon, color: def.color, size: 20),
             ),
-            const SizedBox(height: 16),
-            Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-            if (desc.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(desc, style: const TextStyle(fontSize: 13, color: PrepTheme.textSecondary)),
-            ],
-            const SizedBox(height: 16),
-
-            if (hasSubmitted && status == 'graded') ...[
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: PrepTheme.successSurface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: PrepTheme.success.withAlpha(60)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  def.name,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: def.color),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check_circle, color: PrepTheme.success, size: 24),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Corrigé', style: TextStyle(fontWeight: FontWeight.w600, color: PrepTheme.success)),
-                          Text('Note : $teacherScore / $maxScore',
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-                        ],
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 2),
+                Text(
+                  '${def.defaultCount} QCM',
+                  style: const TextStyle(fontSize: 10, color: PrepTheme.textTertiary),
                 ),
-              ),
-            ] else if (hasSubmitted) ...[
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: PrepTheme.primarySurface,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.hourglass_top, color: PrepTheme.primary, size: 20),
-                    SizedBox(width: 12),
-                    Text('Soumis — En attente de correction',
-                        style: TextStyle(fontSize: 13, color: PrepTheme.primary)),
-                  ],
-                ),
-              ),
-            ] else ...[
-              TextField(
-                controller: answerCtrl,
-                maxLines: 6,
-                decoration: const InputDecoration(
-                  labelText: 'Votre réponse',
-                  hintText: 'Rédigez votre réponse ici...',
-                  border: OutlineInputBorder(),
-                  alignLabelWithHint: true,
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    if (answerCtrl.text.trim().isEmpty) return;
-                    Navigator.of(ctx).pop();
-                    try {
-                      await Supabase.instance.client.rpc('app_prep_student_submit_assignment', params: {
-                        'p_assignment_id': assignment['id'],
-                        'p_answer_content': {'text': answerCtrl.text.trim()},
-                      });
-                      _load();
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Réponse soumise ✓')),
-                        );
-                      }
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Erreur : $e')),
-                        );
-                      }
-                    }
-                  },
-                  icon: const Icon(Icons.send, size: 18),
-                  label: const Text('Soumettre'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: PrepTheme.success,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ],
         ),
       ),
@@ -216,82 +185,48 @@ class _PrepExercisesTabState extends State<PrepExercisesTab> {
   }
 }
 
-class _AssignmentCard extends StatelessWidget {
-  final Map<String, dynamic> assignment;
-  final VoidCallback onTap;
-
-  const _AssignmentCard({required this.assignment, required this.onTap});
+class _ConcoursExerciseGrid extends StatelessWidget {
+  const _ConcoursExerciseGrid();
 
   @override
   Widget build(BuildContext context) {
-    final title = (assignment['title'] ?? '').toString();
-    final concours = assignment['concours_type']?.toString();
-    final subject = assignment['subject_name']?.toString();
-    final type = (assignment['assignment_type'] ?? 'qcm').toString();
-    final mySubmission = assignment['my_submission'];
-    final hasSubmitted = mySubmission != null;
-    final status = mySubmission is Map ? mySubmission['status']?.toString() : null;
-    final deadline = assignment['deadline']?.toString();
+    final concours = [
+      ('ENAREF', 'Régies financières', Icons.account_balance, const Color(0xFF7C3AED)),
+      ('ADMIN_CIVIL', 'Administration', Icons.gavel, const Color(0xFF0891B2)),
+      ('DOUANE', 'Douane', Icons.local_shipping, const Color(0xFFEA580C)),
+      ('GREFFIERS', 'Justice', Icons.balance, const Color(0xFF059669)),
+      ('PARAMILITAIRE', 'Paramilitaire', Icons.security, const Color(0xFF6366F1)),
+      ('EDUCATION', 'Éducation', Icons.school, const Color(0xFFDB2777)),
+    ];
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
-        decoration: PrepTheme.cardBox(
-          borderColor: status == 'graded'
-              ? PrepTheme.success.withAlpha(60)
-              : hasSubmitted
-                  ? PrepTheme.primary.withAlpha(60)
-                  : null,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 42, height: 42,
-              decoration: BoxDecoration(
-                color: (status == 'graded' ? PrepTheme.success : PrepTheme.primary).withAlpha(25),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                type == 'qcm' ? Icons.quiz
-                    : type == 'dissertation' ? Icons.edit_note
-                    : Icons.cases_outlined,
-                color: status == 'graded' ? PrepTheme.success : PrepTheme.primary,
-                size: 22,
-              ),
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: concours.map((c) {
+        final (name, label, icon, color) = c;
+        return GestureDetector(
+          onTap: () {
+            final provider = context.read<PrepQuizProvider>();
+            provider.startQuizFromServer(concoursType: name, count: 15);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(PrepTheme.radiusFull),
+              border: Border.all(color: color.withOpacity(0.2)),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 4),
-                  Row(children: [
-                    if (concours != null) ...[PrepTheme.chip(concours, PrepTheme.primary), const SizedBox(width: 6)],
-                    if (subject != null) PrepTheme.chip(subject, PrepTheme.success),
-                  ]),
-                  if (deadline != null) ...[
-                    const SizedBox(height: 4),
-                    Text('Deadline : ${deadline.substring(0, 10)}',
-                        style: const TextStyle(fontSize: 10, color: PrepTheme.textTertiary)),
-                  ],
-                ],
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 16, color: color),
+                const SizedBox(width: 6),
+                Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+              ],
             ),
-            Icon(
-              status == 'graded' ? Icons.check_circle
-                  : hasSubmitted ? Icons.hourglass_top
-                  : Icons.arrow_forward_ios,
-              color: status == 'graded' ? PrepTheme.success
-                  : hasSubmitted ? PrepTheme.primary
-                  : PrepTheme.textTertiary,
-              size: 18,
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

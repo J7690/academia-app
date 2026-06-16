@@ -1,0 +1,383 @@
+=== PHASE 3: Existence de app_student_request_account_deletion ===
+{
+  "ok": true,
+  "mode": "select",
+  "rows": []
+}
+
+=== PHASE 4: RPCs équivalents ===
+{
+  "ok": true,
+  "mode": "select",
+  "rows": []
+}
+
+=== PHASE 6: Tables avec user_id ===
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "data_type": "uuid",
+      "table_name": "admin_users",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "challenge_comments",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "challenge_favorites",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "challenge_game_live_sessions",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "challenge_likes",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "challenge_participations",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "challenge_user_bans",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "commercial_profiles",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "community_join_requests",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "community_memberships",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "community_poll_votes",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "community_post_reactions",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "community_read_states",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "direct_message_read_states",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "free_videos",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "league_participations",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "marketplace_carts",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "marketplace_listing_bookmarks",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "merchant_profiles",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "notification_events",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "online_course_live_session_participants",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "opportunity_bookmarks",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "opportunity_comments",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "opportunity_reactions",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "opportunity_views",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "prep_actuality_preferences",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "prep_ai_usage_logs",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "prep_exam_blanc_attempts",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "short_training_registrations",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "support_read_states",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "td_teachers",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "tournament_participants",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "user_admin_status",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "user_announcement_reads",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "user_device_tokens",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "user_event_follows",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "user_feature_entitlements",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "user_navigation_events",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "user_notification_state",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "user_presence",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "video_comments",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "video_favorites",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "video_heatmap_events",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "video_likes",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "video_reactions",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "video_shares",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "video_upload_events",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "video_views",
+      "column_name": "user_id",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "flow_state",
+      "column_name": "user_id",
+      "table_schema": "auth"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "identities",
+      "column_name": "user_id",
+      "table_schema": "auth"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "mfa_factors",
+      "column_name": "user_id",
+      "table_schema": "auth"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "oauth_authorizations",
+      "column_name": "user_id",
+      "table_schema": "auth"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "oauth_consents",
+      "column_name": "user_id",
+      "table_schema": "auth"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "one_time_tokens",
+      "column_name": "user_id",
+      "table_schema": "auth"
+    },
+    {
+      "data_type": "character varying",
+      "table_name": "refresh_tokens",
+      "column_name": "user_id",
+      "table_schema": "auth"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "sessions",
+      "column_name": "user_id",
+      "table_schema": "auth"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "webauthn_challenges",
+      "column_name": "user_id",
+      "table_schema": "auth"
+    },
+    {
+      "data_type": "uuid",
+      "table_name": "webauthn_credentials",
+      "column_name": "user_id",
+      "table_schema": "auth"
+    }
+  ]
+}
+
+=== PHASE 6b: FK vers auth.users ===
+{
+  "ok": true,
+  "mode": "select",
+  "rows": []
+}
+
+=== PHASE 7: Définition app_student_request_account_deletion ===
+{
+  "ok": true,
+  "mode": "select",
+  "rows": []
+}

@@ -10,6 +10,7 @@ import 'admin_td_teachers_screen.dart';
 import 'admin_td_student_requests_screen.dart';
 import 'admin_td_local_groups_screen.dart';
 import 'admin_td_upload_screen.dart';
+import 'admin_td_direct_import_screen.dart';
 
 class AdminTdScreen extends StatefulWidget {
   const AdminTdScreen({super.key});
@@ -135,6 +136,14 @@ class _AdminTdScreenState extends State<AdminTdScreen> {
                       color: const Color(0xFF0891B2),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(builder: (_) => const AdminTdLocalGroupsScreen()),
+                      ),
+                    ),
+                    _NavChip(
+                      icon: Icons.bolt,
+                      label: 'Import direct (0 token)',
+                      color: const Color(0xFFD97706),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(builder: (_) => const AdminTdDirectImportScreen()),
                       ),
                     ),
                     _NavChip(

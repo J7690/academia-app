@@ -1,0 +1,113 @@
+{
+  "audit_date": "2026-04-19T19:00:47.281288",
+  "audit_type": "video_studio_supabase",
+  "results": {
+    "video_tables": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 43
+    },
+    "cols_video_assets": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 15
+    },
+    "cols_video_sources": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 10
+    },
+    "cols_video_renditions": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 15
+    },
+    "cols_challenge_participations": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 23
+    },
+    "cols_free_videos": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 18
+    },
+    "cols_free_video_overlays": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 4
+    },
+    "cols_challenge_video_overlays": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 4
+    },
+    "video_rpcs": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 105
+    },
+    "count_video_assets": 188,
+    "count_video_sources": 104,
+    "count_video_renditions": 236,
+    "count_challenge_participations": 2,
+    "count_free_videos": 106,
+    "count_free_video_overlays": 43,
+    "count_challenge_video_overlays": 2,
+    "orphan_assets_no_renditions": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 50
+    },
+    "orphan_assets_no_sources": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 50
+    },
+    "orphan_free_videos_no_asset": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 1
+    },
+    "orphan_cp_no_asset": {
+      "ok": false,
+      "error": "column cp.created_at does not exist",
+      "sqlstate": "42703"
+    },
+    "duplicate_renditions": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 0
+    },
+    "duplicate_sources": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 0
+    },
+    "storage_buckets": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 7
+    },
+    "video_indexes": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 86
+    },
+    "video_rls": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 48
+    },
+    "video_triggers": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 8
+    },
+    "video_asset_statuses": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 4
+    }
+  }
+}

@@ -1,0 +1,239 @@
+================================================================================
+AUDIT SUPABASE — Finance Dashboard (tables, colonnes, RPCs, data)
+================================================================================
+
+### 1. TABLES schema 'app' ###
+
+### 2. app.platform_ledger — COLUMNS ###
+
+### 3. app.payout_queue — COLUMNS ###
+
+### 4. app.actor_balances — COLUMNS ###
+
+### 5. app.application_payments — COLUMNS ###
+
+### 6. app.marketplace_payments — COLUMNS ###
+
+### 7. app.referral_commissions — COLUMNS ###
+
+### 8. RPCs admin finance-related ###
+
+### RPC: app_admin_get_treasury_summary ###
+CREATE OR REPLACE FUNCTION public.app_admin_get_treasury_summary()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+DECLARE
+  v_user_id UUID := auth.uid();
+  v_role TEXT;
+  v_total_payin NUMERIC;
+  v_total_payout NUMERIC;
+  v_month_payin NUMERIC;
+  v_month_payout NUMERIC;
+  v_pending_payouts NUMERIC;
+  v_pending_payout_count INTEGER;
+  v_total_commissions_commercial NUMERIC;
+  v_total_commissions_marketplace NUMERIC;
+  v_active_subscriptions INTEGER;
+BEGIN
+  IF v_user_id IS NULL THEN
+    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+  END IF;
+
+  SELECT raw_user_meta_data->>'role' INTO v_role FROM auth.users WHERE id = v_user_id;
+  IF v_role <> 'admin' THEN
+    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+  END IF;
+
+  -- Total des paiements confirmés (payin)
+  SELECT COALESCE(SUM(amount_paid), 0) INTO v_total_payin
+  FROM app.application_payments WHERE status = 'confirmed';
+
+  -- Total des payouts complétés
+  SELECT COALESCE(SUM(amount), 0) INTO v_total_payout
+  FROM app.payout_queue WHERE status = 'completed';
+
+  -- Payin du mois courant
+  SELECT COALESCE(SUM(amount_paid), 0) INTO v_month_payin
+  FROM app.application_payments
+  WHERE status = 'confirmed'
+    AND confirmed_at >= DATE_TRUNC('month', NOW());
+
+  -- Payout du mois courant
+  SELECT COALESCE(SUM(amount), 0) INTO v_month_payout
+  FROM app.payout_queue
+  WHERE status = 'completed'
+    AND processed_at >= DATE_TRUNC('month', NOW());
+
+  -- Payouts en attente
+  SELECT COALESCE(SUM(amount), 0), COUNT(*)
+  INTO v_pending_payouts, v_pending_payout_count
+  FROM app.payout_queue WHERE status = 'pending';
+
+  -- Commissions commerciales totales
+  SELECT COALESCE(SUM(commission_amount), 0) INTO v_total_commissions_commercial
+  FROM app.referral_commissions;
+
+  -- Commissions marketplace totales
+  SELECT COALESCE(SUM(commission_amount), 0) INTO v_total_commissions_marketplace
+  FROM app.marketplace_payments WHERE status IN ('paid', 'captured', 'released');
+
+  -- Abonnements actifs
+  SELECT COUNT(*) INTO v_active_subscriptions
+  FROM app.subscriptions WHERE status = 'active' AND (expires_at IS NULL OR expires_at > NOW());
+
+  RETURN JSONB_BUILD_OBJECT(
+    'success', TRUE,
+    'total_payin', v_total_payin,
+    'total_payout', v_total_payout,
+    'month_payin', v_month_payin,
+    'month_payout', v_month_payout,
+    'pending_payouts', v_pending_payouts,
+    'pending_payout_count', v_pending_payout_count,
+    'total_commissions_commercial', v_total_
+
+### RPC: app_admin_list_ledger ###
+CREATE OR REPLACE FUNCTION public.app_admin_list_ledger(p_limit integer DEFAULT 50, p_offset integer DEFAULT 0, p_transaction_type text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+DECLARE
+  v_user_id UUID := auth.uid();
+  v_role TEXT;
+  v_result JSONB;
+  v_total INTEGER;
+BEGIN
+  IF v_user_id IS NULL THEN
+    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+  END IF;
+
+  SELECT raw_user_meta_data->>'role' INTO v_role FROM auth.users WHERE id = v_user_id;
+  IF v_role <> 'admin' THEN
+    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+  END IF;
+
+  SELECT COUNT(*) INTO v_total FROM app.platform_ledger
+  WHERE (p_transaction_type IS NULL OR transaction_type = p_transaction_type);
+
+  SELECT COALESCE(JSONB_AGG(row_to_json(t)::JSONB ORDER BY t.created_at DESC), '[]'::JSONB)
+  INTO v_result
+  FROM (
+    SELECT * FROM app.platform_ledger
+    WHERE (p_transaction_type IS NULL OR transaction_type = p_transaction_type)
+    ORDER BY created_at DESC
+    LIMIT p_limit OFFSET p_offset
+  ) t;
+
+  RETURN JSONB_BUILD_OBJECT('success', TRUE, 'entries', v_result, 'total', v_total);
+END;
+$function$
+
+
+### RPC: app_admin_list_payout_queue ###
+CREATE OR REPLACE FUNCTION public.app_admin_list_payout_queue(p_status text DEFAULT NULL::text, p_beneficiary_type text DEFAULT NULL::text, p_limit integer DEFAULT 50, p_offset integer DEFAULT 0)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+DECLARE
+  v_user_id UUID := auth.uid();
+  v_role TEXT;
+  v_result JSONB;
+  v_total INTEGER;
+BEGIN
+  IF v_user_id IS NULL THEN
+    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated');
+  END IF;
+
+  SELECT raw_user_meta_data->>'role' INTO v_role FROM auth.users WHERE id = v_user_id;
+  IF v_role <> 'admin' THEN
+    RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin');
+  END IF;
+
+  SELECT COUNT(*) INTO v_total
+  FROM app.payout_queue pq
+  WHERE (p_status IS NULL OR pq.status = p_status)
+    AND (p_beneficiary_type IS NULL OR pq.beneficiary_type = p_beneficiary_type);
+
+  SELECT COALESCE(JSONB_AGG(row_to_json(t)::JSONB ORDER BY t.created_at DESC), '[]'::JSONB)
+  INTO v_result
+  FROM (
+    SELECT pq.id, pq.beneficiary_type, pq.beneficiary_user_id, pq.beneficiary_phone,
+           pq.amount, pq.currency, pq.reason, pq.source_payment_id,
+           pq.source_marketplace_payment_id, pq.status, pq.ligdicash_token,
+           pq.ligdicash_transaction_id, pq.processed_at, pq.error_message,
+           pq.retry_count, pq.created_at
+    FROM app.payout_queue pq
+    WHERE (p_status IS NULL OR pq.status = p_status)
+      AND (p_beneficiary_type IS NULL OR pq.beneficiary_type = p_beneficiary_type)
+    ORDER BY pq.created_at DESC
+    LIMIT p_limit OFFSET p_offset
+  ) t;
+
+  RETURN JSONB_BUILD_OBJECT('success', TRUE, 'payouts', v_result, 'total', v_total);
+END;
+$function$
+
+
+### RPC: app_admin_list_actor_balances ###
+CREATE OR REPLACE FUNCTION public.app_admin_list_actor_balances(p_actor_type text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+DECLARE v_user_id UUID := auth.uid(); v_role TEXT; v_result JSONB;
+BEGIN
+  IF v_user_id IS NULL THEN RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_authenticated'); END IF;
+  SELECT raw_user_meta_data->>'role' INTO v_role FROM auth.users WHERE id = v_user_id;
+  IF v_role <> 'admin' THEN RETURN JSONB_BUILD_OBJECT('success', FALSE, 'error', 'not_admin'); END IF;
+
+  SELECT COALESCE(JSONB_AGG(row_to_json(t)::JSONB ORDER BY t.actor_type, t.total_earned DESC), '[]'::JSONB)
+  INTO v_result
+  FROM (
+    SELECT ab.*,
+           CASE
+             WHEN ab.actor_type = 'instructor' THEN (SELECT i.full_name FROM app.instructors i WHERE i.id = ab.actor_id)
+             WHEN ab.actor_type = 'university' THEN (SELECT u.name FROM app.universities u WHERE u.id = ab.actor_id)
+             WHEN ab.actor_type = 'commercial' THEN (SELECT au.email FROM auth.users au WHERE au.id = ab.actor_id)
+             WHEN ab.actor_type = 'merchant' THEN (SELECT m.name FROM app.marketplace_merchants m WHERE m.owner_user_id = ab.actor_id)
+             ELSE NULL
+           END AS display_name
+    FROM app.actor_balances ab
+    WHERE (p_actor_type IS NULL OR ab.actor_type = p_actor_type)
+  ) t;
+
+  RETURN JSONB_BUILD_OBJECT('success', TRUE, 'balances', v_result);
+END; $function$
+
+
+### RPC: app_admin_trigger_payouts ###
+  NOT FOUND
+
+### 10. DATA COUNTS ###
+  app.platform_ledger                          3 rows
+  app.payout_queue                             0 rows
+  app.actor_balances                           0 rows
+  app.application_payments                     14 rows
+  app.marketplace_payments                     0 rows
+  app.referral_commissions                     0 rows
+  app.revenue_split_rules                      19 rows
+
+### 11. RLS POLICIES on finance tables ###
+
+### 12. TRIGGERS on finance tables ###
+
+### 13. REALTIME PUBLICATION ###
+
+### 14. auth.users relevant columns ###
+
+### 15. SAMPLE raw_user_meta_data keys ###
+  university_id
+  sub
+  full_name
+  phone_verified
+  role
+  email
+  ref_code
+  email_verified

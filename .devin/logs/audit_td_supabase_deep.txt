@@ -1,0 +1,198 @@
+
+🔍 AUDIT APPROFONDI — Module TD Supabase
+
+  42 tables TD trouvées:
+    app.td_ai_config                             4 lignes
+    app.td_ai_conversations                      0 lignes
+    app.td_ai_messages                           0 lignes
+    app.td_assignment_submissions                0 lignes
+    app.td_assignments                           0 lignes
+    app.td_attendance                            0 lignes
+    app.td_badges                                8 lignes
+    app.td_collections                           2 lignes
+    app.td_daily_goals                           0 lignes
+    app.td_discipline_colors                     12 lignes
+    app.td_doc_chunks                            0 lignes
+    app.td_enrollments                           1 lignes
+    app.td_exam_papers                           0 lignes
+    app.td_fields                                2 lignes
+    app.td_flashcard_decks                       0 lignes
+    app.td_flashcard_progress                    0 lignes
+    app.td_flashcards                            0 lignes
+    app.td_leaderboard_cache                     0 lignes
+    app.td_local_group_members                   0 lignes
+    app.td_local_groups                          0 lignes
+    app.td_messages                              1 lignes
+    app.td_physical_sessions                     0 lignes
+    app.td_programs                              2 lignes
+    app.td_question_banks                        1 lignes
+    app.td_questions                             86 lignes
+    app.td_quiz_attempts                         0 lignes
+    app.td_quiz_templates                        0 lignes
+    app.td_resource_progress                     0 lignes
+    app.td_resources                             0 lignes
+    app.td_scan_logs                             0 lignes
+    app.td_session_occurrences                   0 lignes
+    app.td_sessions                              1 lignes
+    app.td_source_documents                      0 lignes
+    app.td_streaks                               0 lignes
+    app.td_student_badges                        0 lignes
+    app.td_student_profiles                      0 lignes
+    app.td_student_progress                      0 lignes
+    app.td_student_requests                      1 lignes
+    app.td_teacher_availability                  0 lignes
+    app.td_teacher_profiles                      0 lignes
+    app.td_teachers                              2 lignes
+    app.td_xp_log                                0 lignes
+  77 RPCs TD dans public:
+    app_notify_admin_td_message
+    app_notify_admin_td_request
+    app_notify_instructor_td_enrollment
+    app_notify_instructor_td_message
+    app_td_admin_assign_teacher
+    app_td_admin_assign_teacher_to_group
+    app_td_admin_cancel_session_occurrence
+    app_td_admin_get_analytics
+    app_td_admin_get_dashboard
+    app_td_admin_grant_xp
+    app_td_admin_import_questions_json
+    app_td_admin_import_questions_json
+    app_td_admin_import_text_bulk
+    app_td_admin_import_text_bulk
+    app_td_admin_list_badges
+    app_td_admin_list_enrollments_with_context
+    app_td_admin_list_local_groups
+    app_td_admin_list_session_occurrences
+    app_td_admin_list_source_documents
+    app_td_admin_list_student_requests
+    app_td_admin_mark_request_converted
+    app_td_admin_set_source_document_status
+    app_td_admin_upsert_badge
+    app_td_admin_upsert_discipline_color
+    app_td_admin_upsert_session_occurrence
+    app_td_auto_assign_teacher
+    app_td_auto_match_groups
+    app_td_get_program_detail
+    app_td_list_messages_for_enrollment
+    app_td_list_public_programs
+    app_td_semantic_search
+    app_td_send_message
+    app_td_student_create_enrollment_and_payment
+    app_td_student_create_group
+    app_td_student_create_request
+    app_td_student_earn_xp
+    app_td_student_get_dashboard
+    app_td_student_get_exercise_detail
+    app_td_student_get_home
+    app_td_student_get_leaderboard
+    app_td_student_get_my_enrollments
+    app_td_student_get_profile
+    app_td_student_get_quiz_questions
+    app_td_student_get_stats
+    app_td_student_join_group
+    app_td_student_list_catalog
+    app_td_student_list_exercises
+    app_td_student_list_fields
+    app_td_student_list_local_groups
+    app_td_student_list_my_enrollments
+    app_td_student_list_my_requests
+    app_td_student_list_my_session_occurrences
+    app_td_student_list_resources
+    app_td_student_list_resources_for_enrollment
+    app_td_student_list_subjects
+    app_td_student_rate_session
+    app_td_student_submit_exercise
+    app_td_student_update_resource_progress
+    app_td_student_upsert_profile
+    app_td_suggest_groups_for_student
+    app_td_teacher_add_resource
+    app_td_teacher_complete_session
+    app_td_teacher_create_exercise
+    app_td_teacher_create_physical_session
+    app_td_teacher_delete_resource
+    app_td_teacher_get_dashboard
+    app_td_teacher_grade_exercise
+    app_td_teacher_list_assignments
+    app_td_teacher_list_exercise_submissions
+    app_td_teacher_list_exercises
+    app_td_teacher_list_local_groups
+    app_td_teacher_list_resources
+    app_td_teacher_list_resources_for_enrollment
+    app_td_teacher_list_students
+    app_td_teacher_list_upcoming_sessions
+    app_td_teacher_update_attendance
+    app_td_teacher_upsert_profile
+  4 RPCs TD dans app:
+    app_notify_td_group_member_joined
+    app_notify_td_group_status_change
+    app_notify_td_group_teacher_assigned
+    app_td_get_current_role
+    ✅ app_td_list_public_programs → 200 (OK)
+    ❌ app_td_get_program_detail → 404 (404)
+    ✅ app_td_student_get_dashboard → 200 (OK)
+    ✅ app_td_student_list_my_enrollments → 400 (AUTH)
+    ❌ app_td_student_create_request → 404 (404)
+    ❌ app_td_send_message → 404 (404)
+    ✅ app_td_admin_list_enrollments_with_context → 400 (AUTH)
+    ✅ app_td_admin_get_dashboard → 200 (OK)
+    ✅ app_td_teacher_get_dashboard → 200 (OK)
+    Aucune Edge Function TD trouvée
+
+  Dossiers Edge Functions contenant 'td':
+    📁 td-generate-exercises
+    📁 td-ingest-document
+    📁 td-scan-subject
+    📁 td-tutor-chat
+    app.td_doc_chunks                            0 lignes
+    app.td_question_banks                        1 lignes
+    app.td_questions                             86 lignes
+    app.td_resource_progress                     0 lignes
+    app.td_resources                             0 lignes
+    app.td_source_documents                      0 lignes
+    id                             uuid
+    program_id                     uuid
+    collection_id                  uuid
+    session_id                     uuid
+    title                          text
+    description                    text
+    kind                           td_resource_kind
+    url                            text
+    is_required                    bool
+    position                       int4
+    created_at                     timestamptz
+    updated_at                     timestamptz
+    created_by                     uuid
+    thumbnail_url                  text
+    duration_seconds               int4
+    file_size_bytes                int8
+    download_count                 int4
+    📦 td-documents
+    app.td_fields                      2 lignes
+    app.td_programs                    2 lignes
+    app.td_collections                 2 lignes
+    app.td_sessions                    1 lignes
+    app.td_enrollments                 1 lignes
+    app.td_teachers                    2 lignes
+    app.td_messages                    1 lignes
+    ✅ Existe (12698 caractères)
+    ✅ Contient 'upload'
+    ✅ Contient 'PDF'
+    ✅ Contient 'JSON'
+    ✅ Contient 'import'
+    ✅ Contient 'ingest'
+
+  MODULE TD — État actuel:
+  - Tables de structure: td_fields, td_programs, td_collections, td_sessions
+  - Tables de gestion: td_enrollments, td_teachers, td_messages
+  - Providers Flutter: 7 providers (catalog, enrollments, requests, teachers, messages, gamification)
+  - Service: td_service.dart (30+ méthodes RPC)
+  - Écrans admin: admin_td_screen.dart avec bouton "Upload & IA TD"
+  
+  CE QUI MANQUE pour le mécanisme scan/import:
+  1. Edge Function td-scan-subject (OCR + réponses IA pour étudiants)
+  2. RPCs d'import sans token (JSON structuré, texte brut)
+  3. Tables de contenu indexable (td_source_documents, td_doc_chunks)
+  4. Interface admin pour import direct (0 token)
+  5. Interface étudiant pour scanner un sujet TD
+    
+✅ Audit TD terminé.

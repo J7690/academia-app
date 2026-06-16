@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+"""PHASE 6 - Analyse du risque"""
+
+def main():
+    print("\n" + "="*60)
+    print("  PHASE 6 — ANALYSE DU RISQUE")
+    print("="*60 + "\n")
+    
+    print("OPTION 1: DÉPLACER app_prep_teacher_* VERS public")
+    print("="*60 + "\n")
+    
+    print("Impact potentiel:")
+    print("  - Les RPCs deviendront accessibles via PostgREST")
+    print("  - Flutter pourra les appeler")
+    print("  - Les écrans Enseignant Prépa fonctionneront")
+    print()
+    
+    print("Risques:")
+    print("  - FAIBLE")
+    print("  - L'opération est réversible (ALTER FUNCTION ... SET SCHEMA app)")
+    print("  - Les RPCs sont déjà testées via execute_sql")
+    print("  - Aucune modification du code SQL des RPCs")
+    print("  - Aucune modification des tables")
+    print("  - Aucune modification des RLS")
+    print("  - Aucune modification du code Flutter")
+    print("  - Opération standard PostgreSQL")
+    print()
+    
+    print("Dépendances:")
+    print("  - Aucune dépendance à casser")
+    print("  - Les RPCs app_prep_teacher_* ne sont appelées par aucune autre RPC")
+    print("  - Les tables prep_* ne dépendent pas du schéma des RPCs")
+    print()
+    
+    print("Conformité avec la convention:")
+    print("  - OUI, conforme à la convention Cas A")
+    print("  - Aligné avec app_td_teacher_* (dans public)")
+    print("  - Aligné avec app_ci_* (dans public)")
+    print("  - Aligné avec app_prep_student_* (dans public)")
+    print()
+    
+    print("="*60)
+    print("OPTION 2: CRÉER DES PROXYS PUBLIC → app")
+    print("="*60 + "\n")
+    
+    print("Impact potentiel:")
+    print("  - Les proxys public appelleraient les RPCs app")
+    print("  - Flutter appellerait les proxys public")
+    print("  - Les écrans Enseignant Prépa fonctionneraient")
+    print()
+    
+    print("Risques:")
+    print("  - MOYEN")
+    print("  - Création de 8 nouvelles RPCs (double maintenance)")
+    print("  - Complexité inutile")
+    print("  - Non conforme à la convention existante")
+    print("  - Aucun autre module n'utilise de proxy")
+    print()
+    
+    print("Dépendances:")
+    print("  - Aucune dépendance à casser")
+    print("  - Mais introduction d'une nouvelle architecture")
+    print("  - Maintenance double (RPCs app + proxys public)")
+    print()
+    
+    print("Conformité avec la convention:")
+    print("  - NON, non conforme à la convention Cas A")
+    print("  - Aucun autre module n'utilise de proxy")
+    print("  - Les RPCs TD, instructor, prep_student sont directement dans public")
+    print("  - Introduction d'une incohérence architecturale")
+    print()
+    
+    print("="*60)
+    print("COMPARAISON DES OPTIONS")
+    print("="*60 + "\n")
+    
+    print("Critère                    Option 1 (Déplacement)  Option 2 (Proxy)")
+    print("-" * 80)
+    print("Conformité architecturale  OUI                     NON")
+    print("Complexité                 FAIBLE                  MOYENNE")
+    print("Maintenance                Standard                 Double")
+    print("Risque                     FAIBLE                  MOYEN")
+    print("Réversibilité              OUI                     OUI")
+    print("Temps estimé              < 5 minutes             > 15 minutes")
+    print("Impact sur Flutter        Aucun                   Aucun")
+    print("Impact sur tables         Aucun                   Aucun")
+    print("Impact sur RLS            Aucun                   Aucun")
+    print()
+    
+    print("="*60)
+    print("  CONCLUSION DE L'ANALYSE DE RISQUE")
+    print("="*60 + "\n")
+    
+    print("OPTION RECOMMANDÉE: Option 1 (Déplacement vers public)")
+    print()
+    print("Justification:")
+    print("  - Conforme à la convention architecturale existante")
+    print("  - Moins complexe que les proxys")
+    print("  - Maintenance standard (pas de double)")
+    print("  - Risque plus faible")
+    print("  - Plus rapide à implémenter")
+    print("  - Aligné avec tous les autres modules (TD, instructor, prep_student)")
+    print()
+    
+    print("RISQUE GLOBAL: FAIBLE")
+    print("  - L'opération est standard PostgreSQL")
+    print("  - Réversible en cas de problème")
+    print("  - Aucun impact sur les données")
+    print("  - Aucun impact sur le code Flutter")
+    print("  - Aucun impact sur les RLS")
+    
+    print("\n✅ PHASE 6 terminée.\n")
+
+if __name__ == "__main__":
+    main()

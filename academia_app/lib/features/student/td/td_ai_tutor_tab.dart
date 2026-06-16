@@ -206,7 +206,9 @@ class _TdAiTutorTabState extends State<TdAiTutorTab> {
         const SizedBox(height: 8),
         const Text(
           'Je suis votre assistant pour toutes les matières universitaires.\n'
-          'Posez une question, soumettez un exercice ou demandez une explication.',
+          'Posez une question, soumettez un exercice ou demandez une explication.\n\n'
+          '⚠️ Les réponses IA sont fournies à titre indicatif et peuvent contenir des erreurs. '
+          'Elles ne remplacent pas un enseignant qualifié.',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 13, color: Color(0xFF757575), height: 1.5),
         ),

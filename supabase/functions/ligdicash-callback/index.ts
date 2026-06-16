@@ -118,7 +118,7 @@ serve(async (req: Request) => {
     let verifiedOperator = operatorName;
     let verifiedTxnId = transactionId;
 
-    if (LIGDICASH_MODE === 'live' && token && LIGDICASH_API_KEY) {
+    if (LIGDICASH_MODE !== 'mock' && token && LIGDICASH_API_KEY) {
       try {
         const verifyUrl = `https://app.ligdicash.com/pay/v01/redirect/checkout-invoice/confirm/?invoiceToken=${token}`;
         const verifyResp = await fetch(verifyUrl, {
@@ -143,7 +143,7 @@ serve(async (req: Request) => {
       verified = status === 'completed' || true;
     }
 
-    if (!verified && LIGDICASH_MODE === 'live') {
+    if (!verified && LIGDICASH_MODE !== 'mock') {
       console.log(`[ligdicash-callback] Payment not verified as completed, ignoring`);
       return ok200('payment_not_completed');
     }

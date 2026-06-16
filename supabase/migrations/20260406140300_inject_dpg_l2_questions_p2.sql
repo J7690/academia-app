@@ -1,0 +1,178 @@
+-- Injection QCM — Droit Pénal Général L2 S3 (Partie 2/2)
+-- 30 questions: Responsabilité pénale, Faits justificatifs, Agent pénal, Complicité, Peines, Extinction
+
+INSERT INTO app.td_questions (id, question_type, content, options, correct_index, explanation, difficulty, subject, is_active, study_year, field, semester, generation_mode) VALUES
+
+(gen_random_uuid(), 'mcq',
+'Quels sont les quatre faits justificatifs prévus par le code pénal burkinabè ?',
+'["La démence, la contrainte, l''erreur et la minorité","L''ordre de la loi, le commandement de l''autorité légitime, la légitime défense et l''état de nécessité","La récidive, le sursis, la grâce et l''amnistie","La préméditation, la complicité, la tentative et le désistement"]'::jsonb,
+1, 'Les quatre faits justificatifs (causes objectives d''exonération) sont : l''ordre de la loi, le commandement de l''autorité légitime, la légitime défense et l''état de nécessité.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Les faits justificatifs profitent :',
+'["Uniquement à l''auteur principal","À tous les participants à l''infraction (auteurs, co-auteurs, complices)","Uniquement au complice","Uniquement aux mineurs"]'::jsonb,
+1, 'Les faits justificatifs effacent le caractère infractionnel de l''acte et profitent à tous les participants car ils anéantissent l''élément légal de l''infraction.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''article 132-1 al. 2 du CP prévoit que le commandement de l''autorité légitime n''exonère pas si l''acte est :',
+'["Commis par un civil","Manifestement illégal","Commis de nuit","Commis sans témoin"]'::jsonb,
+1, 'Art. 132-1 al. 2 : pas de responsabilité sauf si l''acte est « manifestement illégal ». Les ordres de commettre des crimes contre l''humanité ou actes de torture sont manifestement illicites.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Parmi les conditions de la légitime défense, laquelle est fausse ?',
+'["L''attaque doit être injuste","La riposte doit être proportionnée","La riposte peut être préventive","La riposte doit être contemporaine à l''attaque"]'::jsonb,
+2, 'Il n''y a pas de légitime défense préventive. L''attaque doit être actuelle ou imminente (pas seulement éventuelle ou future) pour que la riposte soit légitime.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'La légitime défense entraîne :',
+'["L''irresponsabilité pénale uniquement","L''irresponsabilité pénale ET civile","L''irresponsabilité civile uniquement","Une atténuation de la peine"]'::jsonb,
+1, 'La personne qui agit en légitime défense n''est responsable ni pénalement (art. 132-2 al. 1) ni civilement. Aucune réparation ne peut être allouée.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''état de nécessité (art. 132-3 CP) suppose que :',
+'["L''auteur a agi par vengeance","L''auteur a commis une infraction pour éviter un péril plus grave et imminent","L''auteur a obéi à un ordre de son supérieur","L''auteur était en état de démence"]'::jsonb,
+1, 'Art. 132-3 : pas de responsabilité pour la personne qui commet une infraction en vue d''éviter un péril plus grave et imminent, sauf disproportion.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''une des conditions de l''état de nécessité est que :',
+'["L''auteur doit avoir créé lui-même le danger","L''intérêt protégé doit être supérieur à l''intérêt sacrifié","L''infraction commise doit être un crime","L''auteur doit être mineur"]'::jsonb,
+1, 'L''intérêt protégé doit être supérieur à l''intérêt sacrifié. De plus, la nécessité ne doit pas avoir été créée par celui qui commet l''infraction.',
+3, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'La démence (art. 132-4 CP) entraîne l''irresponsabilité pénale si :',
+'["Le désordre mental est léger","Le désordre mental est suffisamment grave pour anéantir le discernement et existait au moment de l''infraction","L''auteur était ivre","L''auteur avait des antécédents judiciaires"]'::jsonb,
+1, 'La démence doit être suffisamment grave pour anéantir le discernement ou faire perdre le contrôle des actes, et doit exister au moment de l''infraction.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Si le trouble psychique a seulement « altéré » le discernement (art. 132-5 CP), l''agent est :',
+'["Totalement irresponsable","Responsable mais le juge tient compte de cette circonstance pour la peine","Responsable et la peine est aggravée","Soumis à des mesures de sûreté uniquement"]'::jsonb,
+1, 'Art. 132-5 : si le trouble a altéré (et non aboli) le discernement, l''agent demeure punissable mais la juridiction tient compte de cette circonstance pour la peine.',
+3, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''ivresse en droit pénal burkinabè :',
+'["Constitue une cause d''irresponsabilité pénale","Peut être une circonstance aggravante de la peine","N''a aucune incidence sur la responsabilité","Supprime automatiquement l''intention"]'::jsonb,
+1, 'L''ivresse, loin de constituer une cause d''irresponsabilité, peut même être une circonstance aggravante de la peine.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'La contrainte (art. 132-4 al. 2 CP) doit être, pour exonérer l''agent :',
+'["Simplement gênante","Irrésistible, insurmontable et imprévisible","Connue de tous","Prévisible mais inévitable"]'::jsonb,
+1, 'La contrainte doit revêtir les mêmes caractéristiques que la force majeure en droit civil : irrésistibilité, insurmontabilité et imprévisibilité. La contrainte précédée d''une faute n''exonère pas.',
+3, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''âge de la responsabilité pénale au Burkina Faso est fixé à :',
+'["10 ans","13 ans","16 ans","18 ans"]'::jsonb,
+1, 'L''âge de la responsabilité pénale est fixé à 13 ans (art. 132-7 CP). Le mineur de moins de 13 ans bénéficie d''une présomption irréfragable d''irresponsabilité.',
+1, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''erreur de droit (art. 132-6 CP) est admise comme cause d''irresponsabilité quand :',
+'["L''agent ne connaît pas la loi","Un service public est à l''origine d''une erreur que l''agent n''était pas en mesure d''éviter","L''agent a commis une infraction par négligence","Le juge estime que la loi est injuste"]'::jsonb,
+1, 'Art. 132-6 : l''erreur de droit exonère quand un service public de l''État est à l''origine d''une erreur invincible qui a fait croire à l''agent que son acte était légal.',
+3, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Les causes de non-imputabilité (subjectives) se distinguent des faits justificatifs (objectifs) car :',
+'["Elles effacent l''infraction","Elles ne profitent qu''à la personne concernée, les coauteurs et complices restent punissables","Elles s''appliquent à tous les participants","Elles suppriment la peine mais pas l''infraction ni la responsabilité civile"]'::jsonb,
+1, 'Les causes de non-imputabilité sont personnelles : elles ne profitent qu''à la personne concernée. L''infraction demeure, seul l''agent est rendu irresponsable. Les coauteurs et complices restent punissables.',
+3, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'La complicité suppose trois conditions cumulatives :',
+'["Un crime, un mobile et un résultat","Un fait principal punissable, un acte matériel de complicité et une intention coupable","Un auteur, un complice et une victime","Une arme, un plan et une fuite"]'::jsonb,
+1, 'Les trois conditions de la complicité punissable sont : un fait principal pénalement punissable, un acte matériel de complicité et une intention coupable.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'La complicité d''une tentative est-elle punissable ?',
+'["Oui, la complicité d''une tentative est punissable","Non, ni la complicité d''une tentative ni la tentative de complicité ne sont punissables","Non, seule la tentative de complicité est punissable","Cela dépend de la gravité de l''infraction"]'::jsonb,
+0, 'La complicité d''une tentative est punissable (le fait principal est une tentative punissable). En revanche, la tentative de complicité n''est pas punissable.',
+3, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Selon l''article 131-5 du CP, le complice est puni :',
+'["Moins sévèrement que l''auteur","Comme l''auteur même du crime ou du délit","Plus sévèrement que l''auteur","D''une amende uniquement"]'::jsonb,
+1, 'Art. 131-5 : « les complices d''un crime ou d''un délit sont punis comme les auteurs même de ce crime ou de ce délit sauf si la loi en dispose autrement ».',
+1, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'La responsabilité pénale des personnes morales suppose que l''infraction ait été commise :',
+'["Par n''importe quel salarié de l''entreprise","Par un organe ou un représentant, au nom et dans l''intérêt de la personne morale","Par un client de l''entreprise","Par un concurrent de l''entreprise"]'::jsonb,
+1, 'Conditions cumulatives : infraction commise au nom et dans l''intérêt de la personne morale + par un organe ou un représentant dans l''exercice de ses fonctions.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Les peines criminelles pour les majeurs au BF comprennent notamment :',
+'["Uniquement l''amende","L''emprisonnement à vie, l''emprisonnement à temps de plus de 10 ans, l''amende pour les personnes morales","Le travail d''intérêt général uniquement","L''admonestation et la réprimande"]'::jsonb,
+1, 'Art. 212-1 : peines criminelles pour majeurs = emprisonnement à vie, emprisonnement > 10 ans, amende (PM), dissolution (PM), dégradation civique, confiscation.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Depuis la loi 025-2018, la peine de mort au Burkina Faso est :',
+'["Maintenue pour les crimes de sang","Abolie","Maintenue pour le terrorisme","Remplacée par la réclusion criminelle"]'::jsonb,
+1, 'Depuis l''abolition de la peine de mort par la loi 025-2018, il n''y a plus aucune peine corporelle en droit burkinabè.',
+1, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'La peine accessoire se distingue de la peine complémentaire car :',
+'["Elle est plus sévère","Elle s''applique automatiquement sans que le juge ait besoin de la prononcer","Elle est toujours facultative","Elle ne concerne que les contraventions"]'::jsonb,
+1, 'La peine accessoire s''attache automatiquement à la sanction principale. Ex : emprisonnement à vie → incapacité automatique de donner et recevoir (art. 212-5).',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'La récidive est constituée lorsque :',
+'["L''auteur commet une première infraction","L''auteur, après une condamnation définitive, commet une nouvelle infraction indépendante de la première","L''auteur commet plusieurs infractions sans condamnation intermédiaire","L''auteur est arrêté plusieurs fois pour la même infraction"]'::jsonb,
+1, 'La récidive suppose une première condamnation définitive (1er terme) suivie de la commission d''une nouvelle infraction indépendante (2e terme).',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'En cas de récidive crime → crime (art. 218-3), la récidive est :',
+'["Spéciale et temporaire","Générale et perpétuelle","Spéciale et perpétuelle","Générale et temporaire"]'::jsonb,
+1, 'Crime puis crime : récidive générale (quel que soit le crime) et perpétuelle (sans considération du temps écoulé). Peine encourue = double.',
+3, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Le sursis est une mesure qui consiste à :',
+'["Annuler la condamnation","Suspendre l''exécution de la peine prononcée","Libérer le condamné avant la fin de sa peine","Réduire la durée de la peine"]'::jsonb,
+1, 'Le sursis consiste à suspendre l''exécution de la peine prononcée. Mesure de faveur pour les délinquants primaires.',
+1, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Pour bénéficier du sursis, le délinquant :',
+'["Doit être récidiviste","Ne doit pas avoir fait l''objet d''une condamnation antérieure","Doit avoir commis un crime","Doit être mineur"]'::jsonb,
+1, 'Art. 615-1 CPP : le délinquant ne doit pas avoir fait l''objet d''une condamnation antérieure. Le sursis est exclu pour le récidiviste.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''amnistie se distingue de la grâce car :',
+'["L''amnistie est un acte du pouvoir exécutif, la grâce du pouvoir législatif","L''amnistie efface la condamnation, la grâce ne l''efface pas","L''amnistie réduit la peine, la grâce la supprime","L''amnistie s''applique aux contraventions, la grâce aux crimes"]'::jsonb,
+1, 'L''amnistie (pouvoir législatif) fait disparaître le caractère infractionnel et efface la condamnation. La grâce (Président, art. 54 Constitution) supprime ou réduit la peine mais n''efface pas la condamnation.',
+3, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'La grâce au Burkina Faso est un pouvoir du :',
+'["Premier ministre","Président du Faso (art. 54 Constitution)","Président de l''Assemblée nationale","Garde des sceaux"]'::jsonb,
+1, 'Art. 54 de la Constitution : le Président du Faso dispose du droit de grâce. La grâce peut être totale, partielle ou commutation de peine.',
+1, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'La prescription des peines criminelles est de :',
+'["3 ans","10 ans","20 ans","30 ans"]'::jsonb,
+2, 'Prescription des peines : criminelles = 20 ans, correctionnelles = 3 ans, contraventionnelles = 2 ans. Les crimes contre l''humanité sont imprescriptibles.',
+1, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Le concours réel d''infractions (art. 111-8 CP) se résout par :',
+'["Le cumul de toutes les peines","L''absorption de la peine la plus faible par la peine la plus forte","L''annulation de toutes les peines","Le choix de la peine la plus faible"]'::jsonb,
+1, 'En cas de concours réel d''infractions, la peine la plus forte absorbe la plus faible (pas de cumul). Exceptions : cumul possible entre contraventions ou entre délits et contraventions non connexes.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection');

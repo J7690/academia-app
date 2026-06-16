@@ -7,16 +7,21 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+// import 'package:ffmpeg_kit_flutter_new_audio/ffmpeg_kit.dart';
+// import 'package:ffmpeg_kit_flutter_new_audio/return_code.dart';
 import 'package:video_compress/video_compress.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_thumbnail/video_thumbnail.dart' as vt;
 
 import '../../providers/student_challenges_provider.dart';
 import '../../services/videoasset_upload_service.dart';
 import '../../services/video_segment_merge_service.dart';
+import '../../services/video_orientation_service.dart';
 import '../../video/academia_playback_engine.dart';
 import '../../video/audio_mix_service.dart';
+import '../../games/services/watermark_service.dart';
 import '../../video/overlay_burn_in_service.dart';
 import '../../widgets/audio_picker_sheet.dart';
 import '../../widgets/dj_mix_sheet.dart';
@@ -119,6 +124,7 @@ class _StudentChallengeVideoEditorScreenState
   bool _isRenderingAudio = false;
   bool _isRenderingVideo = false;
   Uint8List? _thumbnailBytes;
+  int _videoDurationMs = 0;
   List<Map<String, dynamic>> _arObjects = [];
   List<Map<String, dynamic>> _textOverlays = [];
   List<Map<String, dynamic>> _zones = [];
@@ -238,22 +244,19 @@ class _StudentChallengeVideoEditorScreenState
     });
 
     if (segments.length == 1) {
-      // Single segment, use directly
+      // Single segment → auto-compress then auto-upload in background
       try {
         final firstFile = segments.first;
-        final bytes = await firstFile.readAsBytes();
         final name = firstFile.name.isNotEmpty ? firstFile.name : 'video.mp4';
-        final ext = name.contains('.') ? name.split('.').last : 'mp4';
 
-        if (!mounted) return;
-        setState(() {
-          _videoBytes = bytes;
-          _fileName = name;
-          _mimeType = ext;
-          _uploadedUrl = null;
-          _videoInitialized = false;
-          _localVideoPath = firstFile.path;
-        });
+        debugPrint('[Studio] Auto-compressing captured segment: ${firstFile.path}');
+        await _compressAndSetVideo(firstFile.path, name);
+
+        // Auto-upload in background (non-blocking) — like TikTok
+        if (mounted && _videoBytes != null && _uploadedUrl == null && !_isUploading) {
+          debugPrint('[Studio] Auto-upload triggered in background');
+          _uploadVideo(); // fire-and-forget, no await
+        }
       } catch (_) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -502,9 +505,24 @@ class _StudentChallengeVideoEditorScreenState
     setState(() => _isCompressing = true);
 
     try {
+      // Detect video orientation for compression preset
+      // Use default dimensions for now (can be enhanced later with actual video metadata)
+      final orientation = VideoOrientationService.detectFromDimensions(1920, 1080);
+      
+      // Use orientation-aware compression preset
+      final VideoQuality quality;
+      if (_hdUpload) {
+        // For HD upload, use standard HD quality
+        // Note: VideoCompress doesn't have orientation-specific presets, so we use standard HD
+        quality = VideoQuality.Res1920x1080Quality;
+      } else {
+        // For medium quality, use default
+        quality = VideoQuality.MediumQuality;
+      }
+      
       final MediaInfo? info = await VideoCompress.compressVideo(
         sourcePath,
-        quality: VideoQuality.MediumQuality,
+        quality: quality,
         deleteOrigin: false,
         includeAudio: true,
       );
@@ -512,28 +530,37 @@ class _StudentChallengeVideoEditorScreenState
       if (!mounted) return;
 
       if (info != null && info.path != null) {
-        final compressedFile = File(info.path!);
-        final compressedBytes = await compressedFile.readAsBytes();
         final originalSize = await File(sourcePath).length();
-        final compressedSize = compressedBytes.length;
+
+        // Add Academia watermark (TikTok-style, burned into video)
+        debugPrint('[Studio] Adding Academia watermark...');
+        final watermarkedPath = await WatermarkService.addWatermark(info.path!);
+        if (!mounted) return;
+
+        final finalFile = File(watermarkedPath);
+        final finalBytes = await finalFile.readAsBytes();
+        final compressedSize = finalBytes.length;
         debugPrint(
-          '[Studio] Compression: ${(originalSize / 1024 / 1024).toStringAsFixed(1)} MB \u2192 '
+          '[Studio] Compression+Watermark: ${(originalSize / 1024 / 1024).toStringAsFixed(1)} MB \u2192 '
           '${(compressedSize / 1024 / 1024).toStringAsFixed(1)} MB '
           '(${(100 - compressedSize * 100 / originalSize).toStringAsFixed(0)}% r\u00e9duit)',
         );
 
         setState(() {
           _isCompressing = false;
-          _videoBytes = compressedBytes;
+          _videoBytes = finalBytes;
           _fileName = originalName;
           _mimeType = ext;
           _uploadedUrl = null;
           _videoInitialized = false;
-          _localVideoPath = info.path;
+          _localVideoPath = watermarkedPath;
+          if (info.duration != null) _videoDurationMs = info.duration!.toInt();
         });
       } else {
-        debugPrint('[Studio] Compression returned null, using original file');
-        final bytes = await File(sourcePath).readAsBytes();
+        debugPrint('[Studio] Compression returned null, watermarking original...');
+        final watermarkedPath = await WatermarkService.addWatermark(sourcePath);
+        if (!mounted) return;
+        final bytes = await File(watermarkedPath).readAsBytes();
         if (!mounted) return;
         setState(() {
           _isCompressing = false;
@@ -542,13 +569,15 @@ class _StudentChallengeVideoEditorScreenState
           _mimeType = ext;
           _uploadedUrl = null;
           _videoInitialized = false;
-          _localVideoPath = sourcePath;
+          _localVideoPath = watermarkedPath;
         });
       }
     } catch (e) {
-      debugPrint('[Studio] Compression error: $e \u2014 using original');
+      debugPrint('[Studio] Compression error: $e \u2014 watermarking original...');
       if (!mounted) return;
-      final bytes = await File(sourcePath).readAsBytes();
+      final watermarkedPath = await WatermarkService.addWatermark(sourcePath);
+      if (!mounted) return;
+      final bytes = await File(watermarkedPath).readAsBytes();
       if (!mounted) return;
       setState(() {
         _isCompressing = false;
@@ -557,7 +586,7 @@ class _StudentChallengeVideoEditorScreenState
         _mimeType = ext;
         _uploadedUrl = null;
         _videoInitialized = false;
-        _localVideoPath = sourcePath;
+        _localVideoPath = watermarkedPath;
       });
     }
   }
@@ -1428,6 +1457,510 @@ class _StudentChallengeVideoEditorScreenState
     return;
   }
 
+  // ---------------------------------------------------------------------------
+  // One-tap Enhance — auto-correction via FFmpeg eq filter
+  // ---------------------------------------------------------------------------
+  bool _isEnhanced = false;
+
+  Future<void> _applyOneTapEnhance() async {
+    if (_localVideoPath == null || _isCompressing) return;
+
+    if (_isEnhanced) {
+      // Toggle off — revert to original by re-reading the file
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enhance désactivé')),
+      );
+      setState(() => _isEnhanced = false);
+      return;
+    }
+
+    setState(() => _isCompressing = true);
+
+    try {
+      final inputPath = _localVideoPath!;
+      final dir = await Directory.systemTemp.createTemp('acad_enhance_');
+      final outputPath = '${dir.path}/enhanced.mp4';
+
+      // FFmpeg: auto-levels brightness/contrast/saturation + sharpening
+      final cmd =
+          '-i "$inputPath" '
+          '-vf "eq=brightness=0.04:contrast=1.1:saturation=1.15,unsharp=5:5:0.8:5:5:0.0" '
+          '-c:a copy -movflags +faststart -y "$outputPath"';
+
+      // DISABLED for release white-screen test
+      // debugPrint('[Enhance] Running FFmpeg: $cmd');
+      // final session = await FFmpegKit.execute(cmd);
+      // final returnCode = await session.getReturnCode();
+      // if (!mounted) return;
+      // if (ReturnCode.isSuccess(returnCode)) {
+      //   final enhanced = File(outputPath);
+      //   if (await enhanced.exists()) {
+      //     final bytes = await enhanced.readAsBytes();
+      //     setState(() {
+      //       _isCompressing = false;
+      //       _isEnhanced = true;
+      //       _videoBytes = bytes;
+      //       _localVideoPath = outputPath;
+      //     });
+      //     ScaffoldMessenger.of(context).showSnackBar(
+      //       const SnackBar(content: Text('✨ Enhance appliqué !')),
+      //     );
+      //     return;
+      //   }
+      // }
+      debugPrint('[Enhance] DISABLED — FFmpegKit not available');
+      setState(() => _isCompressing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enhance temporairement désactivé')),
+      );
+    } catch (e) {
+      debugPrint('[Enhance] Error: $e');
+      if (mounted) {
+        setState(() => _isCompressing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Enhance échoué: $e')),
+        );
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Effects sheet — Filtres + Enhance + Voice Effects
+  // ---------------------------------------------------------------------------
+  void _openEffectsSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF1A1A2E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+                ),
+                const SizedBox(height: 16),
+                const Text('Effets', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 16),
+
+                // One-tap Enhance
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    _applyOneTapEnhance();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _isEnhanced
+                          ? const Color(0xFFFF2D55).withValues(alpha: 0.15)
+                          : Colors.white.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _isEnhanced ? const Color(0xFFFF2D55) : Colors.white12,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.auto_fix_high,
+                          color: _isEnhanced ? const Color(0xFFFF2D55) : Colors.white70,
+                          size: 22,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Enhance',
+                                style: TextStyle(
+                                  color: _isEnhanced ? const Color(0xFFFF2D55) : Colors.white,
+                                  fontSize: 14, fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                _isEnhanced ? 'Activé — tap pour désactiver' : 'Auto-correction lumière & couleurs',
+                                style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 11),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (_isEnhanced)
+                          const Icon(Icons.check_circle, color: Color(0xFFFF2D55), size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // Filters row
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Filtres', style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w600)),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 60,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      for (final filter in ['none', 'warm', 'cool', 'bw', 'vintage', 'bright'])
+                        _filterChip(filter),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // Voice Effects
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Effets vocaux', style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w600)),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _voiceEffectChip('🎵', 'Normal', 'none'),
+                    _voiceEffectChip('🤖', 'Robot', 'robot'),
+                    _voiceEffectChip('🔊', 'Écho', 'echo'),
+                    _voiceEffectChip('🎸', 'Grave', 'deep'),
+                    _voiceEffectChip('🐿️', 'Aigu', 'chipmunk'),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _activeVoiceEffect = 'none';
+
+  Widget _filterChip(String filter) {
+    final selected = _selectedFilter == filter;
+    final labels = {
+      'none': 'Normal', 'warm': 'Chaud', 'cool': 'Froid',
+      'bw': 'N&B', 'vintage': 'Vintage', 'bright': 'Lumineux',
+    };
+    return GestureDetector(
+      onTap: () {
+        setState(() => _selectedFilter = filter);
+        Navigator.of(context).pop();
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFFF2D55).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: selected ? const Color(0xFFFF2D55) : Colors.white12),
+        ),
+        child: Text(
+          labels[filter] ?? filter,
+          style: TextStyle(
+            color: selected ? const Color(0xFFFF2D55) : Colors.white70,
+            fontSize: 12, fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _voiceEffectChip(String emoji, String label, String value) {
+    final selected = _activeVoiceEffect == value;
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pop();
+        _applyVoiceEffect(value);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF00BCD4).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: selected ? const Color(0xFF00BCD4) : Colors.white12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 14)),
+            const SizedBox(width: 4),
+            Text(label, style: TextStyle(
+              color: selected ? const Color(0xFF00BCD4) : Colors.white70,
+              fontSize: 11, fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+            )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Stickers picker sheet
+  // ---------------------------------------------------------------------------
+  void _openStickersSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF1A1A2E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+                ),
+                const SizedBox(height: 16),
+                const Text('Stickers', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _stickerItem('⭐', 'Étoile', 'star'),
+                    _stickerItem('❤️', 'Cœur', 'heart'),
+                    _stickerItem('💡', 'Idée', 'idea'),
+                    _stickerItem('🎓', 'Diplôme', 'graduation'),
+                    _stickerItem('🔬', 'Science', 'science'),
+                    _stickerItem('📐', 'Géométrie', 'geometry'),
+                    _stickerItem('🧪', 'Chimie', 'chemistry'),
+                    _stickerItem('📚', 'Livres', 'books'),
+                    _stickerItem('🏆', 'Trophée', 'trophy'),
+                    _stickerItem('✅', 'Check', 'check'),
+                    _stickerItem('❌', 'Croix', 'cross'),
+                    _stickerItem('🎯', 'Cible', 'target'),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _stickerItem(String emoji, String label, String value) {
+    return GestureDetector(
+      onTap: () {
+        setState(() => _selectedSticker = value);
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$emoji Sticker ajouté: $label')),
+        );
+      },
+      child: SizedBox(
+        width: 64,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 48, height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              alignment: Alignment.center,
+              child: Text(emoji, style: const TextStyle(fontSize: 24)),
+            ),
+            const SizedBox(height: 3),
+            Text(label, style: const TextStyle(color: Colors.white54, fontSize: 9), textAlign: TextAlign.center),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Text-to-Speech placeholder (needs Edge Function backend)
+  // ---------------------------------------------------------------------------
+  void _showTtsPlaceholder() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF1A1A2E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final controller = TextEditingController();
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(ctx).viewInsets.bottom + 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+                ),
+                const SizedBox(height: 16),
+                const Text('Text-to-Speech', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 4),
+                Text('L\'IA lit le texte à voix haute', style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12)),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: controller,
+                  maxLines: 3,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'Écris le texte à lire...',
+                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+                    filled: true,
+                    fillColor: Colors.white.withValues(alpha: 0.06),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('🗣️ TTS sera disponible dans une prochaine mise à jour')),
+                      );
+                    },
+                    icon: const Icon(Icons.record_voice_over),
+                    label: const Text('Générer la voix'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE91E63),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Draft / Brouillon — local save
+  // ---------------------------------------------------------------------------
+  Future<void> _saveDraft() async {
+    try {
+      if (_localVideoPath == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Aucune vidéo à sauvegarder en brouillon')),
+        );
+        return;
+      }
+
+      // Save draft metadata to shared preferences
+      final prefs = await SharedPreferences.getInstance();
+      final draftData = {
+        'localVideoPath': _localVideoPath,
+        'fileName': _fileName,
+        'filter': _selectedFilter,
+        'sticker': _selectedSticker,
+        'voiceEffect': _activeVoiceEffect,
+        'isEnhanced': _isEnhanced,
+        'hdUpload': _hdUpload,
+        'savedAt': DateTime.now().toIso8601String(),
+      };
+      await prefs.setString('studio_draft', draftData.toString());
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('💾 Brouillon sauvegardé localement')),
+      );
+    } catch (e) {
+      debugPrint('[Draft] Error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur sauvegarde brouillon: $e')),
+        );
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // HD Upload toggle
+  // ---------------------------------------------------------------------------
+  bool _hdUpload = false;
+
+  // ---------------------------------------------------------------------------
+  // Voice Effects — real FFmpeg audio filters
+  // ---------------------------------------------------------------------------
+  Future<void> _applyVoiceEffect(String effect) async {
+    if (_localVideoPath == null || _isCompressing) return;
+    if (effect == 'none') {
+      setState(() => _activeVoiceEffect = 'none');
+      return;
+    }
+
+    setState(() => _isCompressing = true);
+
+    try {
+      final inputPath = _localVideoPath!;
+      final dir = await Directory.systemTemp.createTemp('acad_voice_');
+      final outputPath = '${dir.path}/voice_fx.mp4';
+
+      // FFmpeg audio filters per voice effect type
+      final filterMap = {
+        'robot': 'asetrate=44100*0.8,aresample=44100,atempo=1.25',
+        'echo': 'aecho=0.8:0.88:60:0.4',
+        'deep': 'asetrate=44100*0.7,aresample=44100,atempo=1.43',
+        'chipmunk': 'asetrate=44100*1.6,aresample=44100,atempo=0.625',
+      };
+
+      final audioFilter = filterMap[effect];
+      if (audioFilter == null) {
+        setState(() => _isCompressing = false);
+        return;
+      }
+
+      final cmd = '-i "$inputPath" -af "$audioFilter" -c:v copy -movflags +faststart -y "$outputPath"';
+
+      // DISABLED for release white-screen test
+      // debugPrint('[VoiceEffect] Running FFmpeg: $cmd');
+      // final session = await FFmpegKit.execute(cmd);
+      // final returnCode = await session.getReturnCode();
+      // if (!mounted) return;
+      // if (ReturnCode.isSuccess(returnCode)) {
+      //   final result = File(outputPath);
+      //   if (await result.exists()) {
+      //     final bytes = await result.readAsBytes();
+      //     setState(() {
+      //       _isCompressing = false;
+      //       _activeVoiceEffect = effect;
+      //       _videoBytes = bytes;
+      //       _localVideoPath = outputPath;
+      //     });
+      //     return;
+      //   }
+      // }
+      debugPrint('[VoiceEffect] DISABLED — FFmpegKit not available');
+      setState(() => _isCompressing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Effets vocaux temporairement désactivés')),
+      );
+    } catch (e) {
+      debugPrint('[VoiceEffect] Error: $e');
+      if (mounted) setState(() => _isCompressing = false);
+    }
+  }
+
   Future<void> _openAcademicPersonalizationSheet() async {
     if (_isSubmitting) {
       return;
@@ -1682,6 +2215,7 @@ class _StudentChallengeVideoEditorScreenState
     );
   }
 
+  // ignore: unused_element
   Future<void> _openIaToolsSheet() async {
     if (_isSubmitting) {
       return;
@@ -4030,9 +4564,332 @@ class _StudentChallengeVideoEditorScreenState
   }
 
   // ---------------------------------------------------------------------------
-  // Studio TikTok/CapCut — barre d'outils horizontale en bas
+  // Studio TikTok+ — Sidebar droite + Timeline bas + Menu Plus
   // ---------------------------------------------------------------------------
 
+  Widget _buildSidebarItem({
+    required IconData icon,
+    required String label,
+    VoidCallback? onTap,
+    Color? activeColor,
+  }) {
+    final enabled = onTap != null;
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: enabled
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : Colors.white.withValues(alpha: 0.05),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: activeColor ?? Colors.white, size: 20),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                color: enabled ? Colors.white : Colors.white38,
+                fontSize: 9,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSidebarRight() {
+    final busy = _isSubmitting;
+    return Container(
+      width: 56,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.centerRight,
+          end: Alignment.centerLeft,
+          colors: [
+            Colors.black.withValues(alpha: 0.6),
+            Colors.transparent,
+          ],
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildSidebarItem(
+            icon: Icons.edit_note,
+            label: 'Texte',
+            onTap: busy ? null : _openAcademicPersonalizationSheet,
+          ),
+          _buildSidebarItem(
+            icon: Icons.functions,
+            label: 'Maths',
+            onTap: busy ? null : _openScientificKeyboard,
+            activeColor: const Color(0xFF00D2FF),
+          ),
+          _buildSidebarItem(
+            icon: Icons.music_note_outlined,
+            label: 'Audio',
+            onTap: busy ? null : _openAudioStudioSheet,
+          ),
+          _buildSidebarItem(
+            icon: Icons.science_outlined,
+            label: 'Labo',
+            onTap: busy ? null : _openScientificStudio,
+            activeColor: const Color(0xFF1EA75C),
+          ),
+          _buildSidebarItem(
+            icon: Icons.emoji_emotions_outlined,
+            label: 'Stickers',
+            onTap: busy ? null : _openStickersSheet,
+          ),
+          _buildSidebarItem(
+            icon: Icons.auto_awesome,
+            label: 'Effets',
+            onTap: busy ? null : _openEffectsSheet,
+          ),
+          _buildSidebarItem(
+            icon: Icons.more_horiz,
+            label: 'Plus',
+            onTap: busy ? null : _openMoreToolsSheet,
+          ),
+          if (_isUploading)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: SizedBox(
+                width: 28,
+                height: 28,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      value: _uploadProgress,
+                      strokeWidth: 2.5,
+                      color: const Color(0xFF00D2FF),
+                    ),
+                    Text(
+                      '${(_uploadProgress * 100).toInt()}%',
+                      style: const TextStyle(color: Colors.white, fontSize: 7, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimelineBar() {
+    final busy = _isSubmitting;
+    return Container(
+      color: Colors.black.withAlpha(180),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildTimelineItem(
+            icon: Icons.content_cut,
+            label: 'Trim',
+            onTap: busy ? null : _openVideoEditor,
+          ),
+          _buildTimelineItem(
+            icon: Icons.speed,
+            label: 'Vitesse',
+            onTap: busy ? null : _openVideoEditor,
+          ),
+          _buildTimelineItem(
+            icon: Icons.swap_horiz,
+            label: 'Transitions',
+            onTap: busy || _isMerging
+                ? null
+                : (_capturedSegments != null && _capturedSegments!.length > 1
+                    ? () => _showMergeSegmentsDialog(_capturedSegments!)
+                    : null),
+          ),
+          _buildTimelineItem(
+            icon: Icons.add_box_outlined,
+            label: 'Zones',
+            onTap: busy ? null : _addZone,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimelineItem({
+    required IconData icon,
+    required String label,
+    VoidCallback? onTap,
+  }) {
+    final enabled = onTap != null;
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: enabled ? Colors.white70 : Colors.white24, size: 20),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              color: enabled ? Colors.white70 : Colors.white24,
+              fontSize: 9,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openMoreToolsSheet() {
+    final busy = _isSubmitting;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF1A1A2E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+                ),
+                const SizedBox(height: 16),
+                const Text('Outils avancés', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: [
+                    _moreToolItem(Icons.mic_outlined, 'Voix IA', const Color(0xFF00BCD4), () {
+                      Navigator.of(ctx).pop();
+                      _runTranscription();
+                    }),
+                    _moreToolItem(Icons.school_outlined, 'Analyse', const Color(0xFF7C4DFF), () {
+                      Navigator.of(ctx).pop();
+                      _runAnalysis();
+                    }),
+                    _moreToolItem(Icons.spellcheck, 'Corriger', const Color(0xFF26A69A), () {
+                      Navigator.of(ctx).pop();
+                      _runProofreadOverlayText();
+                    }),
+                    _moreToolItem(Icons.view_in_ar, 'AR 3D', const Color(0xFF9C27B0), () {
+                      Navigator.of(ctx).pop();
+                      _openArStudio();
+                    }),
+                    if (_isRenderingVideo)
+                      _moreToolRender()
+                    else
+                      _moreToolItem(Icons.movie_outlined, 'Rendu', const Color(0xFF1EA75C), () {
+                        Navigator.of(ctx).pop();
+                        _runVideoRender();
+                      }),
+                    _moreToolItem(Icons.video_file_outlined, 'Changer', const Color(0xFFFF9800), () {
+                      Navigator.of(ctx).pop();
+                      _pickVideo();
+                    }),
+                    if (_capturedSegments != null && _capturedSegments!.length > 1)
+                      _moreToolItem(Icons.merge, 'Fusionner', const Color(0xFF2196F3), () {
+                        Navigator.of(ctx).pop();
+                        _showMergeSegmentsDialog(_capturedSegments!);
+                      }),
+                    _moreToolItem(Icons.record_voice_over_outlined, 'TTS', const Color(0xFFE91E63), () {
+                      Navigator.of(ctx).pop();
+                      _showTtsPlaceholder();
+                    }),
+                    _moreToolItem(Icons.save_outlined, 'Brouillon', const Color(0xFF78909C), () {
+                      Navigator.of(ctx).pop();
+                      _saveDraft();
+                    }),
+                    if (_videoBytes != null && _uploadedUrl == null && !_isUploading)
+                      _moreToolItem(Icons.cloud_upload, 'Upload', const Color(0xFF00D2FF), () {
+                        Navigator.of(ctx).pop();
+                        _uploadVideo();
+                      }),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _moreToolItem(IconData icon, String label, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 72,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 48, height: 48,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(height: 4),
+            Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10), textAlign: TextAlign.center),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _moreToolRender() {
+    return SizedBox(
+      width: 72,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 48, height: 48,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: _renderProgress > 0 ? _renderProgress : null,
+                  strokeWidth: 3,
+                  color: const Color(0xFF1EA75C),
+                ),
+                Text(
+                  _renderProgress > 0 ? '${(_renderProgress * 100).toInt()}%' : '',
+                  style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text('Rendu...', style: TextStyle(color: Colors.white70, fontSize: 10)),
+        ],
+      ),
+    );
+  }
+
+  // Legacy toolbar item builder — kept for fallback/no-video mode
   Widget _buildStudioToolbarItem({
     required IconData icon,
     required String label,
@@ -4066,173 +4923,6 @@ class _StudentChallengeVideoEditorScreenState
                 fontWeight: FontWeight.w500,
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStudioToolbar() {
-    final busy = _isSubmitting;
-    return Container(
-      color: Colors.black.withAlpha(153),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Row(
-          children: [
-            // Upload button with progress indicator
-            if (_videoBytes != null && _uploadedUrl == null)
-              _isUploading
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(
-                            width: 44,
-                            height: 44,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                CircularProgressIndicator(
-                                  value: _uploadProgress,
-                                  strokeWidth: 3,
-                                  color: const Color(0xFF00D2FF),
-                                ),
-                                Text(
-                                  '${(_uploadProgress * 100).toInt()}%',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Upload...',
-                            style: TextStyle(color: Colors.white70, fontSize: 10),
-                          ),
-                        ],
-                      ),
-                    )
-                  : _buildStudioToolbarItem(
-                      icon: Icons.cloud_upload,
-                      label: 'Upload',
-                      onTap: busy ? null : _uploadVideo,
-                    ),
-            _buildStudioToolbarItem(
-              icon: Icons.add_box_outlined,
-              label: '+ Zone',
-              onTap: busy ? null : _addZone,
-            ),
-            _buildStudioToolbarItem(
-              icon: Icons.edit_note,
-              label: 'Texte',
-              onTap: busy ? null : _openAcademicPersonalizationSheet,
-            ),
-            _buildStudioToolbarItem(
-              icon: Icons.functions,
-              label: 'Écrire',
-              onTap: busy ? null : _openScientificKeyboard,
-            ),
-            _buildStudioToolbarItem(
-              icon: Icons.subtitles_outlined,
-              label: 'Sous-titres',
-              onTap: busy ? null : _openIaToolsSheet,
-            ),
-            _buildStudioToolbarItem(
-              icon: Icons.music_note_outlined,
-              label: 'Audio',
-              onTap: busy ? null : _openAudioStudioSheet,
-            ),
-            _buildStudioToolbarItem(
-              icon: Icons.science_outlined,
-              label: 'Tableau',
-              onTap: busy ? null : _openScientificStudio,
-            ),
-            _buildStudioToolbarItem(
-              icon: Icons.content_cut,
-              label: 'Trim',
-              onTap: busy ? null : _openVideoEditor,
-            ),
-            _buildStudioToolbarItem(
-              icon: Icons.view_in_ar,
-              label: 'AR 3D',
-              onTap: busy ? null : _openArStudio,
-            ),
-            _isRenderingVideo
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 44,
-                          height: 44,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              CircularProgressIndicator(
-                                value: _renderProgress > 0 ? _renderProgress : null,
-                                strokeWidth: 3,
-                                color: const Color(0xFF1EA75C),
-                              ),
-                              Text(
-                                _renderProgress > 0
-                                    ? '${(_renderProgress * 100).toInt()}%'
-                                    : '',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Rendu...',
-                          style: TextStyle(color: Colors.white70, fontSize: 10),
-                        ),
-                      ],
-                    ),
-                  )
-                : _buildStudioToolbarItem(
-                    icon: Icons.movie_outlined,
-                    label: 'Rendu',
-                    onTap: busy ? null : _runVideoRender,
-                  ),
-            _buildStudioToolbarItem(
-              icon: Icons.video_file_outlined,
-              label: 'Changer',
-              onTap: busy ? null : _pickVideo,
-            ),
-            // Show merge button if multiple segments captured
-            if (_capturedSegments != null && _capturedSegments!.length > 1 && !_isUploading)
-              _buildStudioToolbarItem(
-                icon: Icons.merge,
-                label: 'Fusionner',
-                onTap: busy || _isMerging ? null : () => _showMergeSegmentsDialog(_capturedSegments!),
-              ),
-            // Buttons for initial capture if no video yet
-            if (_videoBytes == null && _uploadedUrl == null) ...[
-              _buildStudioToolbarItem(
-                icon: Icons.videocam,
-                label: 'Filmer',
-                onTap: busy || _isCompressing ? null : _recordVideoWithCamera,
-              ),
-              _buildStudioToolbarItem(
-                icon: Icons.photo_library,
-                label: 'Galerie',
-                onTap: busy || _isCompressing ? null : _pickVideo,
-              ),
-            ],
           ],
         ),
       ),
@@ -4410,6 +5100,8 @@ class _StudentChallengeVideoEditorScreenState
           thumbnailBytes: _thumbnailBytes,
           pendingVideoAssetId: _pendingChallengeVideoAssetId,
           pendingPlayback: _pendingChallengePlayback,
+          localVideoPath: _localVideoPath,
+          videoDurationMs: _videoDurationMs,
         ),
       ),
     );
@@ -4510,6 +5202,43 @@ class _StudentChallengeVideoEditorScreenState
                     ),
                   ),
                   const Spacer(),
+                  // HD Upload toggle
+                  GestureDetector(
+                    onTap: () => setState(() => _hdUpload = !_hdUpload),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: _hdUpload
+                            ? const Color(0xFF00BCD4).withValues(alpha: 0.25)
+                            : Colors.black38,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: _hdUpload ? const Color(0xFF00BCD4) : Colors.transparent,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.hd_outlined,
+                            color: _hdUpload ? const Color(0xFF00BCD4) : Colors.white54,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            _hdUpload ? 'HD' : 'SD',
+                            style: TextStyle(
+                              color: _hdUpload ? const Color(0xFF00BCD4) : Colors.white54,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   GestureDetector(
                     onTap: _isSubmitting || _isUploading
                         ? null
@@ -4545,7 +5274,18 @@ class _StudentChallengeVideoEditorScreenState
               ),
             ),
 
-            // ── Timeline + Barre d'outils horizontale en bas ──
+            // ── Sidebar droite TikTok+ ──
+            Positioned(
+              right: 4,
+              top: topPad + 56,
+              bottom: bottomPad + 60,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: _buildSidebarRight(),
+              ),
+            ),
+
+            // ── Timeline bar + zones en bas ──
             Positioned(
               left: 0,
               right: 0,
@@ -4563,7 +5303,7 @@ class _StudentChallengeVideoEditorScreenState
                         _editZoneText(i);
                       },
                     ),
-                  _buildStudioToolbar(),
+                  _buildTimelineBar(),
                 ],
               ),
             ),

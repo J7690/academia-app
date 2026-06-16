@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../providers/prep_quiz_provider.dart';
 import '../../../theme/prep_theme.dart';
@@ -60,9 +61,17 @@ class PrepHomeTab extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // ─── Motivation quote ──────────────────────────────────
+          // ─── Actuality notifications opt-in ─────────────────
           FadeInUp(
             delay: const Duration(milliseconds: 400),
+            duration: const Duration(milliseconds: 500),
+            child: const _ActualityNotifCard(),
+          ),
+          const SizedBox(height: 16),
+
+          // ─── Motivation quote ──────────────────────────────────
+          FadeInUp(
+            delay: const Duration(milliseconds: 500),
             duration: const Duration(milliseconds: 500),
             child: const _MotivationCard(),
           ),
@@ -456,6 +465,145 @@ class _ActionTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Actuality Notifications Opt-in Card
+// ═══════════════════════════════════════════════════════════════════
+class _ActualityNotifCard extends StatefulWidget {
+  const _ActualityNotifCard();
+
+  @override
+  State<_ActualityNotifCard> createState() => _ActualityNotifCardState();
+}
+
+class _ActualityNotifCardState extends State<_ActualityNotifCard> {
+  bool _isEnabled = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreference();
+  }
+
+  Future<void> _loadPreference() async {
+    try {
+      final result = await Supabase.instance.client.rpc(
+        'app_student_get_actuality_preferences',
+      );
+      if (!mounted) return;
+      final data = result as Map<String, dynamic>?;
+      setState(() {
+        _isEnabled = data?['is_enabled'] == true;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _toggle(bool value) async {
+    setState(() => _isEnabled = value);
+    try {
+      await Supabase.instance.client.rpc(
+        'app_student_toggle_actuality_notifications',
+        params: {'p_enabled': value, 'p_min_score': 0.4},
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            value
+                ? 'Notifications actualites concours activees'
+                : 'Notifications actualites desactivees',
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isEnabled = !value);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erreur, reessayez'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: PrepTheme.cardBg,
+        borderRadius: BorderRadius.circular(PrepTheme.radiusLg),
+        border: Border.all(
+          color: _isEnabled
+              ? PrepTheme.primary.withOpacity(0.3)
+              : PrepTheme.divider,
+        ),
+        boxShadow: PrepTheme.softShadow,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: _isEnabled
+                    ? PrepTheme.headerGradient
+                    : [PrepTheme.textTertiary, PrepTheme.textTertiary],
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.newspaper_rounded, color: Colors.white, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Alertes Actualites Concours',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: PrepTheme.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Recevez les actualites susceptibles de tomber au concours',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: PrepTheme.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_isLoading)
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            Switch.adaptive(
+              value: _isEnabled,
+              onChanged: _toggle,
+              activeColor: PrepTheme.primary,
+            ),
+        ],
       ),
     );
   }

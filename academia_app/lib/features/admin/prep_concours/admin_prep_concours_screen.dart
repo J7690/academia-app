@@ -7,6 +7,7 @@ import '../../../providers/prep_concours_provider.dart';
 import '../admin_prep_screen.dart';
 import 'admin_prep_import_screen.dart';
 import 'admin_prep_upload_screen.dart';
+import 'admin_prep_direct_import_screen.dart';
 
 class AdminPrepConcoursScreen extends StatefulWidget {
   const AdminPrepConcoursScreen({super.key});
@@ -116,7 +117,7 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
                           ),
                           subtitle: grantedAt.isEmpty
                               ? null
-                              : Text('Depuis: $grantedAt'),
+                              : Text('Depuis : $grantedAt'),
                           trailing: Icon(
                             isActive ? Icons.check_circle : Icons.cancel,
                             color: isActive ? Colors.green : Colors.red,
@@ -138,7 +139,7 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Erreur entitlements: $e'),
+          content: Text('Erreur lors du chargement des accès : $e'),
         ),
       );
     }
@@ -204,8 +205,8 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Fenêtre: $days jour(s)'),
-                    Text('Total appels IA: $total'),
+                    Text('Période : $days jour(s)'),
+                    Text('Total appels IA : $total'),
                     const SizedBox(height: 12),
                     const Text(
                       'Par statut',
@@ -250,7 +251,7 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Erreur analytics IA: $e'),
+          content: Text('Erreur lors du chargement des analytics IA : $e'),
         ),
       );
     }
@@ -315,10 +316,10 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Total tentatives: $total'),
-                    Text('Réponses correctes: $correct'),
-                    Text('Précision globale: $accuracy %'),
-                    Text('Temps moyen: $avgTime s'),
+                    Text('Total tentatives : $total'),
+                    Text('Réponses correctes : $correct'),
+                    Text('Précision globale : $accuracy %'),
+                    Text('Temps moyen : $avgTime s'),
                     const SizedBox(height: 12),
                     const Text(
                       'Par matière',
@@ -355,7 +356,7 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Erreur stats tentatives: $e'),
+          content: Text('Erreur lors du chargement des stats : $e'),
         ),
       );
     }
@@ -381,15 +382,15 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
                     style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                   const SizedBox(height: 8),
-                  Text('status: ${gen.status}'),
+                  Text('Statut : ${gen.status}'),
                   if (gen.errorMessage != null) ...[
                     const SizedBox(height: 8),
-                    Text('error: ${gen.errorMessage}'),
+                    Text('Erreur : ${gen.errorMessage}'),
                   ],
                   if (outputText.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     const Text(
-                      'output_json',
+                      'Résultat JSON',
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 6),
@@ -841,6 +842,15 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
           IconButton(
             onPressed: () {
               Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AdminPrepDirectImportScreen()),
+              );
+            },
+            icon: const Icon(Icons.bolt, color: Colors.yellowAccent),
+            tooltip: 'Import direct (0 token)',
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const AdminPrepImportScreen()),
               );
             },
@@ -1088,7 +1098,7 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        'Docs: ${docs.length} • Générations: ${generations.length}',
+                        'Documents : ${docs.length} • Générations : ${generations.length}',
                         style: const TextStyle(color: Colors.grey),
                         textAlign: TextAlign.right,
                       ),
@@ -1130,7 +1140,7 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
                     ),
                     child: ListTile(
                       title: Text('Gen ${g.id.substring(0, 8)}…'),
-                      subtitle: Text('status: ${g.status} • type: ${g.generationType}'),
+                      subtitle: Text('Statut : ${g.status} • Type : ${g.generationType}'),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -1148,11 +1158,11 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
                                         SnackBar(
                                           content: Text(
                                             ok
-                                                ? 'Publication OK.'
+                                                ? 'Publication effectuée avec succès.'
                                                 : (context
                                                         .read<AdminPrepConcoursProvider>()
                                                         .error ??
-                                                    'Publication échouée.'),
+                                                    'La publication a échoué.'),
                                           ),
                                         ),
                                       );
@@ -1225,7 +1235,7 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
                         if (d.year != null) {
                           subtitleParts.add(d.year.toString());
                         }
-                        subtitleParts.add('status: ${d.status}');
+                        subtitleParts.add('Statut : ${d.status}');
                         return subtitleParts.join(' • ');
                       }()),
                       trailing: const Icon(Icons.chevron_right),

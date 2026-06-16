@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/student_application_files_provider.dart';
@@ -584,7 +585,7 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                               crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 const Text(
-                                  'Paiement de la candidature',
+                                  'Frais de courtage',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -592,30 +593,92 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                 TextButton.icon(
                                   onPressed: appId.isEmpty
                                       ? null
-                                      : () {
-                                          // Déterminer le montant dû
-                                          final rawDue = payments.isNotEmpty
-                                              ? payments.first['amount_due']
-                                              : null;
+                                      : () async {
+                                          // 1. TOUJOURS récupérer le frais de courtage admin
                                           double amountDue = 0;
-                                          if (rawDue is num) amountDue = rawDue.toDouble();
-                                          if (rawDue is String) amountDue = double.tryParse(rawDue) ?? 0;
-
-                                          if (amountDue <= 0) {
-                                            // Pas encore de paiement créé — créer d'abord
-                                            _showDeclarePaymentSheet(context);
+                                          try {
+                                            final feeResp = await Supabase.instance.client.rpc(
+                                              'app_get_program_brokerage_fee',
+                                              params: {'p_application_id': appId},
+                                            );
+                                            final feeData = feeResp as Map<String, dynamic>?;
+                                            if (feeData == null || feeData['success'] != true) {
+                                              if (!context.mounted) return;
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text(feeData?['error']?.toString() ?? 'Erreur r\u00e9cup\u00e9ration tarif')),
+                                              );
+                                              return;
+                                            }
+                                            final brokerageFee = (feeData['brokerage_fee'] as num?)?.toDouble() ?? 0;
+                                            if (brokerageFee <= 0) {
+                                              if (!context.mounted) return;
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Les frais de courtage ne sont pas encore d\u00e9finis pour ce programme.')),
+                                              );
+                                              return;
+                                            }
+                                            amountDue = brokerageFee;
+                                          } catch (e) {
+                                            if (!context.mounted) return;
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text('Erreur: $e')),
+                                            );
                                             return;
                                           }
 
-                                          final paymentId = payments.first['id']?.toString() ?? '';
-                                          if (paymentId.isEmpty) return;
+                                          // 2. Réutiliser paiement pending existant ou en créer un nouveau
+                                          String paymentId = '';
+                                          final existingPending = payments.isNotEmpty &&
+                                              payments.first['status'] == 'pending'
+                                              ? payments.first
+                                              : null;
+
+                                          if (existingPending != null) {
+                                            paymentId = existingPending['id']?.toString() ?? '';
+                                            // Synchroniser le montant avec le brokerage_fee admin
+                                            try {
+                                              await Supabase.instance.client.rpc(
+                                                'app_update_payment_amount_from_brokerage',
+                                                params: {'p_payment_id': paymentId},
+                                              );
+                                            } catch (_) {}
+                                          } else {
+                                            // Créer un nouveau paiement
+                                            try {
+                                              final resp = await Supabase.instance.client.rpc(
+                                                'app_create_application_payment',
+                                                params: {
+                                                  'p_application_id': appId,
+                                                  'p_payment_reason': 'application_fee',
+                                                  'p_amount_due': amountDue,
+                                                },
+                                              );
+                                              final data = resp as Map<String, dynamic>?;
+                                              if (data == null || data['success'] != true) {
+                                                if (!context.mounted) return;
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(content: Text(data?['error']?.toString() ?? 'Erreur cr\u00e9ation paiement')),
+                                                );
+                                                return;
+                                              }
+                                              paymentId = data['payment_id']?.toString() ?? '';
+                                            } catch (e) {
+                                              if (!context.mounted) return;
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text('Erreur: $e')),
+                                              );
+                                              return;
+                                            }
+                                          }
+
+                                          if (paymentId.isEmpty || !context.mounted) return;
 
                                           LigdiCashPaymentSheet.show(
                                             context: context,
                                             paymentType: 'application',
                                             paymentId: paymentId,
                                             amount: amountDue,
-                                            description: 'Frais de candidature',
+                                            description: 'Frais de courtage \u2014 candidature',
                                             onSuccess: () {
                                               paymentsProvider.loadPayments(appId);
                                             },

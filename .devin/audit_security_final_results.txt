@@ -1,0 +1,60 @@
+=== AUDIT SECURITE FINAL — user_admin_status ===
+
+--- 1. COMPTAGES ---
+Total lignes: {"ok": true, "mode": "select", "rows": [{"total": 25}]}
+is_deleted = TRUE: {"ok": true, "mode": "select", "rows": [{"cnt": 23}]}
+is_suspended = TRUE: {"ok": true, "mode": "select", "rows": [{"cnt": 24}]}
+deleted_at IS NOT NULL: {"ok": true, "mode": "select", "rows": [{"cnt": 23}]}
+deleted_at NOT NULL mais is_deleted = FALSE (incoherence): {"ok": true, "mode": "select", "rows": [{"cnt": 0}]}
+is_deleted = TRUE mais deleted_at NULL (incoherence): {"ok": true, "mode": "select", "rows": [{"cnt": 0}]}
+
+--- 2. LISTE DES COMPTES IMPACTES (sans PII) ---
+{
+  "ok": true,
+  "mode": "exec",
+  "affected_rows": 23
+}
+
+--- 3. ORIGINE VIA admin_user_action_logs ---
+{
+  "ok": true,
+  "mode": "exec",
+  "affected_rows": 42
+}
+
+--- 4. SESSIONS ACTIVES DES COMPTES IMPACTES ---
+{
+  "ok": true,
+  "mode": "exec",
+  "affected_rows": 11
+}
+
+--- 5. ETAT AUTH.USERS POUR COMPTES IMPACTES ---
+{
+  "ok": true,
+  "mode": "exec",
+  "affected_rows": 23
+}
+
+--- 6. CO-OCCURRENCE is_deleted + is_suspended ---
+{
+  "ok": true,
+  "mode": "exec",
+  "affected_rows": 3
+}
+
+--- 7. DELETED_REASON DISTINCTS ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "cnt": 22,
+      "deleted_reason": null
+    },
+    {
+      "cnt": 1,
+      "deleted_reason": "hard_delete"
+    }
+  ]
+}

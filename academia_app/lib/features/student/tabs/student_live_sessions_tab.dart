@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../providers/student_live_sessions_provider.dart';
-import '../../live/livekit_room_screen.dart';
+import '../../live/academia_classroom_screen.dart';
+import '../../../models/academia_session.dart';
 
 class StudentLiveSessionsTab extends StatefulWidget {
   const StudentLiveSessionsTab({super.key});
@@ -235,9 +236,23 @@ class _StudentLiveSessionsTabState extends State<StudentLiveSessionsTab> {
                                         ElevatedButton.icon(
                                           onPressed: () {
                                             if (sessionId == null || sessionId.isEmpty) return;
+                                            final academiaSession = AcademiaSession(
+                                              id: sessionId,
+                                              type: SessionType.course,
+                                              status: SessionStatus.running,
+                                              provider: SessionProvider.livekit,
+                                              title: title,
+                                              description: description.isNotEmpty ? description : null,
+                                              hostId: '',
+                                              createdAt: DateTime.now(),
+                                              updatedAt: DateTime.now(),
+                                            );
                                             Navigator.of(context).push(
                                               MaterialPageRoute(
-                                                builder: (_) => LivekitRoomScreen(sessionId: sessionId),
+                                                builder: (_) => AcademiaClassroomScreen(
+                                                  session: academiaSession,
+                                                  isHost: false,
+                                                ),
                                               ),
                                             );
                                           },

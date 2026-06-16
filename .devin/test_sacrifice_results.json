@@ -1,0 +1,146 @@
+[
+  {
+    "step": "CREATE USER (admin)",
+    "data": {
+      "status_code": 200,
+      "body": {
+        "id": "2985e1a7-1f5b-4ce3-bcb2-6aed8010b285",
+        "aud": "authenticated",
+        "role": "authenticated",
+        "email": "test.sacrifice.9c0111f7@academia.app",
+        "email_confirmed_at": "2026-06-04T16:28:18.974313546Z",
+        "phone": "",
+        "app_metadata": {
+          "provider": "email",
+          "providers": [
+            "email"
+          ]
+        },
+        "user_metadata": {
+          "email_verified": true,
+          "role": "student"
+        },
+        "identities": [
+          {
+            "identity_id": "18647446-f059-4c7c-a6f0-3c9da863e40e",
+            "id": "2985e1a7-1f5b-4ce3-bcb2-6aed8010b285",
+            "user_id": "2985e1a7-1f5b-4ce3-bcb2-6aed8010b285",
+            "identity_data": {
+              "email": "test.sacrifice.9c0111f7@academia.app",
+              "email_verified": false,
+              "phone_verified": false,
+              "sub": "2985e1a7-1f5b-4ce3-bcb2-6aed8010b285"
+            },
+            "provider": "email",
+            "last_sign_in_at": "2026-06-04T16:28:18.970327364Z",
+            "created_at": "2026-06-04T16:28:18.970382Z",
+            "updated_at": "2026-06-04T16:28:18.970382Z",
+            "email": "test.sacrifice.9c0111f7@academia.app"
+          }
+        ],
+        "created_at": "2026-06-04T16:28:18.958461Z",
+        "updated_at": "2026-06-04T16:28:18.975305Z",
+        "is_anonymous": false
+      }
+    }
+  },
+  {
+    "step": "SIGN IN",
+    "data": {
+      "status_code": 200,
+      "has_access_token": true
+    }
+  },
+  {
+    "step": "RPC app_student_request_account_deletion",
+    "data": {
+      "status_code": 200,
+      "body": {
+        "message": "Votre demande de suppression a ete prise en compte.",
+        "success": true,
+        "purge_due_at": "2026-08-03T16:28:37.151533+00:00"
+      }
+    }
+  },
+  {
+    "step": "POST user_admin_status",
+    "data": {
+      "ok": true,
+      "mode": "select",
+      "rows": [
+        {
+          "deleted_at": "2026-06-04T16:28:37.151533+00:00",
+          "is_deleted": true,
+          "is_suspended": true,
+          "purge_due_at": "2026-08-03T16:28:37.151533+00:00",
+          "deletion_method": "self_service",
+          "deletion_requested_at": "2026-06-04T16:28:37.151533+00:00"
+        }
+      ]
+    }
+  },
+  {
+    "step": "POST auth.users banned",
+    "data": {
+      "ok": true,
+      "mode": "select",
+      "rows": [
+        {
+          "banned_until": "2099-12-31T23:59:59+00:00"
+        }
+      ]
+    }
+  },
+  {
+    "step": "POST auth.sessions count",
+    "data": {
+      "ok": true,
+      "mode": "select",
+      "rows": [
+        {
+          "sessions": 0
+        }
+      ]
+    }
+  },
+  {
+    "step": "HISTORICAL accounts deletion_method",
+    "data": {
+      "ok": true,
+      "mode": "select",
+      "rows": [
+        {
+          "cnt": 23,
+          "deletion_method": null
+        },
+        {
+          "cnt": 1,
+          "deletion_method": "self_service"
+        }
+      ]
+    }
+  },
+  {
+    "step": "CRON eligibility (should be 0)",
+    "data": {
+      "ok": true,
+      "mode": "select",
+      "rows": [
+        {
+          "eligible": 0
+        }
+      ]
+    }
+  },
+  {
+    "step": "RE-LOGIN attempt",
+    "data": {
+      "status_code": 400,
+      "body": {
+        "code": 400,
+        "error_code": "user_banned",
+        "msg": "User is banned"
+      }
+    }
+  }
+]

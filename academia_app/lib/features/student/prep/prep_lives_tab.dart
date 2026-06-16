@@ -4,7 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../theme/prep_theme.dart';
-import '../../live/livekit_room_screen.dart';
+import '../../live/academia_classroom_screen.dart';
+import '../../../models/academia_session.dart';
 
 /// Onglet Lives — Sessions live concours planifiées par les enseignants.
 class PrepLivesTab extends StatefulWidget {
@@ -130,8 +131,31 @@ class _PrepLivesTabState extends State<PrepLivesTab> {
 
     if (provider == 'livekit') {
       if (mounted) {
+        final title = (session['title'] ?? '').toString();
+        final desc = (session['description'] ?? '').toString();
+        final sessionType = session['session_type']?.toString();
+        final academiaSession = AcademiaSession(
+          id: sessionId,
+          type: sessionType == 'exam_blanc'
+              ? SessionType.examBlanc
+              : sessionType == 'qa'
+                  ? SessionType.revisionCollective
+                  : SessionType.prepConcours,
+          status: SessionStatus.running,
+          provider: SessionProvider.livekit,
+          title: title,
+          description: desc.isNotEmpty ? desc : null,
+          concoursType: session['concours_type']?.toString(),
+          subject: session['subject_name']?.toString(),
+          hostId: '',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
         Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => LivekitRoomScreen(sessionId: sessionId),
+          builder: (_) => AcademiaClassroomScreen(
+            session: academiaSession,
+            isHost: false,
+          ),
         ));
       }
     } else if (joinUrl.isNotEmpty) {

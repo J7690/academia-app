@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/student_direct_messages_provider.dart';
 import '../../widgets/academia_rich_content.dart';
+import '../../widgets/report_content_sheet.dart';
 import '../../widgets/academia_math_input.dart';
 import 'community_audio_recorder.dart'
     if (dart.library.html) 'community_audio_recorder_stub.dart';
@@ -406,6 +407,17 @@ class _StudentDmChatScreenState extends State<StudentDmChatScreen> {
             foregroundColor: Colors.white,
             leadingWidth: 30,
             titleSpacing: 0,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.more_vert),
+                onPressed: () => UserModerationSheet.show(
+                  context,
+                  userId: widget.otherUserId,
+                  userName: widget.otherUserName,
+                ),
+                tooltip: 'Signaler / Bloquer',
+              ),
+            ],
             title: Row(
               children: [
                 CircleAvatar(
@@ -523,19 +535,53 @@ class _StudentDmChatScreenState extends State<StudentDmChatScreen> {
                                         : Alignment.centerLeft,
                                     child: GestureDetector(
                                       onLongPress: () {
-                                        if (content.isNotEmpty) {
-                                          Clipboard.setData(
-                                              ClipboardData(text: content));
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                              content:
-                                                  Text('Message copié'),
-                                              duration:
-                                                  Duration(seconds: 1),
+                                        final msgId = m['id']?.toString();
+                                        showModalBottomSheet(
+                                          context: context,
+                                          builder: (ctx) => SafeArea(
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                if (content.isNotEmpty)
+                                                  ListTile(
+                                                    leading: const Icon(Icons.copy),
+                                                    title: const Text('Copier'),
+                                                    onTap: () {
+                                                      Clipboard.setData(ClipboardData(text: content));
+                                                      Navigator.pop(ctx);
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        const SnackBar(content: Text('Message copié'), duration: Duration(seconds: 1)),
+                                                      );
+                                                    },
+                                                  ),
+                                                if (isMine && msgId != null)
+                                                  ListTile(
+                                                    leading: const Icon(Icons.delete_outline, color: Colors.red),
+                                                    title: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+                                                    onTap: () async {
+                                                      Navigator.pop(ctx);
+                                                      final provider = context.read<StudentDirectMessagesProvider>();
+                                                      await provider.deleteDmMessage(msgId);
+                                                    },
+                                                  ),
+                                                if (!isMine)
+                                                  ListTile(
+                                                    leading: const Icon(Icons.flag_outlined, color: Colors.orange),
+                                                    title: const Text('Signaler'),
+                                                    onTap: () {
+                                                      Navigator.pop(ctx);
+                                                      if (msgId != null) {
+                                                        ReportContentSheet.show(context,
+                                                          contentType: 'message', contentId: msgId,
+                                                          targetUserId: widget.otherUserId,
+                                                          contentPreview: content.length > 80 ? '${content.substring(0, 80)}...' : content);
+                                                      }
+                                                    },
+                                                  ),
+                                              ],
                                             ),
-                                          );
-                                        }
+                                          ),
+                                        );
                                       },
                                       child: Container(
                                         margin: EdgeInsets.only(

@@ -17,21 +17,39 @@ class LigdiCashService {
     required String paymentType,
     required String paymentId,
     required String phoneNumber,
+    String operator = '',
+    double? amountOverride,
   }) async {
     try {
-      debugPrint('[LigdiCash] initiatePayment: type=$paymentType, id=$paymentId, phone=$phoneNumber');
+      debugPrint('[LigdiCash] initiatePayment: type=$paymentType, id=$paymentId, phone=$phoneNumber, override=$amountOverride');
+      final body = <String, dynamic>{
+        'payment_type': paymentType,
+        'payment_id': paymentId,
+        'phone_number': phoneNumber,
+        'operator': operator,
+      };
+      if (amountOverride != null && amountOverride > 0) {
+        body['amount_override'] = amountOverride;
+      }
       final response = await _client.functions.invoke(
         'ligdicash-initiate',
-        body: {
-          'payment_type': paymentType,
-          'payment_id': paymentId,
-          'phone_number': phoneNumber,
-        },
+        body: body,
       );
 
       final data = _parseResponse(response);
       debugPrint('[LigdiCash] initiatePayment response: $data');
       return data;
+    } on FunctionException catch (e) {
+      debugPrint('[LigdiCash] initiatePayment FunctionException: status=${e.status} body=${e.details}');
+      try {
+        final body = e.details;
+        if (body is Map) return Map<String, dynamic>.from(body);
+        if (body is String) {
+          final decoded = jsonDecode(body);
+          if (decoded is Map) return Map<String, dynamic>.from(decoded);
+        }
+      } catch (_) {}
+      return {'success': false, 'error': 'ligdicash_error', 'details': e.details?.toString() ?? e.toString()};
     } catch (e, st) {
       debugPrint('[LigdiCash] initiatePayment error: $e\n$st');
       return {'success': false, 'error': 'network_error', 'details': e.toString()};
@@ -60,6 +78,18 @@ class LigdiCashService {
       final data = _parseResponse(response);
       debugPrint('[LigdiCash] confirmOtp response: $data');
       return data;
+    } on FunctionException catch (e) {
+      debugPrint('[LigdiCash] confirmOtp FunctionException: status=${e.status} body=${e.details}');
+      // Extract real error message from Edge Function response
+      try {
+        final body = e.details;
+        if (body is Map) return Map<String, dynamic>.from(body);
+        if (body is String) {
+          final decoded = jsonDecode(body);
+          if (decoded is Map) return Map<String, dynamic>.from(decoded);
+        }
+      } catch (_) {}
+      return {'success': false, 'error': 'ligdicash_error', 'details': e.details?.toString() ?? e.toString()};
     } catch (e, st) {
       debugPrint('[LigdiCash] confirmOtp error: $e\n$st');
       return {'success': false, 'error': 'network_error', 'details': e.toString()};

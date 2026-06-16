@@ -51,7 +51,7 @@ class PushNotificationService {
           await Firebase.initializeApp(
             options: const FirebaseOptions(
               apiKey: 'AIzaSyB_9r-GJ9KdbgTTjZHhav9DZpoCSuh63qA',
-              appId: '1:593442809911:web:3d63c267fcc760123af7b2',
+              appId: '1:593442809911:web:e921b64da1f6548c3af7b2',
               messagingSenderId: '593442809911',
               projectId: 'academia-e2c41',
               storageBucket: 'academia-e2c41.firebasestorage.app',
@@ -168,7 +168,9 @@ class PushNotificationService {
   /// Obtient le token FCM avec retry automatique si SERVICE_NOT_AVAILABLE.
   Future<void> _getAndRegisterToken() async {
     try {
-      final token = await FirebaseMessaging.instance.getToken();
+      final token = await FirebaseMessaging.instance.getToken(
+        vapidKey: kIsWeb ? 'BP3rPKB3QdiPOrKBV-rdz4dzkFJsBDUAtMDcKo_-RWIjMgM5pkwzptYdKuAMjvE_lCy0T5rL-E_RN1fqrzyOod0' : null,
+      );
       if (token != null && token.isNotEmpty) {
         debugPrint('[PUSH] FCM token obtained: ${token.substring(0, 20)}...');
         await _registerToken(token);

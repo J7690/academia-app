@@ -27,7 +27,9 @@ class _PrepAiTabState extends State<PrepAiTab> {
       content:
           'Salut ! 👋 Je suis ton tuteur IA pour la préparation aux concours. '
           'Pose-moi n\'importe quelle question : exercices de maths, droit constitutionnel, '
-          'culture générale, méthodologie de dissertation… Je suis là pour t\'aider ! 🎯',
+          'culture générale, méthodologie de dissertation… Je suis là pour t\'aider ! 🎯\n\n'
+          '⚠️ _Les réponses IA sont fournies à titre indicatif et peuvent contenir des erreurs. '
+          'Elles ne remplacent pas un enseignant qualifié._',
     ));
     _initConversation();
   }

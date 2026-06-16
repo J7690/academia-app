@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../providers/student_challenges_provider.dart';
 import '../../video/academia_playback_engine.dart';
 import '../../widgets/video_overlays_layer.dart';
+import '../../widgets/report_content_sheet.dart';
 import 'student_profile_screen.dart';
 
 /// TikTok-style social profile screen.
@@ -132,13 +133,25 @@ class _StudentSocialProfileScreenState
               ),
               child: Column(
                 children: [
-                  // Back button
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    ),
+                  // Back button + report/block
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      ),
+                      if (!_isOwnProfile)
+                        IconButton(
+                          onPressed: () => UserModerationSheet.show(
+                            context,
+                            userId: widget.userId,
+                            userName: _displayName,
+                          ),
+                          icon: const Icon(Icons.more_vert, color: Colors.white),
+                          tooltip: 'Signaler / Bloquer',
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   // Avatar

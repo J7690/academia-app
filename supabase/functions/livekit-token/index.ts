@@ -137,89 +137,102 @@ serve(async (req: Request) => {
   }
 
   const sessionId = body.session_id as string;
+  // Optional: caller specifies 'academia' to force unified table lookup
+  const sessionSource = (body.session_source as string) ?? 'auto';
+
   if (!sessionId) {
     return jsonResponse({ success: false, error: 'session_id requis.' }, 400);
   }
 
-  // Look up the session in DB to get room name and validate access
-  // Try prep_live_sessions first, then online_course_live_sessions
+  // ── Lookup strategy: unified table first, then legacy tables ────────
   let sessionData: Record<string, unknown> | null = null;
-  let sessionType = '';
+  let sessionType = 'legacy';
+  let isHost = false;
+  let roomName = `session_${sessionId}`;
 
-  const { data: prepSession } = await supabase
-    .from('prep_live_sessions')
-    .select('id, title, status, teacher_id')
-    .eq('id', sessionId)
-    .single();
-
-  if (prepSession) {
-    sessionData = prepSession;
-    sessionType = 'prep';
-  } else {
-    const { data: courseSession } = await supabase
-      .from('online_course_live_sessions')
-      .select('id, title, status, instructor_id')
-      .eq('id', sessionId)
-      .single();
-
-    if (courseSession) {
-      sessionData = courseSession;
-      sessionType = 'course';
+  // 1. Try academia_sessions (unified Learning Engine)
+  if (sessionSource !== 'legacy') {
+    const { data: unifiedData } = await supabase.rpc(
+      'livekit_lookup_academia_session',
+      { p_session_id: sessionId, p_user_id: user.id },
+    );
+    if (unifiedData && typeof unifiedData === 'object') {
+      sessionData = unifiedData as Record<string, unknown>;
+      sessionType = 'academia';
     }
   }
 
+  // 2. Fallback: legacy lookup for old tables
   if (!sessionData) {
-    return jsonResponse({ success: false, error: 'Session introuvable.' }, 404);
+    const { data: legacyData, error: lookupError } = await supabase.rpc(
+      'livekit_lookup_session',
+      { p_session_id: sessionId },
+    );
+    if (lookupError || !legacyData) {
+      return jsonResponse({ success: false, error: 'Session introuvable.' }, 404);
+    }
+    sessionData = legacyData as Record<string, unknown>;
+    sessionType = (sessionData.session_type as string) ?? 'course';
   }
 
-  // Check session is active
+  // ── Status check ─────────────────────────────────────────────────────
   const status = sessionData.status as string;
-  if (status !== 'live' && status !== 'scheduled' && status !== 'active' && status !== 'running' && status !== 'approved') {
+  const allowedStatuses = ['live', 'scheduled', 'active', 'running', 'approved', 'draft'];
+  if (!allowedStatuses.includes(status)) {
     return jsonResponse({
       success: false,
       error: `Session non accessible (statut: ${status}).`,
     }, 403);
   }
 
-  // Determine if user is the host (teacher/instructor)
-  const isHost = sessionType === 'prep'
-    ? user.id === sessionData.teacher_id
-    : user.id === (sessionData as Record<string, unknown>).instructor_id;
+  // ── Determine host ────────────────────────────────────────────────────
+  if (sessionType === 'academia') {
+    isHost = user.id === (sessionData.host_id as string);
+  } else if (sessionType === 'prep') {
+    isHost = user.id === sessionData.teacher_id;
+  } else if (sessionType === 'game') {
+    isHost = user.id === sessionData.user_id;
+  } else {
+    isHost = user.id === sessionData.instructor_id;
+  }
 
-  // Get user display name
-  const { data: studentData } = await supabase
-    .from('students')
-    .select('full_name')
-    .eq('id', user.id)
-    .single();
+  // ── Room name ──────────────────────────────────────────────────────────
+  if (sessionData.livekit_room_name) {
+    roomName = sessionData.livekit_room_name as string;
+  }
 
-  const displayName = (studentData?.full_name as string) ?? user.email ?? user.id;
+  // ── Display name ──────────────────────────────────────────────────────
+  const { data: displayNameResult } = await supabase.rpc(
+    'livekit_get_user_display_name',
+    { p_user_id: user.id },
+  );
+  const displayName = (displayNameResult as string) ?? user.email ?? user.id;
 
-  // Room name = session ID (unique per session)
-  const roomName = `session_${sessionId}`;
-
-  // Generate token
+  // ── Generate LiveKit JWT ───────────────────────────────────────────────
   const token = await generateLiveKitToken({
     apiKey: LIVEKIT_API_KEY,
     apiSecret: LIVEKIT_API_SECRET,
     roomName,
     participantIdentity: user.id,
     participantName: displayName,
-    canPublish: isHost, // Only host can publish by default
+    canPublish: isHost,
     canSubscribe: true,
     ttlSeconds: 3600 * 4, // 4 hours
   });
 
-  // Register participant in DB
-  if (sessionType === 'prep') {
+  // ── Register participant ───────────────────────────────────────────────
+  if (sessionType === 'academia') {
+    // Unified join — tracked via app_learning_join_session RPC called by Flutter
+    // (already done in AcademiaSessionProvider.joinSession before token request)
+  } else if (sessionType === 'prep') {
     await supabase.rpc('app_prep_student_join_live_session', {
       p_session_id: sessionId,
-    });
-  } else {
+    }).catch(() => null);
+  } else if (sessionType === 'course') {
     await supabase.rpc('app_register_online_course_live_session_participant', {
       p_session_id: sessionId,
       p_user_id: user.id,
-    });
+    }).catch(() => null);
   }
 
   return jsonResponse({
@@ -230,5 +243,6 @@ serve(async (req: Request) => {
     identity: user.id,
     display_name: displayName,
     is_host: isHost,
+    session_type: sessionType,
   });
 });

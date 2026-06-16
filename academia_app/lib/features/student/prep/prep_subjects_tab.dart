@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:provider/provider.dart';
 
+import '../../../providers/prep_concours_provider.dart';
 import '../../../theme/prep_theme.dart';
+import '../prep_concours/prep_sujet_blanc_exam_screen.dart';
 
-/// Onglet Sujets — Banque d'épreuves par concours, année, matière.
+/// Onglet Sujets — Sujets blancs générés par l'IA + possibilité d'en demander un nouveau.
 class PrepSubjectsTab extends StatefulWidget {
   const PrepSubjectsTab({super.key});
 
@@ -12,379 +15,313 @@ class PrepSubjectsTab extends StatefulWidget {
 }
 
 class _PrepSubjectsTabState extends State<PrepSubjectsTab> {
-  String _selectedConcours = 'Tous';
-  String _selectedYear = 'Toutes';
-  String _selectedSubject = 'Toutes';
+  String _selectedConcours = '';
+  bool _initialized = false;
 
-  static const _concoursList = ['Tous', 'ENAREF', 'ADMIN_CIVIL', 'DOUANE', 'GREFFIERS', 'SANTE', 'EDUCATION', 'GRH', 'PARAMILITAIRE'];
-  static const _yearsList = ['Toutes', '2026', '2025', '2024', '2023', '2022', '2021'];
-  static const _subjectsList = [
-    'Toutes',
-    'Culture Générale',
-    'Actualités BF',
-    'Droit Constitutionnel',
-    'Droit Administratif',
-    'Économie',
-    'Finances Publiques',
-    'Fiscalité',
-    'Français',
-    'Tests Psychotechniques',
-    'Mathématiques',
-  ];
+  static const _concoursTypes = <String, String>{
+    '': 'Tous',
+    'TOUS': 'Général',
+    'ENAREF': 'ENAREF',
+    'ADMIN_CIVIL': 'Admin Civil',
+    'GREFFIERS': 'Greffiers',
+    'GRH': 'GRH',
+    'DOUANE': 'Douane',
+    'PARAMILITAIRE': 'Paramilitaire',
+    'EDUCATION': 'Éducation',
+  };
 
   @override
-  Widget build(BuildContext context) {
-    final papers = _getDemoPapers();
-
-    return Column(
-      children: [
-        // ─── Filters ─────────────────────────────────────────────
-        Container(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          child: Column(
-            children: [
-              // Search bar
-              FadeInDown(
-                duration: const Duration(milliseconds: 350),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: PrepTheme.cardBg,
-                    borderRadius: BorderRadius.circular(PrepTheme.radiusFull),
-                    border: Border.all(color: PrepTheme.divider),
-                    boxShadow: PrepTheme.softShadow,
-                  ),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Rechercher un sujet, une épreuve…',
-                      hintStyle: TextStyle(color: PrepTheme.textTertiary, fontSize: 14),
-                      prefixIcon: const Icon(Icons.search, color: PrepTheme.textTertiary, size: 20),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Filter chips
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _FilterDropdown(
-                      label: 'Concours',
-                      value: _selectedConcours,
-                      items: _concoursList,
-                      color: PrepTheme.xpPurple,
-                      onChanged: (v) => setState(() => _selectedConcours = v),
-                    ),
-                    const SizedBox(width: 8),
-                    _FilterDropdown(
-                      label: 'Année',
-                      value: _selectedYear,
-                      items: _yearsList,
-                      color: PrepTheme.primary,
-                      onChanged: (v) => setState(() => _selectedYear = v),
-                    ),
-                    const SizedBox(width: 8),
-                    _FilterDropdown(
-                      label: 'Matière',
-                      value: _selectedSubject,
-                      items: _subjectsList,
-                      color: PrepTheme.success,
-                      onChanged: (v) => setState(() => _selectedSubject = v),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // ─── Papers list ─────────────────────────────────────────
-        Expanded(
-          child: papers.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.folder_open, size: 48, color: PrepTheme.textTertiary),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Aucun sujet trouvé',
-                        style: TextStyle(color: PrepTheme.textTertiary),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: papers.length,
-                  itemBuilder: (context, index) {
-                    final paper = papers[index];
-                    return FadeInUp(
-                      delay: Duration(milliseconds: 40 * index),
-                      duration: const Duration(milliseconds: 350),
-                      child: _PaperCard(paper: paper),
-                    );
-                  },
-                ),
-        ),
-      ],
-    );
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialized) return;
+    _initialized = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<PrepConcoursProvider>().loadExamBlancs();
+    });
   }
 
-  List<_ExamPaper> _getDemoPapers() {
-    final all = <_ExamPaper>[
-      _ExamPaper(
-        title: 'Épreuve de Culture Générale',
-        concours: 'ENAM',
-        year: '2024',
-        subject: 'Culture Générale',
-        isOfficial: true,
-        hasCorrection: true,
-        difficulty: 3,
-      ),
-      _ExamPaper(
-        title: 'Épreuve de Droit Administratif',
-        concours: 'ENAM',
-        year: '2024',
-        subject: 'Droit',
-        isOfficial: true,
-        hasCorrection: true,
-        difficulty: 4,
-      ),
-      _ExamPaper(
-        title: 'Mathématiques — Série C',
-        concours: 'BAC',
-        year: '2024',
-        subject: 'Mathématiques',
-        isOfficial: true,
-        hasCorrection: true,
-        difficulty: 3,
-      ),
-      _ExamPaper(
-        title: 'Épreuve de Français',
-        concours: 'BEPC',
-        year: '2024',
-        subject: 'Français',
-        isOfficial: true,
-        hasCorrection: false,
-        difficulty: 2,
-      ),
-      _ExamPaper(
-        title: 'Économie Politique',
-        concours: 'ENAM',
-        year: '2023',
-        subject: 'Économie',
-        isOfficial: true,
-        hasCorrection: true,
-        difficulty: 4,
-      ),
-      _ExamPaper(
-        title: 'Relations Internationales',
-        concours: 'IRIC',
-        year: '2023',
-        subject: 'Culture Générale',
-        isOfficial: true,
-        hasCorrection: false,
-        difficulty: 4,
-      ),
-      _ExamPaper(
-        title: 'Physique-Chimie — Série D',
-        concours: 'BAC',
-        year: '2023',
-        subject: 'Physique-Chimie',
-        isOfficial: true,
-        hasCorrection: true,
-        difficulty: 3,
-      ),
-      _ExamPaper(
-        title: 'Pédagogie Générale',
-        concours: 'ENS',
-        year: '2024',
-        subject: 'Culture Générale',
-        isOfficial: true,
-        hasCorrection: false,
-        difficulty: 3,
-      ),
-      _ExamPaper(
-        title: 'Biologie — SVT',
-        concours: 'BAC',
-        year: '2024',
-        subject: 'Biologie',
-        isOfficial: true,
-        hasCorrection: true,
-        difficulty: 2,
-      ),
-      _ExamPaper(
-        title: 'Droit Constitutionnel',
-        concours: 'ENAM',
-        year: '2022',
-        subject: 'Droit',
-        isOfficial: true,
-        hasCorrection: true,
-        difficulty: 5,
-      ),
-    ];
-
-    return all.where((p) {
-      if (_selectedConcours != 'Tous' && p.concours != _selectedConcours) return false;
-      if (_selectedYear != 'Toutes' && p.year != _selectedYear) return false;
-      if (_selectedSubject != 'Toutes' && p.subject != _selectedSubject) return false;
-      return true;
-    }).toList();
-  }
-}
-
-// ─── Models ──────────────────────────────────────────────────────
-class _ExamPaper {
-  final String title;
-  final String concours;
-  final String year;
-  final String subject;
-  final bool isOfficial;
-  final bool hasCorrection;
-  final int difficulty;
-
-  const _ExamPaper({
-    required this.title,
-    required this.concours,
-    required this.year,
-    required this.subject,
-    this.isOfficial = false,
-    this.hasCorrection = false,
-    this.difficulty = 1,
-  });
-}
-
-// ─── Widgets ─────────────────────────────────────────────────────
-class _FilterDropdown extends StatelessWidget {
-  final String label;
-  final String value;
-  final List<String> items;
-  final Color color;
-  final ValueChanged<String> onChanged;
-
-  const _FilterDropdown({
-    required this.label,
-    required this.value,
-    required this.items,
-    required this.color,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _showPicker(context),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(PrepTheme.radiusFull),
-          border: Border.all(color: color.withOpacity(0.2)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '$label: $value',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(Icons.keyboard_arrow_down, size: 16, color: color),
-          ],
-        ),
-      ),
-    );
+  void _onFilterChanged(String type) {
+    setState(() => _selectedConcours = type);
+    context
+        .read<PrepConcoursProvider>()
+        .loadExamBlancs(concoursType: type.isEmpty ? null : type);
   }
 
-  void _showPicker(BuildContext context) {
-    showModalBottomSheet<void>(
+  Future<void> _requestGeneration() async {
+    final type = _selectedConcours.isNotEmpty ? _selectedConcours : 'TOUS';
+    final label = _concoursTypes[type] ?? type;
+
+    final confirm = await showDialog<bool>(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      builder: (ctx) => AlertDialog(
+        title: const Text('Générer un nouveau sujet'),
+        content: Text(
+          'L\'IA va composer un sujet blanc complet pour "$label".\n\nCela peut prendre 30 à 60 secondes.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Générer'),
+          ),
+        ],
       ),
-      builder: (ctx) => SafeArea(
+    );
+
+    if (confirm != true || !mounted) return;
+
+    final provider = context.read<PrepConcoursProvider>();
+    final success = await provider.requestNewExamBlanc(concoursType: type);
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? 'Nouveau sujet blanc généré !'
+              : 'Erreur lors de la génération. Réessaie.',
+        ),
+        backgroundColor: success ? PrepTheme.success : Colors.red,
+      ),
+    );
+  }
+
+  Future<void> _openExam(ExamBlanc exam) async {
+    final provider = context.read<PrepConcoursProvider>();
+    final fullExam = await provider.getExamBlanc(exam.id);
+    if (fullExam == null || !mounted) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Impossible de charger ce sujet.')),
+        );
+      }
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PrepSujetBlancExamScreen(exam: fullExam),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<PrepConcoursProvider>(
+      builder: (context, provider, _) {
+        return Stack(
+          children: [
+            Column(
+              children: [
+                // ─── Filter chips ──────────────────────────────────
+                Container(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _concoursTypes.entries.map((e) {
+                        final isSelected = _selectedConcours == e.key;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: FilterChip(
+                            label: Text(e.value,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isSelected ? Colors.white : PrepTheme.textSecondary,
+                                )),
+                            selected: isSelected,
+                            selectedColor: PrepTheme.primary,
+                            backgroundColor: PrepTheme.cardBg,
+                            side: BorderSide(
+                              color: isSelected ? PrepTheme.primary : PrepTheme.divider,
+                            ),
+                            showCheckmark: false,
+                            onSelected: (_) => _onFilterChanged(e.key),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+
+                // ─── Generating banner ─────────────────────────────
+                if (provider.isGeneratingExam)
+                  FadeInDown(
+                    duration: const Duration(milliseconds: 300),
+                    child: Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: PrepTheme.primarySurface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: PrepTheme.primary.withAlpha(60)),
+                      ),
+                      child: Row(
+                        children: [
+                          const SizedBox(
+                            width: 18, height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2, color: PrepTheme.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'L\'IA compose votre sujet blanc…',
+                              style: TextStyle(fontSize: 13, color: PrepTheme.primary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // ─── Exam list ─────────────────────────────────────
+                Expanded(child: _buildList(provider)),
+              ],
+            ),
+
+            // ─── FAB: generate new exam ──────────────────────────
+            if (!provider.isGeneratingExam)
+              Positioned(
+                right: 16,
+                bottom: 16,
+                child: FloatingActionButton.extended(
+                  heroTag: 'fab_generate_exam',
+                  onPressed: _requestGeneration,
+                  backgroundColor: PrepTheme.primary,
+                  icon: const Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+                  label: const Text(
+                    'Nouveau sujet',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildList(PrepConcoursProvider provider) {
+    if (provider.isLoading && provider.examBlancs.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(color: PrepTheme.primary),
+      );
+    }
+
+    if (provider.examBlancs.isEmpty) {
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(label,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            Icon(Icons.assignment_outlined, size: 48, color: PrepTheme.textTertiary),
+            const SizedBox(height: 12),
+            const Text(
+              'Aucun sujet blanc disponible',
+              style: TextStyle(color: PrepTheme.textTertiary, fontSize: 14),
             ),
-            const Divider(height: 1),
-            ...items.map((item) => ListTile(
-                  title: Text(item),
-                  trailing: item == value
-                      ? Icon(Icons.check_circle, color: color, size: 20)
-                      : null,
-                  onTap: () {
-                    onChanged(item);
-                    Navigator.of(ctx).pop();
-                  },
-                )),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
+            const Text(
+              'Appuie sur "Nouveau sujet" pour en générer un.',
+              style: TextStyle(color: PrepTheme.textTertiary, fontSize: 12),
+            ),
           ],
         ),
+      );
+    }
+
+    return RefreshIndicator(
+      color: PrepTheme.primary,
+      onRefresh: () => provider.loadExamBlancs(
+        concoursType: _selectedConcours.isEmpty ? null : _selectedConcours,
+      ),
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        itemCount: provider.examBlancs.length,
+        itemBuilder: (context, index) {
+          final exam = provider.examBlancs[index];
+          return FadeInUp(
+            delay: Duration(milliseconds: 40 * index),
+            duration: const Duration(milliseconds: 350),
+            child: _ExamBlancCard(
+              exam: exam,
+              onTap: () => _openExam(exam),
+            ),
+          );
+        },
       ),
     );
   }
 }
 
-class _PaperCard extends StatelessWidget {
-  final _ExamPaper paper;
+// ─── Exam Blanc Card ──────────────────────────────────────────────────
+class _ExamBlancCard extends StatelessWidget {
+  final ExamBlanc exam;
+  final VoidCallback onTap;
 
-  const _PaperCard({required this.paper});
+  const _ExamBlancCard({required this.exam, required this.onTap});
 
-  Color get _concoursColor {
-    switch (paper.concours) {
-      case 'ENAM':
+  Color get _typeColor {
+    switch (exam.concoursType) {
+      case 'ENAREF':
         return const Color(0xFF7C3AED);
-      case 'ENS':
+      case 'ADMIN_CIVIL':
         return const Color(0xFF0891B2);
-      case 'ENSET':
-        return const Color(0xFFEA580C);
-      case 'BAC':
-        return const Color(0xFF059669);
-      case 'BEPC':
-        return const Color(0xFF6366F1);
-      case 'IRIC':
+      case 'GREFFIERS':
         return const Color(0xFFDB2777);
+      case 'GRH':
+        return const Color(0xFFEA580C);
+      case 'DOUANE':
+        return const Color(0xFF059669);
+      case 'PARAMILITAIRE':
+        return const Color(0xFF6366F1);
+      case 'EDUCATION':
+        return const Color(0xFF0D9488);
       default:
-        return PrepTheme.textTertiary;
+        return PrepTheme.primary;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final hasScore = exam.userBestScore != null;
+    final scoreColor = hasScore
+        ? (exam.userBestScore! >= 70
+            ? PrepTheme.success
+            : exam.userBestScore! >= 50
+                ? Colors.orange
+                : Colors.red)
+        : PrepTheme.textTertiary;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      decoration: PrepTheme.cardBox(),
+      decoration: PrepTheme.cardBox(
+        borderColor: exam.alreadyTaken ? scoreColor.withAlpha(60) : null,
+      ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(PrepTheme.radiusLg),
-          onTap: () => _showPaperDetail(context),
+          onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
               children: [
                 // Icon
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 48, height: 48,
                   decoration: BoxDecoration(
-                    color: _concoursColor.withOpacity(0.1),
+                    color: _typeColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.description, color: _concoursColor, size: 24),
+                  child: Icon(Icons.assignment, color: _typeColor, size: 24),
                 ),
                 const SizedBox(width: 14),
                 // Content
@@ -393,7 +330,7 @@ class _PaperCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        paper.title,
+                        exam.title,
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -405,240 +342,38 @@ class _PaperCard extends StatelessWidget {
                         spacing: 6,
                         runSpacing: 4,
                         children: [
-                          PrepTheme.chip(paper.concours, _concoursColor),
-                          PrepTheme.chip(paper.year, PrepTheme.textSecondary),
-                          if (paper.isOfficial)
-                            PrepTheme.chip('Officiel', PrepTheme.success),
-                          if (paper.hasCorrection)
-                            PrepTheme.chip('Corrigé', PrepTheme.primary),
+                          PrepTheme.chip(
+                            exam.concoursType == 'TOUS' ? 'Général' : exam.concoursType,
+                            _typeColor,
+                          ),
+                          PrepTheme.chip(
+                            '${exam.totalQuestions} Q',
+                            PrepTheme.textSecondary,
+                          ),
+                          PrepTheme.chip(
+                            '${exam.durationMinutes} min',
+                            PrepTheme.textSecondary,
+                          ),
+                          if (exam.alreadyTaken && hasScore)
+                            PrepTheme.chip(
+                              '${exam.userBestScore!.toStringAsFixed(0)}%',
+                              scoreColor,
+                            ),
                         ],
                       ),
                     ],
                   ),
                 ),
-                // Difficulty dots
-                Column(
-                  children: [
-                    ...List.generate(5, (i) => Container(
-                          width: 6,
-                          height: 6,
-                          margin: const EdgeInsets.only(bottom: 2),
-                          decoration: BoxDecoration(
-                            color: i < paper.difficulty
-                                ? _concoursColor
-                                : PrepTheme.divider,
-                            shape: BoxShape.circle,
-                          ),
-                        )),
-                  ],
+                // Action hint
+                Icon(
+                  exam.alreadyTaken ? Icons.replay : Icons.play_arrow,
+                  color: _typeColor,
+                  size: 22,
                 ),
               ],
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  void _showPaperDetail(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.3,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (_, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: PrepTheme.divider,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Header
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: PrepTheme.gradientBox(
-                  [_concoursColor, _concoursColor.withOpacity(0.8)],
-                  radius: 16,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      paper.title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        _whiteChip(paper.concours),
-                        _whiteChip(paper.year),
-                        _whiteChip(paper.subject),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Actions
-              Row(
-                children: [
-                  Expanded(
-                    child: _ActionButton(
-                      icon: Icons.visibility,
-                      label: 'Voir le sujet',
-                      color: PrepTheme.primary,
-                      onTap: () {
-                        Navigator.of(ctx).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Le viewer PDF sera connecté au backend Supabase.')),
-                        );
-                      },
-                    ),
-                  ),
-                  if (paper.hasCorrection) ...[
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _ActionButton(
-                        icon: Icons.check_circle,
-                        label: 'Voir le corrigé',
-                        color: PrepTheme.success,
-                        onTap: () {
-                          Navigator.of(ctx).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Le corrigé sera connecté au backend Supabase.')),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 12),
-              _ActionButton(
-                icon: Icons.auto_awesome,
-                label: 'Générer un quiz depuis ce sujet (IA)',
-                color: PrepTheme.xpPurple,
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('La génération IA de quiz sera connectée prochainement.')),
-                  );
-                },
-              ),
-              const SizedBox(height: 20),
-              // Info
-              const Text('Informations',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 12),
-              _InfoRow(label: 'Concours', value: paper.concours),
-              _InfoRow(label: 'Année', value: paper.year),
-              _InfoRow(label: 'Matière', value: paper.subject),
-              _InfoRow(label: 'Difficulté', value: '${'⭐' * paper.difficulty}'),
-              _InfoRow(label: 'Officiel', value: paper.isOfficial ? 'Oui' : 'Non'),
-              _InfoRow(label: 'Corrigé disponible', value: paper.hasCorrection ? 'Oui' : 'Non'),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _whiteChip(String label) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(PrepTheme.radiusFull),
-        ),
-        child: Text(label,
-            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
-      );
-}
-
-class _ActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _ActionButton({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(PrepTheme.radiusMd),
-          border: Border.all(color: color.withOpacity(0.2)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _InfoRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Text(label,
-              style: const TextStyle(fontSize: 13, color: PrepTheme.textTertiary)),
-          const Spacer(),
-          Text(value,
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w600, color: PrepTheme.textPrimary)),
-        ],
       ),
     );
   }

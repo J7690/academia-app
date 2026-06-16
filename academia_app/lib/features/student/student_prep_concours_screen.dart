@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/prep_quiz_provider.dart';
+import '../../widgets/credit_balance_chip.dart';
 import '../../theme/prep_theme.dart';
 import '../share/share_service.dart';
 import '../share/share_mode_provider.dart';
@@ -137,6 +138,8 @@ class _StudentPrepConcoursScreenState extends State<StudentPrepConcoursScreen> {
                       PrepTheme.gradientBox(PrepTheme.headerGradient, radius: 0),
                 ),
                 actions: [
+                  const CreditBalanceChip(),
+                  const SizedBox(width: 4),
                   Consumer<ShareModeProvider>(
                     builder: (context, shareMode, _) {
                       final isBusy = shareMode.isBusy;

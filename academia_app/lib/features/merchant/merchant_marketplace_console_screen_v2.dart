@@ -1333,26 +1333,26 @@ class _MerchantMarketplaceConsoleScreenV2State
                 ),
               ),
               const SizedBox(height: 16),
-              // Payout button
-              SizedBox(
+              // Auto-payout info
+              Container(
                 width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: available is num && (available as num) > 0
-                      ? () => _requestMerchantPayout(context)
-                      : null,
-                  icon: const Icon(Icons.account_balance_wallet, size: 18),
-                  label: Text(
-                    available is num && (available as num) > 0
-                        ? 'Retirer ${_formatMoney(available, currency)}'
-                        : 'Aucun solde à retirer',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF16A34A),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECFDF5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF6EE7B7)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.autorenew, color: Color(0xFF059669), size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Les versements sont automatiques vers votre compte LigdiCash.',
+                        style: TextStyle(fontSize: 12, color: const Color(0xFF065F46)),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 24),
@@ -1361,7 +1361,7 @@ class _MerchantMarketplaceConsoleScreenV2State
               _revenueInfoRow(Icons.shopping_cart, 'Un client passe commande et paie via LigdiCash'),
               _revenueInfoRow(Icons.lock, 'Le montant est bloqué en escrow jusqu\'à la livraison'),
               _revenueInfoRow(Icons.check_circle, 'Après livraison, l\'escrow est libéré'),
-              _revenueInfoRow(Icons.account_balance_wallet, 'Vous pouvez retirer votre solde disponible'),
+              _revenueInfoRow(Icons.account_balance_wallet, 'Votre part est automatiquement transférée vers votre compte LigdiCash'),
             ],
           ),
         );
@@ -1395,65 +1395,6 @@ class _MerchantMarketplaceConsoleScreenV2State
       return balance ?? {};
     } catch (_) {
       return {};
-    }
-  }
-
-  Future<void> _requestMerchantPayout(BuildContext context) async {
-    final phoneController = TextEditingController();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Retirer mes revenus'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Saisissez votre numéro mobile money pour recevoir vos revenus.', style: TextStyle(fontSize: 13)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: phoneController,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Numéro mobile money',
-                hintText: '226 7X XX XX XX',
-                prefixIcon: Icon(Icons.phone_android),
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white),
-            child: const Text('Retirer'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !context.mounted) return;
-    final phone = phoneController.text.trim();
-    if (phone.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Numéro invalide.')));
-      return;
-    }
-    try {
-      final client = Supabase.instance.client;
-      final resp = await client.rpc('app_merchant_request_payout', params: {'p_phone': phone});
-      final data = resp as Map<String, dynamic>?;
-      if (!context.mounted) return;
-      if (data != null && data['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Retrait demandé : ${data['amount']} XOF vers $phone')),
-        );
-        setState(() {}); // refresh
-      } else {
-        final err = data?['error']?.toString() ?? 'Erreur';
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err == 'no_funds_available' ? 'Aucun solde à retirer.' : 'Erreur : $err')));
-      }
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur : $e')));
     }
   }
 

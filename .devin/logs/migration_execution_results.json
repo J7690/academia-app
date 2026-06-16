@@ -1,0 +1,122 @@
+[
+  {
+    "cmd": "ALTER FUNCTION app.app_prep_teacher_list_assignments() SET SCHEMA public;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "ALTER FUNCTION app.app_prep_teacher_upsert_assignment(uuid, text, text, text, text, text, jsonb, jsonb, timestamp with time zone, integer, boolean, text) SET SCHEMA public;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "ALTER FUNCTION app.app_prep_teacher_list_submissions(uuid) SET SCHEMA public;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "ALTER FUNCTION app.app_prep_teacher_grade_submission(uuid, integer, text) SET SCHEMA public;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "ALTER FUNCTION app.app_prep_teacher_list_live_sessions() SET SCHEMA public;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "ALTER FUNCTION app.app_prep_teacher_upsert_live_session(uuid, text, text, text, text, text, text, text, timestamp with time zone, timestamp with time zone, text, integer, uuid) SET SCHEMA public;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "ALTER FUNCTION app.app_prep_teacher_start_live_session(uuid) SET SCHEMA public;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "ALTER FUNCTION app.app_prep_teacher_end_live_session(uuid) SET SCHEMA public;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "GRANT EXECUTE ON FUNCTION public.app_prep_teacher_list_assignments() TO authenticated;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "GRANT EXECUTE ON FUNCTION public.app_prep_teacher_list_assignments() TO service_role;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "GRANT EXECUTE ON FUNCTION public.app_prep_teacher_upsert_assignment(uuid, text, text, text, text, text, jsonb, jsonb, timestamp with time zone, integer, boolean, text) TO authenticated;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "GRANT EXECUTE ON FUNCTION public.app_prep_teacher_upsert_assignment(uuid, text, text, text, text, text, jsonb, jsonb, timestamp with time zone, integer, boolean, text) TO service_role;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "GRANT EXECUTE ON FUNCTION public.app_prep_teacher_list_submissions(uuid) TO authenticated;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "GRANT EXECUTE ON FUNCTION public.app_prep_teacher_list_submissions(uuid) TO service_role;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "GRANT EXECUTE ON FUNCTION public.app_prep_teacher_grade_submission(uuid, integer, text) TO authenticated;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "GRANT EXECUTE ON FUNCTION public.app_prep_teacher_grade_submission(uuid, integer, text) TO service_role;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "GRANT EXECUTE ON FUNCTION public.app_prep_teacher_list_live_sessions() TO authenticated;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "GRANT EXECUTE ON FUNCTION public.app_prep_teacher_list_live_sessions() TO service_role;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "GRANT EXECUTE ON FUNCTION public.app_prep_teacher_upsert_live_session(uuid, text, text, text, text, text, text, text, timestamp with time zone, timestamp with time zone, text, integer, uuid) TO authenticated;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "GRANT EXECUTE ON FUNCTION public.app_prep_teacher_upsert_live_session(uuid, text, text, text, text, text, text, text, timestamp with time zone, timestamp with time zone, text, integer, uuid) TO service_role;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "GRANT EXECUTE ON FUNCTION public.app_prep_teacher_start_live_session(uuid) TO authenticated;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "GRANT EXECUTE ON FUNCTION public.app_prep_teacher_start_live_session(uuid) TO service_role;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "GRANT EXECUTE ON FUNCTION public.app_prep_teacher_end_live_session(uuid) TO authenticated;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  },
+  {
+    "cmd": "GRANT EXECUTE ON FUNCTION public.app_prep_teacher_end_live_session(uuid) TO service_role;",
+    "status": "error",
+    "error": "HTTP 404: {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.execute_any_sql with parameter sql_query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":\"Perhaps you meant to call the function public.execute_sql\",\"message\":\"Could not find the function public.execute_any_sql(sql_query) in the schema cache\"}"
+  }
+]

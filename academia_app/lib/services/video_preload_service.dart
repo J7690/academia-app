@@ -8,8 +8,8 @@ import 'package:http/http.dart' as http;
 class VideoPreloadService {
   VideoPreloadService._();
 
-  static const int _preloadBytes = 256 * 1024; // 256 KB
-  static const int _maxConcurrent = 2;
+  static const int _preloadBytes = 1024 * 1024; // 1 MB — enough for ~2s of 480p video
+  static const int _maxConcurrent = 3;
   static const Duration _timeout = Duration(seconds: 8);
 
   static final Set<String> _preloadedUrls = {};

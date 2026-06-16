@@ -70,13 +70,27 @@ class LigdiCashPaymentSheet extends StatefulWidget {
 class _LigdiCashPaymentSheetState extends State<LigdiCashPaymentSheet> {
   final _phoneController = TextEditingController();
   final _otpController = TextEditingController();
+  late final TextEditingController _amountController;
   String _selectedOperator = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _amountController =
+        TextEditingController(text: widget.amount.toStringAsFixed(0));
+  }
 
   @override
   void dispose() {
     _phoneController.dispose();
     _otpController.dispose();
+    _amountController.dispose();
     super.dispose();
+  }
+
+  double get _enteredAmount {
+    final raw = _amountController.text.trim().replaceAll(' ', '');
+    return double.tryParse(raw) ?? widget.amount;
   }
 
   @override
@@ -141,9 +155,9 @@ class _LigdiCashPaymentSheetState extends State<LigdiCashPaymentSheet> {
                 ),
                 const SizedBox(height: 16),
 
-                // Amount card
+                // Amount card (editable)
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFF1EA75C), Color(0xFF16A34A)],
@@ -151,18 +165,47 @@ class _LigdiCashPaymentSheetState extends State<LigdiCashPaymentSheet> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _amountController,
+                          enabled: provider.state != LigdiCashState.waitingOtp &&
+                              provider.state != LigdiCashState.confirming &&
+                              provider.state != LigdiCashState.success,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            isCollapsed: true,
+                            contentPadding: EdgeInsets.symmetric(vertical: 4),
+                          ),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
                       Text(
-                        '${widget.amount.toStringAsFixed(0)} ${widget.currency}',
+                        widget.currency,
                         style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
                           color: Colors.white,
                         ),
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Montant modifiable. Minimum 10 ${widget.currency}.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 20),
 
@@ -248,10 +291,26 @@ class _LigdiCashPaymentSheetState extends State<LigdiCashPaymentSheet> {
                       );
                       return;
                     }
+                    if (_selectedOperator.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Veuillez choisir un op\u00e9rateur (Orange, Moov ou Telecel).')),
+                      );
+                      return;
+                    }
+                    final amt = _enteredAmount;
+                    if (amt < 10) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Le montant minimum est de 10 XOF.')),
+                      );
+                      return;
+                    }
+                    final override = (amt - widget.amount).abs() > 0.5 ? amt : null;
                     provider.initiatePayment(
                       paymentType: widget.paymentType,
                       paymentId: widget.paymentId,
                       phoneNumber: phone,
+                      operator: _selectedOperator,
+                      amountOverride: override,
                     );
                   },
             style: ElevatedButton.styleFrom(
@@ -264,7 +323,7 @@ class _LigdiCashPaymentSheetState extends State<LigdiCashPaymentSheet> {
                 ? const SizedBox(
                     width: 22, height: 22,
                     child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                : const Text('Envoyer le code OTP',
+                : const Text('Continuer',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           ),
         ),
@@ -278,29 +337,68 @@ class _LigdiCashPaymentSheetState extends State<LigdiCashPaymentSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF0FDF4),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFBBF7D0)),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.sms, color: Color(0xFF16A34A), size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  provider.message ?? 'Un code OTP a été envoyé à votre téléphone.',
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF166534)),
+        // USSD code instruction — l'utilisateur doit composer ce code pour recevoir l'OTP
+        if (provider.ussdCode != null && provider.ussdCode!.isNotEmpty && provider.ussdCode != 'null') ...[
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF7ED),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFFED7AA)),
+            ),
+            child: Column(
+              children: [
+                const Icon(Icons.dialpad, color: Color(0xFFEA580C), size: 32),
+                const SizedBox(height: 10),
+                const Text('Composez ce code sur votre t\u00e9l\u00e9phone :',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF9A3412))),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFFED7AA), width: 2),
+                  ),
+                  child: Text(
+                    provider.ussdCode!,
+                    style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFFEA580C), letterSpacing: 2),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 10),
+                const Text(
+                  'Vous recevrez un code OTP. Saisissez-le ci-dessous.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Color(0xFF9A3412)),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 20),
-
-        const Text('Saisissez le code reçu par SMS',
+          const SizedBox(height: 16),
+        ] else ...[
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFBBF7D0)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline, color: Color(0xFF16A34A), size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    provider.message ?? 'Composez le code USSD de votre op\u00e9rateur pour recevoir le code OTP.',
+                    style: const TextStyle(fontSize: 13, color: Color(0xFF166534)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+        const Text('Saisissez le code re\u00e7u',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         const SizedBox(height: 10),
         TextField(

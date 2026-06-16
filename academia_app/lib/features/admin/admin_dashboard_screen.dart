@@ -23,8 +23,7 @@ import 'admin_landing_screen.dart';
 import 'admin_student_home_screen.dart';
 import 'admin_hero_accueil_screen.dart';
 import 'admin_hero_video_encoder_screen.dart';
-import 'admin_user_invitations_screen.dart';
-import 'admin_commercials_screen.dart';
+import 'admin_accounts_screen.dart';
 import 'admin_commission_rules_screen.dart';
 import '../../providers/admin_commission_rules_provider.dart';
 import 'admin_td_screen.dart';
@@ -34,11 +33,10 @@ import 'admin_marketplace_control_tower_screen.dart';
 import '../../services/push_trigger_service.dart';
 import 'admin_support_screen.dart';
 import '../../providers/admin_support_provider.dart';
-import 'admin_treasury_screen.dart';
-import 'admin_payouts_screen.dart';
-import 'admin_subscriptions_screen.dart';
-import 'admin_revenue_split_screen.dart';
-import 'admin_actor_balances_screen.dart';
+import 'admin_finance_screen.dart';
+import 'admin_pricing_screen.dart';
+import 'admin_moderation_screen.dart';
+import 'admin_analytics_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -55,6 +53,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   bool _hasNewCommunities = false;
   bool _hasNewBobodo = false;
   bool _hasNewPrepConcours = false;
+  bool _hasNewSupport = false;
   Timer? _pollingTimer;
   int _lastAdminUnreadCount = 0;
   bool _adminUnreadInitialized = false;
@@ -97,6 +96,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       final adminCommunities = summary['admin_communities'];
       final adminBobodo = summary['admin_bobodo'];
       final adminPrepConcours = summary['admin_prep_concours'];
+      final adminSupport = summary['admin_support'];
 
       final hasNewUniversity =
           adminContent is Map && adminContent['has_new'] == true;
@@ -112,6 +112,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           adminBobodo is Map && adminBobodo['has_new'] == true;
       final hasNewPrepConcours =
           adminPrepConcours is Map && adminPrepConcours['has_new'] == true;
+      final hasNewSupport =
+          adminSupport is Map && adminSupport['has_new'] == true;
       if (!mounted) return;
       if (!_adminContentNotificationInitialized) {
         _adminContentNotificationInitialized = true;
@@ -123,6 +125,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _hasNewCommunities = hasNewCommunities;
           _hasNewBobodo = hasNewBobodo;
           _hasNewPrepConcours = hasNewPrepConcours;
+          _hasNewSupport = hasNewSupport;
         });
         return;
       }
@@ -133,6 +136,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       final previousCommunities = _hasNewCommunities;
       final previousBobodo = _hasNewBobodo;
       final previousPrepConcours = _hasNewPrepConcours;
+      final previousSupport = _hasNewSupport;
       final willPlaySound =
           (!previousUniversity && hasNewUniversity) ||
           (!previousShort && hasNewShort) ||
@@ -140,7 +144,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           (!previousOpportunities && hasNewOpportunities) ||
           (!previousCommunities && hasNewCommunities) ||
           (!previousBobodo && hasNewBobodo) ||
-          (!previousPrepConcours && hasNewPrepConcours);
+          (!previousPrepConcours && hasNewPrepConcours) ||
+          (!previousSupport && hasNewSupport);
       if (willPlaySound) {
         try {
           await NotificationSoundService.instance.playIfEnabled();
@@ -154,6 +159,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
          _hasNewCommunities = hasNewCommunities;
          _hasNewBobodo = hasNewBobodo;
          _hasNewPrepConcours = hasNewPrepConcours;
+         _hasNewSupport = hasNewSupport;
       });
     } catch (_) {}
   }
@@ -236,6 +242,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     });
   }
 
+  Future<void> _markAdminSupportSeen() async {
+    final client = Supabase.instance.client;
+    try {
+      await client.rpc('app_mark_domain_seen', params: {
+        'p_domain': 'admin_support',
+      });
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _hasNewSupport = false;
+    });
+  }
+
   Future<void> _markAdminPrepConcoursSeen() async {
     final client = Supabase.instance.client;
     try {
@@ -277,7 +296,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 29,
+      length: 27,
       child: Consumer<AdminApplicationsProvider>(
         builder: (context, applicationsProvider, child) {
           final unread = applicationsProvider.unreadCount;
@@ -339,6 +358,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     _markAdminBobodoSeen();
                   } else if (index == 13) {
                     _markAdminPrepConcoursSeen();
+                  } else if (index == 22) {
+                    _markAdminSupportSeen();
                   }
                 },
                 tabs: [
@@ -395,17 +416,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const Tab(text: 'Landing'),
                   const Tab(text: 'Hero / Accueil TV'),
                   const Tab(text: 'Hero Video Studio'),
-                  const Tab(text: 'Commerciaux'),
+                  const Tab(text: '👥 Comptes'),
                   const Tab(text: 'Grille commissions'),
-                  const Tab(text: 'Comptes utilisateurs'),
                   const Tab(text: 'TD'),
                   const Tab(text: 'Communication'),
-                  const Tab(text: 'Support'),
-                  const Tab(text: 'Trésorerie'),
-                  const Tab(text: 'Payouts'),
-                  const Tab(text: 'Abonnements'),
-                  const Tab(text: 'Répartition revenus'),
-                  const Tab(text: 'Soldes acteurs'),
+                  Tab(
+                    child: _AdminDotLabel(
+                      text: '🚨 Support',
+                      hasNew: _hasNewSupport,
+                    ),
+                  ),
+                  const Tab(text: '💰 Finance'),
+                  const Tab(text: '💰 Tarification'),
+                  const Tab(text: '🚨 Modération UGC'),
+                  const Tab(text: '📊 Analytics'),
                 ],
               ),
             ),
@@ -429,23 +453,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 AdminLandingScreen(),
                 AdminHeroAccueilScreen(),
                 AdminHeroVideoEncoderScreen(),
-                AdminCommercialsScreen(),
+                const AdminAccountsScreen(),
                 ChangeNotifierProvider(
                   create: (_) => AdminCommissionRulesProvider(),
                   child: const AdminCommissionRulesScreen(),
                 ),
-                AdminUserInvitationsScreen(),
                 AdminTdScreen(),
                 AdminAcademicCommunicationScreen(),
                 ChangeNotifierProvider(
                   create: (_) => AdminSupportProvider(),
                   child: const AdminSupportScreen(),
                 ),
-                const AdminTreasuryScreen(),
-                const AdminPayoutsScreen(),
-                const AdminSubscriptionsScreen(),
-                const AdminRevenueSplitScreen(),
-                const AdminActorBalancesScreen(),
+                const AdminFinanceScreen(),
+                const AdminPricingScreen(),
+                const AdminModerationScreen(),
+                const AdminAnalyticsScreen(),
               ],
             ),
           );

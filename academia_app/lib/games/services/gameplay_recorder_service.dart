@@ -6,8 +6,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
-import 'package:ffmpeg_kit_flutter_new_audio/ffmpeg_kit.dart';
-import 'package:ffmpeg_kit_flutter_new_audio/return_code.dart';
+// import 'package:ffmpeg_kit_flutter_new_audio/ffmpeg_kit.dart';
+// import 'package:ffmpeg_kit_flutter_new_audio/return_code.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_compress/video_compress.dart';
 
@@ -24,9 +24,12 @@ class GameplayRecorderService {
   static int _frameCount = 0;
   static String? _framesDir;
   static GlobalKey? _boundaryKey;
+  static bool _isCapturing = false;
+  static int _captureErrors = 0;
 
   /// Fréquence de capture en images par seconde.
-  static const int _fps = 10;
+  /// 8 fps = bon compromis pour téléphones budget (TECNO etc.)
+  static const int _fps = 8;
 
   static bool get isRecording => _isRecording;
 
@@ -54,14 +57,24 @@ class GameplayRecorderService {
       await Directory(_framesDir!).create(recursive: true);
 
       _frameCount = 0;
+      _captureErrors = 0;
+      _isCapturing = false;
       _isRecording = true;
+
+      debugPrint('[GameplayRecorder] Enregistrement démarré ($_fps fps)');
+      debugPrint('[GameplayRecorder] Frames dir: $_framesDir');
+      debugPrint('[GameplayRecorder] BoundaryKey context: ${_boundaryKey?.currentContext != null}');
+
+      // Délai initial pour laisser le widget tree se stabiliser
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      if (!_isRecording) return false; // annulé entre-temps
+
+      debugPrint('[GameplayRecorder] BoundaryKey context après délai: ${_boundaryKey?.currentContext != null}');
 
       _captureTimer = Timer.periodic(
         Duration(milliseconds: 1000 ~/ _fps),
         (_) => _captureFrame(),
       );
-
-      debugPrint('[GameplayRecorder] Enregistrement démarré ($_fps fps)');
       return true;
     } catch (e) {
       debugPrint('[GameplayRecorder] Erreur démarrage: $e');
@@ -72,25 +85,50 @@ class GameplayRecorderService {
 
   /// Capture une frame du RepaintBoundary et la sauvegarde en PNG.
   static Future<void> _captureFrame() async {
-    if (!_isRecording || _boundaryKey == null || _framesDir == null) return;
+    if (!_isRecording || _boundaryKey == null || _framesDir == null) {
+      if (_captureErrors == 0) debugPrint('[GameplayRecorder] Skip: recording=$_isRecording key=${_boundaryKey != null} dir=${_framesDir != null}');
+      return;
+    }
+    if (_isCapturing) return; // Éviter captures concurrentes
+    _isCapturing = true;
 
     try {
-      final boundary = _boundaryKey!.currentContext?.findRenderObject()
-          as RenderRepaintBoundary?;
-      if (boundary == null) return;
+      final ctx = _boundaryKey!.currentContext;
+      if (ctx == null) {
+        _captureErrors++;
+        if (_captureErrors <= 5) debugPrint('[GameplayRecorder] ctx==null (err=$_captureErrors)');
+        return;
+      }
 
-      final image = await boundary.toImage(pixelRatio: 1.0);
+      final ro = ctx.findRenderObject();
+      if (ro is! RenderRepaintBoundary) {
+        _captureErrors++;
+        if (_captureErrors <= 5) debugPrint('[GameplayRecorder] RenderObject=${ro.runtimeType} pas RenderRepaintBoundary (err=$_captureErrors)');
+        return;
+      }
+
+      // pixelRatio 1.0 pour compatibilité téléphones budget
+      final image = await ro.toImage(pixelRatio: 1.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       image.dispose();
 
-      if (byteData == null) return;
+      if (byteData == null) {
+        _captureErrors++;
+        if (_captureErrors <= 5) debugPrint('[GameplayRecorder] byteData==null (err=$_captureErrors)');
+        return;
+      }
 
       final frameNum = _frameCount.toString().padLeft(6, '0');
       final framePath = '$_framesDir/frame_$frameNum.png';
       await File(framePath).writeAsBytes(byteData.buffer.asUint8List());
       _frameCount++;
+      if (_frameCount == 1) debugPrint('[GameplayRecorder] ✓ Première frame capturée! (${byteData.lengthInBytes} bytes)');
+      if (_frameCount % 50 == 0) debugPrint('[GameplayRecorder] $_frameCount frames capturées...');
     } catch (e) {
-      // Silently skip failed frames
+      _captureErrors++;
+      if (_captureErrors <= 10) debugPrint('[GameplayRecorder] Capture error #$_captureErrors: $e');
+    } finally {
+      _isCapturing = false;
     }
   }
 
@@ -106,7 +144,7 @@ class GameplayRecorderService {
     _captureTimer = null;
     _isRecording = false;
 
-    debugPrint('[GameplayRecorder] Arrêt — $_frameCount frames capturées');
+    debugPrint('[GameplayRecorder] Arrêt — $_frameCount frames capturées (errors=$_captureErrors)');
 
     if (_frameCount == 0 || _framesDir == null) {
       debugPrint('[GameplayRecorder] Aucune frame capturée');
@@ -118,34 +156,33 @@ class GameplayRecorderService {
       final tempDir = await getTemporaryDirectory();
       final outputPath = '${tempDir.path}/gameplay_${DateTime.now().millisecondsSinceEpoch}.mp4';
 
+      // DISABLED for release white-screen test
       // Encoder les frames PNG en vidéo MP4 via FFmpeg
-      final cmd = '-framerate $_fps '
-          '-i "$_framesDir/frame_%06d.png" '
-          '-c:v mpeg4 -q:v 5 '
-          '-pix_fmt yuv420p '
-          '-y "$outputPath"';
-
-      debugPrint('[GameplayRecorder] FFmpeg: $cmd');
-
-      final session = await FFmpegKit.execute(cmd);
-      final returnCode = await session.getReturnCode();
-
-      if (ReturnCode.isSuccess(returnCode)) {
-        final file = File(outputPath);
-        if (await file.exists()) {
-          final sizeBytes = await file.length();
-          debugPrint(
-            '[GameplayRecorder] Vidéo créée: '
-            '${(sizeBytes / 1024 / 1024).toStringAsFixed(1)} MB, '
-            '$_frameCount frames',
-          );
-          await _cleanup();
-          return outputPath;
-        }
-      }
-
-      final logs = await session.getLogsAsString();
-      debugPrint('[GameplayRecorder] FFmpeg error: $logs');
+      // final cmd = '-framerate $_fps '
+      //     '-i "$_framesDir/frame_%06d.png" '
+      //     '-c:v mpeg4 -q:v 3 '
+      //     '-pix_fmt yuv420p '
+      //     '-movflags +faststart '
+      //     '-y "$outputPath"';
+      // debugPrint('[GameplayRecorder] FFmpeg: $cmd');
+      // final session = await FFmpegKit.execute(cmd);
+      // final returnCode = await session.getReturnCode();
+      // if (ReturnCode.isSuccess(returnCode)) {
+      //   final file = File(outputPath);
+      //   if (await file.exists()) {
+      //     final sizeBytes = await file.length();
+      //     debugPrint(
+      //       '[GameplayRecorder] Vidéo créée: '
+      //       '${(sizeBytes / 1024 / 1024).toStringAsFixed(1)} MB, '
+      //       '$_frameCount frames',
+      //     );
+      //     await _cleanup();
+      //     return outputPath;
+      //   }
+      // }
+      // final logs = await session.getLogsAsString();
+      // debugPrint('[GameplayRecorder] FFmpeg error: $logs');
+      debugPrint('[GameplayRecorder] DISABLED — FFmpegKit not available');
       await _cleanup();
       return null;
     } catch (e) {

@@ -879,75 +879,6 @@ class _FinancesTabState extends State<_FinancesTab>
     super.dispose();
   }
 
-  Future<void> _requestPayout(BuildContext context) async {
-    final phoneController = TextEditingController();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Demander un versement'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Saisissez votre numéro mobile money pour recevoir le versement de vos commissions approuvées.',
-              style: TextStyle(fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: phoneController,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Numéro mobile money',
-                hintText: '226 7X XX XX XX',
-                prefixIcon: Icon(Icons.phone_android),
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white),
-            child: const Text('Confirmer'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true || !context.mounted) return;
-    final phone = phoneController.text.trim();
-    if (phone.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Numéro de téléphone invalide.')),
-      );
-      return;
-    }
-
-    try {
-      final client = Supabase.instance.client;
-      final resp = await client.rpc('app_commercial_request_payout', params: {'p_phone': phone});
-      final data = resp as Map<String, dynamic>?;
-      if (!context.mounted) return;
-      if (data != null && data['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Versement demandé : ${data['amount']} XOF vers $phone')),
-        );
-      } else {
-        final err = data?['error']?.toString() ?? 'Erreur';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(err == 'no_funds_available' ? 'Aucune commission approuvée à verser.' : 'Erreur : $err')),
-        );
-      }
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur : $e')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final currency = (widget.summary['currency'] ?? 'XOF').toString();
@@ -1010,28 +941,28 @@ class _FinancesTabState extends State<_FinancesTab>
         ),
         const SizedBox(height: 10),
 
-        // Payout button
+        // Auto-payout info
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: SizedBox(
+          child: Container(
             width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: totalApproved is num && (totalApproved as num) > 0
-                  ? () => _requestPayout(context)
-                  : null,
-              icon: const Icon(Icons.account_balance_wallet, size: 18),
-              label: Text(
-                totalApproved is num && (totalApproved as num) > 0
-                    ? 'Demander le versement (${widget.formatAmount(totalApproved)} $currency)'
-                    : 'Aucune commission à verser',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF16A34A),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF6EE7B7)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.autorenew, color: Color(0xFF059669), size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Vos commissions validées sont automatiquement transférées vers votre compte LigdiCash.',
+                    style: TextStyle(fontSize: 12, color: const Color(0xFF065F46)),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

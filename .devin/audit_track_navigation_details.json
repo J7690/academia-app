@@ -1,0 +1,80 @@
+[
+  {
+    "label": "DETAILS app.app_track_navigation_event",
+    "error": "HTTPSConnectionPool(host='thevdfcwlcqzdoybfvgs.supabase.co', port=443): Max retries exceeded with url: /rest/v1/rpc/admin_execute_sql (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))"
+  },
+  {
+    "label": "DETAILS public.app_track_user_activity",
+    "ok": true,
+    "mode": "exec",
+    "rows": null,
+    "affected": 1
+  },
+  {
+    "label": "GRANT app.app_track_navigation_event",
+    "ok": true,
+    "mode": "exec",
+    "rows": null,
+    "affected": 2
+  },
+  {
+    "label": "GRANT public.app_track_user_activity",
+    "ok": true,
+    "mode": "exec",
+    "rows": null,
+    "affected": 5
+  },
+  {
+    "label": "DETAILED COLUMNS screen/navigation",
+    "ok": true,
+    "mode": "exec",
+    "rows": null,
+    "affected": 18
+  },
+  {
+    "label": "APP SCHEMA TABLES (all)",
+    "ok": true,
+    "mode": "exec",
+    "rows": null,
+    "affected": 268
+  },
+  {
+    "label": "APP TABLES event/screen/activity",
+    "ok": true,
+    "mode": "exec",
+    "rows": null,
+    "affected": 9
+  },
+  {
+    "label": "admin_user_action_logs columns",
+    "ok": true,
+    "mode": "exec",
+    "rows": null,
+    "affected": 7
+  },
+  {
+    "label": "COUNT admin_user_action_logs",
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "cnt": 45
+      }
+    ],
+    "affected": null
+  },
+  {
+    "label": "TABLES WITH screen_name COLUMN",
+    "ok": true,
+    "mode": "exec",
+    "rows": null,
+    "affected": 1
+  },
+  {
+    "label": "SECURITY app.app_track_navigation_event",
+    "ok": true,
+    "mode": "exec",
+    "rows": null,
+    "affected": 1
+  }
+]

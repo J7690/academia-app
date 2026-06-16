@@ -1,0 +1,387 @@
+=== AUDIT ORIGINE CRON purge_deleted_accounts ===
+
+--- 1. Détails complets dans cron.job ---
+{
+  "ok": false,
+  "error": "column \"jobtype\" does not exist",
+  "sqlstate": "42703"
+}
+
+--- 2. Historique d'exécution (cron.job_run_details) ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "jobid": 3,
+      "runid": 101491,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 1078291,
+      "database": "postgres",
+      "end_time": "2026-06-04T03:00:00.174968+00:00",
+      "username": "postgres",
+      "start_time": "2026-06-04T03:00:00.156978+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 99927,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 948922,
+      "database": "postgres",
+      "end_time": "2026-06-03T03:00:00.104545+00:00",
+      "username": "postgres",
+      "start_time": "2026-06-03T03:00:00.102634+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 98363,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 820841,
+      "database": "postgres",
+      "end_time": "2026-06-02T03:00:00.072748+00:00",
+      "username": "postgres",
+      "start_time": "2026-06-02T03:00:00.06785+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 96799,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 695184,
+      "database": "postgres",
+      "end_time": "2026-06-01T03:00:00.070473+00:00",
+      "username": "postgres",
+      "start_time": "2026-06-01T03:00:00.066279+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 95233,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 571002,
+      "database": "postgres",
+      "end_time": "2026-05-31T03:00:00.102072+00:00",
+      "username": "postgres",
+      "start_time": "2026-05-31T03:00:00.091383+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 93669,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 446937,
+      "database": "postgres",
+      "end_time": "2026-05-30T03:00:00.117118+00:00",
+      "username": "postgres",
+      "start_time": "2026-05-30T03:00:00.112411+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 92105,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 322360,
+      "database": "postgres",
+      "end_time": "2026-05-29T03:00:00.117091+00:00",
+      "username": "postgres",
+      "start_time": "2026-05-29T03:00:00.114318+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 90541,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 187507,
+      "database": "postgres",
+      "end_time": "2026-05-28T03:00:00.111268+00:00",
+      "username": "postgres",
+      "start_time": "2026-05-28T03:00:00.101053+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 88977,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 63684,
+      "database": "postgres",
+      "end_time": "2026-05-27T03:00:00.03436+00:00",
+      "username": "postgres",
+      "start_time": "2026-05-27T03:00:00.03318+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 87335,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 2525934,
+      "database": "postgres",
+      "end_time": "2026-05-04T03:00:00.057992+00:00",
+      "username": "postgres",
+      "start_time": "2026-05-04T03:00:00.048276+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 85769,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 2397470,
+      "database": "postgres",
+      "end_time": "2026-05-03T03:00:00.039354+00:00",
+      "username": "postgres",
+      "start_time": "2026-05-03T03:00:00.038107+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 84205,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 2269097,
+      "database": "postgres",
+      "end_time": "2026-05-02T03:00:00.041216+00:00",
+      "username": "postgres",
+      "start_time": "2026-05-02T03:00:00.038092+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 82641,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 2141313,
+      "database": "postgres",
+      "end_time": "2026-05-01T03:00:00.052247+00:00",
+      "username": "postgres",
+      "start_time": "2026-05-01T03:00:00.050442+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 81077,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 2013736,
+      "database": "postgres",
+      "end_time": "2026-04-30T03:00:00.044391+00:00",
+      "username": "postgres",
+      "start_time": "2026-04-30T03:00:00.037894+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 79513,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 1886751,
+      "database": "postgres",
+      "end_time": "2026-04-29T03:00:00.039909+00:00",
+      "username": "postgres",
+      "start_time": "2026-04-29T03:00:00.036337+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 77949,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 1759613,
+      "database": "postgres",
+      "end_time": "2026-04-28T03:00:00.048+00:00",
+      "username": "postgres",
+      "start_time": "2026-04-28T03:00:00.042266+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 76385,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 1631281,
+      "database": "postgres",
+      "end_time": "2026-04-27T03:00:00.039088+00:00",
+      "username": "postgres",
+      "start_time": "2026-04-27T03:00:00.036542+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 74819,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 1541192,
+      "database": "postgres",
+      "end_time": "2026-04-26T03:00:00.039213+00:00",
+      "username": "postgres",
+      "start_time": "2026-04-26T03:00:00.031589+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 73255,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 1460973,
+      "database": "postgres",
+      "end_time": "2026-04-25T03:00:00.048936+00:00",
+      "username": "postgres",
+      "start_time": "2026-04-25T03:00:00.0452+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    },
+    {
+      "jobid": 3,
+      "runid": 71691,
+      "status": "failed",
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "job_pid": 1379889,
+      "database": "postgres",
+      "end_time": "2026-04-24T03:00:00.049571+00:00",
+      "username": "postgres",
+      "start_time": "2026-04-24T03:00:00.047511+00:00",
+      "return_message": "ERROR:  function app.app_admin_purge_deleted_accounts() does not exist\nLINE 1: SELECT app.app_admin_purge_deleted_accounts()\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"
+    }
+  ]
+}
+
+--- 3. Vérifier si la fonction app_admin_purge_deleted_accounts a existé ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": []
+}
+
+--- 4. Tous les jobs cron liés à suppression/compte ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "active": true,
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "jobname": "purge_deleted_accounts",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}
+
+--- 5. Date de dernière modification de user_admin_status ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "relname": "user_admin_status",
+      "last_vacuum": null,
+      "last_analyze": null,
+      "last_autovacuum": null,
+      "last_autoanalyze": null
+    }
+  ]
+}
+
+--- 6. Colonnes actuelles de user_admin_status ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "data_type": "uuid",
+      "column_name": "user_id"
+    },
+    {
+      "data_type": "boolean",
+      "column_name": "is_suspended"
+    },
+    {
+      "data_type": "text",
+      "column_name": "suspended_reason"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "suspended_at"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "reactivated_at"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at"
+    },
+    {
+      "data_type": "boolean",
+      "column_name": "is_deleted"
+    },
+    {
+      "data_type": "text",
+      "column_name": "deleted_reason"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "deleted_at"
+    }
+  ]
+}
+
+--- 7. Attributs supprimés de user_admin_status ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "attname": "user_id",
+      "attisdropped": false
+    },
+    {
+      "attname": "is_suspended",
+      "attisdropped": false
+    },
+    {
+      "attname": "suspended_reason",
+      "attisdropped": false
+    },
+    {
+      "attname": "suspended_at",
+      "attisdropped": false
+    },
+    {
+      "attname": "reactivated_at",
+      "attisdropped": false
+    },
+    {
+      "attname": "updated_at",
+      "attisdropped": false
+    },
+    {
+      "attname": "is_deleted",
+      "attisdropped": false
+    },
+    {
+      "attname": "deleted_reason",
+      "attisdropped": false
+    },
+    {
+      "attname": "deleted_at",
+      "attisdropped": false
+    }
+  ]
+}
+
+--- 8. Dépendances du job cron ---
+{
+  "ok": false,
+  "error": "column \"oid\" does not exist",
+  "sqlstate": "42703"
+}

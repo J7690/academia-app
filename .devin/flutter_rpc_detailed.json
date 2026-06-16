@@ -1,0 +1,970 @@
+[
+  {
+    "rpc": "app_admin_delete_course",
+    "status": "C",
+    "occurrence_count": 0,
+    "files": [],
+    "occurrences": []
+  },
+  {
+    "rpc": "app_admin_delete_program",
+    "status": "C",
+    "occurrence_count": 0,
+    "files": [],
+    "occurrences": []
+  },
+  {
+    "rpc": "app_admin_get_navigation_stats",
+    "status": "B",
+    "occurrence_count": 0,
+    "files": [],
+    "occurrences": []
+  },
+  {
+    "rpc": "app_admin_list_deleted_users",
+    "status": "C",
+    "occurrence_count": 0,
+    "files": [],
+    "occurrences": []
+  },
+  {
+    "rpc": "app_admin_resolve_content_report",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "features\\admin\\admin_moderation_screen.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "features\\admin\\admin_moderation_screen.dart",
+        "line": 48,
+        "context": "await Supabase.instance.client.rpc('app_admin_resolve_content_report', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_admin_suspend_user",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "features\\admin\\admin_moderation_screen.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "features\\admin\\admin_moderation_screen.dart",
+        "line": 65,
+        "context": "await Supabase.instance.client.rpc('app_admin_suspend_user', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_admin_tv_delete_overlay",
+    "status": "D",
+    "occurrence_count": 0,
+    "files": [],
+    "occurrences": []
+  },
+  {
+    "rpc": "app_admin_tv_get_timeline",
+    "status": "D",
+    "occurrence_count": 0,
+    "files": [],
+    "occurrences": []
+  },
+  {
+    "rpc": "app_admin_tv_upsert_overlay",
+    "status": "D",
+    "occurrence_count": 0,
+    "files": [],
+    "occurrences": []
+  },
+  {
+    "rpc": "app_get_or_create_bobodo_session",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\bobodo_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "providers\\bobodo_provider.dart",
+        "line": 60,
+        "context": ".rpc('app_get_or_create_bobodo_session', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_admin_get_stats",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 801,
+        "context": "final resp = await _client.rpc('app_prep_admin_get_stats');"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_admin_list_ai_conversations",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 829,
+        "context": "final resp = await _client.rpc('app_prep_admin_list_ai_conversations', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_admin_list_questions",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 811,
+        "context": "final resp = await _client.rpc('app_prep_admin_list_questions', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_admin_toggle_question",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 821,
+        "context": "final resp = await _client.rpc('app_prep_admin_toggle_question', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_admin_upsert_badge",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 852,
+        "context": "final resp = await _client.rpc('app_prep_admin_upsert_badge', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_create_ai_conversation",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 719,
+        "context": "final resp = await _client.rpc('app_prep_create_ai_conversation', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_create_exam_paper",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 699,
+        "context": "final resp = await _client.rpc('app_prep_create_exam_paper', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_create_flashcard",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 663,
+        "context": "final resp = await _client.rpc('app_prep_create_flashcard', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_create_flashcard_deck",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 647,
+        "context": "final resp = await _client.rpc('app_prep_create_flashcard_deck', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_create_question",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 542,
+        "context": "final resp = await _client.rpc('app_prep_create_question', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_create_question_bank",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 520,
+        "context": "final resp = await _client.rpc('app_prep_create_question_bank', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_create_quiz_template",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 783,
+        "context": "final resp = await _client.rpc('app_prep_create_quiz_template', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_get_adaptive_quiz",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\prep_quiz_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "providers\\prep_quiz_provider.dart",
+        "line": 284,
+        "context": "final res = await client.rpc('app_prep_get_adaptive_quiz', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_get_ai_config",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 754,
+        "context": "final resp = await _client.rpc('app_prep_get_ai_config');"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_get_leaderboard",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 598,
+        "context": "final resp = await _client.rpc('app_prep_get_leaderboard', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_get_student_progress",
+    "status": "D",
+    "occurrence_count": 2,
+    "files": [
+      "providers\\prep_quiz_provider.dart",
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "providers\\prep_quiz_provider.dart",
+        "line": 116,
+        "context": "final res = await client.rpc('app_prep_get_student_progress');"
+      },
+      {
+        "file": "services\\td_service.dart",
+        "line": 588,
+        "context": "final resp = await _client.rpc('app_prep_get_student_progress');"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_get_subject_stats",
+    "status": "D",
+    "occurrence_count": 2,
+    "files": [
+      "providers\\prep_quiz_provider.dart",
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "providers\\prep_quiz_provider.dart",
+        "line": 203,
+        "context": "final res = await client.rpc('app_prep_get_subject_stats');"
+      },
+      {
+        "file": "services\\td_service.dart",
+        "line": 593,
+        "context": "final resp = await _client.rpc('app_prep_get_subject_stats');"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_get_weakness_analysis",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\prep_weakness_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "providers\\prep_weakness_provider.dart",
+        "line": 146,
+        "context": "final response = await client.rpc('app_prep_get_weakness_analysis');"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_list_ai_conversations",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 742,
+        "context": "final resp = await _client.rpc('app_prep_list_ai_conversations');"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_list_ai_messages",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 747,
+        "context": "final resp = await _client.rpc('app_prep_list_ai_messages', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_list_exam_papers",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 680,
+        "context": "final resp = await _client.rpc('app_prep_list_exam_papers', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_list_flashcard_decks",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 610,
+        "context": "final resp = await _client.rpc('app_prep_list_flashcard_decks', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_list_flashcards",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 618,
+        "context": "final resp = await _client.rpc('app_prep_list_flashcards', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_list_question_banks",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 507,
+        "context": "final resp = await _client.rpc('app_prep_list_question_banks', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_list_questions",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 493,
+        "context": "final resp = await _client.rpc('app_prep_list_questions', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_list_quiz_templates",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 764,
+        "context": "final resp = await _client.rpc('app_prep_list_quiz_templates', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_save_ai_message",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 732,
+        "context": "final resp = await _client.rpc('app_prep_save_ai_message', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_save_flashcard_review",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 631,
+        "context": "final resp = await _client.rpc('app_prep_save_flashcard_review', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_save_quiz_attempt",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 571,
+        "context": "final resp = await _client.rpc('app_prep_save_quiz_attempt', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_teacher_end_live_session",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\teacher_prep_live_sessions_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "providers\\teacher_prep_live_sessions_provider.dart",
+        "line": 113,
+        "context": "final res = await _client.rpc('app_prep_teacher_end_live_session', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_teacher_grade_submission",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\teacher_prep_assignments_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "providers\\teacher_prep_assignments_provider.dart",
+        "line": 124,
+        "context": "final res = await _client.rpc('app_prep_teacher_grade_submission', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_teacher_list_assignments",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\teacher_prep_assignments_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "providers\\teacher_prep_assignments_provider.dart",
+        "line": 35,
+        "context": "final res = await _client.rpc('app_prep_teacher_list_assignments');"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_teacher_list_live_sessions",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\teacher_prep_live_sessions_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "providers\\teacher_prep_live_sessions_provider.dart",
+        "line": 27,
+        "context": "final res = await _client.rpc('app_prep_teacher_list_live_sessions');"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_teacher_list_submissions",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\teacher_prep_assignments_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "providers\\teacher_prep_assignments_provider.dart",
+        "line": 96,
+        "context": "final res = await _client.rpc('app_prep_teacher_list_submissions', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_teacher_start_live_session",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\teacher_prep_live_sessions_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "providers\\teacher_prep_live_sessions_provider.dart",
+        "line": 92,
+        "context": "final res = await _client.rpc('app_prep_teacher_start_live_session', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_teacher_upsert_assignment",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\teacher_prep_assignments_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "providers\\teacher_prep_assignments_provider.dart",
+        "line": 65,
+        "context": "final res = await _client.rpc('app_prep_teacher_upsert_assignment', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_teacher_upsert_live_session",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\teacher_prep_live_sessions_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "providers\\teacher_prep_live_sessions_provider.dart",
+        "line": 59,
+        "context": "final res = await _client.rpc('app_prep_teacher_upsert_live_session', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_update_ai_config",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\td_service.dart",
+        "line": 836,
+        "context": "final resp = await _client.rpc('app_prep_update_ai_config', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_student_delete_dm_message",
+    "status": "B",
+    "occurrence_count": 0,
+    "files": [],
+    "occurrences": []
+  },
+  {
+    "rpc": "app_student_delete_forum_message",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "features\\student\\online_course_detail_screen.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "features\\student\\online_course_detail_screen.dart",
+        "line": 925,
+        "context": "await Supabase.instance.client.rpc('app_student_delete_forum_message', params: {'p_message_id': msgId});"
+      }
+    ]
+  },
+  {
+    "rpc": "app_td_admin_import_questions_json",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "features\\admin\\admin_td_direct_import_screen.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "features\\admin\\admin_td_direct_import_screen.dart",
+        "line": 160,
+        "context": ".rpc('app_td_admin_import_questions_json', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_td_admin_import_text_bulk",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "features\\admin\\admin_td_direct_import_screen.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "features\\admin\\admin_td_direct_import_screen.dart",
+        "line": 227,
+        "context": ".rpc('app_td_admin_import_text_bulk', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "app_track_navigation_event",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\analytics_tracking_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "services\\analytics_tracking_service.dart",
+        "line": 93,
+        "context": "await _client.rpc('app_track_navigation_event', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "challenge_game_end_live",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "games\\services\\game_live_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "games\\services\\game_live_service.dart",
+        "line": 106,
+        "context": "await _client.rpc('challenge_game_end_live', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "challenge_game_list_live",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "games\\services\\game_live_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "games\\services\\game_live_service.dart",
+        "line": 158,
+        "context": "final response = await _client.rpc('challenge_game_list_live');"
+      }
+    ]
+  },
+  {
+    "rpc": "challenge_game_start_live",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "games\\services\\game_live_service.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "games\\services\\game_live_service.dart",
+        "line": 38,
+        "context": "final response = await _client.rpc('challenge_game_start_live', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "league_create",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "games\\providers\\tournament_provider.dart",
+        "line": 212,
+        "context": ".rpc('league_create', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "league_get_standings",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "games\\providers\\tournament_provider.dart",
+        "line": 190,
+        "context": ".rpc('league_get_standings', params: {'p_league_id': _availableLeagues.firstOrNull?.id});"
+      }
+    ]
+  },
+  {
+    "rpc": "league_join",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "games\\providers\\tournament_provider.dart",
+        "line": 174,
+        "context": ".rpc('league_join', params: {'p_league_id': leagueId});"
+      }
+    ]
+  },
+  {
+    "rpc": "league_list_available",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "games\\providers\\tournament_provider.dart",
+        "line": 158,
+        "context": ".rpc('league_list_available');"
+      }
+    ]
+  },
+  {
+    "rpc": "league_report_match_result",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "games\\providers\\tournament_provider.dart",
+        "line": 238,
+        "context": ".rpc('league_report_match_result', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "tournament_create",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "games\\providers\\tournament_provider.dart",
+        "line": 94,
+        "context": ".rpc('tournament_create', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "tournament_get_details",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "games\\providers\\tournament_provider.dart",
+        "line": 53,
+        "context": ".rpc('tournament_get_details', params: {'p_user_id': _supabase.auth.currentUser?.id});"
+      }
+    ]
+  },
+  {
+    "rpc": "tournament_get_standings",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "games\\providers\\tournament_provider.dart",
+        "line": 71,
+        "context": ".rpc('tournament_get_standings', params: {'p_tournament_id': _myTournaments.firstOrNull?.id});"
+      }
+    ]
+  },
+  {
+    "rpc": "tournament_list_available",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "games\\providers\\tournament_provider.dart",
+        "line": 21,
+        "context": ".rpc('tournament_list_available');"
+      }
+    ]
+  },
+  {
+    "rpc": "tournament_register",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "games\\providers\\tournament_provider.dart",
+        "line": 37,
+        "context": ".rpc('tournament_register', params: {'p_tournament_id': tournamentId});"
+      }
+    ]
+  },
+  {
+    "rpc": "tournament_report_match_result",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "games\\providers\\tournament_provider.dart",
+        "line": 136,
+        "context": ".rpc('tournament_report_match_result', params: {"
+      }
+    ]
+  },
+  {
+    "rpc": "tournament_start",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "occurrences": [
+      {
+        "file": "games\\providers\\tournament_provider.dart",
+        "line": 116,
+        "context": ".rpc('tournament_start', params: {'p_tournament_id': tournamentId});"
+      }
+    ]
+  }
+]

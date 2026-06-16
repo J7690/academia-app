@@ -1,0 +1,82 @@
+﻿=== 1. TABLES MODERATION / REPORT / BLOCK ===
+  challenge_reports
+  challenge_user_bans
+  moderation_events
+  prep_question_banks
+  td_question_banks
+  university_site_banners
+  university_site_blocks
+  video_moderation_history
+  video_reports
+
+=== 2. RPCs MODERATION ===
+  app_admin_ban_user_from_challenges
+  app_admin_ban_user_from_community
+  app_admin_ban_user_from_online_course_live_session
+  app_admin_delete_university_site_banner
+  app_admin_delete_university_site_block
+  app_admin_list_challenge_reports
+  app_admin_list_community_moderation_events
+  app_admin_moderate_review
+  app_admin_resolve_moderation_event
+  app_admin_update_challenge_report_status
+  app_admin_upsert_university_site_banner
+  app_admin_upsert_university_site_block
+  app_delete_university_site_banner
+  app_delete_university_site_block
+  app_prep_create_question_bank
+  app_prep_list_question_banks
+  app_student_report_challenge_video
+  app_student_report_community
+  app_student_report_community_post
+  app_student_report_video
+  app_upsert_university_site_banner
+  app_upsert_university_site_block
+  league_report_match_result
+  payment_receipts_block_changes
+  tg_block_legacy_video_writes
+  tournament_report_match_result
+
+=== 3. COLONNES MODERATION ===
+  challenge_participations: moderated_at, moderated_by_admin_id, moderation_flags, moderation_status
+  free_videos: moderated_at, moderated_by_admin_id, moderation_flags, moderation_status
+  communities: moderation_state
+  community_memberships: is_banned
+
+=== 4. USER_ADMIN_STATUS ===
+  user_id (uuid)
+  is_suspended (boolean)
+  suspended_reason (text)
+  suspended_at (timestamp with time zone)
+  reactivated_at (timestamp with time zone)
+  updated_at (timestamp with time zone)
+  is_deleted (boolean)
+  deleted_reason (text)
+  deleted_at (timestamp with time zone)
+
+=== 5. COMMUNITY MEMBERSHIPS - colonnes ban ===
+  id
+  community_id
+  user_id
+  role
+  joined_at
+  is_active
+  is_banned
+
+=== 6. CONTENT_REPORTS ===
+  Exists: False
+
+=== 7. USER_BLOCKS ===
+  Exists: False
+
+=== 8. VIDEO MODERATION STATUS ===
+  approved: 2
+  free_videos.pending: 1
+  free_videos.published: 116
+
+=== 9. COMMUNITY REPORTS ===
+  community_reports exists: False
+  RPC: app_student_report_community
+  RPC: app_student_report_community_post
+
+[OK]

@@ -6,10 +6,36 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
 const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY') ?? '';
-const OPENROUTER_MODEL = Deno.env.get('OPENROUTER_MODEL') ?? 'google/gemini-2.0-flash-001';
+const OPENROUTER_MODEL = Deno.env.get('OPENROUTER_MODEL') ?? '';
+const OPENROUTER_FALLBACK_MODEL = Deno.env.get('OPENROUTER_FALLBACK_MODEL') ?? '';
+const OPENROUTER_EMBEDDING_MODEL = Deno.env.get('OPENROUTER_EMBEDDING_MODEL') ?? 'openai/text-embedding-3-small';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-const EMBEDDING_MODEL = 'openai/text-embedding-3-small';
+
+const ACTION_CODE = 'generate_qcm';
+const EDGE_FN = 'prep-generate-questions';
+const TEXT_CASCADE = [
+  { model: OPENROUTER_MODEL, tier: 'primary' },
+  { model: OPENROUTER_FALLBACK_MODEL, tier: 'fallback' },
+].filter(m => m.model);
+interface CascadeResult { content: string; model: string; tier: string; usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number }; costUsd: number; }
+async function callWithCascade(msgs: Array<{role:string;content:string}>, maxTok: number): Promise<CascadeResult> {
+  const errs: string[] = [];
+  for (const { model, tier } of TEXT_CASCADE) {
+    if (!model) continue;
+    try {
+      const r = await fetch('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:{Authorization:`Bearer ${OPENROUTER_API_KEY}`,'Content-Type':'application/json',Accept:'application/json'}, body:JSON.stringify({model,messages:msgs,temperature:0.7,max_tokens:maxTok}) });
+      if (!r.ok) { errs.push(`${model}(${r.status})`); continue; }
+      const d = await r.json(); const c = (d?.choices?.[0]?.message?.content??'').toString().trim();
+      if (!c) { errs.push(`${model}:empty`); continue; }
+      const u = d?.usage ?? {prompt_tokens:0,completion_tokens:0,total_tokens:0};
+      const cost = tier==='free'?0:((u.prompt_tokens||0)*0.0000001+(u.completion_tokens||0)*0.0000004);
+      console.log(`[cascade] OK: ${model} (${tier}) ${u.total_tokens}tok $${cost.toFixed(6)}`);
+      return {content:c,model,tier,usage:u,costUsd:cost};
+    } catch(e) { errs.push(`${model}:${(e as Error).message?.slice(0,60)}`); }
+  }
+  throw new Error(`All models failed: ${errs.join(' | ')}`);
+}
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -97,13 +123,14 @@ serve(async (req: Request) => {
     if (userError || !userData?.user) {
       return jsonResponse({ error: 'not_authenticated' }, 401);
     }
+    const userId = userData.user.id;
 
     const body = await req.json();
     const concoursType = (body.concours_type ?? '').toString().trim();
     const subjectName = (body.subject_name ?? '').toString().trim();
     const subjectId = (body.subject_id ?? '').toString().trim() || null;
     const count = Math.min(Math.max(body.count ?? 10, 1), 30);
-    const mode = (body.mode ?? 'similar').toString().trim(); // similar, exam_blanc, revision
+    const mode = (body.mode ?? 'similar').toString().trim(); // similar, exam_blanc, revision, adaptive
     const bankId = (body.bank_id ?? '').toString().trim() || null;
     const difficulty = body.difficulty ?? null;
 
@@ -111,26 +138,101 @@ serve(async (req: Request) => {
     const contextQuery = `Questions QCM ${concoursType || 'concours'} ${subjectName || 'culture générale'} Burkina Faso`;
 
     // ── 2. Get embedding for the query ────────────────────────────
-    const queryEmbedding = await getEmbedding(contextQuery);
-    if (queryEmbedding.length === 0) {
-      return jsonResponse({ error: 'embedding_failed' }, 500);
+    let queryEmbedding: number[] = [];
+    try {
+      queryEmbedding = await getEmbedding(contextQuery);
+    } catch (embErr) {
+      console.error('Embedding failed (will try fallback):', embErr);
     }
 
     // ── 3. Semantic search for relevant chunks ────────────────────
-    const { data: searchData } = await supabase.rpc('app_prep_semantic_search', {
-      p_query_embedding: `[${queryEmbedding.join(',')}]`,
-      p_subject_id: subjectId,
-      p_concours_type: concoursType || null,
-      p_limit: 15,
-      p_threshold: 0.2,
-    });
+    let chunks: Array<{ content: string; concours_type?: string; year?: string; similarity?: number; doc_type?: string }> = [];
 
-    let chunks: Array<{ content: string; concours_type?: string; year?: string; similarity?: number }> = [];
-    if (searchData && typeof searchData === 'object') {
-      const sd = searchData as Record<string, unknown>;
-      if (sd.success && Array.isArray(sd.chunks)) {
-        chunks = sd.chunks as typeof chunks;
+    if (queryEmbedding.length > 0) {
+      const { data: searchData } = await supabase.rpc('app_prep_semantic_search', {
+        p_query_embedding: `[${queryEmbedding.join(',')}]`,
+        p_subject_id: subjectId,
+        p_concours_type: concoursType || null,
+        p_limit: 15,
+        p_threshold: 0.2,
+      });
+
+      if (searchData && typeof searchData === 'object') {
+        const sd = searchData as Record<string, unknown>;
+        if (sd.success && Array.isArray(sd.chunks)) {
+          chunks = sd.chunks as typeof chunks;
+        }
       }
+    }
+
+    // ── 3b. Fallback RAG: keyword-based chunks (no embeddings needed) ──
+    // If semantic search found nothing, try fetching chunks by subject name.
+    // This allows pasted text (without embeddings) to be used immediately.
+    if (chunks.length === 0 && (subjectName || subjectId)) {
+      try {
+        const { data: fallbackResult } = await supabase.rpc(
+          'app_prep_get_rag_chunks_by_name',
+          {
+            p_subject_name: subjectName || null,
+            p_concours_type: concoursType || null,
+            p_limit: 10,
+            p_max_chars: 10000,
+          },
+        );
+
+        const fb = fallbackResult as Record<string, unknown> | null;
+        if (fb?.success && Array.isArray(fb.chunks) && (fb.chunks as any[]).length > 0) {
+          chunks = (fb.chunks as any[]).map((c: any) => ({
+            content: c.content ?? '',
+            concours_type: c.concours_type ?? undefined,
+            year: c.year ?? undefined,
+            doc_type: c.doc_type ?? undefined,
+          }));
+        }
+      } catch (fbErr) {
+        console.error('RAG fallback failed (non-blocking):', fbErr);
+      }
+    }
+
+    // ── 3c. Fetch trend predictions to guide question generation ────
+    let trendContext = '';
+    try {
+      const { data: predData } = await supabase.rpc('admin_execute_sql', {
+        p_sql: `SELECT t.name AS topic, t.category, tp.probability_score, tp.frequency_count, tp.last_appeared_year, tp.cycle_years, tp.reasoning FROM app.prep_topic_predictions tp JOIN app.prep_topics t ON t.id = tp.topic_id WHERE tp.probability_score >= 50 ${concoursType ? `AND (tp.concours_type = '${concoursType.replace(/'/g, "''")}' OR tp.concours_type = 'TOUS')` : ''} ORDER BY tp.probability_score DESC LIMIT 10`,
+      });
+      const pd = predData as Record<string, unknown> | null;
+      if (pd?.ok && Array.isArray(pd.rows) && (pd.rows as any[]).length > 0) {
+        const predictions = pd.rows as Array<Record<string, unknown>>;
+        trendContext = '\n\n=== THÈMES À FORTE PROBABILITÉ (analyse des tendances) ===\n';
+        trendContext += 'Ces thèmes ont une forte probabilité de tomber au prochain concours. PRIORISE-les dans tes questions :\n\n';
+        for (const p of predictions) {
+          trendContext += `• ${p.topic} (probabilité: ${p.probability_score}%) — ${p.reasoning || ''}\n`;
+        }
+        trendContext += '\nGénère AU MOINS 30% des questions sur ces thèmes prioritaires.\n';
+        console.log(`[trends] Injected ${predictions.length} trend predictions into prompt`);
+      }
+    } catch (trendErr) {
+      console.error('Trend predictions fetch failed (non-blocking):', trendErr);
+    }
+
+    // ── 3d. Fetch recent relevant actualities for context ────────────
+    let actualityContext = '';
+    try {
+      const { data: actData } = await supabase.rpc('admin_execute_sql', {
+        p_sql: `SELECT title, LEFT(scoring_reason, 200) AS reason, relevance_score FROM app.prep_news_articles WHERE is_concours_relevant = true AND relevance_score >= 0.5 ORDER BY published_at DESC LIMIT 5`,
+      });
+      const ad = actData as Record<string, unknown> | null;
+      if (ad?.ok && Array.isArray(ad.rows) && (ad.rows as any[]).length > 0) {
+        const articles = ad.rows as Array<Record<string, unknown>>;
+        actualityContext = '\n\n=== ACTUALITÉS RÉCENTES PERTINENTES CONCOURS ===\n';
+        actualityContext += 'Ces actualités récentes du Burkina Faso sont susceptibles de tomber au concours :\n\n';
+        for (const a of articles) {
+          actualityContext += `• ${a.title} (pertinence: ${a.relevance_score})\n`;
+        }
+        actualityContext += '\nIntègre ces actualités dans tes questions de Culture Générale / Actualités BF si pertinent.\n';
+      }
+    } catch (actErr) {
+      console.error('Actuality fetch failed (non-blocking):', actErr);
     }
 
     // ── 4. Build the LLM prompt ───────────────────────────────────
@@ -160,6 +262,34 @@ Les questions doivent couvrir les thèmes classiques de ce type de concours.`;
       userPrompt = `Génère ${count} questions de révision ciblée en "${subjectName || 'Culture Générale'}" pour le concours ${concoursType || 'de la fonction publique'} au Burkina Faso.
 Commence par des questions faciles puis augmente progressivement la difficulté.
 Concentre-toi sur les concepts fondamentaux qui reviennent fréquemment aux concours.`;
+    } else if (mode === 'adaptive') {
+      // Mode adaptatif : récupérer l'analyse des faiblesses
+      let weaknessAnalysis: any = null;
+      try {
+        const { data: weaknessData } = await supabase.rpc('app_prep_get_weakness_analysis');
+        weaknessAnalysis = weaknessData;
+      } catch (e) {
+        console.error('Error fetching weakness analysis:', e);
+      }
+
+      if (weaknessAnalysis && weaknessAnalysis.weakest_subjects && weaknessAnalysis.weakest_subjects.length > 0) {
+        const weakest = weaknessAnalysis.weakest_subjects[0];
+        userPrompt = `Mode Adaptatif : L'étudiant a des difficultés en "${weakest.subject_name}" (taux de réussite: ${weakest.success_rate}%).
+Il a répondu à ${weakest.total_questions} questions avec ${weakest.correct_answers} bonnes réponses.
+Difficulté recommandée : ${weakest.recommended_difficulty}/5.
+
+Génère ${count} questions QCM adaptées pour l'aider à progresser :
+1. Utilise un niveau de difficulté approprié (${weakest.recommended_difficulty}/5)
+2. Commence par renforcer les bases si le taux de réussite est < 50%
+3. Fournis des explications très détaillées et pédagogiques
+4. Évite les pièges trop complexes, l'objectif est d'apprendre
+5. Cible les concepts clés de "${weakest.subject_name}" pour le concours ${concoursType || 'de la fonction publique'} au Burkina Faso`;
+      } else {
+        // Pas de données de faiblesse, mode découverte
+        userPrompt = `Mode Adaptatif Initial : Génère ${count} questions variées en "${subjectName || 'Culture Générale'}" pour évaluer le niveau de l'étudiant.
+Mélange les difficultés (1 à 4/5) pour identifier ses forces et faiblesses.
+Concours : ${concoursType || 'de la fonction publique'} au Burkina Faso.`;
+      }
     } else {
       // mode === 'similar'
       userPrompt = `Génère ${count} nouvelles questions QCM pour le concours ${concoursType || 'de la fonction publique'} au Burkina Faso.
@@ -169,21 +299,54 @@ Les questions doivent être du MÊME type, MÊME difficulté et MÊME domaine qu
 
     // Add RAG context if chunks available
     if (chunks.length > 0) {
-      userPrompt += `\n\nVoici des extraits de VRAIS sujets de concours pour t'inspirer (NE PAS copier, mais créer des questions similaires) :\n\n`;
+      userPrompt += `\n\nVoici des informations complémentaires pour t'inspirer (NE PAS copier, mais créer des questions originales basées sur ces connaissances) :\n\n`;
       for (const chunk of chunks.slice(0, 10)) {
-        const src = chunk.concours_type && chunk.year
-          ? ` [Source: ${chunk.concours_type} ${chunk.year}]`
-          : '';
-        userPrompt += `---${src}\n${chunk.content.slice(0, 500)}\n\n`;
+        userPrompt += `---\n${chunk.content.slice(0, 500)}\n\n`;
       }
+    }
+
+    // Inject trend predictions into prompt
+    if (trendContext) {
+      userPrompt += trendContext;
+    }
+
+    // Inject recent actualities into prompt
+    if (actualityContext) {
+      userPrompt += actualityContext;
     }
 
     if (difficulty) {
       userPrompt += `\nNiveau de difficulté cible : ${difficulty}/5.`;
     }
 
-    // ── 5. Call the LLM ───────────────────────────────────────────
-    const rawResponse = await callLLM(systemPrompt, userPrompt);
+    // ── 5. Reserve credits ─────────────────────────────────────────
+    const { data: resData } = await supabase.rpc('app_student_reserve_credits', {
+      p_action_code: ACTION_CODE, p_edge_function: EDGE_FN, p_student_id: userId,
+    });
+    const res = resData as Record<string, unknown> | null;
+    if (!res?.success) {
+      return jsonResponse({ error: 'insufficient_credits', balance: res?.balance ?? 0, cost: res?.cost ?? 0,
+        message: `Crédits insuffisants. Il vous faut ${res?.cost??0} crédits (solde: ${res?.balance??0}).` }, 402);
+    }
+    const reservationId = (res.reservation_id as string) || '';
+
+    // ── 5b. Call the LLM with cascade ──────────────────────────────
+    let cascadeResult: CascadeResult;
+    try {
+      cascadeResult = await callWithCascade([{role:'system',content:systemPrompt},{role:'user',content:userPrompt}], 8000);
+    } catch (e) {
+      await supabase.rpc('app_student_refund_credits', { p_reservation_id: reservationId });
+      return jsonResponse({ error: 'llm_error', detail: (e as Error).message?.slice(0,300) }, 502);
+    }
+
+    // ── 5c. Confirm credits ────────────────────────────────────────
+    await supabase.rpc('app_student_confirm_credits', {
+      p_reservation_id: reservationId, p_openrouter_cost_usd: cascadeResult.costUsd,
+      p_openrouter_model: cascadeResult.model, p_tokens_input: cascadeResult.usage.prompt_tokens||0,
+      p_tokens_output: cascadeResult.usage.completion_tokens||0,
+    });
+
+    const rawResponse = cascadeResult.content;
 
     // ── 6. Parse JSON response ────────────────────────────────────
     // Try to extract JSON from the response (sometimes LLMs wrap in markdown)
@@ -300,6 +463,8 @@ Les questions doivent être du MÊME type, MÊME difficulté et MÊME domaine qu
       inserted_ids: insertedIds,
       chunks_used: chunks.length,
       mode,
+      credits_used: res.cost,
+      model: cascadeResult.model,
     });
   } catch (err: any) {
     console.error('prep-generate-questions error:', err);

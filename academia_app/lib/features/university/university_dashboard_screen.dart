@@ -12,7 +12,6 @@ import '../../providers/university_site_provider.dart';
 import '../../providers/university_programs_provider.dart';
 import '../../providers/university_payments_provider.dart';
 import 'university_payments_screen.dart';
-import 'university_revenue_tab.dart';
 import '../../widgets/mini_site_hero_video.dart';
 import 'university_application_detail_screen.dart';
 import '../../services/notification_sound_service.dart';
@@ -77,7 +76,7 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
     final email = user?.email ?? '';
 
     return DefaultTabController(
-      length: 4,
+      length: 3,
       child: Consumer2<UniversityApplicationsProvider, UniversitySiteProvider>(
         builder: (context, applicationsProvider, siteProvider, child) {
           final unread = applicationsProvider.unreadTotal;
@@ -164,7 +163,6 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                 tabs: [
                   Tab(child: _UniversityTabLabel(text: 'Candidatures', count: unread)),
                   const Tab(text: 'Paiements'),
-                  const Tab(text: 'Revenus'),
                   const Tab(text: 'Mini-site & offres'),
                 ],
               ),
@@ -263,7 +261,6 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                         create: (_) => UniversityPaymentsProvider(),
                         child: const UniversityPaymentsScreen(),
                       ),
-                      const UniversityRevenueTab(),
                       const _UniversitySiteWorkspace(),
                     ],
                   ),

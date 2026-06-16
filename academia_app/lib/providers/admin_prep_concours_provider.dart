@@ -512,7 +512,7 @@ class AdminPrepConcoursProvider extends ChangeNotifier {
       if (res1 is! Map) { _setError('Réponse invalide (create).'); return null; }
       final map1 = Map<String, dynamic>.from(res1);
       if (map1['success'] != true) { _setError(map1['error']?.toString()); return null; }
-      final genId = map1['generation']?['id']?.toString();
+      final genId = map1['generation_id']?.toString();
       if (genId == null || genId.isEmpty) { _setError('ID génération manquant.'); return null; }
 
       final res2 = await _client.rpc(

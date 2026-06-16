@@ -1,0 +1,56 @@
+[
+  {
+    "label": "ALTER TABLE add columns",
+    "status": "OK",
+    "response": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 0
+    }
+  },
+  {
+    "label": "CREATE FUNCTION public.app_student_request_account_deletion",
+    "status": "OK",
+    "response": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 0
+    }
+  },
+  {
+    "label": "GRANT EXECUTE ON public.app_student_request_account_deletion",
+    "status": "OK",
+    "response": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 0
+    }
+  },
+  {
+    "label": "CREATE FUNCTION public.app_admin_purge_deleted_accounts",
+    "status": "OK",
+    "response": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 0
+    }
+  },
+  {
+    "label": "cron.unschedule purge_deleted_accounts",
+    "status": "OK",
+    "response": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 1
+    }
+  },
+  {
+    "label": "cron.schedule purge_deleted_accounts",
+    "status": "OK",
+    "response": {
+      "ok": true,
+      "mode": "exec",
+      "affected_rows": 1
+    }
+  }
+]

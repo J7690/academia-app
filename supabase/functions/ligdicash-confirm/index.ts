@@ -3,7 +3,7 @@
 // LIGDICASH-CONFIRM : Valider OTP et finaliser le paiement
 // ========================================
 // Mode mock : simule succès et appelle RPC app_confirm_ligdicash_payment
-// Mode live : POST /pay/v02/debitwallet/withotp + verify + RPC
+// Mode live : POST /pay/v01/straight/checkout-invoice/create (mobile money) + polling verify + RPC
 
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
@@ -17,7 +17,7 @@ const LIGDICASH_CALLBACK_URL = Deno.env.get('LIGDICASH_CALLBACK_URL') ?? '';
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization,apikey,content-type,accept',
+  'Access-Control-Allow-Headers': 'authorization,apikey,content-type,accept,x-client-info',
   'Access-Control-Allow-Methods': 'POST,OPTIONS',
 };
 
@@ -98,11 +98,14 @@ serve(async (req: Request) => {
     let ligdicashTransactionId = '';
     let ligdicashOperator = '';
 
-    if (LIGDICASH_MODE === 'live' && LIGDICASH_API_KEY && LIGDICASH_BEARER_TOKEN) {
+    if (LIGDICASH_MODE !== 'mock' && LIGDICASH_API_KEY && LIGDICASH_BEARER_TOKEN) {
       // ============ LIVE MODE ============
+      // Flux LigdiCash "Payin sans redirection" pour Orange Money / Moov / Telecel :
+      //   Étape 1 (déjà faite par l'utilisateur) : composer USSD (*144*4*6*montant# pour Orange)
+      //   Étape 2 : POST /pay/v01/straight/checkout-invoice/create → soumet l'OTP, lance le débit
+      //   Étape 3 : GET /pay/v01/redirect/checkout-invoice/confirm/ → polling statut jusqu'à completed
       console.log(`[ligdicash-confirm] LIVE: confirming OTP for ${cleanPhone}, amount ${amount}`);
 
-      // Step 1: POST /pay/v02/debitwallet/withotp
       const invoiceBody = {
         commande: {
           invoice: {
@@ -127,7 +130,8 @@ serve(async (req: Request) => {
         },
       };
 
-      const lgResponse = await fetch('https://app.ligdicash.com/pay/v02/debitwallet/withotp', {
+      // Étape 2 : POST straight/checkout-invoice/create (pour mobile money Orange/Moov/Telecel)
+      const lgResponse = await fetch('https://app.ligdicash.com/pay/v01/straight/checkout-invoice/create', {
         method: 'POST',
         headers: {
           'Apikey': LIGDICASH_API_KEY,
@@ -139,7 +143,7 @@ serve(async (req: Request) => {
       });
 
       const lgData = await lgResponse.json();
-      console.log(`[ligdicash-confirm] LigdiCash debitwallet response:`, JSON.stringify(lgData));
+      console.log(`[ligdicash-confirm] straight/checkout response:`, JSON.stringify(lgData));
 
       if (lgData.response_code !== '00') {
         return new Response(
@@ -150,32 +154,65 @@ serve(async (req: Request) => {
 
       ligdicashToken = lgData.token || '';
 
-      // Step 2: Verify status
+      // Étape 3 : Polling agressif — 10 tentatives × 3s = ~30s max
+      // Le débit mobile money prend typiquement 5-15s après soumission OTP
       if (ligdicashToken) {
         const verifyUrl = `https://app.ligdicash.com/pay/v01/redirect/checkout-invoice/confirm/?invoiceToken=${ligdicashToken}`;
-        const verifyResp = await fetch(verifyUrl, {
-          headers: {
-            'Apikey': LIGDICASH_API_KEY,
-            'Authorization': `Bearer ${LIGDICASH_BEARER_TOKEN}`,
-          },
-        });
-        const verifyData = await verifyResp.json();
-        console.log(`[ligdicash-confirm] Verify response:`, JSON.stringify(verifyData));
+        const MAX_POLLS = 10;
+        const POLL_INTERVAL_MS = 3000;
+        let verified = false;
 
-        if (verifyData.response_code === '00' && verifyData.status === 'completed') {
-          ligdicashTransactionId = verifyData.transaction_id || '';
-          ligdicashOperator = verifyData.operator_name || '';
-        } else {
-          // Payment may still be processing — callback will handle it
-          console.log(`[ligdicash-confirm] Payment not yet completed, status: ${verifyData.status}`);
+        for (let attempt = 1; attempt <= MAX_POLLS; attempt++) {
+          if (attempt > 1) {
+            await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+          }
+          console.log(`[ligdicash-confirm] Verify attempt ${attempt}/${MAX_POLLS}`);
+
+          try {
+            const verifyResp = await fetch(verifyUrl, {
+              headers: {
+                'Apikey': LIGDICASH_API_KEY,
+                'Authorization': `Bearer ${LIGDICASH_BEARER_TOKEN}`,
+              },
+            });
+            const verifyData = await verifyResp.json();
+            console.log(`[ligdicash-confirm] Verify response (${attempt}):`, JSON.stringify(verifyData));
+
+            if (verifyData.response_code === '00' && verifyData.status === 'completed') {
+              ligdicashTransactionId = verifyData.transaction_id || '';
+              ligdicashOperator = verifyData.operator_name || '';
+              verified = true;
+              break;
+            }
+
+            // Si statut final d'échec (pas juste "en cours"), arrêter immédiatement
+            if (verifyData.status === 'failed' || verifyData.status === 'cancelled' || verifyData.status === 'rejected') {
+              console.log(`[ligdicash-confirm] Payment definitively failed: ${verifyData.status}`);
+              return new Response(
+                JSON.stringify({
+                  success: false,
+                  error: 'ligdicash_payment_failed',
+                  details: verifyData,
+                  message: 'Le paiement a été refusé par l\'opérateur.',
+                }),
+                { status: 402, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+              );
+            }
+          } catch (verifyErr) {
+            console.error(`[ligdicash-confirm] Verify attempt ${attempt} error:`, verifyErr);
+          }
+        }
+
+        if (!verified) {
+          console.log(`[ligdicash-confirm] Payment not completed after ${MAX_POLLS} polls (~${MAX_POLLS * POLL_INTERVAL_MS / 1000}s)`);
           return new Response(
             JSON.stringify({
-              success: true,
-              status: 'processing',
-              message: 'Paiement en cours de traitement. Vous recevrez une confirmation.',
+              success: false,
+              error: 'ligdicash_payment_failed',
+              message: 'Le paiement n\'a pas abouti dans le délai imparti. Vérifiez votre solde et réessayez.',
               token: ligdicashToken,
             }),
-            { headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+            { status: 408, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
           );
         }
       }

@@ -7,6 +7,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 import 'td_service.dart';
 
+/// Exception levée quand l'étudiant n'a pas assez de crédits pour une action IA.
+class InsufficientCreditsException implements Exception {
+  final int balance;
+  final int cost;
+  final String message;
+  InsufficientCreditsException({required this.balance, required this.cost, required this.message});
+  @override
+  String toString() => 'InsufficientCreditsException: $message (balance=$balance, cost=$cost)';
+}
+
 /// Service IA pour le tuteur de préparation aux concours.
 ///
 /// Architecture (Option A — Edge Function OpenRouter):
@@ -71,12 +81,24 @@ class PrepAiService {
         return _demoResponse(userMessage);
       }
 
+      // HTTP 402 — insufficient credits
+      if (response.statusCode == 402) {
+        final data = jsonDecode(response.body);
+        throw InsufficientCreditsException(
+          balance: (data['balance'] as num?)?.toInt() ?? 0,
+          cost: (data['cost'] as num?)?.toInt() ?? 0,
+          message: data['message']?.toString() ?? 'Crédits insuffisants',
+        );
+      }
+
       // Edge Function not deployed yet or error — fallback to demo
       debugPrint(
         '[PrepAiService] Edge Function error ${response.statusCode}: '
         '${response.body.length > 300 ? response.body.substring(0, 300) : response.body}',
       );
       return _demoResponse(userMessage);
+    } on InsufficientCreditsException {
+      rethrow;
     } catch (e) {
       debugPrint('[PrepAiService] Exception: $e');
       return _demoResponse(userMessage);

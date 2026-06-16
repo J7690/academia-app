@@ -1,0 +1,395 @@
+======================================================================
+BOBODO VOICE REALITY AUDIT
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+TARGET: 185.167.97.144 as root
+======================================================================
+
+### MISSION 1 — Services réels installés ###
+
+======================================================================
+[SERVICES_ALL]
+COMMAND: systemctl list-units --type=service --no-pager
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+UNIT                                     LOAD   ACTIVE SUB     DESCRIPTION
+  apparmor.service                         loaded active exited  Load AppArmor profiles
+  apport.service                           loaded active exited  automatic crash report generation
+  blk-availability.service                 loaded active exited  Availability of block devices
+  bobodo-vocal.service                     loaded active running Bobodo Vocal Service
+  cloud-config.service                     loaded active exited  Cloud-init: Config Stage
+  cloud-final.service                      loaded active exited  Cloud-init: Final Stage
+  cloud-init-local.service                 loaded active exited  Cloud-init: Local Stage (pre-network)
+  cloud-init.service                       loaded active exited  Cloud-init: Network Stage
+  console-setup.service                    loaded active exited  Set console font and keymap
+  containerd.service                       loaded active running containerd container runtime
+  cron.service                             loaded active running Regular background program processing daemon
+  dbus.service                             loaded active running D-Bus System Message Bus
+  docker.service                           loaded active running Docker Application Container Engine
+  finalrd.service                          loaded active exited  Create final runtime dir for shutdown pivot root
+  getty@tty1.service                       loaded active running Getty on tty1
+  irqbalance.service                       loaded active running irqbalance daemon
+  keyboard-setup.service                   loaded active exited  Set the console keyboard layout
+  kmod-static-nodes.service                loaded active exited  Create List of Static Device Nodes
+  lvm2-monitor.service                     loaded active exited  Monitoring of LVM2 mirrors, snapshots etc. using dmeventd or progress polling
+  ModemManager.service                     loaded active running Modem Manager
+  multipathd.service                       loaded active running Device-Mapper Multipath Device Controller
+  nginx.service                            loaded active running A high performance web server and a reverse proxy server
+  plymouth-quit-wait.service               loaded active exited  Hold until boot process finishes up
+  plymouth-quit.service                    loaded active exited  Terminate Plymouth Boot Screen
+  plymouth-read-write.service              loaded active exited  Tell Plymouth To Write Out Runtime Data
+  polkit.service                           loaded active running Authorization Manager
+  qemu-guest-agent.service                 loaded active running QEMU Guest Agent
+  redis-server.service                     loaded active running Advanced key-value store
+  rsyslog.service                          loaded active running System Logging Service
+  setvtrgb.service                         loaded active exited  Set console scheme
+  snapd.apparmor.service                   loaded active exited  Load AppArmor profiles managed internally by snapd
+  snapd.seeded.service                     loaded active exited  Wait until snapd is fully seeded
+  ssh.service                              loaded active running OpenBSD Secure Shell server
+  sysstat.service                          loaded active exited  Resets System Activity Logs
+  systemd-binfmt.service                   loaded active exited  Set Up Additional Binary Formats
+  systemd-journal-flush.service            loaded active exited  Flush Journal to Persistent Storage
+  systemd-journald.service                 loaded active running Journal Service
+  systemd-logind.service                   loaded active running User Login Management
+  systemd-modules-load.service             loaded active exited  Load Kernel Modules
+  systemd-networkd.service                 loaded active running Network Configuration
+  systemd-random-seed.service              loaded active exited  Load/Save OS Random Seed
+  systemd-remount-fs.service               loaded active exited  Remount Root and Kernel File Systems
+  systemd-resolved.service                 loaded active running Network Name Resolution
+  systemd-sysctl.service                   loaded active exited  Apply Kernel Variables
+  systemd-timesyncd.service                loaded active running Network Time Synchronization
+  systemd-tmpfiles-setup-dev-early.service loaded active exited  Create Static Device Nodes in /dev gracefully
+  systemd-tmpfiles-setup-dev.service       loaded active exited  Create Static Device Nodes in /dev
+  systemd-tmpfiles-setup.service           loaded active exited  Create Volatile Files and Directories
+  systemd-udev-trigger.service             loaded active exited  Coldplug All udev Devices
+  systemd-udevd.service                    loaded active running Rule-based Manager for Device Events and Files
+  systemd-update-utmp.service              loaded active exited  Record System Boot/Shutdown in UTMP
+  systemd-user-sessions.service            loaded active exited  Permit User Sessions
+  udisks2.service                          loaded active running Disk Manager
+  ufw.service                              loaded active exited  Uncomplicated firewall
+  unattended-upgrades.service              loaded active running Unattended Upgrades Shutdown
+  upower.service                           loaded active running Daemon for power management
+  user-runtime-dir@0.service               loaded active exited  User Runtime Directory /run/user/0
+  user@0.service                           loaded active running User Manager for UID 0
+  video-worker.service                     loaded active running Academia Video Asset Worker
+
+Legend: LOAD   → Reflects whether the unit definition was properly loaded.
+        ACTIVE → The high-level unit activation state, i.e. generalization of SUB.
+        SUB    → The low-level unit activation state, values depend on unit type.
+
+59 loaded units listed. Pass --all to see loaded but inactive units, too.
+To show all installed unit files use 'systemctl list-unit-files'.
+----------------------------------------------------------------------
+
+======================================================================
+[SERVICES_VOICE]
+COMMAND: systemctl list-unit-files --type=service | grep -i voice || echo 'NO_VOICE_SERVICE_FOUND'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+NO_VOICE_SERVICE_FOUND
+----------------------------------------------------------------------
+
+======================================================================
+[SERVICES_BOBODO]
+COMMAND: systemctl list-unit-files --type=service | grep -i bobodo || echo 'NO_BOBODO_SERVICE_FOUND'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+bobodo-vocal.service                         enabled         enabled
+----------------------------------------------------------------------
+
+======================================================================
+[SERVICES_WHISPER]
+COMMAND: systemctl list-unit-files --type=service | grep -i whisper || echo 'NO_WHISPER_SERVICE_FOUND'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+NO_WHISPER_SERVICE_FOUND
+----------------------------------------------------------------------
+
+======================================================================
+[SERVICES_PIPER]
+COMMAND: systemctl list-unit-files --type=service | grep -i piper || echo 'NO_PIPER_SERVICE_FOUND'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+NO_PIPER_SERVICE_FOUND
+----------------------------------------------------------------------
+
+### MISSION 2 — Ports réellement ouverts ###
+
+======================================================================
+[PORTS_SS]
+COMMAND: ss -tulpn || echo 'SS_FAILED'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+Netid State  Recv-Q Send-Q Local Address:Port Peer Address:PortProcess                                                                                                                                   
+udp   UNCONN 0      0         127.0.0.54:53        0.0.0.0:*    users:(("systemd-resolve",pid=124981,fd=16))                                                                                             
+udp   UNCONN 0      0      127.0.0.53%lo:53        0.0.0.0:*    users:(("systemd-resolve",pid=124981,fd=14))                                                                                             
+tcp   LISTEN 0      2048         0.0.0.0:8000      0.0.0.0:*    users:(("python",pid=125021,fd=14))                                                                                                      
+tcp   LISTEN 0      511        127.0.0.1:6379      0.0.0.0:*    users:(("redis-server",pid=124968,fd=6))                                                                                                 
+tcp   LISTEN 0      4096   127.0.0.53%lo:53        0.0.0.0:*    users:(("systemd-resolve",pid=124981,fd=15))                                                                                             
+tcp   LISTEN 0      511          0.0.0.0:80        0.0.0.0:*    users:(("nginx",pid=124964,fd=5),("nginx",pid=124963,fd=5),("nginx",pid=124962,fd=5),("nginx",pid=124961,fd=5),("nginx",pid=124960,fd=5))
+tcp   LISTEN 0      4096         0.0.0.0:22        0.0.0.0:*    users:(("sshd",pid=125314,fd=3),("systemd",pid=1,fd=155))                                                                                
+tcp   LISTEN 0      4096      127.0.0.54:53        0.0.0.0:*    users:(("systemd-resolve",pid=124981,fd=17))                                                                                             
+tcp   LISTEN 0      511            [::1]:6379         [::]:*    users:(("redis-server",pid=124968,fd=7))                                                                                                 
+tcp   LISTEN 0      4096               *:7881            *:*    users:(("livekit-server",pid=12935,fd=8))                                                                                                
+tcp   LISTEN 0      4096               *:7880            *:*    users:(("livekit-server",pid=12935,fd=9))                                                                                                
+tcp   LISTEN 0      4096            [::]:22           [::]:*    users:(("sshd",pid=125314,fd=4),("systemd",pid=1,fd=156))
+----------------------------------------------------------------------
+
+======================================================================
+[PORTS_NETSTAT]
+COMMAND: netstat -tulpn 2>/dev/null || echo 'NETSTAT_NOT_AVAILABLE'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+NETSTAT_NOT_AVAILABLE
+----------------------------------------------------------------------
+
+### MISSION 3 — Emplacements réels ###
+
+======================================================================
+[FIND_VOICE]
+COMMAND: find / -iname '*voice*' -not -path '/proc/*' -not -path '/sys/*' 2>/dev/null | head -30 || echo 'FIND_VOICE_EMPTY'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/piper/download_voices.py
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/piper/espeak-ng-data/voices
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/piper/patch_voice_with_alignment.py
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/piper/__pycache__/voice.cpython-312.pyc
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/piper/__pycache__/patch_voice_with_alignment.cpython-312.pyc
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/piper/__pycache__/download_voices.cpython-312.pyc
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/piper/voice.py
+/usr/share/alsa/ucm2/PinePhone/VoiceCall.conf
+/usr/share/alsa/ucm2/Allwinner/A64/PinePhone/VoiceCall.conf
+/usr/share/alsa/ucm2/OMAP/abe-twl6040/SDP4430/VoiceCall.conf
+/usr/share/alsa/ucm2/OMAP/abe-twl6040/SDP4430/Voice.conf
+/usr/share/alsa/ucm2/OMAP/abe-twl6040/Pandaboard/VoiceCall.conf
+/usr/share/alsa/ucm2/OMAP/abe-twl6040/Pandaboard/Voice.conf
+/usr/share/alsa/ucm2/Tegra/max98089/lge-x3-VoiceCall.conf
+/usr/lib/python3/dist-packages/botocore/data/pinpoint-sms-voice-v2
+/usr/lib/python3/dist-packages/botocore/data/chime-sdk-voice
+/usr/lib/python3/dist-packages/botocore/data/voice-id
+/usr/lib/python3/dist-packages/botocore/data/sms-voice
+/usr/lib/python3/dist-packages/botocore/data/pinpoint-sms-voice
+/usr/src/linux-headers-6.8.0-117/include/linux/mfd/davinci_voicecodec.h
+/usr/src/linux-headers-6.8.0-124/include/linux/mfd/davinci_voicecodec.h
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/35/fs/usr/share/alsa/ucm2/PinePhone/VoiceCall.conf
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/35/fs/usr/share/alsa/ucm2/Allwinner/A64/PinePhone/VoiceCall.conf
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/35/fs/usr/share/alsa/ucm2/OMAP/abe-twl6040/SDP4430/VoiceCall.conf
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/35/fs/usr/share/alsa/ucm2/OMAP/abe-twl6040/SDP4430/Voice.conf
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/35/fs/usr/share/alsa/ucm2/OMAP/abe-twl6040/Pandaboard/VoiceCall.conf
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/35/fs/usr/share/alsa/ucm2/OMAP/abe-twl6040/Pandaboard/Voice.conf
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/35/fs/usr/share/alsa/ucm2/Tegra/max98089/lge-x3-VoiceCall.conf
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/22/fs/usr/share/alsa/ucm2/PinePhone/VoiceCall.conf
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/22/fs/usr/share/alsa/ucm2/Allwinner/A64/PinePhone/VoiceCall.conf
+----------------------------------------------------------------------
+
+======================================================================
+[FIND_WHISPER]
+COMMAND: find / -iname '*whisper*' -not -path '/proc/*' -not -path '/sys/*' 2>/dev/null | head -30 || echo 'FIND_WHISPER_EMPTY'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+/root/.cache/huggingface/hub/models--Systran--faster-whisper-medium
+/root/.cache/huggingface/hub/.locks/models--Systran--faster-whisper-medium
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/faster_whisper
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/piper/espeak-ng-data/voices/!v/whisperf
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/piper/espeak-ng-data/voices/!v/whisper
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/ctranslate2/specs/whisper_spec.py
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/ctranslate2/specs/__pycache__/whisper_spec.cpython-312.pyc
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/whisper_jump_times.py
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/whisper_chain.py
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/whisper_inputs.py
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/whisper_helper.py
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/whisper_encoder.py
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/__pycache__/whisper_jump_times.cpython-312.pyc
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/__pycache__/whisper_decoder.cpython-312.pyc
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/__pycache__/whisper_encoder_decoder_init.cpython-312.pyc
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/__pycache__/whisper_chain.cpython-312.pyc
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/__pycache__/whisper_inputs.cpython-312.pyc
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/__pycache__/whisper_helper.cpython-312.pyc
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/__pycache__/whisper_encoder.cpython-312.pyc
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/whisper_encoder_decoder_init.py
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/whisper_decoder.py
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/faster_whisper-1.2.1.dist-info
+----------------------------------------------------------------------
+
+======================================================================
+[FIND_PIPER]
+COMMAND: find / -iname '*piper*' -not -path '/proc/*' -not -path '/sys/*' 2>/dev/null | head -30 || echo 'FIND_PIPER_EMPTY'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+/opt/bobodo-vocal/venv/bin/piper
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/piper
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/piper_tts-1.4.2.dist-info
+----------------------------------------------------------------------
+
+======================================================================
+[FIND_BOBODO]
+COMMAND: find / -iname '*bobodo*' -not -path '/proc/*' -not -path '/sys/*' 2>/dev/null | head -30 || echo 'FIND_BOBODO_EMPTY'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+/root/bobodo-vocal\stt_service.py
+/root/bobodo-vocal\websocket_handler.py
+/opt/bobodo-vocal
+/opt/bobodo-vocal/bobodo_client.py
+/opt/bobodo-vocal/__pycache__/bobodo_client.cpython-312.pyc
+/etc/systemd/system/bobodo-vocal.service
+/etc/systemd/system/multi-user.target.wants/bobodo-vocal.service
+/run/systemd/units/invocation:bobodo-vocal.service
+----------------------------------------------------------------------
+
+### MISSION 4 — Fichiers serveur vocal ###
+
+======================================================================
+[FILE_MAIN_PY]
+COMMAND: ls -la /root/voice_server/main.py 2>&1 || echo 'ABSENT'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+ls: cannot access '/root/voice_server/main.py': No such file or directory
+ABSENT
+----------------------------------------------------------------------
+
+======================================================================
+[FILE_WEBSOCKET]
+COMMAND: ls -la /root/voice_server/websocket_handler.py 2>&1 || echo 'ABSENT'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+ls: cannot access '/root/voice_server/websocket_handler.py': No such file or directory
+ABSENT
+----------------------------------------------------------------------
+
+======================================================================
+[FILE_STT]
+COMMAND: ls -la /root/voice_server/stt_service.py 2>&1 || echo 'ABSENT'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+ls: cannot access '/root/voice_server/stt_service.py': No such file or directory
+ABSENT
+----------------------------------------------------------------------
+
+======================================================================
+[FILE_TTS]
+COMMAND: ls -la /root/voice_server/tts_service.py 2>&1 || echo 'ABSENT'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+ls: cannot access '/root/voice_server/tts_service.py': No such file or directory
+ABSENT
+----------------------------------------------------------------------
+
+======================================================================
+[FILE_SERVER]
+COMMAND: ls -la /root/voice_server/voice_server.py 2>&1 || echo 'ABSENT'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+ls: cannot access '/root/voice_server/voice_server.py': No such file or directory
+ABSENT
+----------------------------------------------------------------------
+
+### MISSION 5 — Modèles réels ###
+
+======================================================================
+[MODELS_PIPER]
+COMMAND: find /root /opt /usr/share -name '*.onnx' 2>/dev/null | head -10 || echo 'NO_ONNX_FOUND'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+/opt/bobodo-vocal/models/model.onnx
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/faster_whisper/assets/silero_vad_v6.onnx
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/piper/tashkeel/model.onnx
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/datasets/mul_1.onnx
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/datasets/sigmoid.onnx
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/datasets/logreg_iris.onnx
+----------------------------------------------------------------------
+
+======================================================================
+[MODELS_WHISPER]
+COMMAND: find /root /opt /usr/share -iname '*whisper*' -type f 2>/dev/null | head -10 || echo 'NO_WHISPER_MODEL_FOUND'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/piper/espeak-ng-data/voices/!v/whisperf
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/piper/espeak-ng-data/voices/!v/whisper
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/ctranslate2/specs/whisper_spec.py
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/ctranslate2/specs/__pycache__/whisper_spec.cpython-312.pyc
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/whisper_jump_times.py
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/whisper_chain.py
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/whisper_inputs.py
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/whisper_helper.py
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/whisper_encoder.py
+/opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/transformers/models/whisper/__pycache__/whisper_jump_times.cpython-312.pyc
+----------------------------------------------------------------------
+
+======================================================================
+[MODELS_SIZE]
+COMMAND: find /root /opt /usr/share \( -name '*.onnx' -o -name '*.bin' -o -name '*.pt' -o -name '*.ckpt' \) -exec ls -lh {} + 2>/dev/null | head -20 || echo 'NO_MODEL_FILES'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+-rw-r--r-- 1 root root 299K Jun 12 14:12 /opt/bobodo-vocal/models/model.onnx
+-rw-r--r-- 1 root root 1.2M Jun 10 17:18 /opt/bobodo-vocal/venv/lib/python3.12/site-packages/faster_whisper/assets/silero_vad_v6.onnx
+-rw-r--r-- 1 root root  670 Jun 10 17:18 /opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/datasets/logreg_iris.onnx
+-rw-r--r-- 1 root root  130 Jun 10 17:18 /opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/datasets/mul_1.onnx
+-rw-r--r-- 1 root root  103 Jun 10 17:18 /opt/bobodo-vocal/venv/lib/python3.12/site-packages/onnxruntime/datasets/sigmoid.onnx
+-rw-r--r-- 1 root root 4.6M Jun 10 17:23 /opt/bobodo-vocal/venv/lib/python3.12/site-packages/piper/tashkeel/model.onnx
+lrwxrwxrwx 1 root root   76 Jun 10 17:21 /root/.cache/huggingface/hub/models--Systran--faster-whisper-medium/snapshots/08e178d48790749d25932bbc082711ddcfdfbc4f/model.bin -> ../../blobs/9b45e1009dcc4ab601eff815b61d80e60ce3fd8c74c1a14f4a282258286b51ae
+-rw-r--r-- 1 root root  26M Mar 31  2024 /usr/share/pocketsphinx/model/en-us/en-us.lm.bin
+-rw-r--r-- 1 root root 838K Mar 31  2024 /usr/share/pocketsphinx/model/en-us/en-us-phone.lm.bin
+-rw-r--r-- 1 root root  21K Apr 23  2024 /usr/share/secureboot/updates/dbx/dbxupdate_x64.bin
+-rw-r--r-- 1 root root  36K Jun  2 22:00 /usr/share/vim/vim91/tutor/tutor.pt
+----------------------------------------------------------------------
+
+### MISSION 6 — Test endpoints ###
+
+======================================================================
+[CURL_LOCALHOST]
+COMMAND: curl -s -o /dev/null -w '%{http_code}' --connect-timeout 5 http://localhost:8000/ 2>&1 || echo 'CURL_FAILED_LOCALHOST_8000'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+404
+----------------------------------------------------------------------
+
+======================================================================
+[CURL_127]
+COMMAND: curl -s -o /dev/null -w '%{http_code}' --connect-timeout 5 http://127.0.0.1:8000/ 2>&1 || echo 'CURL_FAILED_127_8000'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+404
+----------------------------------------------------------------------
+
+======================================================================
+[CURL_LOCAL_WS]
+COMMAND: curl -s -o /dev/null -w '%{http_code}' --connect-timeout 5 http://localhost:8000/ws 2>&1 || echo 'CURL_WS_FAILED'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+404
+----------------------------------------------------------------------
+
+======================================================================
+[CURL_PUBLIC]
+COMMAND: curl -s -o /dev/null -w '%{http_code}' --connect-timeout 5 http://185.167.97.144:8000/ 2>&1 || echo 'CURL_PUBLIC_FAILED'
+TIMESTAMP: 2026-06-12 20:11:49 UTC
+EXIT_CODE: 0
+STDOUT:
+404
+----------------------------------------------------------------------
+
+======================================================================
+FIN AUDIT
+======================================================================

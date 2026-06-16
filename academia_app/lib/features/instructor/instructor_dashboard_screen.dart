@@ -11,9 +11,10 @@ import '../../providers/teacher_td_assignments_provider.dart';
 import '../../providers/td_messages_provider.dart';
 import '../../theme/td_theme.dart';
 import '../../widgets/loading_widget.dart';
-import '../../widgets/error_widget.dart';
+// import '../../widgets/error_widget.dart'; // unused
 import 'instructor_course_forum_screen.dart';
-import '../live/livekit_room_screen.dart';
+import '../live/academia_classroom_screen.dart';
+import '../../models/academia_session.dart';
 import 'teacher_td_assignments_screen.dart';
 import 'teacher_prep_screen.dart';
 import 'teacher_prep_assignments_screen.dart';
@@ -420,190 +421,198 @@ class _InstructorCoursesTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
-      body: Consumer<InstructorOnlineCoursesProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading && provider.courses.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (provider.error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(provider.error!),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: provider.loadMyCourses,
-                    child: const Text('Recharger'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          final courses = provider.courses;
-          if (courses.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('Aucun cours en ligne configuré.'),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () => _showCourseDialog(context, provider),
-                    child: const Text('Créer un premier cours en ligne'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: courses.length,
-            itemBuilder: (context, index) {
-              final course = courses[index];
-              final courseId = course['id']?.toString();
-              final title = (course['title'] ?? '').toString();
-              final shortDescription =
-                  (course['short_description'] ?? '').toString();
-              final category = (course['category'] ?? '').toString();
-              final level = (course['level'] ?? '').toString();
-              final language = (course['language'] ?? '').toString();
-              final estimatedHours = course['estimated_hours'];
-              final isPublished = course['is_published'] == true;
-
-              final metaParts = <String>[];
-              if (category.isNotEmpty) metaParts.add(category);
-              if (level.isNotEmpty) metaParts.add(level);
-              if (language.isNotEmpty) metaParts.add(language);
-              if (estimatedHours is int && estimatedHours > 0) {
-                metaParts.add('$estimatedHours h');
+    return Container(
+      color: const Color(0xFFF3F4F6),
+      child: Stack(
+        children: [
+          Consumer<InstructorOnlineCoursesProvider>(
+            builder: (context, provider, child) {
+              if (provider.isLoading && provider.courses.isEmpty) {
+                return const Center(child: CircularProgressIndicator());
               }
 
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                color: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              if (provider.error != null) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              title,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            if (shortDescription.isNotEmpty)
-                              Text(
-                                shortDescription,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                            if (metaParts.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                metaParts.join(' • '),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Chip(
-                            label: Text(
-                              isPublished ? 'Publié' : 'Brouillon',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: isPublished
-                                    ? const Color(0xFF1EA75C)
-                                    : const Color(0xFFFF3B30),
-                              ),
-                            ),
-                            backgroundColor: isPublished
-                                ? const Color(0xFFE5F9E7)
-                                : const Color(0xFFFEE2E2),
-                          ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                tooltip: 'Modifier le cours',
-                                onPressed: () {
-                                  _showCourseDialog(
-                                    context,
-                                    provider,
-                                    existing: course,
-                                  );
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.forum_outlined),
-                                tooltip: 'Forum du cours',
-                                onPressed: courseId == null
-                                    ? null
-                                    : () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (_) => InstructorCourseForumScreen(
-                                              courseId: courseId,
-                                              courseTitle: title,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                              ),
-                            ],
-                          ),
-                          if (courseId != null)
-                            Text(
-                              courseId,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
-                              ),
-                            ),
-                        ],
+                      Text(provider.error!),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: provider.loadMyCourses,
+                        child: const Text('Recharger'),
                       ),
                     ],
                   ),
-                ),
+                );
+              }
+
+              final courses = provider.courses;
+              if (courses.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('Aucun cours en ligne configuré.'),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: () => _showCourseDialog(context, provider),
+                        child: const Text('Créer un premier cours en ligne'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                itemCount: courses.length,
+                itemBuilder: (context, index) {
+                  final course = courses[index];
+                  final courseId = course['id']?.toString();
+                  final title = (course['title'] ?? '').toString();
+                  final shortDescription =
+                      (course['short_description'] ?? '').toString();
+                  final category = (course['category'] ?? '').toString();
+                  final level = (course['level'] ?? '').toString();
+                  final language = (course['language'] ?? '').toString();
+                  final estimatedHours = course['estimated_hours'];
+                  final isPublished = course['is_published'] == true;
+
+                  final metaParts = <String>[];
+                  if (category.isNotEmpty) metaParts.add(category);
+                  if (level.isNotEmpty) metaParts.add(level);
+                  if (language.isNotEmpty) metaParts.add(language);
+                  if (estimatedHours is int && estimatedHours > 0) {
+                    metaParts.add('$estimatedHours h');
+                  }
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    color: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  title,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                if (shortDescription.isNotEmpty)
+                                  Text(
+                                    shortDescription,
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                if (metaParts.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    metaParts.join(' • '),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Chip(
+                                label: Text(
+                                  isPublished ? 'Publié' : 'Brouillon',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: isPublished
+                                        ? const Color(0xFF1EA75C)
+                                        : const Color(0xFFFF3B30),
+                                  ),
+                                ),
+                                backgroundColor: isPublished
+                                    ? const Color(0xFFE5F9E7)
+                                    : const Color(0xFFFEE2E2),
+                              ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit),
+                                    tooltip: 'Modifier le cours',
+                                    onPressed: () {
+                                      _showCourseDialog(
+                                        context,
+                                        provider,
+                                        existing: course,
+                                      );
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.forum_outlined),
+                                    tooltip: 'Forum du cours',
+                                    onPressed: courseId == null
+                                        ? null
+                                        : () {
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (_) => InstructorCourseForumScreen(
+                                                  courseId: courseId,
+                                                  courseTitle: title,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                  ),
+                                ],
+                              ),
+                              if (courseId != null)
+                                Text(
+                                  courseId,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               );
             },
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          final provider =
-              context.read<InstructorOnlineCoursesProvider>();
-          _showCourseDialog(context, provider);
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Ajouter un cours en ligne'),
+          ),
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: FloatingActionButton.extended(
+              onPressed: () {
+                final provider =
+                    context.read<InstructorOnlineCoursesProvider>();
+                _showCourseDialog(context, provider);
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Ajouter un cours en ligne'),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -863,55 +872,57 @@ class _InstructorLiveSessionsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
-      body: Consumer2<InstructorOnlineCourseLiveSessionsProvider,
-          InstructorOnlineCoursesProvider>(
-        builder: (context, sessionsProvider, coursesProvider, child) {
-          if (sessionsProvider.isLoading && sessionsProvider.sessions.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    return Container(
+      color: const Color(0xFFF3F4F6),
+      child: Stack(
+        children: [
+          Consumer2<InstructorOnlineCourseLiveSessionsProvider,
+              InstructorOnlineCoursesProvider>(
+            builder: (context, sessionsProvider, coursesProvider, child) {
+              if (sessionsProvider.isLoading && sessionsProvider.sessions.isEmpty) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-          if (sessionsProvider.error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(sessionsProvider.error!),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: sessionsProvider.loadMySessions,
-                    child: const Text('Recharger'),
+              if (sessionsProvider.error != null) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(sessionsProvider.error!),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: sessionsProvider.loadMySessions,
+                        child: const Text('Recharger'),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          }
+                );
+              }
 
-          final sessions = sessionsProvider.sessions;
+              final sessions = sessionsProvider.sessions;
 
-          if (sessions.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('Aucune session live ou TD planifiée.'),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () => _showSessionDialog(
-                      context,
-                      sessionsProvider,
-                      coursesProvider,
-                    ),
-                    child: const Text('Planifier une première session'),
+              if (sessions.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('Aucune session live ou TD planifiée.'),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: () => _showSessionDialog(
+                          context,
+                          sessionsProvider,
+                          coursesProvider,
+                        ),
+                        child: const Text('Planifier une première session'),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          }
+                );
+              }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
+              return ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
             itemCount: sessions.length,
             itemBuilder: (context, index) {
               final session = sessions[index];
@@ -1098,10 +1109,22 @@ class _InstructorLiveSessionsTab extends StatelessWidget {
                                                 .toLowerCase()
                                                 .trim() ==
                                             'livekit') {
+                                          final academiaSession = AcademiaSession(
+                                            id: sessionId,
+                                            type: SessionType.course,
+                                            status: SessionStatus.running,
+                                            provider: SessionProvider.livekit,
+                                            title: title,
+                                            description: description.isNotEmpty ? description : null,
+                                            hostId: Supabase.instance.client.auth.currentUser?.id ?? '',
+                                            createdAt: DateTime.now(),
+                                            updatedAt: DateTime.now(),
+                                          );
                                           Navigator.of(context).push(
                                             MaterialPageRoute(
-                                              builder: (_) => LivekitRoomScreen(
-                                                sessionId: sessionId,
+                                              builder: (_) => AcademiaClassroomScreen(
+                                                session: academiaSession,
+                                                isHost: true,
                                               ),
                                             ),
                                           );
@@ -1127,18 +1150,24 @@ class _InstructorLiveSessionsTab extends StatelessWidget {
               );
             },
           );
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          final sessionsProvider =
-              context.read<InstructorOnlineCourseLiveSessionsProvider>();
-          final coursesProvider =
-              context.read<InstructorOnlineCoursesProvider>();
-          _showSessionDialog(context, sessionsProvider, coursesProvider);
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Planifier une session'),
+            },
+          ),
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: FloatingActionButton.extended(
+              onPressed: () {
+                final sessionsProvider =
+                    context.read<InstructorOnlineCourseLiveSessionsProvider>();
+                final coursesProvider =
+                    context.read<InstructorOnlineCoursesProvider>();
+                _showSessionDialog(context, sessionsProvider, coursesProvider);
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Planifier une session'),
+            ),
+          ),
+        ],
       ),
     );
   }

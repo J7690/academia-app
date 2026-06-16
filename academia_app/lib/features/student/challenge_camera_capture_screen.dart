@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 // ---------------------------------------------------------------------------
 // Color filter presets applied live on the camera preview (TikTok-style)
@@ -96,7 +97,8 @@ class ChallengeCameraCaptureScreen extends StatefulWidget {
 }
 
 class _ChallengeCameraCaptureScreenState
-    extends State<ChallengeCameraCaptureScreen> {
+    extends State<ChallengeCameraCaptureScreen>
+    with SingleTickerProviderStateMixin {
   // Camera
   List<CameraDescription> _cameras = const [];
   CameraController? _controller;
@@ -121,6 +123,10 @@ class _ChallengeCameraCaptureScreenState
   // Flash
   bool _flashOn = false;
 
+  // Animated logo (TikTok-style floating watermark)
+  late final AnimationController _logoAnimController;
+  late final Animation<Alignment> _logoAlignment;
+
   // Speed
   double _speed = 1.0;
   static const List<double> _speeds = [0.5, 1.0, 2.0, 3.0];
@@ -136,6 +142,17 @@ class _ChallengeCameraCaptureScreenState
   @override
   void initState() {
     super.initState();
+    // Floating logo animation: drifts slowly between corners over 8 seconds
+    _logoAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 8),
+    )..repeat(reverse: true);
+    _logoAlignment = TweenSequence<Alignment>([
+      TweenSequenceItem(tween: AlignmentTween(begin: const Alignment(0.85, -0.75), end: const Alignment(-0.80, -0.60)), weight: 1),
+      TweenSequenceItem(tween: AlignmentTween(begin: const Alignment(-0.80, -0.60), end: const Alignment(0.75, 0.55)), weight: 1),
+      TweenSequenceItem(tween: AlignmentTween(begin: const Alignment(0.75, 0.55), end: const Alignment(-0.70, 0.70)), weight: 1),
+      TweenSequenceItem(tween: AlignmentTween(begin: const Alignment(-0.70, 0.70), end: const Alignment(0.85, -0.75)), weight: 1),
+    ]).animate(CurvedAnimation(parent: _logoAnimController, curve: Curves.easeInOut));
     _initCameras();
   }
 
@@ -211,6 +228,7 @@ class _ChallengeCameraCaptureScreenState
 
   @override
   void dispose() {
+    _logoAnimController.dispose();
     _recordTimer?.cancel();
     _countdownTimer?.cancel();
     _controller?.dispose();
@@ -220,6 +238,10 @@ class _ChallengeCameraCaptureScreenState
   // --- Recording ---
 
   void _onRecordButtonPressed() {
+    if (_isPhotoMode) {
+      _takePhoto();
+      return;
+    }
     if (_isRecording) {
       _stopCurrentSegment();
       return;
@@ -232,6 +254,19 @@ class _ChallengeCameraCaptureScreenState
       _startCountdown();
     } else {
       _startRecording();
+    }
+  }
+
+  Future<void> _takePhoto() async {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) return;
+    try {
+      final file = await controller.takePicture();
+      if (mounted) {
+        Navigator.of(context).pop<List<XFile>>([file]);
+      }
+    } catch (e) {
+      debugPrint('[Camera] Photo capture error: $e');
     }
   }
 
@@ -369,12 +404,25 @@ class _ChallengeCameraCaptureScreenState
     setState(() => _countdownSetting = options[next]);
   }
 
+  // --- Pick from gallery (TikTok "Upload" button) ---
+
+  Future<void> _pickFromGallery() async {
+    if (_isRecording || _isCountingDown) return;
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickVideo(source: ImageSource.gallery);
+      if (picked != null && mounted) {
+        Navigator.of(context).pop<List<XFile>>([picked]);
+      }
+    } catch (e) {
+      debugPrint('[Camera] Gallery picker error: $e');
+    }
+  }
+
   // --- Confirm ---
 
   void _confirm() {
     if (_segments.isEmpty) return;
-    // Return the last segment (or first if single). Multi-segment merge
-    // will be handled by the editor screen (Phase 3).
     Navigator.of(context).pop<List<XFile>>(
       _segments.map((s) => s.file).toList(),
     );
@@ -387,7 +435,10 @@ class _ChallengeCameraCaptureScreenState
     _DurationMode('15s', Duration(seconds: 15)),
     _DurationMode('60s', Duration(seconds: 60)),
     _DurationMode('3min', Duration(minutes: 3)),
+    _DurationMode('📷', Duration.zero), // Photo mode
   ];
+
+  bool get _isPhotoMode => _durationModes[_durationModeIndex].duration == Duration.zero;
 
   Duration get _effectiveMaxDuration => _durationModes[_durationModeIndex].duration;
 
@@ -443,6 +494,31 @@ class _ChallengeCameraCaptureScreenState
                       ),
           ),
 
+          // ── Animated Academia logo (TikTok-style floating watermark) ──
+          if (_isRecording)
+            AnimatedBuilder(
+              animation: _logoAlignment,
+              builder: (context, child) => Align(
+                alignment: _logoAlignment.value,
+                child: child,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Opacity(
+                  opacity: 0.35,
+                  child: Image.asset(
+                    'assets/ACADEMIA_logo1.png',
+                    width: 48,
+                    height: 48,
+                    errorBuilder: (_, __, ___) => const Text(
+                      'Academia',
+                      style: TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
           // ── Countdown overlay ──
           if (_isCountingDown)
             Positioned.fill(
@@ -474,6 +550,45 @@ class _ChallengeCameraCaptureScreenState
                       onTap: () =>
                           Navigator.of(context).pop<List<XFile>?>(null),
                     ),
+                    const Spacer(),
+                    // Add sound button (TikTok-style)
+                    if (!_isRecording)
+                      GestureDetector(
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('♫ Sélecteur de son — bientôt disponible'),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.black38,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.music_note, color: Colors.white, size: 14),
+                              SizedBox(width: 4),
+                              Text(
+                                'Ajouter un son',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(width: 2),
+                              Icon(Icons.keyboard_arrow_down, color: Colors.white54, size: 14),
+                            ],
+                          ),
+                        ),
+                      ),
+                    if (_isRecording)
+                      const SizedBox.shrink(),
                     const Spacer(),
                     // Timer display
                     Container(
@@ -560,9 +675,12 @@ class _ChallengeCameraCaptureScreenState
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Duration mode selector (15s / 60s / 3min)
+                // Duration mode selector (15s / 60s / 3min / 📷)
                 if (!_isRecording) _buildDurationModeSelector(),
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
+                // Effects / Templates row (TikTok-style)
+                if (!_isRecording) _buildEffectsRow(),
+                const SizedBox(height: 14),
                 // Main row: undo / gallery — record — confirm
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -570,16 +688,23 @@ class _ChallengeCameraCaptureScreenState
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Left: undo or gallery placeholder
+                      // Left: undo (if segments) or gallery upload (TikTok-style)
                       SizedBox(
                         width: 48,
-                        child: _segments.isNotEmpty && !_isRecording
-                            ? _bottomIconButton(
-                                icon: Icons.undo_rounded,
-                                label: 'Suppr.',
-                                onTap: _deleteLastSegment,
-                              )
-                            : const SizedBox.shrink(),
+                        child: _isRecording
+                            ? const SizedBox.shrink()
+                            : _segments.isNotEmpty
+                                ? _bottomIconButton(
+                                    icon: Icons.undo_rounded,
+                                    label: 'Suppr.',
+                                    onTap: _deleteLastSegment,
+                                  )
+                                : _bottomIconButton(
+                                    icon: Icons.photo_library_outlined,
+                                    label: 'Upload',
+                                    color: Colors.white,
+                                    onTap: _pickFromGallery,
+                                  ),
                       ),
                       // Center: record button
                       _buildRecordButton(),
@@ -702,6 +827,30 @@ class _ChallengeCameraCaptureScreenState
         _controller != null &&
         _controller!.value.isInitialized;
 
+    if (_isPhotoMode) {
+      // Photo shutter button — white circle
+      return GestureDetector(
+        onTap: active ? _onRecordButtonPressed : null,
+        child: Container(
+          width: 76,
+          height: 76,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 5),
+          ),
+          alignment: Alignment.center,
+          child: Container(
+            width: 60,
+            height: 60,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+      );
+    }
+
     return GestureDetector(
       onTap: active ? _onRecordButtonPressed : null,
       child: Container(
@@ -768,6 +917,72 @@ class _ChallengeCameraCaptureScreenState
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildEffectsRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _effectsRowChip(
+          icon: Icons.auto_awesome_outlined,
+          label: 'Effects',
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Effects en direct — bientôt disponible'),
+                duration: Duration(seconds: 1),
+              ),
+            );
+          },
+        ),
+        const SizedBox(width: 12),
+        _effectsRowChip(
+          icon: Icons.dashboard_outlined,
+          label: 'Templates',
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Templates vidéo — bientôt disponible'),
+                duration: Duration(seconds: 1),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _effectsRowChip({
+    required IconData icon,
+    required String label,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white24, width: 0.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white70, size: 16),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -6,9 +6,35 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
 const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY') ?? '';
-const OPENROUTER_MODEL = Deno.env.get('OPENROUTER_MODEL') ?? 'google/gemini-2.0-flash-001';
+const OPENROUTER_MODEL = Deno.env.get('OPENROUTER_MODEL') ?? '';
+const OPENROUTER_FALLBACK_MODEL = Deno.env.get('OPENROUTER_FALLBACK_MODEL') ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+const ACTION_CODE = 'correct_exercise';
+const EDGE_FN = 'prep-grade-assignment';
+const TEXT_CASCADE = [
+  { model: OPENROUTER_MODEL, tier: 'primary' },
+  { model: OPENROUTER_FALLBACK_MODEL, tier: 'fallback' },
+].filter(m => m.model);
+interface CascadeResult { content: string; model: string; tier: string; usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number }; costUsd: number; }
+async function callWithCascade(msgs: Array<{role:string;content:string}>, maxTok: number): Promise<CascadeResult> {
+  const errs: string[] = [];
+  for (const { model, tier } of TEXT_CASCADE) {
+    if (!model) continue;
+    try {
+      const r = await fetch('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:{Authorization:`Bearer ${OPENROUTER_API_KEY}`,'Content-Type':'application/json',Accept:'application/json'}, body:JSON.stringify({model,messages:msgs,temperature:0.3,max_tokens:maxTok}) });
+      if (!r.ok) { errs.push(`${model}(${r.status})`); continue; }
+      const d = await r.json(); const c = (d?.choices?.[0]?.message?.content??'').toString().trim();
+      if (!c) { errs.push(`${model}:empty`); continue; }
+      const u = d?.usage ?? {prompt_tokens:0,completion_tokens:0,total_tokens:0};
+      const cost = tier==='free'?0:((u.prompt_tokens||0)*0.0000001+(u.completion_tokens||0)*0.0000004);
+      console.log(`[cascade] OK: ${model} (${tier}) ${u.total_tokens}tok $${cost.toFixed(6)}`);
+      return {content:c,model,tier,usage:u,costUsd:cost};
+    } catch(e) { errs.push(`${model}:${(e as Error).message?.slice(0,60)}`); }
+  }
+  throw new Error(`All models failed: ${errs.join(' | ')}`);
+}
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -52,6 +78,7 @@ serve(async (req: Request) => {
     if (userError || !userData?.user) {
       return jsonResponse({ error: 'not_authenticated' }, 401);
     }
+    const userId = userData.user.id;
 
     const body = await req.json();
     const submissionId = (body.submission_id ?? '').toString().trim();
@@ -106,31 +133,34 @@ ${studentAnswer}
 
 Corrige cette copie. Attribue une note sur ${maxScore} et fournis une correction détaillée.`;
 
-    // 3. Call LLM
-    const llmResp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: OPENROUTER_MODEL,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.3,
-        max_tokens: 4000,
-      }),
+    // 3. Reserve credits
+    const { data: resData } = await supabase.rpc('app_student_reserve_credits', {
+      p_action_code: ACTION_CODE, p_edge_function: EDGE_FN, p_student_id: userId,
     });
+    const res = resData as Record<string, unknown> | null;
+    if (!res?.success) {
+      return jsonResponse({ error: 'insufficient_credits', balance: res?.balance ?? 0, cost: res?.cost ?? 0,
+        message: `Crédits insuffisants. Il vous faut ${res?.cost??0} crédits (solde: ${res?.balance??0}).` }, 402);
+    }
+    const reservationId = (res.reservation_id as string) || '';
 
-    if (!llmResp.ok) {
-      const errText = await llmResp.text();
-      return jsonResponse({ error: 'llm_error', detail: errText.slice(0, 500) }, 502);
+    // 3b. Call LLM with cascade
+    let cascadeResult: CascadeResult;
+    try {
+      cascadeResult = await callWithCascade([{role:'system',content:systemPrompt},{role:'user',content:userPrompt}], 4000);
+    } catch (e) {
+      await supabase.rpc('app_student_refund_credits', { p_reservation_id: reservationId });
+      return jsonResponse({ error: 'llm_error', detail: (e as Error).message?.slice(0,300) }, 502);
     }
 
-    const llmData = await llmResp.json();
-    const rawReply = llmData?.choices?.[0]?.message?.content?.trim() ?? '';
+    // 3c. Confirm credits
+    await supabase.rpc('app_student_confirm_credits', {
+      p_reservation_id: reservationId, p_openrouter_cost_usd: cascadeResult.costUsd,
+      p_openrouter_model: cascadeResult.model, p_tokens_input: cascadeResult.usage.prompt_tokens||0,
+      p_tokens_output: cascadeResult.usage.completion_tokens||0,
+    });
+
+    const rawReply = cascadeResult.content;
 
     // 4. Parse JSON
     let grading: Record<string, unknown>;
@@ -159,6 +189,8 @@ Corrige cette copie. Attribue une note sur ${maxScore} et fournis une correction
       strengths: grading.strengths ?? [],
       weaknesses: grading.weaknesses ?? [],
       advice: grading.advice ?? '',
+      credits_used: res.cost,
+      model: cascadeResult.model,
     });
   } catch (err: any) {
     console.error('prep-grade-assignment error:', err);

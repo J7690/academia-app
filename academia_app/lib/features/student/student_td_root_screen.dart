@@ -9,6 +9,7 @@ import '../../providers/td_messages_provider.dart';
 import '../../theme/td_theme.dart';
 
 import '../../widgets/bobodo_state.dart';
+import '../../widgets/credit_balance_chip.dart';
 import '../../widgets/ligdicash_payment_sheet.dart';
 import '../../widgets/bobodo_view.dart';
 import '../share/share_service.dart';
@@ -257,6 +258,8 @@ class _StudentTdRootScreenState extends State<StudentTdRootScreen> {
                   decoration: TdTheme.gradientHeader(TdTheme.studentTdGradient),
                 ),
                 actions: [
+                  const CreditBalanceChip(),
+                  const SizedBox(width: 4),
                   Consumer<ShareModeProvider>(
                     builder: (context, shareMode, _) {
                       final isBusy = shareMode.isBusy;

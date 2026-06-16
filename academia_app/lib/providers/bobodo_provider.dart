@@ -21,6 +21,7 @@ class BobodoProvider extends ChangeNotifier {
   final List<Map<String, dynamic>> _messages = [];
   List<Map<String, dynamic>> _sessions = [];
   String? _lastFailedMessage;
+  bool _shouldScrollToBottom = false;
 
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -28,6 +29,7 @@ class BobodoProvider extends ChangeNotifier {
   List<Map<String, dynamic>> get messages => List.unmodifiable(_messages);
   List<Map<String, dynamic>> get sessions => List.unmodifiable(_sessions);
   String? get lastFailedMessage => _lastFailedMessage;
+  bool get shouldScrollToBottom => _shouldScrollToBottom;
 
   final Map<String, String> _feedbackByMessageId = {};
 
@@ -45,6 +47,28 @@ class BobodoProvider extends ChangeNotifier {
   void _setError(String? value) {
     _error = value;
     notifyListeners();
+  }
+
+  void resetScrollFlag() {
+    _shouldScrollToBottom = false;
+    notifyListeners();
+  }
+
+  /// Restaurer la dernière session active au lancement.
+  /// Si une session existe dans SharedPreferences, charge ses messages.
+  Future<void> restoreLastSession() async {
+    if (_currentSessionId != null) return; // Déjà chargée
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final stored = prefs.getString(_sessionPrefKey);
+      if (stored != null && stored.trim().isNotEmpty) {
+        _currentSessionId = stored.trim();
+        await loadMessages();
+        debugPrint('[BobodoProvider] Session restaurée: $_currentSessionId (${_messages.length} messages)');
+      }
+    } catch (e) {
+      debugPrint('[BobodoProvider] Restauration session échouée: $e');
+    }
   }
 
   Future<void> createSession({String? title}) async {
@@ -97,6 +121,7 @@ class BobodoProvider extends ChangeNotifier {
       _messages
         ..clear()
         ..addAll(data.cast<Map<String, dynamic>>());
+      _shouldScrollToBottom = true;
       notifyListeners();
     } catch (e) {
       _setError(e.toString());
@@ -136,16 +161,10 @@ class BobodoProvider extends ChangeNotifier {
         sessionId = _currentSessionId;
       }
     } else {
-      // On a déjà un session_id en mémoire, mais on vérifie si elle est toujours valide
-      // en essayant de charger les messages. Si erreur, on tente d'en créer une nouvelle.
-      try {
-        await loadMessages();
-      } catch (_) {
-        await createSession(
-          title: content.substring(0, content.length > 60 ? 60 : content.length),
-        );
-        sessionId = _currentSessionId;
-      }
+      // Session déjà en mémoire — on l'utilise directement.
+      // La validité sera vérifiée par l'Edge Function.
+      // Si la session est invalide, le mécanisme P0 de _callEdgeFunction
+      // invalidera la session et retentera automatiquement.
     }
     if (sessionId == null) {
       _setError('Impossible de créer la session Bobodo.');
@@ -172,6 +191,7 @@ class BobodoProvider extends ChangeNotifier {
 
     _setLoading(true);
     var backendOk = true;
+    bool sessionInvalid = false;
     try {
       final session = _client.auth.currentSession;
       if (session == null || session.accessToken.isEmpty) {
@@ -205,6 +225,11 @@ class BobodoProvider extends ChangeNotifier {
             if (detail is String && detail.trim().isNotEmpty) {
               message = detail;
             }
+            // Détecter erreur de session invalide (enregistrement message échoue)
+            if (message.contains('enregistrement du message') ||
+                finalResponse.statusCode == 500) {
+              sessionInvalid = true;
+            }
           }
         } catch (_) {}
         _lastFailedMessage = content;
@@ -221,6 +246,19 @@ class BobodoProvider extends ChangeNotifier {
     if (backendOk) {
       _lastFailedMessage = null;
       await loadMessages();
+    } else if (sessionInvalid) {
+      // P0: Session invalide — invalider et recréer pour le prochain envoi
+      debugPrint('[BobodoProvider] Session invalide détectée, invalidation...');
+      _currentSessionId = null;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_sessionPrefKey);
+      } catch (_) {}
+      // Retry automatique avec nouvelle session
+      _setError(null);
+      _messages.removeLast(); // Retirer le message local ajouté
+      notifyListeners();
+      await sendUserMessage(content);
     }
   }
 

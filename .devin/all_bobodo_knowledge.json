@@ -1,0 +1,371 @@
+[
+  {
+    "id": "b466a5f8-19ea-484a-831e-cdc5cb735ad0",
+    "tags": [
+      "nexiom",
+      "groupe",
+      "burkina",
+      "presentation"
+    ],
+    "title": "Présentation de Nexiom Group",
+    "content": "Nexiom Group est une entreprise de droit burkinabè basée à Ouagadougou, dont le cœur de métier est le courtage dans le domaine de la formation. L'entreprise agit comme intermédiaire entre des structures de formation professionnelle ou universitaire et les personnes intéressées par leurs offres. Nexiom Group développe et exploite également des produits numériques, propose du conseil en orientation académique et conçoit, édite et diffuse des contenus pédagogiques.",
+    "category": "nexiom",
+    "created_at": "2025-11-18T01:02:46.824454+00:00",
+    "updated_at": "2025-11-18T01:02:46.824454+00:00"
+  },
+  {
+    "id": "449b5617-d885-495b-91d0-88dbd2c19bc0",
+    "tags": [
+      "nexiom",
+      "courtage",
+      "formation",
+      "partenaires"
+    ],
+    "title": "Le courtage en formation par Nexiom Group",
+    "content": "Dans le cadre du courtage, Nexiom Group fait la promotion des offres de formation de ses universités, instituts et centres de formation partenaires. Lorsqu'une personne est intéressée, Nexiom Group recueille ses besoins et ses contraintes, puis négocie avec la structure de formation concernée afin de trouver des conditions d'inscription favorables pour le demandeur. Un accord n'est possible qu'avec des établissements ayant un contrat formel avec l'entreprise, visibles dans la section 'Universités et structures partenaires' de la plateforme Academia.",
+    "category": "nexiom",
+    "created_at": "2025-11-18T01:02:47.880893+00:00",
+    "updated_at": "2025-11-18T01:02:47.880893+00:00"
+  },
+  {
+    "id": "d1e4a076-a19a-4c89-8422-4e7aa7d6030c",
+    "tags": [
+      "academia",
+      "plateforme",
+      "courtage",
+      "inscription"
+    ],
+    "title": "Rôle de la plateforme Academia",
+    "content": "Academia est la plateforme numérique utilisée par Nexiom Group pour organiser et piloter ses activités liées à la formation. Elle sert de vitrine pour présenter les offres de formation des partenaires, permet aux intéressés de postuler et de suivre leur demande, et centralise les échanges dans le cadre du courtage. La plateforme est également utilisée pour gérer les inscriptions, la programmation et la logistique des cours d'appui et des formations organisées par Nexiom Group.",
+    "category": "academia",
+    "created_at": "2025-11-18T01:02:48.921961+00:00",
+    "updated_at": "2025-11-18T01:02:48.921961+00:00"
+  },
+  {
+    "id": "be8519f3-299c-434a-8675-993a9619de2c",
+    "tags": [
+      "processus",
+      "courtage",
+      "academia",
+      "inscription"
+    ],
+    "title": "Processus général de courtage via Academia",
+    "content": "Une personne intéressée par une formation découvre l'offre et les activités de Nexiom Group, puis passe par la plateforme Academia pour se manifester. Elle précise les formations visées et, si nécessaire, certaines attentes ou contraintes. Nexiom Group analyse la demande, entre en discussion avec la structure de formation partenaire et négocie les conditions d'inscription. Lorsque des conditions compatibles sont trouvées, elles sont présentées au demandeur pour validation. Une fois la proposition validée et l'inscription effectuée, le rôle de Nexiom Group s'arrête : l'entreprise n'intervient pas dans le contenu pédagogique ni dans la délivrance du diplôme.",
+    "category": "process",
+    "created_at": "2025-11-18T01:02:49.93158+00:00",
+    "updated_at": "2025-11-18T01:02:49.93158+00:00"
+  },
+  {
+    "id": "56c25927-f671-41ab-939f-a2b289e39ae2",
+    "tags": [
+      "reduction",
+      "pas-de-bourse",
+      "courtage",
+      "conditions"
+    ],
+    "title": "Réductions négociées et absence de bourses d'études",
+    "content": "Nexiom Group ne propose pas de bourses d'études. Le rôle de l'entreprise est de faire du courtage et de négocier des réductions ou des conditions d'inscription plus favorables avec ses universités et centres de formation partenaires, au bénéfice des demandeurs. La notion de bourse ne doit pas être utilisée pour décrire ces avantages : il s'agit de réductions et d'aménagements obtenus par la négociation, et non de bourses financées par Nexiom Group.",
+    "category": "process",
+    "created_at": "2025-11-18T01:02:50.973757+00:00",
+    "updated_at": "2025-11-18T01:02:50.973757+00:00"
+  },
+  {
+    "id": "23738f6f-af5c-4696-a39e-e31d05354080",
+    "tags": [
+      "nexiom",
+      "ambition",
+      "burkina",
+      "sous-region"
+    ],
+    "title": "Ambition et couverture géographique de Nexiom Group",
+    "content": "Nexiom Group se positionne comme pionnier du courtage en formation au Burkina Faso, avec l'ambition d'étendre progressivement ses services à l'ensemble du territoire national puis à la sous-région. L'entreprise souhaite faciliter la mobilité des apprenants en travaillant avec des formations en présentiel, à distance ou en ligne, pour offrir des parcours adaptés aux besoins et défis du marché.",
+    "category": "nexiom",
+    "created_at": "2025-11-18T01:02:52.034072+00:00",
+    "updated_at": "2025-11-18T01:02:52.034072+00:00"
+  },
+  {
+    "id": "3b174100-3524-4540-a15f-5722f000bc88",
+    "tags": [
+      "bobodo",
+      "limites",
+      "processus"
+    ],
+    "title": "Rôle et limites de Bobodo",
+    "content": "Bobodo est un assistant spécialisé sur Nexiom Group, la plateforme Academia, l'orientation et l'emploi. Il ne remplace pas un conseiller humain et ne doit pas donner d'avis médicaux, juridiques ou financiers. Pour toute question sensible ou engageante, il est recommandé de contacter directement l'équipe Nexiom ou les services officiels.",
+    "category": "process",
+    "created_at": "2025-11-18T01:02:53.23774+00:00",
+    "updated_at": "2025-11-18T01:02:53.23774+00:00"
+  },
+  {
+    "id": "94ce4cf5-0b2c-4d16-a77f-cd76eb42a9ca",
+    "tags": [
+      "academia",
+      "cours-d-appui",
+      "inscription",
+      "etudiants"
+    ],
+    "title": "Cours d'appui organisés via Academia",
+    "content": "Nexiom Group propose des cours d'appui pour le niveau supérieur, dans différentes disciplines et pour plusieurs niveaux. Ces cours peuvent être organisés en individuel ou en groupe. Toutes les inscriptions et la gestion pratique (choix des sessions, paiements, suivi) se font via la plateforme Academia, en utilisant les options dédiées dans l'application.",
+    "category": "academia",
+    "created_at": "2025-11-18T01:02:54.444056+00:00",
+    "updated_at": "2025-11-18T01:02:54.444056+00:00"
+  },
+  {
+    "id": "532d7065-97db-48b9-acde-dd653438f106",
+    "tags": [
+      "academia",
+      "formations",
+      "ateliers",
+      "concours"
+    ],
+    "title": "Petites formations et ateliers via Academia",
+    "content": "En complément du courtage en formation, Nexiom Group organise régulièrement des petites formations et ateliers (par exemple en décoration, cuisine, préparation aux concours directs ou professionnels). Comme pour les autres activités, les personnes intéressées passent par la plateforme Academia pour consulter les offres, s'inscrire et suivre les informations pratiques.",
+    "category": "academia",
+    "created_at": "2025-11-18T01:02:56.07342+00:00",
+    "updated_at": "2025-11-18T01:02:56.07342+00:00"
+  },
+  {
+    "id": "c959f719-6063-4192-a9c3-d82d7ea24321",
+    "tags": [
+      "academia",
+      "bibliotheque",
+      "conseil",
+      "orientation"
+    ],
+    "title": "Bibliothèque, conseil et orientation sur la plateforme",
+    "content": "La plateforme Academia intègre une bibliothèque de ressources ainsi que des services de conseil et d'orientation. L'utilisateur peut, depuis son espace, accéder aux contenus disponibles et demander un accompagnement ou un rendez-vous via les options prévues dans l'application. L'objectif est de permettre aux apprenants de bénéficier d'un appui structuré pour leurs choix de formation et de parcours.",
+    "category": "academia",
+    "created_at": "2025-11-18T01:02:57.133162+00:00",
+    "updated_at": "2025-11-18T01:02:57.133162+00:00"
+  },
+  {
+    "id": "7e7672ff-3cf1-407f-9010-00ecddf62952",
+    "tags": [
+      "nexiom",
+      "formation",
+      "concours",
+      "cours-d-appui",
+      "sensibilisation"
+    ],
+    "title": "Offre de formation propre à Nexiom Group",
+    "content": "En plus de son rôle de courtier, Nexiom Group conçoit et met en oeuvre ses propres activités de formation avec ses ressources internes. L'entreprise organise notamment des préparations aux concours directs de la fonction publique burkinabè, des préparations aux concours professionnels, des cours d'appui pour le supérieur et pour le secondaire, ainsi que des actions de sensibilisation et d'autres formations ponctuelles. Ces activités restent des prestations de formation et d'accompagnement proposées par une entreprise légalement constituée, et ne doivent pas être confondues avec des bourses d'études.",
+    "category": "nexiom",
+    "created_at": "2025-11-20T12:40:27.524372+00:00",
+    "updated_at": "2025-11-20T12:40:27.524372+00:00"
+  },
+  {
+    "id": "709a7d3a-763e-4f8f-b5d4-07715a3a1e61",
+    "tags": [
+      "nexiom",
+      "formation",
+      "marches-publics",
+      "appels-d-offres"
+    ],
+    "title": "Formations et accompagnement sur les marchés publics",
+    "content": "Nexiom Group peut proposer des formations et un accompagnement spécifiques liés aux marchés publics et aux appels d'offres. Sur demande, l'entreprise peut aider des particuliers ou des organisations à comprendre les procédures de passation de marché, à préparer des dossiers d'appel d'offres et à structurer leurs candidatures, en collaboration avec ses partenaires.",
+    "category": "nexiom",
+    "created_at": "2025-11-20T12:40:28.444508+00:00",
+    "updated_at": "2025-11-20T12:40:28.444508+00:00"
+  },
+  {
+    "id": "e81231bc-01fe-424c-b7ef-ab740e627cf5",
+    "tags": [
+      "nexiom",
+      "formation",
+      "non-diplomante",
+      "certificat",
+      "demande"
+    ],
+    "title": "Formations non diplômantes et certifiantes sur demande",
+    "content": "En dehors des formations diplômantes, Nexiom Group peut organiser ou co-organiser des formations qui aboutissent à une attestation, à un certificat ou simplement à l'acquisition de compétences (préparation à un concours ou à un examen, formations pratiques, etc.). Suite aux demandes des utilisateurs exprimées via la plateforme Academia ou les autres canaux de communication du groupe, Nexiom Group peut proposer ces formations en interne ou, pour les formations certifiantes, en collaboration avec des structures partenaires, car l'entreprise ne délivre pas elle-même de certifications officielles. Si une personne a un compte normalement constitué et souhaite une formation qui n'apparaît pas dans la liste des offres actuelles, elle peut écrire à l'administrateur de la plateforme. L'administrateur étudiera la demande et, si la formation est non diplômante, cherchera une solution adaptée en indiquant les modalités et conditions.",
+    "category": "nexiom",
+    "created_at": "2025-11-20T12:40:29.28096+00:00",
+    "updated_at": "2025-11-20T12:40:29.28096+00:00"
+  },
+  {
+    "id": "b2c830f7-2b93-4640-96e1-df0d0ede0df7",
+    "tags": [
+      "academia",
+      "plateforme",
+      "présentation",
+      "bobodo",
+      "nexiom"
+    ],
+    "title": "Présentation générale d'Academia",
+    "content": "Academia est une plateforme numérique développée par Nexiom Group pour accompagner les étudiants, les nouveaux bacheliers, les universités, les enseignants et les partenaires. La plateforme centralise l'orientation, la recherche d'universités, les cours, les travaux dirigés, la préparation aux concours, les opportunités, la messagerie, les contenus pédagogiques et différents services destinés à faciliter la réussite académique et professionnelle. Bobodo est l'assistant intelligent intégré à Academia. Lorsqu'il répond à un utilisateur, il doit considérer qu'il se trouve déjà dans l'application et guider naturellement vers les espaces appropriés.",
+    "category": "NEXIOM_ACADEMIA_INTERNE",
+    "created_at": "2026-06-08T22:47:43.735674+00:00",
+    "updated_at": "2026-06-08T22:47:43.735674+00:00"
+  },
+  {
+    "id": "1b71010c-15fc-4de1-a280-cd11c76bac4c",
+    "tags": [
+      "universités",
+      "partenaires",
+      "formations",
+      "candidatures"
+    ],
+    "title": "Onglet Universités",
+    "content": "L'onglet Universités permet aux utilisateurs de découvrir les établissements partenaires disponibles sur Academia. Chaque université dispose d'une fiche détaillée pouvant présenter les formations, les filières, les procédures de candidature et d'autres informations utiles. Lorsqu'un utilisateur recherche une université partenaire, Bobodo doit l'inviter à ouvrir directement l'onglet Universités de l'application pour consulter les informations les plus récentes.",
+    "category": "NEXIOM_ACADEMIA_INTERNE",
+    "created_at": "2026-06-08T22:47:46.516328+00:00",
+    "updated_at": "2026-06-08T22:47:46.516328+00:00"
+  },
+  {
+    "id": "0f9632ef-0b29-4d93-8969-631d51c79644",
+    "tags": [
+      "marketplace",
+      "boutique",
+      "étudiant",
+      "matériel",
+      "fournitures"
+    ],
+    "title": "Onglet Marketplace",
+    "content": "Le Marketplace Academia est un espace dédié aux besoins de la vie étudiante. Les utilisateurs peuvent y retrouver différents produits et services utiles comme des fournitures scolaires, du matériel informatique, des accessoires, des équipements pédagogiques et d'autres ressources adaptées aux études. Les offres peuvent évoluer au fil du temps selon les partenaires disponibles sur la plateforme.",
+    "category": "NEXIOM_ACADEMIA_INTERNE",
+    "created_at": "2026-06-08T22:48:03.16061+00:00",
+    "updated_at": "2026-06-08T22:48:03.16061+00:00"
+  },
+  {
+    "id": "2e1ac195-0f2e-4633-aaab-2267389e485a",
+    "tags": [
+      "td",
+      "travaux dirigés",
+      "correction",
+      "quiz",
+      "enseignant"
+    ],
+    "title": "Onglet TD",
+    "content": "L'espace TD est conçu pour accompagner les étudiants dans leurs travaux dirigés. Les utilisateurs peuvent soumettre des exercices, obtenir des explications, demander des corrections, générer des quiz et recevoir une aide pédagogique grâce à l'intelligence artificielle. Lorsqu'un accompagnement plus personnalisé est nécessaire, il est également possible de solliciter l'intervention d'un enseignant.",
+    "category": "NEXIOM_ACADEMIA_INTERNE",
+    "created_at": "2026-06-08T22:48:04.505582+00:00",
+    "updated_at": "2026-06-08T22:48:04.505582+00:00"
+  },
+  {
+    "id": "701bc0f5-384f-4d38-a8df-be82c04e3b90",
+    "tags": [
+      "concours",
+      "préparation",
+      "correction",
+      "quiz",
+      "entraînement"
+    ],
+    "title": "Préparation Concours",
+    "content": "L'espace Préparation Concours aide les étudiants et candidats à s'entraîner pour différents concours. Les utilisateurs peuvent consulter des contenus pédagogiques, soumettre des exercices, demander des corrections, générer des questionnaires d'entraînement et bénéficier d'un accompagnement spécifique. Des enseignants peuvent également intervenir pour un suivi personnalisé.",
+    "category": "NEXIOM_ACADEMIA_INTERNE",
+    "created_at": "2026-06-08T22:48:06.113575+00:00",
+    "updated_at": "2026-06-08T22:48:06.113575+00:00"
+  },
+  {
+    "id": "4801a1e9-7899-4b3a-8a30-aeaef8dff304",
+    "tags": [
+      "crédits",
+      "ia",
+      "paiement",
+      "services"
+    ],
+    "title": "Crédits IA",
+    "content": "Certaines fonctionnalités avancées de l'application utilisent des crédits IA. Ces crédits permettent notamment d'accéder à certaines corrections, analyses, générations d'exercices ou services pédagogiques avancés. Les crédits sont utilisés uniquement pour certaines fonctionnalités identifiées dans l'application.",
+    "category": "NEXIOM_ACADEMIA_INTERNE",
+    "created_at": "2026-06-08T22:48:08.143475+00:00",
+    "updated_at": "2026-06-08T22:48:08.143475+00:00"
+  },
+  {
+    "id": "8c10ceb7-a1d4-4537-8db4-9e3960f06677",
+    "tags": [
+      "enseignant",
+      "tuteur",
+      "cours particuliers",
+      "accompagnement"
+    ],
+    "title": "Accompagnement par des enseignants",
+    "content": "Academia ne repose pas uniquement sur l'intelligence artificielle. Les utilisateurs peuvent également bénéficier de l'accompagnement d'enseignants qualifiés. Selon les besoins, cet accompagnement peut prendre la forme de séances en ligne ou de rencontres physiques lorsque cela est possible.",
+    "category": "NEXIOM_ACADEMIA_INTERNE",
+    "created_at": "2026-06-08T22:48:24.348699+00:00",
+    "updated_at": "2026-06-08T22:48:24.348699+00:00"
+  },
+  {
+    "id": "3000531b-3619-4a45-b531-0161f4716a2c",
+    "tags": [
+      "cours",
+      "bibliothèque",
+      "ressources",
+      "pédagogie"
+    ],
+    "title": "Bibliothèque de cours",
+    "content": "L'espace Cours fonctionne comme une bibliothèque pédagogique numérique. Les utilisateurs peuvent consulter des ressources éducatives, accéder à différents contenus académiques et approfondir leurs connaissances dans plusieurs matières. Cet espace est destiné à soutenir l'apprentissage autonome et la révision.",
+    "category": "NEXIOM_ACADEMIA_INTERNE",
+    "created_at": "2026-06-08T22:48:25.406964+00:00",
+    "updated_at": "2026-06-08T22:48:25.406964+00:00"
+  },
+  {
+    "id": "4272efae-64f3-4579-9b95-e3f20aeb0c1d",
+    "tags": [
+      "live",
+      "visioconférence",
+      "cours direct",
+      "atelier"
+    ],
+    "title": "Espace Live",
+    "content": "L'espace Live permet l'organisation de séances pédagogiques interactives en direct. Les utilisateurs peuvent participer à des cours, des ateliers, des conférences, des séances de soutien ou des rencontres avec des enseignants et intervenants.",
+    "category": "NEXIOM_ACADEMIA_INTERNE",
+    "created_at": "2026-06-08T22:48:26.778328+00:00",
+    "updated_at": "2026-06-08T22:48:26.778328+00:00"
+  },
+  {
+    "id": "3e3bb347-b04b-49d5-9894-f8aaa79a1dbc",
+    "tags": [
+      "challenge",
+      "défis",
+      "jeux",
+      "communauté"
+    ],
+    "title": "Espace Challenge",
+    "content": "L'espace Challenge permet aux utilisateurs de participer à des défis éducatifs, à des activités interactives et à des jeux à vocation pédagogique. Les étudiants peuvent partager du contenu, relever des défis et interagir avec d'autres utilisateurs dans un cadre stimulant et motivant.",
+    "category": "NEXIOM_ACADEMIA_INTERNE",
+    "created_at": "2026-06-08T22:48:43.220733+00:00",
+    "updated_at": "2026-06-08T22:48:43.220733+00:00"
+  },
+  {
+    "id": "88dca55a-0daa-416e-aa79-1d4d52c228a6",
+    "tags": [
+      "opportunités",
+      "communauté",
+      "publication",
+      "réseau"
+    ],
+    "title": "Espace Opportunités",
+    "content": "L'espace Opportunités est un espace communautaire où les utilisateurs peuvent publier du contenu, partager des informations, poser des questions, échanger des expériences et découvrir des opportunités utiles pour leurs études ou leur développement professionnel.",
+    "category": "NEXIOM_ACADEMIA_INTERNE",
+    "created_at": "2026-06-08T22:48:44.635933+00:00",
+    "updated_at": "2026-06-08T22:48:44.635933+00:00"
+  },
+  {
+    "id": "18b8606a-e979-4b79-abf6-f81f3bb514a3",
+    "tags": [
+      "messagerie",
+      "groupes",
+      "discussion",
+      "entraide"
+    ],
+    "title": "Messagerie et groupes",
+    "content": "Academia intègre un système de messagerie permettant aux utilisateurs de communiquer entre eux. Des groupes peuvent être créés selon les centres d'intérêt, les formations, les matières ou d'autres thématiques. Cet espace favorise l'entraide et les échanges entre étudiants.",
+    "category": "NEXIOM_ACADEMIA_INTERNE",
+    "created_at": "2026-06-08T22:49:00.754024+00:00",
+    "updated_at": "2026-06-08T22:49:00.754024+00:00"
+  },
+  {
+    "id": "5bd0093c-cfe2-42eb-a207-2b7a6e665be8",
+    "tags": [
+      "orientation",
+      "carrière",
+      "métier",
+      "accompagnement"
+    ],
+    "title": "Orientation académique et professionnelle",
+    "content": "Academia propose des services d'orientation destinés à aider les utilisateurs dans leurs choix d'études et leurs projets professionnels. Lorsqu'une situation nécessite une analyse approfondie ou un accompagnement personnalisé, l'utilisateur peut être orienté vers un conseiller humain spécialisé.",
+    "category": "ORIENTATION_ETUDES_EMPLOI",
+    "created_at": "2026-06-08T22:49:01.893364+00:00",
+    "updated_at": "2026-06-08T22:49:01.893364+00:00"
+  }
+]

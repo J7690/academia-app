@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-04-06T04:03:31.711922Z",
+  "steps": [
+    {
+      "label": "fix_prep_import_text_bulk",
+      "http": 200,
+      "ok": true,
+      "rows": [],
+      "error": null,
+      "sqlstate": null
+    },
+    {
+      "label": "verify_fix",
+      "http": 200,
+      "ok": true,
+      "rows": [
+        {
+          "def": "CREATE OR REPLACE FUNCTION public.app_admin_prep_import_text_bulk(p_text text, p_concours_type text DEFAULT NULL::text, p_subject_name text DEFAULT NULL::text, p_doc_type text DEFAULT 'sujet'::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_uid uuid;\n    v_subject_id uuid;\n    v_doc_id uuid;\n    v_chunks_count integer := 0;\n    v_offset integer;\n    v_idx integer;\nBEGIN\n    v_uid := auth.uid();\n    IF v_uid IS NULL THEN\n        RETURN jsonb_build_object('success', false, 'error', 'Vous devez être connecté pour indexer du contenu.');\n    END IF;\n\n    IF p_text IS NULL OR LENGTH(TRIM(p_text)) < 20 THEN\n        RETURN jsonb_build_object('success', false, 'error', 'Le texte est trop court (minimum 20 caractères).');\n    END IF;\n\n    -- Résoudre le subject_id\n    IF p_subject_name IS NOT NULL THEN\n        SELECT id INTO v_subject_id\n        FROM app.prep_subjects\n        WHERE LOWER(title) = LOWER(p_subject_name)\n        LIMIT 1;\n    END IF;\n\n    -- Créer le document source (colonne = created_by, PAS uploaded_by)\n    INSERT INTO app.prep_source_documents (\n        created_by, subject_id, year, doc_type,\n        source_type, extracted_text, concours_type, status\n    ) VALUES (\n        v_uid, v_subject_id, EXTRACT(YEAR FROM now())::integer,\n        p_doc_type, 'text_paste', p_text, p_concours_type, 'indexed'\n    ) RETURNING id INTO v_doc_id;\n\n    -- Premier chunk\n    INSERT INTO app.prep_doc_chunks (\n        source_document_id, chunk_index, content,\n        chunk_type, concours_type, subject_name, token_count\n    ) VALUES (\n        v_doc_id, 0, LEFT(p_text, 4000),\n        p_doc_type, p_concours_type, p_subject_name,\n        CEIL(LENGTH(p_text) / 4.0)::integer\n    );\n    v_chunks_count := 1;\n\n    IF LENGTH(p_text) > 4000 THEN\n        v_offset := 4000;\n        v_idx := 1;\n        WHILE v_offset < LENGTH(p_text) LOOP\n            INSERT INTO app.prep_doc_chunks (\n                source_document_id, chunk_index, content,\n                chunk_type, concours_type, subject_name, token_count\n            ) VALUES (\n                v_doc_id, v_idx, SUBSTR(p_text, v_offset + 1, 4000),\n                p_doc_type, p_concours_type, p_subject_name,\n                LEAST(1000, CEIL((LENGTH(p_text) - v_offset) / 4.0))::integer\n            );\n            v_offset := v_offset + 4000;\n            v_idx := v_idx + 1;\n            v_chunks_count := v_chunks_count + 1;\n        END LOOP;\n    END IF;\n\n    RETURN jsonb_build_object(\n        'success', true,\n        'document_id', v_doc_id,\n        'text_length', LENGTH(p_text),\n        'chunks_count', v_chunks_count,\n        'doc_type', p_doc_type,\n        'message', 'Texte indexé avec succès (' || v_chunks_count || ' chunk(s), ' || LENGTH(p_text) || ' caractères).'\n    );\nEND;\n$function$\n"
+        }
+      ],
+      "error": null,
+      "sqlstate": null
+    }
+  ],
+  "verification": {
+    "has_created_by": true,
+    "has_uploaded_by": true,
+    "fix_applied": false
+  }
+}

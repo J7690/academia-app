@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../services/notification_sound_service.dart';
 import 'student_delete_account_screen.dart';
 import 'student_profile_screen.dart';
+import '../../widgets/report_content_sheet.dart';
 
 class StudentSettingsScreen extends StatefulWidget {
   final bool showDeleteAccount;
@@ -67,6 +68,45 @@ class _StudentSettingsScreenState extends State<StudentSettingsScreen> {
     }
   }
 
+  Future<void> _showBlockedUsers(BuildContext ctx) async {
+    try {
+      final result = await Supabase.instance.client.rpc('app_student_list_blocked_users');
+      final list = (result is List) ? result : [];
+      if (!ctx.mounted) return;
+      showModalBottomSheet(
+        context: ctx,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        builder: (_) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Utilisateurs bloques', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 12),
+                if (list.isEmpty)
+                  const Padding(padding: EdgeInsets.all(24), child: Center(child: Text('Aucun utilisateur bloque', style: TextStyle(color: Colors.grey)))),
+                ...list.map<Widget>((u) => ListTile(
+                  leading: const CircleAvatar(child: Icon(Icons.person)),
+                  title: Text(u['display_name']?.toString() ?? 'Utilisateur'),
+                  trailing: TextButton(
+                    onPressed: () async {
+                      await Supabase.instance.client.rpc('app_student_unblock_user', params: {'p_blocked_id': u['user_id']});
+                      if (ctx.mounted) Navigator.pop(ctx);
+                    },
+                    child: const Text('Debloquer', style: TextStyle(color: Colors.red)),
+                  ),
+                )),
+              ],
+            ),
+          ),
+        ),
+      );
+    } catch (_) {}
+  }
+
   Future<void> _confirmSignOut() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -88,6 +128,8 @@ class _StudentSettingsScreenState extends State<StudentSettingsScreen> {
     );
     if (confirmed == true && mounted) {
       await Supabase.instance.client.auth.signOut();
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
     }
   }
 
@@ -177,11 +219,28 @@ class _StudentSettingsScreenState extends State<StudentSettingsScreen> {
           ),
           const Divider(height: 1),
 
+          // ===================== COMMUNAUTÉ =====================
+          _SectionHeader(title: 'Communaut\u00e9'),
+          _SettingsTile(
+            icon: Icons.shield_outlined,
+            title: 'R\u00e8gles communautaires',
+            subtitle: 'Consultez les r\u00e8gles d\'utilisation',
+            onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const CommunityGuidelinesScreen())),
+          ),
+          _SettingsTile(
+            icon: Icons.block,
+            title: 'Utilisateurs bloqu\u00e9s',
+            subtitle: 'G\u00e9rer vos utilisateurs bloqu\u00e9s',
+            onTap: () => _showBlockedUsers(context),
+          ),
+          const Divider(height: 1),
+
           // ===================== LÉGAL =====================
-          _SectionHeader(title: 'Informations légales'),
+          _SectionHeader(title: 'Informations l\u00e9gales'),
           _SettingsTile(
             icon: Icons.privacy_tip_outlined,
-            title: 'Politique de confidentialité',
+            title: 'Politique de confidentialit\u00e9',
             onTap: () => _openUrl(_privacyUrl),
             trailing: const Icon(Icons.open_in_new, size: 18),
           ),

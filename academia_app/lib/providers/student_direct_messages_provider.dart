@@ -183,6 +183,29 @@ class StudentDirectMessagesProvider extends ChangeNotifier {
     }
   }
 
+  // ── Delete own message ──
+
+  Future<bool> deleteDmMessage(String messageId) async {
+    try {
+      final response = await _client.rpc(
+        'app_student_delete_dm_message',
+        params: {'p_message_id': messageId},
+      );
+      if (response is Map && response['success'] == true) {
+        final idx = _messages.indexWhere((m) => m['id']?.toString() == messageId);
+        if (idx != -1) {
+          _messages[idx] = {..._messages[idx], 'content': '[Message supprime]', 'is_deleted': true};
+          notifyListeners();
+        }
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('[DM] Delete message error: $e');
+      return false;
+    }
+  }
+
   // ── Mark as read ──
 
   Future<void> markConversationRead(String conversationId) async {

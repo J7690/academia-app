@@ -1,0 +1,59 @@
+{
+  "timestamp": "2026-04-06T02:45:39.490469Z",
+  "steps": {
+    "A1_drop_broken_td_import_json": {
+      "label": "A1_drop_broken_td_import_json",
+      "http": 200,
+      "ok": true,
+      "rows_count": 0,
+      "rows": [],
+      "error": null,
+      "sqlstate": null
+    },
+    "A2_drop_broken_td_import_text": {
+      "label": "A2_drop_broken_td_import_text",
+      "http": 200,
+      "ok": true,
+      "rows_count": 0,
+      "rows": [],
+      "error": null,
+      "sqlstate": null
+    },
+    "B1_rewrite_td_import_json": {
+      "label": "B1_rewrite_td_import_json",
+      "http": 200,
+      "ok": true,
+      "rows_count": 0,
+      "rows": [],
+      "error": null,
+      "sqlstate": null
+    },
+    "B2_rewrite_td_import_text": {
+      "label": "B2_rewrite_td_import_text",
+      "http": 200,
+      "ok": true,
+      "rows_count": 0,
+      "rows": [],
+      "error": null,
+      "sqlstate": null
+    },
+    "C1_rewrite_prep_import_json": {
+      "label": "C1_rewrite_prep_import_json",
+      "http": 200,
+      "ok": true,
+      "rows_count": 0,
+      "rows": [],
+      "error": null,
+      "sqlstate": null
+    },
+    "C2_rewrite_prep_import_text": {
+      "label": "C2_rewrite_prep_import_text",
+      "http": 200,
+      "ok": true,
+      "rows_count": 0,
+      "rows": [],
+      "error": null,
+      "sqlstate": null
+    }
+  }
+}

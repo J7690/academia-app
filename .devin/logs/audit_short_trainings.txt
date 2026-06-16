@@ -1,0 +1,117 @@
+
+🔍 AUDIT — Module Formations Courtes (Short Trainings)
+
+  4 tables:
+    app.short_training_registration_messages          2 lignes
+    app.short_training_registrations                  3 lignes
+    app.short_training_sessions                       3 lignes
+    app.short_trainings                               5 lignes
+    id                             uuid            gen_random_uuid()
+    title                          text            
+    short_description              text            
+    full_description               text            
+    category                       text            
+    modality                       text            
+    duration_days                  int4            
+    price                          numeric         
+    is_active                      bool            true
+    created_by                     uuid            
+    created_at                     timestamptz     now()
+    updated_at                     timestamptz     now()
+    id                             uuid            gen_random_uuid()
+    training_id                    uuid            
+    start_at                       timestamptz     
+    end_at                         timestamptz     
+    location                       text            
+    capacity                       int4            
+    status                         text            'open'::text
+    is_active                      bool            true
+    created_at                     timestamptz     now()
+    updated_at                     timestamptz     now()
+    id                             uuid            gen_random_uuid()
+    session_id                     uuid            
+    user_id                        uuid            
+    status                         text            'registered'::text
+    created_at                     timestamptz     now()
+    updated_at                     timestamptz     now()
+    contact_phone                  text            
+    preferred_channel              text            
+    payment_method                 text            
+    wants_invoice                  bool            
+    company_name                   text            
+    notes                          text            
+    last_message_at                timestamptz     
+    student_last_read_at           timestamptz     
+    admin_last_read_at             timestamptz     
+    ❌ Table n'existe pas
+  14 RPCs:
+    app_add_short_training_message_from_admin_to_student
+    app_add_short_training_message_from_student
+    app_admin_list_short_training_registrations
+    app_admin_list_short_trainings
+    app_admin_upsert_short_training
+    app_admin_upsert_short_training_session
+    app_list_my_short_trainings
+    app_list_public_short_training_sessions
+    app_list_short_training_messages_for_admin
+    app_list_short_training_messages_for_student
+    app_notify_short_training_created
+    app_notify_short_training_session
+    app_register_short_training
+    app_register_short_training_full
+  0 RPCs:
+    ✅ app_admin_list_short_trainings → 200 (OK)
+    ❌ app_admin_upsert_short_training → 404 (404)
+    ❌ app_admin_upsert_short_training_session → 404 (404)
+    ❌ app_admin_list_short_training_registrations → 404 (404)
+    ✅ app_list_public_short_training_sessions → 200 (OK)
+    ✅ app_list_my_short_trainings → 200 (OK)
+    ❌ app_register_short_training → 404 (404)
+    ❌ app_register_short_training_full → 404 (404)
+    ❌ app_list_short_training_messages_for_admin → 404 (404)
+    ❌ app_list_short_training_messages_for_student → 404 (404)
+    ❌ app_add_short_training_message_from_admin_to_student → 404 (404)
+    ❌ app_add_short_training_message_from_student → 404 (404)
+    app.short_trainings                          5 lignes
+    app.short_training_sessions                  3 lignes
+    app.short_training_registrations             3 lignes
+    app.short_training_messages                  ? lignes
+    app.application_payments                     6 lignes
+    app.marketplace_payments                     0 lignes
+    app.payment_proofs                           0 lignes
+    app.payment_receipts                         5 lignes
+    app_admin_confirm_payment
+    app_admin_get_payment_detail
+    app_admin_list_marketplace_payments
+    app_admin_list_payment_receipts_with_context
+    app_admin_list_payments_with_context
+    app_admin_verify_payment
+    app_confirm_ligdicash_payment
+    app_create_application_payment
+    app_generate_referral_commission_for_payment
+    app_marketplace_process_payment
+    app_notify_admin_payment_declared
+    app_notify_commercial_payment_confirmed
+    app_notify_commercial_prospect_payment
+    app_notify_student_payment_status
+    app_notify_university_payment
+    app_on_payment_confirmed_generate_referral_commission
+    app_student_create_profile_payment
+    app_student_declare_payment
+    app_td_student_create_enrollment_and_payment
+    app_university_list_payments
+    payment_receipts_block_changes
+
+  MODULE FORMATIONS COURTES — État actuel:
+  
+  Flutter (COMPLET):
+  - Admin: CRUD formations + sessions + inscriptions + messages (1045 lignes)
+  - Étudiant: Catalogue + inscription détaillée + messages (716 lignes)
+  - 4 providers: admin trainings, student trainings, admin messages, student messages
+  
+  À VÉRIFIER dans Supabase:
+  - Tables short_training_* existent-elles?
+  - RPCs accessibles via PostgREST?
+  - Tables de paiement pour LigdiCash?
+    
+✅ Audit terminé.

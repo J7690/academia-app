@@ -1,0 +1,63 @@
+{
+  "timestamp": "2026-04-01T09:40:13.605474Z",
+  "functions": {
+    "app_td_admin_import_questions_json": {
+      "label": "app_td_admin_import_questions_json",
+      "http": 200,
+      "ok": true,
+      "mode": "select",
+      "rows_count": 0,
+      "rows": [],
+      "error": null,
+      "sqlstate": null
+    },
+    "app_td_admin_import_text_bulk": {
+      "label": "app_td_admin_import_text_bulk",
+      "http": 200,
+      "ok": true,
+      "mode": "select",
+      "rows_count": 1,
+      "rows": [
+        {
+          "ddl": "CREATE OR REPLACE FUNCTION public.app_td_admin_import_text_bulk(p_text text, p_subject text DEFAULT NULL::text, p_university text DEFAULT NULL::text, p_study_year text DEFAULT NULL::text, p_doc_type text DEFAULT 'exercice'::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_uid uuid;\n    v_doc_id uuid;\nBEGIN\n    v_uid := auth.uid();\n    IF v_uid IS NULL THEN\n        RAISE EXCEPTION 'Non authentifié';\n    END IF;\n\n    INSERT INTO app.td_source_documents (\n        created_by, subject, university, study_year,\n        doc_type, source_type, extracted_text, status\n    ) VALUES (\n        v_uid, p_subject, p_university, p_study_year,\n        p_doc_type, 'text_paste', p_text, 'indexed'\n    ) RETURNING id INTO v_doc_id;\n\n    INSERT INTO app.td_doc_chunks (\n        source_document_id, chunk_index, content,\n        chunk_type, subject, university, study_year, token_count\n    ) VALUES (\n        v_doc_id, 0, LEFT(p_text, 4000),\n        p_doc_type, p_subject, p_university, p_study_year,\n        CEIL(LENGTH(p_text) / 4.0)::integer\n    );\n\n    IF LENGTH(p_text) > 4000 THEN\n        DECLARE\n            v_offset integer := 4000;\n            v_idx integer := 1;\n        BEGIN\n            WHILE v_offset < LENGTH(p_text) LOOP\n                INSERT INTO app.td_doc_chunks (\n                    source_document_id, chunk_index, content,\n                    chunk_type, subject, university, study_year, token_count\n                ) VALUES (\n                    v_doc_id, v_idx, SUBSTR(p_text, v_offset + 1, 4000),\n                    p_doc_type, p_subject, p_university, p_study_year,\n                    LEAST(1000, CEIL((LENGTH(p_text) - v_offset) / 4.0))::integer\n                );\n                v_offset := v_offset + 4000;\n                v_idx := v_idx + 1;\n            END LOOP;\n        END;\n    END IF;\n\n    RETURN jsonb_build_object(\n        'success', true,\n        'document_id', v_doc_id,\n        'text_length', LENGTH(p_text),\n        'doc_type', p_doc_type\n    );\nEND;\n$function$\n"
+        }
+      ],
+      "error": null,
+      "sqlstate": null
+    },
+    "app_td_semantic_search": {
+      "label": "app_td_semantic_search",
+      "http": 200,
+      "ok": true,
+      "mode": "select",
+      "rows_count": 0,
+      "rows": [],
+      "error": null,
+      "sqlstate": null
+    },
+    "app_td_admin_list_source_documents": {
+      "label": "app_td_admin_list_source_documents",
+      "http": 200,
+      "ok": true,
+      "mode": "select",
+      "rows_count": 0,
+      "rows": [],
+      "error": null,
+      "sqlstate": null
+    },
+    "app_td_admin_set_source_document_status": {
+      "label": "app_td_admin_set_source_document_status",
+      "http": 200,
+      "ok": true,
+      "mode": "select",
+      "rows_count": 1,
+      "rows": [
+        {
+          "ddl": "CREATE OR REPLACE FUNCTION public.app_td_admin_set_source_document_status(p_document_id uuid, p_status text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'app'\nAS $function$\nBEGIN\n  UPDATE app.td_source_documents SET status = p_status, updated_at = now() WHERE id = p_document_id;\n  RETURN jsonb_build_object('success', true);\nEND; $function$\n"
+        }
+      ],
+      "error": null,
+      "sqlstate": null
+    }
+  }
+}

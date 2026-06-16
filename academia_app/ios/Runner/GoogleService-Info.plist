@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyCETidln9q3Kum2QqiFntSC7iDbgF6dzds</string>
+	<key>GCM_SENDER_ID</key>
+	<string>593442809911</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.academia.nexiomgroup.app</string>
+	<key>PROJECT_ID</key>
+	<string>academia-e2c41</string>
+	<key>STORAGE_BUCKET</key>
+	<string>academia-e2c41.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:593442809911:ios:1c9027c7311853b73af7b2</string>
+</dict>
+</plist>

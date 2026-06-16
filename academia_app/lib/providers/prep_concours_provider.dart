@@ -238,6 +238,170 @@ class PrepChoice {
   }
 }
 
+// ─── Exam Blanc (Sujet blanc) models ──────────────────────────────────
+
+class ExamBlancChoice {
+  final String label;
+  final String text;
+  final bool isCorrect;
+
+  const ExamBlancChoice({
+    required this.label,
+    required this.text,
+    required this.isCorrect,
+  });
+
+  factory ExamBlancChoice.fromJson(Map<String, dynamic> json) {
+    return ExamBlancChoice(
+      label: (json['label'] ?? '').toString(),
+      text: (json['text'] ?? '').toString(),
+      isCorrect: json['is_correct'] == true,
+    );
+  }
+}
+
+class ExamBlancQuestion {
+  final String questionType; // 'qcm' or 'open'
+  final String question;
+  final String? explanation;
+  final String? expectedAnswer; // for open-ended questions
+  final int points; // points for this question (default 1 for QCM, 2 for open)
+  final List<ExamBlancChoice> choices;
+
+  const ExamBlancQuestion({
+    this.questionType = 'qcm',
+    required this.question,
+    this.explanation,
+    this.expectedAnswer,
+    this.points = 1,
+    required this.choices,
+  });
+
+  bool get isOpen => questionType == 'open';
+  bool get isQcm => questionType == 'qcm';
+
+  factory ExamBlancQuestion.fromJson(Map<String, dynamic> json) {
+    final rawChoices = json['choices'];
+    final choices = (rawChoices is List)
+        ? rawChoices
+            .whereType<Map>()
+            .map((c) => ExamBlancChoice.fromJson(Map<String, dynamic>.from(c)))
+            .toList()
+        : <ExamBlancChoice>[];
+    final type = (json['question_type'] ?? 'qcm').toString();
+    return ExamBlancQuestion(
+      questionType: type,
+      question: (json['question'] ?? '').toString(),
+      explanation: (json['explanation'] ?? '').toString().trim().isEmpty
+          ? null
+          : json['explanation'].toString(),
+      expectedAnswer:
+          (json['expected_answer'] ?? '').toString().trim().isEmpty
+              ? null
+              : json['expected_answer'].toString(),
+      points: json['points'] is int ? json['points'] as int : (type == 'open' ? 2 : 1),
+      choices: choices,
+    );
+  }
+}
+
+class ExamBlancSection {
+  final String subjectName;
+  final int questionsCount;
+  final List<ExamBlancQuestion> questions;
+
+  const ExamBlancSection({
+    required this.subjectName,
+    required this.questionsCount,
+    required this.questions,
+  });
+
+  factory ExamBlancSection.fromJson(Map<String, dynamic> json) {
+    final rawQ = json['questions'];
+    final questions = (rawQ is List)
+        ? rawQ
+            .whereType<Map>()
+            .map((q) => ExamBlancQuestion.fromJson(Map<String, dynamic>.from(q)))
+            .toList()
+        : <ExamBlancQuestion>[];
+    return ExamBlancSection(
+      subjectName: (json['subject_name'] ?? '').toString(),
+      questionsCount: json['questions_count'] is int
+          ? json['questions_count'] as int
+          : questions.length,
+      questions: questions,
+    );
+  }
+}
+
+class ExamBlanc {
+  final String id;
+  final String title;
+  final String? description;
+  final String concoursType;
+  final int totalQuestions;
+  final int durationMinutes;
+  final int timesTaken;
+  final double? avgScore;
+  final bool alreadyTaken;
+  final double? userBestScore;
+  final DateTime? createdAt;
+  final List<ExamBlancSection> sections;
+
+  const ExamBlanc({
+    required this.id,
+    required this.title,
+    this.description,
+    required this.concoursType,
+    required this.totalQuestions,
+    required this.durationMinutes,
+    required this.timesTaken,
+    this.avgScore,
+    this.alreadyTaken = false,
+    this.userBestScore,
+    this.createdAt,
+    this.sections = const [],
+  });
+
+  factory ExamBlanc.fromJson(Map<String, dynamic> json) {
+    final rawSections = json['sections'];
+    final sections = (rawSections is List)
+        ? rawSections
+            .whereType<Map>()
+            .map((s) => ExamBlancSection.fromJson(Map<String, dynamic>.from(s)))
+            .toList()
+        : <ExamBlancSection>[];
+
+    return ExamBlanc(
+      id: (json['id'] ?? '').toString(),
+      title: (json['title'] ?? '').toString(),
+      description: (json['description'] ?? '').toString().trim().isEmpty
+          ? null
+          : json['description'].toString(),
+      concoursType: (json['concours_type'] ?? 'TOUS').toString(),
+      totalQuestions: json['total_questions'] is int
+          ? json['total_questions'] as int
+          : 0,
+      durationMinutes: json['duration_minutes'] is int
+          ? json['duration_minutes'] as int
+          : 120,
+      timesTaken:
+          json['times_taken'] is int ? json['times_taken'] as int : 0,
+      avgScore: json['avg_score'] is num
+          ? (json['avg_score'] as num).toDouble()
+          : null,
+      alreadyTaken: json['already_taken'] == true,
+      userBestScore: json['user_best_score'] is num
+          ? (json['user_best_score'] as num).toDouble()
+          : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString())
+          : null,
+      sections: sections,
+    );
+  }
+}
+
 class PrepConcoursProvider extends ChangeNotifier {
   final SupabaseClient _client = Supabase.instance.client;
 
@@ -250,11 +414,16 @@ class PrepConcoursProvider extends ChangeNotifier {
   List<PrepAttemptItem> _myAttempts = const [];
   PrepSubjectStats? _mySubjectStats;
 
+  List<ExamBlanc> _examBlancs = const [];
+  bool _isGeneratingExam = false;
+
   bool get isLoading => _isLoading;
   String? get error => _error;
   List<PrepSubject> get subjects => _subjects;
   List<PrepAttemptItem> get myAttempts => _myAttempts;
   PrepSubjectStats? get mySubjectStats => _mySubjectStats;
+  List<ExamBlanc> get examBlancs => _examBlancs;
+  bool get isGeneratingExam => _isGeneratingExam;
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -518,6 +687,105 @@ class PrepConcoursProvider extends ChangeNotifier {
       _setError(e.toString());
     } finally {
       _setLoading(false);
+    }
+  }
+
+  // ─── Exam Blanc methods ───────────────────────────────────────────────
+
+  Future<void> loadExamBlancs({String? concoursType}) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final userId = _client.auth.currentUser?.id;
+      final res = await _client.rpc('app_prep_list_exam_blancs', params: {
+        'p_concours_type': concoursType,
+        'p_user_id': userId,
+        'p_limit': 20,
+      });
+      if (res is! Map) {
+        _setError('Réponse invalide.');
+        return;
+      }
+      final map = Map<String, dynamic>.from(res);
+      if (map['success'] != true) {
+        _setError(map['error']?.toString() ?? 'Erreur.');
+        return;
+      }
+      final rawExams = map['exams'];
+      _examBlancs = (rawExams is List)
+          ? rawExams
+              .whereType<Map>()
+              .map((e) => ExamBlanc.fromJson(Map<String, dynamic>.from(e)))
+              .toList()
+          : const [];
+      notifyListeners();
+    } catch (e) {
+      _setError(e.toString());
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<ExamBlanc?> getExamBlanc(String examId) async {
+    try {
+      final res = await _client.rpc('app_prep_get_exam_blanc', params: {
+        'p_exam_id': examId,
+      });
+      if (res is! Map) return null;
+      final map = Map<String, dynamic>.from(res);
+      if (map['success'] != true) return null;
+      final raw = map['exam'];
+      if (raw is! Map) return null;
+      return ExamBlanc.fromJson(Map<String, dynamic>.from(raw));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> submitExamBlanc({
+    required String examId,
+    required int score,
+    required int total,
+    required List<Map<String, dynamic>> answers,
+    int? durationSeconds,
+  }) async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) return null;
+      final res = await _client.rpc('app_prep_submit_exam_blanc', params: {
+        'p_exam_id': examId,
+        'p_user_id': userId,
+        'p_score': score,
+        'p_total': total,
+        'p_answers': answers,
+        'p_duration_seconds': durationSeconds,
+      });
+      if (res is! Map) return null;
+      return Map<String, dynamic>.from(res);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<bool> requestNewExamBlanc({String concoursType = 'TOUS'}) async {
+    _isGeneratingExam = true;
+    notifyListeners();
+    try {
+      final resp = await _client.functions.invoke(
+        'prep-compose-exam-blanc',
+        body: {'concours_type': concoursType},
+      );
+      final data = resp.data;
+      if (data is Map && data['success'] == true) {
+        await loadExamBlancs(concoursType: null);
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    } finally {
+      _isGeneratingExam = false;
+      notifyListeners();
     }
   }
 }

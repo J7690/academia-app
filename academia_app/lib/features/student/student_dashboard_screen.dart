@@ -11,6 +11,7 @@ import '../../providers/student_application_payments_provider.dart';
 import '../../providers/student_communities_provider.dart';
 import '../../services/app_badge_service.dart';
 import '../../services/notification_sound_service.dart';
+import '../../services/analytics_tracking_service.dart';
 import '../../utils/responsive.dart';
 import 'student_home_mobile.dart';
 import 'tabs/student_home_tab.dart';
@@ -64,6 +65,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   void initState() {
     super.initState();
     _pendingApplicationId = widget.initialApplicationId;
+    AnalyticsTrackingService.instance.init();
+    AnalyticsTrackingService.instance.trackTab('student_dashboard', 0, 'Accueil');
     StudentDashboardNavController.setIndex(_currentIndex);
     _navListener = () {
       final newIndex = StudentDashboardNavController.currentIndex;
@@ -357,8 +360,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
 
         Widget? bottomNav;
         // Masquer la barre du dashboard quand on est dans le feed vidéo
-        // Challenges (index 8) — le feed a sa propre barre TikTok.
-        final bool hideBottomNav = _currentIndex == 8;
+        // Challenges (index 7) — le feed a sa propre barre TikTok.
+        final bool hideBottomNav = _currentIndex == 7;
         if (!hideBottomNav) {
           if (isMobile) {
             bottomNav = _buildMobileBottomNav(unread);
@@ -372,9 +375,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           body: Stack(
             children: [
               _buildCurrentTabBody(isMobile),
-              const StudentAssistantOverlay(),
-              // FABs flottants — masqués sur Challenge (index 8)
-              if (_currentIndex != 8)
+              // Overlay assistant + FABs — masqués sur Challenge (index 7)
+              if (_currentIndex != 7)
+                const StudentAssistantOverlay(),
+              if (_currentIndex != 7)
                 Positioned(
                   right: 16,
                   bottom: 96,
@@ -503,11 +507,19 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     }
   }
 
+  static const List<String> _tabNames = [
+    'Accueil', 'Candidatures', 'Cours', 'Communautes',
+    'Partenaires', 'Prep Concours', 'TD', 'Bobodo', 'Challenges', 'Lives',
+  ];
+
   void _onDestinationSelected(int index) {
     setState(() {
       _currentIndex = index;
     });
     StudentDashboardNavController.setIndex(index);
+    AnalyticsTrackingService.instance.trackTab(
+      'student_dashboard', index, index < _tabNames.length ? _tabNames[index] : 'tab_$index',
+    );
     if (index == 0) {
       _markStudentHomeSeen();
     } else if (index == 3) {

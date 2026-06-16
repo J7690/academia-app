@@ -14,19 +14,26 @@ class LivekitTokenService {
   /// - `identity` : l'identité du participant
   /// - `display_name` : le nom affiché
   /// - `is_host` : true si l'utilisateur est l'hôte (enseignant)
-  static Future<Map<String, dynamic>> getTokenForSession(String sessionId) async {
+  /// [sessionSource] : 'auto' (défaut) | 'academia' | 'legacy'
+  /// Pour les sessions AcademiaSession, utiliser 'academia'.
+  /// Pour les anciennes sessions, utiliser 'legacy' ou laisser 'auto'.
+  static Future<Map<String, dynamic>> getTokenForSession(
+    String sessionId, {
+    String sessionSource = 'auto',
+  }) async {
     final client = Supabase.instance.client;
     final session = client.auth.currentSession;
     if (session == null) {
       throw Exception('Utilisateur non authentifié.');
     }
 
-    debugPrint('[LivekitToken] Requesting token for session=$sessionId');
+    debugPrint('[LivekitToken] Requesting token for session=$sessionId source=$sessionSource');
 
     final response = await client.functions.invoke(
       'livekit-token',
       body: {
         'session_id': sessionId,
+        'session_source': sessionSource,
       },
     );
 

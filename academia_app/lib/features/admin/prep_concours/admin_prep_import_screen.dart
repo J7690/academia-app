@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../providers/admin_prep_concours_provider.dart';
 import '../../../providers/prep_concours_provider.dart';
 
-/// Écran admin pour importer les questions du document scanné dans Supabase
+/// Écran admin pour importer les questions du document scanné dans Supabase.
 class AdminPrepImportScreen extends StatefulWidget {
   const AdminPrepImportScreen({super.key});
 
@@ -48,7 +48,8 @@ class _AdminPrepImportScreenState extends State<AdminPrepImportScreen> {
     final subjects = prepProvider.subjects;
 
     if (subjects.isEmpty) {
-      _appendLog('❌ Aucune matière trouvée. Exécutez d\'abord le SQL de seed.');
+      _appendLog('❌ Aucune matière trouvée en base.');
+      _appendLog('Veuillez d\'abord créer les matières via le script SQL ou l\'interface admin.');
       setState(() => _isRunning = false);
       return;
     }
@@ -84,15 +85,15 @@ class _AdminPrepImportScreenState extends State<AdminPrepImportScreen> {
 
     if (results.isEmpty) {
       final err = adminProvider.error;
-      _appendLog('❌ Aucune question injectée.');
-      if (err != null) _appendLog('Erreur: $err');
+      _appendLog('❌ Aucune question n\'a pu être injectée.');
+      if (err != null) _appendLog('Détail de l\'erreur : $err');
     } else {
       int total = 0;
       for (final entry in results.entries) {
         _appendLog('✅ ${entry.key}: ${entry.value} question(s) publiée(s)');
         total += entry.value;
       }
-      _appendLog('\n🎉 Total: $total question(s) injectée(s) avec succès!');
+      _appendLog('\n🎉 Total : $total question(s) injectée(s) avec succès !');
     }
 
     setState(() {
@@ -166,10 +167,10 @@ class _AdminPrepImportScreenState extends State<AdminPrepImportScreen> {
             SizedBox(height: 8),
             Text(
               'Ce module injecte les questions extraites du document de préparation '
-              'au concours (Burkina Faso) scanné à l\'envers et reconverti.\n\n'
-              'Matières: Mathématiques, Physique, Chimie, Biologie, Économie, Droit\n'
-              'Source: assets/data/prep_concours_questions_burkina.json\n'
-              'Nombre de questions: 20',
+              'au concours (Burkina Faso) scanné et reconverti.\n\n'
+              'Matières : Mathématiques, Physique, Chimie, Biologie, Économie, Droit\n'
+              'Source : assets/data/prep_concours_questions_burkina.json\n'
+              'Nombre de questions : 20',
               style: TextStyle(fontSize: 13, color: Colors.black87),
             ),
           ],
@@ -203,11 +204,11 @@ class _AdminPrepImportScreenState extends State<AdminPrepImportScreen> {
             ),
             SizedBox(height: 8),
             Text(
-              '1. Exécutez d\'abord le script SQL:\n'
+              '1. Exécutez d\'abord le script SQL :\n'
               '   .windsurf/sql_changes/20260324_inject_scanned_questions.sql\n'
               '   dans l\'éditeur SQL de Supabase.\n\n'
               '2. Ce script crée les matières, chapitres et questions directement.\n\n'
-              '3. Ce bouton injecte via les RPCs (méthode alternative via IA).',
+              '3. Ce bouton injecte via les RPCs (méthode alternative).',
               style: TextStyle(fontSize: 12, color: Colors.black87),
             ),
           ],
@@ -230,8 +231,8 @@ class _AdminPrepImportScreenState extends State<AdminPrepImportScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Cette action crée une génération IA validée pour chaque matière '
-              'et la publie immédiatement. Les matières doivent exister dans Supabase.',
+              'Cette action injecte les questions pour chaque matière '
+              'et les publie immédiatement. Les matières doivent exister en base.',
               style: TextStyle(fontSize: 12, color: Colors.black54),
               textAlign: TextAlign.center,
             ),

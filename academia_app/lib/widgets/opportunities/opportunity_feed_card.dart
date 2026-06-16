@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'opportunity_type_badge.dart';
 import 'opportunity_reactions_bar.dart';
+import '../report_content_sheet.dart';
 
 /// Card d'opportunité — style Warm Professional 2025
 class OpportunityFeedCard extends StatelessWidget {
@@ -193,14 +194,37 @@ class OpportunityFeedCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header: Logo + Org + Time
-                    _buildHeader(
-                      organizationName: organizationName,
-                      organizationLogoUrl: organizationLogoUrl,
-                      timeAgo: timeAgo,
-                      isFeatured: isFeatured,
-                      isNew: isNew,
-                      isBookmarked: isBookmarked,
+                    // Header: Logo + Org + Time + Report
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildHeader(
+                            organizationName: organizationName,
+                            organizationLogoUrl: organizationLogoUrl,
+                            timeAgo: timeAgo,
+                            isFeatured: isFeatured,
+                            isNew: isNew,
+                            isBookmarked: isBookmarked,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            final oppId = opportunity['id']?.toString();
+                            if (oppId != null) {
+                              ReportContentSheet.show(context,
+                                contentType: 'opportunity',
+                                contentId: oppId,
+                                targetUserId: merchantId,
+                                contentPreview: title,
+                              );
+                            }
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.all(4),
+                            child: Icon(Icons.flag_outlined, size: 16, color: Color(0xFF9CA3AF)),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 14),
 

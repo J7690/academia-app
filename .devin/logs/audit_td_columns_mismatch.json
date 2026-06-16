@@ -1,0 +1,1452 @@
+{
+  "timestamp": "2026-04-06T02:40:34.153836Z",
+  "columns": {
+    "label": "columns",
+    "http": 200,
+    "ok": true,
+    "rows_count": 126,
+    "rows": [
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "prep_doc_chunks",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()",
+        "ordinal_position": 1,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "prep_doc_chunks",
+        "column_name": "source_document_id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "prep_doc_chunks",
+        "column_name": "chunk_index",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_doc_chunks",
+        "column_name": "content",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 4,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "jsonb",
+        "data_type": "jsonb",
+        "table_name": "prep_doc_chunks",
+        "column_name": "metadata",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 5,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "prep_doc_chunks",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()",
+        "ordinal_position": 6,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "vector",
+        "data_type": "USER-DEFINED",
+        "table_name": "prep_doc_chunks",
+        "column_name": "embedding",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 7,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_doc_chunks",
+        "column_name": "chunk_type",
+        "is_nullable": "YES",
+        "column_default": "'content'::text",
+        "ordinal_position": 8,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_doc_chunks",
+        "column_name": "concours_type",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 9,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_doc_chunks",
+        "column_name": "subject_name",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 10,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_doc_chunks",
+        "column_name": "year",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 11,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "prep_doc_chunks",
+        "column_name": "question_number",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 12,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "bool",
+        "data_type": "boolean",
+        "table_name": "prep_doc_chunks",
+        "column_name": "is_correction",
+        "is_nullable": "YES",
+        "column_default": "false",
+        "ordinal_position": 13,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "prep_doc_chunks",
+        "column_name": "token_count",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 14,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "prep_questions",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()",
+        "ordinal_position": 1,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "prep_questions",
+        "column_name": "subject_id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "prep_questions",
+        "column_name": "chapter_id",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 3,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_questions",
+        "column_name": "source",
+        "is_nullable": "NO",
+        "column_default": "'manual'::text",
+        "ordinal_position": 4,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_questions",
+        "column_name": "question_type",
+        "is_nullable": "NO",
+        "column_default": "'mcq'::text",
+        "ordinal_position": 5,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_questions",
+        "column_name": "level",
+        "is_nullable": "NO",
+        "column_default": "'beginner'::text",
+        "ordinal_position": 6,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_questions",
+        "column_name": "mechanism",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 7,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_questions",
+        "column_name": "prompt_context",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 8,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_questions",
+        "column_name": "question",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 9,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_questions",
+        "column_name": "explanation",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 10,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_questions",
+        "column_name": "correct_answer",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 11,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "prep_questions",
+        "column_name": "estimated_time_sec",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 12,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "bool",
+        "data_type": "boolean",
+        "table_name": "prep_questions",
+        "column_name": "is_published",
+        "is_nullable": "NO",
+        "column_default": "false",
+        "ordinal_position": 13,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "prep_questions",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 14,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "prep_questions",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()",
+        "ordinal_position": 15,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "prep_questions",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()",
+        "ordinal_position": 16,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "prep_questions",
+        "column_name": "bank_id",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 17,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_questions",
+        "column_name": "content",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 18,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "jsonb",
+        "data_type": "jsonb",
+        "table_name": "prep_questions",
+        "column_name": "options",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 19,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "prep_questions",
+        "column_name": "correct_index",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 20,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "prep_questions",
+        "column_name": "difficulty",
+        "is_nullable": "YES",
+        "column_default": "1",
+        "ordinal_position": 21,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_questions",
+        "column_name": "subject",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 22,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "_text",
+        "data_type": "ARRAY",
+        "table_name": "prep_questions",
+        "column_name": "tags",
+        "is_nullable": "YES",
+        "column_default": "'{}'::text[]",
+        "ordinal_position": 23,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "prep_questions",
+        "column_name": "points",
+        "is_nullable": "YES",
+        "column_default": "10",
+        "ordinal_position": 24,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "prep_questions",
+        "column_name": "time_limit_seconds",
+        "is_nullable": "YES",
+        "column_default": "60",
+        "ordinal_position": 25,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_questions",
+        "column_name": "image_url",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 26,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "bool",
+        "data_type": "boolean",
+        "table_name": "prep_questions",
+        "column_name": "is_active",
+        "is_nullable": "YES",
+        "column_default": "true",
+        "ordinal_position": 27,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_questions",
+        "column_name": "concours_type",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 28,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "prep_source_documents",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()",
+        "ordinal_position": 1,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "prep_source_documents",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 2,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "prep_source_documents",
+        "column_name": "subject_id",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 3,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "prep_source_documents",
+        "column_name": "year",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 4,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_source_documents",
+        "column_name": "doc_type",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 5,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_source_documents",
+        "column_name": "source_type",
+        "is_nullable": "NO",
+        "column_default": "'pdf'::text",
+        "ordinal_position": 6,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_source_documents",
+        "column_name": "storage_bucket",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 7,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_source_documents",
+        "column_name": "storage_path",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 8,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_source_documents",
+        "column_name": "extracted_text",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 9,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_source_documents",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'received'::text",
+        "ordinal_position": 10,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "prep_source_documents",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()",
+        "ordinal_position": 11,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "prep_source_documents",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()",
+        "ordinal_position": 12,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_source_documents",
+        "column_name": "concours_type",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 13,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_source_documents",
+        "column_name": "subject_name",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 14,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_source_documents",
+        "column_name": "original_filename",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 15,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "prep_source_documents",
+        "column_name": "page_count",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 16,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_source_documents",
+        "column_name": "extraction_method",
+        "is_nullable": "YES",
+        "column_default": "'pdf-text'::text",
+        "ordinal_position": 17,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "bool",
+        "data_type": "boolean",
+        "table_name": "prep_source_documents",
+        "column_name": "has_correction",
+        "is_nullable": "YES",
+        "column_default": "false",
+        "ordinal_position": 18,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "prep_subjects",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()",
+        "ordinal_position": 1,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_subjects",
+        "column_name": "slug",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_subjects",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "prep_subjects",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 4,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "prep_subjects",
+        "column_name": "sort_order",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 5,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "bool",
+        "data_type": "boolean",
+        "table_name": "prep_subjects",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true",
+        "ordinal_position": 6,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "prep_subjects",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()",
+        "ordinal_position": 7,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "prep_subjects",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()",
+        "ordinal_position": 8,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "td_doc_chunks",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()",
+        "ordinal_position": 1,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "td_doc_chunks",
+        "column_name": "source_document_id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "td_doc_chunks",
+        "column_name": "chunk_index",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 3,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_doc_chunks",
+        "column_name": "content",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 4,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "jsonb",
+        "data_type": "jsonb",
+        "table_name": "td_doc_chunks",
+        "column_name": "metadata",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 5,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "vector",
+        "data_type": "USER-DEFINED",
+        "table_name": "td_doc_chunks",
+        "column_name": "embedding",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 6,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_doc_chunks",
+        "column_name": "chunk_type",
+        "is_nullable": "YES",
+        "column_default": "'content'::text",
+        "ordinal_position": 7,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_doc_chunks",
+        "column_name": "subject",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 8,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_doc_chunks",
+        "column_name": "university",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 9,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_doc_chunks",
+        "column_name": "study_year",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 10,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "td_doc_chunks",
+        "column_name": "token_count",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 11,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "td_doc_chunks",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()",
+        "ordinal_position": 12,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "td_question_banks",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()",
+        "ordinal_position": 1,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_question_banks",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_question_banks",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 3,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_question_banks",
+        "column_name": "concours_type",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 4,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_question_banks",
+        "column_name": "subject",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 5,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "td_question_banks",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 6,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "bool",
+        "data_type": "boolean",
+        "table_name": "td_question_banks",
+        "column_name": "is_active",
+        "is_nullable": "YES",
+        "column_default": "true",
+        "ordinal_position": 7,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "td_question_banks",
+        "column_name": "created_at",
+        "is_nullable": "YES",
+        "column_default": "now()",
+        "ordinal_position": 8,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "td_question_banks",
+        "column_name": "updated_at",
+        "is_nullable": "YES",
+        "column_default": "now()",
+        "ordinal_position": 9,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "td_questions",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()",
+        "ordinal_position": 1,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "td_questions",
+        "column_name": "bank_id",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 2,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_questions",
+        "column_name": "question_type",
+        "is_nullable": "NO",
+        "column_default": "'qcm'::text",
+        "ordinal_position": 3,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_questions",
+        "column_name": "content",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 4,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "jsonb",
+        "data_type": "jsonb",
+        "table_name": "td_questions",
+        "column_name": "options",
+        "is_nullable": "YES",
+        "column_default": "'[]'::jsonb",
+        "ordinal_position": 5,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "td_questions",
+        "column_name": "correct_index",
+        "is_nullable": "YES",
+        "column_default": "0",
+        "ordinal_position": 6,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_questions",
+        "column_name": "explanation",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 7,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "td_questions",
+        "column_name": "difficulty",
+        "is_nullable": "YES",
+        "column_default": "1",
+        "ordinal_position": 8,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_questions",
+        "column_name": "subject",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 9,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "_text",
+        "data_type": "ARRAY",
+        "table_name": "td_questions",
+        "column_name": "tags",
+        "is_nullable": "YES",
+        "column_default": "'{}'::text[]",
+        "ordinal_position": 10,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "td_questions",
+        "column_name": "points",
+        "is_nullable": "YES",
+        "column_default": "10",
+        "ordinal_position": 11,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "td_questions",
+        "column_name": "time_limit_seconds",
+        "is_nullable": "YES",
+        "column_default": "60",
+        "ordinal_position": 12,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_questions",
+        "column_name": "image_url",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 13,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "td_questions",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 14,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "bool",
+        "data_type": "boolean",
+        "table_name": "td_questions",
+        "column_name": "is_active",
+        "is_nullable": "YES",
+        "column_default": "true",
+        "ordinal_position": 15,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "td_questions",
+        "column_name": "created_at",
+        "is_nullable": "YES",
+        "column_default": "now()",
+        "ordinal_position": 16,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "td_questions",
+        "column_name": "updated_at",
+        "is_nullable": "YES",
+        "column_default": "now()",
+        "ordinal_position": 17,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "td_source_documents",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()",
+        "ordinal_position": 1,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "td_source_documents",
+        "column_name": "created_by",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 2,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_source_documents",
+        "column_name": "subject",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 3,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_source_documents",
+        "column_name": "university",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 4,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_source_documents",
+        "column_name": "faculty",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 5,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_source_documents",
+        "column_name": "study_year",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 6,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "td_source_documents",
+        "column_name": "year",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 7,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_source_documents",
+        "column_name": "doc_type",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 8,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_source_documents",
+        "column_name": "source_type",
+        "is_nullable": "YES",
+        "column_default": "'pdf'::text",
+        "ordinal_position": 9,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_source_documents",
+        "column_name": "storage_bucket",
+        "is_nullable": "YES",
+        "column_default": "'prep-documents'::text",
+        "ordinal_position": 10,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_source_documents",
+        "column_name": "storage_path",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 11,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_source_documents",
+        "column_name": "extracted_text",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 12,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_source_documents",
+        "column_name": "status",
+        "is_nullable": "YES",
+        "column_default": "'received'::text",
+        "ordinal_position": 13,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_source_documents",
+        "column_name": "concours_type",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 14,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_source_documents",
+        "column_name": "subject_name",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 15,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_source_documents",
+        "column_name": "original_filename",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 16,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "td_source_documents",
+        "column_name": "page_count",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 17,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "td_source_documents",
+        "column_name": "extraction_method",
+        "is_nullable": "YES",
+        "column_default": "'pdf-text'::text",
+        "ordinal_position": 18,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "td_source_documents",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()",
+        "ordinal_position": 19,
+        "character_maximum_length": null
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "td_source_documents",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()",
+        "ordinal_position": 20,
+        "character_maximum_length": null
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "mandatory_no_default": {
+    "label": "mandatory_no_default",
+    "http": 200,
+    "ok": true,
+    "rows_count": 17,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "table_name": "prep_doc_chunks",
+        "column_name": "source_document_id",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "table_name": "prep_doc_chunks",
+        "column_name": "chunk_index",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "prep_doc_chunks",
+        "column_name": "content",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "prep_questions",
+        "column_name": "subject_id",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "prep_questions",
+        "column_name": "source",
+        "column_default": "'manual'::text"
+      },
+      {
+        "data_type": "text",
+        "table_name": "prep_questions",
+        "column_name": "question_type",
+        "column_default": "'mcq'::text"
+      },
+      {
+        "data_type": "text",
+        "table_name": "prep_questions",
+        "column_name": "level",
+        "column_default": "'beginner'::text"
+      },
+      {
+        "data_type": "text",
+        "table_name": "prep_questions",
+        "column_name": "question",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "prep_source_documents",
+        "column_name": "source_type",
+        "column_default": "'pdf'::text"
+      },
+      {
+        "data_type": "text",
+        "table_name": "prep_source_documents",
+        "column_name": "status",
+        "column_default": "'received'::text"
+      },
+      {
+        "data_type": "text",
+        "table_name": "prep_subjects",
+        "column_name": "slug",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "prep_subjects",
+        "column_name": "title",
+        "column_default": null
+      },
+      {
+        "data_type": "uuid",
+        "table_name": "td_doc_chunks",
+        "column_name": "source_document_id",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "td_question_banks",
+        "column_name": "title",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "td_question_banks",
+        "column_name": "subject",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "table_name": "td_questions",
+        "column_name": "question_type",
+        "column_default": "'qcm'::text"
+      },
+      {
+        "data_type": "text",
+        "table_name": "td_questions",
+        "column_name": "content",
+        "column_default": null
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "prep_subjects_structure": {
+    "label": "prep_subjects_structure",
+    "http": 200,
+    "ok": true,
+    "rows_count": 8,
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "data_type": "text",
+        "column_name": "slug",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "title",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "data_type": "text",
+        "column_name": "description",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "integer",
+        "column_name": "sort_order",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "data_type": "boolean",
+        "column_name": "is_active",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      }
+    ],
+    "error": null,
+    "sqlstate": null
+  },
+  "prep_subjects_data": {
+    "label": "prep_subjects_data",
+    "http": 200,
+    "ok": false,
+    "rows_count": 0,
+    "rows": [],
+    "error": "column \"concours_type\" does not exist",
+    "sqlstate": "42703"
+  }
+}

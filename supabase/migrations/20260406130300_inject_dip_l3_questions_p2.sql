@@ -1,0 +1,178 @@
+-- Injection QCM — Droit International Privé L3 (Partie 2/2)
+-- 30 questions: Exequatur, Conflits de lois, Qualification, Renvoi, OPI, Statut personnel
+
+INSERT INTO app.td_questions (id, question_type, content, options, correct_index, explanation, difficulty, subject, is_active, study_year, field, semester, generation_mode) VALUES
+
+(gen_random_uuid(), 'mcq',
+'Qu''est-ce que l''exequatur ?',
+'["Une procédure d''extradition","La procédure par laquelle un tribunal burkinabè autorise l''exécution d''un jugement étranger sur le territoire national","La reconnaissance automatique d''un jugement étranger","Un recours en cassation contre un jugement étranger"]'::jsonb,
+1, 'L''exequatur est la procédure par laquelle un tribunal burkinabè autorise l''exécution d''un jugement étranger sur le territoire national.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Selon l''article 993 du CPF, les décisions étrangères en matière de statut personnel :',
+'["Ne produisent jamais d''effets au BF","Produisent leurs effets au BF sans exequatur, sauf pour l''exécution forcée","Nécessitent toujours l''exequatur","Sont automatiquement exécutoires au BF"]'::jsonb,
+1, 'L''article 993 prévoit la reconnaissance automatique en matière de statut personnel. L''exequatur n''est nécessaire que pour l''exécution forcée (art. 994).',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Lors de la procédure d''exequatur, le tribunal burkinabè vérifie :',
+'["Uniquement la compétence du juge étranger","La compétence du juge étranger, la régularité de la procédure, l''absence de contrariété à l''OPI et l''absence de fraude à la loi","Le bien-fondé de la décision sur le fond","La nationalité des parties"]'::jsonb,
+1, 'Lors de l''exequatur (art. 994), le tribunal vérifie 4 éléments : compétence, régularité procédurale, conformité à l''OPI, absence de fraude. Il ne réexamine pas le fond.',
+3, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''article 1000 du CPF constitue une exception au principe de reconnaissance des jugements étrangers dans quel cas ?',
+'["Quand le jugement est en langue étrangère","Quand le jugement a été rendu en méconnaissance de la compétence exclusive des juridictions burkinabè","Quand le montant en jeu dépasse un certain seuil","Quand les parties n''ont pas été représentées par avocat"]'::jsonb,
+1, 'L''article 1000 permet de refuser la reconnaissance si le jugement étranger a été rendu en méconnaissance de la compétence exclusive des juridictions burkinabè.',
+3, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'La technique conflictuelle consiste à :',
+'["Appliquer directement la loi burkinabè à toute situation internationale","Utiliser une règle de conflit de lois pour désigner la loi applicable","Négocier un accord entre les États concernés","Appliquer la loi la plus favorable aux parties"]'::jsonb,
+1, 'La technique conflictuelle consiste à utiliser une règle de conflit de lois qui désigne la loi applicable à la situation, sans donner directement la solution au fond.',
+1, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Une règle de conflit de lois se compose de :',
+'["Un principe et une exception","Une catégorie de rattachement et un facteur de rattachement","Un droit subjectif et une obligation","Une compétence et une procédure"]'::jsonb,
+1, 'Une règle de conflit se compose d''une catégorie de rattachement (ex : « les effets du mariage ») et d''un facteur de rattachement (ex : « la loi nationale commune des époux »).',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'En DIP, la qualification consiste à :',
+'["Vérifier les diplômes des avocats étrangers","Ranger une situation internationale privée dans la catégorie de rattachement d''une règle de conflit de lois","Évaluer la qualité d''un jugement étranger","Déterminer la compétence du juge"]'::jsonb,
+1, 'La qualification consiste à ranger une situation internationale dans la catégorie de rattachement d''une règle de conflit de lois pour déterminer la loi applicable.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'La qualification « lege fori » signifie que la situation doit être qualifiée selon :',
+'["La loi étrangère désignée par la règle de conflit","La loi du for (loi du juge saisi)","La loi la plus favorable","Le droit international public"]'::jsonb,
+1, 'La qualification lege fori est la méthode dominante : la situation est qualifiée selon la loi du for, c''est-à-dire la loi de l''État dont le juge a été saisi.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Quand parle-t-on de « conflit de qualification » en DIP ?',
+'["Quand deux États qualifient différemment la même situation","Quand la situation correspond à plusieurs catégories de rattachement avec des facteurs différents","Quand le juge ne peut pas qualifier la situation","Quand la qualification est contestée par les parties"]'::jsonb,
+1, 'Le conflit de qualification se pose quand la situation correspond à plusieurs catégories de rattachement soumises à des facteurs différents.',
+3, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Le renvoi au premier degré est la situation où :',
+'["Le juge du for applique directement sa propre loi","La règle de conflit du for désigne un droit étranger dont la règle de conflit désigne à son tour le droit du for","Le juge renvoie l''affaire à un autre tribunal national","La règle de conflit désigne deux lois applicables"]'::jsonb,
+1, 'Le renvoi au 1er degré : la règle de CL du for désigne un droit étranger dont la règle de CL renvoie au droit du for. Première application : arrêt Forgo.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Le renvoi au 2e degré se distingue du renvoi au 1er degré car :',
+'["Il implique trois systèmes juridiques au lieu de deux","Il ne concerne que le droit des affaires","Il est toujours interdit","Il renvoie au droit du for"]'::jsonb,
+0, 'Le renvoi au 2e degré implique trois systèmes juridiques : le for (A) désigne le droit de B, dont la règle de CL désigne le droit de C qui retient sa compétence.',
+3, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''article 1005 du CPF admet le renvoi dans quel domaine ?',
+'["En toute matière","En matière de statut personnel uniquement","En matière contractuelle uniquement","En matière commerciale uniquement"]'::jsonb,
+1, 'L''article 1005 admet le renvoi en matière de statut personnel uniquement. Al. 2 : renvoi au 1er degré. Al. 3 : renvoi au 2e degré.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''article 1006 du CPF exclut le renvoi dans deux cas. Lesquels ?',
+'["Quand les parties sont de même nationalité et quand le litige est commercial","Quand la règle de conflit utilise le critère de la volonté des parties et quand elle poursuit un objectif substantiel","Quand le juge est incompétent et quand la loi étrangère est contraire à l''OPI","Quand l''affaire est urgente et quand le défendeur est absent"]'::jsonb,
+1, 'L''article 1006 exclut le renvoi quand la règle de conflit utilise le critère de la volonté des parties et quand elle poursuit un objectif substantiel.',
+3, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Selon l''article 1010 du CPF, quand peut-on écarter le droit étranger applicable ?',
+'["Chaque fois qu''il diffère du droit burkinabè","Quand son application conduit à un résultat gravement incompatible avec les principes fondamentaux de l''OPI burkinabè","Quand il est difficile à appliquer","Quand les parties en font la demande"]'::jsonb,
+1, 'L''article 1010 exige une incompatibilité grave avec les principes fondamentaux de l''OPI burkinabè. La simple différence ne suffit pas.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''« effet négatif » de l''ordre public international consiste à :',
+'["Appliquer la loi burkinabè en remplacement","Évincer les dispositions du droit étranger dont l''application engendre l''incompatibilité","Refuser de reconnaître le jugement étranger","Annuler la règle de conflit de lois"]'::jsonb,
+1, 'L''effet négatif consiste à évincer le droit étranger incompatible. L''éviction est limitée aux seules dispositions engendrant l''incompatibilité (art. 1010 al. 2).',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''« effet positif » de l''ordre public international consiste à :',
+'["Évincer le droit étranger","Appliquer le droit burkinabè en lieu et place du droit étranger évincé","Appliquer le droit international public","Renvoyer l''affaire au juge étranger"]'::jsonb,
+1, 'L''effet positif est le complément de l''effet négatif : « en lieu et place des dispositions évincées, il peut être fait application du droit burkinabè » (art. 1010).',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'La théorie de l''« ordre public de proximité » consiste à :',
+'["Appliquer la loi de l''État le plus proche géographiquement","Moduler l''intervention de l''OPI en fonction de l''intensité du rattachement de la situation au for","Exclure l''OPI pour les situations proches du for","Appliquer l''OPI uniquement aux situations localisées au BF"]'::jsonb,
+1, 'L''ordre public de proximité module l''OPI en fonction du rattachement au for : plus la situation est rattachée au for, plus l''OPI se justifie.',
+3, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Selon l''article 1020 du CPF, la détermination du nom d''une personne physique est régie par :',
+'["La loi du lieu de naissance","La loi du domicile","La loi nationale de l''intéressé","La loi du for"]'::jsonb,
+2, 'L''article 1020 : la détermination, la protection et le changement volontaire du nom sont régis par la loi nationale de l''intéressé.',
+1, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Selon l''article 1017 du CPF, la capacité générale d''une personne physique est régie par :',
+'["La loi du lieu de résidence","La loi nationale de la personne","La loi du for","La loi du lieu de conclusion de l''acte"]'::jsonb,
+1, 'L''article 1017 : la capacité générale d''une personne physique est régie par sa loi nationale. S''applique aussi quand la capacité est élargie par le mariage.',
+1, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Que signifie la règle « locus regit actum » ?',
+'["Le juge du lieu est toujours compétent","La loi du lieu de réalisation de l''acte régit la forme de l''acte","Le lieu détermine la loi applicable au fond","L''acte est régi par la loi choisie par les parties"]'::jsonb,
+1, 'La règle « locus regit actum » signifie que la forme de l''acte est régie par la loi du lieu de sa réalisation. Appliquée au mariage par l''article 1023 du CPF.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Selon l''article 1023 du CPF, la forme du mariage est régie par :',
+'["La loi nationale commune des époux","La loi du lieu de célébration","La loi du domicile des époux","La loi choisie par les époux"]'::jsonb,
+1, 'L''article 1023 : la forme du mariage est régie par la loi du lieu de célébration, en application de locus regit actum.',
+1, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Quand les futurs époux ont la même nationalité, les conditions de fond du mariage sont régies par (art. 1022 CPF) :',
+'["La loi du lieu de célébration","La loi du domicile commun","La loi de l''État dont ils partagent la nationalité","La loi burkinabè"]'::jsonb,
+2, 'L''article 1022 : même nationalité au moment de la célébration — les conditions de fond sont régies par la loi de l''État dont les époux partagent la nationalité.',
+1, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Quand les futurs époux sont de nationalité distincte (art. 1022 CPF), les conditions personnelles du mariage sont régies par :',
+'["La loi du for uniquement","La loi nationale de chaque époux (application distributive)","La loi du lieu de célébration","La loi la plus favorable"]'::jsonb,
+1, 'Nationalités distinctes : application distributive (chaque époux se voit appliquer sa loi nationale pour l''âge) ; application cumulative pour les conditions relationnelles (parenté).',
+3, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''article 1028 du CPF, sur les causes et effets du divorce, utilise les mêmes critères de rattachement que :',
+'["L''article 988 sur la compétence internationale","L''article 1024 sur les effets du mariage","L''article 1023 sur la forme du mariage","L''article 1043 sur les successions"]'::jsonb,
+1, 'L''article 1028 reprend les mêmes critères que l''article 1024 : loi nationale commune, puis domicile commun, puis dernier domicile commun, puis loi du for.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Selon l''article 1030 du CPF, l''établissement de la filiation maternelle de plein droit est régi par :',
+'["La loi nationale de l''enfant","La loi nationale de la mère au jour de la naissance","La loi du lieu de naissance","La loi du domicile de la mère"]'::jsonb,
+1, 'L''article 1030 : filiation maternelle de plein droit régie par la loi nationale de la mère au jour de la naissance de l''enfant.',
+1, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''établissement judiciaire de la filiation et la contestation sont régis par (art. 1033 CPF) :',
+'["La loi nationale du père","La loi nationale de la mère","La loi nationale de l''enfant","La loi du for"]'::jsonb,
+2, 'L''article 1033 : filiation judiciaire et contestation régies par la loi nationale de l''enfant. Changement de nationalité : l''enfant peut se placer au moment le plus favorable.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Selon l''article 1041 du CPF, les obligations alimentaires sont principalement régies par :',
+'["La loi nationale du débiteur","La loi matérielle du domicile actuel du créancier d''aliments","La loi du for","La loi nationale commune des parties"]'::jsonb,
+1, 'L''article 1041 : loi matérielle du domicile actuel du créancier (exclusion du renvoi). Subsidiairement : loi de la nationalité commune. En dernier recours : loi burkinabè.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'En l''absence de contrat de mariage et si les époux sont de nationalités distinctes, le régime matrimonial est régi par (art. 1026 CPF) :',
+'["La loi nationale du mari","La loi du premier domicile commun des époux","La loi du lieu de célébration","La loi burkinabè"]'::jsonb,
+1, 'L''article 1026 : sans contrat et nationalités distinctes — loi du premier domicile commun des époux.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Selon l''article 1043 du CPF, la succession est en principe régie par :',
+'["La loi du lieu de situation des biens","La loi nationale du défunt au moment du décès","La loi du dernier domicile du défunt","La loi choisie par les héritiers"]'::jsonb,
+1, 'L''article 1043 : principe de la loi nationale du défunt au moment du décès. Exception : liens plus étroits avec l''État de son domicile. Art. 1044 : possibilité de choix de loi.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S2', 'manual_injection');

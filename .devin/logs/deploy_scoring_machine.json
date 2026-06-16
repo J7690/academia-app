@@ -1,0 +1,54 @@
+{
+  "steps": [
+    {
+      "step": "disable_rtb",
+      "result": {
+        "ok": true,
+        "mode": "exec",
+        "affected_rows": 1
+      }
+    },
+    {
+      "step": "add_scoring_columns",
+      "result": {
+        "success": true
+      }
+    },
+    {
+      "step": "create_preferences_table",
+      "result": {
+        "success": true
+      }
+    },
+    {
+      "step": "rpc_toggle_prefs",
+      "result": {
+        "success": true
+      }
+    },
+    {
+      "step": "rpc_get_prefs",
+      "result": {
+        "success": true
+      }
+    },
+    {
+      "step": "rpc_score_article",
+      "result": {
+        "success": true
+      }
+    },
+    {
+      "step": "rpc_notify_article",
+      "result": {
+        "success": true
+      }
+    },
+    {
+      "step": "rpc_list_relevant",
+      "result": {
+        "success": true
+      }
+    }
+  ]
+}

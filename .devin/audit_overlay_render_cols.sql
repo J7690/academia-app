@@ -1,0 +1,1 @@
+SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'app' AND table_name IN ('challenge_video_overlays', 'challenge_video_render_jobs', 'free_video_overlays', 'free_video_render_jobs', 'free_videos', 'video_shares', 'video_reactions', 'challenge_participation_videos') ORDER BY table_name, ordinal_position;

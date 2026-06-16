@@ -1,0 +1,958 @@
+=== A. INVENTAIRE RPCs (toutes variantes) ===
+
+--- MATCH: delete_user ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "args": "p_target_user_id uuid, p_reason text DEFAULT NULL::text",
+      "nspname": "public",
+      "proname": "app_admin_delete_user_account",
+      "returns": "jsonb"
+    }
+  ]
+}
+
+--- MATCH: app_check_account_status ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "args": "",
+      "nspname": "public",
+      "proname": "app_check_account_status",
+      "returns": "jsonb"
+    }
+  ]
+}
+
+--- MATCH: check_account_status ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "args": "",
+      "nspname": "public",
+      "proname": "app_check_account_status",
+      "returns": "jsonb"
+    }
+  ]
+}
+
+--- BROAD SEARCH: all RPCs containing 'delete' or 'purge' or 'account' ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "args": "p_id uuid",
+      "nspname": "app",
+      "proname": "app_admin_tv_delete_overlay"
+    },
+    {
+      "args": "p_message_id uuid",
+      "nspname": "app",
+      "proname": "app_student_delete_dm_message"
+    },
+    {
+      "args": "p_message_id uuid",
+      "nspname": "app",
+      "proname": "app_student_delete_forum_message"
+    },
+    {
+      "args": "url text, params jsonb DEFAULT '{}'::jsonb, headers jsonb DEFAULT '{}'::jsonb, timeout_milliseconds integer DEFAULT 5000, body jsonb DEFAULT NULL::jsonb",
+      "nspname": "net",
+      "proname": "http_delete"
+    },
+    {
+      "args": "jsonb, text",
+      "nspname": "pg_catalog",
+      "proname": "jsonb_delete"
+    },
+    {
+      "args": "jsonb, integer",
+      "nspname": "pg_catalog",
+      "proname": "jsonb_delete"
+    },
+    {
+      "args": "from_json jsonb, VARIADIC path_elems text[]",
+      "nspname": "pg_catalog",
+      "proname": "jsonb_delete"
+    },
+    {
+      "args": "jsonb, text[]",
+      "nspname": "pg_catalog",
+      "proname": "jsonb_delete_path"
+    },
+    {
+      "args": "oid",
+      "nspname": "pg_catalog",
+      "proname": "pg_stat_get_db_tuples_deleted"
+    },
+    {
+      "args": "oid",
+      "nspname": "pg_catalog",
+      "proname": "pg_stat_get_tuples_deleted"
+    },
+    {
+      "args": "oid",
+      "nspname": "pg_catalog",
+      "proname": "pg_stat_get_xact_tuples_deleted"
+    },
+    {
+      "args": "tsvector, text",
+      "nspname": "pg_catalog",
+      "proname": "ts_delete"
+    },
+    {
+      "args": "tsvector, text[]",
+      "nspname": "pg_catalog",
+      "proname": "ts_delete"
+    },
+    {
+      "args": "p_event_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_academic_event"
+    },
+    {
+      "args": "p_video_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_challenge_participation_video"
+    },
+    {
+      "args": "p_participation_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_challenge_video"
+    },
+    {
+      "args": "p_asset_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_challenge_video_asset"
+    },
+    {
+      "args": "p_rule_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_commission_rule"
+    },
+    {
+      "args": "p_community_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_community"
+    },
+    {
+      "args": "p_post_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_community_post"
+    },
+    {
+      "args": "p_item_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_hero_playlist_item"
+    },
+    {
+      "args": "p_announcement_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_landing_announcement"
+    },
+    {
+      "args": "p_partner_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_landing_partner"
+    },
+    {
+      "args": "p_video_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_landing_video"
+    },
+    {
+      "args": "p_why_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_landing_why_card"
+    },
+    {
+      "args": "p_announcement_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_official_announcement"
+    },
+    {
+      "args": "p_rule_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_revenue_split_rule"
+    },
+    {
+      "args": "p_announcement_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_student_home_announcement"
+    },
+    {
+      "args": "p_slot_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_student_home_slot"
+    },
+    {
+      "args": "p_video_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_student_home_video"
+    },
+    {
+      "args": "p_event_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_university_event"
+    },
+    {
+      "args": "p_media_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_university_media"
+    },
+    {
+      "args": "p_news_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_university_news"
+    },
+    {
+      "args": "p_banner_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_university_site_banner"
+    },
+    {
+      "args": "p_block_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_university_site_block"
+    },
+    {
+      "args": "p_staff_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_delete_university_staff"
+    },
+    {
+      "args": "p_target_user_id uuid, p_reason text DEFAULT NULL::text",
+      "nspname": "public",
+      "proname": "app_admin_delete_user_account"
+    },
+    {
+      "args": "p_id uuid",
+      "nspname": "public",
+      "proname": "app_admin_tv_delete_overlay"
+    },
+    {
+      "args": "",
+      "nspname": "public",
+      "proname": "app_check_account_status"
+    },
+    {
+      "args": "p_file_id uuid",
+      "nspname": "public",
+      "proname": "app_delete_application_file"
+    },
+    {
+      "args": "p_document_id uuid",
+      "nspname": "public",
+      "proname": "app_delete_student_dossier_document"
+    },
+    {
+      "args": "p_event_id uuid",
+      "nspname": "public",
+      "proname": "app_delete_university_event"
+    },
+    {
+      "args": "p_media_id uuid",
+      "nspname": "public",
+      "proname": "app_delete_university_media"
+    },
+    {
+      "args": "p_news_id uuid",
+      "nspname": "public",
+      "proname": "app_delete_university_news"
+    },
+    {
+      "args": "p_banner_id uuid",
+      "nspname": "public",
+      "proname": "app_delete_university_site_banner"
+    },
+    {
+      "args": "p_block_id uuid",
+      "nspname": "public",
+      "proname": "app_delete_university_site_block"
+    },
+    {
+      "args": "p_staff_id uuid",
+      "nspname": "public",
+      "proname": "app_delete_university_staff"
+    },
+    {
+      "args": "",
+      "nspname": "public",
+      "proname": "app_notify_admin_new_account"
+    },
+    {
+      "args": "p_comment_id uuid",
+      "nspname": "public",
+      "proname": "app_opportunity_delete_comment"
+    },
+    {
+      "args": "p_post_id uuid",
+      "nspname": "public",
+      "proname": "app_student_delete_own_community_post"
+    },
+    {
+      "args": "p_story_id uuid",
+      "nspname": "public",
+      "proname": "app_student_delete_own_story"
+    },
+    {
+      "args": "p_comment_id uuid",
+      "nspname": "public",
+      "proname": "app_student_delete_video_comment"
+    },
+    {
+      "args": "p_limit integer DEFAULT 50",
+      "nspname": "public",
+      "proname": "app_student_list_recently_deleted_videos"
+    },
+    {
+      "args": "p_video_type text, p_video_id uuid",
+      "nspname": "public",
+      "proname": "app_student_soft_delete_video"
+    },
+    {
+      "args": "p_resource_id uuid",
+      "nspname": "public",
+      "proname": "app_td_teacher_delete_resource"
+    },
+    {
+      "args": "p_table_name text, p_where_condition text",
+      "nspname": "public",
+      "proname": "delete_data_safe"
+    },
+    {
+      "args": "",
+      "nspname": "storage",
+      "proname": "protect_delete"
+    }
+  ]
+}
+
+=== B. INVENTAIRE TABLES (colonnes deletion/purge/is_deleted/banned_until) ===
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "data_type": "boolean",
+      "table_name": "challenge_comments",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "table_name": "challenge_participations",
+      "column_name": "deleted_at",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "boolean",
+      "table_name": "challenge_participations",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "table_name": "challenge_user_bans",
+      "column_name": "banned_until",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "boolean",
+      "table_name": "community_posts",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "boolean",
+      "table_name": "community_stories",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "boolean",
+      "table_name": "direct_messages",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "table_name": "free_videos",
+      "column_name": "deleted_at",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "boolean",
+      "table_name": "free_videos",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "boolean",
+      "table_name": "online_course_forum_messages",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "table_name": "user_admin_status",
+      "column_name": "deleted_at",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "boolean",
+      "table_name": "user_admin_status",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "boolean",
+      "table_name": "user_admin_status",
+      "column_name": "is_suspended",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "table_name": "video_assets",
+      "column_name": "deleted_at",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "boolean",
+      "table_name": "video_comments",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "table_name": "oauth_clients",
+      "column_name": "deleted_at",
+      "table_schema": "auth"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "table_name": "users",
+      "column_name": "banned_until",
+      "table_schema": "auth"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "table_name": "users",
+      "column_name": "deleted_at",
+      "table_schema": "auth"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "table_name": "buckets_analytics",
+      "column_name": "deleted_at",
+      "table_schema": "storage"
+    }
+  ]
+}
+
+--- Any column containing 'delete' or 'purge' ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "data_type": "boolean",
+      "table_name": "challenge_comments",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "table_name": "challenge_participations",
+      "column_name": "deleted_at",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "boolean",
+      "table_name": "challenge_participations",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "boolean",
+      "table_name": "community_posts",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "boolean",
+      "table_name": "community_stories",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "boolean",
+      "table_name": "direct_messages",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "table_name": "free_videos",
+      "column_name": "deleted_at",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "boolean",
+      "table_name": "free_videos",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "boolean",
+      "table_name": "online_course_forum_messages",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "table_name": "user_admin_status",
+      "column_name": "deleted_at",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "text",
+      "table_name": "user_admin_status",
+      "column_name": "deleted_reason",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "boolean",
+      "table_name": "user_admin_status",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "table_name": "video_assets",
+      "column_name": "deleted_at",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "boolean",
+      "table_name": "video_comments",
+      "column_name": "is_deleted",
+      "table_schema": "app"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "table_name": "oauth_clients",
+      "column_name": "deleted_at",
+      "table_schema": "auth"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "table_name": "users",
+      "column_name": "deleted_at",
+      "table_schema": "auth"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "table_name": "buckets_analytics",
+      "column_name": "deleted_at",
+      "table_schema": "storage"
+    }
+  ]
+}
+
+=== C. INVENTAIRE CRONS ===
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "active": true,
+      "command": "SELECT app.app_admin_purge_deleted_accounts()",
+      "jobname": "purge_deleted_accounts",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}
+
+--- ALL CRONS ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "active": true,
+      "jobname": "academia_send_push_notifications",
+      "schedule": "*/1 * * * *"
+    },
+    {
+      "active": true,
+      "jobname": "expire_subscriptions",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "active": true,
+      "jobname": "prep-analyze-trends-weekly",
+      "schedule": "0 6 * * 0"
+    },
+    {
+      "active": true,
+      "jobname": "prep-auto-tag-questions-daily",
+      "schedule": "30 5 * * *"
+    },
+    {
+      "active": true,
+      "jobname": "prep-feed-actuality-daily",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "active": true,
+      "jobname": "process_pending_payouts",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "active": true,
+      "jobname": "purge_deleted_accounts",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "active": true,
+      "jobname": "reset_stale_processing_payments",
+      "schedule": "30 * * * *"
+    },
+    {
+      "active": true,
+      "jobname": "weekly_credit_bonus",
+      "schedule": "0 0 * * 1"
+    }
+  ]
+}
+
+=== D. FONCTIONS PURGE / ANONYMISATION ===
+{
+  "ok": false,
+  "error": "\"array_agg\" is an aggregate function",
+  "sqlstate": "42809"
+}
+
+=== E. VÉRIFICATION RPC app_student_request_account_deletion ===
+{
+  "ok": true,
+  "mode": "select",
+  "rows": []
+}
+
+--- Check in app schema ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": []
+}
+
+--- All schemas deletion RPCs ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "nspname": "app",
+      "proname": "app_admin_tv_delete_overlay"
+    },
+    {
+      "nspname": "app",
+      "proname": "app_student_delete_dm_message"
+    },
+    {
+      "nspname": "app",
+      "proname": "app_student_delete_forum_message"
+    },
+    {
+      "nspname": "net",
+      "proname": "http_delete"
+    },
+    {
+      "nspname": "pg_catalog",
+      "proname": "jsonb_delete"
+    },
+    {
+      "nspname": "pg_catalog",
+      "proname": "jsonb_delete"
+    },
+    {
+      "nspname": "pg_catalog",
+      "proname": "jsonb_delete"
+    },
+    {
+      "nspname": "pg_catalog",
+      "proname": "jsonb_delete_path"
+    },
+    {
+      "nspname": "pg_catalog",
+      "proname": "pg_stat_get_db_tuples_deleted"
+    },
+    {
+      "nspname": "pg_catalog",
+      "proname": "pg_stat_get_tuples_deleted"
+    },
+    {
+      "nspname": "pg_catalog",
+      "proname": "pg_stat_get_xact_tuples_deleted"
+    },
+    {
+      "nspname": "pg_catalog",
+      "proname": "ts_delete"
+    },
+    {
+      "nspname": "pg_catalog",
+      "proname": "ts_delete"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_academic_event"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_challenge_participation_video"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_challenge_video"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_challenge_video_asset"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_commission_rule"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_community"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_community_post"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_hero_playlist_item"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_landing_announcement"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_landing_partner"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_landing_video"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_landing_why_card"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_official_announcement"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_revenue_split_rule"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_student_home_announcement"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_student_home_slot"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_student_home_video"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_university_event"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_university_media"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_university_news"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_university_site_banner"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_university_site_block"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_university_staff"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_delete_user_account"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_admin_tv_delete_overlay"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_delete_application_file"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_delete_student_dossier_document"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_delete_university_event"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_delete_university_media"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_delete_university_news"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_delete_university_site_banner"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_delete_university_site_block"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_delete_university_staff"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_opportunity_delete_comment"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_student_delete_own_community_post"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_student_delete_own_story"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_student_delete_video_comment"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_student_list_recently_deleted_videos"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_student_soft_delete_video"
+    },
+    {
+      "nspname": "public",
+      "proname": "app_td_teacher_delete_resource"
+    },
+    {
+      "nspname": "public",
+      "proname": "delete_data_safe"
+    },
+    {
+      "nspname": "storage",
+      "proname": "protect_delete"
+    }
+  ]
+}
+
+=== F. COHÉRENCE user_admin_status ===
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "data_type": "uuid",
+      "column_name": "user_id"
+    },
+    {
+      "data_type": "boolean",
+      "column_name": "is_suspended"
+    },
+    {
+      "data_type": "text",
+      "column_name": "suspended_reason"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "suspended_at"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "reactivated_at"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at"
+    },
+    {
+      "data_type": "boolean",
+      "column_name": "is_deleted"
+    },
+    {
+      "data_type": "text",
+      "column_name": "deleted_reason"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "deleted_at"
+    }
+  ]
+}
+
+--- Check deletion columns in user_admin_status ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": []
+}
+
+--- Check app_admin_purge_deleted_accounts ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": []
+}
+
+=== G. EDGE FUNCTIONS (hard delete) ===
+Edge Functions HTTP: 404
+
+=== H. app_check_account_status in public (from previous fix) ===
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "args": "",
+      "nspname": "public",
+      "proname": "app_check_account_status"
+    }
+  ]
+}

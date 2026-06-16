@@ -1,0 +1,287 @@
+=== AUDIT SECURITE FINAL v2 ===
+
+--- RECAP COMPTAGES ---
+Total lignes user_admin_status: 25
+is_deleted = TRUE: 23
+is_suspended = TRUE: 24
+deleted_at IS NOT NULL: 23
+deleted_reason NULL: 22, 'hard_delete': 1
+
+--- 2. COMPTES AVEC is_deleted = TRUE ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "user_id": "fac01c01-69de-4ece-8faf-a6ed538792de",
+      "deleted_at": "2026-02-18T13:37:18.45062+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-02-18T13:37:18.45062+00:00",
+      "deleted_reason": "hard_delete",
+      "suspended_reason": "hard_delete"
+    },
+    {
+      "user_id": "74493dee-a128-4c99-ab24-35e48acbe3d1",
+      "deleted_at": "2026-02-16T05:24:03.330839+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-02-16T05:24:03.330839+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "03de29af-9fcb-4d24-83b7-3ae03cf90db0",
+      "deleted_at": "2026-02-16T04:54:45.302458+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-02-16T04:54:45.302458+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "3e99289f-c075-4580-99d0-01b9e40e3aab",
+      "deleted_at": "2026-02-16T04:54:11.489785+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-02-16T04:54:11.489785+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "aa507d72-85d7-453f-b041-71e3d3772515",
+      "deleted_at": "2026-02-16T04:54:05.354353+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-02-16T04:54:05.354353+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "9ebd556c-cef4-412b-80c4-838e6b92594f",
+      "deleted_at": "2026-02-16T04:53:51.691827+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-02-16T04:53:51.691827+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "96f0c40c-19e4-4e54-8bcb-d685da95664c",
+      "deleted_at": "2026-02-16T04:53:43.991909+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-02-16T04:53:43.991909+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "1953c04f-a6c3-48f8-af94-c9a5c4aa314e",
+      "deleted_at": "2026-01-28T11:08:58.712344+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-01-28T11:08:58.712344+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "ecfbc99d-3f6e-446a-a2bd-34330aef1a23",
+      "deleted_at": "2026-01-28T11:08:44.845714+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-01-28T11:08:44.845714+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "cf77200c-d7a0-49af-bba5-9b39b6d07c08",
+      "deleted_at": "2026-01-20T13:28:04.395556+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-01-20T13:28:04.395556+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "12501d2b-2b26-42f1-b549-b8478a3bb064",
+      "deleted_at": "2026-01-20T13:27:51.569032+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-01-20T13:27:51.569032+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "c2573724-137b-4c62-a40e-671e978e71a4",
+      "deleted_at": "2026-01-20T13:27:34.567408+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-01-20T13:27:34.567408+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "533fc50f-f3ef-4866-83a5-4d5ab5d59305",
+      "deleted_at": "2026-01-20T12:44:01.299834+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-01-20T12:44:01.299834+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "07cd4119-261c-4005-8ec7-079956aee762",
+      "deleted_at": "2026-01-19T13:39:08.316551+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-01-19T13:39:08.316551+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "a6151d26-35a3-4b2e-8043-71b5e6e91c50",
+      "deleted_at": "2026-01-19T13:38:59.286275+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-01-19T13:38:59.286275+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "084073ad-7139-4957-8531-c2a1a27fb0bd",
+      "deleted_at": "2026-01-19T13:38:50.836555+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-01-19T13:38:50.836555+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "2b5093a8-9a26-4524-a27f-eed1c44bc45d",
+      "deleted_at": "2026-01-19T13:38:42.354811+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-01-19T13:38:42.354811+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "933e3820-b408-4089-a6db-145e844a2150",
+      "deleted_at": "2026-01-19T13:38:36.725311+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-01-19T13:38:36.725311+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "9fa7c5b9-83b3-42fd-a301-b9358f82c4d0",
+      "deleted_at": "2026-01-10T06:17:08.546869+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-01-10T06:17:08.546869+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "8228063d-de01-4e93-8679-10837bcbf346",
+      "deleted_at": "2026-01-10T06:16:50.779583+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-01-10T06:16:50.779583+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "eb5fab3e-ad89-4f49-8474-745bc063ceb0",
+      "deleted_at": "2026-01-10T06:16:27.918802+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-01-02T08:33:41.751265+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "e9896517-c437-4bc0-9d5d-7daba6b129cf",
+      "deleted_at": "2026-01-10T06:16:12.269794+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-01-02T08:33:58.729016+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    },
+    {
+      "user_id": "296591ce-ec35-4218-b535-05fc5f5a0c05",
+      "deleted_at": "2026-01-10T06:15:55.788391+00:00",
+      "is_deleted": true,
+      "is_suspended": true,
+      "suspended_at": "2026-01-02T08:33:47.65373+00:00",
+      "deleted_reason": null,
+      "suspended_reason": "account_deleted"
+    }
+  ]
+}
+
+--- 3. LOGS admin_user_action_logs pour target_user correspondants ---
+{
+  "ok": true,
+  "mode": "exec",
+  "affected_rows": 41
+}
+
+--- 4. SESSIONS ACTIVES ---
+{
+  "ok": true,
+  "mode": "exec",
+  "affected_rows": 11
+}
+
+--- 5. ETAT AUTH.USERS ---
+{
+  "ok": true,
+  "mode": "exec",
+  "affected_rows": 23
+}
+
+--- 6. DISTRIBUTION is_deleted / is_suspended ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "cnt": 1,
+      "is_deleted": false,
+      "is_suspended": false
+    },
+    {
+      "cnt": 1,
+      "is_deleted": false,
+      "is_suspended": true
+    },
+    {
+      "cnt": 23,
+      "is_deleted": true,
+      "is_suspended": true
+    }
+  ]
+}
+
+--- 7. COMPTES NON SUPPRIMES ---
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "user_id": "0016169f-0762-461f-a58a-8424f88fdbc4",
+      "is_deleted": false,
+      "updated_at": "2026-04-13T10:10:42.572504+00:00",
+      "is_suspended": true
+    },
+    {
+      "user_id": "33fc5aa5-99c7-4504-a790-431ca85e320b",
+      "is_deleted": false,
+      "updated_at": "2026-01-20T12:43:45.158032+00:00",
+      "is_suspended": false
+    }
+  ]
+}

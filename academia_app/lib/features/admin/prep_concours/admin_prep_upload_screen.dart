@@ -8,7 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../providers/admin_prep_concours_provider.dart';
 import '../../../theme/prep_theme.dart';
 
-/// Admin screen for uploading PDF exam papers and triggering ingestion/generation/analysis.
+/// Écran admin pour uploader des sujets PDF/Image et déclencher l'indexation/génération/analyse IA.
 class AdminPrepUploadScreen extends StatefulWidget {
   const AdminPrepUploadScreen({super.key});
 
@@ -42,29 +42,48 @@ class _AdminPrepUploadScreenState extends State<AdminPrepUploadScreen> {
             .toList();
       }
     } catch (e) {
-      debugPrint('[AdminPrepUpload] loadPredictions error: $e');
+      debugPrint('[AdminPrepUpload] Erreur chargement prédictions: $e');
     }
     if (mounted) setState(() => _loadingPredictions = false);
   }
 
-  Future<void> _uploadPdf() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf'],
-    );
-    if (result == null || result.files.isEmpty) return;
+  Future<void> _uploadDocument({bool imageMode = false}) async {
+    final PlatformFile? file;
 
-    final file = result.files.first;
-    if (file.path == null) return;
+    if (imageMode) {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
+      );
+      if (result == null || result.files.isEmpty) return;
+      file = result.files.first;
+    } else {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+      if (result == null || result.files.isEmpty) return;
+      file = result.files.first;
+    }
+
+    if (file == null || file.path == null) return;
 
     // Show metadata dialog
     if (!mounted) return;
     final meta = await _showMetadataDialog();
     if (meta == null) return;
 
+    final ext = file.name.split('.').last.toLowerCase();
+    final isPdf = ext == 'pdf';
+    final contentType = isPdf
+        ? 'application/pdf'
+        : ext == 'png'
+            ? 'image/png'
+            : 'image/jpeg';
+
     setState(() {
       _uploading = true;
-      _uploadStatus = 'Upload en cours...';
+      _uploadStatus = 'Téléversement en cours...';
     });
 
     try {
@@ -77,17 +96,17 @@ class _AdminPrepUploadScreenState extends State<AdminPrepUploadScreen> {
       await client.storage.from('prep-documents').upload(
         storagePath,
         File(file.path!),
-        fileOptions: const FileOptions(contentType: 'application/pdf'),
+        fileOptions: FileOptions(contentType: contentType),
       );
 
-      setState(() => _uploadStatus = 'Création du document...');
+      setState(() => _uploadStatus = 'Création du document en base...');
 
       // 2. Create source document record
       final provider = context.read<AdminPrepConcoursProvider>();
       final ok = await provider.upsertSourceDocument(
         storageBucket: 'prep-documents',
         storagePath: storagePath,
-        sourceType: 'pdf',
+        sourceType: isPdf ? 'pdf' : 'image',
         docType: meta['doc_type'],
         year: meta['year'],
         subjectId: meta['subject_id'],
@@ -95,7 +114,7 @@ class _AdminPrepUploadScreenState extends State<AdminPrepUploadScreen> {
       );
 
       if (!ok) {
-        setState(() => _uploadStatus = 'Erreur: ${provider.error}');
+        setState(() => _uploadStatus = 'Erreur lors de la création du document : ${provider.error ?? "erreur inconnue"}');
         return;
       }
 
@@ -105,21 +124,38 @@ class _AdminPrepUploadScreenState extends State<AdminPrepUploadScreen> {
       if (docs.isNotEmpty) {
         final docId = docs.first.id;
 
-        setState(() => _uploadStatus = 'Indexation IA en cours...');
+        setState(() => _uploadStatus = 'Indexation IA en cours (peut prendre quelques secondes)...');
 
         // 4. Trigger ingestion Edge Function
         final ingested = await provider.triggerIngestion(documentId: docId);
         if (ingested) {
-          setState(() => _uploadStatus = 'Indexation terminée ✓');
+          setState(() => _uploadStatus = '✅ Indexation terminée avec succès.');
         } else {
-          setState(() => _uploadStatus = 'Upload OK. Indexation à relancer (Edge Function non déployée).');
+          setState(() => _uploadStatus = '⚠️ Document uploadé mais l\'indexation a échoué. Relancez-la manuellement.');
         }
       }
     } catch (e) {
-      setState(() => _uploadStatus = 'Erreur: $e');
+      setState(() => _uploadStatus = _parseFrenchError(e));
     } finally {
       setState(() => _uploading = false);
     }
+  }
+
+  String _parseFrenchError(Object e) {
+    final msg = e.toString();
+    if (msg.contains('StorageException') || msg.contains('storage')) {
+      return 'Erreur lors du téléversement du fichier. Vérifiez la taille et réessayez.';
+    }
+    if (msg.contains('SocketException') || msg.contains('TimeoutException')) {
+      return 'Impossible de contacter le serveur. Vérifiez votre connexion internet.';
+    }
+    if (msg.contains('not_authenticated') || msg.contains('Non authentifié')) {
+      return 'Session expirée. Veuillez vous reconnecter.';
+    }
+    if (msg.contains('FunctionException')) {
+      return 'Erreur serveur lors du traitement. Réessayez dans quelques instants.';
+    }
+    return 'Erreur inattendue : $msg';
   }
 
   Future<Map<String, dynamic>?> _showMetadataDialog() async {
@@ -198,7 +234,7 @@ class _AdminPrepUploadScreenState extends State<AdminPrepUploadScreen> {
 
   Future<void> _triggerGeneration() async {
     final provider = context.read<AdminPrepConcoursProvider>();
-    setState(() => _uploadStatus = 'Génération IA en cours...');
+    setState(() => _uploadStatus = 'Génération de questions IA en cours...');
 
     final result = await provider.triggerGenerateQuestions(
       count: 10,
@@ -206,9 +242,10 @@ class _AdminPrepUploadScreenState extends State<AdminPrepUploadScreen> {
     );
 
     if (result != null) {
-      setState(() => _uploadStatus = 'Généré ${result['inserted_count'] ?? 0} questions ✓');
+      final count = result['inserted_count'] ?? 0;
+      setState(() => _uploadStatus = '✅ $count question(s) générée(s) avec succès.');
     } else {
-      setState(() => _uploadStatus = provider.error ?? 'Erreur génération');
+      setState(() => _uploadStatus = provider.error ?? 'Erreur lors de la génération des questions.');
     }
   }
 
@@ -219,10 +256,12 @@ class _AdminPrepUploadScreenState extends State<AdminPrepUploadScreen> {
     final result = await provider.triggerAnalyzeTrends(targetYear: '2026');
 
     if (result != null) {
-      setState(() => _uploadStatus = '${result['topics_created'] ?? 0} thèmes, ${result['predictions_created'] ?? 0} prédictions ✓');
+      final topics = result['topics_created'] ?? 0;
+      final preds = result['predictions_created'] ?? 0;
+      setState(() => _uploadStatus = '✅ $topics thème(s) et $preds prédiction(s) créé(s).');
       _loadPredictions();
     } else {
-      setState(() => _uploadStatus = provider.error ?? 'Erreur analyse');
+      setState(() => _uploadStatus = provider.error ?? 'Erreur lors de l\'analyse des tendances.');
     }
   }
 
@@ -253,20 +292,36 @@ class _AdminPrepUploadScreenState extends State<AdminPrepUploadScreen> {
                 style: TextStyle(color: Colors.white70, fontSize: 12),
               ),
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _uploading ? null : _uploadPdf,
-                  icon: _uploading
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Icon(Icons.upload, size: 18),
-                  label: Text(_uploading ? 'Upload en cours...' : 'Sélectionner un PDF'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: PrepTheme.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _uploading ? null : () => _uploadDocument(),
+                      icon: _uploading
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Icon(Icons.picture_as_pdf, size: 18),
+                      label: Text(_uploading ? 'En cours...' : 'PDF'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: PrepTheme.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _uploading ? null : () => _uploadDocument(imageMode: true),
+                      icon: const Icon(Icons.image, size: 18),
+                      label: const Text('Image'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: PrepTheme.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               if (_uploadStatus != null) ...[
                 const SizedBox(height: 10),
@@ -331,7 +386,7 @@ class _AdminPrepUploadScreenState extends State<AdminPrepUploadScreen> {
                 Text('Aucune prédiction disponible',
                     style: TextStyle(color: PrepTheme.textTertiary, fontSize: 13)),
                 SizedBox(height: 4),
-                Text('Uploadez des sujets puis lancez l\'analyse des tendances.',
+                Text('Téléversez des sujets puis lancez l\'analyse des tendances.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: PrepTheme.textTertiary, fontSize: 11)),
               ],

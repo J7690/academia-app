@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:video_thumbnail/video_thumbnail.dart' as vt;
 
 import '../../providers/student_challenges_provider.dart';
 import '../../video/academia_playback_engine.dart';
@@ -21,6 +22,8 @@ class VideoPublishScreen extends StatefulWidget {
   final Uint8List? thumbnailBytes;
   final String? pendingVideoAssetId;
   final Map<String, dynamic>? pendingPlayback;
+  final String? localVideoPath;
+  final int videoDurationMs;
 
   const VideoPublishScreen({
     super.key,
@@ -34,6 +37,8 @@ class VideoPublishScreen extends StatefulWidget {
     this.thumbnailBytes,
     this.pendingVideoAssetId,
     this.pendingPlayback,
+    this.localVideoPath,
+    this.videoDurationMs = 0,
   });
 
   @override
@@ -45,14 +50,45 @@ class _VideoPublishScreenState extends State<VideoPublishScreen> {
   final TextEditingController _hashtagsController = TextEditingController();
   String _visibility = 'public'; // public, friends, private
   bool _isPublishing = false;
+  Uint8List? _selectedCoverBytes;
+  double _coverPositionMs = 0;
+  bool _isExtractingCover = false;
 
   bool get _isFreeVideo => widget.videoType == 'free';
+
+  Uint8List? get _effectiveCover => _selectedCoverBytes ?? widget.thumbnailBytes;
 
   @override
   void dispose() {
     _captionController.dispose();
     _hashtagsController.dispose();
     super.dispose();
+  }
+
+  Future<void> _extractCoverAtPosition(double positionMs) async {
+    final path = widget.localVideoPath;
+    if (path == null || path.isEmpty) return;
+    if (_isExtractingCover) return;
+
+    setState(() => _isExtractingCover = true);
+
+    try {
+      final bytes = await vt.VideoThumbnail.thumbnailData(
+        video: path,
+        imageFormat: vt.ImageFormat.JPEG,
+        maxWidth: 480,
+        quality: 80,
+        timeMs: positionMs.round(),
+      );
+      if (!mounted) return;
+      setState(() {
+        _selectedCoverBytes = bytes;
+        _isExtractingCover = false;
+      });
+    } catch (e) {
+      debugPrint('[Publish] Cover extraction error: $e');
+      if (mounted) setState(() => _isExtractingCover = false);
+    }
   }
 
   Future<({String? videoAssetId, Map<String, dynamic> playback})> _resolveAssetAndPlayback({
@@ -94,12 +130,13 @@ class _VideoPublishScreenState extends State<VideoPublishScreen> {
     final provider = context.read<StudentChallengesProvider>();
 
     try {
-      // Upload thumbnail if available
+      // Upload cover image (selected by user or default thumbnail)
       String? thumbnailUrl;
-      if (widget.thumbnailBytes != null && widget.thumbnailBytes!.isNotEmpty) {
-        debugPrint('[Publish] Uploading thumbnail...');
+      final coverBytes = _effectiveCover;
+      if (coverBytes != null && coverBytes.isNotEmpty) {
+        debugPrint('[Publish] Uploading cover image (${coverBytes.length} bytes)...');
         thumbnailUrl = await provider.uploadThumbnail(
-          bytes: widget.thumbnailBytes!,
+          bytes: coverBytes,
           videoFileName: widget.videoUrl.split('/').last,
         );
         debugPrint('[Publish] thumbnailUrl=$thumbnailUrl');
@@ -346,29 +383,57 @@ class _VideoPublishScreenState extends State<VideoPublishScreen> {
                 children: [
                   const SizedBox(height: 12),
 
-                  // ── Video preview + caption ──
+                  // ── Cover image + caption ──
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Miniature vidéo
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: SizedBox(
-                          width: 100,
-                          height: 140,
-                          child: widget.thumbnailBytes != null
-                              ? Image.memory(
-                                  widget.thumbnailBytes!,
-                                  fit: BoxFit.cover,
-                                )
-                              : AcademiaPlaybackEngine.view(
-                                  url: widget.videoUrl,
-                                  autoplay: false,
-                                  looping: false,
-                                  muted: true,
-                                  showControls: false,
-                                  fit: BoxFit.cover,
+                      // Cover image
+                      GestureDetector(
+                        onTap: widget.localVideoPath != null && widget.videoDurationMs > 0
+                            ? () => _showCoverPicker()
+                            : null,
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: SizedBox(
+                                width: 100,
+                                height: 140,
+                                child: _effectiveCover != null
+                                    ? Image.memory(
+                                        _effectiveCover!,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : AcademiaPlaybackEngine.view(
+                                        url: widget.videoUrl,
+                                        autoplay: false,
+                                        looping: false,
+                                        muted: true,
+                                        showControls: false,
+                                        fit: BoxFit.cover,
+                                      ),
+                              ),
+                            ),
+                            if (widget.localVideoPath != null)
+                              Positioned(
+                                bottom: 4,
+                                left: 0,
+                                right: 0,
+                                child: Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Text(
+                                      'Couverture',
+                                      style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
                                 ),
+                              ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -486,6 +551,113 @@ class _VideoPublishScreenState extends State<VideoPublishScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showCoverPicker() {
+    double tempPosition = _coverPositionMs;
+    final totalMs = widget.videoDurationMs.toDouble().clamp(1.0, double.infinity);
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF1A1A2E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx2, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40, height: 4,
+                      decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Choisir la couverture',
+                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Fais glisser pour choisir le moment',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Preview of selected frame
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: SizedBox(
+                        width: 160,
+                        height: 220,
+                        child: _isExtractingCover
+                            ? const Center(child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white54))
+                            : (_effectiveCover != null
+                                ? Image.memory(_effectiveCover!, fit: BoxFit.cover)
+                                : Container(color: Colors.white10)),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Time label
+                    Text(
+                      '${(tempPosition / 1000).toStringAsFixed(1)}s / ${(totalMs / 1000).toStringAsFixed(1)}s',
+                      style: const TextStyle(color: Colors.white54, fontSize: 11, fontFamily: 'monospace'),
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Slider
+                    SliderTheme(
+                      data: SliderTheme.of(ctx2).copyWith(
+                        activeTrackColor: const Color(0xFFFF2D55),
+                        inactiveTrackColor: Colors.white12,
+                        thumbColor: const Color(0xFFFF2D55),
+                        trackHeight: 3,
+                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                      ),
+                      child: Slider(
+                        value: tempPosition.clamp(0.0, totalMs),
+                        min: 0,
+                        max: totalMs,
+                        onChanged: (v) {
+                          setSheetState(() => tempPosition = v);
+                        },
+                        onChangeEnd: (v) {
+                          setState(() => _coverPositionMs = v);
+                          _extractCoverAtPosition(v).then((_) {
+                            if (ctx2.mounted) setSheetState(() {});
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Confirm button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF2D55),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                        ),
+                        child: const Text('Confirmer', style: TextStyle(fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

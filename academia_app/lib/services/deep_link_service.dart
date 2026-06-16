@@ -48,8 +48,8 @@ class DeepLinkService {
       final refreshToken = uri.queryParameters['refresh_token'];
       
       if (accessToken != null && refreshToken != null) {
-        // Créer la session avec les tokens du lien
-        await client.auth.setSession(accessToken, refreshToken);
+        // Créer la session avec le refresh token (supabase_flutter v2 API)
+        await client.auth.setSession(refreshToken);
         
         debugPrint('DeepLinkService: Session restored from email link');
         return true;

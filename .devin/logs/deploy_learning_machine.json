@@ -1,0 +1,68 @@
+[
+  [
+    "unique_constraint",
+    {
+      "success": true
+    }
+  ],
+  [
+    "unique_topic_name",
+    {
+      "success": true
+    }
+  ],
+  [
+    "auto_tagger_rpc",
+    {
+      "success": true
+    }
+  ],
+  [
+    "cron_trends",
+    {
+      "ok": true,
+      "mode": "select",
+      "rows": [
+        {
+          "schedule": 9
+        }
+      ]
+    }
+  ],
+  [
+    "cron_autotag",
+    {
+      "ok": true,
+      "mode": "select",
+      "rows": [
+        {
+          "schedule": 10
+        }
+      ]
+    }
+  ],
+  [
+    "run_autotag",
+    {
+      "ok": true,
+      "mode": "select",
+      "rows": [
+        {
+          "result": {
+            "tagged": 160,
+            "success": true
+          }
+        }
+      ]
+    }
+  ],
+  [
+    "analyze_trends",
+    {
+      "status": 401,
+      "body": {
+        "error": "not_authenticated"
+      }
+    }
+  ]
+]

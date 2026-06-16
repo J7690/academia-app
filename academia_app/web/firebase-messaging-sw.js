@@ -10,7 +10,7 @@ firebase.initializeApp({
   authDomain: "academia-e2c41.firebaseapp.com",
   projectId: "academia-e2c41",
   messagingSenderId: "593442809911",
-  appId: "1:593442809911:web:3d63c267fcc760123af7b2",
+  appId: "1:593442809911:web:e921b64da1f6548c3af7b2",
   storageBucket: "academia-e2c41.firebasestorage.app",
 });
 

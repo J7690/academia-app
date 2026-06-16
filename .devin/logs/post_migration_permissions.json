@@ -1,0 +1,34 @@
+[
+  {
+    "name": "app_prep_teacher_list_assignments",
+    "authenticated": true
+  },
+  {
+    "name": "app_prep_teacher_upsert_assignment",
+    "authenticated": true
+  },
+  {
+    "name": "app_prep_teacher_list_submissions",
+    "authenticated": true
+  },
+  {
+    "name": "app_prep_teacher_grade_submission",
+    "authenticated": true
+  },
+  {
+    "name": "app_prep_teacher_list_live_sessions",
+    "authenticated": true
+  },
+  {
+    "name": "app_prep_teacher_upsert_live_session",
+    "authenticated": true
+  },
+  {
+    "name": "app_prep_teacher_start_live_session",
+    "authenticated": true
+  },
+  {
+    "name": "app_prep_teacher_end_live_session",
+    "authenticated": true
+  }
+]

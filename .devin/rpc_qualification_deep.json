@@ -1,0 +1,1416 @@
+[
+  {
+    "rpc": "app_student_delete_forum_message",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "features\\student\\online_course_detail_screen.dart"
+    ],
+    "impact_class": "A",
+    "recommendation": "fix_immediately",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "user_action",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "GestureDetector"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_admin_get_stats",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_admin_list_ai_conversations",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_admin_list_questions",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_admin_toggle_question",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_admin_upsert_badge",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_create_ai_conversation",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_create_exam_paper",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_create_flashcard",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_create_flashcard_deck",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_create_question",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_create_question_bank",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_create_quiz_template",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_get_ai_config",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_get_leaderboard",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_list_ai_conversations",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_list_ai_messages",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_list_exam_papers",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_list_flashcard_decks",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_list_flashcards",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_list_question_banks",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_list_questions",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_list_quiz_templates",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_save_ai_message",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_save_flashcard_review",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_save_quiz_attempt",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_teacher_end_live_session",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\teacher_prep_live_sessions_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": true,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_teacher_grade_submission",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\teacher_prep_assignments_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": true,
+        "error_silent": true,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": "catch"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_teacher_list_assignments",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\teacher_prep_assignments_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": true,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "_setLoading"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_teacher_list_live_sessions",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\teacher_prep_live_sessions_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": true,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "_setLoading"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_teacher_list_submissions",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\teacher_prep_assignments_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": true,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_teacher_start_live_session",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\teacher_prep_live_sessions_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": true,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_teacher_upsert_assignment",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\teacher_prep_assignments_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_teacher_upsert_live_session",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\teacher_prep_live_sessions_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_update_ai_config",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\td_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_track_navigation_event",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "services\\analytics_tracking_service.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "auto_init",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "_startBatchTimer"
+      }
+    ]
+  },
+  {
+    "rpc": "league_create",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "catch"
+      }
+    ]
+  },
+  {
+    "rpc": "league_get_standings",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  },
+  {
+    "rpc": "league_join",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  },
+  {
+    "rpc": "league_list_available",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  },
+  {
+    "rpc": "league_report_match_result",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  },
+  {
+    "rpc": "tournament_create",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "catch"
+      }
+    ]
+  },
+  {
+    "rpc": "tournament_get_details",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  },
+  {
+    "rpc": "tournament_get_standings",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  },
+  {
+    "rpc": "tournament_list_available",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": "TournamentProvider",
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "tournament_register",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  },
+  {
+    "rpc": "tournament_report_match_result",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  },
+  {
+    "rpc": "tournament_start",
+    "status": "B",
+    "occurrence_count": 1,
+    "files": [
+      "games\\providers\\tournament_provider.dart"
+    ],
+    "impact_class": "B",
+    "recommendation": "fix_soon",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  },
+  {
+    "rpc": "app_admin_delete_course",
+    "status": "C",
+    "occurrence_count": 0,
+    "files": [],
+    "impact_class": "C",
+    "recommendation": "implement_or_remove",
+    "contexts": []
+  },
+  {
+    "rpc": "app_admin_delete_program",
+    "status": "C",
+    "occurrence_count": 0,
+    "files": [],
+    "impact_class": "C",
+    "recommendation": "implement_or_remove",
+    "contexts": []
+  },
+  {
+    "rpc": "app_admin_get_navigation_stats",
+    "status": "B",
+    "occurrence_count": 0,
+    "files": [],
+    "impact_class": "C",
+    "recommendation": "verify_or_remove",
+    "contexts": []
+  },
+  {
+    "rpc": "app_admin_list_deleted_users",
+    "status": "C",
+    "occurrence_count": 0,
+    "files": [],
+    "impact_class": "C",
+    "recommendation": "implement_or_remove",
+    "contexts": []
+  },
+  {
+    "rpc": "app_student_delete_dm_message",
+    "status": "B",
+    "occurrence_count": 0,
+    "files": [],
+    "impact_class": "C",
+    "recommendation": "verify_or_remove",
+    "contexts": []
+  },
+  {
+    "rpc": "app_admin_resolve_content_report",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "features\\admin\\admin_moderation_screen.dart"
+    ],
+    "impact_class": "D",
+    "recommendation": "ignore_or_cleanup",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": true,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  },
+  {
+    "rpc": "app_admin_suspend_user",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "features\\admin\\admin_moderation_screen.dart"
+    ],
+    "impact_class": "D",
+    "recommendation": "ignore_or_cleanup",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": true,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "catch"
+      }
+    ]
+  },
+  {
+    "rpc": "app_admin_tv_delete_overlay",
+    "status": "D",
+    "occurrence_count": 0,
+    "files": [],
+    "impact_class": "D",
+    "recommendation": "ignore_or_cleanup",
+    "contexts": []
+  },
+  {
+    "rpc": "app_admin_tv_get_timeline",
+    "status": "D",
+    "occurrence_count": 0,
+    "files": [],
+    "impact_class": "D",
+    "recommendation": "ignore_or_cleanup",
+    "contexts": []
+  },
+  {
+    "rpc": "app_admin_tv_upsert_overlay",
+    "status": "D",
+    "occurrence_count": 0,
+    "files": [],
+    "impact_class": "D",
+    "recommendation": "ignore_or_cleanup",
+    "contexts": []
+  },
+  {
+    "rpc": "app_get_or_create_bobodo_session",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\bobodo_provider.dart"
+    ],
+    "impact_class": "D",
+    "recommendation": "ignore_or_cleanup",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": "_setError"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_get_adaptive_quiz",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\prep_quiz_provider.dart"
+    ],
+    "impact_class": "D",
+    "recommendation": "ignore_or_cleanup",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "catch"
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_get_student_progress",
+    "status": "D",
+    "occurrence_count": 2,
+    "files": [
+      "providers\\prep_quiz_provider.dart",
+      "services\\td_service.dart"
+    ],
+    "impact_class": "D",
+    "recommendation": "ignore_or_cleanup",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "if"
+      },
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_get_subject_stats",
+    "status": "D",
+    "occurrence_count": 2,
+    "files": [
+      "providers\\prep_quiz_provider.dart",
+      "services\\td_service.dart"
+    ],
+    "impact_class": "D",
+    "recommendation": "ignore_or_cleanup",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "_updateStreak"
+      },
+      {
+        "has_try": false,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": null
+      }
+    ]
+  },
+  {
+    "rpc": "app_prep_get_weakness_analysis",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "providers\\prep_weakness_provider.dart"
+    ],
+    "impact_class": "D",
+    "recommendation": "ignore_or_cleanup",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "auto_load",
+        "user_facing": true,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  },
+  {
+    "rpc": "app_td_admin_import_questions_json",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "features\\admin\\admin_td_direct_import_screen.dart"
+    ],
+    "impact_class": "D",
+    "recommendation": "ignore_or_cleanup",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  },
+  {
+    "rpc": "app_td_admin_import_text_bulk",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "features\\admin\\admin_td_direct_import_screen.dart"
+    ],
+    "impact_class": "D",
+    "recommendation": "ignore_or_cleanup",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  },
+  {
+    "rpc": "challenge_game_end_live",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "games\\services\\game_live_service.dart"
+    ],
+    "impact_class": "D",
+    "recommendation": "ignore_or_cleanup",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": "catch"
+      }
+    ]
+  },
+  {
+    "rpc": "challenge_game_list_live",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "games\\services\\game_live_service.dart"
+    ],
+    "impact_class": "D",
+    "recommendation": "ignore_or_cleanup",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": true,
+        "error_visible": false,
+        "error_silent": true,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  },
+  {
+    "rpc": "challenge_game_start_live",
+    "status": "D",
+    "occurrence_count": 1,
+    "files": [
+      "games\\services\\game_live_service.dart"
+    ],
+    "impact_class": "D",
+    "recommendation": "ignore_or_cleanup",
+    "contexts": [
+      {
+        "has_try": true,
+        "has_catch": false,
+        "error_visible": false,
+        "error_silent": false,
+        "activation_path": "unknown",
+        "user_facing": false,
+        "widget_name": null,
+        "function_name": "if"
+      }
+    ]
+  }
+]

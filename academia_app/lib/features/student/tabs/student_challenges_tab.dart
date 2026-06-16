@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
@@ -17,12 +18,14 @@ import '../../../providers/student_challenges_provider.dart';
 import '../../../services/adaptive_quality_service.dart';
 import '../../../services/video_analytics_service.dart';
 import '../../../services/video_cache_service.dart';
-import '../../../services/video_preload_service.dart';
 import '../../../services/video_share_service.dart';
+import '../../../services/video_orientation_service.dart';
+import '../../../widgets/adaptive_video_container.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
 import '../../../video/academia_playback_engine.dart';
 import '../../../widgets/video_overlays_layer.dart';
+import '../../../widgets/report_content_sheet.dart';
 import '../../../widgets/bobodo_state.dart';
 import '../../../widgets/bobodo_view.dart';
 import '../student_challenge_detail_screen.dart';
@@ -32,6 +35,7 @@ import '../student_social_profile_screen.dart';
 import '../student_dashboard_nav_controller.dart';
 import '../student_recently_deleted_videos_screen.dart';
 import '../challenge_live_screen.dart';
+import '../../../games/services/game_live_service.dart';
 
 class StudentChallengesFeedScreen extends StatelessWidget {
   const StudentChallengesFeedScreen({super.key});
@@ -865,6 +869,23 @@ Future<void> _showGenericCommentsSheet(
                                             },
                                             icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                                           ),
+                                        if (!isOwn && commentId.isNotEmpty)
+                                          PopupMenuButton<String>(
+                                            icon: const Icon(Icons.more_vert, color: Colors.white38, size: 18),
+                                            onSelected: (val) {
+                                              if (val == 'report') {
+                                                ReportContentSheet.show(context,
+                                                  contentType: 'comment', contentId: commentId,
+                                                  targetUserId: userId, contentPreview: content.length > 80 ? '${content.substring(0, 80)}...' : content);
+                                              } else if (val == 'block') {
+                                                UserModerationSheet.show(context, userId: userId, userName: name);
+                                              }
+                                            },
+                                            itemBuilder: (_) => const [
+                                              PopupMenuItem(value: 'report', child: Text('Signaler', style: TextStyle(fontSize: 13))),
+                                              PopupMenuItem(value: 'block', child: Text('Bloquer l\'auteur', style: TextStyle(fontSize: 13, color: Colors.red))),
+                                            ],
+                                          ),
                                       ],
                                     ),
                                   );
@@ -1013,6 +1034,15 @@ Future<void> _showGenericReportDialog(
 // TikTok-style video feed (sub-tab 1)
 // ---------------------------------------------------------------------------
 
+/// Immutable snapshot used by Selector to avoid PageView rebuilds on unrelated
+/// provider changes (likes, comments, etc.).
+class _FeedState {
+  final List<Map<String, dynamic>> videos;
+  final bool isLoading;
+  final String? error;
+  const _FeedState({required this.videos, required this.isLoading, this.error});
+}
+
 class _ChallengeVideosFeed extends StatefulWidget {
   const _ChallengeVideosFeed();
 
@@ -1020,23 +1050,34 @@ class _ChallengeVideosFeed extends StatefulWidget {
   State<_ChallengeVideosFeed> createState() => _ChallengeVideosFeedState();
 }
 
-class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
+class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
+    with WidgetsBindingObserver {
   bool _initialized = false;
   bool _isLoadingMore = false;
   bool _hasMore = true;
   final int _pageSize = 20;
 
-  // PageView controller — compatible avec AndroidView PlatformViews
-  // viewportFraction < 1 force Flutter à pré-rendre les pages adjacentes
-  final PageController _pageController = PageController(viewportFraction: 0.999);
+  // PageView controller — viewportFraction < 1 forces Flutter to pre-build adjacent pages.
+  // This ensures N-1 and N+1 ExoPlayer instances exist and buffer while current plays.
+  final PageController _pageController = PageController(viewportFraction: 0.9999);
 
   // Auto-pause on swipe: track controllers per page index
   final Map<int, AcademiaPlaybackController> _controllers = {};
   int _currentPage = 0;
+  bool _wasPlayingBeforeBackground = false;
+
+  // Live sessions en cours (Presence)
+  List<Map<String, dynamic>> _livePlayers = [];
+  StreamSubscription<List<Map<String, dynamic>>>? _liveSubscription;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Écouter les joueurs en live via Presence
+    _liveSubscription = GameLiveService.watchLivePlayers().listen((players) {
+      if (mounted) setState(() => _livePlayers = players);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted || _initialized) return;
       _initialized = true;
@@ -1057,8 +1098,39 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _liveSubscription?.cancel();
     _pageController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.detached:
+        // App going to background — pause all video immediately
+        final currentCtrl = _controllers[_currentPage];
+        _wasPlayingBeforeBackground =
+            currentCtrl != null && currentCtrl.isAttached;
+        _pauseAllControllers();
+        debugPrint('[FEED] Lifecycle $state → paused all controllers');
+        break;
+      case AppLifecycleState.resumed:
+        // App returning to foreground — resume only the active video
+        if (_wasPlayingBeforeBackground) {
+          final currentCtrl = _controllers[_currentPage];
+          if (currentCtrl != null && currentCtrl.isAttached) {
+            currentCtrl.play();
+            debugPrint('[FEED] Lifecycle resumed → playing index $_currentPage');
+          }
+          _wasPlayingBeforeBackground = false;
+        }
+        break;
+    }
   }
 
   void _onPageChanged(int newIndex) {
@@ -1099,10 +1171,10 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
     } else {
       debugPrint('[FEED]   No controller ready at index $newIndex (attached=${newCtrl?.isAttached})');
     }
-    // Clean up controllers far from current (keep only N-2..N+2)
+    // Clean up controllers far from current (keep only N-3..N+3)
     final removed = <int>[];
     _controllers.removeWhere((key, _) {
-      if ((key - newIndex).abs() > 2) {
+      if ((key - newIndex).abs() > 3) {
         removed.add(key);
         return true;
       }
@@ -1117,23 +1189,18 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
   }
 
   void _preloadAdjacentVideos(int currentIndex, List<Map<String, dynamic>> videos) {
-    final urlsToPreload = <String>[];
+    // Cache best URLs for quick access — actual buffering is done natively by ExoPlayer
     for (int i = 1; i <= 3; i++) {
       final nextIdx = currentIndex + i;
       if (nextIdx < videos.length) {
         final url = AdaptiveQualityService.selectBestUrlFromVideo(videos[nextIdx]);
         if (url.isNotEmpty) {
-          // Cache best URL for quick access
           final videoId = videos[nextIdx]['participation_id']?.toString() ?? videos[nextIdx]['video_id']?.toString() ?? '';
           if (videoId.isNotEmpty) {
             VideoCacheService.putBestUrl(videoId, url);
           }
-          urlsToPreload.add(url);
         }
       }
-    }
-    if (urlsToPreload.isNotEmpty) {
-      VideoPreloadService.preloadUrls(urlsToPreload);
     }
   }
 
@@ -1141,7 +1208,6 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
     final provider = context.read<StudentChallengesProvider>();
     _controllers.clear();
     _currentPage = 0;
-    VideoPreloadService.clear();
     await provider.loadChallengeVideos(limit: _pageSize);
     if (!mounted) return;
     final videos = provider.videos;
@@ -1155,20 +1221,33 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<StudentChallengesProvider>(
-      builder: (context, provider, child) {
-        final videos = provider.videos;
+    // Use Selector to only rebuild when the video list identity changes,
+    // not on likes/comments/other provider fields.
+    return Selector<StudentChallengesProvider, _FeedState>(
+      selector: (_, p) => _FeedState(
+        videos: p.videos,
+        isLoading: p.isLoadingVideos,
+        error: p.error,
+      ),
+      shouldRebuild: (prev, next) {
+        // Rebuild only when video list, loading state, or error actually change
+        return !identical(prev.videos, next.videos) ||
+            prev.isLoading != next.isLoading ||
+            prev.error != next.error;
+      },
+      builder: (context, state, child) {
+        final videos = state.videos;
 
-        if (provider.isLoadingVideos && videos.isEmpty) {
+        if (state.isLoading && videos.isEmpty) {
           return const LoadingWidget(
             message: 'Chargement des vidéos...',
           );
         }
 
-        if (provider.error != null && videos.isEmpty) {
+        if (state.error != null && videos.isEmpty) {
           return CustomErrorWidget(
-            error: provider.error!,
-            onRetry: () => provider.loadChallengeVideos(),
+            error: state.error!,
+            onRetry: () => context.read<StudentChallengesProvider>().loadChallengeVideos(),
           );
         }
 
@@ -1182,6 +1261,7 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
               controller: _pageController,
               scrollDirection: Axis.vertical,
               physics: const _TikTokPageScrollPhysics(),
+              allowImplicitScrolling: true, // Pre-build off-screen pages
               itemCount: videos.length,
               onPageChanged: (index) {
                 _onPageChanged(index);
@@ -1200,6 +1280,14 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
                 );
               },
             ),
+            // Live bubbles at top
+            if (_livePlayers.isNotEmpty)
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 4,
+                left: 0,
+                right: 0,
+                child: _buildLiveBubbles(),
+              ),
             Positioned(
               left: 0,
               right: 0,
@@ -1275,6 +1363,97 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
         _hasMore = false;
       }
     });
+  }
+
+  Widget _buildLiveBubbles() {
+    return SizedBox(
+      height: 82,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: _livePlayers.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (ctx, i) {
+          final player = _livePlayers[i];
+          final name = (player['player_name'] ?? player['user_id'] ?? '').toString();
+          final gameType = (player['game_type'] ?? '').toString();
+          final sessionId = (player['session_id'] ?? '').toString();
+          final avatarUrl = (player['player_avatar'] ?? '').toString();
+          final displayName = name.length > 8 ? '${name.substring(0, 8)}…' : name;
+
+          return GestureDetector(
+            onTap: () {
+              _pauseAllControllers();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ChallengeLiveScreen(
+                    sessionId: sessionId,
+                    isHost: false,
+                  ),
+                ),
+              ).then((_) {
+                if (!mounted) return;
+                final ctrl = _controllers[_currentPage];
+                if (ctrl != null && ctrl.isAttached) ctrl.play();
+              });
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.red, width: 2.5),
+                      ),
+                      child: ClipOval(
+                        child: avatarUrl.isNotEmpty
+                            ? Image.network(avatarUrl, fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  color: Colors.grey[800],
+                                  child: const Icon(Icons.person, color: Colors.white54, size: 28),
+                                ))
+                            : Container(
+                                color: Colors.grey[800],
+                                child: const Icon(Icons.sports_esports, color: Colors.white54, size: 28),
+                              ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: -4,
+                      left: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'LIVE',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  displayName.isNotEmpty ? displayName : gameType,
+                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Widget _buildTikTokBottomBar(BuildContext context) {
@@ -1437,7 +1616,7 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed> {
                     _pauseAllControllers();
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => const ChallengeLiveScreen(),
+                        builder: (_) => const ChallengeLiveScreen(isHost: true),
                       ),
                     ).then((_) {
                       if (!mounted) return;
@@ -1604,21 +1783,21 @@ class _TikTokPageScrollPhysics extends PageScrollPhysics {
     return _TikTokPageScrollPhysics(parent: buildParent(ancestor));
   }
 
-  // Spring rapide : snap vif sans oscillation
+  // Ultra-fast spring: instant snap like TikTok (no bounce)
   @override
   SpringDescription get spring => const SpringDescription(
-        mass: 0.8,
-        stiffness: 100,
-        damping: 14,
+        mass: 0.3,
+        stiffness: 200,
+        damping: 22,
       );
 
-  // Seuil de vitesse réduit : un petit flick suffit pour changer de page
+  // Very low fling threshold: lightest touch triggers page change
   @override
-  double get minFlingVelocity => 50.0;
+  double get minFlingVelocity => 30.0;
 
-  // Seuil de drag réduit : ~15% de la page suffit (au lieu de ~50%)
+  // Low drag threshold: ~10% of page height triggers transition
   @override
-  double get dragStartDistanceMotionThreshold => 3.5;
+  double get dragStartDistanceMotionThreshold => 2.0;
 }
 
 class _ChallengeVideoItem extends StatefulWidget {
@@ -1639,11 +1818,16 @@ class _ChallengeVideoItem extends StatefulWidget {
   State<_ChallengeVideoItem> createState() => _ChallengeVideoItemState();
 }
 
-class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
+class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
+    with AutomaticKeepAliveClientMixin {
   bool _initialized = false;
 
   String? _errorMessage;
   String _selectedUrl = '';
+  double _videoAspectRatio = 16.0 / 9.0; // Default to horizontal
+
+  @override
+  bool get wantKeepAlive => true;
 
   // TikTok-style controls
   final AcademiaPlaybackController _playbackController = AcademiaPlaybackController();
@@ -1685,6 +1869,9 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
   Future<void> _startInit() async {
     String url = '';
 
+    // Extract video dimensions from renditions to calculate aspect ratio
+    _extractVideoDimensions();
+
     // 0) Check cache first
     final videoId = widget.video['participation_id']?.toString() ?? widget.video['video_id']?.toString() ?? '';
     if (videoId.isNotEmpty) {
@@ -1707,7 +1894,7 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
 
     _selectedUrl = url;
 
-    debugPrint('[VIDEO_ITEM] _startInit  label=$_videoLabel  url=${_selectedUrl.length > 80 ? _selectedUrl.substring(0, 80) : _selectedUrl}');
+    debugPrint('[VIDEO_ITEM] _startInit  label=$_videoLabel  url=${_selectedUrl.length > 80 ? _selectedUrl.substring(0, 80) : _selectedUrl}  aspectRatio=$_videoAspectRatio');
 
     if (_selectedUrl.isEmpty) {
       _setError("Aucune URL vidéo disponible (renditions absentes ou invalides).");
@@ -1717,6 +1904,51 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
     if (!mounted) return;
     debugPrint('[VIDEO_ITEM] _startInit OK -> _initialized=true  label=$_videoLabel');
     setState(() => _initialized = true);
+  }
+
+  void _extractVideoDimensions() {
+    // Try to extract dimensions from video_renditions
+    final renditions = widget.video['video_renditions'];
+    if (renditions is Map) {
+      final r = Map<String, dynamic>.from(renditions);
+      
+      // Check for width/height in renditions
+      final width = r['width']?.toInt();
+      final height = r['height']?.toInt();
+      
+      if (width != null && height != null && width > 0 && height > 0) {
+        _videoAspectRatio = width / height;
+        debugPrint('[VIDEO_ITEM] Dimensions from renditions: ${width}x${height} -> aspectRatio=$_videoAspectRatio');
+        return;
+      }
+      
+      // Check individual rendition dimensions
+      for (final key in ['1080p', '720p', '480p', '360p', 'default']) {
+        final rendition = r[key];
+        if (rendition is Map) {
+          final rw = rendition['width']?.toInt();
+          final rh = rendition['height']?.toInt();
+          if (rw != null && rh != null && rw > 0 && rh > 0) {
+            _videoAspectRatio = rw / rh;
+            debugPrint('[VIDEO_ITEM] Dimensions from rendition $key: ${rw}x${rh} -> aspectRatio=$_videoAspectRatio');
+            return;
+          }
+        }
+      }
+    }
+    
+    // Try to extract from video metadata
+    final videoWidth = widget.video['width']?.toInt();
+    final videoHeight = widget.video['height']?.toInt();
+    if (videoWidth != null && videoHeight != null && videoWidth > 0 && videoHeight > 0) {
+      _videoAspectRatio = videoWidth / videoHeight;
+      debugPrint('[VIDEO_ITEM] Dimensions from video metadata: ${videoWidth}x${videoHeight} -> aspectRatio=$_videoAspectRatio');
+      return;
+    }
+    
+    // Fallback to default horizontal
+    _videoAspectRatio = 16.0 / 9.0;
+    debugPrint('[VIDEO_ITEM] No dimensions found, using default aspectRatio=$_videoAspectRatio');
   }
 
   Future<void> _reportPlaybackError({
@@ -1803,13 +2035,23 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
     }
   }
 
+  BoxFit _getOptimalBoxFit() {
+    // Detect video orientation from aspect ratio
+    final orientation = VideoOrientationService.detectFromRatio(
+      _videoAspectRatio > 0 ? _videoAspectRatio : 16.0 / 9.0,
+    );
+    
+    // Return optimal BoxFit based on orientation
+    return VideoOrientationService.getOptimalBoxFit(orientation);
+  }
+
   void _handleTapUp(TapUpDetails details) {
     if (!_initialized) return;
     final now = DateTime.now();
     final dt = now.difference(_lastTapTime).inMilliseconds;
     final pos = details.globalPosition;
 
-    if (dt < 300 && (pos - _lastTapPosition).distance < 50) {
+    if (dt < 250 && (pos - _lastTapPosition).distance < 60) {
       // Double-tap detected — cancel pending single-tap, fire heart
       _singleTapTimer?.cancel();
       _singleTapTimer = null;
@@ -1820,7 +2062,7 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
       _lastTapTime = now;
       _lastTapPosition = pos;
       _singleTapTimer?.cancel();
-      _singleTapTimer = Timer(const Duration(milliseconds: 300), () {
+      _singleTapTimer = Timer(const Duration(milliseconds: 180), () {
         _onSingleTap();
       });
     }
@@ -1833,8 +2075,55 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
     super.dispose();
   }
 
+  Widget _buildLoadingPlaceholder(Map<String, dynamic> video) {
+    // Extract poster URL from playback manifest or video data
+    final playback = video['playback'];
+    String posterUrl = '';
+    if (playback is Map) {
+      posterUrl = (playback['poster_url'] ?? '').toString().trim();
+    }
+    if (posterUrl.isEmpty) {
+      posterUrl = (video['poster_url'] ?? video['thumbnail_url'] ?? '').toString().trim();
+    }
+
+    if (posterUrl.isNotEmpty) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(
+            posterUrl,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(color: Colors.black),
+          ),
+          const Center(
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white54,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return const Center(
+      child: SizedBox(
+        width: 24,
+        height: 24,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: Colors.white54,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required by AutomaticKeepAliveClientMixin
     final video = widget.video;
     final videoType = video['video_type']?.toString() ?? 'challenge';
     final isChallenge = videoType != 'free';
@@ -1962,8 +2251,9 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
                                 looping: true,
                                 muted: false,
                                 showControls: false,
-                                fit: BoxFit.cover,
+                                fit: _getOptimalBoxFit(),
                                 playbackController: _playbackController,
+                                videoAspectRatio: _videoAspectRatio > 0 ? _videoAspectRatio : null,
                               ),
                             ),
                           ),
@@ -1978,9 +2268,7 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem> {
                         ],
                       ),
                     )
-                  : const Center(
-                      child: CircularProgressIndicator(),
-                    ),
+                  : _buildLoadingPlaceholder(video),
             ),
           ),
         ),
@@ -2285,14 +2573,24 @@ class _ChallengeVideoActions extends StatelessWidget {
       return status.isGranted;
     }
 
-    final storageStatus = await Permission.storage.request();
-    if (storageStatus.isGranted) return true;
+    // Android: saver_gallery docs say SDK 29+ with skipIfExists:false
+    // does NOT require any permission. Only SDK < 29 needs storage.
+    if (Platform.isAndroid) {
+      final deviceInfo = await DeviceInfoPlugin().androidInfo;
+      final sdkInt = deviceInfo.version.sdkInt;
+      debugPrint('[DL-PERM] Android SDK=$sdkInt');
+      if (sdkInt >= 29) {
+        // Scoped storage: no permission needed for saving
+        debugPrint('[DL-PERM] SDK>=29, no permission needed');
+        return true;
+      }
+      // SDK < 29: need WRITE_EXTERNAL_STORAGE
+      final storageStatus = await Permission.storage.request();
+      debugPrint('[DL-PERM] SDK<29, storage permission=$storageStatus');
+      return storageStatus.isGranted;
+    }
 
-    final photosStatus = await Permission.photos.request();
-    if (photosStatus.isGranted) return true;
-
-    final videosStatus = await Permission.videos.request();
-    return videosStatus.isGranted;
+    return false;
   }
 
   static Future<bool> _downloadWatermarkedWithProgressSheet({
@@ -2329,123 +2627,121 @@ class _ChallengeVideoActions extends StatelessWidget {
     }
 
     Future<void> run() async {
+      debugPrint('╔══════════════════════════════════════════════════════');
+      debugPrint('║ [DL-FLOW] ══ DOWNLOAD START ══');
+      debugPrint('║ videoType=$videoType');
+      debugPrint('║ videoId=$videoId');
+      debugPrint('║ videoAssetId="$videoAssetId"');
+      debugPrint('║ fallbackVideoUrl="${fallbackVideoUrl.length > 60 ? '${fallbackVideoUrl.substring(0, 60)}...' : fallbackVideoUrl}"');
+      debugPrint('║ existing rendition URL="${existing.length > 60 ? '${existing.substring(0, 60)}...' : existing}"');
+      debugPrint('║ videoRenditions=$videoRenditions');
+      debugPrint('╚══════════════════════════════════════════════════════');
       try {
         String urlToDownload = existing;
+        debugPrint('[DL-FLOW] STEP 0: urlToDownload from existing="${urlToDownload.isEmpty ? "(empty)" : "len=${urlToDownload.length}"}"');
+
+        // ── 1. Try server-side watermarked rendition (quick check) ──
+        // If we have a fallback URL, use a very short timeout (3s) so we
+        // don't waste time waiting for a server rendition that may not exist.
+        // If no fallback, allow longer timeout (10s) + polling.
+        final bool hasFallback = fallbackVideoUrl.trim().isNotEmpty;
+        final rpcTimeout = hasFallback ? const Duration(seconds: 3) : const Duration(seconds: 10);
+        debugPrint('[DL-FLOW] hasFallback=$hasFallback → rpcTimeout=${rpcTimeout.inSeconds}s');
 
         if (urlToDownload.isEmpty && videoAssetId.trim().isNotEmpty) {
-          debugPrint(
-            '[watermark-download] request export_watermarked asset=$videoAssetId',
-          );
+          debugPrint('[DL-FLOW] STEP 1: requesting server export for asset=$videoAssetId');
+          phase.value = 'prepare';
+          message.value = 'Préparation en cours...';
+
           final resp = await _withTimeout<Map<String, dynamic>?>(
-            provider.requestVideoExportWatermarked(
-              videoAssetId: videoAssetId,
-            ),
-            const Duration(seconds: 20),
+            provider.requestVideoExportWatermarked(videoAssetId: videoAssetId),
+            rpcTimeout,
           );
 
-          if (resp == null) {
-            phase.value = 'error';
-            message.value = provider.error ??
-                'Impossible de préparer la vidéo. Réessaie plus tard.';
-            canClose.value = true;
-            return;
+          debugPrint('[DL-FLOW] STEP 1 result: resp=${resp == null ? "NULL (timeout or error)" : resp.toString()}');
+          if (resp != null) {
+            final status = resp['status']?.toString() ?? '';
+            final url = resp['url']?.toString() ?? '';
+            debugPrint('[DL-FLOW] STEP 1: status="$status" urlLen=${url.length}');
+            if (status == 'ready' && url.trim().isNotEmpty) {
+              urlToDownload = url.trim();
+              debugPrint('[DL-FLOW] STEP 1: GOT URL from server rendition');
+            } else {
+              debugPrint('[DL-FLOW] STEP 1: NOT ready, will poll or fallback');
+            }
+          } else {
+            debugPrint('[DL-FLOW] STEP 1: provider.error="${provider.error}"');
           }
-
-          final status = resp['status']?.toString() ?? '';
-          final url = resp['url']?.toString() ?? '';
-          debugPrint(
-            '[watermark-download] request response status=$status urlLen=${url.length}',
-          );
-          if (status == 'ready' && url.trim().isNotEmpty) {
-            urlToDownload = url.trim();
-          }
+        } else {
+          debugPrint('[DL-FLOW] STEP 1 SKIP: existing="${urlToDownload.isNotEmpty ? "has URL" : "(empty)"}" assetId="${videoAssetId.trim().isEmpty ? "(empty)" : videoAssetId}"');
         }
 
-        if (urlToDownload.isEmpty && videoAssetId.trim().isNotEmpty) {
-          phase.value = 'prepare';
-          message.value = 'Préparation de la vidéo (logo)...';
-          final deadline = DateTime.now().add(const Duration(seconds: 90));
-
-          String lastStatus = '';
+        // ── 2. Brief polling — only if no fallback URL available ──
+        // When a fallback exists, skip polling entirely (saves 15s+ of wait).
+        if (urlToDownload.isEmpty && videoAssetId.trim().isNotEmpty && !hasFallback) {
+          debugPrint('[DL-FLOW] STEP 2: start polling (15s max, no fallback)...');
+          final deadline = DateTime.now().add(const Duration(seconds: 15));
+          int pollCount = 0;
 
           while (!cancelled && DateTime.now().isBefore(deadline)) {
+            await Future.delayed(const Duration(seconds: 3));
+            pollCount++;
+            debugPrint('[DL-FLOW] STEP 2: poll #$pollCount...');
             final st = await _withTimeout<Map<String, dynamic>?>(
-              provider.getVideoExportWatermarkedStatus(
-                videoAssetId: videoAssetId,
-              ),
-              const Duration(seconds: 20),
+              provider.getVideoExportWatermarkedStatus(videoAssetId: videoAssetId),
+              const Duration(seconds: 8),
             );
-
             if (st == null) {
-              phase.value = 'error';
-              message.value = provider.error ??
-                  'Erreur lors de la vérification de l\'export.';
-              canClose.value = true;
-              return;
+              debugPrint('[DL-FLOW] STEP 2: poll #$pollCount returned NULL — breaking');
+              break;
             }
 
             final status = st['status']?.toString() ?? '';
             final url = st['url']?.toString() ?? '';
-
-            if (status.isNotEmpty && status != lastStatus) {
-              lastStatus = status;
-              message.value = 'Préparation de la vidéo (logo)... ($status)';
-              debugPrint(
-                '[watermark-download] poll status=$status urlLen=${url.length}',
-              );
-            }
+            debugPrint('[DL-FLOW] STEP 2: poll #$pollCount status="$status" urlLen=${url.length}');
 
             if (status == 'ready' && url.trim().isNotEmpty) {
               urlToDownload = url.trim();
+              debugPrint('[DL-FLOW] STEP 2: GOT URL from polling');
               break;
             }
-
             if (status == 'failed') {
-              phase.value = 'error';
-              message.value = st['error']?.toString() ??
-                  'Échec de la préparation de la vidéo.';
-              canClose.value = true;
-              return;
+              debugPrint('[DL-FLOW] STEP 2: status=failed — breaking');
+              break;
             }
-
-            if (status == 'unknown') {
-              debugPrint('[watermark-download] poll unknown status payload=$st');
-            }
-
-            await Future.delayed(const Duration(seconds: 2));
           }
+          debugPrint('[DL-FLOW] STEP 2 done: urlToDownload="${urlToDownload.isEmpty ? "(empty)" : "len=${urlToDownload.length}"}"');
+        } else {
+          debugPrint('[DL-FLOW] STEP 2 SKIP: ${hasFallback ? "has fallback, skip polling" : "urlToDownload=${urlToDownload.isNotEmpty ? "has URL" : "(empty)"}"}');
+        }
 
-          if (cancelled) {
-            canClose.value = true;
-            return;
-          }
-
-          if (urlToDownload.isEmpty) {
-            phase.value = 'error';
-            message.value =
-                'Préparation trop longue. Réessaie dans quelques instants.';
-            canClose.value = true;
-            return;
-          }
+        // ── 3. Fallback: use source video URL (already watermarked locally) ──
+        if (urlToDownload.isEmpty && fallbackVideoUrl.trim().isNotEmpty) {
+          debugPrint('[DL-FLOW] STEP 3: using FALLBACK URL (source video)');
+          urlToDownload = fallbackVideoUrl.trim();
+        } else if (urlToDownload.isEmpty) {
+          debugPrint('[DL-FLOW] STEP 3: NO fallback available either! fallbackVideoUrl="${fallbackVideoUrl}"');
+        } else {
+          debugPrint('[DL-FLOW] STEP 3 SKIP: already have URL');
         }
 
         if (urlToDownload.isEmpty) {
-          if (fallbackVideoUrl.trim().isNotEmpty) {
-            urlToDownload = fallbackVideoUrl.trim();
-          } else {
-            phase.value = 'error';
-            message.value = 'Lien vidéo indisponible.';
-            canClose.value = true;
-            return;
-          }
-        }
-
-        if (cancelled) {
+          debugPrint('[DL-FLOW] ✘ ABORT: no URL available at all');
+          phase.value = 'error';
+          message.value = 'Vidéo indisponible. Réessaie plus tard.';
           canClose.value = true;
           return;
         }
 
+        if (cancelled) {
+          debugPrint('[DL-FLOW] ✘ ABORT: cancelled by user');
+          canClose.value = true;
+          return;
+        }
+
+        debugPrint('[DL-FLOW] STEP 4: requesting storage permission...');
         final okPerm = await _ensureMediaSavePermission();
+        debugPrint('[DL-FLOW] STEP 4: permission=$okPerm');
         if (!okPerm) {
           phase.value = 'error';
           message.value = 'Permission refusée pour enregistrer la vidéo.';
@@ -2453,19 +2749,25 @@ class _ChallengeVideoActions extends StatelessWidget {
           return;
         }
 
+        // ── 4. Download ──
+        debugPrint('[DL-FLOW] STEP 5: downloading from URL="${urlToDownload.length > 80 ? '${urlToDownload.substring(0, 80)}...' : urlToDownload}"');
         phase.value = 'download';
-        message.value = 'Téléchargement...';
+        message.value = 'Téléchargement en cours...';
         progress.value = 0.0;
 
         final client = http.Client();
         try {
           final uri = Uri.parse(urlToDownload);
+          debugPrint('[DL-FLOW] STEP 5: parsed URI scheme=${uri.scheme} host=${uri.host} path=${uri.path.length > 50 ? '${uri.path.substring(0, 50)}...' : uri.path}');
           final req = http.Request('GET', uri);
+          debugPrint('[DL-FLOW] STEP 5: sending HTTP GET...');
           final res = await client.send(req);
+          debugPrint('[DL-FLOW] STEP 5: HTTP response status=${res.statusCode} contentLength=${res.contentLength}');
 
           if (res.statusCode != 200) {
+            debugPrint('[DL-FLOW] ✘ ABORT: HTTP ${res.statusCode}');
             phase.value = 'error';
-            message.value = 'Erreur HTTP ${res.statusCode}.';
+            message.value = 'Impossible de télécharger la vidéo.';
             canClose.value = true;
             return;
           }
@@ -2475,10 +2777,12 @@ class _ChallengeVideoActions extends StatelessWidget {
           final tmpDir = await getTemporaryDirectory();
           final safeName = 'academia_${videoType}_$videoId';
           final file = File('${tmpDir.path}/$safeName.mp4');
+          debugPrint('[DL-FLOW] STEP 5: saving to ${file.path} (total=${total ?? "unknown"} bytes)');
           final sink = file.openWrite();
           try {
             await for (final chunk in res.stream) {
               if (cancelled) {
+                debugPrint('[DL-FLOW] ✘ ABORT: cancelled during download at $received bytes');
                 await sink.flush();
                 await sink.close();
                 canClose.value = true;
@@ -2498,23 +2802,33 @@ class _ChallengeVideoActions extends StatelessWidget {
             await sink.close();
           }
 
+          final fileSize = await file.length();
+          debugPrint('[DL-FLOW] STEP 5 done: downloaded $received bytes, file size=$fileSize bytes');
+
+          // ── 5. Save to gallery ──
+          debugPrint('[DL-FLOW] STEP 6: saving to gallery...');
           phase.value = 'save';
           message.value = 'Enregistrement dans la galerie...';
           progress.value = null;
 
-          final dynamic result = await SaverGallery.saveFile(
+          final SaveResult result = await SaverGallery.saveFile(
             filePath: file.path,
             fileName: '$safeName.mp4',
             androidRelativePath: 'Movies',
             skipIfExists: false,
           );
+          debugPrint('[DL-FLOW] STEP 6: SaverGallery result=$result isSuccess=${result.isSuccess} error=${result.errorMessage}');
 
-          final ok = (result is Map) ? result['isSuccess'] == true : false;
+          final ok = result.isSuccess;
+          debugPrint('[DL-FLOW] STEP 6: isSuccess=$ok');
           if (ok) {
+            debugPrint('[DL-FLOW] ✔ SUCCESS: video saved to gallery');
             phase.value = 'done';
-            message.value = 'Vidéo enregistrée dans la galerie.';
+            message.value = 'Vidéo enregistrée dans ta galerie !';
+            progress.value = 1.0;
             canClose.value = true;
           } else {
+            debugPrint('[DL-FLOW] ✘ FAIL: SaverGallery returned false');
             phase.value = 'error';
             message.value = 'Impossible d\'enregistrer la vidéo.';
             canClose.value = true;
@@ -2522,9 +2836,11 @@ class _ChallengeVideoActions extends StatelessWidget {
         } finally {
           client.close();
         }
-      } catch (e) {
+      } catch (e, stackTrace) {
+        debugPrint('[DL-FLOW] ✘ EXCEPTION: $e');
+        debugPrint('[DL-FLOW] ✘ STACK: ${stackTrace.toString().split('\n').take(5).join('\n')}');
         phase.value = 'error';
-        message.value = 'Erreur lors du téléchargement: $e';
+        message.value = 'Une erreur est survenue. Réessaie.';
         canClose.value = true;
       }
     }
@@ -2537,7 +2853,16 @@ class _ChallengeVideoActions extends StatelessWidget {
       builder: (sheetContext) {
         if (!started) {
           started = true;
-          Future.microtask(run);
+          Future.microtask(() async {
+            await run();
+            // Auto-close after success or error
+            if (phase.value == 'done' || phase.value == 'error') {
+              await Future.delayed(const Duration(milliseconds: 1500));
+              if (sheetContext.mounted) {
+                Navigator.of(sheetContext).pop(phase.value == 'done');
+              }
+            }
+          });
         }
 
         return SafeArea(
@@ -2958,6 +3283,12 @@ class _ChallengeVideoActions extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: () async {
+                  debugPrint('[DL-BTN] ══ Download button pressed ══');
+                  debugPrint('[DL-BTN] videoType="$videoType" videoId="$videoId"');
+                  debugPrint('[DL-BTN] videoAssetId="$videoAssetId"');
+                  debugPrint('[DL-BTN] videoUrl (fallback)="${videoUrl.length > 60 ? '${videoUrl.substring(0, 60)}...' : videoUrl}"');
+                  debugPrint('[DL-BTN] videoRenditions=$videoRenditions');
+                  debugPrint('[DL-BTN] allowDownload=$allowDownload');
                   final ok = await _downloadWatermarkedWithProgressSheet(
                     context: context,
                     provider: provider,
@@ -2967,6 +3298,7 @@ class _ChallengeVideoActions extends StatelessWidget {
                     fallbackVideoUrl: videoUrl,
                     videoRenditions: videoRenditions,
                   );
+                  debugPrint('[DL-BTN] result=$ok');
                   if (!context.mounted) return;
                   if (ok) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -3556,7 +3888,7 @@ class _VideoProgressBarState extends State<_VideoProgressBar> {
   }
 
   void _startPolling() {
-    _timer = Timer.periodic(const Duration(milliseconds: 250), (_) async {
+    _timer = Timer.periodic(const Duration(milliseconds: 500), (_) async {
       final ctrl = widget.controller;
       if (ctrl == null || !ctrl.isAttached) return;
       try {
@@ -3564,9 +3896,13 @@ class _VideoProgressBarState extends State<_VideoProgressBar> {
         final dur = await ctrl.getDuration();
         if (!mounted) return;
         if (dur > 0) {
-          setState(() {
-            _progress = (pos / dur).clamp(0.0, 1.0);
-          });
+          final newProgress = (pos / dur).clamp(0.0, 1.0);
+          // Only rebuild if progress changed meaningfully (>0.5%)
+          if ((newProgress - _progress).abs() > 0.005) {
+            setState(() {
+              _progress = newProgress;
+            });
+          }
         }
       } catch (_) {}
     });

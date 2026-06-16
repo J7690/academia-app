@@ -8,6 +8,7 @@ import '../../../providers/prep_quiz_provider.dart';
 import '../../../widgets/academia_rich_content.dart';
 import '../../../providers/prep_flashcard_provider.dart';
 import '../../../theme/prep_theme.dart';
+import 'prep_scan_subject_screen.dart';
 
 /// Onglet Quiz — QCM adaptatifs, examens blancs, flashcards.
 class PrepQuizTab extends StatelessWidget {
@@ -55,6 +56,18 @@ class _QuizMenuView extends StatelessWidget {
           delay: const Duration(milliseconds: 100),
           duration: const Duration(milliseconds: 400),
           child: _ModeCard(
+            icon: Icons.psychology,
+            title: 'Quiz adaptatif',
+            subtitle: 'Questions ciblées sur tes faiblesses · Progression optimisée',
+            gradient: const [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+            onTap: () => _startAdaptiveQuiz(context),
+          ),
+        ),
+        const SizedBox(height: 12),
+        FadeInDown(
+          delay: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 400),
+          child: _ModeCard(
             icon: Icons.timer,
             title: 'Examen blanc',
             subtitle: '20 questions · 30 min · Mode concentration',
@@ -64,7 +77,7 @@ class _QuizMenuView extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         FadeInDown(
-          delay: const Duration(milliseconds: 200),
+          delay: const Duration(milliseconds: 300),
           duration: const Duration(milliseconds: 400),
           child: _ModeCard(
             icon: Icons.style,
@@ -72,6 +85,18 @@ class _QuizMenuView extends StatelessWidget {
             subtitle: 'Révision espacée · Mémorisation active',
             gradient: PrepTheme.successGradient,
             onTap: () => _openFlashcards(context),
+          ),
+        ),
+        const SizedBox(height: 12),
+        FadeInDown(
+          delay: const Duration(milliseconds: 400),
+          duration: const Duration(milliseconds: 400),
+          child: _ModeCard(
+            icon: Icons.document_scanner,
+            title: 'Scanner un sujet',
+            subtitle: 'Photo d\'un sujet → Réponses IA détaillées',
+            gradient: const [Color(0xFF0891B2), Color(0xFF0E7490)],
+            onTap: () => _openScanSubject(context),
           ),
         ),
         const SizedBox(height: 24),
@@ -138,6 +163,14 @@ class _QuizMenuView extends StatelessWidget {
     provider.startQuizFromServer(count: count, subject: subject, concoursType: concoursType);
   }
 
+  void _startAdaptiveQuiz(BuildContext context) {
+    final provider = context.read<PrepQuizProvider>();
+    provider.startQuizFromServer(
+      count: 10,
+      adaptiveMode: true,
+    );
+  }
+
   void _startExam(BuildContext context) {
     final provider = context.read<PrepQuizProvider>();
     provider.startQuizFromServer(
@@ -152,6 +185,12 @@ class _QuizMenuView extends StatelessWidget {
     provider.loadDemoCards();
     Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (_) => const _FlashcardScreen()),
+    );
+  }
+
+  void _openScanSubject(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const PrepScanSubjectScreen()),
     );
   }
 }

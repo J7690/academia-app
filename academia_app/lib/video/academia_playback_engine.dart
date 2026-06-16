@@ -20,6 +20,7 @@ class AcademiaPlaybackEngine {
     bool showErrorText = true,
     VoidCallback? onFirstPlay,
     AcademiaPlaybackController? playbackController,
+    double? videoAspectRatio,
   }) {
     return AcademiaPlaybackView(
       url: url,
@@ -34,6 +35,7 @@ class AcademiaPlaybackEngine {
       showErrorText: showErrorText,
       onFirstPlay: onFirstPlay,
       playbackController: playbackController,
+      videoAspectRatio: videoAspectRatio,
     );
   }
 }

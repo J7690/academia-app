@@ -469,6 +469,21 @@ function buildFcmMessage(event: any) {
     title = "📢 Opportunités";
     body = "Nouvelle activité sur les opportunités";
 
+  // --- Admin: support (URGENT) ---
+  } else if (domain === "admin_support" && type === "new_message") {
+    const requesterName = payload.requester_name || "Un utilisateur";
+    const preview = payload.content_preview || "";
+    title = "🚨 SUPPORT URGENT";
+    body = preview ? `${requesterName}: ${preview}` : `${requesterName} a envoyé un message support`;
+  } else if (domain === "admin_support" && type === "new_conversation") {
+    const requesterName = payload.requester_name || "Un utilisateur";
+    const requesterRole = payload.requester_role || "";
+    title = "🚨 NOUVELLE DEMANDE SUPPORT";
+    body = `${requesterName} (${requesterRole}) a ouvert une conversation support`;
+  } else if (domain === "admin_support") {
+    title = "🚨 Support";
+    body = "Nouvelle activité support — répondez rapidement !";
+
   // --- Admin: bobodo ---
   } else if (domain === "admin_bobodo") {
     title = "🤖 Bobodo";

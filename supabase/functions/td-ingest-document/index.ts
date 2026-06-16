@@ -6,9 +6,11 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
 const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY') ?? '';
+const OPENROUTER_MODEL = Deno.env.get('OPENROUTER_MODEL') ?? '';
+const OPENROUTER_FALLBACK_MODEL = Deno.env.get('OPENROUTER_FALLBACK_MODEL') ?? '';
+const OPENROUTER_EMBEDDING_MODEL = Deno.env.get('OPENROUTER_EMBEDDING_MODEL') ?? 'openai/text-embedding-3-small';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-const EMBEDDING_MODEL = 'openai/text-embedding-3-small';
 const CHUNK_MAX_CHARS = 1500;
 
 const CORS_HEADERS: Record<string, string> = {
@@ -26,25 +28,38 @@ function escapeSql(text: string): string {
 }
 
 async function extractTextFromPdf(pdfUrl: string): Promise<{ text: string; pageCount: number }> {
-  const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${OPENROUTER_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'google/gemini-2.0-flash-001',
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'file', file: { filename: 'document.pdf', url: pdfUrl } },
-          { type: 'text', text: `Extrais TOUT le texte de ce document PDF universitaire. Retourne le texte brut sans formatage markdown. Conserve la structure (titres, sections, questions numérotées, formules). Retourne UNIQUEMENT le texte extrait.` },
-        ],
-      }],
-      temperature: 0, max_tokens: 16000,
-    }),
-  });
-  if (!resp.ok) throw new Error(`PDF extraction failed: ${resp.status}`);
-  const data = await resp.json();
-  const text = data?.choices?.[0]?.message?.content?.trim() ?? '';
-  return { text, pageCount: Math.max(1, Math.ceil(text.length / 3000)) };
+  const modelsToTry = [OPENROUTER_MODEL, OPENROUTER_FALLBACK_MODEL].filter(m => m);
+  const errors: string[] = [];
+  
+  for (const model of modelsToTry) {
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${OPENROUTER_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'file', file: { filename: 'document.pdf', url: pdfUrl } },
+            { type: 'text', text: `Extrais TOUT le texte de ce document PDF universitaire. Retourne le texte brut sans formatage markdown. Conserve la structure (titres, sections, questions numérotées, formules). Retourne UNIQUEMENT le texte extrait.` },
+          ],
+        }],
+        temperature: 0, max_tokens: 16000,
+      }),
+    });
+    if (!resp.ok) {
+      errors.push(`${model} (${resp.status})`);
+      continue;
+    }
+    const data = await resp.json();
+    const text = data?.choices?.[0]?.message?.content?.trim() ?? '';
+    if (text) {
+      return { text, pageCount: Math.max(1, Math.ceil(text.length / 3000)) };
+    }
+    errors.push(`${model}: empty content`);
+  }
+  
+  throw new Error(`All models failed: ${errors.join(' | ')}`);
 }
 
 function chunkText(fullText: string, metadata: { subject?: string; university?: string; study_year?: string }): Array<{ content: string; chunk_type: string; subject?: string; university?: string; study_year?: string }> {

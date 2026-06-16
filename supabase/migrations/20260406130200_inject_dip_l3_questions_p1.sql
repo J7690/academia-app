@@ -1,0 +1,178 @@
+-- Injection QCM — Droit International Privé L3 (Partie 1/2)
+-- 30 questions: Introduction, Sources, Compétence internationale
+
+INSERT INTO app.td_questions (id, question_type, content, options, correct_index, explanation, difficulty, subject, is_active, study_year, field, semester, generation_mode) VALUES
+
+(gen_random_uuid(), 'mcq',
+'Quelle est la meilleure définition du Droit International Privé (DIP) ?',
+'["Le droit qui régit les relations entre États souverains","Le droit qui régit les relations internationales privées et les problèmes que posent ces relations du fait de leur caractère international","Le droit pénal applicable aux infractions commises à l''étranger","Le droit des organisations internationales comme l''ONU"]'::jsonb,
+1, 'Le DIP est la discipline juridique qui régit les relations privées internationales. Il ne faut pas le confondre avec le droit international public qui régit les relations entre États.',
+1, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Qu''est-ce qu''un élément d''extranéité en DIP ?',
+'["Un élément qui rend la situation juridique illégale","L''élément par lequel la situation se rattache à un autre système juridique","La nationalité étrangère d''une des parties","Un document rédigé dans une langue étrangère"]'::jsonb,
+1, 'L''élément d''extranéité est l''élément par lequel la situation se rattache à un autre système juridique. Ce n''est pas nécessairement la nationalité : cela peut être le domicile, le lieu d''exécution, le lieu de situation d''un bien, etc.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Un contrat de vente est conclu entre un vendeur domicilié au BF et un acheteur domicilié au Mali, à exécuter au Bénin. Quel est l''élément d''extranéité ?',
+'["La nationalité des parties uniquement","Le prix du contrat","Le domicile de l''acheteur et le lieu d''exécution","La langue du contrat"]'::jsonb,
+2, 'Le domicile de l''acheteur au Mali et le lieu d''exécution au Bénin constituent les éléments d''extranéité car ils rattachent la situation à d''autres systèmes juridiques.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Quels sont les trois problèmes principaux que pose la relation privée internationale ?',
+'["La nationalité, l''extradition et le droit d''asile","La compétence internationale, l''efficacité des jugements étrangers et le conflit de lois","Le conflit de nationalités, la condition des étrangers et l''immigration","La compétence territoriale, la compétence d''attribution et la compétence matérielle"]'::jsonb,
+1, 'Les trois problèmes principaux du DIP sont : 1) la compétence internationale des juridictions, 2) l''efficacité des jugements et actes publics étrangers, 3) le conflit de lois.',
+1, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Que signifie le terme « conflit » dans l''expression « conflit de lois » ?',
+'["Une contradiction entre deux lois","Une guerre juridique entre deux États","Une situation de concurrence entre plusieurs lois potentiellement applicables parmi lesquelles il faut choisir","L''impossibilité d''appliquer une loi étrangère"]'::jsonb,
+2, 'Le terme « conflit » a un sens technique en DIP : il exprime une situation de concurrence entre plusieurs lois potentiellement applicables à une même situation juridique.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Qu''est-ce que la compétence internationale d''un ordre juridictionnel ?',
+'["La capacité d''un tribunal à juger les affaires civiles","L''aptitude d''un ordre juridictionnel à connaître d''un litige empreint d''un élément d''extranéité","Le pouvoir d''un juge de faire exécuter ses décisions à l''étranger","La compétence des juridictions internationales comme la CIJ"]'::jsonb,
+1, 'La compétence internationale est l''aptitude d''un ordre juridictionnel à connaître d''un litige empreint d''un élément d''extranéité.',
+1, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Quel est le caractère des règles de compétence internationale ?',
+'["Elles sont bilatérales et s''appliquent à tous les États","Elles sont unilatérales : chaque État fixe ses propres critères de compétence","Elles sont fixées par le droit international public","Elles sont identiques dans tous les pays"]'::jsonb,
+1, 'Les règles de compétence internationale ont un caractère unilatéral : chaque État fixe les règles par lesquelles il identifie les litiges internationaux dont ses juridictions peuvent connaître.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Quel principe régit la compétence en matière de législation sur la nationalité ?',
+'["La compétence partagée entre l''État et les organisations internationales","Le principe de la compétence exclusive de l''État pour légiférer sur sa nationalité","La compétence de la Cour internationale de justice","Le principe de la nationalité effective"]'::jsonb,
+1, 'Chaque État a pleine compétence pour déterminer ses nationaux et ne peut légiférer que sur sa seule nationalité.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'À quoi se rapporte la Convention de New York de 1954 ?',
+'["À la vente internationale de marchandises","Aux apatrides","À l''adoption internationale","Aux réfugiés politiques"]'::jsonb,
+1, 'La Convention de New York de 1954 concerne les apatrides. L''article 143 du CPF burkinabè est une application de la recommandation d''éviter l''apatridie.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Dans quel texte et en quelle année le DIP burkinabè a-t-il été codifié ?',
+'["Dans le Code civil de 1960","Dans le Code des Personnes et de la Famille (CPF) en 1989","Dans la Constitution de 1991","Dans le Code de procédure civile de 1999"]'::jsonb,
+1, 'Le BF a codifié son DIP dans le CPF en 1989. Les articles 1002-1050 du CPF constituent la principale source du DIP burkinabè.',
+1, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Quels articles du CPF contiennent l''essentiel du DIP burkinabè ?',
+'["Les articles 1-50","Les articles 354 et suivants","Les articles 1002-1050","Les articles 500-550"]'::jsonb,
+2, 'Les articles 1002-1050 du CPF constituent la principale source du DIP burkinabè.',
+1, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Quel est l''objet principal du Protocole de Dakar du 29 mai 1979 de la CEDEAO ?',
+'["L''harmonisation du droit des affaires","La libre circulation des personnes, le droit de résidence et d''établissement","La coopération judiciaire en matière pénale","L''unification des règles de conflit de lois"]'::jsonb,
+1, 'Le Protocole de Dakar porte sur la libre circulation des personnes, le droit de résidence et d''établissement dans l''espace CEDEAO.',
+1, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Quel est le rôle principal de la Conférence de DIP de La Haye ?',
+'["Juger les litiges entre États","Élaborer des conventions multilatérales unifiant les règles de conflit de lois","Fixer les règles du commerce international","Protéger les droits de l''homme"]'::jsonb,
+1, 'La Conférence de La Haye est un regroupement d''experts chargé d''élaborer des conventions multilatérales. Le BF en est membre depuis 2013.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Quelle est la particularité du droit OHADA par rapport au DIP ?',
+'["L''OHADA a unifié les règles de conflit de lois","L''OHADA a unifié le droit matériel sans uniformiser les règles de conflit de lois","L''OHADA ne concerne que le droit pénal","L''OHADA a créé une juridiction internationale compétente en DIP"]'::jsonb,
+1, 'L''OHADA a unifié le droit matériel sans uniformiser les règles de conflit de lois. Le législateur opte pour des règles d''applicabilité dans chaque acte uniforme.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'La Convention de Vienne du 11 avril 1980 porte sur :',
+'["Les relations diplomatiques","La vente internationale de marchandises","Le droit des traités","L''adoption internationale"]'::jsonb,
+1, 'La Convention de Vienne du 11 avril 1980 porte sur la vente internationale de marchandises. C''est un exemple de convention contenant des règles matérielles.',
+1, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Que dispose l''article 988 du CPF ?',
+'["Les juridictions burkinabè sont toujours compétentes pour les litiges impliquant un burkinabè","Les règles internes de compétence territoriale déterminent la compétence internationale des juridictions burkinabè","Seul le domicile du demandeur fonde la compétence internationale","La compétence internationale est fixée par accord entre les parties"]'::jsonb,
+1, 'L''article 988 du CPF dispose que « les règles internes de compétence territoriale déterminent, sauf disposition contraire, la compétence internationale des juridictions burkinabè ».',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Quel est le critère principal de compétence internationale des juridictions burkinabè ?',
+'["La nationalité burkinabè du demandeur","Le lieu de conclusion du contrat","Le domicile du défendeur au BF","Le lieu de survenance du dommage"]'::jsonb,
+2, 'En application de l''article 988 CPF et de l''article 43 CPC, le critère principal est le domicile du défendeur (actor sequitur forum rei).',
+1, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Que signifie l''adage « actor sequitur forum rei » ?',
+'["Le demandeur choisit le tribunal qu''il veut","Le juge compétent est celui du domicile du demandeur","Le demandeur doit porter l''action devant le tribunal du domicile du défendeur","L''acteur du dommage doit comparaître en personne"]'::jsonb,
+2, 'L''adage signifie que le demandeur doit porter son action devant le tribunal du domicile du défendeur.',
+1, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'En matière immobilière, quel est le critère de compétence internationale des juridictions burkinabè ?',
+'["Le domicile du défendeur","La nationalité du propriétaire","Le lieu de situation de l''immeuble (compétence exclusive)","Le lieu de conclusion de l''acte de vente"]'::jsonb,
+2, 'En matière immobilière, les juridictions burkinabè ont une compétence exclusive si l''immeuble est situé au BF.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Selon l''article 990 du CPF, dans quel domaine la nationalité burkinabè fonde-t-elle la compétence des juridictions burkinabè ?',
+'["En toute matière sans restriction","En matière de statut personnel uniquement","En matière commerciale uniquement","En matière immobilière uniquement"]'::jsonb,
+1, 'L''article 990 du CPF institue un for de nationalité limité à la matière du statut personnel.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Le for de nationalité de l''article 990 du CPF a un caractère :',
+'["Exclusif et obligatoire","Facultatif et subsidiaire","Impératif et général","Exclusif mais subsidiaire"]'::jsonb,
+1, 'Le for de nationalité est facultatif (simple possibilité) et subsidiaire (ne fonde la compétence que lorsqu''aucun critère ordinaire ne peut être utilisé).',
+3, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''article 989 du CPF institue un for de réciprocité. En quoi consiste-t-il ?',
+'["Les juridictions burkinabè sont compétentes pour tout litige impliquant un étranger","Si un burkinabè peut être assigné à l''étranger selon certains critères, ces mêmes critères s''appliquent au BF contre un ressortissant de cet État","Tout étranger peut être assigné au BF sans condition","La compétence dépend d''un accord entre les deux États"]'::jsonb,
+1, 'Le for de réciprocité (art. 989) consiste à appliquer aux étrangers au BF les mêmes critères de compétence que ceux appliqués aux burkinabè dans le pays d''origine de l''étranger.',
+3, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Quelle est l''une des critiques adressées au for de réciprocité ?',
+'["Il est trop favorable aux burkinabè","C''est une mesure de rétorsion entre États qui s''applique à des intérêts privés","Il viole le droit international public","Il est contraire à la Constitution burkinabè"]'::jsonb,
+1, 'Le for de réciprocité est critiqué techniquement (le juge doit connaître les règles de compétence étrangères) et philosophiquement (rétorsion entre États appliquée à des personnes privées).',
+3, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Qu''est-ce qu''une clause attributive de juridiction (CAJ) ?',
+'["Une clause imposant l''arbitrage","Une clause par laquelle les parties désignent l''ordre juridictionnel compétent en prévision d''un litige","Une clause fixant le montant des dommages-intérêts","Une clause excluant la responsabilité contractuelle"]'::jsonb,
+1, 'La CAJ est une clause par laquelle les parties désignent l''ordre juridictionnel compétent en prévision d''un litige. Elle attribue compétence et exclut les autres.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'En droit interne burkinabè (art. 51 al. 3 CPC), les clauses modificatives de compétence territoriale sont :',
+'["Toujours admises","Prohibées en principe, admises entre commerçants si clause très apparente","Toujours prohibées sans exception","Admises seulement en matière immobilière"]'::jsonb,
+1, 'L''article 51 al. 3 du CPC pose un principe de prohibition. Exception : admises entre commerçants si clause très apparente.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'En cas de litispendance internationale (art. 992 CPF), le juge burkinabè :',
+'["Doit obligatoirement se dessaisir","Peut surseoir à statuer si la décision étrangère est susceptible d''être reconnue au BF","Doit toujours retenir sa compétence","Renvoie l''affaire à la juridiction étrangère"]'::jsonb,
+1, 'L''article 992 prévoit que le juge burkinabè peut surseoir à statuer. C''est une simple faculté, pas une obligation.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Les relations qui constituent l''objet du DIP incluent :',
+'["Uniquement les relations entre personnes privées","Les relations entre personnes privées et les relations entre personnes privées et publiques quand ces dernières agissent sans prérogatives de puissance publique","Toutes les relations impliquant l''État","Les relations entre organisations internationales"]'::jsonb,
+1, 'Le DIP couvre les relations privées, y compris celles avec des personnes publiques agissant comme des personnes privées (sans prérogatives de puissance publique).',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'En matière contractuelle, les juridictions burkinabè sont compétentes si :',
+'["Le contrat est rédigé en français","Le défendeur est domicilié au BF, ou le contrat s''est formé au BF, ou l''obligation doit être exécutée au BF","Le contrat porte sur un montant supérieur à 10 millions FCFA","Le demandeur est de nationalité burkinabè"]'::jsonb,
+1, 'En matière contractuelle (art. 988 CPF + art. 44 CPC), les juridictions burkinabè sont compétentes si le défendeur est domicilié au BF, le contrat s''est formé au BF, ou l''obligation doit être exécutée au BF.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Que signifie le concept de territorialité dans son premier sens en DIP ?',
+'["Le droit d''un État s''applique à tous dans le monde","Les organes d''un État ne peuvent accomplir un acte de contrainte sur le territoire d''un autre État sans autorisation","Chaque État peut juger des affaires de tous les autres États","Les lois ne s''appliquent qu''aux nationaux"]'::jsonb,
+1, 'La territorialité signifie que les effets de contrainte d''un acte sont limités au territoire de l''État. Pas d''acte de contrainte sur le territoire d''un autre État sans autorisation.',
+2, 'Droit International Privé', true, 'L3', 'Droit', 'S1', 'manual_injection');

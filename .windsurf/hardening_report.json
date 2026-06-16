@@ -1,0 +1,21 @@
+{
+  "reconnection": {
+    "initial_transcription": true,
+    "reconnection_transcription": true
+  },
+  "memory": {
+    "ram_initial": 0,
+    "ram_final": 0,
+    "delta_mb": 0,
+    "sessions_created": 20,
+    "sessions_destroyed": 20,
+    "leak_detected": false
+  },
+  "load": {
+    "success": 10,
+    "errors": 0,
+    "avg_s": 9.0,
+    "p95_s": 11.12,
+    "max_s": 11.12
+  }
+}

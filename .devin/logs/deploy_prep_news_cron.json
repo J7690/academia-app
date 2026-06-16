@@ -1,0 +1,48 @@
+{
+  "timestamp": "2026-04-06T04:48:53.217803Z",
+  "steps": [
+    {
+      "label": "check_extensions",
+      "ok": true,
+      "rows": [
+        {
+          "extname": "pg_cron"
+        },
+        {
+          "extname": "pg_net"
+        }
+      ],
+      "error": null
+    },
+    {
+      "label": "remove_old_cron",
+      "ok": false,
+      "rows": [],
+      "error": "could not find valid entry for job 'prep-feed-actuality-daily'"
+    },
+    {
+      "label": "create_cron_job",
+      "ok": true,
+      "rows": [
+        {
+          "schedule": 6
+        }
+      ],
+      "error": null
+    },
+    {
+      "label": "verify_cron_jobs",
+      "ok": true,
+      "rows": [
+        {
+          "jobid": 6,
+          "active": true,
+          "command": "\n            SELECT net.http_post(\n                url := 'https://thevdfcwlcqzdoybfvgs.supabase.co/functions/v1/prep-feed-actuality',\n                headers := jsonb_build_object(\n                    'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoZXZkZmN3bGNxemRveWJmdmdzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzA1NjU2MCwiZXhwIjoyMDc4NjMyNTYwfQ.U0xz7oHnUISnxzAG8ehm_gRzoOlQPucj61i2f-1FjgM',\n                    'apikey', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoZXZkZmN3bGNxemRveWJmdmdzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzA1NjU2MCwiZXhwIjoyMDc4NjMyNTYwfQ.U0xz7oHnUISnxzAG8ehm_gRzoOlQPucj61i2f-1FjgM',\n                    'Content-Type', 'application/json'\n                ),\n                body := '{}'::jsonb\n            ) AS request_id\n            ",
+          "nodename": "localhost",
+          "schedule": "0 5 * * *"
+        }
+      ],
+      "error": null
+    }
+  ]
+}

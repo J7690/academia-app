@@ -1,0 +1,640 @@
+{
+  "prep_topics_cols": [
+    {
+      "data_type": "uuid",
+      "column_name": "id"
+    },
+    {
+      "data_type": "text",
+      "column_name": "name"
+    },
+    {
+      "data_type": "text",
+      "column_name": "category"
+    },
+    {
+      "data_type": "text",
+      "column_name": "description"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at"
+    }
+  ],
+  "prep_topics_data": [
+    {
+      "id": "33b8833e-b4b7-4900-8ea0-e940f578e1e7",
+      "name": "Actualités",
+      "category": "actualites",
+      "created_at": "2026-03-31T13:36:33.524838+00:00",
+      "description": "Connaissance des actualités"
+    },
+    {
+      "id": "e3994be5-d1d0-4dca-ae7d-032f9fc76213",
+      "name": "Culture Générale",
+      "category": "culture_gen",
+      "created_at": "2026-03-31T13:36:32.909519+00:00",
+      "description": "Connaissance générale sur le Burkina Faso"
+    },
+    {
+      "id": "7c533606-43d1-4071-bcaf-f72fe17148f7",
+      "name": "Droit Civil",
+      "category": "droit",
+      "created_at": "2026-03-31T13:36:33.258787+00:00",
+      "description": "Connaissance du droit civil"
+    },
+    {
+      "id": "5e729bd3-fd5c-4aa1-bc03-5686c019ecd3",
+      "name": "Droit du Travail",
+      "category": "droit",
+      "created_at": "2026-03-31T13:36:33.043032+00:00",
+      "description": "Connaissance du droit du travail"
+    },
+    {
+      "id": "d315adb5-7cef-4d8f-9b58-bd9583f7e606",
+      "name": "Droit Pénal",
+      "category": "droit",
+      "created_at": "2026-03-31T13:36:33.310825+00:00",
+      "description": "Connaissance du droit pénal"
+    },
+    {
+      "id": "4a739fe7-12f7-41a9-9331-1d4d3d8ab584",
+      "name": "Économie Générale",
+      "category": "economie",
+      "created_at": "2026-03-31T13:36:33.152337+00:00",
+      "description": "Connaissance de l'économie générale"
+    },
+    {
+      "id": "b761b963-909a-47a4-a06a-9c85f2b73be3",
+      "name": "Fiscalité",
+      "category": "fiscalite",
+      "created_at": "2026-03-31T13:36:33.104758+00:00",
+      "description": "Connaissance de la fiscalité et de la douane"
+    },
+    {
+      "id": "8a986d81-1efb-41a6-9116-97e7a007b2d7",
+      "name": "GRH et Management",
+      "category": "admin",
+      "created_at": "2026-03-31T13:36:33.2013+00:00",
+      "description": "Connaissance de la gestion des ressources humaines et du management"
+    },
+    {
+      "id": "e7125ecf-ceab-4e95-a744-65955710a6d4",
+      "name": "Informatique",
+      "category": "informatique",
+      "created_at": "2026-03-31T13:36:33.419994+00:00",
+      "description": "Connaissance de l'informatique"
+    },
+    {
+      "id": "619025a4-ff89-4700-91e2-836359bd04cd",
+      "name": "Mathématiques",
+      "category": "mathematiques",
+      "created_at": "2026-03-31T13:36:32.98233+00:00",
+      "description": "Calculs et problèmes mathématiques"
+    },
+    {
+      "id": "a967e520-b329-47d3-bd8d-63a5067032d6",
+      "name": "Pédagogie",
+      "category": "education",
+      "created_at": "2026-03-31T13:36:33.360911+00:00",
+      "description": "Connaissance de la pédagogie"
+    },
+    {
+      "id": "132f9dd8-5001-4912-8e3a-d0508d901f88",
+      "name": "Sciences Naturelles",
+      "category": "sciences",
+      "created_at": "2026-03-31T13:36:33.467074+00:00",
+      "description": "Connaissance des sciences naturelles"
+    }
+  ],
+  "prep_topic_predictions_cols": [
+    {
+      "data_type": "uuid",
+      "column_name": "id"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "topic_id"
+    },
+    {
+      "data_type": "text",
+      "column_name": "concours_type"
+    },
+    {
+      "data_type": "text",
+      "column_name": "target_year"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "probability_score"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "frequency_count"
+    },
+    {
+      "data_type": "text",
+      "column_name": "last_appeared_year"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "cycle_years"
+    },
+    {
+      "data_type": "text",
+      "column_name": "reasoning"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at"
+    }
+  ],
+  "prep_topic_predictions_count": "0",
+  "prep_question_topics_cols": [
+    {
+      "data_type": "uuid",
+      "column_name": "question_id"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "topic_id"
+    }
+  ],
+  "question_topics_count": "0",
+  "prep_student_weaknesses_cols": [
+    {
+      "data_type": "uuid",
+      "column_name": "id"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "student_id"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "subject_id"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "total_questions"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "correct_answers"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "incorrect_answers"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "success_rate"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "avg_difficulty_attempted"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "avg_difficulty_failed"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "weakness_score"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "recommended_difficulty"
+    },
+    {
+      "data_type": "numeric",
+      "column_name": "priority_weight"
+    },
+    {
+      "data_type": "boolean",
+      "column_name": "needs_practice"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at"
+    }
+  ],
+  "weaknesses_count": "0",
+  "prep_ai_corrections_cols": [
+    {
+      "data_type": "uuid",
+      "column_name": "id"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "student_id"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "question_id"
+    },
+    {
+      "data_type": "text",
+      "column_name": "student_answer"
+    },
+    {
+      "data_type": "boolean",
+      "column_name": "is_correct"
+    },
+    {
+      "data_type": "text",
+      "column_name": "ai_correction"
+    },
+    {
+      "data_type": "text",
+      "column_name": "ai_explanation"
+    },
+    {
+      "data_type": "ARRAY",
+      "column_name": "source_chunks"
+    },
+    {
+      "data_type": "double precision",
+      "column_name": "confidence_score"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at"
+    }
+  ],
+  "total_questions": "147",
+  "questions_by_subject": [
+    {
+      "n": 47,
+      "subject": "Culture Générale"
+    },
+    {
+      "n": 26,
+      "subject": "Tests Psychotechniques"
+    },
+    {
+      "n": 9,
+      "subject": "Droit Constitutionnel"
+    },
+    {
+      "n": 8,
+      "subject": "Fiscalité"
+    },
+    {
+      "n": 8,
+      "subject": "Actualités BF"
+    },
+    {
+      "n": 8,
+      "subject": "Mathématiques"
+    },
+    {
+      "n": 7,
+      "subject": "Économie Générale"
+    },
+    {
+      "n": 6,
+      "subject": "Droit Administratif"
+    },
+    {
+      "n": 5,
+      "subject": "Français"
+    },
+    {
+      "n": 5,
+      "subject": "Finances Publiques"
+    },
+    {
+      "n": 3,
+      "subject": "Droit du Travail"
+    },
+    {
+      "n": 3,
+      "subject": "Droit Civil"
+    },
+    {
+      "n": 3,
+      "subject": "GRH et Management"
+    },
+    {
+      "n": 2,
+      "subject": "Comptabilité"
+    },
+    {
+      "n": 2,
+      "subject": "Pédagogie"
+    },
+    {
+      "n": 2,
+      "subject": "Droit Pénal"
+    },
+    {
+      "n": 2,
+      "subject": "Informatique"
+    },
+    {
+      "n": 1,
+      "subject": "Sciences Naturelles / SVT"
+    }
+  ],
+  "questions_by_concours": [
+    {
+      "n": 81,
+      "concours_type": "TOUS"
+    },
+    {
+      "n": 17,
+      "concours_type": "ENAREF"
+    },
+    {
+      "n": 16,
+      "concours_type": "PARAMILITAIRE"
+    },
+    {
+      "n": 15,
+      "concours_type": "ADMIN_CIVIL"
+    },
+    {
+      "n": 6,
+      "concours_type": "GRH"
+    },
+    {
+      "n": 5,
+      "concours_type": "GREFFIERS"
+    },
+    {
+      "n": 4,
+      "concours_type": "DOUANE"
+    },
+    {
+      "n": 2,
+      "concours_type": "EDUCATION"
+    },
+    {
+      "n": 1,
+      "concours_type": "SANTE"
+    }
+  ],
+  "questions_by_source": [
+    {
+      "n": 96,
+      "source": "ai_seed"
+    },
+    {
+      "n": 36,
+      "source": "external_source"
+    },
+    {
+      "n": 15,
+      "source": "manual"
+    }
+  ],
+  "questions_by_difficulty": [
+    {
+      "n": 52,
+      "difficulty": 1
+    },
+    {
+      "n": 74,
+      "difficulty": 2
+    },
+    {
+      "n": 21,
+      "difficulty": 3
+    }
+  ],
+  "source_docs_by_type": [
+    {
+      "n": 479,
+      "doc_type": "actualite",
+      "source_type": "rss_feed"
+    },
+    {
+      "n": 3,
+      "doc_type": "cours",
+      "source_type": "text"
+    }
+  ],
+  "chunks_by_type": [
+    {
+      "n": 418,
+      "avg_tokens": 688,
+      "chunk_type": "actualite"
+    },
+    {
+      "n": 24,
+      "avg_tokens": 293,
+      "chunk_type": "content"
+    }
+  ],
+  "embeddings_status": {
+    "total": "442",
+    "with_emb": "0"
+  },
+  "learning_rpcs": [
+    {
+      "proname": "admin_create_storage_policies_for_community_media"
+    },
+    {
+      "proname": "app_generate_referral_commission_for_payment"
+    },
+    {
+      "proname": "app_get_program_brokerage_fee"
+    },
+    {
+      "proname": "app_on_payment_confirmed_generate_referral_commission"
+    },
+    {
+      "proname": "app_prep_get_adaptive_quiz"
+    },
+    {
+      "proname": "app_prep_get_adaptive_quiz"
+    },
+    {
+      "proname": "app_prep_get_predictions"
+    },
+    {
+      "proname": "app_prep_get_rag_chunks"
+    },
+    {
+      "proname": "app_prep_get_rag_chunks_by_name"
+    },
+    {
+      "proname": "app_prep_get_weakness_analysis"
+    },
+    {
+      "proname": "app_prep_get_weakness_analysis"
+    },
+    {
+      "proname": "app_prep_score_article_relevance"
+    },
+    {
+      "proname": "app_prep_semantic_search"
+    },
+    {
+      "proname": "app_storage_setup_marketplace_media_policies"
+    },
+    {
+      "proname": "app_td_semantic_search"
+    },
+    {
+      "proname": "app_td_student_get_generated_assignment"
+    },
+    {
+      "proname": "app_td_student_list_generated_assignments"
+    },
+    {
+      "proname": "app_update_payment_amount_from_brokerage"
+    },
+    {
+      "proname": "generate_tournament_bracket"
+    },
+    {
+      "proname": "update_student_weaknesses_from_attempt"
+    }
+  ],
+  "edge_functions": {
+    "prep-analyze-trends": {
+      "status": 204,
+      "deployed": true
+    },
+    "prep-generate-questions": {
+      "status": 204,
+      "deployed": true
+    },
+    "prep-tutor-chat": {
+      "status": 200,
+      "deployed": true
+    },
+    "prep-grade-assignment": {
+      "status": 204,
+      "deployed": true
+    },
+    "prep-ingest-document": {
+      "status": 204,
+      "deployed": true
+    },
+    "prep-feed-actuality": {
+      "status": 204,
+      "deployed": true
+    },
+    "prep-scan-subject": {
+      "status": 204,
+      "deployed": true
+    }
+  },
+  "quiz_attempts": "0",
+  "quiz_unique_users": "ERR",
+  "learning_triggers": [
+    {
+      "tgname": "trg_update_student_weaknesses",
+      "on_table": "app.prep_quiz_attempts",
+      "tgenabled": "O"
+    }
+  ],
+  "coverage": [
+    {
+      "matiere": "Actualités du Burkina Faso",
+      "nb_chunks": 418,
+      "nb_questions": 0
+    },
+    {
+      "matiere": "Comptabilité",
+      "nb_chunks": 0,
+      "nb_questions": 2
+    },
+    {
+      "matiere": "Culture Générale",
+      "nb_chunks": 1128,
+      "nb_questions": 1128
+    },
+    {
+      "matiere": "Droit Administratif",
+      "nb_chunks": 0,
+      "nb_questions": 6
+    },
+    {
+      "matiere": "Droit Civil",
+      "nb_chunks": 0,
+      "nb_questions": 3
+    },
+    {
+      "matiere": "Droit Constitutionnel",
+      "nb_chunks": 0,
+      "nb_questions": 9
+    },
+    {
+      "matiere": "Droit du Travail",
+      "nb_chunks": 0,
+      "nb_questions": 3
+    },
+    {
+      "matiere": "Droit Fiscal",
+      "nb_chunks": 0,
+      "nb_questions": 0
+    },
+    {
+      "matiere": "Droit Pénal",
+      "nb_chunks": 0,
+      "nb_questions": 2
+    },
+    {
+      "matiere": "Économie Générale",
+      "nb_chunks": 0,
+      "nb_questions": 7
+    },
+    {
+      "matiere": "Finances Publiques",
+      "nb_chunks": 0,
+      "nb_questions": 5
+    },
+    {
+      "matiere": "Fiscalité",
+      "nb_chunks": 0,
+      "nb_questions": 8
+    },
+    {
+      "matiere": "Français",
+      "nb_chunks": 0,
+      "nb_questions": 5
+    },
+    {
+      "matiere": "GRH et Management",
+      "nb_chunks": 0,
+      "nb_questions": 3
+    },
+    {
+      "matiere": "Informatique",
+      "nb_chunks": 0,
+      "nb_questions": 2
+    },
+    {
+      "matiere": "Mathématiques",
+      "nb_chunks": 0,
+      "nb_questions": 8
+    },
+    {
+      "matiere": "Pédagogie",
+      "nb_chunks": 0,
+      "nb_questions": 2
+    },
+    {
+      "matiere": "Sciences Naturelles / SVT",
+      "nb_chunks": 0,
+      "nb_questions": 1
+    },
+    {
+      "matiere": "Tests Psychotechniques",
+      "nb_chunks": 0,
+      "nb_questions": 26
+    }
+  ]
+}

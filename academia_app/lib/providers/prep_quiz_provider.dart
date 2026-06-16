@@ -272,6 +272,49 @@ class PrepQuizProvider extends ChangeNotifier {
     return [];
   }
 
+  // ─── Chargement adaptatif des questions ──────────────────────────
+  Future<List<PrepQuestion>> loadAdaptiveQuestionsFromServer({
+    String? concoursType,
+    int count = 10,
+  }) async {
+    try {
+      final client = Supabase.instance.client;
+      if (client.auth.currentSession == null) return [];
+      
+      final res = await client.rpc('app_prep_get_adaptive_quiz', params: {
+        'p_count': count,
+        if (concoursType != null) 'p_concours_type': concoursType,
+      });
+      
+      if (res is Map && res['questions'] is List) {
+        final questions = res['questions'] as List;
+        return questions.whereType<Map>().map((m) {
+          final map = Map<String, dynamic>.from(m);
+          
+          // Parse options
+          List<String> opts = [];
+          if (map['options'] is List) {
+            opts = (map['options'] as List).map((e) => e.toString()).toList();
+          }
+          
+          return PrepQuestion(
+            id: (map['id'] ?? '').toString(),
+            content: (map['question'] ?? '').toString(),
+            options: opts,
+            correctIndex: (map['correct_index'] as int?) ?? 0,
+            explanation: map['explanation']?.toString(),
+            subject: (map['subject'] ?? '').toString(),
+            difficulty: (map['difficulty'] as int?) ?? 1,
+            imageUrl: map['image_url']?.toString(),
+          );
+        }).toList();
+      }
+    } catch (e) {
+      debugPrint('[PrepQuizProvider] loadAdaptiveQuestionsFromServer error: $e');
+    }
+    return [];
+  }
+
   // ─── Démarrer un quiz ──────────────────────────────────────────
   void startQuiz({
     required List<PrepQuestion> questions,
@@ -296,15 +339,28 @@ class PrepQuizProvider extends ChangeNotifier {
     int count = 10,
     int? timeLimitSeconds,
     bool examMode = false,
+    bool adaptiveMode = false,
   }) async {
     _isLoadingQuestions = true;
     notifyListeners();
     try {
-      var questions = await loadQuestionsFromServer(
-        subject: subject,
-        concoursType: concoursType,
-        count: count,
-      );
+      List<PrepQuestion> questions;
+      
+      if (adaptiveMode) {
+        // Use adaptive quiz RPC
+        questions = await loadAdaptiveQuestionsFromServer(
+          concoursType: concoursType,
+          count: count,
+        );
+      } else {
+        // Use regular quiz loading
+        questions = await loadQuestionsFromServer(
+          subject: subject,
+          concoursType: concoursType,
+          count: count,
+        );
+      }
+      
       if (questions.isEmpty) {
         questions = generateDemoQuestions(subject: subject ?? 'Culture Générale', count: count);
       }

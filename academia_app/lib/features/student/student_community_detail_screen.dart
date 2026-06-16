@@ -12,7 +12,9 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/student_communities_provider.dart';
+import '../../widgets/report_content_sheet.dart';
 import '../../providers/community_stories_provider.dart';
 import '../../providers/student_direct_messages_provider.dart';
 import '../../widgets/community_stories_bar.dart';
@@ -115,6 +117,28 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
+
+    // Check for banned words before posting
+    try {
+      final checkResult = await Supabase.instance.client.rpc(
+        'app_check_content_for_banned_words',
+        params: {'p_text': text},
+      );
+      if (checkResult is Map && checkResult['is_clean'] == false) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Votre message contient des termes inappropries. Veuillez le modifier.'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+    } catch (_) {
+      // Non-blocking: if check fails, allow post
+    }
+
     final provider = context.read<StudentCommunitiesProvider>();
     final replyToId = _replyToPost != null
         ? _replyToPost!['id']?.toString()
@@ -2283,7 +2307,23 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
                                         } else if (value == 'delete') {
                                           _confirmDeleteMyPost(p);
                                         } else if (value == 'report') {
-                                          _openReportPostDialog(p);
+                                          final postId = p['id']?.toString();
+                                          if (postId != null) {
+                                            ReportContentSheet.show(context,
+                                              contentType: 'post',
+                                              contentId: postId,
+                                              targetUserId: p['author_id']?.toString(),
+                                              contentPreview: (p['content']?.toString() ?? '').length > 100
+                                                  ? '${p['content'].toString().substring(0, 100)}...'
+                                                  : p['content']?.toString(),
+                                            );
+                                          }
+                                        } else if (value == 'block_author') {
+                                          final authorId = p['author_id']?.toString();
+                                          final authorName = p['author_display_name']?.toString();
+                                          if (authorId != null) {
+                                            UserModerationSheet.show(context, userId: authorId, userName: authorName);
+                                          }
                                         }
                                       },
                                       itemBuilder: (context) {
@@ -2329,6 +2369,15 @@ class _StudentCommunityDetailScreenState extends State<StudentCommunityDetailScr
                                             child: Text('Signaler ce message'),
                                           ),
                                         );
+                                        if (!isMine) {
+                                          items.add(
+                                            const PopupMenuItem(
+                                              value: 'block_author',
+                                              child: Text('Bloquer / Signaler l\'auteur',
+                                                style: TextStyle(color: Colors.red)),
+                                            ),
+                                          );
+                                        }
                                         return items;
                                       },
                                       padding: EdgeInsets.zero,

@@ -113,8 +113,8 @@ serve(async (req: Request) => {
         .update({ status: 'processing' })
         .eq('id', payoutId);
 
-      if (LIGDICASH_MODE === 'live' && LIGDICASH_API_KEY && LIGDICASH_BEARER_TOKEN) {
-        // ============ LIVE MODE ============
+      if (LIGDICASH_MODE !== 'mock' && LIGDICASH_API_KEY && LIGDICASH_BEARER_TOKEN) {
+        // ============ LIVE/TEST MODE ============
         try {
           const cleanPhone = phone.replace(/\s+/g, '').replace(/^(\+)/, '');
           const callbackUrl = `${SUPABASE_URL}/functions/v1/ligdicash-callback`;
@@ -126,7 +126,7 @@ serve(async (req: Request) => {
               customer: cleanPhone,
               custom_data: { payout_id: payoutId, beneficiary_type: payout.beneficiary_type },
               callback_url: callbackUrl,
-              top_up_wallet: 0, // 0 = envoyer sur mobile money, pas dans le wallet
+              top_up_wallet: 1, // 1 = transfert LigdiCash → LigdiCash (portefeuille du bénéficiaire)
             },
           };
 

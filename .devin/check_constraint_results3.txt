@@ -1,0 +1,30 @@
+information_schema:
+{
+  "ok": true,
+  "mode": "exec",
+  "affected_rows": 1
+}
+
+pg_constraint:
+{
+  "ok": true,
+  "mode": "exec",
+  "affected_rows": 1
+}
+
+Existing actions:
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "action": "reactivate"
+    },
+    {
+      "action": "suspend"
+    },
+    {
+      "action": "delete"
+    }
+  ]
+}

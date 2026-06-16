@@ -4,16 +4,32 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 
 import '../../../providers/prep_quiz_provider.dart';
+import '../../../providers/prep_weakness_provider.dart';
 import '../../../theme/prep_theme.dart';
 import 'psychotech/psychotech_profile_widget.dart';
+import 'prep_progress_dashboard.dart';
 
 /// Onglet Stats — Analytics de progression, forces/faiblesses, historique.
-class PrepStatsTab extends StatelessWidget {
+class PrepStatsTab extends StatefulWidget {
   const PrepStatsTab({super.key});
+
+  @override
+  State<PrepStatsTab> createState() => _PrepStatsTabState();
+}
+
+class _PrepStatsTabState extends State<PrepStatsTab> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PrepWeaknessProvider>().loadWeaknessAnalysis();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final quizProvider = context.watch<PrepQuizProvider>();
+    final weaknessProvider = context.watch<PrepWeaknessProvider>();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -29,6 +45,16 @@ class PrepStatsTab extends StatelessWidget {
             totalCorrect: quizProvider.totalCorrect,
             xp: quizProvider.totalXp,
             streak: quizProvider.currentStreak,
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // ─── Bouton Dashboard adaptatif ───────────────────────────
+        FadeInDown(
+          delay: const Duration(milliseconds: 50),
+          duration: const Duration(milliseconds: 400),
+          child: _AdaptiveDashboardButton(
+            weaknessProvider: weaknessProvider,
           ),
         ),
         const SizedBox(height: 16),
@@ -70,6 +96,85 @@ class PrepStatsTab extends StatelessWidget {
         ),
         const SizedBox(height: 24),
       ],
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Adaptive Dashboard Button
+// ═══════════════════════════════════════════════════════════════════
+class _AdaptiveDashboardButton extends StatelessWidget {
+  final PrepWeaknessProvider weaknessProvider;
+
+  const _AdaptiveDashboardButton({required this.weaknessProvider});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasWeaknesses = weaknessProvider.weakestSubjects.isNotEmpty;
+    final primaryWeakness = weaknessProvider.primaryWeakness;
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const PrepProgressDashboard()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF7C3AED).withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.psychology, color: Colors.white, size: 28),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Tableau de bord adaptatif',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    hasWeaknesses && primaryWeakness != null
+                        ? 'Focus: ${primaryWeakness.subjectName} (${primaryWeakness.successRate.toStringAsFixed(0)}%)'
+                        : 'Passe des quiz pour activer l\'analyse',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, color: Colors.white.withOpacity(0.6), size: 16),
+          ],
+        ),
+      ),
     );
   }
 }

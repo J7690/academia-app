@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart';
 
+import '../../games/services/game_live_service.dart';
 import '../../services/livekit_token_service.dart';
 import 'challenge_live_duo_screen.dart';
 
@@ -46,6 +47,7 @@ class _ChallengeLiveScreenState extends State<ChallengeLiveScreen> {
   bool _isHost = false;
   bool _micEnabled = true;
   bool _cameraEnabled = true;
+  String? _sessionId;
 
   EventsListener<RoomEvent>? _roomListener;
   final List<_ChatMsg> _chatMessages = [];
@@ -70,10 +72,27 @@ class _ChallengeLiveScreenState extends State<ChallengeLiveScreen> {
     setState(() { _connecting = true; _error = null; });
 
     try {
-      final sessionId = widget.sessionId;
+      String? sessionId = _sessionId ?? widget.sessionId;
+
+      // If no sessionId provided, we are the HOST → create a live session
       if (sessionId == null || sessionId.isEmpty) {
-        setState(() { _connecting = false; _error = 'ID de session manquant.'; });
-        return;
+        if (!widget.isHost) {
+          setState(() { _connecting = false; _error = 'ID de session manquant.'; });
+          return;
+        }
+        // Create a new game live session via RPC
+        sessionId = await GameLiveService.startLive(
+          gameType: 'challenge_live',
+          mode: 'solo',
+        );
+        if (sessionId == null || sessionId.isEmpty) {
+          setState(() {
+            _connecting = false;
+            _error = 'Impossible de créer la session live. Réessayez.';
+          });
+          return;
+        }
+        _sessionId = sessionId;
       }
 
       final tokenData = await LivekitTokenService.getTokenForSession(sessionId);
@@ -255,7 +274,11 @@ class _ChallengeLiveScreenState extends State<ChallengeLiveScreen> {
     });
   }
 
-  void _leave() {
+  void _leave() async {
+    // End the live session if we are the host
+    if (_isHost && _sessionId != null) {
+      await GameLiveService.endLive();
+    }
     _roomListener?.dispose();
     _room?.removeListener(_onRoomChanged);
     _room?.dispose();
@@ -265,6 +288,10 @@ class _ChallengeLiveScreenState extends State<ChallengeLiveScreen> {
 
   @override
   void dispose() {
+    // Cancel live if host and still live on dispose
+    if (_isHost && _sessionId != null && GameLiveService.isLive) {
+      GameLiveService.cancelLive();
+    }
     _roomListener?.dispose();
     _room?.removeListener(_onRoomChanged);
     _room?.dispose();
@@ -307,31 +334,59 @@ class _ChallengeLiveScreenState extends State<ChallengeLiveScreen> {
       return const Scaffold(backgroundColor: Colors.black, body: Center(child: Text('Room non disponible.', style: TextStyle(color: Colors.white))));
     }
 
-    // Find the host's video track (first publisher)
-    VideoTrack? hostVideo;
+    // Find the host's tracks: screen share (gameplay) + camera (face, optional)
+    VideoTrack? gameplayTrack; // Screen share = jeu en plein écran
+    VideoTrack? faceCamTrack;  // Caméra frontale = PiP optionnel
+    String? hostIdentity;
     final allParticipants = <Participant>[
       if (room.localParticipant != null) room.localParticipant!,
       ...room.remoteParticipants.values,
     ];
     for (final p in allParticipants) {
       for (final pub in p.videoTrackPublications) {
-        if (pub.source != TrackSource.screenShareVideo && pub.track is VideoTrack) {
-          hostVideo = pub.track as VideoTrack;
-          break;
+        if (pub.source == TrackSource.screenShareVideo && pub.track is VideoTrack) {
+          gameplayTrack = pub.track as VideoTrack;
+          hostIdentity = p.identity;
+        } else if (pub.source == TrackSource.camera && pub.track is VideoTrack) {
+          faceCamTrack = pub.track as VideoTrack;
+          hostIdentity ??= p.identity;
         }
       }
-      if (hostVideo != null) break;
     }
+    // Fallback: si pas de screen share, utiliser la caméra comme vidéo principale
+    final mainVideo = gameplayTrack ?? faceCamTrack;
+    final pipVideo = gameplayTrack != null ? faceCamTrack : null;
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Full-screen video
+          // Full-screen: gameplay (screen share) ou caméra en fallback
           Positioned.fill(
-            child: hostVideo != null
-                ? VideoTrackRenderer(hostVideo)
-                : const Center(child: Text('En attente du streamer...', style: TextStyle(color: Colors.white70, fontSize: 16))),
+            child: mainVideo != null
+                ? VideoTrackRenderer(mainVideo)
+                : const Center(child: Text('En attente du gameplay...', style: TextStyle(color: Colors.white70, fontSize: 16))),
+          ),
+
+          // PiP: caméra frontale du joueur (petit cercle) ou avatar profil
+          Positioned(
+            right: 12,
+            top: MediaQuery.of(context).padding.top + 56,
+            child: Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+                color: Colors.black54,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: pipVideo != null
+                  ? VideoTrackRenderer(pipVideo)
+                  : const Center(
+                      child: Icon(Icons.person, color: Colors.white54, size: 32),
+                    ),
+            ),
           ),
 
           // Top bar: LIVE badge + viewer count + close

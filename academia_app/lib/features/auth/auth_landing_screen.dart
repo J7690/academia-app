@@ -17,9 +17,125 @@ import '../../widgets/hero_media_carousel.dart';
 import '../debug/network_diagnostic_screen.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
+import 'phone_login_screen.dart';
 import '../share/share_service.dart';
 import '../share/share_mode_provider.dart';
 import '../share/widgets/share_signature.dart';
+
+void _showSignupChoice(BuildContext context, {String? refCode}) {
+  showModalBottomSheet<void>(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (ctx) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                "Comment souhaitez-vous vous inscrire ?",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              _SignupOptionTile(
+                icon: Icons.email_outlined,
+                color: const Color(0xFF3275D0),
+                title: 'Par adresse e-mail',
+                subtitle: 'Nom, prénom, e-mail et mot de passe',
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => SignupScreen(initialRefCode: refCode),
+                  ));
+                },
+              ),
+              const SizedBox(height: 12),
+              _SignupOptionTile(
+                icon: Icons.phone_android,
+                color: const Color(0xFF1EA75C),
+                title: 'Par numéro de téléphone',
+                subtitle: 'Nom, prénom et code OTP par SMS',
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const PhoneLoginScreen(isSignup: true),
+                  ));
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+class _SignupOptionTile extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  const _SignupOptionTile({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          border: Border.all(color: color.withOpacity(0.4)),
+          borderRadius: BorderRadius.circular(12),
+          color: color.withOpacity(0.05),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: color)),
+                  const SizedBox(height: 2),
+                  Text(subtitle,
+                      style: const TextStyle(
+                          fontSize: 12, color: Colors.black54)),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, size: 14, color: color),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class AuthLandingScreen extends StatelessWidget {
   const AuthLandingScreen({super.key});
@@ -136,11 +252,7 @@ class AuthLandingScreen extends StatelessWidget {
                   ),
                   elevation: 0,
                 ),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const SignupScreen()),
-                  );
-                },
+                onPressed: () => _showSignupChoice(context),
                 child: Text(
                   'Créer un compte',
                   style: TextStyle(
@@ -534,11 +646,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => SignupScreen(initialRefCode: _capturedRefCode),
-                  ),
-                );
+                _showSignupChoice(context, refCode: _capturedRefCode);
               },
               child: const Text('Créer un compte'),
             ),
@@ -1378,13 +1486,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                                         borderRadius: BorderRadius.circular(999),
                                       ),
                                     ),
-                                    onPressed: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) => SignupScreen(initialRefCode: _capturedRefCode),
-                                        ),
-                                      );
-                                    },
+                                    onPressed: () => _showSignupChoice(context, refCode: _capturedRefCode),
                                     child: const Text('Créer un compte'),
                                   ),
                                   OutlinedButton(
@@ -1801,13 +1903,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                             vertical: 12,
                           ),
                         ),
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => SignupScreen(initialRefCode: _capturedRefCode),
-                            ),
-                          );
-                        },
+                        onPressed: () => _showSignupChoice(context, refCode: _capturedRefCode),
                         child: const Text('Créer mon compte gratuitement'),
                       ),
                     ],

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../providers/student_short_trainings_provider.dart';
 import '../../../providers/student_profile_provider.dart';
 import '../../../providers/student_short_training_messages_provider.dart';
 import '../../../providers/student_home_slots_provider.dart';
+import '../../../widgets/ligdicash_payment_sheet.dart';
 
 class StudentShortTrainingsSection extends StatefulWidget {
   const StudentShortTrainingsSection({super.key});
@@ -361,16 +364,33 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
                     if (!mounted) return;
                     Navigator.of(dialogContext).pop();
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          ok
-                              ? 'Inscription enregistrée.'
-                              : trainingsProvider.error ??
-                                  'Erreur lors de l\'inscription.',
+                    if (!ok) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            trainingsProvider.error ??
+                                'Erreur lors de l\'inscription.',
+                          ),
                         ),
-                      ),
+                      );
+                      return;
+                    }
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Inscription enregistrée.')),
                     );
+
+                    // Propose paiement LigdiCash si prix > 0
+                    final dynamic rawPrice = session['price'];
+                    final double price = (rawPrice is num) ? rawPrice.toDouble() : 0;
+                    if (price > 0 && paymentMethod == 'mobile_money') {
+                      await _offerPayment(
+                        context,
+                        sessionId: sessionId,
+                        title: session['title']?.toString() ?? 'Formation',
+                        price: price,
+                      );
+                    }
                   },
                   child: const Text('Valider mon inscription'),
                 ),
@@ -381,6 +401,59 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
       },
     );
   }
+  Future<void> _offerPayment(
+    BuildContext ctx, {
+    required String sessionId,
+    required String title,
+    required double price,
+  }) async {
+    // Find registration id from myTrainings
+    final provider = ctx.read<StudentShortTrainingsProvider>();
+    String? registrationId;
+    for (final reg in provider.myTrainings) {
+      if (reg['session_id']?.toString() == sessionId ||
+          reg['title']?.toString() == title) {
+        registrationId = reg['registration_id']?.toString();
+        break;
+      }
+    }
+    if (registrationId == null || registrationId.isEmpty) return;
+
+    // Create payment record
+    try {
+      final res = await Supabase.instance.client.rpc(
+        'app_student_create_short_training_payment',
+        params: {
+          'p_registration_id': registrationId,
+          'p_amount': price,
+          'p_payment_method': 'mobile_money',
+        },
+      );
+      final paymentId = (res is Map) ? res['payment_id']?.toString() : null;
+      if (paymentId == null || paymentId.isEmpty) return;
+      if (!mounted) return;
+
+      // Open LigdiCash payment sheet
+      await LigdiCashPaymentSheet.show(
+        context: ctx,
+        paymentType: 'short_training',
+        paymentId: paymentId,
+        amount: price,
+        description: 'Formation: $title',
+        onSuccess: () {
+          // Confirm payment
+          Supabase.instance.client.rpc(
+            'app_confirm_short_training_payment',
+            params: {'p_payment_id': paymentId},
+          );
+          provider.loadMyTrainings();
+        },
+      );
+    } catch (e) {
+      debugPrint('[ShortTrainings] _offerPayment error: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -666,6 +739,25 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
                                         ),
                                       ),
                                     const Spacer(),
+                                    if (regStatus == 'registered' || regStatus == 'pending')
+                                      TextButton.icon(
+                                        onPressed: registrationId.isEmpty
+                                            ? null
+                                            : () {
+                                                final dynamic rawPrice = registration['price'] ?? registration['amount_due'];
+                                                final double price = (rawPrice is num) ? rawPrice.toDouble() : 0;
+                                                if (price > 0) {
+                                                  _offerPayment(
+                                                    context,
+                                                    sessionId: registration['session_id']?.toString() ?? '',
+                                                    title: regTitle,
+                                                    price: price,
+                                                  );
+                                                }
+                                              },
+                                        icon: const Icon(Icons.payment, color: Color(0xFF1EA75C)),
+                                        label: const Text('Payer', style: TextStyle(color: Color(0xFF1EA75C))),
+                                      ),
                                     TextButton.icon(
                                       onPressed: registrationId.isEmpty
                                           ? null

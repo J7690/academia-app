@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../providers/teacher_prep_live_sessions_provider.dart';
 import '../../theme/prep_theme.dart';
-import '../live/livekit_room_screen.dart';
+import '../../models/academia_session.dart';
+import '../live/academia_classroom_screen.dart';
 
 /// Écran enseignant — Sessions live CONCOURS (distinct des sessions cours en ligne).
 /// Types : révision, exam blanc, Q&A — liés au module prep concours BF.
@@ -137,8 +139,31 @@ class _TeacherPrepLiveSessionsScreenState
                         if (ok && mounted) {
                           final prov = s['provider']?.toString() ?? '';
                           if (prov.toLowerCase() == 'livekit') {
+                            final title = (s['title'] ?? '').toString();
+                            final desc = (s['description'] ?? '').toString();
+                            final sessionType = s['session_type']?.toString();
+                            final academiaSession = AcademiaSession(
+                              id: id,
+                              type: sessionType == 'exam_blanc'
+                                  ? SessionType.examBlanc
+                                  : sessionType == 'qa'
+                                      ? SessionType.revisionCollective
+                                      : SessionType.prepConcours,
+                              status: SessionStatus.running,
+                              provider: SessionProvider.livekit,
+                              title: title,
+                              description: desc.isNotEmpty ? desc : null,
+                              concoursType: s['concours_type']?.toString(),
+                              subject: s['subject_name']?.toString(),
+                              hostId: Supabase.instance.client.auth.currentUser?.id ?? '',
+                              createdAt: DateTime.now(),
+                              updatedAt: DateTime.now(),
+                            );
                             Navigator.of(context).push(MaterialPageRoute(
-                              builder: (_) => LivekitRoomScreen(sessionId: id),
+                              builder: (_) => AcademiaClassroomScreen(
+                                session: academiaSession,
+                                isHost: true,
+                              ),
                             ));
                           }
                         }
@@ -495,8 +520,31 @@ class _SessionCard extends StatelessWidget {
                     onPressed: () {
                       final id = session['id']?.toString();
                       if (id == null) return;
+                      final title = (session['title'] ?? '').toString();
+                      final desc = (session['description'] ?? '').toString();
+                      final sType = session['session_type']?.toString();
+                      final as2 = AcademiaSession(
+                        id: id,
+                        type: sType == 'exam_blanc'
+                            ? SessionType.examBlanc
+                            : sType == 'qa'
+                                ? SessionType.revisionCollective
+                                : SessionType.prepConcours,
+                        status: SessionStatus.running,
+                        provider: SessionProvider.livekit,
+                        title: title,
+                        description: desc.isNotEmpty ? desc : null,
+                        concoursType: session['concours_type']?.toString(),
+                        subject: session['subject_name']?.toString(),
+                        hostId: Supabase.instance.client.auth.currentUser?.id ?? '',
+                        createdAt: DateTime.now(),
+                        updatedAt: DateTime.now(),
+                      );
                       Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => LivekitRoomScreen(sessionId: id),
+                        builder: (_) => AcademiaClassroomScreen(
+                          session: as2,
+                          isHost: true,
+                        ),
                       ));
                     },
                     icon: const Icon(Icons.videocam, size: 16),

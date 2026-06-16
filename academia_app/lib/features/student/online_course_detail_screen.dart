@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../live/livekit_room_screen.dart';
+import '../live/academia_classroom_screen.dart';
+import '../../models/academia_session.dart';
 import '../../providers/online_course_detail_provider.dart';
 import '../../providers/student_online_courses_provider.dart';
 import '../../providers/online_course_live_sessions_provider.dart';
 import '../../providers/online_course_forum_provider.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart';
+import '../../widgets/report_content_sheet.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OnlineCourseDetailScreen extends StatefulWidget {
   final String courseId;
@@ -588,10 +591,22 @@ class _OnlineCourseDetailScreenState extends State<OnlineCourseDetailScreen> {
                       if (sessionId == null || sessionId.isEmpty) {
                         return;
                       }
+                      final academiaSession = AcademiaSession(
+                        id: sessionId,
+                        type: SessionType.course,
+                        status: SessionStatus.running,
+                        provider: SessionProvider.livekit,
+                        title: title,
+                        description: description.isNotEmpty ? description : null,
+                        hostId: '',
+                        createdAt: DateTime.now(),
+                        updatedAt: DateTime.now(),
+                      );
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => LivekitRoomScreen(
-                            sessionId: sessionId,
+                          builder: (_) => AcademiaClassroomScreen(
+                            session: academiaSession,
+                            isHost: false,
                           ),
                         ),
                       );
@@ -651,10 +666,22 @@ class _OnlineCourseDetailScreenState extends State<OnlineCourseDetailScreen> {
                             if (sessionId == null || sessionId.isEmpty) {
                               return;
                             }
+                            final academiaSession2 = AcademiaSession(
+                              id: sessionId,
+                              type: SessionType.course,
+                              status: SessionStatus.running,
+                              provider: SessionProvider.livekit,
+                              title: title,
+                              description: description.isNotEmpty ? description : null,
+                              hostId: '',
+                              createdAt: DateTime.now(),
+                              updatedAt: DateTime.now(),
+                            );
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (_) => LivekitRoomScreen(
-                                  sessionId: sessionId,
+                                builder: (_) => AcademiaClassroomScreen(
+                                  session: academiaSession2,
+                                  isHost: false,
                                 ),
                               ),
                             );
@@ -902,28 +929,76 @@ class _OnlineCourseDetailScreenState extends State<OnlineCourseDetailScreen> {
                             final content = (m['content'] ?? '').toString();
                             final senderRole =
                                 (m['sender_role'] ?? '').toString();
-                            final isMe = senderRole == 'student';
-                            return Align(
-                              alignment: isMe
-                                  ? Alignment.centerRight
-                                  : Alignment.centerLeft,
-                              child: Container(
-                                margin: const EdgeInsets.symmetric(
-                                  vertical: 2,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isMe
-                                      ? const Color(0xFFDCFCE7)
-                                      : const Color(0xFFE5E7EB),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  content,
-                                  style: const TextStyle(fontSize: 13),
+                            final msgId = m['id']?.toString();
+                            final msgUserId = m['user_id']?.toString();
+                            final currentUid = Supabase.instance.client.auth.currentUser?.id;
+                            final isMe = senderRole == 'student' || msgUserId == currentUid;
+                            return GestureDetector(
+                              onLongPress: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  builder: (ctx) => SafeArea(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (isMe && msgId != null)
+                                          ListTile(
+                                            leading: const Icon(Icons.delete_outline, color: Colors.red),
+                                            title: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+                                            onTap: () async {
+                                              Navigator.pop(ctx);
+                                              await Supabase.instance.client.rpc('app_student_delete_forum_message', params: {'p_message_id': msgId});
+                                              p.loadMessages(threadId);
+                                            },
+                                          ),
+                                        if (!isMe && msgId != null)
+                                          ListTile(
+                                            leading: const Icon(Icons.flag_outlined, color: Colors.orange),
+                                            title: const Text('Signaler'),
+                                            onTap: () {
+                                              Navigator.pop(ctx);
+                                              ReportContentSheet.show(context,
+                                                contentType: 'forum_message', contentId: msgId,
+                                                targetUserId: msgUserId,
+                                                contentPreview: content.length > 80 ? '${content.substring(0, 80)}...' : content);
+                                            },
+                                          ),
+                                        if (!isMe && msgUserId != null)
+                                          ListTile(
+                                            leading: const Icon(Icons.block, color: Colors.red),
+                                            title: const Text('Bloquer l\'auteur', style: TextStyle(color: Colors.red)),
+                                            onTap: () {
+                                              Navigator.pop(ctx);
+                                              UserModerationSheet.show(context, userId: msgUserId, userName: null);
+                                            },
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Align(
+                                alignment: isMe
+                                    ? Alignment.centerRight
+                                    : Alignment.centerLeft,
+                                child: Container(
+                                  margin: const EdgeInsets.symmetric(
+                                    vertical: 2,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isMe
+                                        ? const Color(0xFFDCFCE7)
+                                        : const Color(0xFFE5E7EB),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    content,
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
                                 ),
                               ),
                             );

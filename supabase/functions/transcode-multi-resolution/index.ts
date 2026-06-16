@@ -12,7 +12,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const LIVEKIT_URL = Deno.env.get('LIVEKIT_URL') ?? ''; // reuse VPS IP
-const VPS_IP = LIVEKIT_URL.replace('ws://', '').replace('wss://', '').replace(':7880', '').trim() || '185.220.204.214';
+const VPS_IP = LIVEKIT_URL.replace('ws://', '').replace('wss://', '').replace(':7880', '').trim() || '185.167.97.144';
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -52,8 +52,9 @@ serve(async (req: Request) => {
   const videoAssetId = body.video_asset_id as string;
   if (!videoAssetId) return jsonResponse({ success: false, error: 'video_asset_id required' }, 400);
 
-  // Get the source file
-  const { data: source, error: srcErr } = await supabase
+  // Get the source file (app schema)
+  const appDb = supabase.schema('app');
+  const { data: source, error: srcErr } = await appDb
     .from('video_sources')
     .select('*')
     .eq('video_asset_id', videoAssetId)
@@ -76,8 +77,8 @@ serve(async (req: Request) => {
     return jsonResponse({ success: false, error: 'Cannot resolve source URL' }, 500);
   }
 
-  // Check which renditions already exist
-  const { data: existing } = await supabase
+  // Check which renditions already exist (app schema)
+  const { data: existing } = await appDb
     .from('video_renditions')
     .select('rendition_key')
     .eq('video_asset_id', videoAssetId)
@@ -99,7 +100,7 @@ serve(async (req: Request) => {
     const outputPath = `renditions/${videoAssetId}/${profile.key}.mp4`;
 
     // Insert rendition entry as 'pending'
-    const { data: rendition, error: rendErr } = await supabase
+    const { data: rendition, error: rendErr } = await appDb
       .from('video_renditions')
       .insert({
         video_asset_id: videoAssetId,
@@ -123,7 +124,7 @@ serve(async (req: Request) => {
     }
 
     // Insert processing job
-    const { error: jobErr } = await supabase
+    const { error: jobErr } = await appDb
       .from('video_processing_jobs')
       .insert({
         video_asset_id: videoAssetId,

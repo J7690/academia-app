@@ -6,10 +6,36 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
 const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY') ?? '';
-const OPENROUTER_MODEL = Deno.env.get('OPENROUTER_MODEL') ?? 'google/gemini-2.0-flash-001';
+const OPENROUTER_MODEL = Deno.env.get('OPENROUTER_MODEL') ?? '';
+const OPENROUTER_FALLBACK_MODEL = Deno.env.get('OPENROUTER_FALLBACK_MODEL') ?? '';
+const OPENROUTER_EMBEDDING_MODEL = Deno.env.get('OPENROUTER_EMBEDDING_MODEL') ?? 'openai/text-embedding-3-small';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-const EMBEDDING_MODEL = 'openai/text-embedding-3-small';
+
+const ACTION_CODE = 'generate_qcm';
+const EDGE_FN = 'td-generate-exercises';
+const TEXT_CASCADE = [
+  { model: OPENROUTER_MODEL, tier: 'primary' },
+  { model: OPENROUTER_FALLBACK_MODEL, tier: 'fallback' },
+].filter(m => m.model);
+interface CascadeResult { content: string; model: string; tier: string; usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number }; costUsd: number; }
+async function callWithCascade(msgs: Array<{role:string;content:string}>, maxTok: number): Promise<CascadeResult> {
+  const errs: string[] = [];
+  for (const { model, tier } of TEXT_CASCADE) {
+    if (!model) continue;
+    try {
+      const r = await fetch('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:{Authorization:`Bearer ${OPENROUTER_API_KEY}`,'Content-Type':'application/json',Accept:'application/json'}, body:JSON.stringify({model,messages:msgs,temperature:0.7,max_tokens:maxTok}) });
+      if (!r.ok) { errs.push(`${model}(${r.status})`); continue; }
+      const d = await r.json(); const c = (d?.choices?.[0]?.message?.content??'').toString().trim();
+      if (!c) { errs.push(`${model}:empty`); continue; }
+      const u = d?.usage ?? {prompt_tokens:0,completion_tokens:0,total_tokens:0};
+      const cost = tier==='free'?0:((u.prompt_tokens||0)*0.0000001+(u.completion_tokens||0)*0.0000004);
+      console.log(`[cascade] OK: ${model} (${tier}) ${u.total_tokens}tok $${cost.toFixed(6)}`);
+      return {content:c,model,tier,usage:u,costUsd:cost};
+    } catch(e) { errs.push(`${model}:${(e as Error).message?.slice(0,60)}`); }
+  }
+  throw new Error(`All models failed: ${errs.join(' | ')}`);
+}
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -35,13 +61,19 @@ serve(async (req: Request) => {
     }).auth.getUser(jwt);
     if (!userData?.user) return jsonResponse({ error: 'not_authenticated' }, 401);
 
+    const userId = userData.user.id;
     const body = await req.json();
     const subject = (body.subject ?? '').toString().trim();
     const university = (body.university ?? '').toString().trim();
     const studyYear = (body.study_year ?? '').toString().trim();
+    const field = (body.field ?? '').toString().trim();
+    const semester = (body.semester ?? '').toString().trim();
     const count = Math.min(Math.max(body.count ?? 10, 1), 30);
     const mode = (body.mode ?? 'exercise').toString().trim();
     const bankId = (body.bank_id ?? '').toString().trim() || null;
+    const totalPoints = body.total_points ?? 20;
+    const durationMinutes = body.duration_minutes ?? 60;
+    const assignmentTitle = (body.title ?? '').toString().trim();
 
     // 1. Embedding for semantic search
     const contextQuery = `Exercices ${subject || 'universitaires'} ${university || ''} ${studyYear || ''} Burkina Faso`;
@@ -86,13 +118,17 @@ RÈGLES :
 FORMAT JSON :
 {"exercises":[{"question":"...","options":["A. ...","B. ...","C. ...","D. ..."],"correct_index":0,"explanation":"...","difficulty":2,"subject":"..."}]}`;
 
+    const fieldInfo = field ? `, filière ${field}` : '';
+    const semesterInfo = semester ? `, semestre ${semester}` : '';
+    const levelInfo = studyYear || 'L1-L2';
+
     let userPrompt = '';
     if (mode === 'td_session') {
-      userPrompt = `Compose une feuille de TD complète de ${count} exercices en "${subject || 'matière universitaire'}" pour des étudiants ${studyYear || 'L1-L2'} au Burkina Faso. Mélange QCM et questions de réflexion. Progression de difficulté croissante.`;
+      userPrompt = `Compose une feuille de TD complète de ${count} exercices en "${subject || 'matière universitaire'}" pour des étudiants ${levelInfo}${fieldInfo}${semesterInfo} au Burkina Faso. Mélange QCM et questions de réflexion. Progression de difficulté croissante. Barème total : ${totalPoints} points. Durée indicative : ${durationMinutes} minutes.`;
     } else if (mode === 'exam') {
-      userPrompt = `Compose un sujet d'examen de ${count} questions en "${subject || 'matière'}" niveau ${studyYear || 'L2'}, style université burkinabè. QCM + exercices ouverts avec barème.`;
+      userPrompt = `Compose un sujet d'examen de ${count} questions en "${subject || 'matière'}" niveau ${levelInfo}${fieldInfo}${semesterInfo}, style université burkinabè. QCM + exercices ouverts avec barème. Total : ${totalPoints} points. Durée : ${durationMinutes} minutes.`;
     } else {
-      userPrompt = `Génère ${count} exercices en "${subject || 'matière universitaire'}" adaptés au niveau ${studyYear || 'L1-L2'} des universités du Burkina Faso.`;
+      userPrompt = `Génère ${count} exercices en "${subject || 'matière universitaire'}" adaptés au niveau ${levelInfo}${fieldInfo}${semesterInfo} des universités du Burkina Faso.`;
     }
 
     if (chunks.length > 0) {
@@ -103,16 +139,34 @@ FORMAT JSON :
       }
     }
 
-    // 3. Call LLM
-    const llmResp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${OPENROUTER_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: OPENROUTER_MODEL, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], temperature: 0.7, max_tokens: 8000 }),
+    // 3. Reserve credits
+    const { data: resData } = await supabase.rpc('app_student_reserve_credits', {
+      p_action_code: ACTION_CODE, p_edge_function: EDGE_FN, p_student_id: userId,
     });
-    if (!llmResp.ok) return jsonResponse({ error: 'llm_error', status: llmResp.status }, 502);
+    const res = resData as Record<string, unknown> | null;
+    if (!res?.success) {
+      return jsonResponse({ error: 'insufficient_credits', balance: res?.balance ?? 0, cost: res?.cost ?? 0,
+        message: `Crédits insuffisants. Il vous faut ${res?.cost??0} crédits (solde: ${res?.balance??0}).` }, 402);
+    }
+    const reservationId = (res.reservation_id as string) || '';
 
-    const llmData = await llmResp.json();
-    const rawResponse = llmData?.choices?.[0]?.message?.content?.trim() ?? '';
+    // 3b. Call LLM with cascade
+    let cascadeResult: CascadeResult;
+    try {
+      cascadeResult = await callWithCascade([{role:'system',content:systemPrompt},{role:'user',content:userPrompt}], 8000);
+    } catch (e) {
+      await supabase.rpc('app_student_refund_credits', { p_reservation_id: reservationId });
+      return jsonResponse({ error: 'llm_error', detail: (e as Error).message?.slice(0,300) }, 502);
+    }
+
+    // 3c. Confirm credits
+    await supabase.rpc('app_student_confirm_credits', {
+      p_reservation_id: reservationId, p_openrouter_cost_usd: cascadeResult.costUsd,
+      p_openrouter_model: cascadeResult.model, p_tokens_input: cascadeResult.usage.prompt_tokens||0,
+      p_tokens_output: cascadeResult.usage.completion_tokens||0,
+    });
+
+    const rawResponse = cascadeResult.content;
 
     // 4. Parse JSON
     let jsonStr = rawResponse;
@@ -135,8 +189,12 @@ FORMAT JSON :
       }
     }
 
-    // 6. Insert into td_questions (SEPARATE from prep_questions)
+    // 6. Insert into td_questions with new columns
     let insertedCount = 0;
+    const fieldSql = field ? `'${field.replace(/'/g, "''")}'` : 'NULL';
+    const yearSql = studyYear ? `'${studyYear.replace(/'/g, "''")}'` : 'NULL';
+    const semSql = semester ? `'${semester.replace(/'/g, "''")}'` : 'NULL';
+
     for (const ex of parsed.exercises) {
       const qText = (ex.question ?? '').toString().trim();
       if (!qText) continue;
@@ -151,12 +209,42 @@ FORMAT JSON :
       const escapedSubj = subj.replace(/'/g, "''");
       const optionsJson = JSON.stringify(options).replace(/'/g, "''");
 
-      const insertSql = `INSERT INTO app.td_questions (${targetBankId ? `bank_id,` : ''} question_type, content, options, correct_index, explanation, difficulty, subject, is_active) VALUES (${targetBankId ? `'${targetBankId}',` : ''} 'mcq', '${escapedQ}', '${optionsJson}'::jsonb, ${correctIdx}, '${escapedExpl}', ${diff}, '${escapedSubj}', true)`;
+      const cols = [
+        targetBankId ? 'bank_id,' : '',
+        'question_type, content, options, correct_index, explanation, difficulty, subject, is_active,',
+        'field, study_year, semester, generation_mode, generated_by',
+      ].join(' ');
+      const vals = [
+        targetBankId ? `'${targetBankId}',` : '',
+        `'mcq', '${escapedQ}', '${optionsJson}'::jsonb, ${correctIdx}, '${escapedExpl}', ${diff}, '${escapedSubj}', true,`,
+        `${fieldSql}, ${yearSql}, ${semSql}, '${mode}', '${userId}'`,
+      ].join(' ');
 
+      const insertSql = `INSERT INTO app.td_questions (${cols}) VALUES (${vals})`;
       try {
         const { data: ir } = await supabase.rpc('admin_execute_sql', { p_sql: insertSql.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim() });
         if ((ir as Record<string, unknown>)?.ok) insertedCount++;
       } catch {}
+    }
+
+    // 7. Save as a generated assignment (devoir type)
+    let assignmentId: string | null = null;
+    if (mode === 'exam' || mode === 'td_session') {
+      const aTitle = assignmentTitle || `${mode === 'exam' ? 'Devoir type' : 'Feuille TD'} — ${subject || 'Universitaire'} ${studyYear || ''} ${semester || ''}`.trim();
+      const escapedTitle = aTitle.replace(/'/g, "''");
+      const questionsJsonStr = JSON.stringify(parsed.exercises).replace(/'/g, "''");
+
+      const assignSql = `INSERT INTO app.td_generated_assignments (student_id, title, subject, field, study_year, semester, mode, question_count, total_points, duration_minutes, questions_json, status) VALUES ('${userId}', '${escapedTitle}', '${(subject || 'Universitaire').replace(/'/g, "''")}', ${fieldSql}, ${yearSql}, ${semSql}, '${mode}', ${parsed.exercises.length}, ${totalPoints}, ${durationMinutes}, '${questionsJsonStr}'::jsonb, 'generated') RETURNING id`;
+
+      try {
+        const { data: aData } = await supabase.rpc('admin_execute_sql', { p_sql: assignSql.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim() });
+        const ad = aData as Record<string, unknown> | null;
+        if (ad?.ok && Array.isArray(ad.rows) && ad.rows.length > 0) {
+          assignmentId = (ad.rows[0] as Record<string, unknown>).id as string;
+        }
+      } catch (e) {
+        console.error('Failed to save generated assignment:', e);
+      }
     }
 
     return jsonResponse({
@@ -166,6 +254,12 @@ FORMAT JSON :
       chunks_used: chunks.length,
       mode,
       target: 'td_questions',
+      assignment_id: assignmentId,
+      exercises: parsed.exercises,
+      total_points: totalPoints,
+      duration_minutes: durationMinutes,
+      credits_used: res.cost,
+      model: cascadeResult.model,
     });
   } catch (err: any) {
     console.error('td-generate-exercises error:', err);

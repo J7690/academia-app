@@ -6,6 +6,8 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
 const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY') ?? '';
+const OPENROUTER_MODEL = Deno.env.get('OPENROUTER_MODEL') ?? '';
+const OPENROUTER_FALLBACK_MODEL = Deno.env.get('OPENROUTER_FALLBACK_MODEL') ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
@@ -32,15 +34,19 @@ async function extractTextFromPdf(
 ): Promise<{ text: string; pageCount: number }> {
   // Use OpenRouter's pdf-text engine (FREE) via a multimodal model
   // We send the PDF URL and ask the model to extract all text
-  const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'google/gemini-2.0-flash-001',
-      messages: [
+  const modelsToTry = [OPENROUTER_MODEL, OPENROUTER_FALLBACK_MODEL].filter(m => m);
+  const errors: string[] = [];
+  
+  for (const model of modelsToTry) {
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
         {
           role: 'user',
           content: [
@@ -65,14 +71,20 @@ async function extractTextFromPdf(
 
   if (!resp.ok) {
     const errText = await resp.text();
-    throw new Error(`OpenRouter PDF extraction failed (${resp.status}): ${errText.slice(0, 500)}`);
+    errors.push(`${model} (${resp.status}): ${errText.slice(0, 100)}`);
+    continue;
   }
 
   const data = await resp.json();
   const text = data?.choices?.[0]?.message?.content?.trim() ?? '';
-  // Estimate page count from text length (~3000 chars per page)
-  const pageCount = Math.max(1, Math.ceil(text.length / 3000));
-  return { text, pageCount };
+  if (text) {
+    const pageCount = Math.max(1, Math.ceil(text.length / 3000));
+    return { text, pageCount };
+  }
+  errors.push(`${model}: empty content`);
+  }
+
+  throw new Error(`All models failed: ${errors.join(' | ')}`);
 }
 
 type ChunkData = {

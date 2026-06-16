@@ -1,0 +1,299 @@
+{
+  "duration_seconds": 300.3,
+  "exchanges_sent": 9,
+  "transcriptions_received": 1,
+  "audio_responses_received": 0,
+  "errors_count": 0,
+  "timeouts_count": 0,
+  "disconnections_count": 0,
+  "stability_percent": 11.1,
+  "logs": [
+    {
+      "event": "connected",
+      "time": 0.0967416763305664
+    },
+    {
+      "event": "pong",
+      "time": 0.1
+    },
+    {
+      "event": "pong",
+      "time": 0.6
+    },
+    {
+      "event": "pong",
+      "time": 10.1
+    },
+    {
+      "event": "pong",
+      "time": 10.6
+    },
+    {
+      "event": "pong",
+      "time": 20.1
+    },
+    {
+      "event": "pong",
+      "time": 20.6
+    },
+    {
+      "event": "audio_sent",
+      "exchange": 0,
+      "time": 30.14885926246643
+    },
+    {
+      "type": "transcription",
+      "text": "Bonjour Bobodo",
+      "elapsed_since_send": 8.55,
+      "time": 38.71
+    },
+    {
+      "event": "pong",
+      "time": 30.1
+    },
+    {
+      "event": "pong",
+      "time": 40.7
+    },
+    {
+      "event": "pong",
+      "time": 50.2
+    },
+    {
+      "event": "pong",
+      "time": 50.7
+    },
+    {
+      "event": "audio_sent",
+      "exchange": 1,
+      "time": 60.246800899505615
+    },
+    {
+      "type": "pong",
+      "elapsed_since_send": 0.0,
+      "time": 60.26
+    },
+    {
+      "event": "pong",
+      "time": 60.2
+    },
+    {
+      "event": "pong",
+      "time": 60.8
+    },
+    {
+      "event": "pong",
+      "time": 80.3
+    },
+    {
+      "event": "pong",
+      "time": 80.8
+    },
+    {
+      "event": "audio_sent",
+      "exchange": 2,
+      "time": 90.30731701850891
+    },
+    {
+      "type": "pong",
+      "elapsed_since_send": 0.0,
+      "time": 90.32
+    },
+    {
+      "event": "pong",
+      "time": 90.3
+    },
+    {
+      "event": "pong",
+      "time": 90.8
+    },
+    {
+      "event": "pong",
+      "time": 100.3
+    },
+    {
+      "event": "pong",
+      "time": 100.8
+    },
+    {
+      "event": "pong",
+      "time": 110.4
+    },
+    {
+      "event": "pong",
+      "time": 110.9
+    },
+    {
+      "event": "audio_sent",
+      "exchange": 3,
+      "time": 120.36881828308105
+    },
+    {
+      "type": "pong",
+      "elapsed_since_send": 0.0,
+      "time": 120.38
+    },
+    {
+      "event": "pong",
+      "time": 120.4
+    },
+    {
+      "event": "pong",
+      "time": 120.9
+    },
+    {
+      "event": "pong",
+      "time": 130.9
+    },
+    {
+      "event": "pong",
+      "time": 140.9
+    },
+    {
+      "event": "audio_sent",
+      "exchange": 4,
+      "time": 150.43187022209167
+    },
+    {
+      "type": "pong",
+      "elapsed_since_send": 0.0,
+      "time": 150.44
+    },
+    {
+      "event": "pong",
+      "time": 150.4
+    },
+    {
+      "event": "pong",
+      "time": 150.9
+    },
+    {
+      "event": "pong",
+      "time": 160.5
+    },
+    {
+      "event": "pong",
+      "time": 171.0
+    },
+    {
+      "event": "audio_sent",
+      "exchange": 5,
+      "time": 180.49369359016418
+    },
+    {
+      "type": "pong",
+      "elapsed_since_send": 0.0,
+      "time": 180.5
+    },
+    {
+      "event": "pong",
+      "time": 180.5
+    },
+    {
+      "event": "pong",
+      "time": 190.0
+    },
+    {
+      "event": "pong",
+      "time": 190.5
+    },
+    {
+      "event": "pong",
+      "time": 210.1
+    },
+    {
+      "event": "audio_sent",
+      "exchange": 6,
+      "time": 210.55729842185974
+    },
+    {
+      "type": "pong",
+      "elapsed_since_send": 0.0,
+      "time": 210.57
+    },
+    {
+      "event": "pong",
+      "time": 210.6
+    },
+    {
+      "event": "pong",
+      "time": 220.1
+    },
+    {
+      "event": "pong",
+      "time": 220.6
+    },
+    {
+      "event": "pong",
+      "time": 230.1
+    },
+    {
+      "event": "pong",
+      "time": 230.6
+    },
+    {
+      "event": "pong",
+      "time": 240.1
+    },
+    {
+      "event": "audio_sent",
+      "exchange": 7,
+      "time": 240.61478757858276
+    },
+    {
+      "type": "pong",
+      "elapsed_since_send": 0.0,
+      "time": 240.63
+    },
+    {
+      "event": "pong",
+      "time": 240.6
+    },
+    {
+      "event": "pong",
+      "time": 250.1
+    },
+    {
+      "event": "pong",
+      "time": 250.6
+    },
+    {
+      "event": "pong",
+      "time": 260.2
+    },
+    {
+      "event": "pong",
+      "time": 260.7
+    },
+    {
+      "event": "pong",
+      "time": 270.2
+    },
+    {
+      "event": "audio_sent",
+      "exchange": 8,
+      "time": 270.67720437049866
+    },
+    {
+      "type": "pong",
+      "elapsed_since_send": 0.0,
+      "time": 270.69
+    },
+    {
+      "event": "pong",
+      "time": 270.7
+    },
+    {
+      "event": "pong",
+      "time": 280.2
+    },
+    {
+      "event": "pong",
+      "time": 290.3
+    },
+    {
+      "event": "pong",
+      "time": 290.8
+    }
+  ]
+}

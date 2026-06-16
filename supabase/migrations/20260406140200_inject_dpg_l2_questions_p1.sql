@@ -1,0 +1,178 @@
+-- Injection QCM — Droit Pénal Général L2 S3 (Partie 1/2)
+-- 30 questions: Introduction, Classification, Éléments constitutifs, Tentative
+
+INSERT INTO app.td_questions (id, question_type, content, options, correct_index, explanation, difficulty, subject, is_active, study_year, field, semester, generation_mode) VALUES
+
+(gen_random_uuid(), 'mcq',
+'Quelle est la meilleure définition du droit pénal ?',
+'["L''ensemble des règles relatives aux contrats","La branche du droit positif ayant pour objet la répression par l''État des comportements de nature à créer un trouble intolérable pour l''ordre public","Le droit qui régit les relations entre États","L''ensemble des règles de procédure devant les tribunaux"]'::jsonb,
+1, 'Le droit pénal désigne la branche du droit positif ayant pour objet l''étude et la répression par l''État des comportements contraires aux valeurs essentielles de la société.',
+1, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Quel décret a mis fin à la dualité du régime pénal colonial en Afrique ?',
+'["Le décret du 1er janvier 1946","Le décret du 22 avril 1946","Le décret du 5 août 1960","Le décret du 31 mai 2018"]'::jsonb,
+1, 'Le décret du 22 avril 1946 a mis fin à la dualité du régime pénal en prévoyant l''unification du droit pénal et des juridictions répressives en Afrique.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Pourquoi dit-on que le droit pénal est un droit « sanctionnateur » ?',
+'["Parce qu''il crée des infractions nouvelles","Parce qu''il intervient au second degré pour ériger en infraction les manquements graves aux règles des autres branches du droit","Parce qu''il ne prévoit que des amendes","Parce qu''il est appliqué par des juridictions spéciales"]'::jsonb,
+1, 'Le droit pénal est « sanctionnateur » car il intervient au second degré pour ériger en infraction les manquements particulièrement graves aux règles des autres disciplines du droit.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Selon l''article 121-1 du code pénal, les crimes sont les infractions punies de :',
+'["1 à 10 ans d''emprisonnement","Emprisonnement à vie ou supérieur à 10 ans","Une amende supérieure à 200 000 FCFA","30 jours à 5 ans d''emprisonnement"]'::jsonb,
+1, 'Art. 121-1 al. 1 : « sont qualifiées crimes, les infractions punies d''une peine d''emprisonnement à vie ou d''une peine d''emprisonnement supérieure à dix ans ».',
+1, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Quel est le seuil d''amende qui distingue les délits des contraventions ?',
+'["100 000 FCFA","200 000 FCFA","500 000 FCFA","1 000 000 FCFA"]'::jsonb,
+1, 'Les délits sont punis d''une amende supérieure à 200 000 FCFA. Les contraventions sont punies d''une amende n''excédant pas 200 000 FCFA (art. 121-1).',
+1, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Quel texte détermine les contraventions au Burkina Faso ?',
+'["La Constitution","La loi au sens strict","Le règlement (décrets)","La jurisprudence"]'::jsonb,
+2, 'Les contraventions sont déterminées par le règlement (décrets du pouvoir exécutif). Seuls les crimes et délits relèvent de la loi au sens strict (art. 101 Constitution).',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Les crimes relèvent de la compétence de quelle juridiction ?',
+'["Le tribunal de police","Le tribunal correctionnel","La chambre criminelle de la Cour d''appel","Le tribunal administratif"]'::jsonb,
+2, 'Les crimes relèvent de la chambre criminelle de la Cour d''appel ; les délits du tribunal correctionnel ; les contraventions du tribunal de police.',
+1, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Le délai de prescription de l''action publique en matière de crime est de :',
+'["1 an","3 ans","10 ans","20 ans"]'::jsonb,
+2, 'Prescription de l''action publique : crimes = 10 ans, délits = 3 ans, contraventions = 1 an.',
+1, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'La tentative de contravention est :',
+'["Toujours punissable","Punissable si la loi le prévoit","Jamais punissable","Punissable en cas de récidive"]'::jsonb,
+2, 'Art. 122-2 : la tentative de crime est toujours punissable ; la tentative de délit ne l''est que si la loi le prévoit ; la tentative de contravention n''est jamais punissable.',
+1, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Selon la conception objective, une infraction est politique lorsque :',
+'["Son auteur agit par mobile politique","Les agissements ont pour objet de porter atteinte à l''organisation politique de l''État","Elle est commise par un homme politique","Elle concerne les élections"]'::jsonb,
+1, 'La conception objective (retenue par le législateur) définit l''infraction politique par son objet : atteinte à l''existence ou à l''organisation politique de l''État. Le mobile est indifférent.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'La condamnation pour une infraction militaire :',
+'["Compte dans la récidive","Ne compte pas dans la récidive","Alourdit automatiquement la peine suivante","Entraîne une interdiction de droits civiques"]'::jsonb,
+1, 'La condamnation pour une infraction militaire ne compte pas dans la détermination de la récidive et n''alourdit donc pas la peine en cas de commission d''une nouvelle infraction.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Une infraction d''omission est une infraction dans laquelle :',
+'["L''auteur accomplit un acte positif interdit","L''auteur s''abstient de faire ce que la loi rend obligatoire","L''auteur oublie de payer une amende","L''auteur ne comparaît pas au tribunal"]'::jsonb,
+1, 'Dans l''infraction d''omission, on réprime pour n''avoir pas fait ce que la loi a rendu obligatoire (ex : non-assistance à personne en danger).',
+1, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Quelle est la différence entre une infraction matérielle et une infraction formelle ?',
+'["La matérielle nécessite un résultat dommageable pour être consommée, la formelle est consommée indépendamment du résultat","La matérielle est plus grave que la formelle","La matérielle concerne les biens, la formelle concerne les personnes","La matérielle est un crime, la formelle est un délit"]'::jsonb,
+0, 'L''infraction matérielle exige un résultat dommageable (pas de meurtre sans décès). L''infraction formelle est consommée indépendamment du résultat (empoisonnement dès l''administration de substances).',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''empoisonnement est une infraction :',
+'["Matérielle car il faut que la victime décède","Formelle car elle est constituée dès l''administration de substances mortifères","Impossible car on ne peut jamais prouver l''intention","D''omission car l''auteur omet de prévenir la victime"]'::jsonb,
+1, 'L''empoisonnement est une infraction formelle : elle est constituée dès l''administration de substances de nature à entraîner la mort, indépendamment des suites pour la victime.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Que signifie l''adage « nullum crimen, nulla poena sine lege » ?',
+'["Le juge peut créer de nouvelles infractions","Il n''y a pas de crime, il n''y a pas de peine sans loi","La coutume peut fonder une condamnation pénale","Toute infraction doit être jugée immédiatement"]'::jsonb,
+1, 'Cet adage exprime le principe de légalité des infractions et des peines : nul ne peut être condamné pour un fait qui ne constituait pas une infraction au regard du droit en vigueur.',
+1, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''interprétation stricte de la loi pénale (art. 111-2 al. 1 CP) signifie que :',
+'["Le juge peut étendre la loi par analogie","Le juge doit interpréter la loi pénale sans rien y retrancher et sans rien y ajouter","Le juge doit toujours condamner","Le juge est libre d''interpréter la loi comme il l''entend"]'::jsonb,
+1, 'L''interprétation stricte interdit au juge d''étendre l''application de la loi à des situations non prévues par le législateur. Le raisonnement par analogie est prohibé.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'En cas de doute sur l''interprétation d''un texte pénal, le juge doit :',
+'["Condamner par précaution","Demander l''avis du législateur","Prononcer la relaxe","Appliquer la peine maximale"]'::jsonb,
+2, 'En cas de doute, il convient de ne pas réprimer un fait qui ne tombe pas de manière certaine sous le coup d''une disposition légale. Le juge doit prononcer la relaxe.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Le principe de non-rétroactivité de la loi pénale de fond signifie que :',
+'["La loi pénale s''applique toujours rétroactivement","On ne peut pas punir en se fondant sur un texte qui n''existait pas au moment des faits","La loi pénale ne s''applique qu''aux crimes","Seules les contraventions sont soumises à ce principe"]'::jsonb,
+1, 'Art. 5 al. 2 Constitution et art. 112-1 al. 3 CP : la loi qui aggrave une peine n''a point d''effet rétroactif. On ne peut punir sur un texte inexistant au moment des faits.',
+1, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Une loi pénale plus douce (qui allège la peine) :',
+'["Ne s''applique jamais rétroactivement","S''applique rétroactivement aux infractions n''ayant pas donné lieu à condamnation définitive","Ne s''applique qu''aux crimes","S''applique uniquement si le juge le décide"]'::jsonb,
+1, 'Art. 112-1 al. 1-2 CP : la loi qui allège une peine a un effet rétroactif et s''applique aux infractions commises avant son entrée en vigueur n''ayant pas donné lieu à condamnation définitive.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Le principe de territorialité de la loi pénale (art. 113-1 al. 1 CP) signifie que :',
+'["La loi pénale ne s''applique qu''aux nationaux","La loi pénale s''applique à toute infraction commise sur le territoire national, quelle que soit la nationalité de l''auteur","La loi pénale s''applique uniquement aux étrangers","La loi pénale ne s''applique qu''aux infractions commises à l''étranger"]'::jsonb,
+1, 'La territorialité signifie que la loi pénale burkinabè s''applique à toute infraction commise sur le territoire national, que l''auteur soit burkinabè ou étranger.',
+1, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Les trois phases de l''infraction sont :',
+'["L''enquête, l''instruction et le jugement","La résolution criminelle, les actes préparatoires et le commencement d''exécution","La plainte, la poursuite et la condamnation","L''intention, le mobile et le résultat"]'::jsonb,
+1, 'L''infraction connaît 3 phases : la résolution criminelle (pensée, non punissable), les actes préparatoires (en principe non punissables) et le commencement d''exécution (seuil de la tentative).',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Les actes préparatoires sont en principe :',
+'["Toujours punissables","Non punissables sauf s''ils constituent eux-mêmes des infractions","Punissables uniquement en matière de crime","Assimilés au commencement d''exécution"]'::jsonb,
+1, 'Art. 122-3 CP : l''acte préparatoire n''est pas punissable. Toutefois certains actes préparatoires constituent eux-mêmes des infractions (détention illégale d''arme, port d''armes prohibées).',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Le commencement d''exécution selon la jurisprudence est :',
+'["Tout acte de préparation de l''infraction","Tout acte qui tend directement au délit, lorsqu''il a été accompli avec l''intention de le commettre","La seule résolution criminelle","Le résultat de l''infraction"]'::jsonb,
+1, 'La Cour de cassation a défini le commencement d''exécution comme « tout acte qui tend directement au délit, lorsqu''il a été accompli avec l''intention de le commettre » (solution intermédiaire).',
+3, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Le désistement volontaire de l''auteur d''une tentative :',
+'["Rend la tentative punissable","Rend la tentative non punissable","N''a aucun effet sur la punissabilité","Constitue une circonstance aggravante"]'::jsonb,
+1, 'Si l''auteur arrête volontairement et spontanément son entreprise criminelle, la tentative n''est pas punissable. La loi donne une chance d''impunité au désistement volontaire.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''infraction impossible est :',
+'["Jamais punissable car irréalisable","Punissable selon l''article 122-1 al. 2 du CP","Punissable uniquement si le résultat est atteint","Assimilée à un acte préparatoire"]'::jsonb,
+1, 'Art. 122-1 al. 2 : « la tentative est punissable alors même que le but recherché ne pouvait être atteint en raison de circonstances ignorées de l''auteur ». L''infraction impossible est punissable.',
+3, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'L''auteur d''une tentative de meurtre encourt :',
+'["La moitié de la peine du meurtre","La même peine que le meurtrier","Une peine symbolique","Uniquement une amende"]'::jsonb,
+1, 'Art. 122-4 CP : « la peine applicable à la tentative est celle de l''infraction elle-même ». L''auteur d''une tentative de meurtre encourt les mêmes peines qu''un meurtrier.',
+1, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Selon l''article 111-4 al. 1 du CP, en principe :',
+'["Toute infraction est non intentionnelle","Il n''y a point de crime ou de délit sans intention de le commettre","La faute contraventionnelle suffit pour les crimes","Le mobile détermine la peine"]'::jsonb,
+1, 'Art. 111-4 al. 1 CP : « il n''y a point de crime ou de délit sans intention de le commettre ». Le caractère intentionnel implique la volonté et la conscience de violer la loi.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'Quelle est la différence entre l''intention et le mobile en droit pénal ?',
+'["L''intention et le mobile sont synonymes","L''intention est la volonté de commettre l''infraction, le mobile est la raison qui a poussé l''agent à la commettre","Le mobile est plus grave que l''intention","L''intention est subjective, le mobile est objectif"]'::jsonb,
+1, 'L''intention est la volonté de violer la loi pénale. Le mobile est la raison (haine, jalousie, pitié...) qui a poussé l''agent. Le mobile est en principe indifférent à la qualification de l''infraction.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection'),
+
+(gen_random_uuid(), 'mcq',
+'La préméditation (art. 216-5 CP) constitue :',
+'["Un fait justificatif","Une cause d''atténuation de la peine","Une circonstance aggravante (dol aggravé)","Une cause d''irresponsabilité pénale"]'::jsonb,
+2, 'La préméditation est un dol aggravé : le dessein formé avant l''action d''attenter à la personne d''autrui. Elle entraîne une aggravation de la peine. Ex : meurtre avec préméditation = assassinat.',
+2, 'Droit Pénal Général', true, 'L2', 'Droit', 'S3', 'manual_injection');

@@ -8,6 +8,7 @@ enum LigdiCashState {
   sendingOtp,
   waitingOtp,
   confirming,
+  processing,
   success,
   error,
 }
@@ -21,7 +22,7 @@ class LigdiCashProvider extends ChangeNotifier {
   String? _message;
   String? _receiptNumber;
   String? _transactionId;
-  String? _operator;
+  String? _resultOperator;
   bool _commissionCreated = false;
   double _commissionAmount = 0;
   String _mode = '';
@@ -30,16 +31,20 @@ class LigdiCashProvider extends ChangeNotifier {
   String _paymentType = '';
   String _paymentId = '';
   String _phoneNumber = '';
+  String _selectedOperator = '';
+  String? _ussdCode;
 
   LigdiCashState get state => _state;
   String? get error => _error;
   String? get message => _message;
   String? get receiptNumber => _receiptNumber;
   String? get transactionId => _transactionId;
-  String? get operator => _operator;
+  String? get operatorName => _resultOperator;
+  String get selectedOperator => _selectedOperator;
   bool get commissionCreated => _commissionCreated;
   double get commissionAmount => _commissionAmount;
   String get mode => _mode;
+  String? get ussdCode => _ussdCode;
   bool get isLoading =>
       _state == LigdiCashState.sendingOtp || _state == LigdiCashState.confirming;
 
@@ -50,13 +55,15 @@ class LigdiCashProvider extends ChangeNotifier {
     _message = null;
     _receiptNumber = null;
     _transactionId = null;
-    _operator = null;
+    _resultOperator = null;
     _commissionCreated = false;
     _commissionAmount = 0;
     _mode = '';
     _paymentType = '';
     _paymentId = '';
     _phoneNumber = '';
+    _selectedOperator = '';
+    _ussdCode = null;
     notifyListeners();
   }
 
@@ -65,10 +72,13 @@ class LigdiCashProvider extends ChangeNotifier {
     required String paymentType,
     required String paymentId,
     required String phoneNumber,
+    String operator = '',
+    double? amountOverride,
   }) async {
     _paymentType = paymentType;
     _paymentId = paymentId;
     _phoneNumber = phoneNumber;
+    _selectedOperator = operator;
     _state = LigdiCashState.sendingOtp;
     _error = null;
     _message = null;
@@ -78,12 +88,15 @@ class LigdiCashProvider extends ChangeNotifier {
       paymentType: paymentType,
       paymentId: paymentId,
       phoneNumber: phoneNumber,
+      operator: operator,
+      amountOverride: amountOverride,
     );
 
     if (result['success'] == true) {
       _state = LigdiCashState.waitingOtp;
       _message = result['message']?.toString();
       _mode = result['mode']?.toString() ?? '';
+      _ussdCode = result['ussd_code']?.toString();
       notifyListeners();
       return true;
     } else {
@@ -115,19 +128,10 @@ class LigdiCashProvider extends ChangeNotifier {
     );
 
     if (result['success'] == true) {
-      // Paiement peut être complété ou en cours de traitement
-      if (result['status'] == 'processing') {
-        _state = LigdiCashState.waitingOtp;
-        _message = result['message']?.toString() ??
-            'Paiement en cours de traitement...';
-        notifyListeners();
-        return true;
-      }
-
       _state = LigdiCashState.success;
       _receiptNumber = result['receipt_number']?.toString();
       _transactionId = result['transaction_id']?.toString();
-      _operator = result['operator']?.toString();
+      _resultOperator = result['operator']?.toString();
       _commissionCreated = result['commission_created'] == true;
       _mode = result['mode']?.toString() ?? '';
       final rawCommission = result['commission_amount'];
@@ -169,6 +173,8 @@ class LigdiCashProvider extends ChangeNotifier {
         return 'Numéro de téléphone invalide. Format : 226XXXXXXXX.';
       case 'invalid_amount':
         return 'Montant invalide pour ce paiement.';
+      case 'amount_below_minimum':
+        return 'Le montant minimum est de 10 XOF.';
       case 'invalid_otp_code':
         return 'Code OTP incorrect. Vérifiez le SMS reçu.';
       case 'ligdicash_otp_failed':

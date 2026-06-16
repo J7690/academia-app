@@ -96,9 +96,12 @@ import 'providers/admin_td_enrollments_provider.dart';
 import 'providers/td_messages_provider.dart';
 import 'providers/commercial_dashboard_provider.dart';
 import 'providers/subscription_provider.dart';
+import 'providers/credit_provider.dart';
+import 'providers/academia_session_provider.dart';
 import 'features/share/share_mode_provider.dart';
 import 'providers/prep_quiz_provider.dart';
 import 'providers/prep_flashcard_provider.dart';
+import 'providers/prep_weakness_provider.dart';
 import 'providers/td_gamification_provider.dart';
 import 'providers/community_stories_provider.dart';
 import 'games/providers/tournament_provider.dart';
@@ -108,6 +111,7 @@ import 'games/screens/games_domain_hub_screen.dart';
 import 'features/auth/auth_wrapper.dart';
 import 'features/auth/auth_callback_screen.dart';
 
+// Cache invalidation comment - force full rebuild
 const String kAppVersion = '1.0.1';
 
 Future<void> _checkWebVersion() async {
@@ -260,10 +264,13 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => ShareModeProvider()),
       ChangeNotifierProvider(create: (_) => PrepQuizProvider()),
       ChangeNotifierProvider(create: (_) => PrepFlashcardProvider()),
+      ChangeNotifierProvider(create: (_) => PrepWeaknessProvider()),
       ChangeNotifierProvider(create: (_) => TdGamificationProvider()),
       ChangeNotifierProvider(create: (_) => CommunityStoriesProvider()),
       ChangeNotifierProvider(create: (_) => TournamentProvider()),
       ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
+      ChangeNotifierProvider(create: (_) => CreditProvider()),
+      ChangeNotifierProvider(create: (_) => AcademiaSessionProvider()),
     ];
 
     if (kDebugMode) {

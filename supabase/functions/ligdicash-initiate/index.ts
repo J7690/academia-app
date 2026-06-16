@@ -1,9 +1,16 @@
 // ========================================
 // ACADEMIA - EDGE FUNCTION
-// LIGDICASH-INITIATE : Envoyer OTP pour paiement mobile money
+// LIGDICASH-INITIATE : Préparer le paiement mobile money (Orange Money / Moov / Telecel)
 // ========================================
-// Mode mock : retourne succès sans appeler LigdiCash (LIGDICASH_MODE != 'live')
-// Mode live : appelle GET /pay/v02/debitotp/{phone}/{amount}
+// Flux LigdiCash "Payin sans redirection" pour mobile money :
+//   1. L'utilisateur compose le code USSD de son opérateur pour obtenir un OTP :
+//      - Orange Money BF : *144*4*6*{montant}#
+//      - Moov Money BF   : *555*6#
+//   2. L'utilisateur saisit l'OTP dans l'app
+//   3. ligdicash-confirm valide avec POST /pay/v01/straight/checkout-invoice/create + polling
+// NB: debitotp = pour Wallet LigdiCash seulement. Les opérateurs mobile money
+//     utilisent leur propre USSD pour générer l'OTP.
+// Mode mock : retourne succès simulé
 
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
@@ -16,7 +23,7 @@ const LIGDICASH_MODE = Deno.env.get('LIGDICASH_MODE') ?? 'mock'; // 'mock' or 'l
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization,apikey,content-type,accept',
+  'Access-Control-Allow-Headers': 'authorization,apikey,content-type,accept,x-client-info',
   'Access-Control-Allow-Methods': 'POST,OPTIONS',
 };
 
@@ -40,7 +47,7 @@ serve(async (req: Request) => {
     }
 
     const body = await req.json();
-    const { payment_type, payment_id, phone_number } = body;
+    const { payment_type, payment_id, phone_number, operator, amount_override } = body;
 
     if (!payment_type || !payment_id || !phone_number) {
       return new Response(
@@ -62,7 +69,13 @@ serve(async (req: Request) => {
     let amount = 0;
     let paymentStatus = '';
 
-    if (payment_type === 'application' || payment_type === 'subscription' || payment_type === 'td') {
+    // Override eventuel (mode test / dev) : montant choisi par l'utilisateur >= 10 XOF.
+    const overrideNum = typeof amount_override === 'number'
+      ? amount_override
+      : (amount_override != null ? Number(amount_override) : NaN);
+    const hasOverride = !isNaN(overrideNum) && overrideNum > 0;
+
+    if (payment_type === 'application' || payment_type === 'subscription' || payment_type === 'td' || payment_type === 'short_training') {
       const { data: payment, error: payErr } = await supabase
         .schema('app')
         .from('application_payments')
@@ -95,17 +108,25 @@ serve(async (req: Request) => {
 
       amount = payment.amount_due || payment.amount_paid || 0;
 
-      // Update payment: store phone + set status to processing
+      // Override eventuel du montant (mode test) : repercute aussi dans la DB.
+      const finalAmount = hasOverride ? overrideNum : amount;
+      amount = finalAmount;
+
+      // Update payment: store phone + set status to processing (+ amount si override)
+      const updatePayload: Record<string, unknown> = {
+        phone_number: cleanPhone,
+        payment_method: 'ligdicash_otp',
+        channel: 'ligdicash',
+        status: 'processing',
+        updated_at: new Date().toISOString(),
+      };
+      if (hasOverride) {
+        updatePayload.amount_due = finalAmount;
+      }
       await supabase
         .schema('app')
         .from('application_payments')
-        .update({
-          phone_number: cleanPhone,
-          payment_method: 'ligdicash_otp',
-          channel: 'ligdicash',
-          status: 'processing',
-          updated_at: new Date().toISOString(),
-        })
+        .update(updatePayload)
         .eq('id', payment_id);
 
     } else if (payment_type === 'marketplace') {
@@ -139,18 +160,24 @@ serve(async (req: Request) => {
       }
 
       amount = mpPayment.gross_amount || 0;
+      const finalMpAmount = hasOverride ? overrideNum : amount;
+      amount = finalMpAmount;
 
-      // Update marketplace payment
+      // Update marketplace payment (+ amount si override)
+      const mpUpdatePayload: Record<string, unknown> = {
+        phone_number: cleanPhone,
+        payment_method: 'ligdicash_otp',
+        payment_provider: 'ligdicash',
+        status: 'processing',
+        updated_at: new Date().toISOString(),
+      };
+      if (hasOverride) {
+        mpUpdatePayload.gross_amount = finalMpAmount;
+      }
       await supabase
         .schema('app')
         .from('marketplace_payments')
-        .update({
-          phone_number: cleanPhone,
-          payment_method: 'ligdicash_otp',
-          payment_provider: 'ligdicash',
-          status: 'processing',
-          updated_at: new Date().toISOString(),
-        })
+        .update(mpUpdatePayload)
         .eq('id', payment_id);
 
     } else {
@@ -160,69 +187,95 @@ serve(async (req: Request) => {
       );
     }
 
+    // Montant minimal commun a tous les services : 10 XOF
+    const MIN_PAYMENT_AMOUNT = 10;
     if (amount <= 0) {
       return new Response(
         JSON.stringify({ success: false, error: 'invalid_amount', amount }),
         { status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
       );
     }
-
-    // ==========================
-    // CALL LIGDICASH API (or mock)
-    // ==========================
-    if (LIGDICASH_MODE === 'live' && LIGDICASH_API_KEY && LIGDICASH_BEARER_TOKEN) {
-      // LIVE MODE: call LigdiCash OTP endpoint
-      const otpUrl = `https://app.ligdicash.com/pay/v02/debitotp/${cleanPhone}/${Math.round(amount)}`;
-      console.log(`[ligdicash-initiate] LIVE: calling ${otpUrl}`);
-
-      const lgResponse = await fetch(otpUrl, {
-        method: 'GET',
-        headers: {
-          'Apikey': LIGDICASH_API_KEY,
-          'Authorization': `Bearer ${LIGDICASH_BEARER_TOKEN}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const lgData = await lgResponse.json();
-      console.log(`[ligdicash-initiate] LigdiCash response:`, JSON.stringify(lgData));
-
-      if (lgData.error === true || lgData.error === 'true') {
-        return new Response(
-          JSON.stringify({ success: false, error: 'ligdicash_otp_failed', details: lgData.message || lgData }),
-          { status: 502, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
-        );
-      }
-
+    if (amount < MIN_PAYMENT_AMOUNT) {
       return new Response(
         JSON.stringify({
-          success: true,
-          otp_sent: true,
-          mode: 'live',
-          phone: cleanPhone,
+          success: false,
+          error: 'amount_below_minimum',
+          message: `Le montant minimum est de ${MIN_PAYMENT_AMOUNT} XOF.`,
           amount,
-          message: lgData.message || 'OTP envoyé. Vérifiez votre téléphone.',
+          minimum: MIN_PAYMENT_AMOUNT,
         }),
-        { headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
       );
+    }
 
+    // ==========================
+    // Pour les opérateurs mobile money : PAS d'appel à debitotp.
+    // L'utilisateur doit composer le code USSD de son opérateur pour obtenir son OTP.
+    // debitotp = Wallet LigdiCash seulement (nos utilisateurs n'en ont pas).
+    // ==========================
+    const op = (operator || '').toLowerCase();
+    const roundedAmount = Math.round(amount);
+
+    // Déterminer le code USSD selon l'opérateur
+    let ussdCode = '';
+    let ussdMessage = '';
+
+    if (op === 'orange') {
+      ussdCode = `*144*4*6*${roundedAmount}#`;
+      ussdMessage = `Composez ${ussdCode} sur votre téléphone pour recevoir votre code OTP Orange Money.`;
+    } else if (op === 'moov') {
+      ussdCode = '*555*6#';
+      ussdMessage = `Composez ${ussdCode} sur votre téléphone pour recevoir votre code OTP Moov Money.`;
+    } else if (op === 'telecel') {
+      ussdCode = '*100*6#';
+      ussdMessage = `Composez ${ussdCode} sur votre téléphone pour recevoir votre code OTP Telecel Money.`;
     } else {
-      // MOCK MODE: simulate success
-      console.log(`[ligdicash-initiate] MOCK: simulating OTP for ${cleanPhone}, amount ${amount}`);
+      // Opérateur inconnu : fallback générique
+      ussdMessage = 'Composez le code USSD de votre opérateur pour recevoir votre code OTP.';
+    }
 
+    if (LIGDICASH_MODE === 'mock') {
+      console.log(`[ligdicash-initiate] MOCK: ${cleanPhone}, amount ${amount}, operator ${op}`);
       return new Response(
         JSON.stringify({
           success: true,
-          otp_sent: true,
           mode: 'mock',
+          operator: op || 'mock',
           phone: cleanPhone,
           amount,
-          message: 'Mode test : OTP simulé. Utilisez le code 123456 pour confirmer.',
+          ussd_code: ussdCode || '*144*4*6*100#',
+          message: ussdCode
+            ? `Mode test. ${ussdMessage} Puis saisissez le code 123456.`
+            : 'Mode test : utilisez le code 123456.',
         }),
         { headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
       );
     }
+
+    // ===== LIVE MODE =====
+    // Pas d'appel API LigdiCash ici. L'utilisateur compose le USSD lui-même.
+    // L'appel API se fait dans ligdicash-confirm avec l'OTP.
+    if (!LIGDICASH_API_KEY || !LIGDICASH_BEARER_TOKEN) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'ligdicash_not_configured' }),
+        { status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`[ligdicash-initiate] LIVE: operator=${op}, phone=${cleanPhone}, amount=${roundedAmount}, ussd=${ussdCode}`);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        mode: 'live',
+        operator: op || 'unknown',
+        phone: cleanPhone,
+        amount,
+        ussd_code: ussdCode,
+        message: ussdMessage || 'Composez le code USSD de votre opérateur pour obtenir votre code OTP.',
+      }),
+      { headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+    );
 
   } catch (err) {
     console.error('[ligdicash-initiate] Error:', err);

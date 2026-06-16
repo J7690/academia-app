@@ -8,9 +8,47 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
 const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY') ?? '';
 const OPENROUTER_MODEL = Deno.env.get('OPENROUTER_MODEL') ?? '';
+const OPENROUTER_FALLBACK_MODEL = Deno.env.get('OPENROUTER_FALLBACK_MODEL') ?? '';
+const OPENROUTER_EMBEDDING_MODEL = Deno.env.get('OPENROUTER_EMBEDDING_MODEL') ?? 'openai/text-embedding-3-small';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-const EMBEDDING_MODEL = 'openai/text-embedding-3-small';
+
+const ACTION_CODE = 'chat_tuteur';
+const EDGE_FUNCTION_NAME = 'td-tutor-chat';
+
+const TEXT_MODEL_CASCADE = [
+  { model: OPENROUTER_MODEL, tier: 'primary' },
+  { model: OPENROUTER_FALLBACK_MODEL, tier: 'fallback' },
+].filter(m => m.model);
+
+interface CascadeResult {
+  content: string; model: string; tier: string;
+  usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+  costUsd: number;
+}
+
+async function callWithCascade(msgs: ChatMessage[], maxTokens: number, cascade: Array<{ model: string; tier: string }>): Promise<CascadeResult> {
+  const errors: string[] = [];
+  for (const { model, tier } of cascade) {
+    if (!model) continue;
+    try {
+      const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${OPENROUTER_API_KEY}`, 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ model, messages: msgs, temperature: 0.7, top_p: 0.95, max_tokens: maxTokens }),
+      });
+      if (!resp.ok) { errors.push(`${model}(${resp.status})`); continue; }
+      const data = await resp.json();
+      const content = (data?.choices?.[0]?.message?.content ?? '').toString().trim();
+      if (!content) { errors.push(`${model}:empty`); continue; }
+      const usage = data?.usage ?? { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+      const costUsd = tier === 'free' ? 0 : ((usage.prompt_tokens||0)*0.0000001 + (usage.completion_tokens||0)*0.0000004);
+      console.log(`[cascade] OK: ${model} (${tier}) — ${usage.total_tokens} tok, $${costUsd.toFixed(6)}`);
+      return { content, model, tier, usage, costUsd };
+    } catch (e) { errors.push(`${model}:${(e as Error).message?.slice(0,60)}`); }
+  }
+  throw new Error(`All models failed: ${errors.join(' | ')}`);
+}
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -31,12 +69,12 @@ const DEFAULT_SYSTEM_PROMPT =
 
 type ChatMessage = { role: 'user' | 'assistant' | 'system'; content: string };
 
-async function callOpenRouter(messages: ChatMessage[], maxTokens = 2048): Promise<string> {
-  if (!OPENROUTER_API_KEY || !OPENROUTER_MODEL) throw new Error('OPENROUTER not configured');
+// kept for non-cascade calls if needed
+async function callOpenRouterRaw(messages: ChatMessage[], maxTokens = 2048): Promise<string> {
   const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: { Authorization: `Bearer ${OPENROUTER_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: OPENROUTER_MODEL, messages, temperature: 0.7, top_p: 0.95, max_tokens: maxTokens }),
+    body: JSON.stringify({ model: OPENROUTER_MODEL || 'google/gemini-2.0-flash-001', messages, temperature: 0.7, top_p: 0.95, max_tokens: maxTokens }),
   });
   if (!resp.ok) throw new Error(`OpenRouter error: ${resp.status}`);
   const data = await resp.json();
@@ -97,6 +135,7 @@ serve(async (req: Request) => {
 
     const { data: userData } = await supabaseUser.auth.getUser(jwt);
     if (!userData?.user) return new Response(JSON.stringify({ error: 'not_authenticated' }), { status: 401, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } });
+    const userId = userData.user.id;
 
     const body = await req.json().catch(() => null);
     if (!body) return new Response(JSON.stringify({ error: 'invalid_body' }), { status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } });
@@ -156,14 +195,43 @@ serve(async (req: Request) => {
     for (const h of history) { messages.push(h); }
     messages.push({ role: 'user', content: message });
 
-    const reply = await callOpenRouter(messages, 2048);
+    // ─── Reserve credits ───
+    const { data: reserveData } = await supabaseService.rpc('app_student_reserve_credits', {
+      p_action_code: ACTION_CODE, p_edge_function: EDGE_FUNCTION_NAME, p_student_id: userId,
+    });
+    const reserve = reserveData as Record<string, unknown> | null;
+    if (!reserve?.success) {
+      return new Response(JSON.stringify({
+        error: 'insufficient_credits', balance: reserve?.balance ?? 0, cost: reserve?.cost ?? 0,
+        message: `Crédits insuffisants. Il vous faut ${reserve?.cost ?? 0} crédits (solde: ${reserve?.balance ?? 0}).`,
+      }), { status: 402, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } });
+    }
+    const reservationId = (reserve.reservation_id as string) || '';
+
+    // ─── Call LLM with cascade ───
+    let cascadeResult: CascadeResult;
+    try {
+      cascadeResult = await callWithCascade(messages, 2048, TEXT_MODEL_CASCADE);
+    } catch (e) {
+      await supabaseService.rpc('app_student_refund_credits', { p_reservation_id: reservationId });
+      return new Response(JSON.stringify({ error: 'Erreur IA', detail: (e as Error).message?.slice(0, 300) }), { status: 502, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } });
+    }
+
+    // ─── Confirm credits ───
+    await supabaseService.rpc('app_student_confirm_credits', {
+      p_reservation_id: reservationId, p_openrouter_cost_usd: cascadeResult.costUsd,
+      p_openrouter_model: cascadeResult.model, p_tokens_input: cascadeResult.usage.prompt_tokens || 0,
+      p_tokens_output: cascadeResult.usage.completion_tokens || 0,
+    });
+
+    const reply = cascadeResult.content;
 
     if (conversationId) {
       await saveMessage(supabaseService, conversationId, 'user', message);
       await saveMessage(supabaseService, conversationId, 'assistant', reply);
     }
 
-    return new Response(JSON.stringify({ reply }), { status: 200, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ reply, credits_used: reserve.cost, model: cascadeResult.model }), { status: 200, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } });
   } catch (e) {
     console.error('td-tutor-chat error:', e);
     return new Response(JSON.stringify({ error: 'internal_error', detail: (e as Error).message?.slice(0, 500) }), { status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } });
