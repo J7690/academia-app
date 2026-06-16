@@ -1,1 +1,0 @@
-SELECT table_name FROM information_schema.tables WHERE table_schema = 'app' AND (table_name ILIKE '%tournament%' OR table_name ILIKE '%league%' OR table_name ILIKE '%game%' OR table_name ILIKE '%match%' OR table_name ILIKE '%multiplayer%' OR table_name ILIKE '%arena%' OR table_name ILIKE '%kellenge%' OR table_name ILIKE '%reward%') ORDER BY table_name;

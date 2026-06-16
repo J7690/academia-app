@@ -9,9 +9,11 @@ pubspec.lock
 # IDE files
 .idea/
 android/.gradle/
+.cursor/
 
 # Windsurf / Python cache
-.windsurf/__pycache__/
+.windsurf/
+.devin/
 *.pyc
 
 # Supabase CLI temp
@@ -19,7 +21,10 @@ supabase/.temp/
 
 # Sensitive files
 *.env
-.env
+.env.*
+google-services.json
+livekit_credentials.json
+*.credentials.json
 keys.dart
 **/secrets/
 **/google-cloud-key.json
