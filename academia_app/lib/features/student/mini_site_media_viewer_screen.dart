@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../video/academia_playback_engine.dart';
+import '../../widgets/adaptive_video_container.dart';
 
 class MiniSiteMediaViewerScreen extends StatefulWidget {
   final Map<String, dynamic> media;
@@ -17,6 +18,8 @@ class _MiniSiteMediaViewerScreenState extends State<MiniSiteMediaViewerScreen> {
   String? _error;
   bool _isLoading = true;
   bool _isVideo = false;
+  int? _videoWidth;
+  int? _videoHeight;
 
   @override
   void initState() {
@@ -30,6 +33,10 @@ class _MiniSiteMediaViewerScreenState extends State<MiniSiteMediaViewerScreen> {
       final isVideo = mediaType.contains('video');
       final storagePath = widget.media['storage_path']?.toString() ?? '';
       final directUrl = widget.media['url']?.toString().trim() ?? '';
+      
+      // Extract video dimensions if available
+      _videoWidth = widget.media['width'] as int?;
+      _videoHeight = widget.media['height'] as int?;
 
       String? resolvedUrl;
 
@@ -128,8 +135,14 @@ class _MiniSiteMediaViewerScreenState extends State<MiniSiteMediaViewerScreen> {
       if (url == null || url.isEmpty) {
         return const SizedBox.shrink();
       }
-      return AspectRatio(
-        aspectRatio: 16 / 9,
+      // Use AdaptiveVideoContainer for auto aspect ratio detection
+      final videoWidth = _videoWidth ?? 1920;
+      final videoHeight = _videoHeight ?? 1080;
+      final videoAspectRatio = videoWidth / videoHeight;
+      
+      return AdaptiveVideoContainer(
+        videoAspectRatio: videoAspectRatio,
+        useAdaptiveSizing: true,
         child: AcademiaPlaybackEngine.view(
           url: url,
           autoplay: true,

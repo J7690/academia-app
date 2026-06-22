@@ -741,12 +741,9 @@ class _GamePlayScreenState extends State<GamePlayScreen> {
         return;
       }
 
-      // Compresser la vidéo
-      final compressedPath = await GameplayRecorderService.compressRecording(rawPath);
-      if (!mounted) return;
-
-      // Ajouter le watermark Academia
-      final watermarkedPath = await WatermarkService.addWatermark(compressedPath);
+      // Compression DISABLED - handled by Kamatera Edge Functions
+      // Use raw video directly
+      final watermarkedPath = await WatermarkService.addWatermark(rawPath);
       if (!mounted) return;
 
       setState(() => _isProcessingVideo = false);
@@ -1000,10 +997,9 @@ class _GamePlayScreenState extends State<GamePlayScreen> {
       }
       debugPrint('[GamePlay] Raw video: $rawPath');
 
-      final compressedPath = await GameplayRecorderService.compressRecording(rawPath);
-      if (!mounted) return;
-
-      final watermarkedPath = await WatermarkService.addWatermark(compressedPath);
+      // Compression DISABLED - handled by Kamatera Edge Functions
+      // Use raw video directly
+      final watermarkedPath = await WatermarkService.addWatermark(rawPath);
       if (!mounted) return;
 
       final videoFile = File(watermarkedPath);
@@ -1019,7 +1015,7 @@ class _GamePlayScreenState extends State<GamePlayScreen> {
 
       try {
         _uploadedAssetId = await VideoAssetUploadService.ingestVideoFromBytes(
-          bytes: bytes,
+          fileOrBytes: videoFile,
           fileName: fileName,
           origin: 'student_gameplay',
           contextType: 'free_video',

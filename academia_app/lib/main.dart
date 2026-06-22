@@ -151,6 +151,7 @@ Future<void> _checkWebVersion() async {
 }
 
 void main() async {
+  print('P11_MAIN_START');
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialisation des données de locale pour Intl (dates, jours en fr_FR)
@@ -169,7 +170,7 @@ void main() async {
   try {
     await PushNotificationService.instance.init();
   } catch (_) {}
-  
+
   runApp(const AcademiaApp());
 }
 

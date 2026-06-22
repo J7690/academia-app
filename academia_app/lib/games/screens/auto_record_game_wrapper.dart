@@ -141,10 +141,9 @@ class _AutoRecordGameWrapperState extends State<AutoRecordGameWrapper> {
       }
       debugPrint('[AutoRecord] Raw video: $rawPath');
 
-      final compressed = await GameplayRecorderService.compressRecording(rawPath);
-      if (!mounted) return;
-
-      final watermarked = await WatermarkService.addWatermark(compressed);
+      // Compression DISABLED - handled by Kamatera Edge Functions
+      // Use raw video directly
+      final watermarked = await WatermarkService.addWatermark(rawPath);
       if (!mounted) return;
 
       debugPrint('[AutoRecord] Watermarked video: $watermarked');
@@ -169,7 +168,7 @@ class _AutoRecordGameWrapperState extends State<AutoRecordGameWrapper> {
       Map<String, dynamic>? playback;
       try {
         videoAssetId = await VideoAssetUploadService.ingestVideoFromBytes(
-          bytes: bytes,
+          fileOrBytes: videoFile,
           fileName: fileName,
           origin: 'student_gameplay',
           contextType: 'free_video',
@@ -178,7 +177,7 @@ class _AutoRecordGameWrapperState extends State<AutoRecordGameWrapper> {
 
         // Déclencher le transcode pour obtenir le manifest playback
         playback = await VideoAssetUploadService.triggerTranscode(
-          videoAssetId: videoAssetId,
+          videoAssetId: videoAssetId!,
         );
         debugPrint('[AutoRecord] Playback manifest: $playback');
       } catch (e) {

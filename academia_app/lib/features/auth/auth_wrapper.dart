@@ -28,6 +28,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   @override
   void initState() {
+    print('P11_FIRST_SCREEN');
     super.initState();
     _client = Supabase.instance.client;
     _authSub = _client.auth.onAuthStateChange.listen((_) {

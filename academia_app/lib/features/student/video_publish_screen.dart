@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -5,6 +7,8 @@ import 'package:provider/provider.dart';
 import 'package:video_thumbnail/video_thumbnail.dart' as vt;
 
 import '../../providers/student_challenges_provider.dart';
+import '../../services/video_player_lifecycle_service.dart';
+import '../../services/videoasset_upload_service.dart';
 import '../../video/academia_playback_engine.dart';
 
 /// Écran de publication TikTok-style.
@@ -25,6 +29,16 @@ class VideoPublishScreen extends StatefulWidget {
   final String? localVideoPath;
   final int videoDurationMs;
 
+  // TikTok-style background upload: when [videoUrl] is empty and these are
+  // provided, the upload runs in the background while the user writes the
+  // caption, and "Publier" waits for it to finish (processing indicator).
+  final String? uploadLocalPath;
+  final String? uploadOrigin;
+  final String? uploadContextType;
+  final String? uploadContextId;
+  final String? uploadFileName;
+  final String? uploadMimeType;
+
   const VideoPublishScreen({
     super.key,
     required this.videoUrl,
@@ -39,11 +53,19 @@ class VideoPublishScreen extends StatefulWidget {
     this.pendingPlayback,
     this.localVideoPath,
     this.videoDurationMs = 0,
+    this.uploadLocalPath,
+    this.uploadOrigin,
+    this.uploadContextType,
+    this.uploadContextId,
+    this.uploadFileName,
+    this.uploadMimeType,
   });
 
   @override
   State<VideoPublishScreen> createState() => _VideoPublishScreenState();
 }
+
+enum _UploadPhase { idle, uploading, processing, ready, failed }
 
 class _VideoPublishScreenState extends State<VideoPublishScreen> {
   final TextEditingController _captionController = TextEditingController();
@@ -53,16 +75,121 @@ class _VideoPublishScreenState extends State<VideoPublishScreen> {
   Uint8List? _selectedCoverBytes;
   double _coverPositionMs = 0;
   bool _isExtractingCover = false;
+  AcademiaPlaybackController? _videoController;
+
+  // Background upload (TikTok flow) state.
+  _UploadPhase _uploadPhase = _UploadPhase.idle;
+  double _uploadProgress = 0.0;
+  String? _bgVideoAssetId;
+  Map<String, dynamic>? _bgPlayback;
+  String? _bgUrl;
+  String? _uploadError;
+  Completer<bool>? _uploadCompleter;
 
   bool get _isFreeVideo => widget.videoType == 'free';
+
+  String get _effectiveUrl =>
+      (_bgUrl != null && _bgUrl!.isNotEmpty) ? _bgUrl! : widget.videoUrl;
 
   Uint8List? get _effectiveCover => _selectedCoverBytes ?? widget.thumbnailBytes;
 
   @override
+  void initState() {
+    super.initState();
+    // Pause feed controllers when Publish screen opens
+    VideoPlayerLifecycleService().pauseFeed();
+    _videoController = AcademiaPlaybackController();
+
+    // Start the background upload (TikTok flow) if the video has not been
+    // uploaded yet but a local file + upload params were provided.
+    if (widget.videoUrl.trim().isEmpty &&
+        widget.uploadLocalPath != null &&
+        (widget.uploadOrigin ?? '').isNotEmpty) {
+      _startBackgroundUpload();
+    }
+  }
+
+  @override
   void dispose() {
+    // Pause video controller to prevent audio conflicts
+    if (_videoController != null && _videoController!.isAttached) {
+      _videoController!.pause();
+    }
+    // Resume feed controllers when Publish screen closes
+    VideoPlayerLifecycleService().resumeFeed();
     _captionController.dispose();
     _hashtagsController.dispose();
     super.dispose();
+  }
+
+  /// Uploads the baked video in the background while the user writes the
+  /// caption. Heavy compression/transcoding stays server-side (Kamatera).
+  Future<void> _startBackgroundUpload() async {
+    final path = widget.uploadLocalPath;
+    if (path == null || path.isEmpty) return;
+    final file = File(path);
+    if (!await file.exists()) {
+      if (mounted) {
+        setState(() {
+          _uploadPhase = _UploadPhase.failed;
+          _uploadError = 'Fichier vidéo introuvable.';
+        });
+      }
+      return;
+    }
+
+    _uploadCompleter = Completer<bool>();
+    if (mounted) {
+      setState(() {
+        _uploadPhase = _UploadPhase.uploading;
+        _uploadProgress = 0.0;
+        _uploadError = null;
+      });
+    }
+
+    try {
+      final assetId = await VideoAssetUploadService.ingestVideoFromBytes(
+        fileOrBytes: file,
+        fileName: widget.uploadFileName ?? path.split('/').last,
+        origin: widget.uploadOrigin!,
+        contextType: widget.uploadContextType,
+        contextId: widget.uploadContextId,
+        mimeType: widget.uploadMimeType,
+        onUploadProgress: (p) {
+          if (mounted) setState(() => _uploadProgress = p);
+        },
+      );
+
+      if (!mounted) return;
+      setState(() => _uploadPhase = _UploadPhase.processing);
+
+      // Mark ready + resolve playback. Server-side ABR renditions keep going
+      // in the background (playback-ready is separate from transcode-complete).
+      final playback =
+          await VideoAssetUploadService.triggerTranscode(videoAssetId: assetId);
+      if (!mounted) return;
+
+      final url = playback?['best_url']?.toString();
+      setState(() {
+        _bgVideoAssetId = assetId;
+        _bgPlayback = playback ??
+            (url != null && url.isNotEmpty
+                ? <String, dynamic>{'best_url': url}
+                : null);
+        _bgUrl = url;
+        _uploadPhase = _UploadPhase.ready;
+        _uploadProgress = 1.0;
+      });
+      if (!(_uploadCompleter?.isCompleted ?? true)) _uploadCompleter!.complete(true);
+    } catch (e) {
+      debugPrint('[Publish] Background upload failed: $e');
+      if (!mounted) return;
+      setState(() {
+        _uploadPhase = _UploadPhase.failed;
+        _uploadError = e.toString();
+      });
+      if (!(_uploadCompleter?.isCompleted ?? true)) _uploadCompleter!.complete(false);
+    }
   }
 
   Future<void> _extractCoverAtPosition(double positionMs) async {
@@ -95,6 +222,27 @@ class _VideoPublishScreenState extends State<VideoPublishScreen> {
     required StudentChallengesProvider provider,
     String? posterUrl,
   }) async {
+    // 0) Background-upload result (TikTok flow) takes priority.
+    final bgAssetId = _bgVideoAssetId?.trim() ?? '';
+    if (bgAssetId.isNotEmpty) {
+      Map<String, dynamic> pb;
+      if (_bgPlayback != null) {
+        pb = Map<String, dynamic>.from(_bgPlayback!);
+      } else {
+        final manifest = await provider.fetchPlaybackForVideoAsset(bgAssetId);
+        final rawPb = manifest?['playback'];
+        pb = rawPb is Map
+            ? Map<String, dynamic>.from(rawPb)
+            : <String, dynamic>{
+                if (_bgUrl != null && _bgUrl!.isNotEmpty) 'best_url': _bgUrl,
+              };
+      }
+      if (posterUrl != null && posterUrl.trim().isNotEmpty) {
+        pb['poster_url'] ??= posterUrl.trim();
+      }
+      return (videoAssetId: bgAssetId, playback: pb);
+    }
+
     final pendingAssetId = widget.pendingVideoAssetId?.trim() ?? '';
     if (pendingAssetId.isNotEmpty && widget.pendingPlayback != null) {
       final pb = Map<String, dynamic>.from(widget.pendingPlayback!);
@@ -104,7 +252,7 @@ class _VideoPublishScreenState extends State<VideoPublishScreen> {
       return (videoAssetId: pendingAssetId, playback: pb);
     }
 
-    final manifest = await provider.fetchPlaybackForDirectUrl(widget.videoUrl);
+    final manifest = await provider.fetchPlaybackForDirectUrl(_effectiveUrl);
     final assetId = manifest?['video_asset_id']?.toString().trim();
     final rawPlayback = manifest?['playback'];
     if (assetId != null && assetId.isNotEmpty && rawPlayback is Map) {
@@ -116,7 +264,7 @@ class _VideoPublishScreenState extends State<VideoPublishScreen> {
     }
 
     final fallback = <String, dynamic>{
-      'best_url': widget.videoUrl,
+      'best_url': _effectiveUrl,
       if (posterUrl != null && posterUrl.trim().isNotEmpty) 'poster_url': posterUrl.trim(),
     };
     return (videoAssetId: null, playback: fallback);
@@ -126,6 +274,26 @@ class _VideoPublishScreenState extends State<VideoPublishScreen> {
     if (_isPublishing) return;
 
     setState(() => _isPublishing = true);
+
+    // TikTok flow: wait for the background upload + processing to finish.
+    if (_uploadPhase == _UploadPhase.uploading ||
+        _uploadPhase == _UploadPhase.processing) {
+      final ok = await (_uploadCompleter?.future ?? Future<bool>.value(true));
+      if (!mounted) return;
+      if (!ok) {
+        setState(() => _isPublishing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_uploadError ?? 'Échec du téléversement. Réessaie.')),
+        );
+        return;
+      }
+    } else if (_uploadPhase == _UploadPhase.failed) {
+      setState(() => _isPublishing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_uploadError ?? 'Échec du téléversement. Réessaie.')),
+      );
+      return;
+    }
 
     final provider = context.read<StudentChallengesProvider>();
 
@@ -137,7 +305,7 @@ class _VideoPublishScreenState extends State<VideoPublishScreen> {
         debugPrint('[Publish] Uploading cover image (${coverBytes.length} bytes)...');
         thumbnailUrl = await provider.uploadThumbnail(
           bytes: coverBytes,
-          videoFileName: widget.videoUrl.split('/').last,
+          videoFileName: _effectiveUrl.split('/').last,
         );
         debugPrint('[Publish] thumbnailUrl=$thumbnailUrl');
       }
@@ -309,7 +477,7 @@ class _VideoPublishScreenState extends State<VideoPublishScreen> {
       submissionText: _captionController.text.trim().isEmpty
           ? null
           : _captionController.text.trim(),
-      submissionUrl: widget.videoUrl,
+      submissionUrl: _effectiveUrl,
     );
 
     if (!mounted) return;
@@ -404,14 +572,26 @@ class _VideoPublishScreenState extends State<VideoPublishScreen> {
                                         _effectiveCover!,
                                         fit: BoxFit.cover,
                                       )
-                                    : AcademiaPlaybackEngine.view(
-                                        url: widget.videoUrl,
-                                        autoplay: false,
-                                        looping: false,
-                                        muted: true,
-                                        showControls: false,
-                                        fit: BoxFit.cover,
-                                      ),
+                                    : (_effectiveUrl.isNotEmpty
+                                        ? AcademiaPlaybackEngine.view(
+                                            url: _effectiveUrl,
+                                            autoplay: false,
+                                            looping: false,
+                                            muted: true,
+                                            showControls: false,
+                                            fit: BoxFit.cover,
+                                            playbackController: _videoController,
+                                          )
+                                        : Container(
+                                            color: Colors.white10,
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.movie_creation_outlined,
+                                                color: Colors.white24,
+                                                size: 32,
+                                              ),
+                                            ),
+                                          )),
                               ),
                             ),
                             if (widget.localVideoPath != null)
@@ -519,34 +699,47 @@ class _VideoPublishScreenState extends State<VideoPublishScreen> {
               bottom: bottomPad + 12,
             ),
             color: Colors.black,
-            child: SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _isPublishing ? null : _publish,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF2D55),
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.grey,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildUploadStatus(),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _isPublishing ? null : _publish,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF2D55),
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: Colors.grey,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    child: _isPublishing
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(_publishingLabel),
+                            ],
+                          )
+                        : const Text('Publier'),
                   ),
                 ),
-                child: _isPublishing
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text('Publier'),
-              ),
+              ],
             ),
           ),
         ],
@@ -659,6 +852,93 @@ class _VideoPublishScreenState extends State<VideoPublishScreen> {
         );
       },
     );
+  }
+
+  String get _publishingLabel {
+    switch (_uploadPhase) {
+      case _UploadPhase.uploading:
+        return 'Téléversement ${(_uploadProgress * 100).toStringAsFixed(0)}%';
+      case _UploadPhase.processing:
+        return 'Traitement…';
+      default:
+        return 'Publication…';
+    }
+  }
+
+  Widget _buildUploadStatus() {
+    const Color accent = Color(0xFF00D2FF);
+    switch (_uploadPhase) {
+      case _UploadPhase.uploading:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.cloud_upload_outlined, color: accent, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Téléversement ${(_uploadProgress * 100).toStringAsFixed(0)}%',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: _uploadProgress > 0 ? _uploadProgress : null,
+                  minHeight: 4,
+                  backgroundColor: Colors.white.withValues(alpha: 0.1),
+                  color: accent,
+                ),
+              ),
+            ],
+          ),
+        );
+      case _UploadPhase.processing:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Row(
+            children: [
+              const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2, color: accent),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Traitement de la vidéo…',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12),
+              ),
+            ],
+          ),
+        );
+      case _UploadPhase.failed:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.redAccent, size: 16),
+              const SizedBox(width: 6),
+              const Expanded(
+                child: Text(
+                  'Échec du téléversement.',
+                  style: TextStyle(color: Colors.redAccent, fontSize: 12),
+                ),
+              ),
+              TextButton(
+                onPressed: _startBackgroundUpload,
+                child: const Text('Réessayer', style: TextStyle(color: accent)),
+              ),
+            ],
+          ),
+        );
+      case _UploadPhase.idle:
+      case _UploadPhase.ready:
+        return const SizedBox.shrink();
+    }
   }
 
   Widget _visibilityChip(String value, String label, IconData icon) {

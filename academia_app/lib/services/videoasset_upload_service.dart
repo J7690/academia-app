@@ -1,10 +1,11 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../utils/mime_type_helper.dart';
-import 'chunked_upload_service.dart';
+import 'tus_upload_service.dart';
 
 class VideoAssetUploadService {
   VideoAssetUploadService._();
@@ -12,7 +13,7 @@ class VideoAssetUploadService {
   static final SupabaseClient _client = Supabase.instance.client;
 
   static Future<String> ingestVideoFromBytes({
-    required Uint8List bytes,
+    required dynamic fileOrBytes, // File or Uint8List
     required String fileName,
     required String origin,
     String? contextType,
@@ -27,7 +28,22 @@ class VideoAssetUploadService {
     }
 
     final normalizedMime = MimeTypeHelper.normalize(mimeType ?? fileName.split('.').last);
-    final expectedSize = fileSizeBytes ?? bytes.length;
+    
+    // Get file size - only read bytes if needed for direct upload
+    late Uint8List bytes;
+    late int expectedSize;
+    final isFile = fileOrBytes is File;
+    
+    if (isFile) {
+      expectedSize = fileSizeBytes ?? await (fileOrBytes as File).length();
+      // Don't read bytes yet - will only read if needed for direct upload
+      // For chunked upload, we use the File directly to save memory
+    } else if (fileOrBytes is Uint8List) {
+      bytes = fileOrBytes;
+      expectedSize = fileSizeBytes ?? bytes.length;
+    } else {
+      throw Exception('fileOrBytes must be File or Uint8List');
+    }
 
     final dynamic intentResponse = await _client.rpc(
       'app_videoasset_create_upload_intent',
@@ -65,21 +81,49 @@ class VideoAssetUploadService {
     }
 
     try {
-      // Use chunked upload for files > 4MB
-      if (bytes.length > 4 * 1024 * 1024) {
-        debugPrint('[VideoAssetUpload] Using chunked upload for ${(bytes.length / 1024 / 1024).toStringAsFixed(1)} MB file');
-        final publicUrl = await ChunkedUploadService.uploadInChunks(
-          bytes: bytes,
+      // Files >= 6 MB use resumable TUS upload (robust on unstable networks).
+      // Smaller files use a single direct upload. Compression/transcoding is
+      // handled entirely server-side (Kamatera) after registration.
+      final bool useResumable = expectedSize >= TusUploadService.chunkSize;
+
+      if (isFile && useResumable) {
+        debugPrint('[VideoAssetUpload] TUS resumable upload (File) ${(expectedSize / 1024 / 1024).toStringAsFixed(1)} MB');
+        final publicUrl = await TusUploadService.uploadFile(
+          file: fileOrBytes as File,
           bucket: bucket,
-          basePath: path,
+          objectPath: path,
           contentType: normalizedMime,
           onProgress: onUploadProgress,
         );
         if (publicUrl == null) {
-          throw Exception('Chunked upload failed');
+          throw Exception('Upload résumable (TUS) échoué');
+        }
+      } else if (!isFile && useResumable) {
+        debugPrint('[VideoAssetUpload] TUS resumable upload (bytes) ${(bytes.length / 1024 / 1024).toStringAsFixed(1)} MB');
+        final tempFile = File(
+            '${Directory.systemTemp.path}/tus_${DateTime.now().millisecondsSinceEpoch}.mp4');
+        await tempFile.writeAsBytes(bytes);
+        try {
+          final publicUrl = await TusUploadService.uploadFile(
+            file: tempFile,
+            bucket: bucket,
+            objectPath: path,
+            contentType: normalizedMime,
+            onProgress: onUploadProgress,
+          );
+          if (publicUrl == null) {
+            throw Exception('Upload résumable (TUS) échoué');
+          }
+        } finally {
+          if (await tempFile.exists()) {
+            await tempFile.delete();
+          }
         }
       } else {
-        // Direct upload for small files
+        // Small files: single direct upload.
+        if (isFile) {
+          bytes = await (fileOrBytes as File).readAsBytes();
+        }
         await _client.storage.from(bucket).uploadBinary(
               path,
               bytes,
@@ -150,10 +194,6 @@ class VideoAssetUploadService {
       final data = response.data;
       if (data is Map<String, dynamic> && data['success'] == true) {
         debugPrint('[VideoAssetUpload] triggerTranscode OK: ${data['playback']}');
-
-        // Fire-and-forget: trigger multi-resolution transcoding
-        _triggerMultiResolution(videoAssetId);
-
         return data['playback'] as Map<String, dynamic>?;
       }
 
@@ -162,26 +202,6 @@ class VideoAssetUploadService {
     } catch (e) {
       debugPrint('[VideoAssetUpload] triggerTranscode error: $e');
       return null;
-    }
-  }
-
-  /// Fire-and-forget: enqueue multi-resolution transcoding jobs (720p, 480p, 240p).
-  /// Runs asynchronously after the original transcode succeeds.
-  static Future<void> _triggerMultiResolution(String videoAssetId) async {
-    try {
-      debugPrint('[VideoAssetUpload] triggerMultiResolution: videoAssetId=$videoAssetId');
-      final response = await _client.functions.invoke(
-        'transcode-multi-resolution',
-        body: {'video_asset_id': videoAssetId},
-      );
-      if (response.status == 200) {
-        final data = response.data;
-        debugPrint('[VideoAssetUpload] multiResolution OK: jobs=${data is Map ? data['jobs_created'] : '?'}');
-      } else {
-        debugPrint('[VideoAssetUpload] multiResolution: HTTP ${response.status}');
-      }
-    } catch (e) {
-      debugPrint('[VideoAssetUpload] multiResolution error (non-blocking): $e');
     }
   }
 }

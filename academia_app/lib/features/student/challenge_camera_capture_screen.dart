@@ -201,7 +201,7 @@ class _ChallengeCameraCaptureScreenState
       final camera = _cameras[index];
       final controller = CameraController(
         camera,
-        ResolutionPreset.medium,
+        ResolutionPreset.veryHigh,
         enableAudio: true,
       );
       await controller.initialize();
@@ -407,10 +407,16 @@ class _ChallengeCameraCaptureScreenState
   // --- Pick from gallery (TikTok "Upload" button) ---
 
   Future<void> _pickFromGallery() async {
+    final tGalleryStart = DateTime.now();
+    debugPrint('[TIMING] T_GALLERY_START - Clic bouton galerie: ${tGalleryStart.toIso8601String()}');
+    
     if (_isRecording || _isCountingDown) return;
     try {
       final picker = ImagePicker();
       final picked = await picker.pickVideo(source: ImageSource.gallery);
+      final tGalleryEnd = DateTime.now();
+      debugPrint('[TIMING] T_GALLERY_END - Vidéo sélectionnée dans galerie: ${tGalleryEnd.toIso8601String()} (ΔT: ${tGalleryEnd.difference(tGalleryStart).inMilliseconds}ms)');
+      
       if (picked != null && mounted) {
         Navigator.of(context).pop<List<XFile>>([picked]);
       }

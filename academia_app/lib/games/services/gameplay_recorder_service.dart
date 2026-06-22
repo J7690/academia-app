@@ -6,10 +6,10 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
-// import 'package:ffmpeg_kit_flutter_new_audio/ffmpeg_kit.dart';
-// import 'package:ffmpeg_kit_flutter_new_audio/return_code.dart';
+import 'package:ffmpeg_kit_flutter_new_audio/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter_new_audio/return_code.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:video_compress/video_compress.dart';
+// VideoCompress removed - all compression handled by Kamatera Edge Functions
 
 /// Service d'enregistrement de gameplay pour les jeux Kellenge.
 ///
@@ -156,32 +156,31 @@ class GameplayRecorderService {
       final tempDir = await getTemporaryDirectory();
       final outputPath = '${tempDir.path}/gameplay_${DateTime.now().millisecondsSinceEpoch}.mp4';
 
-      // DISABLED for release white-screen test
       // Encoder les frames PNG en vidéo MP4 via FFmpeg
-      // final cmd = '-framerate $_fps '
-      //     '-i "$_framesDir/frame_%06d.png" '
-      //     '-c:v mpeg4 -q:v 3 '
-      //     '-pix_fmt yuv420p '
-      //     '-movflags +faststart '
-      //     '-y "$outputPath"';
-      // debugPrint('[GameplayRecorder] FFmpeg: $cmd');
-      // final session = await FFmpegKit.execute(cmd);
-      // final returnCode = await session.getReturnCode();
-      // if (ReturnCode.isSuccess(returnCode)) {
-      //   final file = File(outputPath);
-      //   if (await file.exists()) {
-      //     final sizeBytes = await file.length();
-      //     debugPrint(
-      //       '[GameplayRecorder] Vidéo créée: '
-      //       '${(sizeBytes / 1024 / 1024).toStringAsFixed(1)} MB, '
-      //       '$_frameCount frames',
-      //     );
-      //     await _cleanup();
-      //     return outputPath;
-      //   }
-      // }
-      // final logs = await session.getLogsAsString();
-      // debugPrint('[GameplayRecorder] FFmpeg error: $logs');
+      final cmd = '-framerate $_fps '
+          '-i "$_framesDir/frame_%06d.png" '
+          '-c:v mpeg4 -q:v 3 '
+          '-pix_fmt yuv420p '
+          '-movflags +faststart '
+          '-y "$outputPath"';
+      debugPrint('[GameplayRecorder] FFmpeg: $cmd');
+      final session = await FFmpegKit.execute(cmd);
+      final returnCode = await session.getReturnCode();
+      if (ReturnCode.isSuccess(returnCode)) {
+        final file = File(outputPath);
+        if (await file.exists()) {
+          final sizeBytes = await file.length();
+          debugPrint(
+            '[GameplayRecorder] Vidéo créée: '
+            '${(sizeBytes / 1024 / 1024).toStringAsFixed(1)} MB, '
+            '$_frameCount frames',
+          );
+          await _cleanup();
+          return outputPath;
+        }
+      }
+      final logs = await session.getLogsAsString();
+      debugPrint('[GameplayRecorder] FFmpeg error: $logs');
       debugPrint('[GameplayRecorder] DISABLED — FFmpegKit not available');
       await _cleanup();
       return null;
@@ -192,29 +191,10 @@ class GameplayRecorderService {
     }
   }
 
-  /// Compresse la vidéo pour réduire la taille avant upload.
+  /// Skip compression - upload raw video to avoid blocking and let Worker Kamatera handle transcoding
   static Future<String> compressRecording(String sourcePath) async {
     try {
-      debugPrint('[GameplayRecorder] Compression en cours...');
-      final info = await VideoCompress.compressVideo(
-        sourcePath,
-        quality: VideoQuality.MediumQuality,
-        deleteOrigin: false,
-        includeAudio: false,
-      );
-
-      if (info != null && info.path != null) {
-        final originalSize = await File(sourcePath).length();
-        final compressedSize = await File(info.path!).length();
-        debugPrint(
-          '[GameplayRecorder] Compression: '
-          '${(originalSize / 1024 / 1024).toStringAsFixed(1)} MB → '
-          '${(compressedSize / 1024 / 1024).toStringAsFixed(1)} MB '
-          '(${(100 - compressedSize * 100 / originalSize).toStringAsFixed(0)}% réduit)',
-        );
-        return info.path!;
-      }
-
+      debugPrint('[GameplayRecorder] Compression SKIPPED - uploading raw video');
       return sourcePath;
     } catch (e) {
       debugPrint('[GameplayRecorder] Erreur compression: $e');

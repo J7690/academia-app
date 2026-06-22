@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import 'academia_playback_view.dart';
 
@@ -22,6 +23,7 @@ class AcademiaPlaybackEngine {
     AcademiaPlaybackController? playbackController,
     double? videoAspectRatio,
   }) {
+    debugPrint('[P9_ENGINE] url=$url');
     return AcademiaPlaybackView(
       url: url,
       preferFlutterPlayer: preferFlutterPlayer,

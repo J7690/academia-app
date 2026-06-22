@@ -12,7 +12,9 @@ android/.gradle/
 .cursor/
 
 # Windsurf / Python cache
-.windsurf/
+.windsurf/__pycache__/
+.windsurf/.env
+.windsurf/.env.local
 .devin/
 *.pyc
 

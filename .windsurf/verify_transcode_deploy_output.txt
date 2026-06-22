@@ -1,0 +1,13 @@
+================================================================================
+VERIF DEPLOY transcode-video
+================================================================================
+
+1. POST https://thevdfcwlcqzdoybfvgs.supabase.co/functions/v1/transcode-video  (video_asset_id=c6f1ceb6-d276-4e39-b59f-ebdaee927fe6)
+   HTTP 200
+   BODY: {"success":true,"video_asset_id":"c6f1ceb6-d276-4e39-b59f-ebdaee927fe6","playback":{"best_url":"https://thevdfcwlcqzdoybfvgs.supabase.co/storage/v1/object/public/video-assets/raw/c6f1ceb6-d276-4e39-b59f-ebdaee927fe6/3aa54da7-0039-451b-bf47-9cf87d65dd68","poster_url":null,"renditions":[{"label":"original","url":"https://thevdfcwlcqzdoybfvgs.supabase.co/storage/v1/object/public/video-assets/raw/c6f1ceb6-d276-4e39-b59f-ebdaee927fe6/3aa54da7-0039-451b-bf47-9cf87d65dd68","mime_type":"video/mp4"}]}}
+
+2. Verif rendition 'original' pour l'asset de test
+   [{"n": 0}]
+
+3. Nombre total de renditions 'original' en base
+   [{"n": 0}]

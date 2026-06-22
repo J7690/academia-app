@@ -17,10 +17,14 @@ object ExoPlayerRegistry {
     private val players = mutableSetOf<ExoPlayer>()
 
     @Synchronized
-    fun register(player: ExoPlayer) { players.add(player) }
+    fun register(player: ExoPlayer) {
+        players.add(player)
+    }
 
     @Synchronized
-    fun unregister(player: ExoPlayer) { players.remove(player) }
+    fun unregister(player: ExoPlayer) {
+        players.remove(player)
+    }
 
     @Synchronized
     fun pauseAll() {

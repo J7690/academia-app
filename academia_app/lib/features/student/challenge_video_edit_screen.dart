@@ -12,9 +12,9 @@ import 'package:video_player/video_player.dart';
 /// - Speed adjustment (0.5x, 1x, 1.5x, 2x, 3x)
 /// - Rotate (90°, 180°, 270°)
 /// - Crop (16:9, 9:16, 1:1, 4:3)
-/// - Compress (360p, 480p, 720p, 1080p)
 /// - Merge multiple clips
 /// - Export with progress indicator
+/// Note: Compression disabled - handled by Kamatera Edge Functions
 ///
 /// Returns the exported file path via Navigator.pop.
 class ChallengeVideoEditScreen extends StatefulWidget {
@@ -52,16 +52,16 @@ class _ChallengeVideoEditScreenState extends State<ChallengeVideoEditScreen> {
   String _cropLabel = 'Original';
   VideoAspectRatio? _cropRatio;
 
-  // Compress
-  String _compressLabel = '720p';
-  VideoResolution _compressResolution = VideoResolution.p720;
+  // Compress DISABLED - handled by Kamatera Edge Functions
+  // String _compressLabel = '720p';
+  // VideoResolution _compressResolution = VideoResolution.p720;
 
   // Export
   bool _isExporting = false;
   double _exportProgress = 0;
 
   // Active tool
-  String _activeTool = 'trim'; // trim, speed, rotate, crop, compress
+  String _activeTool = 'trim'; // trim, speed, rotate, crop
 
   String get _primaryPath => widget.videoPaths.first;
 
@@ -146,8 +146,8 @@ class _ChallengeVideoEditScreenState extends State<ChallengeVideoEditScreen> {
         builder = builder.crop(aspectRatio: _cropRatio!);
       }
 
-      // Compress
-      builder = builder.compress(resolution: _compressResolution);
+      // Compress DISABLED - handled by Kamatera Edge Functions
+      // builder = builder.compress(resolution: _compressResolution);
 
       // Export
       final outputPath = await builder.export(
@@ -290,8 +290,9 @@ class _ChallengeVideoEditScreenState extends State<ChallengeVideoEditScreen> {
         return _buildRotatePanel();
       case 'crop':
         return _buildCropPanel();
-      case 'compress':
-        return _buildCompressPanel();
+      // Compress DISABLED - handled by Kamatera Edge Functions
+      // case 'compress':
+      //   return _buildCompressPanel();
       default:
         return const SizedBox.shrink();
     }
@@ -471,49 +472,49 @@ class _ChallengeVideoEditScreenState extends State<ChallengeVideoEditScreen> {
     );
   }
 
-  // --- Compress panel ---
+  // --- Compress panel DISABLED - handled by Kamatera Edge Functions ---
 
-  Widget _buildCompressPanel() {
-    final options = <MapEntry<String, VideoResolution>>[
-      const MapEntry('360p', VideoResolution.p360),
-      const MapEntry('480p', VideoResolution.p480),
-      const MapEntry('720p', VideoResolution.p720),
-      const MapEntry('1080p', VideoResolution.p1080),
-    ];
+  // Widget _buildCompressPanel() {
+  //   final options = <MapEntry<String, VideoResolution>>[
+  //     const MapEntry('360p', VideoResolution.p360),
+  //     const MapEntry('480p', VideoResolution.p480),
+  //     const MapEntry('720p', VideoResolution.p720),
+  //     const MapEntry('1080p', VideoResolution.p1080),
+  //   ];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: options.map((o) {
-          final selected = o.key == _compressLabel;
-          return GestureDetector(
-            onTap: () => setState(() {
-              _compressLabel = o.key;
-              _compressResolution = o.value;
-            }),
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: selected ? const Color(0xFF1EA75C) : Colors.white12,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                o.key,
-                style: TextStyle(
-                  color: selected ? Colors.white : Colors.white70,
-                  fontWeight:
-                      selected ? FontWeight.w600 : FontWeight.normal,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(vertical: 12),
+  //     child: Row(
+  //       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //       children: options.map((o) {
+  //         final selected = o.key == _compressLabel;
+  //         return GestureDetector(
+  //           onTap: () => setState(() {
+  //             _compressLabel = o.key;
+  //             _compressResolution = o.value;
+  //           }),
+  //           child: Container(
+  //             padding:
+  //                 const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  //             decoration: BoxDecoration(
+  //               color: selected ? const Color(0xFF1EA75C) : Colors.white12,
+  //               borderRadius: BorderRadius.circular(20),
+  //             ),
+  //             child: Text(
+  //               o.key,
+  //               style: TextStyle(
+  //                 color: selected ? Colors.white : Colors.white70,
+  //                 fontWeight:
+  //                     selected ? FontWeight.w600 : FontWeight.normal,
+  //                 fontSize: 14,
+  //               ),
+  //             ),
+  //           ),
+  //         );
+  //       }).toList(),
+  //     ),
+  //   );
+  // }
 
   // --- Tool selector ---
 
@@ -523,7 +524,8 @@ class _ChallengeVideoEditScreenState extends State<ChallengeVideoEditScreen> {
       const MapEntry('speed', Icons.speed),
       const MapEntry('rotate', Icons.rotate_right),
       const MapEntry('crop', Icons.crop),
-      const MapEntry('compress', Icons.compress),
+      // Compress DISABLED - handled by Kamatera Edge Functions
+      // const MapEntry('compress', Icons.compress),
     ];
 
     return Container(

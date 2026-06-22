@@ -1,0 +1,100 @@
+{
+  "results": {
+    "1_users": {
+      "0": [
+        {
+          "event": "connected",
+          "time": 0.08466863632202148
+        },
+        {
+          "event": "audio_sent",
+          "time": 0.09008979797363281
+        },
+        {
+          "event": "inner_timeout",
+          "elapsed": 5.01
+        }
+      ]
+    },
+    "2_users": {
+      "0": [
+        {
+          "event": "connected",
+          "time": 0.11238384246826172
+        },
+        {
+          "event": "audio_sent",
+          "time": 0.11739850044250488
+        },
+        {
+          "event": "inner_timeout",
+          "elapsed": 5.0
+        }
+      ],
+      "1": [
+        {
+          "event": "connected",
+          "time": 0.11751103401184082
+        },
+        {
+          "event": "audio_sent",
+          "time": 0.1274113655090332
+        },
+        {
+          "event": "inner_timeout",
+          "elapsed": 5.0
+        }
+      ]
+    },
+    "3_users": {
+      "0": [
+        {
+          "event": "connected",
+          "time": 0.17287969589233398
+        },
+        {
+          "event": "audio_sent",
+          "time": 0.17763423919677734
+        },
+        {
+          "event": "inner_timeout",
+          "elapsed": 5.01
+        }
+      ],
+      "2": [
+        {
+          "event": "connected",
+          "time": 0.17743921279907227
+        },
+        {
+          "event": "audio_sent",
+          "time": 0.1859421730041504
+        },
+        {
+          "event": "inner_timeout",
+          "elapsed": 5.0
+        }
+      ],
+      "1": [
+        {
+          "event": "connected",
+          "time": 0.18669414520263672
+        },
+        {
+          "event": "audio_sent",
+          "time": 0.19296622276306152
+        },
+        {
+          "event": "inner_timeout",
+          "elapsed": 5.0
+        }
+      ]
+    }
+  },
+  "transcriptions": {
+    "1_users": {},
+    "2_users": {},
+    "3_users": {}
+  },
+  "timestamp": 1781394599.7502136
+}

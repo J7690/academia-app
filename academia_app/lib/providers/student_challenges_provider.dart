@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/tus_upload_service.dart';
 import '../utils/mime_type_helper.dart';
 
 /// Provider pour la gestion des challenges côté étudiant
@@ -630,15 +632,45 @@ class StudentChallengesProvider extends ChangeNotifier {
   }
 
   Future<String?> uploadChallengeVideo({
-    required Uint8List bytes,
+    required Uint8List? bytes,
     required String fileName,
     required String challengeId,
     String? mimeType,
+    String? localPath,
   }) async {
-    debugPrint('[ChallengesProvider] uploadChallengeVideo: fileName=$fileName, challengeId=$challengeId, bytes=${bytes.length}');
+    final enterTime = DateTime.now();
+    debugPrint('[UPLOAD_ENTER] uploadChallengeVideo: fileName=$fileName, challengeId=$challengeId');
+    
+    // Prefer File if localPath is provided (streaming, no memory load)
+    File? file;
+    if (localPath != null && localPath.isNotEmpty) {
+      file = File(localPath);
+      if (!await file.exists()) {
+        debugPrint('[UPLOAD_RETURN] null - localPath file does not exist: $localPath');
+        _setError('Fichier vidéo non disponible.');
+        return null;
+      }
+      debugPrint('[UPLOAD_FILE_LOADED] from localPath=$localPath');
+    }
+    
+    // Fallback to bytes if no file
+    if (file == null && bytes == null) {
+      debugPrint('[UPLOAD_RETURN] null - both file and bytes are null');
+      _setError('Fichier vidéo non disponible.');
+      return null;
+    }
+    
+    if (file != null) {
+      final fileSize = await file.length();
+      debugPrint('[UPLOAD_FILE_SIZE] file=${(fileSize / 1024 / 1024).toStringAsFixed(2)} MB');
+    } else if (bytes != null) {
+      debugPrint('[UPLOAD_FILE_SIZE] bytes=${bytes.length} (${(bytes.length / 1024 / 1024).toStringAsFixed(2)} MB)');
+    }
+    
     _setError(null);
     final user = _client.auth.currentUser;
     if (user == null) {
+      debugPrint('[UPLOAD_RETURN] null - Utilisateur non authentifié');
       _setError('Utilisateur non authentifié.');
       return null;
     }
@@ -648,16 +680,49 @@ class StudentChallengesProvider extends ChangeNotifier {
     final storagePath =
         '${user.id}/challenges/$challengeId/$sanitizedFileName';
 
+    String? url;
     try {
-      await _client.storage.from('challenge-media').uploadBinary(
-            storagePath,
-            bytes,
-            fileOptions: FileOptions(
-              contentType: MimeTypeHelper.normalize(mimeType),
-              upsert: true,
-            ),
-          );
+      debugPrint('[UPLOAD_BEFORE_STORAGE] path=$storagePath');
+      final beforeStorage = DateTime.now();
+      
+      // Use resumable upload for large files, prefer File streaming
+      if (file != null) {
+        url = await TusUploadService.uploadFile(
+          file: file,
+          bucket: 'challenge-media',
+          objectPath: storagePath,
+          contentType: MimeTypeHelper.normalize(mimeType) ?? 'video/mp4',
+          onProgress: (progress) {
+            debugPrint('[UPLOAD_PROGRESS] ${(progress * 100).toStringAsFixed(0)}%');
+          },
+        );
+      } else if (bytes != null) {
+        // Fallback: write bytes to temp file then upload
+        final tempFile = File('${Directory.systemTemp.path}/temp_video_${DateTime.now().millisecondsSinceEpoch}.mp4');
+        await tempFile.writeAsBytes(bytes);
+        url = await TusUploadService.uploadFile(
+          file: tempFile,
+          bucket: 'challenge-media',
+          objectPath: storagePath,
+          contentType: MimeTypeHelper.normalize(mimeType) ?? 'video/mp4',
+          onProgress: (progress) {
+            debugPrint('[UPLOAD_PROGRESS] ${(progress * 100).toStringAsFixed(0)}%');
+          },
+        );
+        await tempFile.delete();
+      } else {
+        throw Exception('No file or bytes available for upload');
+      }
+      
+      if (url == null) {
+        throw Exception('Chunked upload failed');
+      }
+      
+      final afterStorage = DateTime.now();
+      final storageDuration = afterStorage.difference(beforeStorage).inMilliseconds;
+      debugPrint('[UPLOAD_AFTER_STORAGE] duration=${storageDuration}ms');
     } on StorageException catch (e) {
+      debugPrint('[UPLOAD_EXCEPTION] StorageException: ${e.message} (status=${e.statusCode})');
       final message = e.message.toLowerCase();
       final error = (e.error ?? '').toLowerCase();
       final statusCode = e.statusCode?.toString() ?? '';
@@ -667,17 +732,22 @@ class StudentChallengesProvider extends ChangeNotifier {
 
       if (!isDuplicate) {
         _setError(e.toString());
+        debugPrint('[UPLOAD_RETURN] null - StorageException non duplicate');
         return null;
       }
+      debugPrint('[UPLOAD_RETURN] Ignoring duplicate file');
     } catch (e) {
+      debugPrint('[UPLOAD_EXCEPTION] Generic: $e');
       _setError(e.toString());
+      debugPrint('[UPLOAD_RETURN] null - Generic exception');
       return null;
     }
 
-    final publicUrl =
-        _client.storage.from('challenge-media').getPublicUrl(storagePath);
-    debugPrint('[ChallengesProvider] uploadChallengeVideo: publicUrl=$publicUrl');
-    return publicUrl;
+    // ResumableUploadService already returns the public URL
+    final exitTime = DateTime.now();
+    final totalDuration = exitTime.difference(enterTime).inMilliseconds;
+    debugPrint('[UPLOAD_RETURN] $url (total=${totalDuration}ms)');
+    return url;
   }
 
   Future<Map<String, dynamic>?> fetchPlaybackForDirectUrl(String url) async {
@@ -913,14 +983,44 @@ class StudentChallengesProvider extends ChangeNotifier {
   }
 
   Future<String?> uploadFreeVideo({
-    required Uint8List bytes,
+    required Uint8List? bytes,
     required String fileName,
     String? mimeType,
+    String? localPath,
   }) async {
-    debugPrint('[ChallengesProvider] uploadFreeVideo: fileName=$fileName, bytes=${bytes.length}');
+    final enterTime = DateTime.now();
+    debugPrint('[UPLOAD_ENTER] uploadFreeVideo: fileName=$fileName');
+    
+    // Prefer File if localPath is provided (streaming, no memory load)
+    File? file;
+    if (localPath != null && localPath.isNotEmpty) {
+      file = File(localPath);
+      if (!await file.exists()) {
+        debugPrint('[UPLOAD_RETURN] null - localPath file does not exist: $localPath');
+        _setError('Fichier vidéo non disponible.');
+        return null;
+      }
+      debugPrint('[UPLOAD_FILE_LOADED] from localPath=$localPath');
+    }
+    
+    // Fallback to bytes if no file
+    if (file == null && bytes == null) {
+      debugPrint('[UPLOAD_RETURN] null - both file and bytes are null');
+      _setError('Fichier vidéo non disponible.');
+      return null;
+    }
+    
+    if (file != null) {
+      final fileSize = await file.length();
+      debugPrint('[UPLOAD_FILE_SIZE] file=${(fileSize / 1024 / 1024).toStringAsFixed(2)} MB');
+    } else if (bytes != null) {
+      debugPrint('[UPLOAD_FILE_SIZE] bytes=${bytes.length} (${(bytes.length / 1024 / 1024).toStringAsFixed(2)} MB)');
+    }
+    
     _setError(null);
     final user = _client.auth.currentUser;
     if (user == null) {
+      debugPrint('[UPLOAD_RETURN] null - Utilisateur non authentifié');
       _setError('Utilisateur non authentifié.');
       return null;
     }
@@ -929,16 +1029,49 @@ class StudentChallengesProvider extends ChangeNotifier {
         fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
     final storagePath = '${user.id}/free_videos/$sanitizedFileName';
 
+    String? url;
     try {
-      await _client.storage.from('challenge-media').uploadBinary(
-            storagePath,
-            bytes,
-            fileOptions: FileOptions(
-              contentType: MimeTypeHelper.normalize(mimeType),
-              upsert: true,
-            ),
-          );
+      debugPrint('[UPLOAD_BEFORE_STORAGE] path=$storagePath');
+      final beforeStorage = DateTime.now();
+      
+      // Use resumable upload for large files, prefer File streaming
+      if (file != null) {
+        url = await TusUploadService.uploadFile(
+          file: file,
+          bucket: 'challenge-media',
+          objectPath: storagePath,
+          contentType: MimeTypeHelper.normalize(mimeType) ?? 'video/mp4',
+          onProgress: (progress) {
+            debugPrint('[UPLOAD_PROGRESS] ${(progress * 100).toStringAsFixed(0)}%');
+          },
+        );
+      } else if (bytes != null) {
+        // Fallback: write bytes to temp file then upload
+        final tempFile = File('${Directory.systemTemp.path}/temp_video_${DateTime.now().millisecondsSinceEpoch}.mp4');
+        await tempFile.writeAsBytes(bytes);
+        url = await TusUploadService.uploadFile(
+          file: tempFile,
+          bucket: 'challenge-media',
+          objectPath: storagePath,
+          contentType: MimeTypeHelper.normalize(mimeType) ?? 'video/mp4',
+          onProgress: (progress) {
+            debugPrint('[UPLOAD_PROGRESS] ${(progress * 100).toStringAsFixed(0)}%');
+          },
+        );
+        await tempFile.delete();
+      } else {
+        throw Exception('No file or bytes available for upload');
+      }
+      
+      if (url == null) {
+        throw Exception('Chunked upload failed');
+      }
+      
+      final afterStorage = DateTime.now();
+      final storageDuration = afterStorage.difference(beforeStorage).inMilliseconds;
+      debugPrint('[UPLOAD_AFTER_STORAGE] duration=${storageDuration}ms');
     } on StorageException catch (e) {
+      debugPrint('[UPLOAD_EXCEPTION] StorageException: ${e.message} (status=${e.statusCode})');
       final message = e.message.toLowerCase();
       final error = (e.error ?? '').toLowerCase();
       final statusCode = e.statusCode?.toString() ?? '';
@@ -948,17 +1081,22 @@ class StudentChallengesProvider extends ChangeNotifier {
 
       if (!isDuplicate) {
         _setError(e.toString());
+        debugPrint('[UPLOAD_RETURN] null - StorageException non duplicate');
         return null;
       }
+      debugPrint('[UPLOAD_RETURN] Ignoring duplicate file');
     } catch (e) {
+      debugPrint('[UPLOAD_EXCEPTION] Generic: $e');
       _setError(e.toString());
+      debugPrint('[UPLOAD_RETURN] null - Generic exception');
       return null;
     }
 
-    final publicUrl =
-        _client.storage.from('challenge-media').getPublicUrl(storagePath);
-    debugPrint('[ChallengesProvider] uploadFreeVideo: publicUrl=$publicUrl');
-    return publicUrl;
+    // ResumableUploadService already returns the public URL
+    final exitTime = DateTime.now();
+    final totalDuration = exitTime.difference(enterTime).inMilliseconds;
+    debugPrint('[UPLOAD_RETURN] $url (total=${totalDuration}ms)');
+    return url;
   }
 
   /// Upload a thumbnail image to Storage and return its public URL.

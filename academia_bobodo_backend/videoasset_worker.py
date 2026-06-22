@@ -592,7 +592,7 @@ async def _process_single_job(job: Dict[str, Any], worker_id: str) -> None:
         await _mark_job_failed(job_id or "", "invalid_job_payload")
         return
 
-    if job_type in ("generate_hls", "generate_mp4"):
+    if job_type in ("generate_hls", "generate_mp4", "transcode_resolution"):
         await _process_generate_hls_job(job, worker_id)
         return
 

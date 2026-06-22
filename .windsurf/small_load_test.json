@@ -1,0 +1,77 @@
+{
+  "1": {
+    "num_users": 1,
+    "load_ms": 2259.5,
+    "ram_load_mb": 526.6,
+    "total_elapsed_ms": 56751.0,
+    "avg_time_per_transcription_ms": 2837.1,
+    "min_time_ms": 2609.9,
+    "max_time_ms": 3091.0,
+    "avg_cpu_percent": 300.8,
+    "max_cpu_percent": 305.9,
+    "avg_ram_mb": 679.5,
+    "max_ram_mb": 680.3,
+    "transcriptions_per_user": {
+      "0": 20
+    },
+    "total_transcriptions": 20
+  },
+  "2": {
+    "num_users": 2,
+    "load_ms": 2259.5,
+    "ram_load_mb": 526.6,
+    "total_elapsed_ms": 56105.3,
+    "avg_time_per_transcription_ms": 5574.5,
+    "min_time_ms": 4733.9,
+    "max_time_ms": 5945.5,
+    "avg_cpu_percent": 304.6,
+    "max_cpu_percent": 315.0,
+    "avg_ram_mb": 686.7,
+    "max_ram_mb": 687.1,
+    "transcriptions_per_user": {
+      "0": 10,
+      "1": 10
+    },
+    "total_transcriptions": 20
+  },
+  "3": {
+    "num_users": 3,
+    "load_ms": 2259.5,
+    "ram_load_mb": 526.6,
+    "total_elapsed_ms": 50109.3,
+    "avg_time_per_transcription_ms": 8229.5,
+    "min_time_ms": 6746.5,
+    "max_time_ms": 8561.3,
+    "avg_cpu_percent": 305.7,
+    "max_cpu_percent": 317.2,
+    "avg_ram_mb": 693.2,
+    "max_ram_mb": 693.9,
+    "transcriptions_per_user": {
+      "0": 6,
+      "2": 6,
+      "1": 6
+    },
+    "total_transcriptions": 18
+  },
+  "5": {
+    "num_users": 5,
+    "load_ms": 2259.5,
+    "ram_load_mb": 526.6,
+    "total_elapsed_ms": 55069.6,
+    "avg_time_per_transcription_ms": 13429.0,
+    "min_time_ms": 11097.4,
+    "max_time_ms": 14095.3,
+    "avg_cpu_percent": 306.6,
+    "max_cpu_percent": 320.7,
+    "avg_ram_mb": 706.2,
+    "max_ram_mb": 706.3,
+    "transcriptions_per_user": {
+      "0": 4,
+      "2": 4,
+      "4": 4,
+      "3": 4,
+      "1": 4
+    },
+    "total_transcriptions": 20
+  }
+}

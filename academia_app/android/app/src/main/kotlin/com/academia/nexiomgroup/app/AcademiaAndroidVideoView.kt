@@ -1,12 +1,13 @@
 package com.academia.nexiomgroup.app
 
 import android.content.Context
+import android.util.Log
 import android.view.View
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
@@ -51,14 +52,13 @@ object VideoCacheManager {
     }
 
     fun buildCacheDataSourceFactory(context: Context): DataSource.Factory {
-        val httpFactory = DefaultHttpDataSource.Factory()
-            .setConnectTimeoutMs(5_000)
-            .setReadTimeoutMs(5_000)
-            .setAllowCrossProtocolRedirects(true)
+        // Use DefaultDataSource to handle file://, content://, http://, https://, asset://
+        val defaultFactory = DefaultDataSource.Factory(context)
+            .setTransferListener(null) // Optional: add transfer listener for debugging
 
         return CacheDataSource.Factory()
             .setCache(getCache(context))
-            .setUpstreamDataSourceFactory(httpFactory)
+            .setUpstreamDataSourceFactory(defaultFactory)
             .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
     }
 
@@ -106,6 +106,8 @@ class AcademiaAndroidVideoView(
         val showControls = (creationParams?.get("showControls") as? Boolean) ?: false
         val resizeMode = (creationParams?.get("resizeMode") as? String) ?: "cover"
 
+        Log.d("[RUNTIME NATIVE]", "AcademiaAndroidVideoView init - url=${url.take(60)} autoplay=$autoplay loop=$loop muted=$muted")
+
         val renderersFactory = DefaultRenderersFactory(context)
             .setEnableDecoderFallback(true)
             .setMediaCodecSelector(VideoCacheManager.safeCodecSelector)
@@ -124,11 +126,26 @@ class AcademiaAndroidVideoView(
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
+        Log.d("[RUNTIME NATIVE]", "Creating ExoPlayer")
         player = ExoPlayer.Builder(context)
             .setRenderersFactory(renderersFactory)
             .setMediaSourceFactory(mediaSourceFactory)
             .setLoadControl(loadControl)
             .build()
+
+        // Add listener for playback state and errors
+        player.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(state: Int) {
+                Log.d("[RUNTIME NATIVE]", "Playback state changed: $state")
+            }
+
+            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                Log.e("[RUNTIME NATIVE]", "Player error: ${error.errorCode} - ${error.errorCodeName}")
+                Log.e("[RUNTIME NATIVE]", "Error message: ${error.message}")
+                Log.e("[RUNTIME NATIVE]", "Error cause: ${error.cause}", error.cause)
+                error.printStackTrace()
+            }
+        })
 
         player.repeatMode = if (loop) Player.REPEAT_MODE_ALL else Player.REPEAT_MODE_OFF
         player.volume = if (muted) 0f else 1f
@@ -149,22 +166,52 @@ class AcademiaAndroidVideoView(
 
         if (url.isNotEmpty()) {
             currentUrl = url
-            player.setMediaItem(MediaItem.fromUri(url))
+            Log.d("[RUNTIME NATIVE]", "Calling setMediaItem - url=${url.take(60)}")
+            
+            // Explicit URI handling
+            val mediaItem = when {
+                url.startsWith("file://") -> {
+                    val path = android.net.Uri.parse(url).path
+                    Log.d("[RUNTIME NATIVE]", "Local file URI: exists=${java.io.File(path).exists()} path=$path")
+                    MediaItem.fromUri(url)
+                }
+                url.startsWith("content://") -> {
+                    Log.d("[RUNTIME NATIVE]", "Content URI: $url")
+                    MediaItem.fromUri(url)
+                }
+                url.startsWith("http://") || url.startsWith("https://") -> {
+                    Log.d("[RUNTIME NATIVE]", "Network URI: $url")
+                    MediaItem.fromUri(url)
+                }
+                else -> {
+                    Log.d("[RUNTIME NATIVE]", "Unknown URI scheme: $url")
+                    MediaItem.fromUri(url)
+                }
+            }
+            
+            player.setMediaItem(mediaItem)
+            Log.d("[RUNTIME NATIVE]", "Calling prepare() - START")
+            val stopwatch = android.os.SystemClock.elapsedRealtime()
             player.prepare()
+            val elapsed = android.os.SystemClock.elapsedRealtime() - stopwatch
+            Log.d("[RUNTIME NATIVE]", "Calling prepare() - END - duration=${elapsed}ms")
         }
 
         methodChannel = MethodChannel(messenger, "academia_android_video_$id")
         methodChannel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "play" -> {
+                    Log.d("[RUNTIME NATIVE]", "MethodChannel: play")
                     player.playWhenReady = true
                     result.success(true)
                 }
                 "pause" -> {
+                    Log.d("[RUNTIME NATIVE]", "MethodChannel: pause")
                     player.playWhenReady = false
                     result.success(true)
                 }
                 "toggle" -> {
+                    Log.d("[RUNTIME NATIVE]", "MethodChannel: toggle")
                     player.playWhenReady = !player.playWhenReady
                     result.success(player.playWhenReady)
                 }
@@ -179,11 +226,38 @@ class AcademiaAndroidVideoView(
                 "setUrl" -> {
                     val newUrl = (call.argument<String>("url")).orEmpty()
                     val play = call.argument<Boolean>("autoplay") ?: true
+                    Log.d("[RUNTIME NATIVE]", "MethodChannel: setUrl - url=${newUrl.take(60)} autoplay=$play")
                     if (newUrl.isNotEmpty() && newUrl != currentUrl) {
                         currentUrl = newUrl
-                        player.setMediaItem(MediaItem.fromUri(newUrl))
+                        
+                        // Explicit URI handling
+                        val mediaItem = when {
+                            newUrl.startsWith("file://") -> {
+                                val path = android.net.Uri.parse(newUrl).path
+                                Log.d("[RUNTIME NATIVE]", "Local file URI (setUrl): exists=${java.io.File(path).exists()} path=$path")
+                                MediaItem.fromUri(newUrl)
+                            }
+                            newUrl.startsWith("content://") -> {
+                                Log.d("[RUNTIME NATIVE]", "Content URI (setUrl): $newUrl")
+                                MediaItem.fromUri(newUrl)
+                            }
+                            newUrl.startsWith("http://") || newUrl.startsWith("https://") -> {
+                                Log.d("[RUNTIME NATIVE]", "Network URI (setUrl): $newUrl")
+                                MediaItem.fromUri(newUrl)
+                            }
+                            else -> {
+                                Log.d("[RUNTIME NATIVE]", "Unknown URI scheme (setUrl): $newUrl")
+                                MediaItem.fromUri(newUrl)
+                            }
+                        }
+                        
+                        player.setMediaItem(mediaItem)
                         player.playWhenReady = play
+                        Log.d("[RUNTIME NATIVE]", "Calling prepare() after setUrl - START")
+                        val stopwatch = android.os.SystemClock.elapsedRealtime()
                         player.prepare()
+                        val elapsed = android.os.SystemClock.elapsedRealtime() - stopwatch
+                        Log.d("[RUNTIME NATIVE]", "Calling prepare() after setUrl - END - duration=${elapsed}ms")
                     } else if (newUrl == currentUrl) {
                         // Same URL — just control playback
                         player.playWhenReady = play
@@ -199,6 +273,7 @@ class AcademiaAndroidVideoView(
                     result.success(true)
                 }
                 "stop" -> {
+                    Log.d("[RUNTIME NATIVE]", "MethodChannel: stop")
                     player.stop()
                     currentUrl = ""
                     result.success(true)
@@ -211,6 +286,7 @@ class AcademiaAndroidVideoView(
     override fun getView(): View = playerView
 
     override fun dispose() {
+        Log.d("[RUNTIME NATIVE]", "AcademiaAndroidVideoView dispose - releasing ExoPlayer")
         methodChannel.setMethodCallHandler(null)
         ExoPlayerRegistry.unregister(player)
         playerView.player = null

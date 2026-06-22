@@ -1,0 +1,47 @@
+[
+  {
+    "exchange": 0,
+    "audio_file": "expr_000.wav",
+    "transcription": "Bonjour Bobodo",
+    "t0_send": 1781431965.9524095,
+    "t1_silence_plus_stt": 8.394,
+    "t2_bobodo_plus_tts": 3.214,
+    "t_total": 11.608
+  },
+  {
+    "exchange": 1,
+    "audio_file": "expr_001.wav",
+    "transcription": "Je veux parler \u00e0 Bobodo.",
+    "t0_send": 1781431977.6373253,
+    "t1_silence_plus_stt": 8.846,
+    "t2_bobodo_plus_tts": 3.913,
+    "t_total": 12.759
+  },
+  {
+    "exchange": 2,
+    "audio_file": "expr_002.wav",
+    "transcription": "Bobodo, explique-moi, c'est le con.",
+    "t0_send": 1781431990.4535034,
+    "t1_silence_plus_stt": 9.218,
+    "t2_bobodo_plus_tts": 3.611,
+    "t_total": 12.829
+  },
+  {
+    "exchange": 3,
+    "audio_file": "expr_003.wav",
+    "transcription": "Academia est une super plateforme.",
+    "t0_send": 1781432003.3432481,
+    "t1_silence_plus_stt": 8.599,
+    "t2_bobodo_plus_tts": 3.801,
+    "t_total": 12.4
+  },
+  {
+    "exchange": 4,
+    "audio_file": "expr_004.wav",
+    "transcription": "Comment fonctionne Academia?",
+    "t0_send": 1781432015.8035572,
+    "t1_silence_plus_stt": 8.274,
+    "t2_bobodo_plus_tts": 5.942,
+    "t_total": 14.216
+  }
+]

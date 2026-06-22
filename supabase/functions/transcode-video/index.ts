@@ -66,7 +66,7 @@ serve(async (req: Request) => {
     // ── 1. Fetch the video_asset and its primary source ──
     const { data: asset, error: assetErr } = await appDb
       .from('video_assets')
-      .select('id, status, owner_id')
+      .select('id, status')
       .eq('id', videoAssetId)
       .single();
 

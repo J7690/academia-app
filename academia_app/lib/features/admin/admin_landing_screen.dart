@@ -615,7 +615,7 @@ class _AdminLandingScreenState extends State<AdminLandingScreen> {
                           try {
                             final videoAssetId =
                                 await VideoAssetUploadService.ingestVideoFromBytes(
-                              bytes: Uint8List.fromList(bytes),
+                              fileOrBytes: Uint8List.fromList(bytes),
                               fileName: file.name,
                               mimeType: file.extension,
                               origin: 'admin_landing_carousel_video',

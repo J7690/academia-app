@@ -23,6 +23,10 @@ class AcademiaPlaybackController {
   Future<void> pause() async => _state?._pauseExternal();
   Future<void> play() async => _state?._playExternal();
 
+  /// Imperatively set the audio volume (0.0 = muted, 1.0 = full).
+  Future<void> setVolume(double volume) async =>
+      _state?._setVolumeExternal(volume);
+
   /// Current playback position in milliseconds.
   Future<int> getPosition() async => await _state?._getPositionMs() ?? 0;
 
@@ -85,7 +89,8 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
   /// True when running on Android (not web).
   bool get _useNativeAndroid => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
-  bool get _shouldUseNativeAndroid => _useNativeAndroid && !widget.preferFlutterPlayer;
+  /// Android always uses native player, iOS/Web always use Flutter video_player.
+  bool get _shouldUseNativeAndroid => _useNativeAndroid;
 
   @override
   void initState() {
@@ -99,39 +104,67 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
   @override
   void didUpdateWidget(covariant AcademiaPlaybackView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    
     if (oldWidget.url != widget.url) {
+      // URL changed - hot-switch on native player, reinit on Flutter player
       if (_shouldUseNativeAndroid && _nativeChannel != null) {
-        // Hot-switch URL on existing native player — no PlatformView recreation
         final newUrl = UrlNormalizer.normalize(widget.url.trim());
         if (newUrl.isNotEmpty) {
           _nativeChannel!.invokeMethod('setUrl', {
             'url': newUrl,
             'autoplay': widget.autoplay,
           });
-          debugPrint('[AcademiaPlaybackView] setUrl on existing player: ${newUrl.length > 60 ? '${newUrl.substring(0, 60)}...' : newUrl}');
         }
         _hasCompleted = false;
       } else {
+        // Flutter player - dispose and reinit
         _disposeController();
         _hasCompleted = false;
         _init();
       }
-    } else if (oldWidget.muted != widget.muted) {
-      _controller?.setVolume(widget.muted ? 0.0 : 1.0);
-      if (_shouldUseNativeAndroid && _nativeChannel != null) {
-        _nativeChannel!.invokeMethod('setVolume', {'volume': widget.muted ? 0.0 : 1.0});
+    } else {
+      // URL unchanged: apply mute and autoplay INDEPENDENTLY. Both can change in
+      // the same rebuild when a feed page becomes active/inactive; the previous
+      // `else if` chain dropped one of the two (e.g. unmuted but never played).
+      if (oldWidget.muted != widget.muted) {
+        if (_shouldUseNativeAndroid && _nativeChannel != null) {
+          _nativeChannel!.invokeMethod('setVolume', {'volume': widget.muted ? 0.0 : 1.0});
+        } else {
+          _controller?.setVolume(widget.muted ? 0.0 : 1.0);
+        }
       }
-    } else if (oldWidget.autoplay != widget.autoplay && _shouldUseNativeAndroid && _nativeChannel != null) {
-      // Autoplay state changed (e.g. page became active/inactive)
-      if (widget.autoplay) {
-        _nativeChannel!.invokeMethod('play');
-      } else {
-        _nativeChannel!.invokeMethod('pause');
+      if (oldWidget.autoplay != widget.autoplay) {
+        if (_shouldUseNativeAndroid && _nativeChannel != null) {
+          if (widget.autoplay) {
+            _nativeChannel!.invokeMethod('play');
+          } else {
+            _nativeChannel!.invokeMethod('pause');
+          }
+        } else {
+          final c = _controller;
+          if (c != null && c.value.isInitialized) {
+            if (widget.autoplay) {
+              c.play();
+            } else {
+              c.pause();
+            }
+          }
+        }
       }
     }
   }
 
   Future<void> _init() async {
+    // Android always uses native player - no need to initialize VideoPlayerController
+    if (_shouldUseNativeAndroid) {
+      setState(() {
+        _initializing = false;
+        _error = null;
+      });
+      return;
+    }
+
+    // --- Web / iOS: Flutter video_player ---
     final original = widget.url.trim();
     if (original.isEmpty) {
       setState(() {
@@ -145,20 +178,6 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
     final uri = Uri.tryParse(url);
     final isLocalFileUri = uri != null && uri.scheme.toLowerCase() == 'file';
 
-    // Sur Android, on utilise la PlatformView native qui a le filtre MediaTek.
-    // Pas besoin d'initialiser un VideoPlayerController.
-    // Exception: pour les previews locales (file://), la PlatformView native peut
-    // crasher selon les devices. Dans ce cas on utilise video_player.
-    if (_shouldUseNativeAndroid && !isLocalFileUri) {
-      debugPrint('[AcademiaPlaybackView] using native Android view url=$url');
-      setState(() {
-        _initializing = false;
-        _error = null;
-      });
-      return;
-    }
-
-    // --- Web / iOS: Flutter video_player ---
     setState(() {
       _initializing = true;
       _error = null;
@@ -166,7 +185,6 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
     });
 
     try {
-      debugPrint('[AcademiaPlaybackView] init url=$url');
       final VideoPlayerController controller;
       if (isLocalFileUri) {
         final parsed = Uri.parse(url);
@@ -175,16 +193,11 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
         controller = VideoPlayerController.networkUrl(Uri.parse(url));
       }
       _controller = controller;
+      debugPrint('[PLAYER_CREATED] VideoPlayerController initialized url=$url');
 
       await controller.initialize();
       await controller.setLooping(widget.looping);
       await controller.setVolume(widget.muted ? 0.0 : 1.0);
-
-      final v0 = controller.value;
-      debugPrint(
-        '[AcademiaPlaybackView] initialized isWeb=$kIsWeb duration=${v0.duration} '
-        'aspectRatio=${v0.aspectRatio} muted=${widget.muted} looping=${widget.looping}',
-      );
 
       controller.addListener(() {
         final c = _controller;
@@ -197,10 +210,6 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
           if (widget.onFirstPlay != null) {
             widget.onFirstPlay!();
           }
-          debugPrint(
-            '[AcademiaPlaybackView] playing isWeb=$kIsWeb '
-            'position=${v.position} duration=${v.duration}',
-          );
         }
 
         if (widget.looping) return;
@@ -209,17 +218,12 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
         if (d == Duration.zero) return;
         if (!v.isPlaying && v.position >= d && !_hasCompleted) {
           _hasCompleted = true;
-          debugPrint(
-            '[AcademiaPlaybackView] completed isWeb=$kIsWeb '
-            'position=${v.position} duration=$d',
-          );
           widget.onCompleted?.call();
         }
       });
 
       if (widget.autoplay) {
         await controller.play();
-        debugPrint('[AcademiaPlaybackView] autoplay play() requested isWeb=$kIsWeb');
       }
       if (!mounted) {
         await controller.dispose();
@@ -230,7 +234,6 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
       });
     } catch (e) {
       if (!mounted) return;
-      debugPrint('[AcademiaPlaybackView] init error=$e url=$url');
       setState(() {
         _initializing = false;
         _error = e;
@@ -250,6 +253,7 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
     final c = _controller;
     _controller = null;
     if (c != null) {
+      debugPrint('[PLAYER_DISPOSED] VideoPlayerController disposed');
       c.dispose();
     }
   }
@@ -299,6 +303,7 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
   }
 
   Future<void> _pauseExternal() async {
+    debugPrint('[PLAYER_PAUSED] pause called');
     if (_useNativeAndroid) {
       final ch = _nativeChannel;
       if (ch == null) return;
@@ -318,7 +323,27 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
     }
   }
 
+  /// Imperatively change the audio volume without rebuilding the widget.
+  /// Used by the lifecycle service to mute feed players when leaving the feed.
+  Future<void> _setVolumeExternal(double volume) async {
+    final v = volume.clamp(0.0, 1.0);
+    if (_useNativeAndroid) {
+      final ch = _nativeChannel;
+      if (ch == null) return;
+      try {
+        await ch.invokeMethod('setVolume', {'volume': v})
+            .timeout(const Duration(seconds: 2), onTimeout: () => null);
+      } catch (_) {}
+      return;
+    }
+    final c = _controller;
+    if (c != null && c.value.isInitialized) {
+      await c.setVolume(v);
+    }
+  }
+
   Future<void> _playExternal() async {
+    debugPrint('[PLAYER_RESUMED] play called');
     if (_useNativeAndroid) {
       final ch = _nativeChannel;
       if (ch == null) return;
@@ -416,6 +441,7 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
                       : optimalResizeMode; // Use orientation-aware mode for contain
 
       debugPrint('[AcademiaPlaybackView] build AndroidView url=${url.length > 60 ? '${url.substring(0, 60)}...' : url}  autoplay=${widget.autoplay}');
+      debugPrint('[P8_BUILD] url=$url native=$_shouldUseNativeAndroid flutter=${!_shouldUseNativeAndroid}');
 
       return AndroidView(
         viewType: 'academia_android_video',
@@ -429,7 +455,6 @@ class _AcademiaPlaybackViewState extends State<AcademiaPlaybackView> {
         },
         creationParamsCodec: const StandardMessageCodec(),
         onPlatformViewCreated: (int viewId) {
-          debugPrint('[AcademiaPlaybackView] PlatformView created viewId=$viewId url=${url.length > 60 ? '${url.substring(0, 60)}...' : url}');
           _nativeChannel = MethodChannel('academia_android_video_$viewId');
         },
       );

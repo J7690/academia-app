@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-// import 'package:ffmpeg_kit_flutter_new_audio/ffmpeg_kit.dart';
-// import 'package:ffmpeg_kit_flutter_new_audio/ffprobe_kit.dart';
-// import 'package:ffmpeg_kit_flutter_new_audio/return_code.dart';
+import 'package:ffmpeg_kit_flutter_new_audio/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter_new_audio/ffprobe_kit.dart';
+import 'package:ffmpeg_kit_flutter_new_audio/return_code.dart';
 import 'package:http/http.dart' as http;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -57,16 +57,14 @@ class AudioMixService {
   /// Probes whether the video file has an audio stream.
   static Future<bool> _videoHasAudio(String videoPath) async {
     try {
-      // DISABLED for release white-screen test
-      // final session = await FFprobeKit.getMediaInformation(videoPath);
-      // final info = session.getMediaInformation();
-      // if (info == null) return false;
-      // final streams = info.getStreams();
-      // for (final s in streams) {
-      //   final type = s.getType();
-      //   if (type != null && type.toLowerCase() == 'audio') return true;
-      // }
-      // return false;
+      final session = await FFprobeKit.getMediaInformation(videoPath);
+      final info = session.getMediaInformation();
+      if (info == null) return false;
+      final streams = info.getStreams();
+      for (final s in streams) {
+        final type = s.getType();
+        if (type != null && type.toLowerCase() == 'audio') return true;
+      }
       return false;
     } catch (e) {
       debugPrint('[AudioMix] Probe error: $e');
@@ -81,20 +79,18 @@ class AudioMixService {
       final f = File(path);
       if (!await f.exists()) return 'FILE_NOT_FOUND';
       final size = await f.length();
-      // DISABLED for release white-screen test
-      // final session = await FFprobeKit.getMediaInformation(path);
-      // final info = session.getMediaInformation();
-      // if (info == null) return 'PROBE_FAILED (size=$size)';
-      // final streams = info.getStreams();
-      // final streamDescs = <String>[];
-      // for (final s in streams) {
-      //   final type = s.getType() ?? '?';
-      //   final codec = s.getCodec() ?? '?';
-      //   streamDescs.add('$type/$codec');
-      // }
-      // final duration = info.getDuration() ?? '?';
-      // return 'OK size=$size duration=$duration streams=[${streamDescs.join(", ")}]';
-      return 'DISABLED (size=$size)';
+      final session = await FFprobeKit.getMediaInformation(path);
+      final info = session.getMediaInformation();
+      if (info == null) return 'PROBE_FAILED (size=$size)';
+      final streams = info.getStreams();
+      final streamDescs = <String>[];
+      for (final s in streams) {
+        final type = s.getType() ?? '?';
+        final codec = s.getCodec() ?? '?';
+        streamDescs.add('$type/$codec');
+      }
+      final duration = info.getDuration() ?? '?';
+      return 'OK size=$size duration=$duration streams=[${streamDescs.join(", ")}]';
     } catch (e) {
       return 'PROBE_ERROR: $e';
     }
@@ -106,9 +102,8 @@ class AudioMixService {
     debugPrint('[AudioMix] ARGS (${args.length}): ${args.join(' | ')}');
     debugPrint('[AudioMix] ════════════════════════════════════════');
 
-    // DISABLED for release white-screen test
-    // final session = await FFmpegKit.executeWithArguments(args);
-    // final rc = await session.getReturnCode();
+    final session = await FFmpegKit.executeWithArguments(args);
+    final rc = await session.getReturnCode();
     // if (ReturnCode.isSuccess(rc)) {
     //   final f = File(outputPath);
     //   if (await f.exists() && await f.length() > 0) {

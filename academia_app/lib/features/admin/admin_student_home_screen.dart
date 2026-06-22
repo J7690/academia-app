@@ -224,7 +224,7 @@ class _AdminStudentHomeScreenState extends State<AdminStudentHomeScreen> {
                               );
                               final videoAssetId =
                                   await VideoAssetUploadService.ingestVideoFromBytes(
-                                bytes: Uint8List.fromList(bytes),
+                                fileOrBytes: Uint8List.fromList(bytes),
                                 fileName: file.name,
                                 mimeType: file.extension,
                                 origin: 'admin_student_home_hero_playlist',
@@ -559,7 +559,7 @@ class _AdminStudentHomeScreenState extends State<AdminStudentHomeScreen> {
                           try {
                             final videoAssetId =
                                 await VideoAssetUploadService.ingestVideoFromBytes(
-                              bytes: Uint8List.fromList(bytes),
+                              fileOrBytes: Uint8List.fromList(bytes),
                               fileName: file.name,
                               mimeType: file.extension,
                               origin: 'admin_student_home_carousel_video',

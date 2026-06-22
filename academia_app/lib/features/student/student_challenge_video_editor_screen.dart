@@ -7,9 +7,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-// import 'package:ffmpeg_kit_flutter_new_audio/ffmpeg_kit.dart';
-// import 'package:ffmpeg_kit_flutter_new_audio/return_code.dart';
-import 'package:video_compress/video_compress.dart';
+import 'package:ffmpeg_kit_flutter_new_audio/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter_new_audio/return_code.dart';
+// VideoCompress removed - all compression handled by Kamatera Edge Functions
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,10 +19,11 @@ import '../../providers/student_challenges_provider.dart';
 import '../../services/videoasset_upload_service.dart';
 import '../../services/video_segment_merge_service.dart';
 import '../../services/video_orientation_service.dart';
+import '../../services/video_player_lifecycle_service.dart';
 import '../../video/academia_playback_engine.dart';
 import '../../video/audio_mix_service.dart';
 import '../../games/services/watermark_service.dart';
-import '../../video/overlay_burn_in_service.dart';
+// import '../../video/overlay_burn_in_service.dart'; // REMOVED - dead code
 import '../../widgets/audio_picker_sheet.dart';
 import '../../widgets/dj_mix_sheet.dart';
 import '../../widgets/equation_editor.dart';
@@ -178,6 +179,11 @@ class _StudentChallengeVideoEditorScreenState
   @override
   void initState() {
     super.initState();
+    debugPrint('[P6_PATH] Editor opened');
+    // Pause all feed controllers when Studio opens
+    VideoPlayerLifecycleService().pauseFeed();
+    // Disable feed autoplay to prevent double resume
+    VideoPlayerLifecycleService().setFeedAutoplayEnabled(false);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
 
@@ -194,6 +200,14 @@ class _StudentChallengeVideoEditorScreenState
 
   @override
   void dispose() {
+    // Pause preview controller to prevent audio conflicts
+    if (_previewPlaybackController.isAttached) {
+      _previewPlaybackController.pause();
+    }
+    // Resume feed controllers when Studio closes
+    VideoPlayerLifecycleService().resumeFeed();
+    // Re-enable feed autoplay
+    VideoPlayerLifecycleService().setFeedAutoplayEnabled(true);
     _descriptionController.dispose();
     _overlayTextController.dispose();
     _equationController.dispose();
@@ -206,6 +220,10 @@ class _StudentChallengeVideoEditorScreenState
   /// This prevents native crashes caused by abruptly destroying
   /// AndroidView PlatformViews while video codecs are still active.
   Future<void> _cleanupAndPop([bool result = true]) async {
+    // Pause preview controller to prevent audio conflicts
+    if (_previewPlaybackController.isAttached) {
+      _previewPlaybackController.pause();
+    }
     // Clear video state so the PlatformView is removed from the tree
     if (mounted) {
       setState(() {
@@ -239,24 +257,40 @@ class _StudentChallengeVideoEditorScreenState
   }
 
   Future<void> _processSegments(List<XFile> segments) async {
+    print('P11_PROCESSSEGMENTS_REACHED');
+    final enterTime = DateTime.now();
+    debugPrint('[P6_ENTER] _processSegments');
+    final t0 = DateTime.now();
+    debugPrint('[TIMING] T0 - Segments reçus de caméra: ${t0.toIso8601String()}');
+
     setState(() {
       _capturedSegments = segments;
     });
 
     if (segments.length == 1) {
-      // Single segment → auto-compress then auto-upload in background
+      // Single segment → show immediately, compress in background
       try {
         final firstFile = segments.first;
         final name = firstFile.name.isNotEmpty ? firstFile.name : 'video.mp4';
 
-        debugPrint('[Studio] Auto-compressing captured segment: ${firstFile.path}');
-        await _compressAndSetVideo(firstFile.path, name);
+        debugPrint('[Studio] Showing video immediately: ${firstFile.path}');
+        
+        // Show video immediately without compression/watermark
+        final ext = name.contains('.') ? name.split('.').last : 'mp4';
+        setState(() {
+          _localVideoPath = firstFile.path;
+          _fileName = name;
+          _mimeType = ext;
+          _uploadedUrl = null;
+          _videoInitialized = false;
+          _videoBytes = null;
+        });
 
-        // Auto-upload in background (non-blocking) — like TikTok
-        if (mounted && _videoBytes != null && _uploadedUrl == null && !_isUploading) {
-          debugPrint('[Studio] Auto-upload triggered in background');
-          _uploadVideo(); // fire-and-forget, no await
-        }
+        // Generate thumbnail in background (non-blocking)
+        _generateThumbnailInBackground(firstFile.path);
+
+        // COMPRESSION DÉSACTIVÉE - Sera faite sur Kamatera après clic bouton Suivant
+        // _compressAndWatermarkInBackground(firstFile.path, name, t0);
       } catch (_) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -269,6 +303,9 @@ class _StudentChallengeVideoEditorScreenState
       // Multiple segments, show merge dialog
       await _showMergeSegmentsDialog(segments);
     }
+    final exitTime = DateTime.now();
+    final duration = exitTime.difference(enterTime).inMilliseconds;
+    debugPrint('[P6_EXIT] _processSegments duration=${duration}ms');
   }
 
   Future<void> _openCameraCaptureFlow() async {
@@ -427,6 +464,12 @@ class _StudentChallengeVideoEditorScreenState
   }
 
   Future<void> _pickVideo() async {
+    final enterTime = DateTime.now();
+    debugPrint('[P6_ENTER] _pickVideo');
+    final t0 = DateTime.now();
+    debugPrint('[TIMING] T0 - Vidéo sélectionnée: ${t0.toIso8601String()}');
+    debugPrint('[P6_PATH] Gallery selected');
+
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
       withData: true,
@@ -459,15 +502,38 @@ class _StudentChallengeVideoEditorScreenState
         _videoInitialized = false;
       });
       if (!mounted) return;
+      final exitTime = DateTime.now();
+      final duration = exitTime.difference(enterTime).inMilliseconds;
+      debugPrint('[P6_EXIT] _pickVideo duration=${duration}ms');
       return;
     }
 
-    await _compressAndSetVideo(filePath, file.name);
+    // Show video immediately without compression/watermark
+    final ext = file.name.contains('.') ? file.name.split('.').last : 'mp4';
+    setState(() {
+      _localVideoPath = filePath;
+      _fileName = file.name;
+      _mimeType = ext;
+      _uploadedUrl = null;
+      _videoInitialized = false;
+      _videoBytes = null;
+    });
+
+    // Generate thumbnail in background (non-blocking)
+    _generateThumbnailInBackground(filePath);
+
+    // COMPRESSION DÉSACTIVÉE - Sera faite sur Kamatera après clic bouton Suivant
+    // _compressAndWatermarkInBackground(filePath, file.name, t0);
+    final exitTime = DateTime.now();
+    final duration = exitTime.difference(enterTime).inMilliseconds;
+    debugPrint('[P6_EXIT] _pickVideo duration=${duration}ms');
   }
 
   /// Compresses the video at [sourcePath] using hardware-accelerated
   /// LightCompressor, generates a thumbnail, then triggers upload.
-  Future<void> _compressAndSetVideo(String sourcePath, String originalName) async {
+  Future<void> _compressAndSetVideo(String sourcePath, String originalName, DateTime t0) async {
+    final enterTime = DateTime.now();
+    debugPrint('[P6_ENTER] _compressAndSetVideo');
     if (!mounted) return;
 
     final ext = originalName.contains('.')
@@ -475,6 +541,9 @@ class _StudentChallengeVideoEditorScreenState
         : 'mp4';
 
     // Generate thumbnail before compression (from original for best quality).
+    final t3 = DateTime.now();
+    debugPrint('[TIMING] T3 - Début génération miniature: ${t3.toIso8601String()} (ΔT3-T0: ${t3.difference(t0).inMilliseconds}ms)');
+    
     try {
       _thumbnailBytes = await vt.VideoThumbnail.thumbnailData(
         video: sourcePath,
@@ -482,7 +551,8 @@ class _StudentChallengeVideoEditorScreenState
         maxWidth: 360,
         quality: 70,
       );
-      debugPrint('[Studio] Thumbnail generated: ${_thumbnailBytes?.length ?? 0} bytes');
+      final t4 = DateTime.now();
+      debugPrint('[TIMING] T4 - Fin génération miniature: ${t4.toIso8601String()} (ΔT4-T3: ${t4.difference(t3).inMilliseconds}ms, taille: ${_thumbnailBytes?.length ?? 0} bytes)');
     } catch (e) {
       debugPrint('[Studio] Thumbnail generation failed: $e');
     }
@@ -504,80 +574,40 @@ class _StudentChallengeVideoEditorScreenState
 
     setState(() => _isCompressing = true);
 
+    final t1 = DateTime.now();
+    debugPrint('[TIMING] T1 - Compression désactivée - sera faite sur Kamatera après clic bouton Suivant');
+    debugPrint('[TIMING] T1 - Début compression: ${t1.toIso8601String()} (ΔT1-T0: ${t1.difference(t0).inMilliseconds}ms)');
+
     try {
-      // Detect video orientation for compression preset
-      // Use default dimensions for now (can be enhanced later with actual video metadata)
-      final orientation = VideoOrientationService.detectFromDimensions(1920, 1080);
-      
-      // Use orientation-aware compression preset
-      final VideoQuality quality;
-      if (_hdUpload) {
-        // For HD upload, use standard HD quality
-        // Note: VideoCompress doesn't have orientation-specific presets, so we use standard HD
-        quality = VideoQuality.Res1920x1080Quality;
-      } else {
-        // For medium quality, use default
-        quality = VideoQuality.MediumQuality;
-      }
-      
-      final MediaInfo? info = await VideoCompress.compressVideo(
-        sourcePath,
-        quality: quality,
-        deleteOrigin: false,
-        includeAudio: true,
-      );
+      // COMPRESSION AUTOMATIQUE DÉSACTIVÉE - Sera faite sur Kamatera après clic bouton Suivant
+      // L'utilisateur peut éditer la vidéo avant compression
+      // Utiliser le fichier original sans compression locale
+      final finalFile = File(sourcePath);
+      final finalBytes = await finalFile.readAsBytes();
+      final originalSize = finalBytes.length;
+      debugPrint('[P6_SIZE] Original (non compressé): ${(originalSize / 1024 / 1024).toStringAsFixed(1)} MB');
+      debugPrint('[P6_STATE] Before setState: _isCompressing=$_isCompressing, _videoBytes=${_videoBytes != null}');
 
-      if (!mounted) return;
-
-      if (info != null && info.path != null) {
-        final originalSize = await File(sourcePath).length();
-
-        // Add Academia watermark (TikTok-style, burned into video)
-        debugPrint('[Studio] Adding Academia watermark...');
-        final watermarkedPath = await WatermarkService.addWatermark(info.path!);
-        if (!mounted) return;
-
-        final finalFile = File(watermarkedPath);
-        final finalBytes = await finalFile.readAsBytes();
-        final compressedSize = finalBytes.length;
-        debugPrint(
-          '[Studio] Compression+Watermark: ${(originalSize / 1024 / 1024).toStringAsFixed(1)} MB \u2192 '
-          '${(compressedSize / 1024 / 1024).toStringAsFixed(1)} MB '
-          '(${(100 - compressedSize * 100 / originalSize).toStringAsFixed(0)}% r\u00e9duit)',
-        );
-
-        setState(() {
-          _isCompressing = false;
-          _videoBytes = finalBytes;
-          _fileName = originalName;
-          _mimeType = ext;
-          _uploadedUrl = null;
-          _videoInitialized = false;
-          _localVideoPath = watermarkedPath;
-          if (info.duration != null) _videoDurationMs = info.duration!.toInt();
+      setState(() {
+        _isCompressing = false;
+        _videoBytes = finalBytes;
+        _fileName = originalName;
+        _mimeType = ext;
+        _uploadedUrl = null;
+        _videoInitialized = false;
+        _localVideoPath = sourcePath;
+        // _videoDurationMs sera détecté plus tard si nécessaire
         });
-      } else {
-        debugPrint('[Studio] Compression returned null, watermarking original...');
-        final watermarkedPath = await WatermarkService.addWatermark(sourcePath);
-        if (!mounted) return;
-        final bytes = await File(watermarkedPath).readAsBytes();
-        if (!mounted) return;
-        setState(() {
-          _isCompressing = false;
-          _videoBytes = bytes;
-          _fileName = originalName;
-          _mimeType = ext;
-          _uploadedUrl = null;
-          _videoInitialized = false;
-          _localVideoPath = watermarkedPath;
-        });
-      }
+
+        debugPrint('[P6_STATE] After setState: _isCompressing=$_isCompressing, _videoBytes=${_videoBytes != null}');
+        final exitTime = DateTime.now();
+        final duration = exitTime.difference(enterTime).inMilliseconds;
+        debugPrint('[P6_EXIT] _compressAndSetVideo duration=${duration}ms');
     } catch (e) {
-      debugPrint('[Studio] Compression error: $e \u2014 watermarking original...');
+      // COMPRESSION AUTOMATIQUE DÉSACTIVÉE - Utiliser le fichier original en cas d'erreur
+      debugPrint('[Studio] Compression error: $e \u2014 using original...');
       if (!mounted) return;
-      final watermarkedPath = await WatermarkService.addWatermark(sourcePath);
-      if (!mounted) return;
-      final bytes = await File(watermarkedPath).readAsBytes();
+      final bytes = await File(sourcePath).readAsBytes();
       if (!mounted) return;
       setState(() {
         _isCompressing = false;
@@ -586,15 +616,112 @@ class _StudentChallengeVideoEditorScreenState
         _mimeType = ext;
         _uploadedUrl = null;
         _videoInitialized = false;
-        _localVideoPath = watermarkedPath;
+        _localVideoPath = sourcePath;
       });
+      final exitTime = DateTime.now();
+      final duration = exitTime.difference(enterTime).inMilliseconds;
+      debugPrint('[P6_EXIT] _compressAndSetVideo duration=${duration}ms');
+    }
+  }
+
+  /// Generate thumbnail in background without blocking UI
+  Future<void> _generateThumbnailInBackground(String sourcePath) async {
+    try {
+      _thumbnailBytes = await vt.VideoThumbnail.thumbnailData(
+        video: sourcePath,
+        imageFormat: vt.ImageFormat.JPEG,
+        maxWidth: 360,
+        quality: 70,
+      );
+      if (mounted) {
+        setState(() {}); // Trigger rebuild to show thumbnail
+      }
+    } catch (e) {
+      debugPrint('[Studio] Thumbnail generation failed: $e');
+    }
+  }
+
+  /// Compress and watermark in background without blocking UI
+  Future<void> _compressAndWatermarkInBackground(String sourcePath, String originalName, DateTime t0) async {
+    final enterTime = DateTime.now();
+    debugPrint('[P6_ENTER] _compressAndWatermarkInBackground');
+    if (!mounted) return;
+
+    final ext = originalName.contains('.') ? originalName.split('.').last : 'mp4';
+
+    // Show compression indicator
+    if (mounted) {
+      setState(() => _isCompressing = true);
+    }
+
+    final t1 = DateTime.now();
+    debugPrint('[TIMING] T1 - Début compression (background): ${t1.toIso8601String()} (ΔT1-T0: ${t1.difference(t0).inMilliseconds}ms)');
+
+    try {
+      // Compression DISABLED - handled by Kamatera Edge Functions
+      // Utiliser le fichier original sans compression locale
+      final finalFile = File(sourcePath);
+      final finalBytes = await finalFile.readAsBytes();
+      final originalSize = finalBytes.length;
+      debugPrint('[P6_SIZE] Original (non compressé): ${(originalSize / 1024 / 1024).toStringAsFixed(1)} MB');
+      debugPrint('[P6_STATE] Before setState (background): _isCompressing=$_isCompressing, _videoBytes=${_videoBytes != null}');
+
+      if (mounted) {
+        setState(() {
+          _isCompressing = false;
+          _videoBytes = finalBytes;
+          _localVideoPath = sourcePath;
+        });
+      }
+
+      debugPrint('[P6_STATE] After setState (background): _isCompressing=$_isCompressing, _videoBytes=${_videoBytes != null}');
+      final exitTime = DateTime.now();
+      final duration = exitTime.difference(enterTime).inMilliseconds;
+      debugPrint('[P6_EXIT] _compressAndWatermarkInBackground duration=${duration}ms');
+    } catch (e) {
+      // COMPRESSION AUTOMATIQUE DÉSACTIVÉE - Utiliser le fichier original en cas d'erreur
+      debugPrint('[Studio] Compression error (background): $e — using original...');
+      if (!mounted) return;
+      final bytes = await File(sourcePath).readAsBytes();
+      if (!mounted) return;
+      setState(() {
+        _isCompressing = false;
+        _videoBytes = bytes;
+        _localVideoPath = sourcePath;
+      });
+      final exitTime = DateTime.now();
+      final duration = exitTime.difference(enterTime).inMilliseconds;
+      debugPrint('[P6_EXIT] _compressAndWatermarkInBackground duration=${duration}ms (error)');
     }
   }
 
   Future<void> _uploadVideo() async {
+    final enterTime = DateTime.now();
+    debugPrint('[P6_ENTER] _uploadVideo');
     debugPrint('[Studio] ===== _uploadVideo START =====');
-    debugPrint('[Studio] _isFreeVideo=$_isFreeVideo, _hasFreeVideoId=$_hasFreeVideoId, _fileName=$_fileName, bytesLen=${_videoBytes?.length}');
-    if (_videoBytes == null || _fileName == null) {
+    debugPrint('[Studio] _isFreeVideo=$_isFreeVideo, _hasFreeVideoId=$_hasFreeVideoId, _fileName=$_fileName, bytesLen=${_videoBytes?.length}, localPath=$_localVideoPath');
+    
+    // Priorité : utiliser les bytes compressés si disponibles
+    Uint8List? bytesToUpload = _videoBytes;
+    String? fileNameToUpload = _fileName;
+    
+    // Fallback : utiliser le fichier brut si compression pas terminée
+    if (bytesToUpload == null && _localVideoPath != null) {
+      debugPrint('[Studio] Compression not finished, uploading raw file from $_localVideoPath');
+      try {
+        bytesToUpload = await File(_localVideoPath!).readAsBytes();
+        fileNameToUpload = _fileName;
+        debugPrint('[Studio] Raw file loaded, size: ${bytesToUpload.length} bytes');
+      } catch (e) {
+        debugPrint('[Studio] Error reading raw file: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erreur lors de la lecture de la vidéo.')),
+        );
+        return;
+      }
+    }
+    
+    if (bytesToUpload == null || fileNameToUpload == null) {
       debugPrint('[Studio] ABORT: no video bytes or fileName');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Sélectionne d\'abord une vidéo.')),
@@ -603,6 +730,9 @@ class _StudentChallengeVideoEditorScreenState
     }
 
     final provider = context.read<StudentChallengesProvider>();
+
+    final t7 = DateTime.now();
+    debugPrint('[TIMING] T7 - Début upload: ${t7.toIso8601String()}');
 
     setState(() {
       _isUploading = true;
@@ -626,27 +756,74 @@ class _StudentChallengeVideoEditorScreenState
         final contextId = _isFreeVideo ? null : _effectiveChallengeId;
 
         debugPrint('[Studio] PIPELINE: ingestVideoFromBytes(origin=$origin, contextType=$contextType, contextId=$contextId)...');
-        videoAssetId = await VideoAssetUploadService.ingestVideoFromBytes(
-          bytes: _videoBytes!,
-          fileName: _fileName!,
-          origin: origin,
-          contextType: contextType,
-          contextId: contextId,
-          mimeType: _mimeType,
-          fileSizeBytes: _videoBytes!.length,
-          onUploadProgress: (progress) {
-            if (mounted) {
-              setState(() {
-                _uploadProgress = progress;
-              });
+        
+        // Prefer File streaming if localPath is available
+        if (_localVideoPath != null && _localVideoPath!.isNotEmpty) {
+          final file = File(_localVideoPath!);
+          if (await file.exists()) {
+            videoAssetId = await VideoAssetUploadService.ingestVideoFromBytes(
+              fileOrBytes: file,
+              fileName: _fileName!,
+              origin: origin,
+              contextType: contextType,
+              contextId: contextId,
+              mimeType: _mimeType,
+              onUploadProgress: (progress) {
+                if (mounted) {
+                  setState(() {
+                    _uploadProgress = progress;
+                  });
+                }
+              },
+            );
+          } else {
+            // Fallback to bytes if file doesn't exist
+            if (_videoBytes != null) {
+              videoAssetId = await VideoAssetUploadService.ingestVideoFromBytes(
+                fileOrBytes: _videoBytes!,
+                fileName: _fileName!,
+                origin: origin,
+                contextType: contextType,
+                contextId: contextId,
+                mimeType: _mimeType,
+                fileSizeBytes: _videoBytes!.length,
+                onUploadProgress: (progress) {
+                  if (mounted) {
+                    setState(() {
+                      _uploadProgress = progress;
+                    });
+                  }
+                },
+              );
             }
-          },
-        );
+          }
+        } else if (_videoBytes != null) {
+          // Fallback to bytes if no localPath
+          videoAssetId = await VideoAssetUploadService.ingestVideoFromBytes(
+            fileOrBytes: _videoBytes!,
+            fileName: _fileName!,
+            origin: origin,
+            contextType: contextType,
+            contextId: contextId,
+            mimeType: _mimeType,
+            fileSizeBytes: _videoBytes!.length,
+            onUploadProgress: (progress) {
+              if (mounted) {
+                setState(() {
+                  _uploadProgress = progress;
+                });
+              }
+            },
+          );
+        }
         debugPrint('[Studio] PIPELINE OK: videoAssetId=$videoAssetId');
       } catch (e) {
         debugPrint('[Studio] PIPELINE FAILED: $e — falling back to direct upload');
         videoAssetId = null;
       }
+
+      final t8 = DateTime.now();
+      debugPrint('[TIMING] T8 - Fin upload: ${t8.toIso8601String()} (ΔT8-T7: ${t8.difference(t7).inMilliseconds}ms)');
 
       if (!mounted) return;
 
@@ -657,16 +834,18 @@ class _StudentChallengeVideoEditorScreenState
         debugPrint('[Studio] FALLBACK: direct Storage upload...');
         if (_isFreeVideo) {
           directUploadUrl = await provider.uploadFreeVideo(
-            bytes: _videoBytes!,
+            bytes: _videoBytes,
             fileName: _fileName!,
             mimeType: _mimeType,
+            localPath: _localVideoPath,
           );
         } else {
           directUploadUrl = await provider.uploadChallengeVideo(
-            bytes: _videoBytes!,
+            bytes: _videoBytes,
             fileName: _fileName!,
             challengeId: _effectiveChallengeId,
             mimeType: _mimeType,
+            localPath: _localVideoPath,
           );
         }
 
@@ -840,6 +1019,10 @@ class _StudentChallengeVideoEditorScreenState
     });
     await _initRemoteVideo(url);
 
+    final exitTime = DateTime.now();
+    final duration = exitTime.difference(enterTime).inMilliseconds;
+    debugPrint('[P6_EXIT] _uploadVideo duration=${duration}ms');
+
     if (!kIsWeb) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -899,11 +1082,20 @@ class _StudentChallengeVideoEditorScreenState
   }
 
   Future<void> _initRemoteVideo(String url) async {
+    final enterTime = DateTime.now();
+    debugPrint('[P6_ENTER] _initRemoteVideo');
+    final t5 = DateTime.now();
+    debugPrint('[TIMING] T5 - Début initialisation contrôleur vidéo: ${t5.toIso8601String()}');
     print('ANDROID STUDIO VIDEO DEBUG :: initRemoteVideo url=$url');
     if (!mounted) return;
     setState(() {
       _videoInitialized = true;
     });
+    final t6 = DateTime.now();
+    debugPrint('[TIMING] T6 - Vidéo initialisée (setState): ${t6.toIso8601String()} (ΔT6-T5: ${t6.difference(t5).inMilliseconds}ms)');
+    final exitTime = DateTime.now();
+    final duration = exitTime.difference(enterTime).inMilliseconds;
+    debugPrint('[P6_EXIT] _initRemoteVideo duration=${duration}ms');
   }
 
   Future<void> _loadExistingOverlaysIfAny() async {
@@ -1487,11 +1679,10 @@ class _StudentChallengeVideoEditorScreenState
           '-vf "eq=brightness=0.04:contrast=1.1:saturation=1.15,unsharp=5:5:0.8:5:5:0.0" '
           '-c:a copy -movflags +faststart -y "$outputPath"';
 
-      // DISABLED for release white-screen test
-      // debugPrint('[Enhance] Running FFmpeg: $cmd');
-      // final session = await FFmpegKit.execute(cmd);
-      // final returnCode = await session.getReturnCode();
-      // if (!mounted) return;
+      debugPrint('[Enhance] Running FFmpeg: $cmd');
+      final session = await FFmpegKit.execute(cmd);
+      final returnCode = await session.getReturnCode();
+      if (!mounted) return;
       // if (ReturnCode.isSuccess(returnCode)) {
       //   final enhanced = File(outputPath);
       //   if (await enhanced.exists()) {
@@ -1932,28 +2123,28 @@ class _StudentChallengeVideoEditorScreenState
 
       final cmd = '-i "$inputPath" -af "$audioFilter" -c:v copy -movflags +faststart -y "$outputPath"';
 
-      // DISABLED for release white-screen test
-      // debugPrint('[VoiceEffect] Running FFmpeg: $cmd');
-      // final session = await FFmpegKit.execute(cmd);
-      // final returnCode = await session.getReturnCode();
-      // if (!mounted) return;
-      // if (ReturnCode.isSuccess(returnCode)) {
-      //   final result = File(outputPath);
-      //   if (await result.exists()) {
-      //     final bytes = await result.readAsBytes();
-      //     setState(() {
-      //       _isCompressing = false;
-      //       _activeVoiceEffect = effect;
-      //       _videoBytes = bytes;
-      //       _localVideoPath = outputPath;
-      //     });
-      //     return;
-      //   }
-      // }
-      debugPrint('[VoiceEffect] DISABLED — FFmpegKit not available');
+      debugPrint('[VoiceEffect] Running FFmpeg: $cmd');
+      final session = await FFmpegKit.execute(cmd);
+      final returnCode = await session.getReturnCode();
+      if (!mounted) return;
+      if (ReturnCode.isSuccess(returnCode)) {
+        final result = File(outputPath);
+        if (await result.exists()) {
+          final bytes = await result.readAsBytes();
+          setState(() {
+            _isCompressing = false;
+            _activeVoiceEffect = effect;
+            _videoBytes = bytes;
+            _localVideoPath = outputPath;
+          });
+          return;
+        }
+      }
+      final logs = await session.getLogsAsString();
+      debugPrint('[VoiceEffect] FFmpeg error: $logs');
       setState(() => _isCompressing = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Effets vocaux temporairement désactivés')),
+        const SnackBar(content: Text('Erreur lors de l\'application de l\'effet vocal')),
       );
     } catch (e) {
       debugPrint('[VoiceEffect] Error: $e');
@@ -3005,27 +3196,14 @@ class _StudentChallengeVideoEditorScreenState
 
       if (!mounted) return;
 
-      // 2. Burn overlays into the video
-      debugPrint('[Studio] _runVideoRender: starting burn-in render...');
-      final renderedPath = await OverlayBurnInService.burnOverlaysIntoVideo(
-        videoPath: sourceFile.path,
-        overlays: overlays,
-        videoSize: const Size(1080, 1920),
-        overlayWidgetBuilder: (ovl, size) => SizedBox(
-          width: size.width,
-          height: size.height,
-          child: VideoOverlaysLayer(overlays: ovl),
-        ),
-        onProgress: (progress) {
-          if (mounted) {
-            setState(() => _renderProgress = progress);
-          }
-        },
-      );
+      // 2. Burn overlays into the video - DISABLED (OverlayBurnInService removed)
+      // Overlays are now rendered client-side in real-time, not burned into video
+      debugPrint('[Studio] _runVideoRender: burn-in DISABLED - using raw video');
+      final renderedPath = sourceFile.path;
 
       // Clean up source temp file
       try {
-        await sourceFile.delete();
+        // sourceFile is now the rendered file, don't delete
       } catch (_) {}
 
       if (!mounted) return;
@@ -4937,7 +5115,7 @@ class _StudentChallengeVideoEditorScreenState
         _buildStudioToolbarItem(
           icon: Icons.check_circle_outline,
           label: 'Publier',
-          onTap: _isSubmitting || _isUploading ? null : _submitVideoChallenge,
+          onTap: _localVideoPath == null ? null : _submitVideoChallenge,
         ),
       ],
     );
@@ -5068,29 +5246,32 @@ class _StudentChallengeVideoEditorScreenState
   }
 
   Future<void> _openPublishScreen() async {
-    debugPrint('[Studio] _openPublishScreen: _uploadedUrl=$_uploadedUrl, _fileName=$_fileName, _videoBytes=${_videoBytes?.length}, _localVideoPath=$_localVideoPath');
+    debugPrint('[Studio] _openPublishScreen: _uploadedUrl=$_uploadedUrl, _fileName=$_fileName, _localVideoPath=$_localVideoPath');
 
-    if ((_uploadedUrl == null || _uploadedUrl!.isEmpty) && !_isUploading) {
+    if (_localVideoPath == null || _localVideoPath!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Upload en cours...')),
-      );
-      await _uploadVideo();
-      if (!mounted) return;
-    }
-
-    if (_uploadedUrl == null || _uploadedUrl!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Upload non terminé. Réessaie dans quelques secondes.')),
+        const SnackBar(content: Text('Sélectionne d\'abord une vidéo.')),
       );
       return;
     }
 
-    debugPrint('[Studio] Publishing with URL: $_uploadedUrl');
+    // Pause preview controller before navigation to prevent audio conflicts.
+    if (_previewPlaybackController.isAttached) {
+      _previewPlaybackController.pause();
+    }
+
+    // TikTok flow: open the publish screen immediately. The upload runs in the
+    // background while the user writes the caption, and "Publier" waits for it.
+    // Heavy compression/transcoding stays server-side (Kamatera worker).
+    final bool alreadyUploaded = _uploadedUrl != null && _uploadedUrl!.isNotEmpty;
+    final String origin = _isFreeVideo ? 'student_free_video' : 'student_challenge';
+    final String contextType = _isFreeVideo ? 'free_video' : 'challenge';
+    final String? contextId = _isFreeVideo ? null : _effectiveChallengeId;
 
     final result = await Navigator.of(context).push<bool?>(
       MaterialPageRoute(
         builder: (_) => VideoPublishScreen(
-          videoUrl: _uploadedUrl!,
+          videoUrl: alreadyUploaded ? _uploadedUrl! : '',
           videoType: widget.videoType,
           challengeId: widget.challengeId,
           participationId: widget.participationId,
@@ -5098,10 +5279,16 @@ class _StudentChallengeVideoEditorScreenState
           asAdditionalVideo: widget.asAdditionalVideo,
           overlays: _buildOverlaysPayload(),
           thumbnailBytes: _thumbnailBytes,
-          pendingVideoAssetId: _pendingChallengeVideoAssetId,
-          pendingPlayback: _pendingChallengePlayback,
+          pendingVideoAssetId: alreadyUploaded ? _pendingChallengeVideoAssetId : null,
+          pendingPlayback: alreadyUploaded ? _pendingChallengePlayback : null,
           localVideoPath: _localVideoPath,
           videoDurationMs: _videoDurationMs,
+          uploadLocalPath: alreadyUploaded ? null : _localVideoPath,
+          uploadOrigin: alreadyUploaded ? null : origin,
+          uploadContextType: alreadyUploaded ? null : contextType,
+          uploadContextId: alreadyUploaded ? null : contextId,
+          uploadFileName: alreadyUploaded ? null : _fileName,
+          uploadMimeType: alreadyUploaded ? null : _mimeType,
         ),
       ),
     );
@@ -5121,6 +5308,8 @@ class _StudentChallengeVideoEditorScreenState
     final String? effectivePreviewUrl = hasLocalVideo
         ? Uri.file(_localVideoPath!).toString()
         : (hasUrl ? _uploadedUrl : null);
+
+    debugPrint('[P9_BUILD_EDITOR] local=$_localVideoPath effective=$effectivePreviewUrl uploaded=$_uploadedUrl');
 
     final bool isLocalPreview = (effectivePreviewUrl ?? '').startsWith('file://');
 
@@ -5202,6 +5391,42 @@ class _StudentChallengeVideoEditorScreenState
                     ),
                   ),
                   const Spacer(),
+                  // Compression indicator
+                  if (_isCompressing)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: Colors.orange,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.orange,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'Compression...',
+                            style: TextStyle(
+                              color: Colors.orange,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   // HD Upload toggle
                   GestureDetector(
                     onTap: () => setState(() => _hdUpload = !_hdUpload),
@@ -5240,7 +5465,7 @@ class _StudentChallengeVideoEditorScreenState
                     ),
                   ),
                   GestureDetector(
-                    onTap: _isSubmitting || _isUploading
+                    onTap: _localVideoPath == null
                         ? null
                         : _openPublishScreen,
                     child: Container(

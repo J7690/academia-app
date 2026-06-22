@@ -3,9 +3,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-// import 'package:ffmpeg_kit_flutter_new_audio/ffmpeg_kit.dart';
-// import 'package:ffmpeg_kit_flutter_new_audio/ffprobe_kit.dart';
-// import 'package:ffmpeg_kit_flutter_new_audio/return_code.dart';
+import 'package:ffmpeg_kit_flutter_new_audio/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter_new_audio/ffprobe_kit.dart';
+import 'package:ffmpeg_kit_flutter_new_audio/return_code.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// Service pour ajouter le watermark Academia sur les vidéos.
@@ -47,18 +47,17 @@ class WatermarkService {
   /// Falls back to 1280 (720p portrait) if probing fails.
   static Future<int> _probeVideoHeight(String videoPath) async {
     try {
-      // DISABLED for release white-screen test
-      // final session = await FFprobeKit.getMediaInformation(videoPath);
-      // final info = session.getMediaInformation();
-      // if (info != null) {
-      //   for (final s in info.getStreams()) {
-      //     final type = s.getType();
-      //     if (type != null && type.toLowerCase() == 'video') {
-      //       final h = s.getHeight();
-      //       if (h != null && h > 0) return h;
-      //     }
-      //   }
-      // }
+      final session = await FFprobeKit.getMediaInformation(videoPath);
+      final info = session.getMediaInformation();
+      if (info != null) {
+        for (final s in info.getStreams()) {
+          final type = s.getType();
+          if (type != null && type.toLowerCase() == 'video') {
+            final h = s.getHeight();
+            if (h != null && h > 0) return h;
+          }
+        }
+      }
     } catch (e) {
       debugPrint('[Watermark] Probe failed, using default: $e');
     }
@@ -86,25 +85,22 @@ class WatermarkService {
       '-y', outputPath,
     ];
 
-    // DISABLED for release white-screen test
-    // final session = await FFmpegKit.executeWithArguments(args);
-    // final returnCode = await session.getReturnCode();
-    // if (ReturnCode.isSuccess(returnCode)) {
-    //   final outFile = File(outputPath);
-    //   if (await outFile.exists() && await outFile.length() > 1000) {
-    //     final sizeKB = (await outFile.length()) / 1024;
-    //     debugPrint('[Watermark] ✓ $label OK: ${sizeKB.toStringAsFixed(0)} KB');
-    //     return outputPath;
-    //   }
-    //   debugPrint('[Watermark] ✗ $label: rc=success but output missing/empty');
-    // }
-    // final logs = await session.getLogsAsString();
-    // final snippet = logs.length > 800
-    //     ? logs.substring(logs.length - 800)
-    //     : logs;
-    // debugPrint('[Watermark] ✗ $label FAILED rc=$returnCode:\n$snippet');
-    // return null;
-    debugPrint('[Watermark] DISABLED — FFmpegKit not available');
+    final session = await FFmpegKit.executeWithArguments(args);
+    final returnCode = await session.getReturnCode();
+    if (ReturnCode.isSuccess(returnCode)) {
+      final outFile = File(outputPath);
+      if (await outFile.exists() && await outFile.length() > 1000) {
+        final sizeKB = (await outFile.length()) / 1024;
+        debugPrint('[Watermark] ✓ $label OK: ${sizeKB.toStringAsFixed(0)} KB');
+        return outputPath;
+      }
+      debugPrint('[Watermark] ✗ $label: rc=success but output missing/empty');
+    }
+    final logs = await session.getLogsAsString();
+    final snippet = logs.length > 800
+        ? logs.substring(logs.length - 800)
+        : logs;
+    debugPrint('[Watermark] ✗ $label FAILED rc=$returnCode:\n$snippet');
     return null;
   }
 

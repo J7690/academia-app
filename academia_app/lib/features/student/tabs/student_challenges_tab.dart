@@ -20,6 +20,7 @@ import '../../../services/video_analytics_service.dart';
 import '../../../services/video_cache_service.dart';
 import '../../../services/video_share_service.dart';
 import '../../../services/video_orientation_service.dart';
+import '../../../services/video_player_lifecycle_service.dart';
 import '../../../widgets/adaptive_video_container.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
@@ -1063,7 +1064,15 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
 
   // Auto-pause on swipe: track controllers per page index
   final Map<int, AcademiaPlaybackController> _controllers = {};
-  int _currentPage = 0;
+  // Active page index — single source of truth. Driving it via a notifier lets
+  // the progress bar + each video page react WITHOUT rebuilding the PageView
+  // (the Selector's shouldRebuild blocks page-change rebuilds).
+  final ValueNotifier<int> _activeIndex = ValueNotifier<int>(0);
+  int get _currentPage => _activeIndex.value;
+  // Controller bound to the progress bar; refreshed on page change and when the
+  // active page's controller attaches (so the bar never stays on a stale player).
+  final ValueNotifier<AcademiaPlaybackController?> _activeController =
+      ValueNotifier<AcademiaPlaybackController?>(null);
   bool _wasPlayingBeforeBackground = false;
 
   // Live sessions en cours (Presence)
@@ -1073,6 +1082,7 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
   @override
   void initState() {
     super.initState();
+    debugPrint('[RUNTIME LIFECYCLE] _ChallengeVideosFeed initState');
     WidgetsBinding.instance.addObserver(this);
     // Écouter les joueurs en live via Presence
     _liveSubscription = GameLiveService.watchLivePlayers().listen((players) {
@@ -1087,7 +1097,7 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
       await provider.loadChallengeVideos(limit: _pageSize);
       if (!mounted) return;
       final videos = provider.videos;
-      debugPrint('[FEED] Loaded ${videos.length} videos');
+      debugPrint('[RUNTIME T0] Feed ouvert - videos=${videos.length}');
       setState(() {
         _hasMore = videos.length >= _pageSize;
       });
@@ -1098,9 +1108,17 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
 
   @override
   void dispose() {
+    debugPrint('[RUNTIME LIFECYCLE] _ChallengeVideosFeed dispose - _controllers size=${_controllers.length}');
+    // Unregister all controllers from lifecycle service
+    for (final entry in _controllers.entries) {
+      VideoPlayerLifecycleService().unregisterController('feed_${entry.key}');
+    }
+    _controllers.clear();
     WidgetsBinding.instance.removeObserver(this);
     _liveSubscription?.cancel();
     _pageController.dispose();
+    _activeIndex.dispose();
+    _activeController.dispose();
     super.dispose();
   }
 
@@ -1120,8 +1138,8 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
         debugPrint('[FEED] Lifecycle $state → paused all controllers');
         break;
       case AppLifecycleState.resumed:
-        // App returning to foreground — resume only the active video
-        if (_wasPlayingBeforeBackground) {
+        // App returning to foreground — resume only the active video if autoplay is enabled
+        if (_wasPlayingBeforeBackground && !_feedAudioSuspended && VideoPlayerLifecycleService().feedAutoplayEnabled) {
           final currentCtrl = _controllers[_currentPage];
           if (currentCtrl != null && currentCtrl.isAttached) {
             currentCtrl.play();
@@ -1134,23 +1152,21 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
   }
 
   void _onPageChanged(int newIndex) {
-    debugPrint('[FEED] Page changed: $_currentPage -> $newIndex');
+    final previous = _activeIndex.value;
+    debugPrint('[RUNTIME PRELOAD] Page changed: $previous -> $newIndex - _controllers size=${_controllers.length}');
 
-    // Stop analytics for previous video
     final provider = context.read<StudentChallengesProvider>();
     final videos = provider.videos;
-    if (_currentPage < videos.length) {
+
+    // Stop analytics for previous video
+    if (previous < videos.length) {
       VideoAnalyticsService.onVideoStopped();
     }
 
-    // Pause all controllers except the new active one
-    for (final entry in _controllers.entries) {
-      if (entry.key != newIndex && entry.value.isAttached) {
-        entry.value.pause();
-        debugPrint('[FEED]   Paused controller at index ${entry.key}');
-      }
-    }
-    _currentPage = newIndex;
+    // Single source of truth: flip the active page. Each video page then
+    // mutes/unmutes + pauses/plays itself and the progress bar rebinds —
+    // WITHOUT rebuilding the PageView (the Selector blocks that).
+    _activeIndex.value = newIndex;
 
     // Start analytics for new video
     if (newIndex < videos.length) {
@@ -1164,28 +1180,59 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
         );
       }
     }
+
     final newCtrl = _controllers[newIndex];
     if (newCtrl != null && newCtrl.isAttached) {
-      newCtrl.play();
-      debugPrint('[FEED]   Playing controller at index $newIndex');
-    } else {
-      debugPrint('[FEED]   No controller ready at index $newIndex (attached=${newCtrl?.isAttached})');
+      VideoPlayerLifecycleService().registerController('feed_$newIndex', newCtrl, 'feed');
     }
+
+    // Authoritative enforcement: exactly the active player is audible & playing,
+    // every other feed player is paused AND muted.
+    _applyActivePlayback();
+
     // Clean up controllers far from current (keep only N-3..N+3)
     final removed = <int>[];
     _controllers.removeWhere((key, _) {
       if ((key - newIndex).abs() > 3) {
         removed.add(key);
+        VideoPlayerLifecycleService().unregisterController('feed_$key');
         return true;
       }
       return false;
     });
     if (removed.isNotEmpty) {
-      debugPrint('[FEED]   Cleaned up controllers: $removed');
+      debugPrint('[RUNTIME PRELOAD]   Cleaned up controllers: $removed - new size=${_controllers.length}');
     }
 
     // Preload adjacent videos
     _preloadAdjacentVideos(newIndex, videos);
+  }
+
+  /// Authoritative single-playback enforcement. Exactly the active page plays
+  /// with sound; every other feed player is paused AND muted. Re-applied on
+  /// page change and whenever a controller attaches, so a late-created native
+  /// player (whose `autoplay` creation param can race the page change) can never
+  /// bleed audio from videos "below" the current one.
+  void _applyActivePlayback() {
+    final active = _activeIndex.value;
+    // Keep the progress bar bound to the live controller (may be null until the
+    // page's player attaches — re-applied from onControllerReady).
+    _activeController.value = _controllers[active];
+
+    final bool autoplayOk =
+        !_feedAudioSuspended && VideoPlayerLifecycleService().feedAutoplayEnabled;
+
+    for (final entry in _controllers.entries) {
+      final ctrl = entry.value;
+      if (!ctrl.isAttached) continue;
+      if (autoplayOk && entry.key == active) {
+        ctrl.setVolume(1.0);
+        ctrl.play();
+      } else {
+        ctrl.pause();
+        ctrl.setVolume(0.0);
+      }
+    }
   }
 
   void _preloadAdjacentVideos(int currentIndex, List<Map<String, dynamic>> videos) {
@@ -1207,7 +1254,8 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
   Future<void> _reloadAfterDeletion() async {
     final provider = context.read<StudentChallengesProvider>();
     _controllers.clear();
-    _currentPage = 0;
+    _activeIndex.value = 0;
+    _activeController.value = null;
     await provider.loadChallengeVideos(limit: _pageSize);
     if (!mounted) return;
     final videos = provider.videos;
@@ -1272,10 +1320,17 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
                 return _ChallengeVideoItem(
                   key: ValueKey('video_${video['video_type']}_${video['participation_id'] ?? video['video_id']}_$index'),
                   video: video,
-                  isActive: index == _currentPage,
+                  index: index,
+                  activeIndex: _activeIndex,
                   onDeleted: _reloadAfterDeletion,
                   onControllerReady: (ctrl) {
                     _controllers[index] = ctrl;
+                    // A freshly-attached player must immediately obey
+                    // single-playback, and the progress bar must bind to it if
+                    // this is the active page.
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) _applyActivePlayback();
+                    });
                   },
                 );
               },
@@ -1506,12 +1561,17 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // TikTok-style progress bar synced with actual video playback
-          SizedBox(
-            height: 3,
-            child: _VideoProgressBar(
-              key: ValueKey('progress_page_$_currentPage'),
-              controller: _controllers[_currentPage],
+          // TikTok-style progress bar synced with actual video playback.
+          // Bound to the active controller via a notifier so it rebinds on page
+          // change (the Selector won't rebuild the bottom bar on swipe).
+          ValueListenableBuilder<AcademiaPlaybackController?>(
+            valueListenable: _activeController,
+            builder: (_, ctrl, __) => SizedBox(
+              height: 3,
+              child: _VideoProgressBar(
+                key: ObjectKey(ctrl),
+                controller: ctrl,
+              ),
             ),
           ),
           Container(
@@ -1704,8 +1764,12 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
   Future<void> _openCreateVideoFromFeed(BuildContext context) async {
     if (!context.mounted) return;
 
-    // Pause toutes les vidéos du feed avant de naviguer
-    _pauseAllControllers();
+    debugPrint('[RUNTIME T1] Clic sur + - _controllers size=${_controllers.length}');
+
+    // Suspend feed audio (pause + mute) before leaving for the Studio.
+    _suspendFeedAudio();
+
+    debugPrint('[RUNTIME T2] Ouverture CameraCapture - _controllers size=${_controllers.length}');
 
     final segments = await Navigator.of(context).push<List<XFile>?>(
       MaterialPageRoute(
@@ -1715,8 +1779,20 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
 
     if (!mounted) return;
 
+    debugPrint('[RUNTIME T3] Retour Galerie - segments=${segments?.length ?? 0} - _controllers size=${_controllers.length}');
+
     // Si l'utilisateur a capturé des segments, ouvrir le Studio avec les segments
     if (segments != null && segments.isNotEmpty) {
+      // Keep feed audio suspended (pause + mute) before the editor.
+      _suspendFeedAudio();
+      
+      debugPrint('[RUNTIME T4] Vidéo sélectionnée - _controllers size=${_controllers.length}');
+      
+      debugPrint('[RUNTIME T5] Ouverture Editor - _controllers size=${_controllers.length}');
+      
+      // Log memory before opening editor
+      debugPrint('[RUNTIME MEMORY] Before opening editor - ${_getMemoryInfo()}');
+      
       final published = await Navigator.of(context).push<bool?>(
         MaterialPageRoute(
           builder: (_) => StudentChallengeVideoEditorScreen(
@@ -1743,6 +1819,8 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
   /// reloads the feed and scrolls to index 0 (the just-published video).
   Future<void> _onReturnFromStudio(bool published) async {
     final provider = context.read<StudentChallengesProvider>();
+    // Re-enable feed audio now that we are back on the feed.
+    _releaseFeedAudio();
     if (published) {
       // Reload the feed to include the newly published video
       await provider.loadChallengeVideos(limit: _pageSize);
@@ -1751,7 +1829,8 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
       if (_pageController.hasClients) {
         _pageController.jumpToPage(0);
       }
-      _currentPage = 0;
+      _activeIndex.value = 0;
+      _activeController.value = null;
     } else {
       // Resume playback on the current video
       final ctrl = _controllers[_currentPage];
@@ -1763,11 +1842,50 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
 
   /// Pause tous les controllers vidéo (utilisé avant navigation)
   void _pauseAllControllers() {
+    debugPrint('[RUNTIME] _pauseAllControllers - _controllers size=${_controllers.length}');
+    int pausedCount = 0;
     for (final entry in _controllers.entries) {
       if (entry.value.isAttached) {
         entry.value.pause();
+        pausedCount++;
       }
     }
+    debugPrint('[RUNTIME] _pauseAllControllers - paused=$pausedCount');
+  }
+
+  /// True while the feed is left for the Studio/another route: feed players
+  /// must stay paused AND muted so their audio never bleeds into the Studio.
+  bool _feedAudioSuspended = false;
+
+  /// Fully suspend feed audio when leaving the feed (Studio, etc.): pause AND
+  /// mute every feed player, and block feed playback until [_releaseFeedAudio].
+  void _suspendFeedAudio() {
+    _feedAudioSuspended = true;
+    for (final entry in _controllers.entries) {
+      if (entry.value.isAttached) {
+        entry.value.pause();
+        entry.value.setVolume(0.0);
+      }
+    }
+    debugPrint('[FEED_AUDIO] suspended (paused + muted) ${_controllers.length} controllers');
+  }
+
+  /// Release the suspension when returning to the feed: unmute every player so
+  /// the active video plays with sound again.
+  void _releaseFeedAudio() {
+    _feedAudioSuspended = false;
+    // Re-assert single-playback: only the active video regains sound, every
+    // other feed player stays paused + muted.
+    _applyActivePlayback();
+    debugPrint('[FEED_AUDIO] released → single-playback re-applied (${_controllers.length} controllers)');
+  }
+
+  /// Get memory info for runtime monitoring
+  String _getMemoryInfo() {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      return 'controllers=${_controllers.length}';
+    }
+    return 'controllers=${_controllers.length}';
   }
 }
 
@@ -1804,12 +1922,14 @@ class _ChallengeVideoItem extends StatefulWidget {
   final Map<String, dynamic> video;
   final ValueChanged<AcademiaPlaybackController>? onControllerReady;
   final Future<void> Function()? onDeleted;
-  final bool isActive;
+  final int index;
+  final ValueListenable<int> activeIndex;
 
   const _ChallengeVideoItem({
     Key? key,
     required this.video,
-    required this.isActive,
+    required this.index,
+    required this.activeIndex,
     this.onControllerReady,
     this.onDeleted,
   }) : super(key: key);
@@ -1821,6 +1941,9 @@ class _ChallengeVideoItem extends StatefulWidget {
 class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
     with AutomaticKeepAliveClientMixin {
   bool _initialized = false;
+  // This page is the live one. Drives autoplay/mute so each page manages its own
+  // audio independently of the pruned controllers map.
+  late bool _isActive = widget.activeIndex.value == widget.index;
 
   String? _errorMessage;
   String _selectedUrl = '';
@@ -1853,16 +1976,34 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
   @override
   void initState() {
     super.initState();
-    debugPrint('[VIDEO_ITEM] initState  label=$_videoLabel  isActive=${widget.isActive}');
+    debugPrint('[RUNTIME LIFECYCLE] _ChallengeVideoItem initState - label=$_videoLabel isActive=$_isActive');
+    widget.activeIndex.addListener(_handleActiveIndexChanged);
     widget.onControllerReady?.call(_playbackController);
     _startInit();
+  }
+
+  void _handleActiveIndexChanged() {
+    final active = widget.activeIndex.value == widget.index;
+    if (active == _isActive) return;
+    if (!mounted) {
+      _isActive = active;
+      return;
+    }
+    // Rebuild so the player view's autoplay/muted props flip → the engine applies
+    // play/pause + volume. Makes each page responsible for its own audio.
+    setState(() => _isActive = active);
   }
 
   @override
   void didUpdateWidget(covariant _ChallengeVideoItem oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.isActive != widget.isActive) {
-      debugPrint('[VIDEO_ITEM] didUpdateWidget  label=$_videoLabel  isActive: ${oldWidget.isActive} -> ${widget.isActive}');
+    if (oldWidget.activeIndex != widget.activeIndex) {
+      oldWidget.activeIndex.removeListener(_handleActiveIndexChanged);
+      widget.activeIndex.addListener(_handleActiveIndexChanged);
+    }
+    final active = widget.activeIndex.value == widget.index;
+    if (active != _isActive) {
+      _isActive = active;
     }
   }
 
@@ -2071,6 +2212,7 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
   @override
   void dispose() {
     debugPrint('[VIDEO_ITEM] dispose  label=$_videoLabel');
+    widget.activeIndex.removeListener(_handleActiveIndexChanged);
     _singleTapTimer?.cancel();
     super.dispose();
   }
@@ -2133,8 +2275,7 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
     final challengeType = isChallenge
         ? (video['challenge_type']?.toString() ?? '')
         : '';
-    final difficulty =
-        isChallenge ? (video['difficulty']?.toString() ?? '') : '';
+    // final difficulty = isChallenge ? (video['difficulty']?.toString() ?? '') : '';
     final points = isChallenge && video['points'] is int
         ? video['points'] as int
         : null;
@@ -2171,16 +2312,20 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
     }
 
     final metaParts = <String>[];
+    // Signal contextuel unique
     if (challengeType.isNotEmpty) {
       metaParts.add(
-        challengeType == 'mission' ? 'Mission' : 'Concours',
+        challengeType == 'mission' ? '🎯 Mission' : '⚔️ Concours',
       );
     }
-    if (difficulty.isNotEmpty) {
-      metaParts.add('Difficulté: $difficulty');
-    }
+    // Récompense
     if (points != null && points > 0) {
-      metaParts.add('$points points');
+      metaParts.add('$points pts');
+    }
+    // Statut personnel (si disponible)
+    final myStatus = video['my_status']?.toString() ?? '';
+    if (myStatus.isNotEmpty) {
+      metaParts.add(myStatus);
     }
 
     if (_errorMessage != null) {
@@ -2247,9 +2392,9 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
                             child: IgnorePointer(
                               child: AcademiaPlaybackEngine.view(
                                 url: _selectedUrl,
-                                autoplay: widget.isActive,
+                                autoplay: _isActive,
                                 looping: true,
-                                muted: false,
+                                muted: !_isActive,
                                 showControls: false,
                                 fit: _getOptimalBoxFit(),
                                 playbackController: _playbackController,
@@ -2304,7 +2449,7 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
           left: 0,
           right: 0,
           bottom: 0,
-          height: 280,
+          height: 120,
           child: IgnorePointer(
             child: Container(
               decoration: const BoxDecoration(
@@ -2383,90 +2528,39 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
                 );
               },
               child: Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      authorName.isNotEmpty ? authorName : '@${authorUserId.substring(0, 8)}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  authorName.isNotEmpty ? authorName : '@${authorUserId.substring(0, 8)}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
           if (challengeTitle.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: 2),
               child: Text(
                 challengeTitle,
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 13,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           if (metaParts.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: 2),
               child: Text(
                 metaParts.join(' • '),
                 style: const TextStyle(
                   color: Colors.white70,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-          if (remixType == 'duo' || parentParticipationId.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(999),
-                onTap: parentParticipationId.isEmpty
-                    ? null
-                    : () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => _DuoParentVideoPreviewScreen(
-                              parentParticipationId: parentParticipationId,
-                            ),
-                          ),
-                        );
-                      },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.18),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(
-                        Icons.people_outline,
-                        size: 14,
-                        color: Colors.white,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'Duo',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+                  fontSize: 12,
                 ),
               ),
             ),
@@ -2946,16 +3040,6 @@ class _ChallengeVideoActions extends StatelessWidget {
     return sheetResult == true;
   }
 
-  static String _pickWatermarkedUrlFromVideo(Map<String, dynamic> video) {
-    final renditions = video['video_renditions'];
-    if (renditions is Map) {
-      final r = Map<String, dynamic>.from(renditions);
-      final url = r['export_watermarked']?.toString().trim() ?? '';
-      if (url.isNotEmpty) return url;
-    }
-    return '';
-  }
-
   static String _pickWatermarkedUrlFromRenditions(Map<String, dynamic>? renditions) {
     if (renditions == null) return '';
     final url = renditions['export_watermarked']?.toString().trim() ?? '';
@@ -2969,33 +3053,75 @@ class _ChallengeVideoActions extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Menu "..." pour actions secondaires
         IconButton(
+          icon: const Icon(Icons.more_horiz, color: Colors.white),
           onPressed: () async {
             await showModalBottomSheet<void>(
               context: context,
               backgroundColor: Colors.black87,
+              isScrollControlled: true,
               builder: (sheetContext) {
                 return SafeArea(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (allowDownload)
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Favoris (déplacé ici)
                         ListTile(
-                          leading: const Icon(
-                            Icons.download,
-                            color: Colors.white,
+                          leading: Icon(
+                            hasFavorited ? Icons.star : Icons.star_border,
+                            color: hasFavorited ? Colors.amber : Colors.white,
                           ),
-                          title: const Text(
-                            'Télécharger',
-                            style: TextStyle(color: Colors.white),
+                          title: Text(
+                            hasFavorited ? 'Retirer des favoris' : 'Ajouter aux favoris',
+                            style: const TextStyle(color: Colors.white),
                           ),
                           onTap: () async {
                             Navigator.of(sheetContext).pop();
-
-                            final ok = await _downloadWatermarkedWithProgressSheet(
-                              context: context,
-                              provider: provider,
-                              videoType: videoType,
+                            bool ok = false;
+                            if (isChallenge && participationId.isNotEmpty) {
+                              if (hasFavorited) {
+                                ok = await provider.unfavoriteChallengeVideo(
+                                  participationId: participationId,
+                                );
+                              } else {
+                                ok = await provider.favoriteChallengeVideo(
+                                  participationId: participationId,
+                                );
+                              }
+                            } else if (videoType.isNotEmpty && videoId.isNotEmpty) {
+                              if (hasFavorited) {
+                                ok = await provider.unfavoriteVideo(
+                                  videoType: videoType,
+                                  videoId: videoId,
+                                );
+                              } else {
+                                ok = await provider.favoriteVideo(
+                                  videoType: videoType,
+                                  videoId: videoId,
+                                );
+                              }
+                            }
+                            if (!context.mounted) return;
+                            if (!ok && provider.error != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(provider.error!)),
+                              );
+                            }
+                          },
+                        ),
+                        // Télécharger (déplacé ici)
+                        if (allowDownload)
+                          ListTile(
+                            leading: const Icon(Icons.download, color: Colors.white),
+                            title: const Text('Télécharger', style: TextStyle(color: Colors.white)),
+                            onTap: () async {
+                              Navigator.of(sheetContext).pop();
+                              final ok = await _downloadWatermarkedWithProgressSheet(
+                                context: context,
+                                provider: provider,
+                                videoType: videoType,
                               videoId: videoId,
                               videoAssetId: videoAssetId,
                               fallbackVideoUrl: videoUrl,
@@ -3009,77 +3135,80 @@ class _ChallengeVideoActions extends StatelessWidget {
                             }
                           },
                         ),
-                      if (isOwner)
-                        SwitchListTile(
-                          secondary: const Icon(
-                            Icons.download_for_offline,
-                            color: Colors.white,
-                          ),
-                          title: const Text(
-                            'Autoriser le téléchargement',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          value: allowDownload,
-                          onChanged: (value) async {
-                            final ok = await provider.setVideoAllowDownload(
-                              videoType: videoType,
-                              videoId: videoId,
-                              allowDownload: value,
-                            );
-                            if (!sheetContext.mounted) return;
-                            if (!ok) {
-                              if (provider.error != null) {
-                                ScaffoldMessenger.of(sheetContext).showSnackBar(
-                                  SnackBar(content: Text(provider.error!)),
-                                );
-                              }
-                              return;
-                            }
-                            await onDeleted?.call();
-                            if (!sheetContext.mounted) return;
+                        // Partager
+                        ListTile(
+                          leading: const Icon(Icons.share, color: Colors.white),
+                          title: const Text('Partager', style: TextStyle(color: Colors.white)),
+                          onTap: () async {
                             Navigator.of(sheetContext).pop();
+                            await VideoShareService.shareVideo(
+                              videoUrl: videoUrl,
+                              videoId: videoId.isNotEmpty ? videoId : participationId,
+                              title: isChallenge ? 'Challenge Academia' : 'Vidéo Academia',
+                            );
                           },
                         ),
-                      ListTile(
-                        leading: const Icon(
-                          Icons.history,
-                          color: Colors.white,
-                        ),
-                        title: const Text(
-                          'Récemment supprimées',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        onTap: () async {
-                          Navigator.of(sheetContext).pop();
-                          final restored = await Navigator.of(context).push<bool>(
-                            MaterialPageRoute(
-                              builder: (_) => const StudentRecentlyDeletedVideosScreen(),
-                            ),
-                          );
-                          if (restored == true) {
-                            await onDeleted?.call();
-                          }
-                        },
-                      ),
-                      if (isOwner)
+                        // Signaler
                         ListTile(
-                          leading: const Icon(
-                            Icons.delete_outline,
-                            color: Colors.redAccent,
-                          ),
-                          title: const Text(
-                            'Supprimer',
-                            style: TextStyle(color: Colors.redAccent),
-                          ),
+                          leading: const Icon(Icons.flag_outlined, color: Colors.white),
+                          title: const Text('Signaler', style: TextStyle(color: Colors.white)),
                           onTap: () async {
-                            final confirmed = await showDialog<bool>(
-                              context: sheetContext,
-                              builder: (dialogContext) {
-                                return AlertDialog(
-                                  title: const Text('Supprimer cette vidéo ?'),
-                                  content: const Text(
-                                    'Elle sera déplacée dans "Récemment supprimées".',
-                                  ),
+                            Navigator.of(sheetContext).pop();
+                            await _showGenericReportDialog(
+                              context,
+                              provider,
+                              videoType,
+                              videoId,
+                            );
+                          },
+                        ),
+                        if (isOwner) ...[
+                          const Divider(color: Colors.white24),
+                          ListTile(
+                            leading: const Icon(Icons.download_for_offline, color: Colors.white),
+                            title: const Text('Autoriser le téléchargement', style: TextStyle(color: Colors.white)),
+                            trailing: Switch(
+                              value: allowDownload,
+                              onChanged: (value) async {
+                                final ok = await provider.setVideoAllowDownload(
+                                  videoType: videoType,
+                                  videoId: videoId,
+                                  allowDownload: value,
+                                );
+                                if (!sheetContext.mounted) return;
+                                if (!ok && provider.error != null) {
+                                  ScaffoldMessenger.of(sheetContext).showSnackBar(
+                                    SnackBar(content: Text(provider.error!)),
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.history, color: Colors.white),
+                            title: const Text('Récemment supprimées', style: TextStyle(color: Colors.white)),
+                            onTap: () async {
+                              Navigator.of(sheetContext).pop();
+                              final restored = await Navigator.of(context).push<bool>(
+                                MaterialPageRoute(
+                                  builder: (_) => const StudentRecentlyDeletedVideosScreen(),
+                                ),
+                              );
+                              if (restored == true) {
+                                await onDeleted?.call();
+                              }
+                            },
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                            title: const Text('Supprimer', style: TextStyle(color: Colors.redAccent)),
+                            onTap: () async {
+                              final confirmed = await showDialog<bool>(
+                                context: sheetContext,
+                                builder: (dialogContext) {
+                                  return AlertDialog(
+                                    title: const Text('Supprimer cette vidéo ?'),
+                                    content: const Text('Elle sera déplacée dans "Récemment supprimées".'),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -3093,24 +3222,18 @@ class _ChallengeVideoActions extends StatelessWidget {
                                 );
                               },
                             );
-
                             if (confirmed != true) return;
-
                             final ok = await provider.softDeleteVideo(
                               videoType: videoType,
                               videoId: videoId,
                             );
                             if (!sheetContext.mounted) return;
-
-                            if (!ok) {
-                              if (provider.error != null) {
-                                ScaffoldMessenger.of(sheetContext).showSnackBar(
-                                  SnackBar(content: Text(provider.error!)),
-                                );
-                              }
+                            if (!ok && provider.error != null) {
+                              ScaffoldMessenger.of(sheetContext).showSnackBar(
+                                SnackBar(content: Text(provider.error!)),
+                              );
                               return;
                             }
-
                             Navigator.of(sheetContext).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Vidéo supprimée')),
@@ -3118,60 +3241,68 @@ class _ChallengeVideoActions extends StatelessWidget {
                             await onDeleted?.call();
                           },
                         ),
-                      ListTile(
-                        leading: const Icon(Icons.close, color: Colors.white70),
-                        title: const Text('Annuler', style: TextStyle(color: Colors.white70)),
-                        onTap: () => Navigator.of(sheetContext).pop(),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
+                      ],
+                        ListTile(
+                          leading: const Icon(Icons.close, color: Colors.white70),
+                          title: const Text('Annuler', style: TextStyle(color: Colors.white70)),
+                          onTap: () => Navigator.of(sheetContext).pop(),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
                   ),
                 );
               },
             );
           },
-          icon: const Icon(Icons.more_horiz, color: Colors.white),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
+        // Commentaires (action visible)
+        IconButton(
+          onPressed: () async {
+            if (isChallenge && participationId.isNotEmpty) {
+              await _showCommentsSheet(context, provider, participationId);
+            } else if (videoType.isNotEmpty && videoId.isNotEmpty) {
+              await _showGenericCommentsSheet(
+                context,
+                provider,
+                videoType,
+                videoId,
+              );
+            }
+          },
+          icon: const Icon(
+            Icons.chat_bubble_outline,
+            color: Colors.white,
+          ),
+        ),
+        Text(
+          '$commentsCount',
+          style: const TextStyle(color: Colors.white, fontSize: 12),
+        ),
+        const SizedBox(height: 8),
+        // Action principale: Like
         IconButton(
           onPressed: () async {
             bool ok = false;
-
-            // Vidéos de challenge → on conserve la logique basée sur participationId.
             if (isChallenge && participationId.isNotEmpty) {
               if (hasLiked) {
-                ok = await provider.unlikeChallengeVideo(
-                  participationId: participationId,
-                );
+                ok = await provider.unlikeChallengeVideo(participationId: participationId);
               } else {
-                ok = await provider.likeChallengeVideo(
-                  participationId: participationId,
-                );
+                ok = await provider.likeChallengeVideo(participationId: participationId);
               }
-            }
-            // Autres types de vidéos (par ex. free) → RPC générique basée sur
-            // (video_type, video_id) pour le feed unifié.
-            else if (videoType.isNotEmpty && videoId.isNotEmpty) {
+            } else if (videoType.isNotEmpty && videoId.isNotEmpty) {
               if (hasLiked) {
-                ok = await provider.unlikeVideo(
-                  videoType: videoType,
-                  videoId: videoId,
-                );
+                ok = await provider.unlikeVideo(videoType: videoType, videoId: videoId);
               } else {
-                ok = await provider.likeVideo(
-                  videoType: videoType,
-                  videoId: videoId,
-                );
+                ok = await provider.likeVideo(videoType: videoType, videoId: videoId);
               }
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Impossible d\'identifier cette vidéo pour le like.'),
-                ),
+                const SnackBar(content: Text('Impossible d\'identifier cette vidéo pour le like.')),
               );
               return;
             }
-
             if (!ok && provider.error != null && context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(provider.error!)),
@@ -3187,402 +3318,59 @@ class _ChallengeVideoActions extends StatelessWidget {
           '$likesCount',
           style: const TextStyle(color: Colors.white, fontSize: 12),
         ),
-        const SizedBox(height: 12),
-        IconButton(
-          onPressed: () async {
-            bool ok = false;
-
-            if (isChallenge && participationId.isNotEmpty) {
-              if (hasFavorited) {
-                ok = await provider.unfavoriteChallengeVideo(
-                  participationId: participationId,
-                );
-              } else {
-                ok = await provider.favoriteChallengeVideo(
-                  participationId: participationId,
-                );
-              }
-            } else if (videoType.isNotEmpty && videoId.isNotEmpty) {
-              if (hasFavorited) {
-                ok = await provider.unfavoriteVideo(
-                  videoType: videoType,
-                  videoId: videoId,
-                );
-              } else {
-                ok = await provider.favoriteVideo(
-                  videoType: videoType,
-                  videoId: videoId,
-                );
-              }
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Impossible d\'identifier cette vidéo pour les favoris.',
-                  ),
+        const SizedBox(height: 8),
+        // Rang personnel (si disponible)
+        Consumer<StudentChallengesProvider>(
+          builder: (context, provider, child) {
+            final myRank = provider.videos
+                .firstWhere(
+                  (v) => (v['participation_id']?.toString() ?? v['video_id']?.toString() ?? '') == 
+                         (participationId.isNotEmpty ? participationId : videoId),
+                  orElse: () => <String, dynamic>{},
+                )['my_rank'];
+            if (myRank == null) return const SizedBox.shrink();
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.emoji_events, color: Colors.amber, size: 20),
+                const SizedBox(height: 2),
+                Text(
+                  '#$myRank',
+                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
                 ),
-              );
-              return;
-            }
-            if (!ok && provider.error != null && context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(provider.error!)),
-              );
-            }
-          },
-          icon: Icon(
-            hasFavorited ? Icons.star : Icons.star_border,
-            color: hasFavorited ? Colors.amber : Colors.white,
-          ),
-        ),
-        Text(
-          '$favoritesCount',
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
-        const SizedBox(height: 12),
-        IconButton(
-          onPressed: () async {
-            // Challenges → on garde le flux historique basé sur participationId.
-            if (isChallenge && participationId.isNotEmpty) {
-              await _showCommentsSheet(context, provider, participationId);
-              return;
-            }
-
-            // Autres vidéos (ex: free) → commentaires génériques (video_type, video_id).
-            if (videoType.isNotEmpty && videoId.isNotEmpty) {
-              await _showGenericCommentsSheet(
-                context,
-                provider,
-                videoType,
-                videoId,
-              );
-              return;
-            }
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Impossible d\'identifier cette vidéo pour les commentaires.',
-                ),
-              ),
+              ],
             );
           },
-          icon: const Icon(
-            Icons.chat_bubble_outline,
-            color: Colors.white,
-          ),
         ),
-        Text(
-          '$commentsCount',
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
-        const SizedBox(height: 12),
-        if (allowDownload)
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                onPressed: () async {
-                  debugPrint('[DL-BTN] ══ Download button pressed ══');
-                  debugPrint('[DL-BTN] videoType="$videoType" videoId="$videoId"');
-                  debugPrint('[DL-BTN] videoAssetId="$videoAssetId"');
-                  debugPrint('[DL-BTN] videoUrl (fallback)="${videoUrl.length > 60 ? '${videoUrl.substring(0, 60)}...' : videoUrl}"');
-                  debugPrint('[DL-BTN] videoRenditions=$videoRenditions');
-                  debugPrint('[DL-BTN] allowDownload=$allowDownload');
-                  final ok = await _downloadWatermarkedWithProgressSheet(
-                    context: context,
-                    provider: provider,
-                    videoType: videoType,
-                    videoId: videoId,
-                    videoAssetId: videoAssetId,
-                    fallbackVideoUrl: videoUrl,
-                    videoRenditions: videoRenditions,
-                  );
-                  debugPrint('[DL-BTN] result=$ok');
-                  if (!context.mounted) return;
-                  if (ok) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Vidéo enregistrée dans la galerie'),
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.download, color: Colors.white),
-                tooltip: 'Télécharger',
-              ),
-              const SizedBox(height: 4),
-            ],
-          ),
+        const SizedBox(height: 8),
+        // Partage
         IconButton(
           onPressed: () async {
-            if (videoUrl.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Lien vidéo indisponible pour le partage.'),
-                ),
-              );
-              return;
-            }
-            try {
-              await VideoShareService.shareVideo(
-                videoUrl: videoUrl,
-                videoId: videoId.isNotEmpty ? videoId : participationId,
-                participationId: participationId.isNotEmpty ? participationId : null,
-                title: 'Vidéo de challenge Academia',
-              );
-            } catch (_) {
-              await Clipboard.setData(ClipboardData(text: videoUrl));
-              await VideoShareService.copyLink(
-                videoUrl: videoUrl,
-                videoId: videoId.isNotEmpty ? videoId : participationId,
-              );
-              if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content:
-                      Text('Lien de la vidéo copié dans le presse-papiers.'),
-                ),
-              );
-            }
-          },
-          icon: const Icon(
-            Icons.share,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 12),
-        IconButton(
-          onPressed: () async {
-            // Vidéos de challenge → pipeline historique basé sur participationId.
-            if (isChallenge && participationId.isNotEmpty) {
-              if (remixType == 'duo') {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Tu ne peux pas créer un duo à partir d\'un duo.',
-                    ),
-                  ),
-                );
-                return;
-              }
-
-              final result = await provider.startDuoChallengeVideo(
-                parentParticipationId: participationId,
-              );
-              if (result == null) {
-                if (provider.error != null) {
-                  // ignore: use_build_context_synchronously
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(provider.error!)),
-                  );
-                }
-                return;
-              }
-              final newParticipationId = result['participation_id'] ?? '';
-              final challengeId = result['challenge_id'] ?? '';
-              if (newParticipationId.isEmpty || challengeId.isEmpty) {
-                return;
-              }
-
-              // ignore: use_build_context_synchronously
-              await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => StudentChallengeVideoEditorScreen(
-                    challengeId: challengeId,
-                    participationId: newParticipationId,
-                  ),
-                ),
-              );
-              return;
-            }
-
-            // Autres vidéos (free, etc.) → duo générique basé sur (video_type, video_id).
-            if (videoType.isEmpty || videoId.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Impossible d\'identifier cette vidéo pour le duo.',
-                  ),
-                ),
-              );
-              return;
-            }
-
-            if (remixType == 'duo') {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Tu ne peux pas créer un duo à partir d\'un duo.',
-                  ),
-                ),
-              );
-              return;
-            }
-
-            final result = await provider.startDuoVideo(
-              videoType: videoType,
-              videoId: videoId,
-            );
-            if (result == null) {
-              if (provider.error != null) {
-                // ignore: use_build_context_synchronously
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(provider.error!)),
-                );
-              }
-              return;
-            }
-
-            final newVideoId = result['video_id']?.toString() ?? '';
-            if (newVideoId.isEmpty) {
-              return;
-            }
-
-            // ignore: use_build_context_synchronously
-            await Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => StudentChallengeVideoEditorScreen(
-                  videoType: 'free',
-                  freeVideoId: newVideoId,
-                ),
-              ),
+            await VideoShareService.shareVideo(
+              videoUrl: videoUrl,
+              videoId: videoId.isNotEmpty ? videoId : participationId,
+              title: isChallenge ? 'Challenge Academia' : 'Vidéo Academia',
             );
           },
-          icon: const Icon(
-            Icons.video_call,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 12),
-        IconButton(
-          onPressed: () async {
-            // Challenges → RPC historique basée sur participationId.
-            if (isChallenge && participationId.isNotEmpty) {
-              await _showReportDialog(context, provider, participationId);
-              return;
-            }
-
-            // Autres vidéos → signalement générique (video_type, video_id).
-            if (videoType.isNotEmpty && videoId.isNotEmpty) {
-              await _showGenericReportDialog(
-                context,
-                provider,
-                videoType,
-                videoId,
-              );
-              return;
-            }
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Impossible d\'identifier cette vidéo pour le signalement.',
-                ),
-              ),
-            );
-          },
-          icon: const Icon(
-            Icons.flag_outlined,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 12),
-        IconButton(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const StudentChallengesTab(),
-              ),
-            );
-          },
-          icon: const Icon(
-            Icons.emoji_events_outlined,
-            color: Colors.white,
-          ),
-          tooltip: 'Voir les challenges',
+          icon: const Icon(Icons.share, color: Colors.white),
         ),
       ],
     );
   }
+}
 
-  static Future<void> _showCommentsSheet(
-    BuildContext context,
-    StudentChallengesProvider provider,
-    String participationId,
-  ) async {
-    await _showGenericCommentsSheet(
-      context,
-      provider,
-      'challenge',
-      participationId,
-    );
-  }
-
-  static Future<void> _showReportDialog(
-    BuildContext context,
-    StudentChallengesProvider provider,
-    String participationId,
-  ) async {
-    final reasonController = TextEditingController();
-    final detailsController = TextEditingController();
-
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Signaler la vidéo'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: reasonController,
-                  decoration: const InputDecoration(
-                    labelText: 'Motif (obligatoire)',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: detailsController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Détails (optionnel)',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final reason = reasonController.text.trim();
-                final details = detailsController.text.trim();
-                final ok = await provider.reportChallengeVideo(
-                  participationId: participationId,
-                  reason: reason,
-                  details: details.isEmpty ? null : details,
-                );
-                if (!dialogContext.mounted) return;
-                if (!ok && provider.error != null) {
-                  ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    SnackBar(content: Text(provider.error!)),
-                  );
-                } else if (ok) {
-                  Navigator.of(dialogContext).pop();
-                }
-              },
-              child: const Text('Envoyer'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+// Helper functions for comments and reporting (moved outside class for reuse)
+Future<void> _showCommentsSheet(
+  BuildContext context,
+  StudentChallengesProvider provider,
+  String participationId,
+) async {
+  await _showGenericCommentsSheet(
+    context,
+    provider,
+    'challenge',
+    participationId,
+  );
 }
 
 class _DuoParentVideoPreviewScreen extends StatefulWidget {
