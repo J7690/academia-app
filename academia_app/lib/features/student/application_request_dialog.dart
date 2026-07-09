@@ -1,3 +1,4 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 
 class ApplicationRequestData {
@@ -120,85 +121,220 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.programTitle ?? 'Demande de candidature'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Merci de préciser quelques informations pour votre candidature.',
+    return FadeInUp(
+      duration: const Duration(milliseconds: 300),
+      child: Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 500),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFFFFFF), Color(0xFFF8FAFC)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _degreeController,
-              decoration: const InputDecoration(
-                labelText: "Niveau d'étude souhaité",
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _modeController,
-              decoration: const InputDecoration(
-                labelText: "Mode d'étude souhaité (présentiel, en ligne, etc.)",
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _scheduleController,
-              maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'Disponibilités / horaires préférés',
-              ),
-            ),
-            const SizedBox(height: 8),
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              value: _discountRequested,
-              onChanged: (value) {
-                setState(() {
-                  _discountRequested = value ?? false;
-                });
-              },
-              title: const Text(
-                'Je souhaite demander une réduction ou un échelonnement des frais',
-              ),
-            ),
-            if (_discountRequested) ...[
-              const SizedBox(height: 8),
-              TextField(
-                controller: _discountDetailsController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText:
-                      'Détail de votre demande de réduction / échelonnement (situation, montant, etc.)',
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3275D0).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.edit_document,
+                        color: Color(0xFF3275D0),
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.programTitle ?? 'Demande de candidature',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0A2540),
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Merci de préciser quelques informations pour votre candidature.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF6B7280),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-            const SizedBox(height: 8),
-            TextField(
-              controller: _commentController,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: "Commentaire pour l'université / l'équipe",
-              ),
+                const SizedBox(height: 20),
+                _buildInputField(
+                  controller: _degreeController,
+                  label: "Niveau d'étude souhaité",
+                  icon: Icons.school_outlined,
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _modeController,
+                  label: "Mode d'étude souhaité (présentiel, en ligne, etc.)",
+                  icon: Icons.access_time_outlined,
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _scheduleController,
+                  label: 'Disponibilités / horaires préférés',
+                  icon: Icons.calendar_today_outlined,
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3275D0).withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFF3275D0).withOpacity(0.15),
+                    ),
+                  ),
+                  child: CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _discountRequested,
+                    onChanged: (value) {
+                      setState(() {
+                        _discountRequested = value ?? false;
+                      });
+                    },
+                    title: const Text(
+                      'Je souhaite demander une réduction ou un échelonnement des frais',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF0A2540),
+                      ),
+                    ),
+                  ),
+                ),
+                if (_discountRequested) ...[
+                  const SizedBox(height: 16),
+                  _buildInputField(
+                    controller: _discountDetailsController,
+                    label: 'Détail de votre demande de réduction / échelonnement (situation, montant, etc.)',
+                    icon: Icons.payments_outlined,
+                    maxLines: 3,
+                  ),
+                ],
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _commentController,
+                  label: "Commentaire pour l'université / l'équipe",
+                  icon: Icons.comment_outlined,
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(null);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          side: const BorderSide(
+                            color: Color(0xFFE5E7EB),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: const Text(
+                          'Annuler',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _submit,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: const Color(0xFF3275D0),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Envoyer la candidature',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop(null);
-          },
-          child: const Text('Annuler'),
+    );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    int maxLines = 1,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFE5E7EB),
+          width: 1.2,
         ),
-        ElevatedButton(
-          onPressed: _submit,
-          child: const Text('Envoyer la candidature'),
+      ),
+      child: TextField(
+        controller: controller,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, color: const Color(0xFF9CA3AF)),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.all(16),
+          labelStyle: const TextStyle(
+            color: Color(0xFF9CA3AF),
+            fontSize: 14,
+          ),
         ),
-      ],
+      ),
     );
   }
 }

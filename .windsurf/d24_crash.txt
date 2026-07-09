@@ -1,0 +1,930 @@
+﻿06-28 10:25:49.574  7351  7351 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.sendBroadcast:1062 android.content.ContextWrapper.sendBroadcast:448 com.transsion.powercenter.receiver.BatteryChangedReceiver.d:315 com.transsion.powercenter.receiver.BatteryChangedReceiver.c:307 com.transsion.powercenter.receiver.BatteryChangedReceiver.a:43 
+06-28 10:26:07.413  1240  3901 V ActivityManager: New death recipient com.android.server.am.ActivityManagerService$AppDeathRecipient@432eda5 for thread android.os.BinderProxy@b5a57a, pid:26929,mApp:null
+06-28 10:26:19.028  1240  3787 V ActivityManager: New death recipient com.android.server.am.ActivityManagerService$AppDeathRecipient@c6d4644 for thread android.os.BinderProxy@287d32d, pid:27156,mApp:null
+06-28 10:26:22.276  1240  3787 D os.notification: onEnqueueNotificationInternal StatusBarNotification:StatusBarNotification(pkg=net.bat.store user=UserHandle{0} id=141 tag=null key=0|net.bat.store|141|null|10128: Notification(channel=local_push_high pri=1 contentView=net.bat.store/0x7f0d01f7 vibrate=null sound=null defaults=0x0 flags=0x10 color=0x00000000 groupKey=ActiveNotify vis=PRIVATE)) callingUid:10128 sn:149 res:true
+06-28 10:26:22.276  1240  1265 D os.notification.SuspendJobManager: create job  com.transsion.common.SuspendJobManager$JobInfo@2541eb1 key:NotificationRecord(0x0bbd3d58: pkg=net.bat.store user=UserHandle{0} id=141 tag=null importance=4 key=0|net.bat.store|141|null|10128appImportanceLocked=false: Notification(channel=local_push_high pri=1 contentView=net.bat.store/0x7f0d01f7 vibrate=null sound=null defaults=0x0 flags=0x10 color=0x00000000 groupKey=ActiveNotify vis=PRIVATE)) data:com.android.server.notification.-$$Lambda$NotificationManagerService$5rTJ6GnvK-HkJIFoj_Xh9OqKs24@d52717 sn:-1 owner:{}
+06-28 10:26:22.280  1240  3746 D os.notification: onEnqueueNotificationInternal StatusBarNotification:StatusBarNotification(pkg=net.bat.store user=UserHandle{0} id=1441888783 tag=ActiveNotify key=0|net.bat.store|1441888783|ActiveNotify|10128: Notification(channel=local_push_high pri=0 contentView=null vibrate=null sound=null defaults=0x0 flags=0x210 color=0x00000000 groupKey=ActiveNotify vis=PRIVATE)) callingUid:10128 sn:150 res:true
+06-28 10:26:22.280  1240  1265 D os.notification.SuspendJobManager: create job  com.transsion.common.SuspendJobManager$JobInfo@ca8af22 key:NotificationRecord(0x0f5af4ed: pkg=net.bat.store user=UserHandle{0} id=1441888783 tag=ActiveNotify importance=4 key=0|net.bat.store|1441888783|ActiveNotify|10128appImportanceLocked=false: Notification(channel=local_push_high pri=0 contentView=null vibrate=null sound=null defaults=0x0 flags=0x210 color=0x00000000 groupKey=ActiveNotify vis=PRIVATE)) data:com.android.server.notification.-$$Lambda$NotificationManagerService$5rTJ6GnvK-HkJIFoj_Xh9OqKs24@f7b1db3 sn:-1 owner:{}
+06-28 10:26:22.289  1240  1265 D os.notification.SuspendJobManager: done  com.transsion.common.SuspendJobManager$JobInfo@2541eb1 key:NotificationRecord(0x0bbd3d58: pkg=net.bat.store user=UserHandle{0} id=141 tag=null importance=4 key=0|net.bat.store|141|null|10128appImportanceLocked=false: Notification(channel=local_push_high pri=1 contentView=net.bat.store/0x7f0d01f7 vibrate=null sound=null defaults=0x0 flags=0x10 color=0x00000000 groupKey=ActiveNotify vis=PRIVATE)) data:com.android.server.notification.-$$Lambda$NotificationManagerService$5rTJ6GnvK-HkJIFoj_Xh9OqKs24@d52717 sn:149 owner:{3289} for  app-3289-request
+06-28 10:26:22.292  1240  1265 D os.notification.SuspendJobManager: done  com.transsion.common.SuspendJobManager$JobInfo@ca8af22 key:NotificationRecord(0x0f5af4ed: pkg=net.bat.store user=UserHandle{0} id=1441888783 tag=ActiveNotify importance=4 key=0|net.bat.store|1441888783|ActiveNotify|10128appImportanceLocked=false: Notification(channel=local_push_high pri=0 contentView=null vibrate=null sound=null defaults=0x0 flags=0x210 color=0x00000000 groupKey=ActiveNotify vis=PRIVATE)) data:com.android.server.notification.-$$Lambda$NotificationManagerService$5rTJ6GnvK-HkJIFoj_Xh9OqKs24@f7b1db3 sn:150 owner:{3289} for  app-3289-request
+06-28 10:27:50.304  1240  1268 I ActivityManager: Start proc 27501:com.android.cellbroadcastreceiver/1000 for broadcast {com.android.cellbroadcastreceiver/com.android.cellbroadcastreceiver.CellBroadcastReceiver}
+06-28 10:27:50.355  1240  3747 V ActivityManager: New death recipient com.android.server.am.ActivityManagerService$AppDeathRecipient@86fbff for thread android.os.BinderProxy@7b2dcc, pid:27501,mApp:null
+06-28 10:27:50.359  1240  3747 D os.ActivityManagerServiceLice: make process active com.android.cellbroadcastreceiver(27501)
+06-28 10:27:50.543 27501 27501 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1667 android.content.ContextWrapper.startService:669 com.android.cellbroadcastreceiver.CellBroadcastReceiver.startConfigService:306 com.android.cellbroadcastreceiver.CellBroadcastReceiver.onReceiveWithPrivilege:124 com.android.cellbroadcastreceiver.CellBroadcastReceiver.onReceive:65 
+06-28 10:27:50.593  1240  1268 I ActivityManager: Start proc 27526:com.android.settings/1000 for broadcast {com.android.settings/com.mediatek.settings.network.RoamingSettingsReceiver}
+06-28 10:27:50.622  1240  5282 V ActivityManager: New death recipient com.android.server.am.ActivityManagerService$AppDeathRecipient@3ebf0b for thread android.os.BinderProxy@66ee1e8, pid:27526,mApp:null
+06-28 10:27:52.416  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.DROPBOX_ENTRY_ADDED flg=0x10 (has extras) } to com.google.android.gms/.stats.service.DropBoxEntryAddedReceiver
+06-28 10:28:43.792  1240  1253 V ActivityManager: New death recipient com.android.server.am.ActivityManagerService$AppDeathRecipient@58073f for thread android.os.BinderProxy@16a780c, pid:27637,mApp:null
+06-28 10:30:31.498  7351  7351 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.sendBroadcast:1062 android.content.ContextWrapper.sendBroadcast:448 com.transsion.powercenter.receiver.BatteryChangedReceiver.d:315 com.transsion.powercenter.receiver.BatteryChangedReceiver.c:307 com.transsion.powercenter.receiver.BatteryChangedReceiver.a:43 
+06-28 10:31:03.070  1240  2163 V ActivityManager: New death recipient com.android.server.am.ActivityManagerService$AppDeathRecipient@d20e70c for thread android.os.BinderProxy@cb03855, pid:27956,mApp:null
+06-28 10:31:10.540  1240  1254 V ActivityManager: New death recipient com.android.server.am.ActivityManagerService$AppDeathRecipient@ecc691 for thread android.os.BinderProxy@e76e9f6, pid:28126,mApp:null
+06-28 10:33:15.863  1240  1669 V ActivityManager: New death recipient com.android.server.am.ActivityManagerService$AppDeathRecipient@f566545 for thread android.os.BinderProxy@302549a, pid:28555,mApp:null
+06-28 10:33:21.424  1240  1912 V ActivityManager: New death recipient com.android.server.am.ActivityManagerService$AppDeathRecipient@767ff0c for thread android.os.BinderProxy@6457055, pid:28603,mApp:null
+06-28 10:33:23.350  1240  1240 D Griffin/ComponentManager: Limit receiveBroadcast:android.intent.action.ACTION_POWER_DISCONNECTED for com.facebook.pages.app/com.facebook.notifications.tray.util.NotificationsClientSignalStaticBroadcastReceiver from sys, 3rd-nomral
+06-28 10:33:23.352  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.battery.monitor.ContinuousBatteryMonitorService$BroadcastReceiver
+06-28 10:33:23.356  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.notifications.tray.util.NotificationsClientSignalStaticBroadcastReceiver
+06-28 10:33:23.356  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.google.android.gms/.chimera.GmsIntentOperationService$PersistentTrustedReceiver
+06-28 10:33:23.360  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.google.android.projection.gearhead/com.google.android.apps.auto.components.connectivity.impl.ConnectivityEventHandlerImpl$ConnectivityEventBroadcastReceiver
+06-28 10:33:23.360  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.transsion.phoenix/com.cloudview.daemon.way.broadcast.DaemonBroadCastReceiver
+06-28 10:33:45.496  7351  7351 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.sendBroadcast:1062 android.content.ContextWrapper.sendBroadcast:448 com.transsion.powercenter.receiver.BatteryChangedReceiver.d:315 com.transsion.powercenter.receiver.BatteryChangedReceiver.c:307 com.transsion.powercenter.receiver.BatteryChangedReceiver.a:43 
+06-28 10:33:48.357  1240  1258 I DisplayManagerService: Display device changed state: "flutter-vd#0", OFF
+06-28 10:33:48.357  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#0": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#0,0", 720 x 1544, modeId 26, defaultModeId 26, supportedModes [{id=26, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state OFF, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.357  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#1": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#1,0", 720 x 1544, modeId 27, defaultModeId 27, supportedModes [{id=27, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.358  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 28, defaultModeId 28, supportedModes [{id=28, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.362  1240  3748 I DisplayManagerService: Display device removed: DisplayDeviceInfo{"flutter-vd#0": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#0,0", 720 x 1544, modeId 26, defaultModeId 26, supportedModes [{id=26, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state OFF, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY}
+06-28 10:33:48.365  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#1": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#1,0", 720 x 1544, modeId 27, defaultModeId 27, supportedModes [{id=27, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.365  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 28, defaultModeId 28, supportedModes [{id=28, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.376  1240  3748 I DisplayManagerService: Display device added: DisplayDeviceInfo{"flutter-vd#0": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#0,0", 720 x 1544, modeId 29, defaultModeId 29, supportedModes [{id=29, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY}
+06-28 10:33:48.376  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#1": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#1,0", 720 x 1544, modeId 27, defaultModeId 27, supportedModes [{id=27, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.376  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 28, defaultModeId 28, supportedModes [{id=28, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.376  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#0": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#0,0", 720 x 1544, modeId 29, defaultModeId 29, supportedModes [{id=29, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.474  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#1": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#1,0", 720 x 1544, modeId 27, defaultModeId 27, supportedModes [{id=27, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.474  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 28, defaultModeId 28, supportedModes [{id=28, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.475  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#0": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#0,0", 720 x 1544, modeId 29, defaultModeId 29, supportedModes [{id=29, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.516  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#1": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#1,0", 720 x 1544, modeId 27, defaultModeId 27, supportedModes [{id=27, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.516  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 28, defaultModeId 28, supportedModes [{id=28, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.516  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#0": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#0,0", 720 x 1544, modeId 29, defaultModeId 29, supportedModes [{id=29, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.544  1240  1258 I DisplayManagerService: Display device changed state: "flutter-vd#1", OFF
+06-28 10:33:48.545  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#1": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#1,0", 720 x 1544, modeId 27, defaultModeId 27, supportedModes [{id=27, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state OFF, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.545  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 28, defaultModeId 28, supportedModes [{id=28, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.545  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#0": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#0,0", 720 x 1544, modeId 29, defaultModeId 29, supportedModes [{id=29, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.547  1240  2165 I DisplayManagerService: Display device removed: DisplayDeviceInfo{"flutter-vd#1": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#1,0", 720 x 1544, modeId 27, defaultModeId 27, supportedModes [{id=27, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state OFF, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY}
+06-28 10:33:48.552  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 28, defaultModeId 28, supportedModes [{id=28, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.552  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#0": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#0,0", 720 x 1544, modeId 29, defaultModeId 29, supportedModes [{id=29, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.558  1240  3787 I DisplayManagerService: Display device added: DisplayDeviceInfo{"flutter-vd#1": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#1,0", 720 x 1544, modeId 30, defaultModeId 30, supportedModes [{id=30, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY}
+06-28 10:33:48.560  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 28, defaultModeId 28, supportedModes [{id=28, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.560  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#0": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#0,0", 720 x 1544, modeId 29, defaultModeId 29, supportedModes [{id=29, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.560  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#1": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#1,0", 720 x 1544, modeId 30, defaultModeId 30, supportedModes [{id=30, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.640  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 28, defaultModeId 28, supportedModes [{id=28, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.640  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#0": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#0,0", 720 x 1544, modeId 29, defaultModeId 29, supportedModes [{id=29, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.640  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#1": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#1,0", 720 x 1544, modeId 30, defaultModeId 30, supportedModes [{id=30, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.692  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 28, defaultModeId 28, supportedModes [{id=28, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.692  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#0": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#0,0", 720 x 1544, modeId 29, defaultModeId 29, supportedModes [{id=29, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.692  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#1": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#1,0", 720 x 1544, modeId 30, defaultModeId 30, supportedModes [{id=30, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.709  1240  2159 I DisplayManagerService: Display device removed: DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 28, defaultModeId 28, supportedModes [{id=28, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state OFF, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY}
+06-28 10:33:48.710  1240  1258 W DisplayManagerService: Attempted to change non-existent display device: DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 28, defaultModeId 28, supportedModes [{id=28, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state OFF, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY}
+06-28 10:33:48.711  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#0": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#0,0", 720 x 1544, modeId 29, defaultModeId 29, supportedModes [{id=29, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.711  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#1": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#1,0", 720 x 1544, modeId 30, defaultModeId 30, supportedModes [{id=30, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.716  1240  2159 I DisplayManagerService: Display device added: DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 31, defaultModeId 31, supportedModes [{id=31, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY}
+06-28 10:33:48.717  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#0": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#0,0", 720 x 1544, modeId 29, defaultModeId 29, supportedModes [{id=29, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.717  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#1": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#1,0", 720 x 1544, modeId 30, defaultModeId 30, supportedModes [{id=30, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.717  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 31, defaultModeId 31, supportedModes [{id=31, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.775  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#0": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#0,0", 720 x 1544, modeId 29, defaultModeId 29, supportedModes [{id=29, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.775  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#1": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#1,0", 720 x 1544, modeId 30, defaultModeId 30, supportedModes [{id=30, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.775  1240  1256 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 31, defaultModeId 31, supportedModes [{id=31, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.817  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#0": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#0,0", 720 x 1544, modeId 29, defaultModeId 29, supportedModes [{id=29, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.817  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#1": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#1,0", 720 x 1544, modeId 30, defaultModeId 30, supportedModes [{id=30, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:48.818  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 31, defaultModeId 31, supportedModes [{id=31, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:49.021  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#0": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#0,0", 720 x 1544, modeId 29, defaultModeId 29, supportedModes [{id=29, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:49.021  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#1": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#1,0", 720 x 1544, modeId 30, defaultModeId 30, supportedModes [{id=30, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:49.021  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 31, defaultModeId 31, supportedModes [{id=31, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:49.036  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#0": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#0,0", 720 x 1544, modeId 29, defaultModeId 29, supportedModes [{id=29, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:49.036  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#1": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#1,0", 720 x 1544, modeId 30, defaultModeId 30, supportedModes [{id=30, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:33:49.037  1240  1259 I DisplayManagerService: Display DisplayDeviceInfo{"flutter-vd#2": uniqueId="virtual:com.academia.nexiomgroup.app,10685,flutter-vd#2,0", 720 x 1544, modeId 31, defaultModeId 31, supportedModes [{id=31, width=720, height=1544, fps=60.0}], colorMode 0, supportedColorModes [0], HdrCapabilities null, density 320, 320.0 x 320.0 dpi, appVsyncOff 0, presDeadline 16666666, touch NONE, rotation 0, type VIRTUAL, state ON, owner com.academia.nexiomgroup.app (uid 10685), FLAG_PRIVATE, FLAG_NEVER_BLANK, FLAG_OWN_CONTENT_ONLY} does not support input device matching.
+06-28 10:34:07.995  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.battery.monitor.ContinuousBatteryMonitorService$BroadcastReceiver
+06-28 10:34:07.995  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.notifications.tray.util.NotificationsClientSignalStaticBroadcastReceiver
+06-28 10:34:07.996  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.google.android.gms/.chimera.GmsIntentOperationService$PersistentTrustedReceiver
+06-28 10:34:07.996  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.google.android.gms/.gcm.nts.SchedulerReceiver
+06-28 10:34:07.996  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.google.android.projection.gearhead/com.google.android.apps.auto.components.connectivity.impl.ConnectivityEventHandlerImpl$ConnectivityEventBroadcastReceiver
+06-28 10:34:07.996  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.transsion.phoenix/com.cloudview.daemon.way.broadcast.DaemonBroadCastReceiver
+06-28 10:34:08.087  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.battery.monitor.ContinuousBatteryMonitorService$BroadcastReceiver
+06-28 10:34:08.110  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.notifications.tray.util.NotificationsClientSignalStaticBroadcastReceiver
+06-28 10:34:08.170  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.google.android.gms/.chimera.GmsIntentOperationService$PersistentTrustedReceiver
+06-28 10:34:08.170  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.google.android.projection.gearhead/com.google.android.apps.auto.components.connectivity.impl.ConnectivityEventHandlerImpl$ConnectivityEventBroadcastReceiver
+06-28 10:34:08.170  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.transsion.phoenix/com.cloudview.daemon.way.broadcast.DaemonBroadCastReceiver
+06-28 10:34:11.575  1240  1258 W WindowManager: Unable to start animation, surface is null or no children.
+06-28 10:34:12.984  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.battery.monitor.ContinuousBatteryMonitorService$BroadcastReceiver
+06-28 10:34:12.985  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.notifications.tray.util.NotificationsClientSignalStaticBroadcastReceiver
+06-28 10:34:12.985  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.google.android.gms/.chimera.GmsIntentOperationService$PersistentTrustedReceiver
+06-28 10:34:12.985  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.google.android.gms/.gcm.nts.SchedulerReceiver
+06-28 10:34:12.985  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.google.android.projection.gearhead/com.google.android.apps.auto.components.connectivity.impl.ConnectivityEventHandlerImpl$ConnectivityEventBroadcastReceiver
+06-28 10:34:12.985  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.transsion.phoenix/com.cloudview.daemon.way.broadcast.DaemonBroadCastReceiver
+06-28 10:34:16.573  1240  1258 W WindowManager: Unable to start animation, surface is null or no children.
+06-28 10:35:05.530  1240  3747 I Telecom-Call: checkCarrierCapability: mTargetPhoneAccountHandle is null: TSI.pC@AUM
+06-28 10:35:05.533  1240  3747 I Telecom-LogUtils: EventRecord added as Call: [TC@3, NEW, null, tel:*****, A, childs(0), has_parent(false), [Capabilities:], [Properties:]]: TSI.pC@AUM
+06-28 10:35:05.586  1240  1240 I Telecom : CallRedirectionProcessorHelper: formatNumberToE164, formatted E164 number: null: TSI.pC->CIP.sNOCI@AUM
+06-28 10:35:05.591  1240  1240 I Telecom : CallRedirectionProcessorHelper: Cannot get carrier componentNameString.: TSI.pC->CIP.sNOCI@AUM
+06-28 10:35:05.592  1240  1240 I Telecom-NewOutgoingCallIntentBroadcaster: Sending NewOutgoingCallBroadcast for [TC@3, CONNECTING, null, tel:*****, A, childs(0), has_parent(false), [Capabilities:], [Properties:]] to UserHandle{0}: TSI.pC->CIP.sNOCI@AUM
+06-28 10:35:05.613  1240  1240 I Telecom-Call: CallerInfo received for tel:*****: com.mediatek.internal.telephony.MtkCallerInfo@245a68f { name null, phoneNumber non-null }: TSI.pC->CILH.sL->CILH.oQC@AUM
+06-28 10:35:05.631  1240  1240 I Telecom-NewOutgoingCallBroadcastIntentReceiver: Received new-outgoing-call-broadcast for [TC@3, CONNECTING, null, tel:*****, A, childs(0), has_parent(false), [Capabilities:], [Properties:]] with data ***: NOCBIR.oR@AUQ
+06-28 10:35:05.638  1240  1240 I Telecom-NewOutgoingCallIntentBroadcaster: Placing call immediately instead of waiting for OutgoingCallBroadcastReceiver: NOCBIR.oR@AUQ
+06-28 10:35:05.658  1240  1240 I Telecom-PhoneAccountRegistrar: getSimCallManager: SimCallManager for subId 14 queried, returning: null: NOCBIR.oR@AUQ
+06-28 10:35:05.702  1240  2159 I Telecom-PhoneAccountRegistrar: getSimCallManager: SimCallManager for subId 14 queried, returning: null: (...->CS.aCSA->H.CS.aCSA)->CSW.qRCS@E-E-AUU
+06-28 10:35:05.708  1240  2159 I Telecom-PhoneAccountRegistrar: getSimCallManager: SimCallManager for subId 5 queried, returning: null: (...->CS.aCSA->H.CS.aCSA)->CSW.qRCS@E-E-AUU
+06-28 10:35:05.872  1240  2159 I Telecom : Event: RecordEntry TC@3: SET_DISCONNECTED, disconnected set explicitly> DisconnectCause [ Code: (OTHER) Label: () Description: () Reason: (Connection is null, DIALED_MMI) Tone: (-1) ]: (...->CS.crCo->H.CS.crCo->H.CS.crCo.pICR)->CSW.hCCC@E-E-AUU
+06-28 10:35:05.879  1240  1240 I Telecom-PhoneAccountRegistrar: getSimCallManager: SimCallManager for subId 14 queried, returning: null: (...->CS.crCo->H.CS.crCo->H.CS.crCo.pICR)->CSW.hCCC->CM.mCAR@E-E-AUU
+06-28 10:35:05.880  1240  1240 I Telecom-CallsManager: setCallState DISCONNECTED -> DISCONNECTED, call: [TC@3, DISCONNECTED, null, tel:*****, A, childs(0), has_parent(false), [Capabilities:], [Properties:]]: (...->CS.crCo->H.CS.crCo->H.CS.crCo.pICR)->CSW.hCCC->CM.mCAR@E-E-AUU
+06-28 10:35:05.881  1240  1240 W Telecom-ConnectionServiceWrapper: unlinkDeathRecipient: death recipient is null.: (...->CS.crCo->H.CS.crCo->H.CS.crCo.pICR)->CSW.hCCC->CM.mCAR@E-E-AUU
+06-28 10:35:05.911  1240  1240 I Telecom : Event: RecordEntry TC@3: DESTROYED, null: (...->CS.crCo->H.CS.crCo->H.CS.crCo.pICR)->CSW.hCCC->CM.mCAR@E-E-AUU
+06-28 10:35:09.155  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.DROPBOX_ENTRY_ADDED flg=0x10 (has extras) } to com.google.android.gms/.stats.service.DropBoxEntryAddedReceiver
+06-28 10:35:15.180  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.DROPBOX_ENTRY_ADDED flg=0x10 (has extras) } to com.google.android.gms/.stats.service.DropBoxEntryAddedReceiver
+06-28 10:35:24.662  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.DROPBOX_ENTRY_ADDED flg=0x10 (has extras) } to com.google.android.gms/.stats.service.DropBoxEntryAddedReceiver
+06-28 10:35:56.563  7351  7351 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.sendBroadcast:1062 android.content.ContextWrapper.sendBroadcast:448 com.transsion.powercenter.receiver.BatteryChangedReceiver.d:315 com.transsion.powercenter.receiver.BatteryChangedReceiver.c:307 com.transsion.powercenter.receiver.BatteryChangedReceiver.a:43 
+06-28 10:35:58.196  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.battery.monitor.ContinuousBatteryMonitorService$BroadcastReceiver
+06-28 10:35:58.196  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.notifications.tray.util.NotificationsClientSignalStaticBroadcastReceiver
+06-28 10:35:58.196  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.google.android.gms/.chimera.GmsIntentOperationService$PersistentTrustedReceiver
+06-28 10:35:58.197  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.google.android.projection.gearhead/com.google.android.apps.auto.components.connectivity.impl.ConnectivityEventHandlerImpl$ConnectivityEventBroadcastReceiver
+06-28 10:35:58.197  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.transsion.phoenix/com.cloudview.daemon.way.broadcast.DaemonBroadCastReceiver
+06-28 10:36:26.679  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.battery.monitor.ContinuousBatteryMonitorService$BroadcastReceiver
+06-28 10:36:26.680  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.notifications.tray.util.NotificationsClientSignalStaticBroadcastReceiver
+06-28 10:36:26.681  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.google.android.gms/.chimera.GmsIntentOperationService$PersistentTrustedReceiver
+06-28 10:36:26.682  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.google.android.gms/.gcm.nts.SchedulerReceiver
+06-28 10:36:26.702  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.google.android.projection.gearhead/com.google.android.apps.auto.components.connectivity.impl.ConnectivityEventHandlerImpl$ConnectivityEventBroadcastReceiver
+06-28 10:36:26.720  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.transsion.phoenix/com.cloudview.daemon.way.broadcast.DaemonBroadCastReceiver
+06-28 10:36:27.114  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.battery.monitor.ContinuousBatteryMonitorService$BroadcastReceiver
+06-28 10:36:27.115  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.notifications.tray.util.NotificationsClientSignalStaticBroadcastReceiver
+06-28 10:36:27.118  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.google.android.gms/.chimera.GmsIntentOperationService$PersistentTrustedReceiver
+06-28 10:36:27.119  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.google.android.projection.gearhead/com.google.android.apps.auto.components.connectivity.impl.ConnectivityEventHandlerImpl$ConnectivityEventBroadcastReceiver
+06-28 10:36:27.120  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.transsion.phoenix/com.cloudview.daemon.way.broadcast.DaemonBroadCastReceiver
+06-28 10:36:30.304  1240  1258 W WindowManager: Unable to start animation, surface is null or no children.
+06-28 10:36:30.802  1240  1268 I ActivityManager: Start proc 29722:com.video.fun.app/u0a559 for broadcast {com.video.fun.app/com.google.firebase.iid.FirebaseInstanceIdReceiver}
+06-28 10:37:14.858  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.battery.monitor.ContinuousBatteryMonitorService$BroadcastReceiver
+06-28 10:37:14.858  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.notifications.tray.util.NotificationsClientSignalStaticBroadcastReceiver
+06-28 10:37:14.858  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.google.android.gms/.chimera.GmsIntentOperationService$PersistentTrustedReceiver
+06-28 10:37:14.883  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.google.android.gms/.gcm.nts.SchedulerReceiver
+06-28 10:37:14.888  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.google.android.projection.gearhead/com.google.android.apps.auto.components.connectivity.impl.ConnectivityEventHandlerImpl$ConnectivityEventBroadcastReceiver
+06-28 10:37:14.888  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.transsion.phoenix/com.cloudview.daemon.way.broadcast.DaemonBroadCastReceiver
+06-28 10:37:15.445  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.battery.monitor.ContinuousBatteryMonitorService$BroadcastReceiver
+06-28 10:37:15.446  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.notifications.tray.util.NotificationsClientSignalStaticBroadcastReceiver
+06-28 10:37:15.446  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.google.android.gms/.chimera.GmsIntentOperationService$PersistentTrustedReceiver
+06-28 10:37:15.446  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.google.android.projection.gearhead/com.google.android.apps.auto.components.connectivity.impl.ConnectivityEventHandlerImpl$ConnectivityEventBroadcastReceiver
+06-28 10:37:15.446  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_DISCONNECTED flg=0x4000010 (has extras) } to com.transsion.phoenix/com.cloudview.daemon.way.broadcast.DaemonBroadCastReceiver
+06-28 10:37:18.435  1240  1258 W WindowManager: Unable to start animation, surface is null or no children.
+06-28 10:37:23.935  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.battery.monitor.ContinuousBatteryMonitorService$BroadcastReceiver
+06-28 10:37:23.936  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.facebook.katana/com.facebook.notifications.tray.util.NotificationsClientSignalStaticBroadcastReceiver
+06-28 10:37:23.936  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.google.android.gms/.chimera.GmsIntentOperationService$PersistentTrustedReceiver
+06-28 10:37:23.936  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.google.android.gms/.gcm.nts.SchedulerReceiver
+06-28 10:37:23.936  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.google.android.projection.gearhead/com.google.android.apps.auto.components.connectivity.impl.ConnectivityEventHandlerImpl$ConnectivityEventBroadcastReceiver
+06-28 10:37:23.973  1240  1267 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 (has extras) } to com.transsion.phoenix/com.cloudview.daemon.way.broadcast.DaemonBroadCastReceiver
+06-28 10:37:27.523  1240  1258 W WindowManager: Unable to start animation, surface is null or no children.
+06-28 10:37:40.955   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:40.955   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:40.972   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:40.972   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:40.989   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:40.989   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.004   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.004   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.022   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.022   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.040   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.040   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.055   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.055   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.072   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.073   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.088   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.088   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.106   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.106   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.122   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.122   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.139   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.139   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.155   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.155   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.172   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.173   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.189   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.189   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.207   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.207   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.222   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.222   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.240   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.240   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.256   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.256   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.273   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.273   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.289   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.289   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.306   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.306   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.322   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.322   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.339   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.339   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.355   530   530 I BufferQueueProducer: [VDS: flutter-vd#0](this:0x7ad7483800,id:340,api:1,p:530,c:530) queueBuffer: fps=54.88 dur=1002.14 max=35.57 min=13.87
+06-28 10:37:41.356   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.356   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.372   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.372   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.388   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.389   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.406   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.406   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.423   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.423   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.440   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.440   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.457   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.457   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.473   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.473   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.488   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.488   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.506   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.506   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.522   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.522   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.539   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.539   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.554   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.554   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.573   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.573   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.589   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.589   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.607   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.607   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.622   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.622   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.639   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.639   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.656   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.656   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.673   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.673   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.689   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.689   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.706   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.706   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.722   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.722   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.740   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.740   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.755   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.755   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.772   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.772   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.790   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.790   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.806   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.806   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.822   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.822   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.839   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.839   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.857   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.857   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.873   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.873   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.889   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.889   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.906   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.906   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.924   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.924   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.940   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.940   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.957   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.957   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.973   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.973   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:41.989   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:41.989   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.005   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.005   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.022   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.023   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.039   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.040   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.056   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.056   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.071   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.071   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.089   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.089   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.107   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.107   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.123   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.123   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.139   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.139   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.156   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.156   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.173   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.173   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.189   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.189   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.206   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.206   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.223   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.223   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.239   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.239   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.257   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.257   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.274   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.274   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.288   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.289   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.306   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.306   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.323   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.323   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.341   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.341   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.356   530   530 I BufferQueueProducer: [VDS: flutter-vd#0](this:0x7ad7483800,id:340,api:1,p:530,c:530) queueBuffer: fps=59.98 dur=1000.38 max=18.35 min=14.28
+06-28 10:37:42.356   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.356   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.372   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.373   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.389   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.390   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.407   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.407   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.423   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.423   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.439   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.439   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.456   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.456   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.471   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.471   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.489   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.489   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.508   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.508   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.522   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.522   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.541   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.541   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.555   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.555   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.574   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.574   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.591   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.591   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.607   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.608   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.624   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.624   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.641   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.641   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.656   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.656   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.673   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.673   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.690   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.690   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.705   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.706   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.723   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.723   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.739   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.740   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.756   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.756   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.773   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.773   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.790   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.790   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.805   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.805   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.823   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.823   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.838   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.838   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.856   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.856   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.874   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.874   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.890   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.890   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.906   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.906   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.924   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.924   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.940   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.940   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.956   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.956   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.974   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.974   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:42.991   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:42.991   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.005   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.005   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.024   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.024   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.042   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.042   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.058   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.058   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.071   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.071   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.089   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.090   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.106   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.106   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.123   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.123   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.139   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.139   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.156   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.156   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.175   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.175   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.190   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.190   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.208   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.208   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.223   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.223   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.257   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.257   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.290   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.290   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.323   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.323   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.356   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.356   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.389   530   530 I BufferQueueProducer: [VDS: flutter-vd#0](this:0x7ad7483800,id:340,api:1,p:530,c:530) queueBuffer: fps=55.15 dur=1033.56 max=33.64 min=13.27
+06-28 10:37:43.390   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.390   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.422   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.422   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.440   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.440   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.455   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.456   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.473   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.473   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.489   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.489   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.507   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.507   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.523   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.523   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.540   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.540   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.556   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.556   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.573   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.573   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.589   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.589   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.607   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.607   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.623   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.624   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.640   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.641   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.656   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.656   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.673   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.673   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.689   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.689   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.708   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.708   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.723   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.723   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.740   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.741   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.756   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.756   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.773   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.774   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.791   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.791   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.806   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.807   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.822   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.822   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.840   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.840   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.856   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.856   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.874   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.874   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.889   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.889   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.908   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.908   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.922   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.922   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.941   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.941   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.956   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.956   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.973   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.974   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:43.989   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:43.990   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.007   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.007   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.022   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.022   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.042   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.042   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.058   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.058   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.074   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.074   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.091   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.091   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.108   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.108   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.123   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.124   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.140   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.140   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.156   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.156   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.176   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.176   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.189   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.190   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.207   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.207   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.225   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.225   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.240   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.240   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.256   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.256   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.274   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.274   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.291   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.291   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.308   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.308   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.324   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.325   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.340   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.340   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.356   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.357   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.374   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.374   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.391   530   530 I BufferQueueProducer: [VDS: flutter-vd#0](this:0x7ad7483800,id:340,api:1,p:530,c:530) queueBuffer: fps=58.93 dur=1001.16 max=32.76 min=13.54
+06-28 10:37:44.391   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.391   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.409   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.409   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.424   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.424   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.441   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.441   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.458   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.458   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.475   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.475   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.491   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.491   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.507   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.507   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.524   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.524   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.540   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.540   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.556   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.557   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.576   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.576   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.589   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.589   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.610   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.610   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.625   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.625   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.643   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.643   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.657   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.657   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.674   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.674   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.689   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.690   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.710   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.710   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.723   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.723   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.741   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.741   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.757   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.757   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.774   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.774   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.790   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.790   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.807   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.808   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.823   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.823   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.841   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.842   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.858   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.858   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.874   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.874   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.890   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.890   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.908   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.908   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.924   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.924   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.941   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.941   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.957   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.957   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.975   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.975   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:44.990   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:44.990   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.007   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.008   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.024   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.024   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.041   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.041   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.057   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.057   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.074   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.074   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.092   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.092   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.108   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.108   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.125   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.125   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.142   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.142   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.175   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.175   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.191   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.191   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.206   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.206   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.224   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.225   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.243   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.243   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.258   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.258   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.274   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.274   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.291   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.291   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.308   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.308   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.324   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.324   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.341   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.341   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.358   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.358   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.376   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.376   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.393   530   530 I BufferQueueProducer: [VDS: flutter-vd#0](this:0x7ad7483800,id:340,api:1,p:530,c:530) queueBuffer: fps=58.85 dur=1002.58 max=32.85 min=13.22
+06-28 10:37:45.393   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.393   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.408   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.408   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.425   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.425   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.441   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.441   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.458   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.458   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.474   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.474   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.492   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.492   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.509   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.509   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.525   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.525   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.541   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.541   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.560   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.560   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.575   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.575   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.590   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.590   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.608   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.608   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.624   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.624   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.643   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.643   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.659   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.659   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.675   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.675   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.693   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.693   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.708   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.708   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.724   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.724   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.741   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.741   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.758   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.758   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.774   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.774   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.791   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.791   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.808   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.808   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.825   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.825   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.841   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.841   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.859   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.859   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.874   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.874   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.891   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.892   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.907   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.908   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.927   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.927   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.941   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.941   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.958   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.959   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:45.991   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:45.991   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.025   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.025   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.058   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.058   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.092   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.092   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.125   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.125   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.158   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.158   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.176   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.176   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.192   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.192   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.209   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.209   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.226   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.226   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.243   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.243   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.259   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.259   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.275   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.275   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.292   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.292   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.309   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.310   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.324   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.324   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.342   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.342   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.358   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.358   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.376   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.376   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.391   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.391   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.408   530   530 I BufferQueueProducer: [VDS: flutter-vd#0](this:0x7ad7483800,id:340,api:1,p:530,c:530) queueBuffer: fps=54.18 dur=1015.22 max=33.69 min=14.28
+06-28 10:37:46.409   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.409   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.425   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.425   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.443   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.443   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.458   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.458   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.475   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.475   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.491   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.491   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.508   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.508   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.525   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.525   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.542   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.542   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.560   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.560   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.577   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.577   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.591   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.591   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.608   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.608   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.627   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.627   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.643   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.644   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.659   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.659   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.676   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.677   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.692   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.692   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.709   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.709   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.726   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.726   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.742   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.742   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.759   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.759   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.775   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.775   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.793   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.793   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.809   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.809   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.826   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.826   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.844   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.844   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.858   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.858   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.875   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.875   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.891   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.892   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.909   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.910   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.925   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.926   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.942   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.942   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.959   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.959   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:46.977   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:46.978   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.008   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.009   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.027   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.027   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.042   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.042   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.059   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.059   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.074   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.074   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.093   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.093   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.111   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.111   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.126   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.126   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.141   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.141   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.159   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.159   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.176   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.176   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.193   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.193   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.208   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.208   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.226   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.226   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.243   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.243   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.260   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.260   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.274   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.275   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.293   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.293   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.310   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.310   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.326   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.326   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.343   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.343   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.361   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.361   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.376   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.376   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.394   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.394   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.409   530   530 I BufferQueueProducer: [VDS: flutter-vd#0](this:0x7ad7483800,id:340,api:1,p:530,c:530) queueBuffer: fps=58.98 dur=1000.41 max=30.89 min=13.42
+06-28 10:37:47.409   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.409   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.427   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.427   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.442   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.442   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.460   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.461   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.476   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.476   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.493   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.493   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.512   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.512   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.526   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.527   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12
+06-28 10:37:47.545   530   530 E SurfaceFlinger: [flutter-vd#0] advanceFrame: no buffer, bailing out
+06-28 10:37:47.545   530   530 E CompositionEngine: [flutter-vd#0] failed pushing new frame to HWC: -12

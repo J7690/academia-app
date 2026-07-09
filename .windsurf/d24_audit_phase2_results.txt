@@ -1,0 +1,1085 @@
+﻿======================================================================
+MISSION D.24 - AUDIT - 2026-06-28T19:14:00.787658
+Target render_id: 15d0b7ed-4124-4e47-93f0-a38d8ff92bcb
+Target file    : 90505511a06a4812afa6785033097289.mp4
+======================================================================
+
+======================================================================
+SQL: Storyboard via whiteboard_projects (schema correct)
+======================================================================
+HTTP:200
+{
+  "ok": false,
+  "error": "column wb.storyboard does not exist",
+  "sqlstate": "42703"
+}
+
+======================================================================
+SQL: Structure table whiteboard_renders (colonnes completes)
+======================================================================
+HTTP:200
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "data_type": "uuid",
+      "column_name": "id",
+      "is_nullable": "NO"
+    },
+    {
+      "data_type": "uuid",
+      "column_name": "project_id",
+      "is_nullable": "NO"
+    },
+    {
+      "data_type": "text",
+      "column_name": "status",
+      "is_nullable": "NO"
+    },
+    {
+      "data_type": "text",
+      "column_name": "video_url",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "duration_ms",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "text",
+      "column_name": "error_message",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "integer",
+      "column_name": "progress",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "created_at",
+      "is_nullable": "NO"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "completed_at",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "started_at",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "text",
+      "column_name": "video_storage_path",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "text",
+      "column_name": "video_storage_bucket",
+      "is_nullable": "YES"
+    },
+    {
+      "data_type": "timestamp with time zone",
+      "column_name": "updated_at",
+      "is_nullable": "NO"
+    },
+    {
+      "data_type": "jsonb",
+      "column_name": "export_settings",
+      "is_nullable": "YES"
+    }
+  ]
+}
+
+======================================================================
+SQL: whiteboard_fetch_queued_jobs - source SQL
+======================================================================
+HTTP:200
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "def": "CREATE OR REPLACE FUNCTION public.whiteboard_fetch_queued_jobs(p_limit integer DEFAULT 5)\n RETURNS TABLE(id uuid, storyboard jsonb, created_at timestamp with time zone)\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nBEGIN\n    RETURN QUERY\n    SELECT wr.id, wp.storyboard_json as storyboard, wr.created_at\n    FROM app.whiteboard_renders wr\n    JOIN app.whiteboard_projects wp ON wr.project_id = wp.id\n    WHERE wr.status = 'queued'\n    ORDER BY wr.created_at ASC\n    LIMIT p_limit;\nEND;\n$function$\n"
+    }
+  ]
+}
+
+======================================================================
+SQL: whiteboard_mark_done - source SQL
+======================================================================
+HTTP:200
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "def": "CREATE OR REPLACE FUNCTION public.whiteboard_mark_done(p_job_id uuid, p_video_url text, p_duration_ms integer)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nBEGIN\n    UPDATE app.whiteboard_renders\n    SET status = 'done',\n        video_url = p_video_url,\n        duration_ms = p_duration_ms,\n        completed_at = now()\n    WHERE id = p_job_id;\nEND;\n$function$\n"
+    }
+  ]
+}
+
+======================================================================
+SQL: whiteboard_get_render_status - source SQL
+======================================================================
+HTTP:200
+{
+  "ok": true,
+  "mode": "select",
+  "rows": [
+    {
+      "def": "CREATE OR REPLACE FUNCTION public.whiteboard_get_render_status(p_render_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  render_record RECORD;\n  result JSONB;\nBEGIN\n  SELECT\n    wr.id,\n    wr.project_id,\n    wr.status,\n    wr.video_url,\n    wr.duration_ms,\n    wr.created_at,\n    wr.completed_at,\n    wr.error_message,\n    wr.progress\n  INTO render_record\n  FROM app.whiteboard_renders wr\n  JOIN app.whiteboard_projects wp ON wr.project_id = wp.id\n  WHERE wr.id = p_render_id\n  AND wp.student_id = auth.uid();\n\n  IF NOT FOUND THEN\n    RETURN jsonb_build_object('success', false, 'error', 'Render not found');\n  END IF;\n\n  result := jsonb_build_object(\n    'success', true,\n    'render', to_jsonb(render_record)\n  );\n\n  RETURN result;\nEND;\n$function$\n"
+    }
+  ]
+}
+
+======================================================================
+CONNEXION SSH KAMATERA
+======================================================================
+SSH OK
+
+======================================================================
+SSH: PHASE 2 : ffprobe -show_format -show_streams
+======================================================================
+{
+    "streams": [
+        {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+            "profile": "High",
+            "codec_type": "video",
+            "codec_tag_string": "avc1",
+            "codec_tag": "0x31637661",
+            "width": 1080,
+            "height": 1920,
+            "coded_width": 1080,
+            "coded_height": 1920,
+            "closed_captions": 0,
+            "film_grain": 0,
+            "has_b_frames": 2,
+            "sample_aspect_ratio": "1:1",
+            "display_aspect_ratio": "9:16",
+            "pix_fmt": "yuv420p",
+            "level": 40,
+            "chroma_location": "left",
+            "field_order": "progressive",
+            "refs": 1,
+            "is_avc": "true",
+            "nal_length_size": "4",
+            "id": "0x1",
+            "r_frame_rate": "30/1",
+            "avg_frame_rate": "30/1",
+            "time_base": "1/15360",
+            "start_pts": 0,
+            "start_time": "0.000000",
+            "duration_ts": 4608,
+            "duration": "0.300000",
+            "bit_rate": "565280",
+            "bits_per_raw_sample": "8",
+            "nb_frames": "9",
+            "extradata_size": 48,
+            "disposition": {
+                "default": 1,
+                "dub": 0,
+                "original": 0,
+                "comment": 0,
+                "lyrics": 0,
+                "karaoke": 0,
+                "forced": 0,
+                "hearing_impaired": 0,
+                "visual_impaired": 0,
+                "clean_effects": 0,
+                "attached_pic": 0,
+                "timed_thumbnails": 0,
+                "non_diegetic": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0
+            },
+            "tags": {
+                "language": "und",
+                "handler_name": "VideoHandler",
+                "vendor_id": "[0][0][0][0]",
+                "encoder": "Lavc60.31.102 libx264"
+            }
+        }
+    ],
+    "format": {
+        "filename": "https://thevdfcwlcqzdoybfvgs.supabase.co/storage/v1/object/public/whiteboard-renders/renders/15d0b7ed-4124-4e47-93f0-a38d8ff92bcb/90505511a06a4812afa6785033097289.mp4",
+        "nb_streams": 1,
+        "nb_programs": 0,
+        "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+        "format_long_name": "QuickTime / MOV",
+        "start_time": "0.000000",
+        "duration": "0.300000",
+        "size": "22167",
+        "bit_rate": "591120",
+        "probe_score": 100,
+        "tags": {
+            "major_brand": "isom",
+            "minor_version": "512",
+            "compatible_brands": "isomiso2avc1mp41",
+            "encoder": "Lavf60.16.100"
+        }
+    }
+}
+
+
+======================================================================
+SSH: PHASE 2 : ffprobe -show_frames (20 premieres frames)
+======================================================================
+{
+    "frames": [
+        {
+            "media_type": "video",
+            "stream_index": 0,
+            "key_frame": 1,
+            "pts": 0,
+            "pts_time": "0.000000",
+            "pkt_dts": 0,
+            "pkt_dts_time": "0.000000",
+            "best_effort_timestamp": 0,
+            "best_effort_timestamp_time": "0.000000",
+            "pkt_duration": 512,
+            "pkt_duration_time": "0.033333",
+            "duration": 512,
+            "duration_time": "0.033333",
+            "pkt_pos": "48",
+            "pkt_size": "3354",
+            "width": 1080,
+            "height": 1920,
+            "crop_top": 0,
+            "crop_bottom": 0,
+            "crop_left": 0,
+            "crop_right": 0,
+            "pix_fmt": "yuv420p",
+            "sample_aspect_ratio": "1:1",
+            "pict_type": "I",
+            "coded_picture_number": 0,
+            "display_picture_number": 0,
+            "interlaced_frame": 0,
+            "top_field_first": 0,
+            "repeat_pict": 0,
+            "chroma_location": "left",
+            "side_data_list": [
+                {
+                    "side_data_type": "H.26[45] User Data Unregistered SEI message"
+                }
+            ]
+        },
+        {
+            "media_type": "video",
+            "stream_index": 0,
+            "key_frame": 0,
+            "pts": 512,
+            "pts_time": "0.033333",
+            "pkt_dts": 512,
+            "pkt_dts_time": "0.033333",
+            "best_effort_timestamp": 512,
+            "best_effort_timestamp_time": "0.033333",
+            "pkt_duration": 512,
+            "pkt_duration_time": "0.033333",
+            "duration": 512,
+            "duration_time": "0.033333",
+            "pkt_pos": "5654",
+            "pkt_size": "2741",
+            "width": 1080,
+            "height": 1920,
+            "crop_top": 0,
+            "crop_bottom": 0,
+            "crop_left": 0,
+            "crop_right": 0,
+            "pix_fmt": "yuv420p",
+            "sample_aspect_ratio": "1:1",
+            "pict_type": "B",
+            "coded_picture_number": 2,
+            "display_picture_number": 0,
+            "interlaced_frame": 0,
+            "top_field_first": 0,
+            "repeat_pict": 0,
+            "chroma_location": "left"
+        },
+        {
+            "media_type": "video",
+            "stream_index": 0,
+            "key_frame": 0,
+            "pts": 1024,
+            "pts_time": "0.066667",
+            "pkt_dts": 1024,
+            "pkt_dts_time": "0.066667",
+            "best_effort_timestamp": 1024,
+            "best_effort_timestamp_time": "0.066667",
+            "pkt_duration": 512,
+            "pkt_duration_time": "0.033333",
+            "duration": 512,
+            "duration_time": "0.033333",
+            "pkt_pos": "8395",
+            "pkt_size": "2357",
+            "width": 1080,
+            "height": 1920,
+            "crop_top": 0,
+            "crop_bottom": 0,
+            "crop_left": 0,
+            "crop_right": 0,
+            "pix_fmt": "yuv420p",
+            "sample_aspect_ratio": "1:1",
+            "pict_type": "B",
+            "coded_picture_number": 3,
+            "display_picture_number": 0,
+            "interlaced_frame": 0,
+            "top_field_first": 0,
+            "repeat_pict": 0,
+            "chroma_location": "left"
+        },
+        {
+            "media_type": "video",
+            "stream_index": 0,
+            "key_frame": 0,
+            "pts": 1536,
+            "pts_time": "0.100000",
+            "pkt_dts": 1536,
+            "pkt_dts_time": "0.100000",
+            "best_effort_timestamp": 1536,
+            "best_effort_timestamp_time": "0.100000",
+            "pkt_duration": 512,
+            "pkt_duration_time": "0.033333",
+            "duration": 512,
+            "duration_time": "0.033333",
+            "pkt_pos": "3402",
+            "pkt_size": "2252",
+            "width": 1080,
+            "height": 1920,
+            "crop_top": 0,
+            "crop_bottom": 0,
+            "crop_left": 0,
+            "crop_right": 0,
+            "pix_fmt": "yuv420p",
+            "sample_aspect_ratio": "1:1",
+            "pict_type": "P",
+            "coded_picture_number": 1,
+            "display_picture_number": 0,
+            "interlaced_frame": 0,
+            "top_field_first": 0,
+            "repeat_pict": 0,
+            "chroma_location": "left"
+        },
+        {
+            "media_type": "video",
+            "stream_index": 0,
+            "key_frame": 0,
+            "pts": 2048,
+            "pts_time": "0.133333",
+            "pkt_dts": 2048,
+            "pkt_dts_time": "0.133333",
+            "best_effort_timestamp": 2048,
+            "best_effort_timestamp_time": "0.133333",
+            "pkt_duration": 512,
+            "pkt_duration_time": "0.033333",
+            "duration": 512,
+            "duration_time": "0.033333",
+            "pkt_pos": "12982",
+            "pkt_size": "1899",
+            "width": 1080,
+            "height": 1920,
+            "crop_top": 0,
+            "crop_bottom": 0,
+            "crop_left": 0,
+            "crop_right": 0,
+            "pix_fmt": "yuv420p",
+            "sample_aspect_ratio": "1:1",
+            "pict_type": "B",
+            "coded_picture_number": 5,
+            "display_picture_number": 0,
+            "interlaced_frame": 0,
+            "top_field_first": 0,
+            "repeat_pict": 0,
+            "chroma_location": "left"
+        },
+        {
+            "media_type": "video",
+            "stream_index": 0,
+            "key_frame": 0,
+            "pts": 2560,
+            "pts_time": "0.166667",
+            "pkt_dts": 2560,
+            "pkt_dts_time": "0.166667",
+            "best_effort_timestamp": 2560,
+            "best_effort_timestamp_time": "0.166667",
+            "pkt_duration": 512,
+            "pkt_duration_time": "0.033333",
+            "duration": 512,
+            "duration_time": "0.033333",
+            "pkt_pos": "14881",
+            "pkt_size": "1859",
+            "width": 1080,
+            "height": 1920,
+     
+
+======================================================================
+SSH: PHASE 4 : FFmpeg version exacte
+======================================================================
+ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers
+built with gcc 13 (Ubuntu 13.2.0-23ubuntu3)
+configuration: --prefix=/usr --extra-version=3ubuntu5 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 --enable-gpl --disable-stripping --disable-omx --enable-gnutls --enable-libaom --enable-libass --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libglslang --enable-libgme --enable-libgsm --enable-libharfbuzz --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzimg --enable-openal --enable-opencl --enable-opengl --disable-sndio --enable-libvpl --disable-libmfx --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-ladspa --enable-libbluray --enable-libjack --enable-libpulse --enable-librabbitmq --enable-librist --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libx264 --enable-libzmq --enable-libzvbi --enable-lv2 --enable-sdl2 --enable-libplacebo --enable-librav1e --enable-pocketsphinx --enable-librsvg --enable-libjxl --enable-shared
+libavutil      58. 29.100 / 58. 29.100
+
+
+======================================================================
+SSH: PHASE 4 : dependances Python
+======================================================================
+Python: 3.12.3
+Pillow: 12.2.0
+httpx: 0.28.1
+paramiko: ABSENT
+
+
+======================================================================
+SSH: PHASE 4 : processus worker actif
+======================================================================
+root      395272  2.9  0.5 139580 51796 ?        Ssl  Jun24 172:41 /usr/bin/python3 /opt/whiteboard-worker/whiteboard_render_worker.py
+
+
+======================================================================
+SSH: PHASE 4 : whiteboard_ffmpeg_assembler.py ACTUEL complet
+======================================================================
+"""
+Whiteboard FFmpeg Assembler - Phase C.3 v4 FINAL
+- Concat demuxer : 5s par scÞne
+- Profile Baseline level 3.1 (compatibilitÚ Android max)
+- Color metadata BT.709 explicite (fix ExoPlayer "Unset color space" crash)
+- moov avant mdat via faststart en 2 passes
+"""
+
+from pathlib import Path
+from typing import List
+import subprocess
+
+SECONDS_PER_SCENE = 5
+FPS = 24
+
+
+def assemble_pngs_to_mp4(png_paths: List[Path], output_dir: Path) -> Path:
+    if not png_paths:
+        raise ValueError("No PNGs provided")
+
+    for p in png_paths:
+        if not p.exists():
+            raise FileNotFoundError(f"PNG not found: {p}")
+
+    # Fichier concat
+    concat_file = output_dir / "concat.txt"
+    with open(concat_file, "w") as f:
+        for p in png_paths:
+            safe = str(p).replace("'", "'\\''")
+            f.write(f"file '{safe}'\n")
+            f.write(f"duration {SECONDS_PER_SCENE}\n")
+        # RÚpÚter le dernier frame pour Úviter troncature
+        last = str(png_paths[-1]).replace("'", "'\\''")
+        f.write(f"file '{last}'\n")
+
+    tmp_mp4 = output_dir / "output_tmp.mp4"
+    mp4_path = output_dir / "output.mp4"
+
+    # Passe 1 : encodage avec mÚtadonnÚes couleur BT.709 complÞtes
+    cmd_encode = [
+        "ffmpeg", "-y",
+        "-f", "concat",
+        "-safe", "0",
+        "-i", str(concat_file),
+        # Scale + padding portrait + dÚfinir espace couleur BT.709
+        "-vf", (
+            "scale=1080:1920:force_original_aspect_ratio=decrease,"
+            "pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=white,"
+            "setsar=1,"
+            "format=yuv420p"
+        ),
+        "-c:v", "libx264",
+        "-profile:v", "baseline",
+        "-level", "3.1",
+        "-pix_fmt", "yuv420p",
+        "-r", str(FPS),
+        "-preset", "fast",
+        "-crf", "28",
+        # MÚtadonnÚes couleur explicites ù fix ExoPlayer "Unset color space"
+        "-colorspace", "bt709",
+        "-color_primaries", "bt709",
+        "-color_trc", "bt709",
+        "-color_range", "tv",
+        str(tmp_mp4),
+    ]
+
+    r = subprocess.run(cmd_encode, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    if r.returncode != 0:
+        err = r.stderr.decode(errors='ignore')
+        raise RuntimeError(f"FFmpeg encode error (code {r.returncode}): {err[:3000]}")
+
+    # Passe 2 : faststart ù dÚplacer moov avant mdat
+    cmd_fast = [
+        "ffmpeg", "-y",
+        "-i", str(tmp_mp4),
+        "-c", "copy",
+        "-movflags", "+faststart",
+        str(mp4_path),
+    ]
+    r2 = subprocess.run(cmd_fast, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    if r2.returncode != 0:
+        err2 = r2.stderr.decode(errors='ignore')
+        raise RuntimeError(f"FFmpeg faststart error: {err2[:3000]}")
+
+    tmp_mp4.unlink(missing_ok=True)
+
+    if not mp4_path.exists():
+        raise RuntimeError(f"MP4 not created: {mp4_path}")
+
+    return mp4_path
+
+
+======================================================================
+SSH: PHASE 4 : whiteboard_png_renderer.py ACTUEL complet
+======================================================================
+"""
+Whiteboard PNG Renderer - Phase C.3
+GÚnÚration de PNGs Ó partir d'un storyboard
+"""
+
+from pathlib import Path
+from typing import Any, Dict, List
+import json
+
+try:
+    from PIL import Image, ImageDraw, ImageFont
+except ImportError:
+    print("Pillow not installed. Install with: pip install Pillow")
+    raise
+
+# Configuration
+WIDTH = 1080
+HEIGHT = 1920
+DPI = 72
+
+# ThÞmes
+THEMES = {
+    "scientific": {
+        "background": "#0a192f",
+        "text_color": "#ffffff",
+        "accent_color": "#69f0ae",
+        "title_font_size": 32,
+        "paragraph_font_size": 24,
+        "definition_font_size": 20,
+        "exercise_font_size": 24,
+        "correction_font_size": 20,
+    },
+    "notebook": {
+        "background": "#ffffff",
+        "text_color": "#000000",
+        "accent_color": "#2e7d32",
+        "title_font_size": 32,
+        "paragraph_font_size": 24,
+        "definition_font_size": 20,
+        "exercise_font_size": 24,
+        "correction_font_size": 20,
+    },
+}
+
+
+def _get_font(size: int) -> Any:
+    """RÚcupÞre une police avec la taille spÚcifiÚe"""
+    try:
+        # Essayer d'utiliser Arial
+        return ImageFont.truetype("arial.ttf", size)
+    except:
+        # Fallback sur la police par dÚfaut
+        return ImageFont.load_default()
+
+
+def _render_title_block(content: str, theme: Dict[str, Any], draw: Any, y_position: int) -> int:
+    """Rend un bloc de titre"""
+    font = _get_font(theme["title_font_size"])
+    text_color = theme["text_color"]
+    
+    # Dessiner le titre centrÚ
+    bbox = draw.textbbox((0, 0), content, font=font)
+    text_width = bbox[2] - bbox[0]
+    x_position = (WIDTH - text_width) // 2
+    
+    draw.text((x_position, y_position), content, fill=text_color, font=font)
+    
+    return y_position + theme["title_font_size"] + 20
+
+
+def _render_paragraph_block(content: str, theme: Dict[str, Any], draw: Any, y_position: int) -> int:
+    """Rend un bloc de paragraphe"""
+    font = _get_font(theme["paragraph_font_size"])
+    text_color = theme["text_color"]
+    
+    # Dessiner le paragraphe justifiÚ (simplifiÚ)
+    margin = 50
+    max_width = WIDTH - 2 * margin
+    
+    # Pour V1, on dessine simplement le texte sans wrapping complexe
+    draw.text((margin, y_position), content, fill=text_color, font=font)
+    
+    return y_position + theme["paragraph_font_size"] * 2 + 20
+
+
+def _render_definition_block(content: str, theme: Dict[str, Any], draw: Any, y_position: int) -> int:
+    """Rend un bloc de dÚfinition"""
+    font = _get_font(theme["definition_font_size"])
+    text_color = theme["text_color"]
+    
+    margin = 50
+    draw.text((margin, y_position), content, fill=text_color, font=font)
+    
+    return y_position + theme["definition_font_size"] * 2 + 20
+
+
+def _render_exercise_block(content: str, theme: Dict[str, Any], draw: Any, y_position: int) -> int:
+    """Rend un bloc d'exercice"""
+    font = _get_font(theme["exercise_font_size"])
+    text_color = theme["text_color"]
+    
+    margin = 50
+    draw.text((margin, y_position), content, fill=text_color, font=font)
+    
+    return y_position + theme["exercise_font_size"] * 2 + 20
+
+
+def _render_correction_block(content: str, theme: Dict[str, Any], draw: Any, y_position: int) -> int:
+    """Rend un bloc de correction"""
+    font = _get_font(theme["correction_font_size"])
+    text_color = theme["accent_color"]  # Vert
+    
+    margin = 50
+    draw.text((margin, y_position), content, fill=text_color, font=font)
+    
+    return y_position + theme["correction_font_size"] * 2 + 20
+
+
+def _render_formula_block(content: str, theme: Dict[str, Any], draw: Any, y_position: int) -> int:
+    """Rend un bloc de formule"""
+    # Pour V1, on utilise le rendu texte brut comme fallback
+    # Matplotlib sera implÚmentÚ dans une version ultÚrieure
+    font = _get_font(28)
+    text_color = theme["text_color"]
+    
+    # Centrer la formule
+    bbox = draw.textbbox((0, 0), content, font=font)
+    text_width = bbox[2] - bbox[0]
+    x_position = (WIDTH - text_width) // 2
+    
+    draw.text((x_position, y_position), content, fill=text_color, font=font)
+    
+    return y_position + 28 + 20
+
+
+def _render_block(block: Dict[str, Any], theme: Dict[str, Any], draw: Any, y_position: int) -> int:
+    """Rend un bloc selon son type"""
+    block_type = block.get("type")
+    content = block.get("content", "")
+    
+    if block_type == "title":
+        return _render_title_block(content, theme, draw, y_position)
+    elif block_type == "paragraph":
+        return _render_paragraph_block(content, theme, draw, y_position)
+    elif block_type == "definition":
+        return _render_definition_block(content, theme, draw, y_position)
+    elif block_type == "exercise":
+        return _render_exercise_block(content, theme, draw, y_position)
+    elif block_type == "correction":
+        return _render_correction_block(content, theme, draw, y_position)
+    elif block_type == "formula":
+        return _render_formula_block(content, theme, draw, y_position)
+    else:
+        # Type inconnu, rendu par dÚfaut
+        return _render_paragraph_block(content, theme, draw, y_position)
+
+
+def render_storyboard_to_pngs(storyboard_json: Any, output_dir: Path) -> List[Path]:
+    """
+    GÚnÞre des PNGs Ó partir d'un storyboard
+    
+    Args:
+        storyboard_json: Storyboard (dict ou JSON string)
+        output_dir: RÚpertoire de sortie
+        
+    Returns:
+        Liste des chemins des PNGs gÚnÚrÚs
+    """
+    # Parser le storyboard si c'est une string
+    if isinstance(storyboard_json, str):
+        storyboard = json.loads(storyboard_json)
+    else:
+        storyboard = storyboard_json
+    
+    # RÚcupÚrer le thÞme
+    theme_name = storyboard.get("theme", "scientific")
+    theme = THEMES.get(theme_name, THEMES["scientific"])
+    
+    # RÚcupÚrer les scÞnes
+    scenes = storyboard.get("scenes", [])
+    
+    png_paths = []
+    
+    for scene_index, scene in enumerate(scenes):
+        # CrÚer une nouvelle image
+        img = Image.new("RGB", (WIDTH, HEIGHT), theme["bac
+
+======================================================================
+SSH: PHASE 4 : whiteboard_upload_renderer.py ACTUEL complet
+======================================================================
+"""
+Whiteboard Upload Renderer - Phase C.3
+Upload de MP4 vers Supabase Storage
+BasÚ sur le pattern de videoasset_worker.py
+"""
+
+from pathlib import Path
+from typing import Optional
+import os
+import uuid
+
+import httpx
+from dotenv import load_dotenv
+
+# Configuration
+load_dotenv()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+WHITEBOARD_BUCKET = "whiteboard-renders"
+
+SUPABASE_HTTP_TIMEOUT = 600.0
+
+
+def _storage_base() -> str:
+    return f"{SUPABASE_URL.rstrip('/')}/storage/v1"
+
+
+def _supabase_headers(extra: Optional[dict] = None) -> dict:
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "video/mp4",
+    }
+    if extra:
+        headers.update(extra)
+    return headers
+
+
+async def upload_mp4_to_storage(mp4_path: Path, render_id: str) -> str:
+    """
+    Upload un MP4 vers Supabase Storage
+    
+    Args:
+        mp4_path: Chemin du MP4
+        render_id: ID du rendu
+        
+    Returns:
+        URL publique du MP4
+    """
+    if not mp4_path.exists():
+        raise FileNotFoundError(f"MP4 not found: {mp4_path}")
+    
+    # GÚnÚrer un nom de fichier unique
+    object_key = f"renders/{render_id}/{uuid.uuid4().hex}.mp4"
+    
+    # Construire l'URL d'upload
+    storage_url = f"{_storage_base()}/object/{WHITEBOARD_BUCKET}/{object_key}"
+    
+    # Lire le fichier
+    data = mp4_path.read_bytes()
+    
+    # Uploader
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
+        resp = await client.put(
+            storage_url,
+            headers=_supabase_headers(),
+            content=data,
+        )
+    
+    resp.raise_for_status()
+    
+    # Construire l'URL publique
+    public_url = f"{SUPABASE_URL}/storage/v1/object/public/{WHITEBOARD_BUCKET}/{object_key}"
+    
+    return public_url
+
+
+======================================================================
+SSH: PHASE 4 : whiteboard_render_worker.py ACTUEL complet
+======================================================================
+"""
+Whiteboard Render Worker - Phase C.3
+Worker pour le traitement des jobs de rendu Smart Whiteboard
+BasÚ sur le pattern de videoasset_worker.py
+"""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+import os
+import subprocess
+import tempfile
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import httpx
+from dotenv import load_dotenv
+
+from whiteboard_png_renderer import render_storyboard_to_pngs
+from whiteboard_ffmpeg_assembler import assemble_pngs_to_mp4
+from whiteboard_upload_renderer import upload_mp4_to_storage
+
+# Configuration
+load_dotenv()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+WHITEBOARD_BUCKET = "whiteboard-renders"
+WHITEBOARD_TABLE = "whiteboard_renders"
+
+WORKER_LOOP = (os.getenv("WORKER_LOOP") or "").strip().lower() in {"1", "true", "yes"}
+WORKER_INTERVAL_SECONDS = float((os.getenv("WORKER_INTERVAL_SECONDS") or "2").strip() or "2")
+WORKER_MAX_JOBS = int((os.getenv("WORKER_MAX_JOBS") or "1").strip() or "1")
+
+SUPABASE_HTTP_TIMEOUT = 600.0
+
+# Logging
+logger = logging.getLogger("whiteboard_render_worker")
+if not logging.getLogger().handlers:
+    logging.basicConfig(level=logging.INFO)
+
+
+def _rest_base() -> str:
+    return f"{SUPABASE_URL.rstrip('/')}/rest/v1"
+
+
+def _storage_base() -> str:
+    return f"{SUPABASE_URL.rstrip('/')}/storage/v1"
+
+
+def _supabase_headers(extra: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+    }
+    if extra:
+        headers.update(extra)
+    return headers
+
+
+async def _fetch_queued_jobs(limit: int = 5) -> List[Dict[str, Any]]:
+    """RÚcupÞre les jobs en attente (status=queued) via RPC spÚcifique"""
+    rpc_url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/rpc/whiteboard_fetch_queued_jobs"
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
+        resp = await client.post(rpc_url, headers=_supabase_headers(), json={"p_limit": limit})
+    resp.raise_for_status()
+    return resp.json()
+
+
+async def _mark_job_processing(job_id: str) -> None:
+    """Marque un job comme processing via RPC spÚcifique"""
+    rpc_url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/rpc/whiteboard_mark_processing"
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
+        resp = await client.post(rpc_url, headers=_supabase_headers(), json={"p_job_id": job_id})
+    resp.raise_for_status()
+
+
+async def _mark_job_done(job_id: str, video_url: str, duration_ms: int) -> None:
+    """Marque un job comme done via RPC spÚcifique"""
+    rpc_url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/rpc/whiteboard_mark_done"
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
+        resp = await client.post(rpc_url, headers=_supabase_headers(), json={
+            "p_job_id": job_id,
+            "p_video_url": video_url,
+            "p_duration_ms": duration_ms
+        })
+    resp.raise_for_status()
+
+
+async def _mark_job_failed(job_id: str, error_message: str) -> None:
+    """Marque un job comme failed via RPC spÚcifique"""
+    rpc_url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/rpc/whiteboard_mark_failed"
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
+        resp = await client.post(rpc_url, headers=_supabase_headers(), json={
+            "p_job_id": job_id,
+            "p_error_message": error_message
+        })
+    resp.raise_for_status()
+
+
+async def _process_single_job(job: Dict[str, Any]) -> None:
+    """Traite un seul job de rendu"""
+    job_id = job["id"]
+    storyboard_json = job.get("storyboard")
+    
+    if not storyboard_json:
+        await _mark_job_failed(job_id, "storyboard_json is empty")
+        return
+    
+    try:
+        # Marquer comme processing
+        await _mark_job_processing(job_id)
+        logger.info(f"[whiteboard_render_worker] Processing job {job_id}")
+        
+        # CrÚer un rÚpertoire temporaire
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            
+            # GÚnÚrer les PNGs
+            logger.info(f"[whiteboard_render_worker] Generating PNGs for job {job_id}")
+            png_paths = render_storyboard_to_pngs(storyboard_json, temp_path)
+            
+            # Assembler les PNGs en MP4
+            logger.info(f"[whiteboard_render_worker] Assembling MP4 for job {job_id}")
+            mp4_path = assemble_pngs_to_mp4(png_paths, temp_path)
+            
+            # Uploader le MP4
+            logger.info(f"[whiteboard_render_worker] Uploading MP4 for job {job_id}")
+            video_url = await upload_mp4_to_storage(mp4_path, job_id)
+            
+            # Calculer la durÚe (estimation basÚe sur le nombre de scÞnes)
+            # Pour V1, on estime 5 secondes par scÞne
+            storyboard = storyboard_json if isinstance(storyboard_json, dict) else {}
+            scenes = storyboard.get("scenes", [])
+            duration_ms = len(scenes) * 5000
+            
+            # Marquer comme done
+            await _mark_job_done(job_id, video_url, duration_ms)
+            logger.info(f"[whiteboard_render_worker] Job {job_id} completed successfully")
+            
+    except Exception as e:
+        logger.exception(f"[whiteboard_render_worker] Error processing job {job_id}")
+        await _mark_job_failed(job_id, str(e))
+
+
+async def run_once(max_jobs: int = 1) -> None:
+    """ExÚcute une seule itÚration du worker"""
+    jobs = await _fetch_queued_jobs(limit=max_jobs)
+    logger.info(f"[whiteboard_render_worker] Found {len(jobs)} queued job(s)")
+    
+    for job in jobs:
+        await _process_single_job(job)
+
+
+async def _loop() -> None:
+    """Boucle infinie du worker"""
+    while True:
+        try:
+            await run_once(max_jobs=WORKER_MAX_JOBS)
+        except Exception:
+            logger.exception("[whiteboard_render_worker
+
+======================================================================
+SSH: PHASE 4 : whiteboard-worker.service
+======================================================================
+[Unit]
+Description=Whiteboard Render Worker Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/whiteboard-worker
+ExecStart=/usr/bin/python3 /opt/whiteboard-worker/whiteboard_render_worker.py
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+StandardOutput=journal
+StandardError=journal
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
+
+
+======================================================================
+SSH: PHASE 4 : 150 derniers logs worker
+======================================================================
+Jun 28 19:11:40 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:11:40 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:11:42 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:11:42 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:11:44 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:11:44 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:11:46 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:11:46 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:11:48 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:11:48 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:11:50 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:11:50 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:11:53 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:11:53 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:11:55 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:11:55 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:11:57 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:11:57 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:11:59 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:11:59 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:12:01 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:12:01 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:12:03 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:12:03 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:12:05 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:12:05 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:12:07 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:12:07 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:12:10 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:12:10 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:12:12 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:12:12 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:12:14 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:12:14 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:12:16 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:12:16 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:12:18 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:12:18 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:12:20 academia00 python3[395272]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 28 19:12:20 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 28 19:12:22 academia00 python3[395272]: INFO:httpx:HTTP 
+
+======================================================================
+SSH: PHASE 4 : logs specifiques render 15d0b7ed
+======================================================================
+Jun 28 18:49:14 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Processing job 15d0b7ed-4124-4e47-93f0-a38d8ff92bcb
+Jun 28 18:49:14 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Generating PNGs for job 15d0b7ed-4124-4e47-93f0-a38d8ff92bcb
+Jun 28 18:49:15 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Assembling MP4 for job 15d0b7ed-4124-4e47-93f0-a38d8ff92bcb
+Jun 28 18:49:15 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Uploading MP4 for job 15d0b7ed-4124-4e47-93f0-a38d8ff92bcb
+Jun 28 18:49:17 academia00 python3[395272]: INFO:httpx:HTTP Request: PUT https://thevdfcwlcqzdoybfvgs.supabase.co/storage/v1/object/whiteboard-renders/renders/15d0b7ed-4124-4e47-93f0-a38d8ff92bcb/90505511a06a4812afa6785033097289.mp4 "HTTP/1.1 200 OK"
+Jun 28 18:49:17 academia00 python3[395272]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Job 15d0b7ed-4124-4e47-93f0-a38d8ff92bcb completed successfully
+
+
+======================================================================
+SSH: PHASE 4 : contenu /opt/whiteboard-worker + pip list
+======================================================================
+total 836
+drwxr-xr-x 3 root root   4096 Jun 23 16:53 .
+drwxr-xr-x 7 root root   4096 Jun 23 16:51 ..
+-rw-r--r-- 1 root root    353 Jun 23 18:32 .env
+drwxr-xr-x 2 root root   4096 Jun 28 17:53 __pycache__
+-rw-r--r-- 1 root root   2893 Jun 28 17:53 whiteboard_ffmpeg_assembler.py
+-rw-r--r-- 1 root root   6526 Jun 23 18:44 whiteboard_png_renderer.py
+-rw-r--r-- 1 root root   6230 Jun 23 18:31 whiteboard_render_worker.py
+-rw-r--r-- 1 root root   1872 Jun 23 18:31 whiteboard_upload_renderer.py
+-rw-r--r-- 1 root root 807664 Jun 23 17:18 worker.log
+---
+httpx                 0.28.1
+pillow                12.2.0
+python-dotenv         1.2.2
+requests              2.31.0
+
+
+======================================================================
+AUDIT D.24 - COLLECTE TERMINEE
+======================================================================

@@ -70,7 +70,7 @@
             android:value="true" />
         <meta-data
             android:name="firebase_analytics_collection_enabled"
-            android:value="true" />
+            android:value="false" />
 
         <!-- Native FCM service for badge count update in background -->
         <service

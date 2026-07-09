@@ -95,9 +95,11 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
         builder: (dialogContext) {
           return AlertDialog(
             title: const Text('Accès Prépa concours'),
-            content: SizedBox(
-              width: 520,
-              height: 320,
+            content: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(dialogContext).size.width * 0.9,
+                maxHeight: 320,
+              ),
               child: entitlements.isEmpty
                   ? const Center(
                       child: Text('Aucun entitlement actif pour le moment.'),
@@ -198,9 +200,11 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
         builder: (dialogContext) {
           return AlertDialog(
             title: const Text('Analytics IA – Prépa concours'),
-            content: SizedBox(
-              width: 520,
-              height: 320,
+            content: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(dialogContext).size.width * 0.9,
+                maxHeight: 320,
+              ),
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,9 +313,11 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
           final avgTime = overallMap['avg_time_sec'] ?? 0;
           return AlertDialog(
             title: const Text('Stats tentatives – Prépa concours'),
-            content: SizedBox(
-              width: 520,
-              height: 320,
+            content: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(dialogContext).size.width * 0.9,
+                maxHeight: 320,
+              ),
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,8 +377,10 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Génération IA'),
-          content: SizedBox(
-            width: 520,
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(dialogContext).size.width * 0.9,
+            ),
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -511,8 +519,10 @@ class _AdminPrepConcoursScreenState extends State<AdminPrepConcoursScreen> {
 			builder: (dialogContext) {
 				return AlertDialog(
 					title: const Text('Créer une matière'),
-					content: SizedBox(
-						width: 520,
+					content: ConstrainedBox(
+						constraints: BoxConstraints(
+							maxWidth: MediaQuery.of(dialogContext).size.width * 0.9,
+						),
 						child: SingleChildScrollView(
 							child: Column(
 								mainAxisSize: MainAxisSize.min,

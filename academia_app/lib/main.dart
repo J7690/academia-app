@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -110,6 +111,14 @@ import 'games/screens/leaderboard_screen.dart';
 import 'games/screens/games_domain_hub_screen.dart';
 import 'features/auth/auth_wrapper.dart';
 import 'features/auth/auth_callback_screen.dart';
+import 'features/challenge/smart_whiteboard/screens/smart_whiteboard_input_screen.dart';
+import 'features/challenge/smart_whiteboard/screens/smart_whiteboard_storyboard_editor_screen.dart';
+import 'features/challenge/smart_whiteboard/screens/smart_whiteboard_preview_screen.dart';
+import 'features/challenge/smart_whiteboard/screens/smart_whiteboard_projects_list_screen.dart';
+import 'features/challenge/smart_whiteboard/providers/smart_whiteboard_provider.dart';
+import 'features/challenge/smart_whiteboard/services/smart_whiteboard_service.dart';
+import 'features/challenge/smart_whiteboard/services/smart_whiteboard_render_service.dart';
+import 'features/challenge/smart_whiteboard/services/smart_whiteboard_narration_service.dart';
 
 // Cache invalidation comment - force full rebuild
 const String kAppVersion = '1.0.1';
@@ -153,6 +162,17 @@ Future<void> _checkWebVersion() async {
 void main() async {
   print('P11_MAIN_START');
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Set system UI to edge-to-edge (status bar transparent, app content behind it)
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
 
   // Initialisation des données de locale pour Intl (dates, jours en fr_FR)
   // Nécessaire avant toute utilisation de DateFormat('EEEE', 'fr_FR') etc.
@@ -272,6 +292,13 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
       ChangeNotifierProvider(create: (_) => CreditProvider()),
       ChangeNotifierProvider(create: (_) => AcademiaSessionProvider()),
+      ChangeNotifierProvider(
+        create: (_) => SmartWhiteboardProvider(
+          projectService: SmartWhiteboardService(Supabase.instance.client),
+          renderService: SmartWhiteboardRenderService(Supabase.instance.client),
+          narrationService: SmartWhiteboardNarrationService(Supabase.instance.client),
+        ),
+      ),
     ];
 
     if (kDebugMode) {
@@ -293,6 +320,10 @@ class AcademiaApp extends StatelessWidget {
           '/games': (_) => const GamesDomainHubScreen(),
           '/tournaments': (_) => const TournamentListScreen(),
           '/leaderboard': (_) => const LeaderboardScreen(),
+          '/smart-whiteboard-input': (_) => const SmartWhiteboardInputScreen(),
+          '/smart-whiteboard-editor': (_) => const SmartWhiteboardStoryboardEditorScreen(),
+          '/smart-whiteboard-preview': (_) => const SmartWhiteboardPreviewScreen(),
+          '/smart-whiteboard-projects': (_) => const SmartWhiteboardProjectsListScreen(),
         },
       ),
     );

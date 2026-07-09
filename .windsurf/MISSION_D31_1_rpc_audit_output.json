@@ -1,0 +1,35 @@
+{
+  "whiteboard_fetch_queued_jobs": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.whiteboard_fetch_queued_jobs(p_limit integer DEFAULT 5)\n RETURNS TABLE(id uuid, storyboard jsonb, created_at timestamp with time zone)\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nBEGIN\n    RETURN QUERY\n    SELECT wr.id, wp.storyboard_json as storyboard, wr.created_at\n    FROM app.whiteboard_renders wr\n    JOIN app.whiteboard_projects wp ON wr.project_id = wp.id\n    WHERE wr.status = 'queued'\n    ORDER BY wr.created_at ASC\n    LIMIT p_limit;\nEND;\n$function$\n",
+        "nspname": "public",
+        "proname": "whiteboard_fetch_queued_jobs"
+      }
+    ]
+  },
+  "whiteboard_create_render_job": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.whiteboard_create_render_job(p_project_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_render_id uuid;\n  v_project_exists boolean;\n  v_result jsonb;\nBEGIN\n  SELECT EXISTS (\n    SELECT 1 FROM app.whiteboard_projects\n    WHERE id = p_project_id AND student_id = auth.uid()\n  ) INTO v_project_exists;\n\n  IF NOT v_project_exists THEN\n    RETURN jsonb_build_object(\n      'success', false,\n      'error', 'Project not found or unauthorized'\n    );\n  END IF;\n\n  INSERT INTO app.whiteboard_renders (\n    project_id,\n    status,\n    progress\n  ) VALUES (\n    p_project_id,\n    'queued',\n    0\n  )\n  RETURNING id INTO v_render_id;\n\n  v_result := jsonb_build_object(\n    'success', true,\n    'render_id', v_render_id\n  );\n\n  RETURN v_result;\nEND;\n$function$\n",
+        "nspname": "public",
+        "proname": "whiteboard_create_render_job"
+      }
+    ]
+  },
+  "whiteboard_mark_done": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.whiteboard_mark_done(p_job_id uuid, p_video_url text, p_duration_ms integer)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nBEGIN\n    UPDATE app.whiteboard_renders\n    SET status = 'done',\n        video_url = p_video_url,\n        duration_ms = p_duration_ms,\n        completed_at = now()\n    WHERE id = p_job_id;\nEND;\n$function$\n",
+        "nspname": "public",
+        "proname": "whiteboard_mark_done"
+      }
+    ]
+  }
+}

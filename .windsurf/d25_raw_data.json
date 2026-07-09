@@ -1,0 +1,686 @@
+{
+  "render_id": "ad74ed9e-2133-4c79-9a84-29b33d9d8fb3",
+  "project_id": "3fa88728-9ce5-489e-8f51-85dc3b87f7f4",
+  "status": "done",
+  "video_url": "https://thevdfcwlcqzdoybfvgs.supabase.co/storage/v1/object/public/whiteboard-renders/renders/ad74ed9e-2133-4c79-9a84-29b33d9d8fb3/30258deac6114b89a2fdfc309d3ea9bc.mp4",
+  "render_duration_ms": 45000,
+  "subject": "dérivés d'une fonction",
+  "storyboard_renderer": "notebook",
+  "storyboard_theme": "notebook",
+  "storyboard_narration": "tts",
+  "nb_scenes": 9,
+  "total_ms_storyboard": 69000,
+  "scenes": [
+    {
+      "id": "scene-001",
+      "order": 0,
+      "title": "Introduction aux Dérivées",
+      "blocks": [
+        {
+          "id": "block-001",
+          "type": "title",
+          "order": 0,
+          "style": {},
+          "content": "Qu'est-ce qu'une dérivée ?",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-002",
+          "type": "paragraph",
+          "order": 1,
+          "style": {},
+          "content": "La dérivée d'une fonction mesure la vitesse à laquelle la valeur de la fonction change par rapport à un changement de sa variable.",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-003",
+          "type": "paragraph",
+          "order": 2,
+          "style": {},
+          "content": "C'est un concept fondamental en calcul différentiel.",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        }
+      ],
+      "transition": {},
+      "duration_ms": 7000
+    },
+    {
+      "id": "scene-002",
+      "order": 1,
+      "title": "Définition Formelle",
+      "blocks": [
+        {
+          "id": "block-004",
+          "type": "definition",
+          "order": 0,
+          "style": {},
+          "content": "La dérivée d'une fonction f en un point x, notée f'(x), est la limite du taux de variation moyen lorsque le pas tend vers zéro.",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-005",
+          "type": "formula",
+          "order": 1,
+          "style": {},
+          "content": "f'(x) = \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        }
+      ],
+      "transition": {},
+      "duration_ms": 8000
+    },
+    {
+      "id": "scene-003",
+      "order": 2,
+      "title": "Interprétation Géométrique",
+      "blocks": [
+        {
+          "id": "block-006",
+          "type": "paragraph",
+          "order": 0,
+          "style": {},
+          "content": "Géométriquement, la dérivée f'(x) représente la pente de la tangente à la courbe de f au point (x, f(x)).",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-007",
+          "type": "paragraph",
+          "order": 1,
+          "style": {},
+          "content": "Elle indique la direction et la raideur de la courbe à cet endroit.",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        }
+      ],
+      "transition": {},
+      "duration_ms": 6000
+    },
+    {
+      "id": "scene-004",
+      "order": 3,
+      "title": "Exemple Simple : Fonction Linéaire",
+      "blocks": [
+        {
+          "id": "block-008",
+          "type": "paragraph",
+          "order": 0,
+          "style": {},
+          "content": "Considérons la fonction f(x) = 3x + 2.",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-009",
+          "type": "paragraph",
+          "order": 1,
+          "style": {},
+          "content": "La pente de cette droite est constante.",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-010",
+          "type": "formula",
+          "order": 2,
+          "style": {},
+          "content": "f'(x) = 3",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        }
+      ],
+      "transition": {},
+      "duration_ms": 7000
+    },
+    {
+      "id": "scene-005",
+      "order": 4,
+      "title": "Exemple : Fonction Quadratique",
+      "blocks": [
+        {
+          "id": "block-011",
+          "type": "paragraph",
+          "order": 0,
+          "style": {},
+          "content": "Calculons la dérivée de f(x) = x².",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-012",
+          "type": "formula",
+          "order": 1,
+          "style": {},
+          "content": "\\frac{d}{dx}(x^n) = nx^{n-1}",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-013",
+          "type": "formula",
+          "order": 2,
+          "style": {},
+          "content": "f'(x) = 2x^{2-1} = 2x",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-014",
+          "type": "paragraph",
+          "order": 3,
+          "style": {},
+          "content": "La pente de la tangente varie selon x.",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        }
+      ],
+      "transition": {},
+      "duration_ms": 9000
+    },
+    {
+      "id": "scene-006",
+      "order": 5,
+      "title": "Règles de Dérivation Courantes",
+      "blocks": [
+        {
+          "id": "block-015",
+          "type": "paragraph",
+          "order": 0,
+          "style": {},
+          "content": "Quelques règles essentielles :",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-016",
+          "type": "formula",
+          "order": 1,
+          "style": {},
+          "content": "(c)' = 0 \\quad (constante)",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-017",
+          "type": "formula",
+          "order": 2,
+          "style": {},
+          "content": "(x)' = 1",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-018",
+          "type": "formula",
+          "order": 3,
+          "style": {},
+          "content": "(e^x)' = e^x",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-019",
+          "type": "formula",
+          "order": 4,
+          "style": {},
+          "content": "(\\ln x)' = \\frac{1}{x}",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        }
+      ],
+      "transition": {},
+      "duration_ms": 10000
+    },
+    {
+      "id": "scene-007",
+      "order": 6,
+      "title": "Exercice d'Application",
+      "blocks": [
+        {
+          "id": "block-020",
+          "type": "exercise",
+          "order": 0,
+          "style": {},
+          "content": "Calculez la dérivée de la fonction suivante :",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-021",
+          "type": "formula",
+          "order": 1,
+          "style": {},
+          "content": "g(x) = 5x^3 - 4x + 7",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-022",
+          "type": "paragraph",
+          "order": 2,
+          "style": {},
+          "content": "Prenez quelques instants pour réfléchir.",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        }
+      ],
+      "transition": {},
+      "duration_ms": 7000
+    },
+    {
+      "id": "scene-008",
+      "order": 7,
+      "title": "Correction de l'Exercice",
+      "blocks": [
+        {
+          "id": "block-023",
+          "type": "correction",
+          "order": 0,
+          "style": {},
+          "content": "Pour g(x) = 5x³ - 4x + 7 :",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-024",
+          "type": "formula",
+          "order": 1,
+          "style": {},
+          "content": "g'(x) = \\frac{d}{dx}(5x^3) - \\frac{d}{dx}(4x) + \\frac{d}{dx}(7)",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-025",
+          "type": "formula",
+          "order": 2,
+          "style": {},
+          "content": "g'(x) = 5 \\cdot 3x^{3-1} - 4 \\cdot 1 + 0",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-026",
+          "type": "formula",
+          "order": 3,
+          "style": {},
+          "content": "g'(x) = 15x^2 - 4",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        }
+      ],
+      "transition": {},
+      "duration_ms": 8000
+    },
+    {
+      "id": "scene-009",
+      "order": 8,
+      "title": "Applications des Dérivées",
+      "blocks": [
+        {
+          "id": "block-027",
+          "type": "paragraph",
+          "order": 0,
+          "style": {},
+          "content": "Les dérivées sont utilisées pour :",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-028",
+          "type": "paragraph",
+          "order": 1,
+          "style": {},
+          "content": "- Optimisation (minima/maxima)",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-029",
+          "type": "paragraph",
+          "order": 2,
+          "style": {},
+          "content": "- Étude de variations de fonctions",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        },
+        {
+          "id": "block-030",
+          "type": "paragraph",
+          "order": 3,
+          "style": {},
+          "content": "- Physique (vitesse, accélération)",
+          "visible": true,
+          "position": {},
+          "animation": {}
+        }
+      ],
+      "transition": {},
+      "duration_ms": 7000
+    }
+  ],
+  "scene_table": [
+    {
+      "order": 0,
+      "scene_id": "scene-001",
+      "duration_ms": 7000,
+      "cumul_ms": 7000,
+      "blocks": [
+        "title",
+        "paragraph",
+        "paragraph"
+      ]
+    },
+    {
+      "order": 1,
+      "scene_id": "scene-002",
+      "duration_ms": 8000,
+      "cumul_ms": 15000,
+      "blocks": [
+        "definition",
+        "formula"
+      ]
+    },
+    {
+      "order": 2,
+      "scene_id": "scene-003",
+      "duration_ms": 6000,
+      "cumul_ms": 21000,
+      "blocks": [
+        "paragraph",
+        "paragraph"
+      ]
+    },
+    {
+      "order": 3,
+      "scene_id": "scene-004",
+      "duration_ms": 7000,
+      "cumul_ms": 28000,
+      "blocks": [
+        "paragraph",
+        "paragraph",
+        "formula"
+      ]
+    },
+    {
+      "order": 4,
+      "scene_id": "scene-005",
+      "duration_ms": 9000,
+      "cumul_ms": 37000,
+      "blocks": [
+        "paragraph",
+        "formula",
+        "formula",
+        "paragraph"
+      ]
+    },
+    {
+      "order": 5,
+      "scene_id": "scene-006",
+      "duration_ms": 10000,
+      "cumul_ms": 47000,
+      "blocks": [
+        "paragraph",
+        "formula",
+        "formula",
+        "formula",
+        "formula"
+      ]
+    },
+    {
+      "order": 6,
+      "scene_id": "scene-007",
+      "duration_ms": 7000,
+      "cumul_ms": 54000,
+      "blocks": [
+        "exercise",
+        "formula",
+        "paragraph"
+      ]
+    },
+    {
+      "order": 7,
+      "scene_id": "scene-008",
+      "duration_ms": 8000,
+      "cumul_ms": 62000,
+      "blocks": [
+        "correction",
+        "formula",
+        "formula",
+        "formula"
+      ]
+    },
+    {
+      "order": 8,
+      "scene_id": "scene-009",
+      "duration_ms": 7000,
+      "cumul_ms": 69000,
+      "blocks": [
+        "paragraph",
+        "paragraph",
+        "paragraph",
+        "paragraph"
+      ]
+    }
+  ],
+  "file_size": "338856",
+  "fmt": {
+    "filename": "/tmp/d25_audit.mp4",
+    "nb_streams": 2,
+    "nb_programs": 0,
+    "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+    "format_long_name": "QuickTime / MOV",
+    "start_time": "0.000000",
+    "duration": "49.966667",
+    "size": "338856",
+    "bit_rate": "54253",
+    "probe_score": 100,
+    "tags": {
+      "major_brand": "isom",
+      "minor_version": "512",
+      "compatible_brands": "isomiso2avc1mp41",
+      "encoder": "Lavf60.16.100"
+    }
+  },
+  "video_stream": {
+    "index": 0,
+    "codec_name": "h264",
+    "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+    "profile": "Constrained Baseline",
+    "codec_type": "video",
+    "codec_tag_string": "avc1",
+    "codec_tag": "0x31637661",
+    "width": 1080,
+    "height": 1920,
+    "coded_width": 1080,
+    "coded_height": 1920,
+    "closed_captions": 0,
+    "film_grain": 0,
+    "has_b_frames": 0,
+    "sample_aspect_ratio": "1:1",
+    "display_aspect_ratio": "9:16",
+    "pix_fmt": "yuv420p",
+    "level": 31,
+    "color_range": "tv",
+    "color_space": "bt709",
+    "color_transfer": "bt709",
+    "color_primaries": "bt709",
+    "chroma_location": "left",
+    "field_order": "progressive",
+    "refs": 1,
+    "is_avc": "true",
+    "nal_length_size": "4",
+    "id": "0x1",
+    "r_frame_rate": "30/1",
+    "avg_frame_rate": "30/1",
+    "time_base": "1/15360",
+    "start_pts": 0,
+    "start_time": "0.000000",
+    "duration_ts": 767488,
+    "duration": "49.966667",
+    "bit_rate": "45244",
+    "bits_per_raw_sample": "8",
+    "nb_frames": "1499",
+    "extradata_size": 44,
+    "disposition": {
+      "default": 1,
+      "dub": 0,
+      "original": 0,
+      "comment": 0,
+      "lyrics": 0,
+      "karaoke": 0,
+      "forced": 0,
+      "hearing_impaired": 0,
+      "visual_impaired": 0,
+      "clean_effects": 0,
+      "attached_pic": 0,
+      "timed_thumbnails": 0,
+      "non_diegetic": 0,
+      "captions": 0,
+      "descriptions": 0,
+      "metadata": 0,
+      "dependent": 0,
+      "still_image": 0
+    },
+    "tags": {
+      "language": "und",
+      "handler_name": "VideoHandler",
+      "vendor_id": "[0][0][0][0]",
+      "encoder": "Lavc60.31.102 libx264"
+    }
+  },
+  "audio_stream": {
+    "index": 1,
+    "codec_name": "aac",
+    "codec_long_name": "AAC (Advanced Audio Coding)",
+    "profile": "LC",
+    "codec_type": "audio",
+    "codec_tag_string": "mp4a",
+    "codec_tag": "0x6134706d",
+    "sample_fmt": "fltp",
+    "sample_rate": "44100",
+    "channels": 2,
+    "channel_layout": "stereo",
+    "bits_per_sample": 0,
+    "initial_padding": 0,
+    "id": "0x2",
+    "r_frame_rate": "0/0",
+    "avg_frame_rate": "0/0",
+    "time_base": "1/44100",
+    "start_pts": 0,
+    "start_time": "0.000000",
+    "duration_ts": 2202619,
+    "duration": "49.946009",
+    "bit_rate": "2091",
+    "nb_frames": "2152",
+    "extradata_size": 5,
+    "disposition": {
+      "default": 1,
+      "dub": 0,
+      "original": 0,
+      "comment": 0,
+      "lyrics": 0,
+      "karaoke": 0,
+      "forced": 0,
+      "hearing_impaired": 0,
+      "visual_impaired": 0,
+      "clean_effects": 0,
+      "attached_pic": 0,
+      "timed_thumbnails": 0,
+      "non_diegetic": 0,
+      "captions": 0,
+      "descriptions": 0,
+      "metadata": 0,
+      "dependent": 0,
+      "still_image": 0
+    },
+    "tags": {
+      "language": "und",
+      "handler_name": "SoundHandler",
+      "vendor_id": "[0][0][0][0]"
+    }
+  },
+  "frames_video": {
+    "nb": 1499,
+    "f0_pts": null,
+    "f0_dts": "0.000000",
+    "fn_pts": null,
+    "fn_dts": "49.933333"
+  },
+  "frames_audio": {
+    "nb": 2151,
+    "f0_pts": null,
+    "fn_pts": null
+  },
+  "atoms": [
+    {
+      "name": "ftyp",
+      "offset": 0,
+      "size": 32
+    },
+    {
+      "name": "moov",
+      "offset": 32,
+      "size": 43153
+    },
+    {
+      "name": "free",
+      "offset": 43185,
+      "size": 8
+    },
+    {
+      "name": "mdat",
+      "offset": 43193,
+      "size": 295663
+    }
+  ],
+  "moov_before_mdat": true,
+  "has_smpte170m": false,
+  "decode_errors": "",
+  "service_file": "[Unit]\nDescription=Whiteboard Render Worker Service\nAfter=network.target\n\n[Service]\nType=simple\nUser=root\nWorkingDirectory=/opt/whiteboard-worker\nExecStart=/usr/bin/python3 /opt/whiteboard-worker/whiteboard_render_worker.py\nRestart=always\nRestartSec=5\nLimitNOFILE=65536\nStandardOutput=journal\nStandardError=journal\nEnvironment=PYTHONUNBUFFERED=1\n\n[Install]\nWantedBy=multi-user.target\n",
+  "worker_files": "total 836\ndrwxr-xr-x 3 root root   4096 Jun 29 09:15 .\ndrwxr-xr-x 7 root root   4096 Jun 23 16:51 ..\n-rw-r--r-- 1 root root    353 Jun 23 18:32 .env\ndrwxr-xr-x 2 root root   4096 Jun 29 09:15 __pycache__\n-rw-r--r-- 1 root root   3416 Jun 29 09:15 whiteboard_ffmpeg_assembler.py\n-rw-r--r-- 1 root root   6526 Jun 23 18:44 whiteboard_png_renderer.py\n-rw-r--r-- 1 root root   6230 Jun 23 18:31 whiteboard_render_worker.py\n-rw-r--r-- 1 root root   1872 Jun 23 18:31 whiteboard_upload_renderer.py\n-rw-r--r-- 1 root root 807664 Jun 23 17:18 worker.log\n1aef5f207a1491f2e0b2855ce63d4f59  /opt/whiteboard-worker/whiteboard_ffmpeg_assembler.py\n62a604fdabbe7f065f0ca5acb76195b0  /opt/whiteboard-worker/whiteboard_png_renderer.py\n96274c246a4ba3e3cb4f2dc076707b20  /opt/whiteboard-worker/whiteboard_render_worker.py\n547a0d66ad175c9d8f100566166e928f  /opt/whiteboard-worker/whiteboard_upload_renderer.py\n",
+  "python_version": "Python 3.12.3\nPillow: 12.2.0",
+  "ffmpeg_version": "ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers",
+  "dur_attendue": 69.0,
+  "dur_container": 49.966667,
+  "dur_video_stream": 49.966667,
+  "dur_par_frames": 49.96666666666667,
+  "ecart_container": -19.033333,
+  "fps_float": 30.0,
+  "nb_frames_header": 1499,
+  "nb_frames_real": 1499
+}

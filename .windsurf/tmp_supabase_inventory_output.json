@@ -1,0 +1,813 @@
+[
+  {
+    "label": "tables",
+    "body": {
+      "ok": true,
+      "mode": "select",
+      "rows": [
+        {
+          "name": "idx_whiteboard_ai_generations_created_at",
+          "schema": "app",
+          "relkind": "i"
+        },
+        {
+          "name": "idx_whiteboard_ai_generations_created_by",
+          "schema": "app",
+          "relkind": "i"
+        },
+        {
+          "name": "idx_whiteboard_ai_generations_status",
+          "schema": "app",
+          "relkind": "i"
+        },
+        {
+          "name": "idx_whiteboard_projects_created_at",
+          "schema": "app",
+          "relkind": "i"
+        },
+        {
+          "name": "idx_whiteboard_projects_id",
+          "schema": "app",
+          "relkind": "i"
+        },
+        {
+          "name": "idx_whiteboard_projects_status",
+          "schema": "app",
+          "relkind": "i"
+        },
+        {
+          "name": "idx_whiteboard_projects_storyboard_json",
+          "schema": "app",
+          "relkind": "i"
+        },
+        {
+          "name": "idx_whiteboard_projects_student_id",
+          "schema": "app",
+          "relkind": "i"
+        },
+        {
+          "name": "idx_whiteboard_renders_created_at",
+          "schema": "app",
+          "relkind": "i"
+        },
+        {
+          "name": "idx_whiteboard_renders_id",
+          "schema": "app",
+          "relkind": "i"
+        },
+        {
+          "name": "idx_whiteboard_renders_project_id",
+          "schema": "app",
+          "relkind": "i"
+        },
+        {
+          "name": "idx_whiteboard_renders_status",
+          "schema": "app",
+          "relkind": "i"
+        },
+        {
+          "name": "whiteboard_ai_generations",
+          "schema": "app",
+          "relkind": "r"
+        },
+        {
+          "name": "whiteboard_ai_generations_pkey",
+          "schema": "app",
+          "relkind": "i"
+        },
+        {
+          "name": "whiteboard_projects",
+          "schema": "app",
+          "relkind": "r"
+        },
+        {
+          "name": "whiteboard_projects_pkey",
+          "schema": "app",
+          "relkind": "i"
+        },
+        {
+          "name": "whiteboard_renders",
+          "schema": "app",
+          "relkind": "r"
+        },
+        {
+          "name": "whiteboard_renders_pkey",
+          "schema": "app",
+          "relkind": "i"
+        }
+      ]
+    }
+  },
+  {
+    "label": "rpcs",
+    "body": {
+      "ok": true,
+      "mode": "select",
+      "rows": [
+        {
+          "name": "whiteboard_ai_generations_updated_at",
+          "schema": "app",
+          "signature": ""
+        },
+        {
+          "name": "whiteboard_projects_updated_at",
+          "schema": "app",
+          "signature": ""
+        },
+        {
+          "name": "whiteboard_create_project",
+          "schema": "public",
+          "signature": "p_student_id uuid, p_subject text, p_renderer_id text, p_theme_id text, p_narration_mode text, p_storyboard_json jsonb"
+        },
+        {
+          "name": "whiteboard_create_render_job",
+          "schema": "public",
+          "signature": "p_project_id uuid"
+        },
+        {
+          "name": "whiteboard_delete_project",
+          "schema": "public",
+          "signature": "p_project_id uuid"
+        },
+        {
+          "name": "whiteboard_fetch_queued_jobs",
+          "schema": "public",
+          "signature": "p_limit integer"
+        },
+        {
+          "name": "whiteboard_get_any_student_id",
+          "schema": "public",
+          "signature": ""
+        },
+        {
+          "name": "whiteboard_get_project",
+          "schema": "public",
+          "signature": "p_project_id uuid"
+        },
+        {
+          "name": "whiteboard_get_render_status",
+          "schema": "public",
+          "signature": "p_render_id uuid"
+        },
+        {
+          "name": "whiteboard_list_projects",
+          "schema": "public",
+          "signature": "p_status text"
+        },
+        {
+          "name": "whiteboard_mark_done",
+          "schema": "public",
+          "signature": "p_job_id uuid, p_video_url text, p_duration_ms integer"
+        },
+        {
+          "name": "whiteboard_mark_failed",
+          "schema": "public",
+          "signature": "p_job_id uuid, p_error_message text"
+        },
+        {
+          "name": "whiteboard_mark_processing",
+          "schema": "public",
+          "signature": "p_job_id uuid"
+        },
+        {
+          "name": "whiteboard_update_project",
+          "schema": "public",
+          "signature": "p_project_id uuid, p_subject text, p_status text, p_renderer_id text, p_theme_id text, p_narration_mode text, p_storyboard_json jsonb"
+        }
+      ]
+    }
+  },
+  {
+    "label": "policies",
+    "body": {
+      "ok": true,
+      "mode": "select",
+      "rows": [
+        {
+          "cmd": "SELECT",
+          "qual": "(EXISTS ( SELECT 1\n   FROM app.admin_users\n  WHERE (admin_users.user_id = auth.uid())))",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_ai_generations",
+          "permissive": "PERMISSIVE",
+          "policyname": "Admins can view all generations",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "INSERT",
+          "qual": null,
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_ai_generations",
+          "permissive": "PERMISSIVE",
+          "policyname": "Service role can insert generations",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "SELECT",
+          "qual": "(auth.uid() = created_by)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_ai_generations",
+          "permissive": "PERMISSIVE",
+          "policyname": "Students can view own generations",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "ALL",
+          "qual": "(auth.role() = 'service_role'::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "Service role can do everything",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "DELETE",
+          "qual": "(auth.uid() = student_id)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "Students can delete own projects",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "INSERT",
+          "qual": null,
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "Students can insert own projects",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "UPDATE",
+          "qual": "(auth.uid() = student_id)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "Students can update own projects",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "SELECT",
+          "qual": "(auth.uid() = student_id)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "Students can view own projects",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "DELETE",
+          "qual": "((auth.jwt() ->> 'role'::text) = 'admin'::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_projects_delete_admin",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "DELETE",
+          "qual": "(auth.role() = 'service_role'::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_projects_delete_service_role",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "DELETE",
+          "qual": "((auth.uid())::text = (student_id)::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_projects_delete_student",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "INSERT",
+          "qual": null,
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_projects_insert_admin",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "INSERT",
+          "qual": null,
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_projects_insert_service_role",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "INSERT",
+          "qual": null,
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_projects_insert_student",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "SELECT",
+          "qual": "((auth.jwt() ->> 'role'::text) = 'admin'::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_projects_select_admin",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "SELECT",
+          "qual": "(auth.role() = 'service_role'::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_projects_select_service_role",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "SELECT",
+          "qual": "((auth.uid())::text = (student_id)::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_projects_select_student",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "ALL",
+          "qual": "(auth.role() = 'service_role'::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_projects_service_role",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "UPDATE",
+          "qual": "((auth.jwt() ->> 'role'::text) = 'admin'::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_projects_update_admin",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "UPDATE",
+          "qual": "(auth.role() = 'service_role'::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_projects_update_service_role",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "UPDATE",
+          "qual": "((auth.uid())::text = (student_id)::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_projects",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_projects_update_student",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "ALL",
+          "qual": "(auth.role() = 'service_role'::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "Service role can do everything",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "SELECT",
+          "qual": "(EXISTS ( SELECT 1\n   FROM app.whiteboard_projects\n  WHERE ((whiteboard_projects.id = whiteboard_renders.project_id) AND (whiteboard_projects.student_id = auth.uid()))))",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "Students can view own renders",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "DELETE",
+          "qual": "((auth.jwt() ->> 'role'::text) = 'admin'::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_renders_delete_admin",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "DELETE",
+          "qual": "(EXISTS ( SELECT 1\n   FROM app.whiteboard_projects\n  WHERE ((whiteboard_projects.id = whiteboard_renders.project_id) AND ((whiteboard_projects.student_id)::text = (auth.uid())::text))))",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_renders_delete_owner",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "DELETE",
+          "qual": "(auth.role() = 'service_role'::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_renders_delete_service_role",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "DELETE",
+          "qual": "(EXISTS ( SELECT 1\n   FROM app.whiteboard_projects wp\n  WHERE ((wp.id = whiteboard_renders.project_id) AND (wp.student_id = auth.uid()))))",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_renders_delete_student",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "INSERT",
+          "qual": null,
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_renders_insert_admin",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "INSERT",
+          "qual": null,
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_renders_insert_owner",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "INSERT",
+          "qual": null,
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_renders_insert_service_role",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "INSERT",
+          "qual": null,
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_renders_insert_student",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "SELECT",
+          "qual": "((auth.jwt() ->> 'role'::text) = 'admin'::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_renders_select_admin",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "SELECT",
+          "qual": "(EXISTS ( SELECT 1\n   FROM app.whiteboard_projects\n  WHERE ((whiteboard_projects.id = whiteboard_renders.project_id) AND ((whiteboard_projects.student_id)::text = (auth.uid())::text))))",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_renders_select_owner",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "SELECT",
+          "qual": "(auth.role() = 'service_role'::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_renders_select_service_role",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "SELECT",
+          "qual": "(EXISTS ( SELECT 1\n   FROM app.whiteboard_projects wp\n  WHERE ((wp.id = whiteboard_renders.project_id) AND (wp.student_id = auth.uid()))))",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_renders_select_student",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "ALL",
+          "qual": "(auth.role() = 'service_role'::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_renders_service_role",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "UPDATE",
+          "qual": "((auth.jwt() ->> 'role'::text) = 'admin'::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_renders_update_admin",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "UPDATE",
+          "qual": "(EXISTS ( SELECT 1\n   FROM app.whiteboard_projects\n  WHERE ((whiteboard_projects.id = whiteboard_renders.project_id) AND ((whiteboard_projects.student_id)::text = (auth.uid())::text))))",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_renders_update_owner",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "UPDATE",
+          "qual": "(auth.role() = 'service_role'::text)",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_renders_update_service_role",
+          "schemaname": "app"
+        },
+        {
+          "cmd": "UPDATE",
+          "qual": "(EXISTS ( SELECT 1\n   FROM app.whiteboard_projects wp\n  WHERE ((wp.id = whiteboard_renders.project_id) AND (wp.student_id = auth.uid()))))",
+          "roles": [
+            "public"
+          ],
+          "tablename": "whiteboard_renders",
+          "permissive": "PERMISSIVE",
+          "policyname": "whiteboard_renders_update_student",
+          "schemaname": "app"
+        }
+      ]
+    }
+  },
+  {
+    "label": "triggers",
+    "body": {
+      "ok": true,
+      "mode": "select",
+      "rows": [
+        {
+          "trigger_name": "whiteboard_ai_generations_updated_at_trigger",
+          "event_manipulation": "UPDATE",
+          "event_object_table": "whiteboard_ai_generations",
+          "event_object_schema": "app"
+        },
+        {
+          "trigger_name": "whiteboard_projects_updated_at_trigger",
+          "event_manipulation": "UPDATE",
+          "event_object_table": "whiteboard_projects",
+          "event_object_schema": "app"
+        }
+      ]
+    }
+  },
+  {
+    "label": "indexes",
+    "body": {
+      "ok": true,
+      "mode": "select",
+      "rows": [
+        {
+          "indexname": "idx_whiteboard_ai_generations_created_at",
+          "tablename": "whiteboard_ai_generations",
+          "schemaname": "app"
+        },
+        {
+          "indexname": "idx_whiteboard_ai_generations_created_by",
+          "tablename": "whiteboard_ai_generations",
+          "schemaname": "app"
+        },
+        {
+          "indexname": "idx_whiteboard_ai_generations_status",
+          "tablename": "whiteboard_ai_generations",
+          "schemaname": "app"
+        },
+        {
+          "indexname": "whiteboard_ai_generations_pkey",
+          "tablename": "whiteboard_ai_generations",
+          "schemaname": "app"
+        },
+        {
+          "indexname": "idx_whiteboard_projects_created_at",
+          "tablename": "whiteboard_projects",
+          "schemaname": "app"
+        },
+        {
+          "indexname": "idx_whiteboard_projects_id",
+          "tablename": "whiteboard_projects",
+          "schemaname": "app"
+        },
+        {
+          "indexname": "idx_whiteboard_projects_status",
+          "tablename": "whiteboard_projects",
+          "schemaname": "app"
+        },
+        {
+          "indexname": "idx_whiteboard_projects_storyboard_json",
+          "tablename": "whiteboard_projects",
+          "schemaname": "app"
+        },
+        {
+          "indexname": "idx_whiteboard_projects_student_id",
+          "tablename": "whiteboard_projects",
+          "schemaname": "app"
+        },
+        {
+          "indexname": "whiteboard_projects_pkey",
+          "tablename": "whiteboard_projects",
+          "schemaname": "app"
+        },
+        {
+          "indexname": "idx_whiteboard_renders_created_at",
+          "tablename": "whiteboard_renders",
+          "schemaname": "app"
+        },
+        {
+          "indexname": "idx_whiteboard_renders_id",
+          "tablename": "whiteboard_renders",
+          "schemaname": "app"
+        },
+        {
+          "indexname": "idx_whiteboard_renders_project_id",
+          "tablename": "whiteboard_renders",
+          "schemaname": "app"
+        },
+        {
+          "indexname": "idx_whiteboard_renders_status",
+          "tablename": "whiteboard_renders",
+          "schemaname": "app"
+        },
+        {
+          "indexname": "whiteboard_renders_pkey",
+          "tablename": "whiteboard_renders",
+          "schemaname": "app"
+        }
+      ]
+    }
+  },
+  {
+    "label": "columns whiteboard_renders",
+    "body": {
+      "ok": true,
+      "mode": "select",
+      "rows": [
+        {
+          "data_type": "uuid",
+          "column_name": "id",
+          "table_schema": "app"
+        },
+        {
+          "data_type": "uuid",
+          "column_name": "project_id",
+          "table_schema": "app"
+        },
+        {
+          "data_type": "text",
+          "column_name": "status",
+          "table_schema": "app"
+        },
+        {
+          "data_type": "text",
+          "column_name": "video_url",
+          "table_schema": "app"
+        },
+        {
+          "data_type": "integer",
+          "column_name": "duration_ms",
+          "table_schema": "app"
+        },
+        {
+          "data_type": "text",
+          "column_name": "error_message",
+          "table_schema": "app"
+        },
+        {
+          "data_type": "integer",
+          "column_name": "progress",
+          "table_schema": "app"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "table_schema": "app"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "completed_at",
+          "table_schema": "app"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "started_at",
+          "table_schema": "app"
+        },
+        {
+          "data_type": "text",
+          "column_name": "video_storage_path",
+          "table_schema": "app"
+        },
+        {
+          "data_type": "text",
+          "column_name": "video_storage_bucket",
+          "table_schema": "app"
+        },
+        {
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "table_schema": "app"
+        },
+        {
+          "data_type": "jsonb",
+          "column_name": "export_settings",
+          "table_schema": "app"
+        }
+      ]
+    }
+  }
+]

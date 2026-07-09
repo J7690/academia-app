@@ -1,0 +1,29 @@
+================================================================================
+TEST HISTORICAL RPC - VERIFY RPC LAYER
+2026-06-24T17:59:51.580448
+================================================================================
+
+1. TEST RPC HISTORIQUE: app_student_get_credit_balance
+--------------------------------------------------------------------------------
+STATUS: 404
+BODY: {"code":"PGRST202","details":"Searched for the function public.app_student_get_credit_balance with parameter p_student_id or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.","hint":null,"message":"Could not find the function public.app_student_get_credit_balance(p_student_id) in the schema cache"}
+
+2. TEST RPC DIRECT: admin_execute_sql
+--------------------------------------------------------------------------------
+STATUS: 200
+BODY: {"ok": true, "mode": "select", "rows": [{"?column?": 1}]}
+
+3. TEST REST API DIRECT
+--------------------------------------------------------------------------------
+STATUS: 404
+BODY: {"code":"PGRST205","details":null,"hint":"Perhaps you meant the table 'public.flutter_test'","message":"Could not find the table 'public.students' in the schema cache"}
+
+4. VÉRIFICATION PG_PROC
+--------------------------------------------------------------------------------
+STATUS: 200
+BODY: {"ok": true, "mode": "exec", "affected_rows": 1}
+
+5. VÉRIFICATION TOUS SCHÉMAS
+--------------------------------------------------------------------------------
+STATUS: 200
+BODY: {"ok": true, "mode": "exec", "affected_rows": 1}

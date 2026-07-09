@@ -71,6 +71,11 @@ android {
             )
         }
     }
+
+    // Suppression de la permission AD_ID injectée par les dépendances transitives
+    buildFeatures {
+        buildConfig = true
+    }
 }
 
 flutter {

@@ -1,0 +1,41 @@
+{
+  "whiteboard_create_project": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.whiteboard_create_project(p_student_id uuid, p_subject text, p_renderer_id text, p_theme_id text, p_narration_mode text, p_storyboard_json jsonb DEFAULT '{}'::jsonb)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_project_id uuid;\n  v_result jsonb;\nBEGIN\n  INSERT INTO app.whiteboard_projects (\n    student_id,\n    subject,\n    status,\n    renderer_id,\n    theme_id,\n    narration_mode,\n    storyboard_json\n  ) VALUES (\n    p_student_id,\n    p_subject,\n    'draft',\n    p_renderer_id,\n    p_theme_id,\n    p_narration_mode,\n    p_storyboard_json\n  )\n  RETURNING id INTO v_project_id;\n\n  v_result := jsonb_build_object(\n    'success', true,\n    'project_id', v_project_id\n  );\n\n  RETURN v_result;\nEND;\n$function$\n",
+        "proname": "whiteboard_create_project"
+      }
+    ]
+  },
+  "whiteboard_create_render_job": {
+    "error": "HTTPSConnectionPool(host='thevdfcwlcqzdoybfvgs.supabase.co', port=443): Max retries exceeded with url: /rest/v1/rpc/admin_execute_sql (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))"
+  },
+  "whiteboard_get_render_status": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.whiteboard_get_render_status(p_render_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  render_record RECORD;\n  result JSONB;\nBEGIN\n  SELECT\n    wr.id,\n    wr.project_id,\n    wr.status,\n    wr.video_url,\n    wr.duration_ms,\n    wr.created_at,\n    wr.completed_at,\n    wr.error_message,\n    wr.progress\n  INTO render_record\n  FROM app.whiteboard_renders wr\n  JOIN app.whiteboard_projects wp ON wr.project_id = wp.id\n  WHERE wr.id = p_render_id\n  AND wp.student_id = auth.uid();\n\n  IF NOT FOUND THEN\n    RETURN jsonb_build_object('success', false, 'error', 'Render not found');\n  END IF;\n\n  result := jsonb_build_object(\n    'success', true,\n    'render', to_jsonb(render_record)\n  );\n\n  RETURN result;\nEND;\n$function$\n",
+        "proname": "whiteboard_get_render_status"
+      }
+    ]
+  },
+  "whiteboard_fetch_queued_jobs": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.whiteboard_fetch_queued_jobs(p_limit integer DEFAULT 5)\n RETURNS TABLE(id uuid, storyboard jsonb, created_at timestamp with time zone)\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nBEGIN\n    RETURN QUERY\n    SELECT wr.id, wp.storyboard_json as storyboard, wr.created_at\n    FROM app.whiteboard_renders wr\n    JOIN app.whiteboard_projects wp ON wr.project_id = wp.id\n    WHERE wr.status = 'queued'\n    ORDER BY wr.created_at ASC\n    LIMIT p_limit;\nEND;\n$function$\n",
+        "proname": "whiteboard_fetch_queued_jobs"
+      }
+    ]
+  },
+  "whiteboard_mark_done": {
+    "error": "HTTPSConnectionPool(host='thevdfcwlcqzdoybfvgs.supabase.co', port=443): Max retries exceeded with url: /rest/v1/rpc/admin_execute_sql (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))"
+  },
+  "whiteboard_list_projects": {
+    "error": "HTTPSConnectionPool(host='thevdfcwlcqzdoybfvgs.supabase.co', port=443): Max retries exceeded with url: /rest/v1/rpc/admin_execute_sql (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))"
+  }
+}

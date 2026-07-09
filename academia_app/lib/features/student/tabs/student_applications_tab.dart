@@ -1,3 +1,4 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -186,20 +187,24 @@ class _StudentApplicationsTabState extends State<StudentApplicationsTab> {
                   itemCount: applications.length,
                   itemBuilder: (context, index) {
                     final app = applications[index];
-                    return _ApplicationCard(
-                      application: app,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => ChangeNotifierProvider(
-                              create: (_) => StudentApplicationPaymentsProvider(),
-                              child: StudentApplicationDetailScreen(
-                                application: app,
+                    return FadeInUp(
+                      duration: const Duration(milliseconds: 350),
+                      delay: Duration(milliseconds: 50 * (index < 10 ? index : 0)),
+                      child: _ApplicationCard(
+                        application: app,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => ChangeNotifierProvider(
+                                create: (_) => StudentApplicationPaymentsProvider(),
+                                child: StudentApplicationDetailScreen(
+                                  application: app,
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     );
                   },
                 ),
@@ -299,155 +304,204 @@ class _ApplicationsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: _kApplicationsHeaderBackground,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Mes candidatures',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: _kApplicationsFilterSelectedLabelColor,
-              ),
+    return FadeInDown(
+      duration: const Duration(milliseconds: 400),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFEAF4FF), Color(0xFFFFFFFF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            const SizedBox(height: 4),
-            const Text(
-              'Suivez l\'évolution de vos demandes universitaires.',
-              style: TextStyle(
-                fontSize: 13,
-                color: _kApplicationsFilterUnselectedLabelColor,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF3275D0).withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
-            ),
-            const SizedBox(height: 8),
-            Consumer<StudentApplicationsProvider>(
-              builder: (context, provider, _) {
-                final apps = provider.applications;
-                if (apps.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-
-                int drafts = 0;
-                int submitted = 0;
-                int underReview = 0;
-                int accepted = 0;
-                int rejected = 0;
-                int canceled = 0;
-
-                for (final app in apps) {
-                  final status = app['status']?.toString();
-                  switch (status) {
-                    case 'draft':
-                      drafts++;
-                      break;
-                    case 'submitted':
-                      submitted++;
-                      break;
-                    case 'under_review':
-                      underReview++;
-                      break;
-                    case 'accepted':
-                      accepted++;
-                      break;
-                    case 'rejected':
-                      rejected++;
-                      break;
-                    case 'canceled':
-                      canceled++;
-                      break;
-                    default:
-                      break;
-                  }
-                }
-
-                final bobodoState = _bobodoSummaryState(
-                  drafts: drafts,
-                  submitted: submitted,
-                  underReview: underReview,
-                  accepted: accepted,
-                  rejected: rejected,
-                  canceled: canceled,
-                );
-
-                final bobodoText = _bobodoSummaryText(
-                  drafts: drafts,
-                  submitted: submitted,
-                  underReview: underReview,
-                  accepted: accepted,
-                  rejected: rejected,
-                  canceled: canceled,
-                );
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3275D0).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.assignment_turned_in,
+                      color: Color(0xFF3275D0),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(right: 12.0),
-                          child: BobodoView(
-                            state: bobodoState,
-                            size: 56,
+                        Text(
+                          'Mes candidatures',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: _kApplicationsFilterSelectedLabelColor,
                           ),
                         ),
-                        Expanded(
-                          child: Text(
-                            bobodoText,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: _kApplicationsFilterUnselectedLabelColor,
+                        SizedBox(height: 2),
+                        Text(
+                          'Suivez l\'évolution de vos demandes universitaires.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: _kApplicationsFilterUnselectedLabelColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Consumer<StudentApplicationsProvider>(
+                builder: (context, provider, _) {
+                  final apps = provider.applications;
+                  if (apps.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+
+                  int drafts = 0;
+                  int submitted = 0;
+                  int underReview = 0;
+                  int accepted = 0;
+                  int rejected = 0;
+                  int canceled = 0;
+
+                  for (final app in apps) {
+                    final status = app['status']?.toString();
+                    switch (status) {
+                      case 'draft':
+                        drafts++;
+                        break;
+                      case 'submitted':
+                        submitted++;
+                        break;
+                      case 'under_review':
+                        underReview++;
+                        break;
+                      case 'accepted':
+                        accepted++;
+                        break;
+                      case 'rejected':
+                        rejected++;
+                        break;
+                      case 'canceled':
+                        canceled++;
+                        break;
+                      default:
+                        break;
+                    }
+                  }
+
+                  final bobodoState = _bobodoSummaryState(
+                    drafts: drafts,
+                    submitted: submitted,
+                    underReview: underReview,
+                    accepted: accepted,
+                    rejected: rejected,
+                    canceled: canceled,
+                  );
+
+                  final bobodoText = _bobodoSummaryText(
+                    drafts: drafts,
+                    submitted: submitted,
+                    underReview: underReview,
+                    accepted: accepted,
+                    rejected: rejected,
+                    canceled: canceled,
+                  );
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(0xFF3275D0).withOpacity(0.15),
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 12.0),
+                              child: BobodoView(
+                                state: bobodoState,
+                                size: 56,
+                              ),
                             ),
-                          ),
+                            Expanded(
+                              child: Text(
+                                bobodoText,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: _kApplicationsFilterUnselectedLabelColor,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: [
-                        if (drafts > 0)
-                          _ApplicationsStatPill(
-                            icon: Icons.edit_note,
-                            color: _kApplicationsStatusDraftColor,
-                            label: '$drafts brouillon${drafts > 1 ? 's' : ''}',
-                          ),
-                        if (submitted + underReview > 0)
-                          _ApplicationsStatPill(
-                            icon: Icons.timelapse,
-                            color: _kApplicationsStatusSubmittedColor,
-                            label:
-                                '${submitted + underReview} en cours',
-                          ),
-                        if (accepted > 0)
-                          _ApplicationsStatPill(
-                            icon: Icons.check_circle_outline,
-                            color: _kApplicationsStatusAcceptedColor,
-                            label:
-                                '$accepted acceptée${accepted > 1 ? 's' : ''}',
-                          ),
-                        if (rejected + canceled > 0)
-                          _ApplicationsStatPill(
-                            icon: Icons.cancel_outlined,
-                            color: _kApplicationsStatusRejectedColor,
-                            label:
-                                '${rejected + canceled} terminée${rejected + canceled > 1 ? 's' : ''}',
-                          ),
-                      ],
-                    ),
-                  ],
-                );
-              },
-            ),
-          ],
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          if (drafts > 0)
+                            _ApplicationsStatPill(
+                              icon: Icons.edit_note,
+                              color: _kApplicationsStatusDraftColor,
+                              label: '$drafts brouillon${drafts > 1 ? 's' : ''}',
+                            ),
+                          if (submitted + underReview > 0)
+                            _ApplicationsStatPill(
+                              icon: Icons.timelapse,
+                              color: _kApplicationsStatusSubmittedColor,
+                              label:
+                                  '${submitted + underReview} en cours',
+                            ),
+                          if (accepted > 0)
+                            _ApplicationsStatPill(
+                              icon: Icons.check_circle_outline,
+                              color: _kApplicationsStatusAcceptedColor,
+                              label:
+                                  '$accepted acceptée${accepted > 1 ? 's' : ''}',
+                            ),
+                          if (rejected + canceled > 0)
+                            _ApplicationsStatPill(
+                              icon: Icons.cancel_outlined,
+                              color: _kApplicationsStatusRejectedColor,
+                              label:
+                                  '${rejected + canceled} terminée${rejected + canceled > 1 ? 's' : ''}',
+                            ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -468,26 +522,26 @@ class _ApplicationsStatPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.7),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(0.4)),
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             icon,
-            size: 14,
+            size: 16,
             color: color,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Text(
             label,
             style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
               color: color,
             ),
           ),
@@ -536,116 +590,138 @@ class _ApplicationCard extends StatelessWidget {
       mainDate = 'Créée le $createdAt';
     }
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      color: Colors.white,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: statusColor.withOpacity(0.6),
-          width: 1.4,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: statusColor.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: statusColor.withOpacity(0.2),
+          width: 1.2,
         ),
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 4,
-              decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.85),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  bottomLeft: Radius.circular(16),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Stack(
-                          children: [
-                            const Icon(Icons.assignment_outlined),
-                            if (hasUnread)
-                              Positioned(
-                                right: 0,
-                                top: 0,
-                                child: _CountBadge(count: 1),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (programTitle.isNotEmpty)
-                                Text(
-                                  degreeLevel.isNotEmpty
-                                      ? '$programTitle · $degreeLevel'
-                                      : programTitle,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: statusColor,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              if (universityName.isNotEmpty) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  universityName,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: Color(0xFF6B7280),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                              if (shortId.isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Candidature $shortId',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF9CA3AF),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        _StatusBadge(status: status),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        statusColor.withOpacity(0.15),
+                        statusColor.withOpacity(0.05),
                       ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    if (mainDate.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        mainDate,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF6B7280),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Stack(
+                    children: [
+                      Center(
+                        child: Icon(
+                          Icons.assignment_outlined,
+                          color: statusColor,
+                          size: 28,
                         ),
                       ),
+                      if (hasUnread)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: _CountBadge(count: 1),
+                        ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (programTitle.isNotEmpty)
+                                  Text(
+                                    degreeLevel.isNotEmpty
+                                        ? '$programTitle · $degreeLevel'
+                                        : programTitle,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: _kApplicationsFilterSelectedLabelColor,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                if (universityName.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    universityName,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF6B7280),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          _StatusBadge(status: status),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today_outlined,
+                            size: 14,
+                            color: Color(0xFF9CA3AF),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              mainDate.isNotEmpty ? mainDate : 'Candidature $shortId',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF9CA3AF),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

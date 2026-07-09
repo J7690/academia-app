@@ -224,9 +224,11 @@ class _AdminCommercialsScreenState extends State<AdminCommercialsScreen> {
               final commissions =
                   (data['commissions'] as List?) ?? const <Map<String, dynamic>>[];
 
-              return SizedBox(
-                width: 420,
-                height: 360,
+              return ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(dialogContext).size.width * 0.9,
+                  maxHeight: 360,
+                ),
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -480,9 +482,11 @@ class _AdminCommercialsScreenState extends State<AdminCommercialsScreen> {
                 );
               }
 
-              return SizedBox(
-                width: 400,
-                height: 240,
+              return ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(dialogContext).size.width * 0.9,
+                  maxHeight: 240,
+                ),
                 child: ListView.builder(
                   itemCount: logs.length,
                   itemBuilder: (context, index) {

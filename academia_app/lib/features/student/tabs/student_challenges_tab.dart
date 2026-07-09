@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:saver_gallery/saver_gallery.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 // tiktoklikescroller retiré : incompatible avec AndroidView PlatformViews.
 // On utilise PageView.builder + _TikTokScrollPhysics custom à la place.
 import '../../../providers/student_challenges_provider.dart';
@@ -28,6 +29,7 @@ import '../../../video/academia_playback_engine.dart';
 import '../../../widgets/video_overlays_layer.dart';
 import '../../../widgets/report_content_sheet.dart';
 import '../../../widgets/bobodo_state.dart';
+import '../../challenge/smart_whiteboard/screens/smart_whiteboard_input_screen.dart';
 import '../../../widgets/bobodo_view.dart';
 import '../student_challenge_detail_screen.dart';
 import '../student_challenge_video_editor_screen.dart';
@@ -1760,14 +1762,101 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
     );
   }
 
-  /// Ouvre directement la caméra TikTok. Après capture, passe au Studio.
+  /// Ouvre le menu de création (Filmer, Importer, Publication, Smart Whiteboard)
   Future<void> _openCreateVideoFromFeed(BuildContext context) async {
     if (!context.mounted) return;
 
     debugPrint('[RUNTIME T1] Clic sur + - _controllers size=${_controllers.length}');
 
-    // Suspend feed audio (pause + mute) before leaving for the Studio.
+    // Suspend feed audio (pause + mute) before showing menu.
     _suspendFeedAudio();
+
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.black87,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              const Text(
+                'Créer du contenu',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ListTile(
+                leading: const Icon(Icons.videocam, color: Color(0xFF1EA75C)),
+                title: const Text('Filmer une vidéo', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(sheetContext, 'camera');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: Color(0xFF1EA75C)),
+                title: const Text('Importer de la galerie', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(sheetContext, 'gallery');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.article, color: Color(0xFF1EA75C)),
+                title: const Text('Publication texte', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(sheetContext, 'text');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.dashboard, color: Color(0xFF1EA75C)),
+                title: const Text('Smart Whiteboard', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(sheetContext, 'whiteboard');
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (!mounted) return;
+
+    // Release feed audio if menu was cancelled
+    if (result == null) {
+      _releaseFeedAudio();
+      final ctrl = _controllers[_currentPage];
+      if (ctrl != null && ctrl.isAttached) {
+        ctrl.play();
+      }
+      return;
+    }
+
+    // Handle selected option
+    switch (result) {
+      case 'camera':
+        await _openCameraCapture(context);
+        break;
+      case 'gallery':
+        await _openGalleryImport(context);
+        break;
+      case 'text':
+        await _openTextPublication(context);
+        break;
+      case 'whiteboard':
+        await _openSmartWhiteboard(context);
+        break;
+    }
+  }
+
+  /// Ouvre la caméra TikTok
+  Future<void> _openCameraCapture(BuildContext context) async {
+    if (!context.mounted) return;
 
     debugPrint('[RUNTIME T2] Ouverture CameraCapture - _controllers size=${_controllers.length}');
 
@@ -1783,36 +1872,110 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
 
     // Si l'utilisateur a capturé des segments, ouvrir le Studio avec les segments
     if (segments != null && segments.isNotEmpty) {
-      // Keep feed audio suspended (pause + mute) before the editor.
-      _suspendFeedAudio();
-      
-      debugPrint('[RUNTIME T4] Vidéo sélectionnée - _controllers size=${_controllers.length}');
-      
-      debugPrint('[RUNTIME T5] Ouverture Editor - _controllers size=${_controllers.length}');
-      
-      // Log memory before opening editor
-      debugPrint('[RUNTIME MEMORY] Before opening editor - ${_getMemoryInfo()}');
-      
-      final published = await Navigator.of(context).push<bool?>(
-        MaterialPageRoute(
-          builder: (_) => StudentChallengeVideoEditorScreen(
-            videoType: 'free',
-            initialMode: 'camera',
-            initialSegments: segments,
-          ),
-        ),
-      );
+      await _openStudioWithSegments(context, segments, 'camera');
+    } else {
+      _releaseFeedAudio();
+      final ctrl = _controllers[_currentPage];
+      if (ctrl != null && ctrl.isAttached) {
+        ctrl.play();
+      }
+    }
+  }
+
+  /// Ouvre l'import galerie
+  Future<void> _openGalleryImport(BuildContext context) async {
+    if (!context.mounted) return;
+
+    debugPrint('[RUNTIME T2] Ouverture Import Galerie - _controllers size=${_controllers.length}');
+
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickVideo(source: ImageSource.gallery);
 
       if (!mounted) return;
-      await _onReturnFromStudio(published == true);
-      return;
-    }
 
-    if (!mounted) return;
+      debugPrint('[RUNTIME T3] Retour Galerie - picked=${picked != null} - _controllers size=${_controllers.length}');
+
+      if (picked != null) {
+        await _openStudioWithSegments(context, [picked], 'gallery');
+      } else {
+        _releaseFeedAudio();
+        final ctrl = _controllers[_currentPage];
+        if (ctrl != null && ctrl.isAttached) {
+          ctrl.play();
+        }
+      }
+    } catch (e) {
+      debugPrint('[Gallery] Picker error: $e');
+      if (!mounted) return;
+      _releaseFeedAudio();
+      final ctrl = _controllers[_currentPage];
+      if (ctrl != null && ctrl.isAttached) {
+        ctrl.play();
+      }
+    }
+  }
+
+  /// Ouvre la publication texte
+  Future<void> _openTextPublication(BuildContext context) async {
+    if (!context.mounted) return;
+
+    debugPrint('[RUNTIME T2] Ouverture Publication Texte - _controllers size=${_controllers.length}');
+
+    // TODO: Implement text publication
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Publication texte à implémenter')),
+    );
+
+    _releaseFeedAudio();
     final ctrl = _controllers[_currentPage];
     if (ctrl != null && ctrl.isAttached) {
       ctrl.play();
     }
+  }
+
+  /// Ouvre Smart Whiteboard
+  Future<void> _openSmartWhiteboard(BuildContext context) async {
+    if (!context.mounted) return;
+
+    debugPrint('[RUNTIME T2] Ouverture Smart Whiteboard - _controllers size=${_controllers.length}');
+
+    final result = await Navigator.of(context).push<bool?>(
+      MaterialPageRoute(
+        builder: (_) => const SmartWhiteboardInputScreen(),
+      ),
+    );
+
+    if (!mounted) return;
+    await _onReturnFromStudio(result == true);
+  }
+
+  /// Ouvre le Studio avec des segments (réutilisé par camera et gallery)
+  Future<void> _openStudioWithSegments(BuildContext context, List<XFile> segments, String mode) async {
+    if (!context.mounted) return;
+
+    // Keep feed audio suspended (pause + mute) before the editor.
+    _suspendFeedAudio();
+    
+    debugPrint('[RUNTIME T4] Vidéo sélectionnée - _controllers size=${_controllers.length}');
+    
+    debugPrint('[RUNTIME T5] Ouverture Editor - _controllers size=${_controllers.length}');
+    
+    // Log memory before opening editor
+    debugPrint('[RUNTIME MEMORY] Before opening editor - ${_getMemoryInfo()}');
+    
+    final published = await Navigator.of(context).push<bool?>(
+      MaterialPageRoute(
+        builder: (_) => StudentChallengeVideoEditorScreen(
+          videoType: 'free',
+          initialMode: mode,
+          initialSegments: segments,
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+    await _onReturnFromStudio(published == true);
   }
 
   /// Called when returning from the Studio. If [published] is true,

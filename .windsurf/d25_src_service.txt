@@ -1,0 +1,18 @@
+[Unit]
+Description=Whiteboard Render Worker Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/whiteboard-worker
+ExecStart=/usr/bin/python3 /opt/whiteboard-worker/whiteboard_render_worker.py
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+StandardOutput=journal
+StandardError=journal
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,960 @@
+﻿
+06-28 10:25:42.824 25740 25740 I flutter : DEBUG-D19-07: generateStoryboard response.status=200 runtimeType=int
+06-28 10:25:42.824 25740 25740 I flutter : DEBUG-D19-08: generateStoryboard response.data=Instance of 'FunctionResponse'.data runtimeType=_Map<String, dynamic> 
+isNull=false
+06-28 10:25:42.826 25740 25740 I flutter : DEBUG-D19-10: generateStoryboard data={success: true, storyboard_json: {version: 1.0, created_at: 2026-06-28T10:25:43.460Z, 
+created_by: 6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: 
+mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 8000, transition: {}, blocks: [{id: block-001-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-001-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-001-003, type: paragraph, content: C'est un concept fondamental 
+en calcul diff├®rentiel, essentiel pour comprendre les
+06-28 10:25:42.828 25740 25740 I flutter : DEBUG-D19-11: data['storyboard_json']={version: 1.0, created_at: 2026-06-28T10:25:43.460Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 8000, transition: {}, blocks: [{id: block-001-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-001-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-001-003, type: paragraph, content: C'est un concept fondamental 
+en calcul diff├®rentiel, essentiel pour comprendre les pentes de courbes et les taux de
+06-28 10:25:42.829 25740 25740 I flutter : DEBUG-D19-13: generateStoryboard storyboardJson={version: 1.0, created_at: 2026-06-28T10:25:43.460Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 8000, transition: {}, blocks: [{id: block-001-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-001-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-001-003, type: paragraph, content: C'est un concept fondamental 
+en calcul diff├®rentiel, essentiel pour comprendre les pentes de courbes et l
+06-28 10:25:42.834 25740 25740 I flutter : DEBUG-D19-68: Storyboard.fromJson START json={version: 1.0, created_at: 2026-06-28T10:25:43.460Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 8000, transition: {}, blocks: [{id: block-001-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-001-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-001-003, type: paragraph, content: C'est un concept fondamental 
+en calcul diff├®rentiel, essentiel pour comprendre les pentes de courbes et les 
+06-28 10:25:42.834 25740 25740 I flutter : DEBUG-D19-69: Storyboard.fromJson version=1.0 runtimeType=String isNull=false
+06-28 10:25:42.834 25740 25740 I flutter : DEBUG-D19-70: Storyboard.fromJson created_at=2026-06-28T10:25:43.460Z runtimeType=String isNull=false
+06-28 10:25:42.835 25740 25740 I flutter : DEBUG-D19-71: Storyboard.fromJson created_by=6745c7ad-732b-47d0-b5b8-06d6dcf286ff runtimeType=String isNull=false
+06-28 10:25:42.835 25740 25740 I flutter : DEBUG-D19-72: Storyboard.fromJson subject=d├®riv├®s d'une fonction runtimeType=String isNull=false
+06-28 10:25:42.835 25740 25740 I flutter : DEBUG-D19-73: Storyboard.fromJson renderer=notebook runtimeType=String isNull=false
+06-28 10:25:42.835 25740 25740 I flutter : DEBUG-D19-74: Storyboard.fromJson theme=notebook runtimeType=String isNull=false
+06-28 10:25:42.835 25740 25740 I flutter : DEBUG-D19-75: Storyboard.fromJson narration_mode=tts runtimeType=String isNull=false
+06-28 10:25:42.835 25740 25740 I flutter : DEBUG-D19-76: Storyboard.fromJson export_settings={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac} runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:25:42.836 25740 25740 I flutter : DEBUG-D19-77: Storyboard.fromJson scenes=[{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, duration_ms: 8000, 
+transition: {}, blocks: [{id: block-001-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: 
+block-001-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un changement de sa 
+variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-001-003, type: paragraph, content: C'est un concept fondamental en calcul 
+diff├®rentiel, essentiel pour comprendre les pentes de courbes et les taux de variation instantan├®s., order: 2, visible: true, animation: {}, position: {}, style: {}}]}, 
+{id: scene-002, order: 1, title: D├®finition Formelle, duration_ms: 10000, transition: {}, blocks: [{id: block-002-001, type: title, content: D├®finition de la d├®riv├®e 
+en un point, order: 0, visible: true, animation: {}, position: 
+06-28 10:25:42.839 25740 25740 I flutter : DEBUG-D19-51: ExportSettings.fromJson START json={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac} runtimeType=_Map<String, dynamic>
+06-28 10:25:42.839 25740 25740 I flutter : DEBUG-D19-52: ExportSettings.fromJson format=mp4 runtimeType=String isNull=false
+06-28 10:25:42.839 25740 25740 I flutter : DEBUG-D19-53: ExportSettings.fromJson resolution={width: 1080, height: 1920} runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:25:42.840 25740 25740 I flutter : DEBUG-D19-54: ExportSettings.fromJson frame_rate=30 runtimeType=int isNull=false
+06-28 10:25:42.840 25740 25740 I flutter : DEBUG-D19-55: Resolution.fromJson START json={width: 1080, height: 1920} runtimeType=_Map<String, dynamic>
+06-28 10:25:42.841 25740 25740 I flutter : DEBUG-D19-56: Resolution.fromJson width=1080 runtimeType=int isNull=false
+06-28 10:25:42.841 25740 25740 I flutter : DEBUG-D19-57: Resolution.fromJson height=1920 runtimeType=int isNull=false
+06-28 10:25:42.842 25740 25740 I flutter : DEBUG-D19-58: Scene.fromJson START json={id: scene-001, order: 0, title: Introduction aux D├®riv├®es, duration_ms: 8000, 
+transition: {}, blocks: [{id: block-001-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: 
+block-001-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un changement de sa 
+variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-001-003, type: paragraph, content: C'est un concept fondamental en calcul 
+diff├®rentiel, essentiel pour comprendre les pentes de courbes et les taux de variation instantan├®s., order: 2, visible: true, animation: {}, position: {}, style: {}}]} 
+runtimeType=_Map<String, dynamic>
+06-28 10:25:42.842 25740 25740 I flutter : DEBUG-D19-59: Scene.fromJson id=scene-001 runtimeType=String isNull=false
+06-28 10:25:42.842 25740 25740 I flutter : DEBUG-D19-60: Scene.fromJson order=0 runtimeType=int isNull=false
+06-28 10:25:42.842 25740 25740 I flutter : DEBUG-D19-61: Scene.fromJson title=Introduction aux D├®riv├®es runtimeType=String isNull=false
+06-28 10:25:42.842 25740 25740 I flutter : DEBUG-D19-62: Scene.fromJson duration_ms=8000 runtimeType=int isNull=false
+06-28 10:25:42.843 25740 25740 I flutter : DEBUG-D19-63: Scene.fromJson blocks=[{id: block-001-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: 
+true, animation: {}, position: {}, style: {}}, {id: block-001-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la 
+fonction change par rapport ├á un changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-001-003, type: paragraph, 
+content: C'est un concept fondamental en calcul diff├®rentiel, essentiel pour comprendre les pentes de courbes et les taux de variation instantan├®s., order: 2, visible: 
+true, animation: {}, position: {}, style: {}}] runtimeType=List<dynamic> isNull=false
+06-28 10:25:42.844 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-001-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, 
+visible: true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:25:42.844 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-001-001 runtimeType=String isNull=false
+06-28 10:25:42.844 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=title runtimeType=String isNull=false
+06-28 10:25:42.844 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=Qu'est-ce qu'une d├®riv├®e ? runtimeType=String isNull=false
+06-28 10:25:42.846 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-001-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la 
+vitesse ├á laquelle la valeur de la fonction change par rapport ├á un changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}} 
+runtimeType=_Map<String, dynamic>
+06-28 10:25:42.846 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-001-002 runtimeType=String isNull=false
+06-28 10:25:42.846 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+06-28 10:25:42.846 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change 
+par rapport ├á un changement de sa variable. runtimeType=String isNull=false
+06-28 10:25:42.847 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-001-003, type: paragraph, content: C'est un concept fondamental en calcul 
+diff├®rentiel, essentiel pour comprendre les pentes de courbes et les taux de variation instantan├®s., order: 2, visible: true, animation: {}, position: {}, style: {}} 
+runtimeType=_Map<String, dynamic>
+06-28 10:25:42.848 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-001-003 runtimeType=String isNull=false
+06-28 10:25:42.848 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+06-28 10:25:42.848 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=C'est un concept fondamental en calcul diff├®rentiel, essentiel pour comprendre les pentes 
+de courbes et les taux de variation instantan├®s. runtimeType=String isNull=false
+06-28 10:25:42.848 25740 25740 I flutter : DEBUG-D19-58: Scene.fromJson START json={id: scene-002, order: 1, title: D├®finition Formelle, duration_ms: 10000, transition: 
+{}, blocks: [{id: block-002-001, type: title, content: D├®finition de la d├®riv├®e en un point, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: 
+block-002-002, type: definition, content: La d├®riv├®e d'une fonction f en un point a, not├®e f'(a), est la limite du taux de variation moyen lorsque h tend vers 0., 
+order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-002-003, type: formula, content: f'(a) = \lim_{h \to 0} \frac{f(a+h) - f(a)}{h}, order: 2, 
+visible: true, animation: {}, position: {}, style: {}}]} runtimeType=_Map<String, dynamic>
+06-28 10:25:42.848 25740 25740 I flutter : DEBUG-D19-59: Scene.fromJson id=scene-002 runtimeType=String isNull=false
+06-28 10:25:42.849 25740 25740 I flutter : DEBUG-D19-60: Scene.fromJson order=1 runtimeType=int isNull=false
+06-28 10:25:42.849 25740 25740 I flutter : DEBUG-D19-61: Scene.fromJson title=D├®finition Formelle runtimeType=String isNull=false
+06-28 10:25:42.849 25740 25740 I flutter : DEBUG-D19-62: Scene.fromJson duration_ms=10000 runtimeType=int isNull=false
+06-28 10:25:42.849 25740 25740 I flutter : DEBUG-D19-63: Scene.fromJson blocks=[{id: block-002-001, type: title, content: D├®finition de la d├®riv├®e en un point, order: 
+0, visible: true, animation: {}, position: {}, style: {}}, {id: block-002-002, type: definition, content: La d├®riv├®e d'une fonction f en un point a, not├®e f'(a), est 
+la limite du taux de variation moyen lorsque h tend vers 0., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-002-003, type: formula, content: 
+f'(a) = \lim_{h \to 0} \frac{f(a+h) - f(a)}{h}, order: 2, visible: true, animation: {}, position: {}, style: {}}] runtimeType=List<dynamic> isNull=false
+06-28 10:25:42.850 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-002-001, type: title, content: D├®finition de la d├®riv├®e en un point, 
+order: 0, visible: true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:25:42.850 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-002-001 runtimeType=String isNull=false
+06-28 10:25:42.851 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=title runtimeType=String isNull=false
+06-28 10:25:42.851 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=D├®finition de la d├®riv├®e en un point runtimeType=String isNull=false
+06-28 10:25:42.852 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-002-002, type: definition, content: La d├®riv├®e d'une fonction f en un 
+point a, not├®e f'(a), est la limite du taux de variation moyen lorsque h tend vers 0., order: 1, visible: true, animation: {}, position: {}, style: {}} 
+runtimeType=_Map<String, dynamic>
+06-28 10:25:42.852 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-002-002 runtimeType=String isNull=false
+06-28 10:25:42.852 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=definition runtimeType=String isNull=false
+06-28 10:25:42.852 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=La d├®riv├®e d'une fonction f en un point a, not├®e f'(a), est la limite du taux de 
+variation moyen lorsque h tend vers 0. runtimeType=String isNull=false
+06-28 10:25:51.782 25740 25740 I flutter : DEBUG-D19-01: createProject START subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+06-28 10:25:51.782 25740 25740 I flutter : DEBUG-D19-30: service.createProject RPC START
+06-28 10:25:52.032 25740 25740 I flutter : DEBUG-D19-31: service.createProject response={success: true, project_id: 9b580e1f-5273-4413-a4a1-44c5f6202604} 
+runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:25:52.032 25740 25740 I flutter : DEBUG-D19-02: createProject result={success: true, project_id: 9b580e1f-5273-4413-a4a1-44c5f6202604} runtimeType=_Map<String, 
+dynamic> isNull=false
+06-28 10:25:52.032 25740 25740 I flutter : DEBUG-D19-03: result['success']=true runtimeType=bool
+06-28 10:25:52.032 25740 25740 I flutter : DEBUG-D19-04: result['project_id']=9b580e1f-5273-4413-a4a1-44c5f6202604 runtimeType=String isNull=false
+06-28 10:25:52.032 25740 25740 I flutter : DEBUG-D24-01: _currentProject BUILT subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+06-28 10:25:52.033 25740 25740 I flutter : DEBUG-D19-05: createProject _currentProjectId=9b580e1f-5273-4413-a4a1-44c5f6202604
+06-28 10:25:52.033 25740 25740 I flutter : DEBUG-D24-02: generateStoryboard PAYLOAD subject=d├®riv├®s d'une fonction renderer=notebook theme=notebook narration_mode=tts
+06-28 10:25:52.033 25740 25740 I flutter : DEBUG-D19-06: generateStoryboard invoke START mode=simple_subject subject=d├®riv├®s d'une fonction narration_mode=tts
+06-28 10:26:02.346 25740 25740 I flutter : DEBUG-D19-07: generateStoryboard response.status=200 runtimeType=int
+06-28 10:26:02.346 25740 25740 I flutter : DEBUG-D19-08: generateStoryboard response.data=Instance of 'FunctionResponse'.data runtimeType=_Map<String, dynamic> 
+isNull=false
+06-28 10:26:02.350 25740 25740 I flutter : DEBUG-D19-10: generateStoryboard data={success: true, storyboard_json: {version: 1.0, created_at: 2026-06-28T10:26:02.962Z, 
+created_by: 6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: 
+mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 7000, transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-002, order: 1, title: Interpr├®tation G├®om├®trique, 
+duration_ms: 8000, transition: {}, blocks: [{id: block-003, type: title
+06-28 10:26:02.353 25740 25740 I flutter : DEBUG-D19-11: data['storyboard_json']={version: 1.0, created_at: 2026-06-28T10:26:02.962Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 7000, transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-002, order: 1, title: Interpr├®tation G├®om├®trique, 
+duration_ms: 8000, transition: {}, blocks: [{id: block-003, type: title, content: Pente de la tangente, 
+06-28 10:26:02.356 25740 25740 I flutter : DEBUG-D19-13: generateStoryboard storyboardJson={version: 1.0, created_at: 2026-06-28T10:26:02.962Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 7000, transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-002, order: 1, title: Interpr├®tation G├®om├®trique, 
+duration_ms: 8000, transition: {}, blocks: [{id: block-003, type: title, content: Pente de la 
+06-28 10:26:02.361 25740 25740 I flutter : DEBUG-D19-68: Storyboard.fromJson START json={version: 1.0, created_at: 2026-06-28T10:26:02.962Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 7000, transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-002, order: 1, title: Interpr├®tation G├®om├®trique, 
+duration_ms: 8000, transition: {}, blocks: [{id: block-003, type: title, content: Pente de la tan
+06-28 10:26:02.361 25740 25740 I flutter : DEBUG-D19-69: Storyboard.fromJson version=1.0 runtimeType=String isNull=false
+06-28 10:26:02.361 25740 25740 I flutter : DEBUG-D19-70: Storyboard.fromJson created_at=2026-06-28T10:26:02.962Z runtimeType=String isNull=false
+06-28 10:26:02.362 25740 25740 I flutter : DEBUG-D19-71: Storyboard.fromJson created_by=6745c7ad-732b-47d0-b5b8-06d6dcf286ff runtimeType=String isNull=false
+06-28 10:26:02.362 25740 25740 I flutter : DEBUG-D19-72: Storyboard.fromJson subject=d├®riv├®s d'une fonction runtimeType=String isNull=false
+06-28 10:26:02.362 25740 25740 I flutter : DEBUG-D19-73: Storyboard.fromJson renderer=notebook runtimeType=String isNull=false
+06-28 10:26:02.362 25740 25740 I flutter : DEBUG-D19-74: Storyboard.fromJson theme=notebook runtimeType=String isNull=false
+06-28 10:26:02.362 25740 25740 I flutter : DEBUG-D19-75: Storyboard.fromJson narration_mode=tts runtimeType=String isNull=false
+06-28 10:26:02.362 25740 25740 I flutter : DEBUG-D19-76: Storyboard.fromJson export_settings={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac} runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:26:02.364 25740 25740 I flutter : DEBUG-D19-77: Storyboard.fromJson scenes=[{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, duration_ms: 7000, 
+transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: 
+block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un changement de sa 
+variable., order: 1, visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-002, order: 1, title: Interpr├®tation G├®om├®trique, duration_ms: 8000, 
+transition: {}, blocks: [{id: block-003, type: title, content: Pente de la tangente, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-004, 
+type: paragraph, content: G├®om├®triquement, la d├®riv├®e d'une fonction en un point est la pente de la tangente ├á la courbe de la fonction en ce point., order: 1, 
+visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-003, order:
+06-28 10:26:02.366 25740 25740 I flutter : DEBUG-D19-51: ExportSettings.fromJson START json={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac} runtimeType=_Map<String, dynamic>
+06-28 10:26:02.366 25740 25740 I flutter : DEBUG-D19-52: ExportSettings.fromJson format=mp4 runtimeType=String isNull=false
+06-28 10:26:02.366 25740 25740 I flutter : DEBUG-D19-53: ExportSettings.fromJson resolution={width: 1080, height: 1920} runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:26:02.366 25740 25740 I flutter : DEBUG-D19-54: ExportSettings.fromJson frame_rate=30 runtimeType=int isNull=false
+06-28 10:26:02.367 25740 25740 I flutter : DEBUG-D19-55: Resolution.fromJson START json={width: 1080, height: 1920} runtimeType=_Map<String, dynamic>
+06-28 10:26:02.367 25740 25740 I flutter : DEBUG-D19-56: Resolution.fromJson width=1080 runtimeType=int isNull=false
+06-28 10:26:02.367 25740 25740 I flutter : DEBUG-D19-57: Resolution.fromJson height=1920 runtimeType=int isNull=false
+06-28 10:26:02.367 25740 25740 I flutter : DEBUG-D19-58: Scene.fromJson START json={id: scene-001, order: 0, title: Introduction aux D├®riv├®es, duration_ms: 7000, 
+transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: 
+block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un changement de sa 
+variable., order: 1, visible: true, animation: {}, position: {}, style: {}}]} runtimeType=_Map<String, dynamic>
+06-28 10:26:02.367 25740 25740 I flutter : DEBUG-D19-59: Scene.fromJson id=scene-001 runtimeType=String isNull=false
+06-28 10:26:02.368 25740 25740 I flutter : DEBUG-D19-60: Scene.fromJson order=0 runtimeType=int isNull=false
+06-28 10:26:02.368 25740 25740 I flutter : DEBUG-D19-61: Scene.fromJson title=Introduction aux D├®riv├®es runtimeType=String isNull=false
+06-28 10:26:02.368 25740 25740 I flutter : DEBUG-D19-62: Scene.fromJson duration_ms=7000 runtimeType=int isNull=false
+06-28 10:26:02.368 25740 25740 I flutter : DEBUG-D19-63: Scene.fromJson blocks=[{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: 
+true, animation: {}, position: {}, style: {}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la 
+fonction change par rapport ├á un changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}] runtimeType=List<dynamic> isNull=false
+06-28 10:26:02.370 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: 
+true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:26:02.370 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-001 runtimeType=String isNull=false
+06-28 10:26:02.370 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=title runtimeType=String isNull=false
+06-28 10:26:02.370 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=Qu'est-ce qu'une d├®riv├®e ? runtimeType=String isNull=false
+06-28 10:26:02.372 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse 
+├á laquelle la valeur de la fonction change par rapport ├á un changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}} 
+runtimeType=_Map<String, dynamic>
+06-28 10:26:02.372 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-002 runtimeType=String isNull=false
+06-28 10:26:02.372 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+06-28 10:26:02.372 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change 
+par rapport ├á un changement de sa variable. runtimeType=String isNull=false
+06-28 10:26:02.372 25740 25740 I flutter : DEBUG-D19-58: Scene.fromJson START json={id: scene-002, order: 1, title: Interpr├®tation G├®om├®trique, duration_ms: 8000, 
+transition: {}, blocks: [{id: block-003, type: title, content: Pente de la tangente, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-004, 
+type: paragraph, content: G├®om├®triquement, la d├®riv├®e d'une fonction en un point est la pente de la tangente ├á la courbe de la fonction en ce point., order: 1, 
+visible: true, animation: {}, position: {}, style: {}}]} runtimeType=_Map<String, dynamic>
+06-28 10:26:02.372 25740 25740 I flutter : DEBUG-D19-59: Scene.fromJson id=scene-002 runtimeType=String isNull=false
+06-28 10:26:02.372 25740 25740 I flutter : DEBUG-D19-60: Scene.fromJson order=1 runtimeType=int isNull=false
+06-28 10:26:02.372 25740 25740 I flutter : DEBUG-D19-61: Scene.fromJson title=Interpr├®tation G├®om├®trique runtimeType=String isNull=false
+06-28 10:26:02.373 25740 25740 I flutter : DEBUG-D19-62: Scene.fromJson duration_ms=8000 runtimeType=int isNull=false
+06-28 10:26:02.373 25740 25740 I flutter : DEBUG-D19-63: Scene.fromJson blocks=[{id: block-003, type: title, content: Pente de la tangente, order: 0, visible: true, 
+animation: {}, position: {}, style: {}}, {id: block-004, type: paragraph, content: G├®om├®triquement, la d├®riv├®e d'une fonction en un point est la pente de la tangente 
+├á la courbe de la fonction en ce point., order: 1, visible: true, animation: {}, position: {}, style: {}}] runtimeType=List<dynamic> isNull=false
+06-28 10:26:02.373 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-003, type: title, content: Pente de la tangente, order: 0, visible: true, 
+animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:26:02.373 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-003 runtimeType=String isNull=false
+06-28 10:26:02.374 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=title runtimeType=String isNull=false
+06-28 10:26:02.374 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=Pente de la tangente runtimeType=String isNull=false
+06-28 10:26:02.374 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-004, type: paragraph, content: G├®om├®triquement, la d├®riv├®e d'une 
+fonction en un point est la pente de la tangente ├á la courbe de la fonction en ce point., order: 1, visible: true, animation: {}, position: {}, style: {}} 
+runtimeType=_Map<String, dynamic>
+06-28 10:26:02.374 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-004 runtimeType=String isNull=false
+06-28 10:26:02.375 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+06-28 10:26:02.375 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=G├®om├®triquement, la d├®riv├®e d'une fonction en un point est la pente de la tangente ├á 
+la courbe de la fonction en ce point. runtimeType=String isNull=false
+06-28 10:26:02.375 25740 25740 I flutter : DEBUG-D19-58: Scene.fromJson START json={id: scene-003, order: 2, title: D├®finition Formelle, duration_ms: 10000, transition: 
+{}, blocks: [{id: block-005, type: definition, content: La d├®riv├®e d'une fonction f en un point xÔéÇ est d├®finie par la limite :, order: 0, visible: true, animation: 
+{}, position: {}, style: {}}, {id: block-006, type: formula, content: f'(xÔéÇ) = lim (hÔåÆ0) [f(xÔéÇ + h) - f(xÔéÇ)] / h, order: 1, visible: true, animation: {}, 
+position: {}, style: {}}]} runtimeType=_Map<String, dynamic>
+06-28 10:26:02.375 25740 25740 I flutter : DEBUG-D19-59: Scene.fromJson id=scene-003 runtimeType=String isNull=false
+06-28 10:26:02.375 25740 25740 I flutter : DEBUG-D19-60: Scene.fromJson order=2 runtimeType=int isNull=false
+06-28 10:26:02.375 25740 25740 I flutter : DEBUG-D19-61: Scene.fromJson title=D├®finition Formelle runtimeType=String isNull=false
+06-28 10:26:02.375 25740 25740 I flutter : DEBUG-D19-62: Scene.fromJson duration_ms=10000 runtimeType=int isNull=false
+06-28 10:26:02.375 25740 25740 I flutter : DEBUG-D19-63: Scene.fromJson blocks=[{id: block-005, type: definition, content: La d├®riv├®e d'une fonction f en un point xÔéÇ 
+est d├®finie par la limite :, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-006, type: formula, content: f'(xÔéÇ) = lim (hÔåÆ0) [f(xÔéÇ + 
+h) - f(xÔéÇ)] / h, order: 1, visible: true, animation: {}, position: {}, style: {}}] runtimeType=List<dynamic> isNull=false
+06-28 10:26:02.376 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-005, type: definition, content: La d├®riv├®e d'une fonction f en un point 
+xÔéÇ est d├®finie par la limite :, order: 0, visible: true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:26:02.376 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-005 runtimeType=String isNull=false
+06-28 10:26:02.376 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=definition runtimeType=String isNull=false
+06-28 10:26:02.376 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=La d├®riv├®e d'une fonction f en un point xÔéÇ est d├®finie par la limite : 
+runtimeType=String isNull=false
+06-28 10:26:41.858 25740 25740 I flutter : DEBUG-D19-01: createProject START subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+06-28 10:26:41.858 25740 25740 I flutter : DEBUG-D19-30: service.createProject RPC START
+06-28 10:26:42.181 25740 25740 I flutter : DEBUG-D19-31: service.createProject response={success: true, project_id: fedd1181-b7a9-4e4b-bb2f-4ff2e631d541} 
+runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:26:42.181 25740 25740 I flutter : DEBUG-D19-02: createProject result={success: true, project_id: fedd1181-b7a9-4e4b-bb2f-4ff2e631d541} runtimeType=_Map<String, 
+dynamic> isNull=false
+06-28 10:26:42.181 25740 25740 I flutter : DEBUG-D19-03: result['success']=true runtimeType=bool
+06-28 10:26:42.181 25740 25740 I flutter : DEBUG-D19-04: result['project_id']=fedd1181-b7a9-4e4b-bb2f-4ff2e631d541 runtimeType=String isNull=false
+06-28 10:26:42.182 25740 25740 I flutter : DEBUG-D24-01: _currentProject BUILT subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+06-28 10:26:42.182 25740 25740 I flutter : DEBUG-D19-05: createProject _currentProjectId=fedd1181-b7a9-4e4b-bb2f-4ff2e631d541
+06-28 10:26:42.182 25740 25740 I flutter : DEBUG-D24-02: generateStoryboard PAYLOAD subject=d├®riv├®s d'une fonction renderer=notebook theme=notebook narration_mode=tts
+06-28 10:26:42.182 25740 25740 I flutter : DEBUG-D19-06: generateStoryboard invoke START mode=simple_subject subject=d├®riv├®s d'une fonction narration_mode=tts
+06-28 10:26:55.071 25740 25740 I flutter : DEBUG-D19-07: generateStoryboard response.status=200 runtimeType=int
+06-28 10:26:55.072 25740 25740 I flutter : DEBUG-D19-08: generateStoryboard response.data=Instance of 'FunctionResponse'.data runtimeType=_Map<String, dynamic> 
+isNull=false
+06-28 10:26:55.074 25740 25740 I flutter : DEBUG-D19-10: generateStoryboard data={success: true, storyboard_json: {version: 1.0, created_at: 2026-06-28T10:26:55.701Z, 
+created_by: 6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: 
+mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-uuid-001, order: 0, title: Introduction aux 
+D├®riv├®es, duration_ms: 7000, transition: {}, blocks: [{id: block-uuid-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, 
+position: {}, style: {}}, {id: block-uuid-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par 
+rapport ├á un changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-uuid-003, type: paragraph, content: C'est un 
+concept fondamental en calcul diff├®rentiel., order: 2, visible: t
+06-28 10:26:55.078 25740 25740 I flutter : DEBUG-D19-11: data['storyboard_json']={version: 1.0, created_at: 2026-06-28T10:26:55.701Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-uuid-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 7000, transition: {}, blocks: [{id: block-uuid-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-uuid-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-uuid-003, type: paragraph, content: C'est un concept fondamental 
+en calcul diff├®rentiel., order: 2, visible: true, animation: {}, position: {},
+06-28 10:26:55.081 25740 25740 I flutter : DEBUG-D19-13: generateStoryboard storyboardJson={version: 1.0, created_at: 2026-06-28T10:26:55.701Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-uuid-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 7000, transition: {}, blocks: [{id: block-uuid-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-uuid-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-uuid-003, type: paragraph, content: C'est un concept fondamental 
+en calcul diff├®rentiel., order: 2, visible: true, animation: {}, pos
+06-28 10:26:55.089 25740 25740 I flutter : DEBUG-D19-68: Storyboard.fromJson START json={version: 1.0, created_at: 2026-06-28T10:26:55.701Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-uuid-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 7000, transition: {}, blocks: [{id: block-uuid-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-uuid-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-uuid-003, type: paragraph, content: C'est un concept fondamental 
+en calcul diff├®rentiel., order: 2, visible: true, animation: {}, positi
+06-28 10:26:55.090 25740 25740 I flutter : DEBUG-D19-69: Storyboard.fromJson version=1.0 runtimeType=String isNull=false
+06-28 10:26:55.090 25740 25740 I flutter : DEBUG-D19-70: Storyboard.fromJson created_at=2026-06-28T10:26:55.701Z runtimeType=String isNull=false
+06-28 10:26:55.091 25740 25740 I flutter : DEBUG-D19-71: Storyboard.fromJson created_by=6745c7ad-732b-47d0-b5b8-06d6dcf286ff runtimeType=String isNull=false
+06-28 10:26:55.091 25740 25740 I flutter : DEBUG-D19-72: Storyboard.fromJson subject=d├®riv├®s d'une fonction runtimeType=String isNull=false
+06-28 10:26:55.091 25740 25740 I flutter : DEBUG-D19-73: Storyboard.fromJson renderer=notebook runtimeType=String isNull=false
+06-28 10:26:55.092 25740 25740 I flutter : DEBUG-D19-74: Storyboard.fromJson theme=notebook runtimeType=String isNull=false
+06-28 10:26:55.092 25740 25740 I flutter : DEBUG-D19-75: Storyboard.fromJson narration_mode=tts runtimeType=String isNull=false
+06-28 10:26:55.092 25740 25740 I flutter : DEBUG-D19-76: Storyboard.fromJson export_settings={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac} runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:26:55.094 25740 25740 I flutter : DEBUG-D19-77: Storyboard.fromJson scenes=[{id: scene-uuid-001, order: 0, title: Introduction aux D├®riv├®es, duration_ms: 7000, 
+transition: {}, blocks: [{id: block-uuid-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: 
+block-uuid-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un changement de sa 
+variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-uuid-003, type: paragraph, content: C'est un concept fondamental en calcul 
+diff├®rentiel., order: 2, visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-uuid-002, order: 1, title: D├®finition Formelle, duration_ms: 8000, 
+transition: {}, blocks: [{id: block-uuid-004, type: definition, content: La d├®riv├®e d'une fonction f en un point a, not├®e f'(a), est la limite du taux d'accroissement 
+lorsque h tend vers 0., order: 0, visible: true, animation: {},
+06-28 10:26:55.098 25740 25740 I flutter : DEBUG-D19-51: ExportSettings.fromJson START json={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac} runtimeType=_Map<String, dynamic>
+06-28 10:26:55.098 25740 25740 I flutter : DEBUG-D19-52: ExportSettings.fromJson format=mp4 runtimeType=String isNull=false
+06-28 10:26:55.098 25740 25740 I flutter : DEBUG-D19-53: ExportSettings.fromJson resolution={width: 1080, height: 1920} runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:26:55.099 25740 25740 I flutter : DEBUG-D19-54: ExportSettings.fromJson frame_rate=30 runtimeType=int isNull=false
+06-28 10:26:55.099 25740 25740 I flutter : DEBUG-D19-55: Resolution.fromJson START json={width: 1080, height: 1920} runtimeType=_Map<String, dynamic>
+06-28 10:26:55.099 25740 25740 I flutter : DEBUG-D19-56: Resolution.fromJson width=1080 runtimeType=int isNull=false
+06-28 10:26:55.100 25740 25740 I flutter : DEBUG-D19-57: Resolution.fromJson height=1920 runtimeType=int isNull=false
+06-28 10:26:55.100 25740 25740 I flutter : DEBUG-D19-58: Scene.fromJson START json={id: scene-uuid-001, order: 0, title: Introduction aux D├®riv├®es, duration_ms: 7000, 
+transition: {}, blocks: [{id: block-uuid-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: 
+block-uuid-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un changement de sa 
+variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-uuid-003, type: paragraph, content: C'est un concept fondamental en calcul 
+diff├®rentiel., order: 2, visible: true, animation: {}, position: {}, style: {}}]} runtimeType=_Map<String, dynamic>
+06-28 10:26:55.101 25740 25740 I flutter : DEBUG-D19-59: Scene.fromJson id=scene-uuid-001 runtimeType=String isNull=false
+06-28 10:26:55.101 25740 25740 I flutter : DEBUG-D19-60: Scene.fromJson order=0 runtimeType=int isNull=false
+06-28 10:26:55.101 25740 25740 I flutter : DEBUG-D19-61: Scene.fromJson title=Introduction aux D├®riv├®es runtimeType=String isNull=false
+06-28 10:26:55.101 25740 25740 I flutter : DEBUG-D19-62: Scene.fromJson duration_ms=7000 runtimeType=int isNull=false
+06-28 10:26:55.102 25740 25740 I flutter : DEBUG-D19-63: Scene.fromJson blocks=[{id: block-uuid-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, 
+visible: true, animation: {}, position: {}, style: {}}, {id: block-uuid-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur 
+de la fonction change par rapport ├á un changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-uuid-003, type: 
+paragraph, content: C'est un concept fondamental en calcul diff├®rentiel., order: 2, visible: true, animation: {}, position: {}, style: {}}] runtimeType=List<dynamic> 
+isNull=false
+06-28 10:26:55.105 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-uuid-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, 
+visible: true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:26:55.105 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-uuid-001 runtimeType=String isNull=false
+06-28 10:26:55.105 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=title runtimeType=String isNull=false
+06-28 10:26:55.106 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=Qu'est-ce qu'une d├®riv├®e ? runtimeType=String isNull=false
+06-28 10:26:55.108 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-uuid-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la 
+vitesse ├á laquelle la valeur de la fonction change par rapport ├á un changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}} 
+runtimeType=_Map<String, dynamic>
+06-28 10:26:55.108 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-uuid-002 runtimeType=String isNull=false
+06-28 10:26:55.109 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+06-28 10:26:55.109 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change 
+par rapport ├á un changement de sa variable. runtimeType=String isNull=false
+06-28 10:26:55.111 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-uuid-003, type: paragraph, content: C'est un concept fondamental en calcul 
+diff├®rentiel., order: 2, visible: true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:26:55.111 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-uuid-003 runtimeType=String isNull=false
+06-28 10:26:55.111 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+06-28 10:26:55.112 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=C'est un concept fondamental en calcul diff├®rentiel. runtimeType=String isNull=false
+06-28 10:26:55.112 25740 25740 I flutter : DEBUG-D19-58: Scene.fromJson START json={id: scene-uuid-002, order: 1, title: D├®finition Formelle, duration_ms: 8000, 
+transition: {}, blocks: [{id: block-uuid-004, type: definition, content: La d├®riv├®e d'une fonction f en un point a, not├®e f'(a), est la limite du taux d'accroissement 
+lorsque h tend vers 0., order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-uuid-005, type: formula, content: f'(a) = \lim_{h \to 0} \frac{f(a+h) 
+- f(a)}{h}, order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-uuid-006, type: paragraph, content: Elle repr├®sente la pente de la tangente ├á 
+la courbe de f au point (a, f(a))., order: 2, visible: true, animation: {}, position: {}, style: {}}]} runtimeType=_Map<String, dynamic>
+06-28 10:26:55.113 25740 25740 I flutter : DEBUG-D19-59: Scene.fromJson id=scene-uuid-002 runtimeType=String isNull=false
+06-28 10:26:55.113 25740 25740 I flutter : DEBUG-D19-60: Scene.fromJson order=1 runtimeType=int isNull=false
+06-28 10:26:55.113 25740 25740 I flutter : DEBUG-D19-61: Scene.fromJson title=D├®finition Formelle runtimeType=String isNull=false
+06-28 10:26:55.113 25740 25740 I flutter : DEBUG-D19-62: Scene.fromJson duration_ms=8000 runtimeType=int isNull=false
+06-28 10:26:55.114 25740 25740 I flutter : DEBUG-D19-63: Scene.fromJson blocks=[{id: block-uuid-004, type: definition, content: La d├®riv├®e d'une fonction f en un point 
+a, not├®e f'(a), est la limite du taux d'accroissement lorsque h tend vers 0., order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-uuid-005, 
+type: formula, content: f'(a) = \lim_{h \to 0} \frac{f(a+h) - f(a)}{h}, order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-uuid-006, type: 
+paragraph, content: Elle repr├®sente la pente de la tangente ├á la courbe de f au point (a, f(a))., order: 2, visible: true, animation: {}, position: {}, style: {}}] 
+runtimeType=List<dynamic> isNull=false
+06-28 10:26:55.116 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-uuid-004, type: definition, content: La d├®riv├®e d'une fonction f en un 
+point a, not├®e f'(a), est la limite du taux d'accroissement lorsque h tend vers 0., order: 0, visible: true, animation: {}, position: {}, style: {}} 
+runtimeType=_Map<String, dynamic>
+06-28 10:26:55.116 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-uuid-004 runtimeType=String isNull=false
+06-28 10:26:55.117 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=definition runtimeType=String isNull=false
+06-28 10:26:55.117 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=La d├®riv├®e d'une fonction f en un point a, not├®e f'(a), est la limite du taux 
+d'accroissement lorsque h tend vers 0. runtimeType=String isNull=false
+06-28 10:27:02.903 25740 25740 I flutter : DEBUG-D19-01: createProject START subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+06-28 10:27:02.903 25740 25740 I flutter : DEBUG-D19-30: service.createProject RPC START
+06-28 10:27:03.148 25740 25740 I flutter : DEBUG-D19-31: service.createProject response={success: true, project_id: 09ca968e-e938-459d-a1ed-653231835a51} 
+runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:27:03.148 25740 25740 I flutter : DEBUG-D19-02: createProject result={success: true, project_id: 09ca968e-e938-459d-a1ed-653231835a51} runtimeType=_Map<String, 
+dynamic> isNull=false
+06-28 10:27:03.148 25740 25740 I flutter : DEBUG-D19-03: result['success']=true runtimeType=bool
+06-28 10:27:03.148 25740 25740 I flutter : DEBUG-D19-04: result['project_id']=09ca968e-e938-459d-a1ed-653231835a51 runtimeType=String isNull=false
+06-28 10:27:03.149 25740 25740 I flutter : DEBUG-D24-01: _currentProject BUILT subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+06-28 10:27:03.149 25740 25740 I flutter : DEBUG-D19-05: createProject _currentProjectId=09ca968e-e938-459d-a1ed-653231835a51
+06-28 10:27:03.149 25740 25740 I flutter : DEBUG-D24-02: generateStoryboard PAYLOAD subject=d├®riv├®s d'une fonction renderer=notebook theme=notebook narration_mode=tts
+06-28 10:27:03.149 25740 25740 I flutter : DEBUG-D19-06: generateStoryboard invoke START mode=simple_subject subject=d├®riv├®s d'une fonction narration_mode=tts
+06-28 10:27:12.992 25740 25740 I flutter : DEBUG-D19-07: generateStoryboard response.status=200 runtimeType=int
+06-28 10:27:12.992 25740 25740 I flutter : DEBUG-D19-08: generateStoryboard response.data=Instance of 'FunctionResponse'.data runtimeType=_Map<String, dynamic> 
+isNull=false
+06-28 10:27:12.994 25740 25740 I flutter : DEBUG-D19-10: generateStoryboard data={success: true, storyboard_json: {version: 1.0, created_at: 2026-06-28T10:27:13.616Z, 
+created_by: 6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: 
+mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 7000, transition: {}, blocks: [{id: block-001, type: title, content: Comprendre les D├®riv├®es d'une Fonction, order: 0, visible: true, animation: {}, 
+position: {}, style: {}}, {id: block-002, type: paragraph, content: Les d├®riv├®es sont un outil fondamental en math├®matiques pour ├®tudier le taux de variation d'une 
+fonction., order: 1, visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-002, order: 1, title: Qu'est-ce qu'une d├®riv├®e ?, duration_ms: 8000, 
+transition: {}, blocks: [{id: block-003, type: definition, content
+06-28 10:27:12.996 25740 25740 I flutter : DEBUG-D19-11: data['storyboard_json']={version: 1.0, created_at: 2026-06-28T10:27:13.616Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 7000, transition: {}, blocks: [{id: block-001, type: title, content: Comprendre les D├®riv├®es d'une Fonction, order: 0, visible: true, animation: {}, 
+position: {}, style: {}}, {id: block-002, type: paragraph, content: Les d├®riv├®es sont un outil fondamental en math├®matiques pour ├®tudier le taux de variation d'une 
+fonction., order: 1, visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-002, order: 1, title: Qu'est-ce qu'une d├®riv├®e ?, duration_ms: 8000, 
+transition: {}, blocks: [{id: block-003, type: definition, content: La d├®riv├®e d'une fonction en 
+06-28 10:27:12.997 25740 25740 I flutter : DEBUG-D19-13: generateStoryboard storyboardJson={version: 1.0, created_at: 2026-06-28T10:27:13.616Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 7000, transition: {}, blocks: [{id: block-001, type: title, content: Comprendre les D├®riv├®es d'une Fonction, order: 0, visible: true, animation: {}, 
+position: {}, style: {}}, {id: block-002, type: paragraph, content: Les d├®riv├®es sont un outil fondamental en math├®matiques pour ├®tudier le taux de variation d'une 
+fonction., order: 1, visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-002, order: 1, title: Qu'est-ce qu'une d├®riv├®e ?, duration_ms: 8000, 
+transition: {}, blocks: [{id: block-003, type: definition, content: La d├®riv├®e d'une fo
+06-28 10:27:13.002 25740 25740 I flutter : DEBUG-D19-68: Storyboard.fromJson START json={version: 1.0, created_at: 2026-06-28T10:27:13.616Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 7000, transition: {}, blocks: [{id: block-001, type: title, content: Comprendre les D├®riv├®es d'une Fonction, order: 0, visible: true, animation: {}, 
+position: {}, style: {}}, {id: block-002, type: paragraph, content: Les d├®riv├®es sont un outil fondamental en math├®matiques pour ├®tudier le taux de variation d'une 
+fonction., order: 1, visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-002, order: 1, title: Qu'est-ce qu'une d├®riv├®e ?, duration_ms: 8000, 
+transition: {}, blocks: [{id: block-003, type: definition, content: La d├®riv├®e d'une fonct
+06-28 10:27:13.002 25740 25740 I flutter : DEBUG-D19-69: Storyboard.fromJson version=1.0 runtimeType=String isNull=false
+06-28 10:27:13.002 25740 25740 I flutter : DEBUG-D19-70: Storyboard.fromJson created_at=2026-06-28T10:27:13.616Z runtimeType=String isNull=false
+06-28 10:27:13.003 25740 25740 I flutter : DEBUG-D19-71: Storyboard.fromJson created_by=6745c7ad-732b-47d0-b5b8-06d6dcf286ff runtimeType=String isNull=false
+06-28 10:27:13.003 25740 25740 I flutter : DEBUG-D19-72: Storyboard.fromJson subject=d├®riv├®s d'une fonction runtimeType=String isNull=false
+06-28 10:27:13.003 25740 25740 I flutter : DEBUG-D19-73: Storyboard.fromJson renderer=notebook runtimeType=String isNull=false
+06-28 10:27:13.003 25740 25740 I flutter : DEBUG-D19-74: Storyboard.fromJson theme=notebook runtimeType=String isNull=false
+06-28 10:27:13.003 25740 25740 I flutter : DEBUG-D19-75: Storyboard.fromJson narration_mode=tts runtimeType=String isNull=false
+06-28 10:27:13.003 25740 25740 I flutter : DEBUG-D19-76: Storyboard.fromJson export_settings={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac} runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:27:13.004 25740 25740 I flutter : DEBUG-D19-77: Storyboard.fromJson scenes=[{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, duration_ms: 7000, 
+transition: {}, blocks: [{id: block-001, type: title, content: Comprendre les D├®riv├®es d'une Fonction, order: 0, visible: true, animation: {}, position: {}, style: {}}, 
+{id: block-002, type: paragraph, content: Les d├®riv├®es sont un outil fondamental en math├®matiques pour ├®tudier le taux de variation d'une fonction., order: 1, 
+visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-002, order: 1, title: Qu'est-ce qu'une d├®riv├®e ?, duration_ms: 8000, transition: {}, blocks: [{id: 
+block-003, type: definition, content: La d├®riv├®e d'une fonction en un point est la pente de la tangente ├á la courbe de cette fonction en ce point., order: 0, visible: 
+true, animation: {}, position: {}, style: {}}, {id: block-004, type: paragraph, content: Elle repr├®sente le taux de variation instantan├® de la fonction., order: 1, 
+visible: true, animation: {}, position: {}, style: {}}]}, {i
+06-28 10:27:13.006 25740 25740 I flutter : DEBUG-D19-51: ExportSettings.fromJson START json={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac} runtimeType=_Map<String, dynamic>
+06-28 10:27:13.007 25740 25740 I flutter : DEBUG-D19-52: ExportSettings.fromJson format=mp4 runtimeType=String isNull=false
+06-28 10:27:13.007 25740 25740 I flutter : DEBUG-D19-53: ExportSettings.fromJson resolution={width: 1080, height: 1920} runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:27:13.007 25740 25740 I flutter : DEBUG-D19-54: ExportSettings.fromJson frame_rate=30 runtimeType=int isNull=false
+06-28 10:27:13.007 25740 25740 I flutter : DEBUG-D19-55: Resolution.fromJson START json={width: 1080, height: 1920} runtimeType=_Map<String, dynamic>
+06-28 10:27:13.007 25740 25740 I flutter : DEBUG-D19-56: Resolution.fromJson width=1080 runtimeType=int isNull=false
+06-28 10:27:13.007 25740 25740 I flutter : DEBUG-D19-57: Resolution.fromJson height=1920 runtimeType=int isNull=false
+06-28 10:27:13.008 25740 25740 I flutter : DEBUG-D19-58: Scene.fromJson START json={id: scene-001, order: 0, title: Introduction aux D├®riv├®es, duration_ms: 7000, 
+transition: {}, blocks: [{id: block-001, type: title, content: Comprendre les D├®riv├®es d'une Fonction, order: 0, visible: true, animation: {}, position: {}, style: {}}, 
+{id: block-002, type: paragraph, content: Les d├®riv├®es sont un outil fondamental en math├®matiques pour ├®tudier le taux de variation d'une fonction., order: 1, 
+visible: true, animation: {}, position: {}, style: {}}]} runtimeType=_Map<String, dynamic>
+06-28 10:27:13.008 25740 25740 I flutter : DEBUG-D19-59: Scene.fromJson id=scene-001 runtimeType=String isNull=false
+06-28 10:27:13.009 25740 25740 I flutter : DEBUG-D19-60: Scene.fromJson order=0 runtimeType=int isNull=false
+06-28 10:27:13.009 25740 25740 I flutter : DEBUG-D19-61: Scene.fromJson title=Introduction aux D├®riv├®es runtimeType=String isNull=false
+06-28 10:27:13.009 25740 25740 I flutter : DEBUG-D19-62: Scene.fromJson duration_ms=7000 runtimeType=int isNull=false
+06-28 10:27:13.009 25740 25740 I flutter : DEBUG-D19-63: Scene.fromJson blocks=[{id: block-001, type: title, content: Comprendre les D├®riv├®es d'une Fonction, order: 0, 
+visible: true, animation: {}, position: {}, style: {}}, {id: block-002, type: paragraph, content: Les d├®riv├®es sont un outil fondamental en math├®matiques pour ├®tudier 
+le taux de variation d'une fonction., order: 1, visible: true, animation: {}, position: {}, style: {}}] runtimeType=List<dynamic> isNull=false
+06-28 10:27:13.010 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-001, type: title, content: Comprendre les D├®riv├®es d'une Fonction, order: 
+0, visible: true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:27:13.010 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-001 runtimeType=String isNull=false
+06-28 10:27:13.011 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=title runtimeType=String isNull=false
+06-28 10:27:13.011 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=Comprendre les D├®riv├®es d'une Fonction runtimeType=String isNull=false
+06-28 10:27:13.013 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-002, type: paragraph, content: Les d├®riv├®es sont un outil fondamental en 
+math├®matiques pour ├®tudier le taux de variation d'une fonction., order: 1, visible: true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:27:13.013 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-002 runtimeType=String isNull=false
+06-28 10:27:13.013 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+06-28 10:27:13.014 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=Les d├®riv├®es sont un outil fondamental en math├®matiques pour ├®tudier le taux de 
+variation d'une fonction. runtimeType=String isNull=false
+06-28 10:27:13.014 25740 25740 I flutter : DEBUG-D19-58: Scene.fromJson START json={id: scene-002, order: 1, title: Qu'est-ce qu'une d├®riv├®e ?, duration_ms: 8000, 
+transition: {}, blocks: [{id: block-003, type: definition, content: La d├®riv├®e d'une fonction en un point est la pente de la tangente ├á la courbe de cette fonction en 
+ce point., order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-004, type: paragraph, content: Elle repr├®sente le taux de variation instantan├® 
+de la fonction., order: 1, visible: true, animation: {}, position: {}, style: {}}]} runtimeType=_Map<String, dynamic>
+06-28 10:27:13.015 25740 25740 I flutter : DEBUG-D19-59: Scene.fromJson id=scene-002 runtimeType=String isNull=false
+06-28 10:27:13.015 25740 25740 I flutter : DEBUG-D19-60: Scene.fromJson order=1 runtimeType=int isNull=false
+06-28 10:27:13.015 25740 25740 I flutter : DEBUG-D19-61: Scene.fromJson title=Qu'est-ce qu'une d├®riv├®e ? runtimeType=String isNull=false
+06-28 10:27:13.015 25740 25740 I flutter : DEBUG-D19-62: Scene.fromJson duration_ms=8000 runtimeType=int isNull=false
+06-28 10:27:13.015 25740 25740 I flutter : DEBUG-D19-63: Scene.fromJson blocks=[{id: block-003, type: definition, content: La d├®riv├®e d'une fonction en un point est la 
+pente de la tangente ├á la courbe de cette fonction en ce point., order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-004, type: paragraph, 
+content: Elle repr├®sente le taux de variation instantan├® de la fonction., order: 1, visible: true, animation: {}, position: {}, style: {}}] runtimeType=List<dynamic> 
+isNull=false
+06-28 10:27:13.017 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-003, type: definition, content: La d├®riv├®e d'une fonction en un point est 
+la pente de la tangente ├á la courbe de cette fonction en ce point., order: 0, visible: true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:27:13.017 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-003 runtimeType=String isNull=false
+06-28 10:27:13.017 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=definition runtimeType=String isNull=false
+06-28 10:27:13.017 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=La d├®riv├®e d'une fonction en un point est la pente de la tangente ├á la courbe de cette 
+fonction en ce point. runtimeType=String isNull=false
+06-28 10:27:25.771 25740 25740 I flutter : DEBUG-D19-01: createProject START subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+06-28 10:27:25.771 25740 25740 I flutter : DEBUG-D19-30: service.createProject RPC START
+06-28 10:27:25.991 25740 25740 I flutter : DEBUG-D19-31: service.createProject response={success: true, project_id: 1b0a955d-d135-4876-9956-0763b8a3a992} 
+runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:27:25.991 25740 25740 I flutter : DEBUG-D19-02: createProject result={success: true, project_id: 1b0a955d-d135-4876-9956-0763b8a3a992} runtimeType=_Map<String, 
+dynamic> isNull=false
+06-28 10:27:25.991 25740 25740 I flutter : DEBUG-D19-03: result['success']=true runtimeType=bool
+06-28 10:27:25.991 25740 25740 I flutter : DEBUG-D19-04: result['project_id']=1b0a955d-d135-4876-9956-0763b8a3a992 runtimeType=String isNull=false
+06-28 10:27:25.992 25740 25740 I flutter : DEBUG-D24-01: _currentProject BUILT subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+06-28 10:27:25.992 25740 25740 I flutter : DEBUG-D19-05: createProject _currentProjectId=1b0a955d-d135-4876-9956-0763b8a3a992
+06-28 10:27:25.992 25740 25740 I flutter : DEBUG-D24-02: generateStoryboard PAYLOAD subject=d├®riv├®s d'une fonction renderer=notebook theme=notebook narration_mode=tts
+06-28 10:27:25.992 25740 25740 I flutter : DEBUG-D19-06: generateStoryboard invoke START mode=simple_subject subject=d├®riv├®s d'une fonction narration_mode=tts
+06-28 10:27:39.739 25740 25740 I flutter : DEBUG-D19-07: generateStoryboard response.status=200 runtimeType=int
+06-28 10:27:39.740 25740 25740 I flutter : DEBUG-D19-08: generateStoryboard response.data=Instance of 'FunctionResponse'.data runtimeType=_Map<String, dynamic> 
+isNull=false
+06-28 10:27:39.741 25740 25740 I flutter : DEBUG-D19-10: generateStoryboard data={success: true, storyboard_json: {version: 1.0, created_at: 2026-06-28T10:27:40.384Z, 
+created_by: 6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: 
+mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 8000, transition: {}, blocks: [{id: block-001-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-001-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-001-003, type: paragraph, content: C'est un concept fondamental 
+en calcul diff├®rentiel, essentiel pour comprendre les
+06-28 10:27:39.743 25740 25740 I flutter : DEBUG-D19-11: data['storyboard_json']={version: 1.0, created_at: 2026-06-28T10:27:40.384Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 8000, transition: {}, blocks: [{id: block-001-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-001-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-001-003, type: paragraph, content: C'est un concept fondamental 
+en calcul diff├®rentiel, essentiel pour comprendre les pentes de courbes et les taux de
+06-28 10:27:39.745 25740 25740 I flutter : DEBUG-D19-13: generateStoryboard storyboardJson={version: 1.0, created_at: 2026-06-28T10:27:40.384Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 8000, transition: {}, blocks: [{id: block-001-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-001-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-001-003, type: paragraph, content: C'est un concept fondamental 
+en calcul diff├®rentiel, essentiel pour comprendre les pentes de courbes et l
+06-28 10:27:39.749 25740 25740 I flutter : DEBUG-D19-68: Storyboard.fromJson START json={version: 1.0, created_at: 2026-06-28T10:27:40.384Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 8000, transition: {}, blocks: [{id: block-001-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-001-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-001-003, type: paragraph, content: C'est un concept fondamental 
+en calcul diff├®rentiel, essentiel pour comprendre les pentes de courbes et les 
+06-28 10:27:39.750 25740 25740 I flutter : DEBUG-D19-69: Storyboard.fromJson version=1.0 runtimeType=String isNull=false
+06-28 10:27:39.750 25740 25740 I flutter : DEBUG-D19-70: Storyboard.fromJson created_at=2026-06-28T10:27:40.384Z runtimeType=String isNull=false
+06-28 10:27:39.750 25740 25740 I flutter : DEBUG-D19-71: Storyboard.fromJson created_by=6745c7ad-732b-47d0-b5b8-06d6dcf286ff runtimeType=String isNull=false
+06-28 10:27:39.750 25740 25740 I flutter : DEBUG-D19-72: Storyboard.fromJson subject=d├®riv├®s d'une fonction runtimeType=String isNull=false
+06-28 10:27:39.750 25740 25740 I flutter : DEBUG-D19-73: Storyboard.fromJson renderer=notebook runtimeType=String isNull=false
+06-28 10:27:39.750 25740 25740 I flutter : DEBUG-D19-74: Storyboard.fromJson theme=notebook runtimeType=String isNull=false
+06-28 10:27:39.751 25740 25740 I flutter : DEBUG-D19-75: Storyboard.fromJson narration_mode=tts runtimeType=String isNull=false
+06-28 10:27:39.751 25740 25740 I flutter : DEBUG-D19-76: Storyboard.fromJson export_settings={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac} runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:27:39.752 25740 25740 I flutter : DEBUG-D19-77: Storyboard.fromJson scenes=[{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, duration_ms: 8000, 
+transition: {}, blocks: [{id: block-001-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: 
+block-001-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un changement de sa 
+variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-001-003, type: paragraph, content: C'est un concept fondamental en calcul 
+diff├®rentiel, essentiel pour comprendre les pentes de courbes et les taux de variation., order: 2, visible: true, animation: {}, position: {}, style: {}}]}, {id: 
+scene-002, order: 1, title: D├®finition Formelle, duration_ms: 10000, transition: {}, blocks: [{id: block-002-001, type: title, content: D├®finition de la d├®riv├®e en un 
+point, order: 0, visible: true, animation: {}, position: {}, style: {}
+06-28 10:27:39.754 25740 25740 I flutter : DEBUG-D19-51: ExportSettings.fromJson START json={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac} runtimeType=_Map<String, dynamic>
+06-28 10:27:39.754 25740 25740 I flutter : DEBUG-D19-52: ExportSettings.fromJson format=mp4 runtimeType=String isNull=false
+06-28 10:27:39.754 25740 25740 I flutter : DEBUG-D19-53: ExportSettings.fromJson resolution={width: 1080, height: 1920} runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:27:39.754 25740 25740 I flutter : DEBUG-D19-54: ExportSettings.fromJson frame_rate=30 runtimeType=int isNull=false
+06-28 10:27:39.754 25740 25740 I flutter : DEBUG-D19-55: Resolution.fromJson START json={width: 1080, height: 1920} runtimeType=_Map<String, dynamic>
+06-28 10:27:39.755 25740 25740 I flutter : DEBUG-D19-56: Resolution.fromJson width=1080 runtimeType=int isNull=false
+06-28 10:27:39.755 25740 25740 I flutter : DEBUG-D19-57: Resolution.fromJson height=1920 runtimeType=int isNull=false
+06-28 10:27:39.755 25740 25740 I flutter : DEBUG-D19-58: Scene.fromJson START json={id: scene-001, order: 0, title: Introduction aux D├®riv├®es, duration_ms: 8000, 
+transition: {}, blocks: [{id: block-001-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: 
+block-001-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un changement de sa 
+variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-001-003, type: paragraph, content: C'est un concept fondamental en calcul 
+diff├®rentiel, essentiel pour comprendre les pentes de courbes et les taux de variation., order: 2, visible: true, animation: {}, position: {}, style: {}}]} 
+runtimeType=_Map<String, dynamic>
+06-28 10:27:39.755 25740 25740 I flutter : DEBUG-D19-59: Scene.fromJson id=scene-001 runtimeType=String isNull=false
+06-28 10:27:39.756 25740 25740 I flutter : DEBUG-D19-60: Scene.fromJson order=0 runtimeType=int isNull=false
+06-28 10:27:39.756 25740 25740 I flutter : DEBUG-D19-61: Scene.fromJson title=Introduction aux D├®riv├®es runtimeType=String isNull=false
+06-28 10:27:39.756 25740 25740 I flutter : DEBUG-D19-62: Scene.fromJson duration_ms=8000 runtimeType=int isNull=false
+06-28 10:27:39.756 25740 25740 I flutter : DEBUG-D19-63: Scene.fromJson blocks=[{id: block-001-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: 
+true, animation: {}, position: {}, style: {}}, {id: block-001-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la 
+fonction change par rapport ├á un changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-001-003, type: paragraph, 
+content: C'est un concept fondamental en calcul diff├®rentiel, essentiel pour comprendre les pentes de courbes et les taux de variation., order: 2, visible: true, 
+animation: {}, position: {}, style: {}}] runtimeType=List<dynamic> isNull=false
+06-28 10:27:39.757 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-001-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, 
+visible: true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:27:39.758 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-001-001 runtimeType=String isNull=false
+06-28 10:27:39.758 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=title runtimeType=String isNull=false
+06-28 10:27:39.758 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=Qu'est-ce qu'une d├®riv├®e ? runtimeType=String isNull=false
+06-28 10:27:39.760 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-001-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la 
+vitesse ├á laquelle la valeur de la fonction change par rapport ├á un changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}} 
+runtimeType=_Map<String, dynamic>
+06-28 10:27:39.760 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-001-002 runtimeType=String isNull=false
+06-28 10:27:39.760 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+06-28 10:27:39.760 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change 
+par rapport ├á un changement de sa variable. runtimeType=String isNull=false
+06-28 10:27:39.761 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-001-003, type: paragraph, content: C'est un concept fondamental en calcul 
+diff├®rentiel, essentiel pour comprendre les pentes de courbes et les taux de variation., order: 2, visible: true, animation: {}, position: {}, style: {}} 
+runtimeType=_Map<String, dynamic>
+06-28 10:27:39.762 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-001-003 runtimeType=String isNull=false
+06-28 10:27:39.762 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+06-28 10:27:39.762 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=C'est un concept fondamental en calcul diff├®rentiel, essentiel pour comprendre les pentes 
+de courbes et les taux de variation. runtimeType=String isNull=false
+06-28 10:27:39.762 25740 25740 I flutter : DEBUG-D19-58: Scene.fromJson START json={id: scene-002, order: 1, title: D├®finition Formelle, duration_ms: 10000, transition: 
+{}, blocks: [{id: block-002-001, type: title, content: D├®finition de la d├®riv├®e en un point, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: 
+block-002-002, type: definition, content: La d├®riv├®e d'une fonction f en un point a, not├®e f'(a), est la limite du taux de variation moyen lorsque h tend vers 0., 
+order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-002-003, type: formula, content: f'(a) = \lim_{h \to 0} \frac{f(a+h) - f(a)}{h}, order: 2, 
+visible: true, animation: {}, position: {}, style: {}}]} runtimeType=_Map<String, dynamic>
+06-28 10:27:39.763 25740 25740 I flutter : DEBUG-D19-59: Scene.fromJson id=scene-002 runtimeType=String isNull=false
+06-28 10:27:39.763 25740 25740 I flutter : DEBUG-D19-60: Scene.fromJson order=1 runtimeType=int isNull=false
+06-28 10:27:39.763 25740 25740 I flutter : DEBUG-D19-61: Scene.fromJson title=D├®finition Formelle runtimeType=String isNull=false
+06-28 10:27:39.763 25740 25740 I flutter : DEBUG-D19-62: Scene.fromJson duration_ms=10000 runtimeType=int isNull=false
+06-28 10:27:39.763 25740 25740 I flutter : DEBUG-D19-63: Scene.fromJson blocks=[{id: block-002-001, type: title, content: D├®finition de la d├®riv├®e en un point, order: 
+0, visible: true, animation: {}, position: {}, style: {}}, {id: block-002-002, type: definition, content: La d├®riv├®e d'une fonction f en un point a, not├®e f'(a), est 
+la limite du taux de variation moyen lorsque h tend vers 0., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-002-003, type: formula, content: 
+f'(a) = \lim_{h \to 0} \frac{f(a+h) - f(a)}{h}, order: 2, visible: true, animation: {}, position: {}, style: {}}] runtimeType=List<dynamic> isNull=false
+06-28 10:27:39.765 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-002-001, type: title, content: D├®finition de la d├®riv├®e en un point, 
+order: 0, visible: true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:27:39.765 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-002-001 runtimeType=String isNull=false
+06-28 10:27:39.765 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=title runtimeType=String isNull=false
+06-28 10:27:39.765 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=D├®finition de la d├®riv├®e en un point runtimeType=String isNull=false
+06-28 10:27:39.767 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-002-002, type: definition, content: La d├®riv├®e d'une fonction f en un 
+point a, not├®e f'(a), est la limite du taux de variation moyen lorsque h tend vers 0., order: 1, visible: true, animation: {}, position: {}, style: {}} 
+runtimeType=_Map<String, dynamic>
+06-28 10:27:39.767 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-002-002 runtimeType=String isNull=false
+06-28 10:27:39.767 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=definition runtimeType=String isNull=false
+06-28 10:27:39.767 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=La d├®riv├®e d'une fonction f en un point a, not├®e f'(a), est la limite du taux de 
+variation moyen lorsque h tend vers 0. runtimeType=String isNull=false
+06-28 10:27:47.186 25740 25740 I flutter : DEBUG-D19-01: createProject START subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+06-28 10:27:47.186 25740 25740 I flutter : DEBUG-D19-30: service.createProject RPC START
+06-28 10:27:47.387 25740 25740 I flutter : DEBUG-D19-31: service.createProject response={success: true, project_id: 10c7140a-d7f9-4005-80da-1e487e5e258a} 
+runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:27:47.387 25740 25740 I flutter : DEBUG-D19-02: createProject result={success: true, project_id: 10c7140a-d7f9-4005-80da-1e487e5e258a} runtimeType=_Map<String, 
+dynamic> isNull=false
+06-28 10:27:47.388 25740 25740 I flutter : DEBUG-D19-03: result['success']=true runtimeType=bool
+06-28 10:27:47.388 25740 25740 I flutter : DEBUG-D19-04: result['project_id']=10c7140a-d7f9-4005-80da-1e487e5e258a runtimeType=String isNull=false
+06-28 10:27:47.388 25740 25740 I flutter : DEBUG-D24-01: _currentProject BUILT subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+06-28 10:27:47.388 25740 25740 I flutter : DEBUG-D19-05: createProject _currentProjectId=10c7140a-d7f9-4005-80da-1e487e5e258a
+06-28 10:27:47.388 25740 25740 I flutter : DEBUG-D24-02: generateStoryboard PAYLOAD subject=d├®riv├®s d'une fonction renderer=notebook theme=notebook narration_mode=tts
+06-28 10:27:47.389 25740 25740 I flutter : DEBUG-D19-06: generateStoryboard invoke START mode=simple_subject subject=d├®riv├®s d'une fonction narration_mode=tts
+06-28 10:28:01.419 25740 25740 I flutter : DEBUG-D19-07: generateStoryboard response.status=200 runtimeType=int
+06-28 10:28:01.419 25740 25740 I flutter : DEBUG-D19-08: generateStoryboard response.data=Instance of 'FunctionResponse'.data runtimeType=_Map<String, dynamic> 
+isNull=false
+06-28 10:28:01.421 25740 25740 I flutter : DEBUG-D19-10: generateStoryboard data={success: true, storyboard_json: {version: 1.0, created_at: 2026-06-28T10:28:02.030Z, 
+created_by: 6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: 
+mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 8000, transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure le taux de variation instantan├® de cette fonction., order: 1, visible: true, 
+animation: {}, position: {}, style: {}}, {id: block-003, type: paragraph, content: Elle est fondamentale en math├®matiques et en physique pour comprendre les 
+changements., order: 2, visible: true, animation: {}, position: {}, 
+06-28 10:28:01.424 25740 25740 I flutter : DEBUG-D19-11: data['storyboard_json']={version: 1.0, created_at: 2026-06-28T10:28:02.030Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 8000, transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure le taux de variation instantan├® de cette fonction., order: 1, visible: true, 
+animation: {}, position: {}, style: {}}, {id: block-003, type: paragraph, content: Elle est fondamentale en math├®matiques et en physique pour comprendre les 
+changements., order: 2, visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-002, ord
+06-28 10:28:01.427 25740 25740 I flutter : DEBUG-D19-13: generateStoryboard storyboardJson={version: 1.0, created_at: 2026-06-28T10:28:02.030Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 8000, transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure le taux de variation instantan├® de cette fonction., order: 1, visible: true, 
+animation: {}, position: {}, style: {}}, {id: block-003, type: paragraph, content: Elle est fondamentale en math├®matiques et en physique pour comprendre les 
+changements., order: 2, visible: true, animation: {}, position: {}, style: {}}]}, {id: scen
+06-28 10:28:01.435 25740 25740 I flutter : DEBUG-D19-68: Storyboard.fromJson START json={version: 1.0, created_at: 2026-06-28T10:28:02.030Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, 
+duration_ms: 8000, transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure le taux de variation instantan├® de cette fonction., order: 1, visible: true, 
+animation: {}, position: {}, style: {}}, {id: block-003, type: paragraph, content: Elle est fondamentale en math├®matiques et en physique pour comprendre les 
+changements., order: 2, visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-0
+06-28 10:28:01.436 25740 25740 I flutter : DEBUG-D19-69: Storyboard.fromJson version=1.0 runtimeType=String isNull=false
+06-28 10:28:01.436 25740 25740 I flutter : DEBUG-D19-70: Storyboard.fromJson created_at=2026-06-28T10:28:02.030Z runtimeType=String isNull=false
+06-28 10:28:01.437 25740 25740 I flutter : DEBUG-D19-71: Storyboard.fromJson created_by=6745c7ad-732b-47d0-b5b8-06d6dcf286ff runtimeType=String isNull=false
+06-28 10:28:01.437 25740 25740 I flutter : DEBUG-D19-72: Storyboard.fromJson subject=d├®riv├®s d'une fonction runtimeType=String isNull=false
+06-28 10:28:01.437 25740 25740 I flutter : DEBUG-D19-73: Storyboard.fromJson renderer=notebook runtimeType=String isNull=false
+06-28 10:28:01.437 25740 25740 I flutter : DEBUG-D19-74: Storyboard.fromJson theme=notebook runtimeType=String isNull=false
+06-28 10:28:01.437 25740 25740 I flutter : DEBUG-D19-75: Storyboard.fromJson narration_mode=tts runtimeType=String isNull=false
+06-28 10:28:01.438 25740 25740 I flutter : DEBUG-D19-76: Storyboard.fromJson export_settings={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac} runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:28:01.440 25740 25740 I flutter : DEBUG-D19-77: Storyboard.fromJson scenes=[{id: scene-001, order: 0, title: Introduction aux D├®riv├®es, duration_ms: 8000, 
+transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: 
+block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure le taux de variation instantan├® de cette fonction., order: 1, visible: true, animation: {}, 
+position: {}, style: {}}, {id: block-003, type: paragraph, content: Elle est fondamentale en math├®matiques et en physique pour comprendre les changements., order: 2, 
+visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-002, order: 1, title: D├®finition Formelle, duration_ms: 10000, transition: {}, blocks: [{id: 
+block-004, type: definition, content: La d├®riv├®e d'une fonction f en un point xÔéÇ, not├®e f'(xÔéÇ), est la limite du taux d'accroissement lorsque h tend vers 0., 
+order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block
+06-28 10:28:01.443 25740 25740 I flutter : DEBUG-D19-51: ExportSettings.fromJson START json={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac} runtimeType=_Map<String, dynamic>
+06-28 10:28:01.443 25740 25740 I flutter : DEBUG-D19-52: ExportSettings.fromJson format=mp4 runtimeType=String isNull=false
+06-28 10:28:01.444 25740 25740 I flutter : DEBUG-D19-53: ExportSettings.fromJson resolution={width: 1080, height: 1920} runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:28:01.444 25740 25740 I flutter : DEBUG-D19-54: ExportSettings.fromJson frame_rate=30 runtimeType=int isNull=false
+06-28 10:28:01.444 25740 25740 I flutter : DEBUG-D19-55: Resolution.fromJson START json={width: 1080, height: 1920} runtimeType=_Map<String, dynamic>
+06-28 10:28:01.445 25740 25740 I flutter : DEBUG-D19-56: Resolution.fromJson width=1080 runtimeType=int isNull=false
+06-28 10:28:01.445 25740 25740 I flutter : DEBUG-D19-57: Resolution.fromJson height=1920 runtimeType=int isNull=false
+06-28 10:28:01.445 25740 25740 I flutter : DEBUG-D19-58: Scene.fromJson START json={id: scene-001, order: 0, title: Introduction aux D├®riv├®es, duration_ms: 8000, 
+transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: 
+block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure le taux de variation instantan├® de cette fonction., order: 1, visible: true, animation: {}, 
+position: {}, style: {}}, {id: block-003, type: paragraph, content: Elle est fondamentale en math├®matiques et en physique pour comprendre les changements., order: 2, 
+visible: true, animation: {}, position: {}, style: {}}]} runtimeType=_Map<String, dynamic>
+06-28 10:28:01.446 25740 25740 I flutter : DEBUG-D19-59: Scene.fromJson id=scene-001 runtimeType=String isNull=false
+06-28 10:28:01.446 25740 25740 I flutter : DEBUG-D19-60: Scene.fromJson order=0 runtimeType=int isNull=false
+06-28 10:28:01.446 25740 25740 I flutter : DEBUG-D19-61: Scene.fromJson title=Introduction aux D├®riv├®es runtimeType=String isNull=false
+06-28 10:28:01.446 25740 25740 I flutter : DEBUG-D19-62: Scene.fromJson duration_ms=8000 runtimeType=int isNull=false
+06-28 10:28:01.447 25740 25740 I flutter : DEBUG-D19-63: Scene.fromJson blocks=[{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: 
+true, animation: {}, position: {}, style: {}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure le taux de variation instantan├® de cette 
+fonction., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-003, type: paragraph, content: Elle est fondamentale en math├®matiques et en 
+physique pour comprendre les changements., order: 2, visible: true, animation: {}, position: {}, style: {}}] runtimeType=List<dynamic> isNull=false
+06-28 10:28:01.449 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: 
+true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:28:01.449 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-001 runtimeType=String isNull=false
+06-28 10:28:01.449 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=title runtimeType=String isNull=false
+06-28 10:28:01.449 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=Qu'est-ce qu'une d├®riv├®e ? runtimeType=String isNull=false
+06-28 10:28:01.451 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure le taux de 
+variation instantan├® de cette fonction., order: 1, visible: true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:28:01.451 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-002 runtimeType=String isNull=false
+06-28 10:28:01.452 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+06-28 10:28:01.452 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=La d├®riv├®e d'une fonction mesure le taux de variation instantan├® de cette fonction. 
+runtimeType=String isNull=false
+06-28 10:28:01.454 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-003, type: paragraph, content: Elle est fondamentale en math├®matiques et en 
+physique pour comprendre les changements., order: 2, visible: true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:28:01.454 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-003 runtimeType=String isNull=false
+06-28 10:28:01.454 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+06-28 10:28:01.454 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=Elle est fondamentale en math├®matiques et en physique pour comprendre les changements. 
+runtimeType=String isNull=false
+06-28 10:28:01.455 25740 25740 I flutter : DEBUG-D19-58: Scene.fromJson START json={id: scene-002, order: 1, title: D├®finition Formelle, duration_ms: 10000, transition: 
+{}, blocks: [{id: block-004, type: definition, content: La d├®riv├®e d'une fonction f en un point xÔéÇ, not├®e f'(xÔéÇ), est la limite du taux d'accroissement lorsque h 
+tend vers 0., order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-005, type: formula, content: f'(xÔéÇ) = \lim_{h \to 0} \frac{f(xÔéÇ + h) - 
+f(xÔéÇ)}{h}, order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-006, type: paragraph, content: G├®om├®triquement, c'est la pente de la tangente 
+├á la courbe de f au point (xÔéÇ, f(xÔéÇ))., order: 2, visible: true, animation: {}, position: {}, style: {}}]} runtimeType=_Map<String, dynamic>
+06-28 10:28:01.455 25740 25740 I flutter : DEBUG-D19-59: Scene.fromJson id=scene-002 runtimeType=String isNull=false
+06-28 10:28:01.456 25740 25740 I flutter : DEBUG-D19-60: Scene.fromJson order=1 runtimeType=int isNull=false
+06-28 10:28:01.456 25740 25740 I flutter : DEBUG-D19-61: Scene.fromJson title=D├®finition Formelle runtimeType=String isNull=false
+06-28 10:28:01.456 25740 25740 I flutter : DEBUG-D19-62: Scene.fromJson duration_ms=10000 runtimeType=int isNull=false
+06-28 10:28:01.457 25740 25740 I flutter : DEBUG-D19-63: Scene.fromJson blocks=[{id: block-004, type: definition, content: La d├®riv├®e d'une fonction f en un point xÔéÇ, 
+not├®e f'(xÔéÇ), est la limite du taux d'accroissement lorsque h tend vers 0., order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-005, type: 
+formula, content: f'(xÔéÇ) = \lim_{h \to 0} \frac{f(xÔéÇ + h) - f(xÔéÇ)}{h}, order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-006, type: 
+paragraph, content: G├®om├®triquement, c'est la pente de la tangente ├á la courbe de f au point (xÔéÇ, f(xÔéÇ))., order: 2, visible: true, animation: {}, position: {}, 
+style: {}}] runtimeType=List<dynamic> isNull=false
+06-28 10:28:01.459 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-004, type: definition, content: La d├®riv├®e d'une fonction f en un point 
+xÔéÇ, not├®e f'(xÔéÇ), est la limite du taux d'accroissement lorsque h tend vers 0., order: 0, visible: true, animation: {}, position: {}, style: {}} 
+runtimeType=_Map<String, dynamic>
+06-28 10:28:01.459 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-004 runtimeType=String isNull=false
+06-28 10:28:01.459 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=definition runtimeType=String isNull=false
+06-28 10:28:01.460 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=La d├®riv├®e d'une fonction f en un point xÔéÇ, not├®e f'(xÔéÇ), est la limite du taux 
+d'accroissement lorsque h tend vers 0. runtimeType=String isNull=false
+06-28 10:28:33.232 25740 25740 I flutter : DEBUG-D19-01: createProject START subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+06-28 10:28:33.232 25740 25740 I flutter : DEBUG-D19-30: service.createProject RPC START
+06-28 10:28:33.512 25740 25740 I flutter : DEBUG-D19-31: service.createProject response={success: true, project_id: 6fc73cc2-87fa-4100-9426-b12be49ae9df} 
+runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:28:33.513 25740 25740 I flutter : DEBUG-D19-02: createProject result={success: true, project_id: 6fc73cc2-87fa-4100-9426-b12be49ae9df} runtimeType=_Map<String, 
+dynamic> isNull=false
+06-28 10:28:33.513 25740 25740 I flutter : DEBUG-D19-03: result['success']=true runtimeType=bool
+06-28 10:28:33.513 25740 25740 I flutter : DEBUG-D19-04: result['project_id']=6fc73cc2-87fa-4100-9426-b12be49ae9df runtimeType=String isNull=false
+06-28 10:28:33.513 25740 25740 I flutter : DEBUG-D24-01: _currentProject BUILT subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+06-28 10:28:33.513 25740 25740 I flutter : DEBUG-D19-05: createProject _currentProjectId=6fc73cc2-87fa-4100-9426-b12be49ae9df
+06-28 10:28:33.514 25740 25740 I flutter : DEBUG-D24-02: generateStoryboard PAYLOAD subject=d├®riv├®s d'une fonction renderer=notebook theme=notebook narration_mode=tts
+06-28 10:28:33.514 25740 25740 I flutter : DEBUG-D19-06: generateStoryboard invoke START mode=simple_subject subject=d├®riv├®s d'une fonction narration_mode=tts
+06-28 10:28:45.328 25740 25740 I flutter : DEBUG-D19-07: generateStoryboard response.status=200 runtimeType=int
+06-28 10:28:45.328 25740 25740 I flutter : DEBUG-D19-08: generateStoryboard response.data=Instance of 'FunctionResponse'.data runtimeType=_Map<String, dynamic> 
+isNull=false
+06-28 10:28:45.330 25740 25740 I flutter : DEBUG-D19-10: generateStoryboard data={success: true, storyboard_json: {version: 1.0, created_at: 2026-06-28T10:28:45.950Z, 
+created_by: 6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: 
+mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®s, 
+duration_ms: 7000, transition: {type: fade, duration_ms: 500}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, 
+style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure le taux de variation instantan├® 
+de cette fonction., order: 1, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-003, type: paragraph, content: Elle nous aide ├á 
+comprendre comment une quantit├® change par rapport ├á une a
+06-28 10:28:45.332 25740 25740 I flutter : DEBUG-D19-11: data['storyboard_json']={version: 1.0, created_at: 2026-06-28T10:28:45.950Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®s, 
+duration_ms: 7000, transition: {type: fade, duration_ms: 500}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, 
+style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure le taux de variation instantan├® 
+de cette fonction., order: 1, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-003, type: paragraph, content: Elle nous aide ├á 
+comprendre comment une quantit├® change par rapport ├á une autre., order: 2, visible: true, s
+06-28 10:28:45.334 25740 25740 I flutter : DEBUG-D19-13: generateStoryboard storyboardJson={version: 1.0, created_at: 2026-06-28T10:28:45.950Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®s, 
+duration_ms: 7000, transition: {type: fade, duration_ms: 500}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, 
+style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure le taux de variation instantan├® 
+de cette fonction., order: 1, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-003, type: paragraph, content: Elle nous aide ├á 
+comprendre comment une quantit├® change par rapport ├á une autre., order: 2, visibl
+06-28 10:28:45.340 25740 25740 I flutter : DEBUG-D19-68: Storyboard.fromJson START json={version: 1.0, created_at: 2026-06-28T10:28:45.950Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®s, 
+duration_ms: 7000, transition: {type: fade, duration_ms: 500}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, 
+style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure le taux de variation instantan├® 
+de cette fonction., order: 1, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-003, type: paragraph, content: Elle nous aide ├á 
+comprendre comment une quantit├® change par rapport ├á une autre., order: 2, visible: 
+06-28 10:28:45.341 25740 25740 I flutter : DEBUG-D19-69: Storyboard.fromJson version=1.0 runtimeType=String isNull=false
+06-28 10:28:45.341 25740 25740 I flutter : DEBUG-D19-70: Storyboard.fromJson created_at=2026-06-28T10:28:45.950Z runtimeType=String isNull=false
+06-28 10:28:45.341 25740 25740 I flutter : DEBUG-D19-71: Storyboard.fromJson created_by=6745c7ad-732b-47d0-b5b8-06d6dcf286ff runtimeType=String isNull=false
+06-28 10:28:45.341 25740 25740 I flutter : DEBUG-D19-72: Storyboard.fromJson subject=d├®riv├®s d'une fonction runtimeType=String isNull=false
+06-28 10:28:45.341 25740 25740 I flutter : DEBUG-D19-73: Storyboard.fromJson renderer=notebook runtimeType=String isNull=false
+06-28 10:28:45.341 25740 25740 I flutter : DEBUG-D19-74: Storyboard.fromJson theme=notebook runtimeType=String isNull=false
+06-28 10:28:45.342 25740 25740 I flutter : DEBUG-D19-75: Storyboard.fromJson narration_mode=tts runtimeType=String isNull=false
+06-28 10:28:45.342 25740 25740 I flutter : DEBUG-D19-76: Storyboard.fromJson export_settings={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac} runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:28:45.343 25740 25740 I flutter : DEBUG-D19-77: Storyboard.fromJson scenes=[{id: scene-001, order: 0, title: Introduction aux D├®riv├®s, duration_ms: 7000, 
+transition: {type: fade, duration_ms: 500}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, style: {fontSize: 16, 
+fontWeight: normal, color: #000000}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure le taux de variation instantan├® de cette fonction., 
+order: 1, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-003, type: paragraph, content: Elle nous aide ├á comprendre comment une 
+quantit├® change par rapport ├á une autre., order: 2, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}]}, {id: scene-002, order: 1, title: 
+D├®finition Formelle, duration_ms: 8000, transition: {type: slide_left, duration_ms: 500}, blocks: [{id: block-004, type: definition, content: La d├®riv├®e d'une fonction 
+f en un point x est la pente de la tangente ├á la courbe de f 
+06-28 10:28:45.346 25740 25740 I flutter : DEBUG-D19-51: ExportSettings.fromJson START json={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac} runtimeType=_Map<String, dynamic>
+06-28 10:28:45.346 25740 25740 I flutter : DEBUG-D19-52: ExportSettings.fromJson format=mp4 runtimeType=String isNull=false
+06-28 10:28:45.346 25740 25740 I flutter : DEBUG-D19-53: ExportSettings.fromJson resolution={width: 1080, height: 1920} runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:28:45.346 25740 25740 I flutter : DEBUG-D19-54: ExportSettings.fromJson frame_rate=30 runtimeType=int isNull=false
+06-28 10:28:45.347 25740 25740 I flutter : DEBUG-D19-55: Resolution.fromJson START json={width: 1080, height: 1920} runtimeType=_Map<String, dynamic>
+06-28 10:28:45.347 25740 25740 I flutter : DEBUG-D19-56: Resolution.fromJson width=1080 runtimeType=int isNull=false
+06-28 10:28:45.348 25740 25740 I flutter : DEBUG-D19-57: Resolution.fromJson height=1920 runtimeType=int isNull=false
+06-28 10:28:45.348 25740 25740 I flutter : DEBUG-D19-58: Scene.fromJson START json={id: scene-001, order: 0, title: Introduction aux D├®riv├®s, duration_ms: 7000, 
+transition: {type: fade, duration_ms: 500}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, style: {fontSize: 16, 
+fontWeight: normal, color: #000000}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure le taux de variation instantan├® de cette fonction., 
+order: 1, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-003, type: paragraph, content: Elle nous aide ├á comprendre comment une 
+quantit├® change par rapport ├á une autre., order: 2, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}]} runtimeType=_Map<String, dynamic>
+06-28 10:28:45.349 25740 25740 I flutter : DEBUG-D19-59: Scene.fromJson id=scene-001 runtimeType=String isNull=false
+06-28 10:28:45.349 25740 25740 I flutter : DEBUG-D19-60: Scene.fromJson order=0 runtimeType=int isNull=false
+06-28 10:28:45.349 25740 25740 I flutter : DEBUG-D19-61: Scene.fromJson title=Introduction aux D├®riv├®s runtimeType=String isNull=false
+06-28 10:28:45.349 25740 25740 I flutter : DEBUG-D19-62: Scene.fromJson duration_ms=7000 runtimeType=int isNull=false
+06-28 10:28:45.349 25740 25740 I flutter : DEBUG-D19-63: Scene.fromJson blocks=[{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: 
+true, style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure le taux de variation 
+instantan├® de cette fonction., order: 1, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-003, type: paragraph, content: Elle nous 
+aide ├á comprendre comment une quantit├® change par rapport ├á une autre., order: 2, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}] 
+runtimeType=List<dynamic> isNull=false
+06-28 10:28:45.351 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: 
+true, style: {fontSize: 16, fontWeight: normal, color: #000000}} runtimeType=_Map<String, dynamic>
+06-28 10:28:45.351 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-001 runtimeType=String isNull=false
+06-28 10:28:45.351 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=title runtimeType=String isNull=false
+06-28 10:28:45.352 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=Qu'est-ce qu'une d├®riv├®e ? runtimeType=String isNull=false
+06-28 10:28:45.353 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure le taux de 
+variation instantan├® de cette fonction., order: 1, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}} runtimeType=_Map<String, dynamic>
+06-28 10:28:45.354 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-002 runtimeType=String isNull=false
+06-28 10:28:45.354 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+06-28 10:28:45.354 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=La d├®riv├®e d'une fonction mesure le taux de variation instantan├® de cette fonction. 
+runtimeType=String isNull=false
+06-28 10:28:45.356 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-003, type: paragraph, content: Elle nous aide ├á comprendre comment une 
+quantit├® change par rapport ├á une autre., order: 2, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}} runtimeType=_Map<String, dynamic>
+06-28 10:28:45.356 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-003 runtimeType=String isNull=false
+06-28 10:28:45.356 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+06-28 10:28:45.356 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=Elle nous aide ├á comprendre comment une quantit├® change par rapport ├á une autre. 
+runtimeType=String isNull=false
+06-28 10:28:45.357 25740 25740 I flutter : DEBUG-D19-58: Scene.fromJson START json={id: scene-002, order: 1, title: D├®finition Formelle, duration_ms: 8000, transition: 
+{type: slide_left, duration_ms: 500}, blocks: [{id: block-004, type: definition, content: La d├®riv├®e d'une fonction f en un point x est la pente de la tangente ├á la 
+courbe de f en ce point., order: 0, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-005, type: formula, content: f'(x) = \lim_{h \to 
+0} \frac{f(x+h) - f(x)}{h}, order: 1, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-006, type: paragraph, content: Cette limite 
+repr├®sente le taux de variation moyen lorsque l'intervalle h tend vers z├®ro., order: 2, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}]} 
+runtimeType=_Map<String, dynamic>
+06-28 10:28:45.357 25740 25740 I flutter : DEBUG-D19-59: Scene.fromJson id=scene-002 runtimeType=String isNull=false
+06-28 10:28:45.357 25740 25740 I flutter : DEBUG-D19-60: Scene.fromJson order=1 runtimeType=int isNull=false
+06-28 10:28:45.357 25740 25740 I flutter : DEBUG-D19-61: Scene.fromJson title=D├®finition Formelle runtimeType=String isNull=false
+06-28 10:28:45.358 25740 25740 I flutter : DEBUG-D19-62: Scene.fromJson duration_ms=8000 runtimeType=int isNull=false
+06-28 10:28:45.358 25740 25740 I flutter : DEBUG-D19-63: Scene.fromJson blocks=[{id: block-004, type: definition, content: La d├®riv├®e d'une fonction f en un point x est 
+la pente de la tangente ├á la courbe de f en ce point., order: 0, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-005, type: 
+formula, content: f'(x) = \lim_{h \to 0} \frac{f(x+h) - f(x)}{h}, order: 1, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-006, 
+type: paragraph, content: Cette limite repr├®sente le taux de variation moyen lorsque l'intervalle h tend vers z├®ro., order: 2, visible: true, style: {fontSize: 16, 
+fontWeight: normal, color: #000000}}] runtimeType=List<dynamic> isNull=false
+06-28 10:28:45.359 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-004, type: definition, content: La d├®riv├®e d'une fonction f en un point x 
+est la pente de la tangente ├á la courbe de f en ce point., order: 0, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}} runtimeType=_Map<String, 
+dynamic>
+06-28 10:28:45.360 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-004 runtimeType=String isNull=false
+06-28 10:28:45.360 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=definition runtimeType=String isNull=false
+06-28 10:28:45.360 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=La d├®riv├®e d'une fonction f en un point x est la pente de la tangente ├á la courbe de f 
+en ce point. runtimeType=String isNull=false
+06-28 10:30:43.086 25740 25740 I flutter : DEBUG-D19-01: createProject START subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+06-28 10:30:43.086 25740 25740 I flutter : DEBUG-D19-30: service.createProject RPC START
+06-28 10:30:43.482 25740 25740 I flutter : DEBUG-D19-31: service.createProject response={success: true, project_id: 920651ad-46cb-40dc-a84b-c610c4e81bae} 
+runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:30:43.482 25740 25740 I flutter : DEBUG-D19-02: createProject result={success: true, project_id: 920651ad-46cb-40dc-a84b-c610c4e81bae} runtimeType=_Map<String, 
+dynamic> isNull=false
+06-28 10:30:43.482 25740 25740 I flutter : DEBUG-D19-03: result['success']=true runtimeType=bool
+06-28 10:30:43.482 25740 25740 I flutter : DEBUG-D19-04: result['project_id']=920651ad-46cb-40dc-a84b-c610c4e81bae runtimeType=String isNull=false
+06-28 10:30:43.482 25740 25740 I flutter : DEBUG-D24-01: _currentProject BUILT subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+06-28 10:30:43.482 25740 25740 I flutter : DEBUG-D19-05: createProject _currentProjectId=920651ad-46cb-40dc-a84b-c610c4e81bae
+06-28 10:30:43.482 25740 25740 I flutter : DEBUG-D24-02: generateStoryboard PAYLOAD subject=d├®riv├®s d'une fonction renderer=notebook theme=notebook narration_mode=tts
+06-28 10:30:43.482 25740 25740 I flutter : DEBUG-D19-06: generateStoryboard invoke START mode=simple_subject subject=d├®riv├®s d'une fonction narration_mode=tts
+06-28 10:30:54.768 25740 25740 I flutter : DEBUG-D19-07: generateStoryboard response.status=200 runtimeType=int
+06-28 10:30:54.768 25740 25740 I flutter : DEBUG-D19-08: generateStoryboard response.data=Instance of 'FunctionResponse'.data runtimeType=_Map<String, dynamic> 
+isNull=false
+06-28 10:30:54.770 25740 25740 I flutter : DEBUG-D19-10: generateStoryboard data={success: true, storyboard_json: {version: 1.0, created_at: 2026-06-28T10:30:55.380Z, 
+created_by: 6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: 
+mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®s, 
+duration_ms: 7000, transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-003, type: paragraph, content: Elle repr├®sente la pente de la 
+tangente ├á la courbe de la fonction en un point donn├®., order:
+06-28 10:30:54.772 25740 25740 I flutter : DEBUG-D19-11: data['storyboard_json']={version: 1.0, created_at: 2026-06-28T10:30:55.380Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®s, 
+duration_ms: 7000, transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-003, type: paragraph, content: Elle repr├®sente la pente de la 
+tangente ├á la courbe de la fonction en un point donn├®., order: 2, visible: true, animation: {},
+06-28 10:30:54.774 25740 25740 I flutter : DEBUG-D19-13: generateStoryboard storyboardJson={version: 1.0, created_at: 2026-06-28T10:30:55.380Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®s, 
+duration_ms: 7000, transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-003, type: paragraph, content: Elle repr├®sente la pente de la 
+tangente ├á la courbe de la fonction en un point donn├®., order: 2, visible: true, anim
+06-28 10:30:54.779 25740 25740 I flutter : DEBUG-D19-68: Storyboard.fromJson START json={version: 1.0, created_at: 2026-06-28T10:30:55.380Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: d├®riv├®s d'une fonction, renderer: notebook, theme: notebook, narration_mode: tts, export_settings: {format: mp4, 
+resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux D├®riv├®s, 
+duration_ms: 7000, transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un 
+changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-003, type: paragraph, content: Elle repr├®sente la pente de la 
+tangente ├á la courbe de la fonction en un point donn├®., order: 2, visible: true, animati
+06-28 10:30:54.780 25740 25740 I flutter : DEBUG-D19-69: Storyboard.fromJson version=1.0 runtimeType=String isNull=false
+06-28 10:30:54.780 25740 25740 I flutter : DEBUG-D19-70: Storyboard.fromJson created_at=2026-06-28T10:30:55.380Z runtimeType=String isNull=false
+06-28 10:30:54.781 25740 25740 I flutter : DEBUG-D19-71: Storyboard.fromJson created_by=6745c7ad-732b-47d0-b5b8-06d6dcf286ff runtimeType=String isNull=false
+06-28 10:30:54.781 25740 25740 I flutter : DEBUG-D19-72: Storyboard.fromJson subject=d├®riv├®s d'une fonction runtimeType=String isNull=false
+06-28 10:30:54.781 25740 25740 I flutter : DEBUG-D19-73: Storyboard.fromJson renderer=notebook runtimeType=String isNull=false
+06-28 10:30:54.781 25740 25740 I flutter : DEBUG-D19-74: Storyboard.fromJson theme=notebook runtimeType=String isNull=false
+06-28 10:30:54.781 25740 25740 I flutter : DEBUG-D19-75: Storyboard.fromJson narration_mode=tts runtimeType=String isNull=false
+06-28 10:30:54.781 25740 25740 I flutter : DEBUG-D19-76: Storyboard.fromJson export_settings={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac} runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:30:54.783 25740 25740 I flutter : DEBUG-D19-77: Storyboard.fromJson scenes=[{id: scene-001, order: 0, title: Introduction aux D├®riv├®s, duration_ms: 7000, 
+transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: 
+block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un changement de sa 
+variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-003, type: paragraph, content: Elle repr├®sente la pente de la tangente ├á la 
+courbe de la fonction en un point donn├®., order: 2, visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-002, order: 1, title: D├®finition Formelle, 
+duration_ms: 8000, transition: {}, blocks: [{id: block-004, type: title, content: D├®finition de la d├®riv├®e, order: 0, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-005, type: definition, content: La d├®riv├®e d'une fonc
+06-28 10:30:54.787 25740 25740 I flutter : DEBUG-D19-51: ExportSettings.fromJson START json={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac} runtimeType=_Map<String, dynamic>
+06-28 10:30:54.787 25740 25740 I flutter : DEBUG-D19-52: ExportSettings.fromJson format=mp4 runtimeType=String isNull=false
+06-28 10:30:54.787 25740 25740 I flutter : DEBUG-D19-53: ExportSettings.fromJson resolution={width: 1080, height: 1920} runtimeType=_Map<String, dynamic> isNull=false
+06-28 10:30:54.788 25740 25740 I flutter : DEBUG-D19-54: ExportSettings.fromJson frame_rate=30 runtimeType=int isNull=false
+06-28 10:30:54.788 25740 25740 I flutter : DEBUG-D19-55: Resolution.fromJson START json={width: 1080, height: 1920} runtimeType=_Map<String, dynamic>
+06-28 10:30:54.788 25740 25740 I flutter : DEBUG-D19-56: Resolution.fromJson width=1080 runtimeType=int isNull=false
+06-28 10:30:54.788 25740 25740 I flutter : DEBUG-D19-57: Resolution.fromJson height=1920 runtimeType=int isNull=false
+06-28 10:30:54.788 25740 25740 I flutter : DEBUG-D19-58: Scene.fromJson START json={id: scene-001, order: 0, title: Introduction aux D├®riv├®s, duration_ms: 7000, 
+transition: {}, blocks: [{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: 
+block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change par rapport ├á un changement de sa 
+variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-003, type: paragraph, content: Elle repr├®sente la pente de la tangente ├á la 
+courbe de la fonction en un point donn├®., order: 2, visible: true, animation: {}, position: {}, style: {}}]} runtimeType=_Map<String, dynamic>
+06-28 10:30:54.789 25740 25740 I flutter : DEBUG-D19-59: Scene.fromJson id=scene-001 runtimeType=String isNull=false
+06-28 10:30:54.789 25740 25740 I flutter : DEBUG-D19-60: Scene.fromJson order=0 runtimeType=int isNull=false
+06-28 10:30:54.789 25740 25740 I flutter : DEBUG-D19-61: Scene.fromJson title=Introduction aux D├®riv├®s runtimeType=String isNull=false
+06-28 10:30:54.789 25740 25740 I flutter : DEBUG-D19-62: Scene.fromJson duration_ms=7000 runtimeType=int isNull=false
+06-28 10:30:54.789 25740 25740 I flutter : DEBUG-D19-63: Scene.fromJson blocks=[{id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: 
+true, animation: {}, position: {}, style: {}}, {id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la 
+fonction change par rapport ├á un changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-003, type: paragraph, content: 
+Elle repr├®sente la pente de la tangente ├á la courbe de la fonction en un point donn├®., order: 2, visible: true, animation: {}, position: {}, style: {}}] 
+runtimeType=List<dynamic> isNull=false
+06-28 10:30:54.791 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-001, type: title, content: Qu'est-ce qu'une d├®riv├®e ?, order: 0, visible: 
+true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:30:54.791 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-001 runtimeType=String isNull=false
+06-28 10:30:54.791 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=title runtimeType=String isNull=false
+06-28 10:30:54.791 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=Qu'est-ce qu'une d├®riv├®e ? runtimeType=String isNull=false
+06-28 10:30:54.792 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-002, type: paragraph, content: La d├®riv├®e d'une fonction mesure la vitesse 
+├á laquelle la valeur de la fonction change par rapport ├á un changement de sa variable., order: 1, visible: true, animation: {}, position: {}, style: {}} 
+runtimeType=_Map<String, dynamic>
+06-28 10:30:54.793 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-002 runtimeType=String isNull=false
+06-28 10:30:54.793 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+06-28 10:30:54.793 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=La d├®riv├®e d'une fonction mesure la vitesse ├á laquelle la valeur de la fonction change 
+par rapport ├á un changement de sa variable. runtimeType=String isNull=false
+06-28 10:30:54.794 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-003, type: paragraph, content: Elle repr├®sente la pente de la tangente ├á 
+la courbe de la fonction en un point donn├®., order: 2, visible: true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:30:54.794 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-003 runtimeType=String isNull=false
+06-28 10:30:54.794 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+06-28 10:30:54.795 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=Elle repr├®sente la pente de la tangente ├á la courbe de la fonction en un point donn├®. 
+runtimeType=String isNull=false
+06-28 10:30:54.795 25740 25740 I flutter : DEBUG-D19-58: Scene.fromJson START json={id: scene-002, order: 1, title: D├®finition Formelle, duration_ms: 8000, transition: 
+{}, blocks: [{id: block-004, type: title, content: D├®finition de la d├®riv├®e, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-005, type: 
+definition, content: La d├®riv├®e d'une fonction f en un point xÔéÇ, not├®e f'(xÔéÇ), est d├®finie par la limite :, order: 1, visible: true, animation: {}, position: {}, 
+style: {}}, {id: block-006, type: formula, content: f'(xÔéÇ) = \lim_{h \to 0} \frac{f(xÔéÇ + h) - f(xÔéÇ)}{h}, order: 2, visible: true, animation: {}, position: {}, 
+style: {}}]} runtimeType=_Map<String, dynamic>
+06-28 10:30:54.795 25740 25740 I flutter : DEBUG-D19-59: Scene.fromJson id=scene-002 runtimeType=String isNull=false
+06-28 10:30:54.795 25740 25740 I flutter : DEBUG-D19-60: Scene.fromJson order=1 runtimeType=int isNull=false
+06-28 10:30:54.796 25740 25740 I flutter : DEBUG-D19-61: Scene.fromJson title=D├®finition Formelle runtimeType=String isNull=false
+06-28 10:30:54.796 25740 25740 I flutter : DEBUG-D19-62: Scene.fromJson duration_ms=8000 runtimeType=int isNull=false
+06-28 10:30:54.796 25740 25740 I flutter : DEBUG-D19-63: Scene.fromJson blocks=[{id: block-004, type: title, content: D├®finition de la d├®riv├®e, order: 0, visible: 
+true, animation: {}, position: {}, style: {}}, {id: block-005, type: definition, content: La d├®riv├®e d'une fonction f en un point xÔéÇ, not├®e f'(xÔéÇ), est d├®finie 
+par la limite :, order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-006, type: formula, content: f'(xÔéÇ) = \lim_{h \to 0} \frac{f(xÔéÇ + h) - 
+f(xÔéÇ)}{h}, order: 2, visible: true, animation: {}, position: {}, style: {}}] runtimeType=List<dynamic> isNull=false
+06-28 10:30:54.797 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-004, type: title, content: D├®finition de la d├®riv├®e, order: 0, visible: 
+true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:30:54.798 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-004 runtimeType=String isNull=false
+06-28 10:30:54.798 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=title runtimeType=String isNull=false
+06-28 10:30:54.798 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=D├®finition de la d├®riv├®e runtimeType=String isNull=false
+06-28 10:30:54.800 25740 25740 I flutter : DEBUG-D19-64: Block.fromJson START json={id: block-005, type: definition, content: La d├®riv├®e d'une fonction f en un point 
+xÔéÇ, not├®e f'(xÔéÇ), est d├®finie par la limite :, order: 1, visible: true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+06-28 10:30:54.800 25740 25740 I flutter : DEBUG-D19-65: Block.fromJson id=block-005 runtimeType=String isNull=false
+06-28 10:30:54.800 25740 25740 I flutter : DEBUG-D19-66: Block.fromJson type=definition runtimeType=String isNull=false
+06-28 10:30:54.800 25740 25740 I flutter : DEBUG-D19-67: Block.fromJson content=La d├®riv├®e d'une fonction f en un point xÔéÇ, not├®e f'(xÔéÇ), est d├®finie par la 
+limite : runtimeType=String isNull=false
+
+

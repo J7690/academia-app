@@ -64,6 +64,3 @@
 # Sceneform AR — referenced transitively but not used
 -dontwarn com.google.ar.sceneform.**
 -dontwarn com.google.devtools.build.android.desugar.runtime.**
-
-# Google Mobile Ads
--dontwarn com.google.android.gms.ads.**

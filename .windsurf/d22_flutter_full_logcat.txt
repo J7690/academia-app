@@ -1,0 +1,6 @@
+﻿--------- beginning of system
+--------- beginning of main
+06-28 09:45:29.190 12481 12481 I flutter : [StudentApplicationsProvider] loadApplications start userId=6745c7ad-732b-47d0-b5b8-06d6dcf286ff email=nexiomgroup@gmail.com
+06-28 09:45:29.398 12481 12481 I flutter : [StudentApplicationsProvider] RPC app_list_student_applications rawType=List<dynamic>
+06-28 09:45:29.398 12481 12481 I flutter : [StudentApplicationsProvider] parsed applications length=10
+06-28 09:45:30.329 12481 12481 I flutter : [PushTrigger] OK ÔÇö processed pending push

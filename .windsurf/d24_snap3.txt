@@ -1,0 +1,2 @@
+﻿06-28 10:28:33.513 25740 25740 I flutter : DEBUG-D24-01: _currentProject BUILT subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+06-28 10:28:33.514 25740 25740 I flutter : DEBUG-D24-02: generateStoryboard PAYLOAD subject=d├®riv├®s d'une fonction renderer=notebook theme=notebook narration_mode=tts

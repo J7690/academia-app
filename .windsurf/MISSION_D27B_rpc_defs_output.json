@@ -1,0 +1,57 @@
+{
+  "whiteboard_get_project": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.whiteboard_get_project(p_project_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  project_record RECORD;\n  result JSONB;\nBEGIN\n  SELECT \n    id,\n    student_id,\n    subject,\n    status,\n    created_at,\n    updated_at,\n    renderer_id,\n    theme_id,\n    narration_mode,\n    storyboard_json\n  INTO project_record\n  FROM app.whiteboard_projects\n  WHERE id = p_project_id\n  AND student_id = auth.uid();\n\n  IF NOT FOUND THEN\n    RETURN jsonb_build_object('success', false, 'error', 'Project not found');\n  END IF;\n\n  result := jsonb_build_object(\n    'success', true,\n    'project', to_jsonb(project_record)\n  );\n\n  RETURN result;\nEND;\n$function$\n",
+        "nspname": "public",
+        "proname": "whiteboard_get_project"
+      }
+    ]
+  },
+  "whiteboard_update_project": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.whiteboard_update_project(p_project_id uuid, p_subject text DEFAULT NULL::text, p_status text DEFAULT NULL::text, p_renderer_id text DEFAULT NULL::text, p_theme_id text DEFAULT NULL::text, p_narration_mode text DEFAULT NULL::text, p_storyboard_json jsonb DEFAULT NULL::jsonb)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  project_record RECORD;\n  result JSONB;\nBEGIN\n  UPDATE app.whiteboard_projects\n  SET \n    subject = COALESCE(p_subject, subject),\n    status = COALESCE(p_status, status),\n    renderer_id = COALESCE(p_renderer_id, renderer_id),\n    theme_id = COALESCE(p_theme_id, theme_id),\n    narration_mode = COALESCE(p_narration_mode, narration_mode),\n    storyboard_json = COALESCE(p_storyboard_json, storyboard_json),\n    updated_at = NOW()\n  WHERE id = p_project_id\n  AND student_id = auth.uid()\n  RETURNING * INTO project_record;\n\n  IF NOT FOUND THEN\n    RETURN jsonb_build_object('success', false, 'error', 'Project not found');\n  END IF;\n\n  result := jsonb_build_object(\n    'success', true,\n    'project', to_jsonb(project_record)\n  );\n\n  RETURN result;\nEND;\n$function$\n",
+        "nspname": "public",
+        "proname": "whiteboard_update_project"
+      }
+    ]
+  },
+  "whiteboard_delete_project": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.whiteboard_delete_project(p_project_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  result JSONB;\nBEGIN\n  DELETE FROM app.whiteboard_projects\n  WHERE id = p_project_id\n  AND student_id = auth.uid();\n\n  result := jsonb_build_object(\n    'success', true,\n    'message', 'Project deleted'\n  );\n\n  RETURN result;\nEND;\n$function$\n",
+        "nspname": "public",
+        "proname": "whiteboard_delete_project"
+      }
+    ]
+  },
+  "whiteboard_list_projects": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.whiteboard_list_projects(p_status text DEFAULT NULL::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  projects JSONB;\n  result JSONB;\nBEGIN\n  SELECT jsonb_agg(to_jsonb(t))\n  INTO projects\n  FROM (\n    SELECT \n      id,\n      student_id,\n      subject,\n      status,\n      created_at,\n      updated_at,\n      renderer_id,\n      theme_id,\n      narration_mode\n    FROM app.whiteboard_projects\n    WHERE student_id = auth.uid()\n    AND (p_status IS NULL OR status = p_status)\n    ORDER BY created_at DESC\n  ) t;\n\n  result := jsonb_build_object(\n    'success', true,\n    'projects', COALESCE(projects, '[]'::jsonb)\n  );\n\n  RETURN result;\nEND;\n$function$\n",
+        "nspname": "public",
+        "proname": "whiteboard_list_projects"
+      }
+    ]
+  },
+  "whiteboard_create_project": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.whiteboard_create_project(p_student_id uuid, p_subject text, p_renderer_id text, p_theme_id text, p_narration_mode text, p_storyboard_json jsonb DEFAULT '{}'::jsonb)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_project_id uuid;\n  v_result jsonb;\nBEGIN\n  INSERT INTO app.whiteboard_projects (\n    student_id,\n    subject,\n    status,\n    renderer_id,\n    theme_id,\n    narration_mode,\n    storyboard_json\n  ) VALUES (\n    p_student_id,\n    p_subject,\n    'draft',\n    p_renderer_id,\n    p_theme_id,\n    p_narration_mode,\n    p_storyboard_json\n  )\n  RETURNING id INTO v_project_id;\n\n  v_result := jsonb_build_object(\n    'success', true,\n    'project_id', v_project_id\n  );\n\n  RETURN v_result;\nEND;\n$function$\n",
+        "nspname": "public",
+        "proname": "whiteboard_create_project"
+      }
+    ]
+  }
+}

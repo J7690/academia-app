@@ -1,0 +1,23 @@
+================================================================================
+AUDIT DU SYSTÈME DE RÉFÉRENCIATION DES PROSPECTS COMMERCIAUX
+Date: 2026-07-07T10:10:24.335117
+================================================================================
+
+
+=== ÉTAPE 1: TABLES AVEC 'referral' OU 'ref' ===
+
+STATUS: 200
+❌ Aucune table trouvée
+
+=== ÉTAPE 2: TABLES LIÉES AUX COMMERCIAUX ===
+
+STATUS: 200
+❌ Aucune table trouvée
+
+=== ÉTAPE 3: STRUCTURE DE commercial_profiles ===
+
+STATUS: 200
+❌ Erreur ou pas de données
+
+=== ÉTAPE 4: COLONNES 'ref' DANS students ===
+

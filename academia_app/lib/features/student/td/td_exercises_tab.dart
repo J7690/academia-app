@@ -508,23 +508,26 @@ class _TdExercisesTabState extends State<TdExercisesTab> {
         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         children: [
           // ─── Generate buttons ─────────────────────────────────────
-          Row(children: [
-            Expanded(child: _GenerateButton(
-              icon: Icons.auto_awesome,
-              label: 'Générer exercices',
-              color: accent,
-              loading: _generating,
-              onTap: () => _showGenerateSheet(mode: 'exercise'),
-            )),
-            const SizedBox(width: 10),
-            Expanded(child: _GenerateButton(
-              icon: Icons.description,
-              label: 'Générer devoir type',
-              color: const Color(0xFFDB2777),
-              loading: _generating,
-              onTap: () => _showGenerateSheet(mode: 'exam'),
-            )),
-          ]),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              Flexible(child: _GenerateButton(
+                icon: Icons.auto_awesome,
+                label: 'Générer exercices',
+                color: accent,
+                loading: _generating,
+                onTap: () => _showGenerateSheet(mode: 'exercise'),
+              )),
+              Flexible(child: _GenerateButton(
+                icon: Icons.description,
+                label: 'Générer devoir type',
+                color: const Color(0xFFDB2777),
+                loading: _generating,
+                onTap: () => _showGenerateSheet(mode: 'exam'),
+              )),
+            ],
+          ),
           if (_generating) ...[
             const SizedBox(height: 12),
             Center(child: Row(mainAxisSize: MainAxisSize.min, children: [

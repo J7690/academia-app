@@ -1,0 +1,92 @@
+[
+  {
+    "schema_name": "app",
+    "function_name": "whiteboard_ai_generations_updated_at",
+    "arguments": "",
+    "returns": "trigger"
+  },
+  {
+    "schema_name": "app",
+    "function_name": "whiteboard_projects_updated_at",
+    "arguments": "",
+    "returns": "trigger"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "_verify_whiteboard_functions",
+    "arguments": "",
+    "returns": "TABLE(schema_name text, function_name text, arguments text, returns text)"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "whiteboard_create_project",
+    "arguments": "p_student_id uuid, p_subject text, p_renderer_id text, p_theme_id text, p_narration_mode text, p_storyboard_json jsonb",
+    "returns": "jsonb"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "whiteboard_create_render_job",
+    "arguments": "p_project_id uuid",
+    "returns": "jsonb"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "whiteboard_delete_project",
+    "arguments": "p_project_id uuid",
+    "returns": "jsonb"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "whiteboard_fetch_queued_jobs",
+    "arguments": "p_limit integer",
+    "returns": "TABLE(id uuid, storyboard jsonb, created_at timestamp with time zone)"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "whiteboard_get_any_student_id",
+    "arguments": "",
+    "returns": "uuid"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "whiteboard_get_project",
+    "arguments": "p_project_id uuid",
+    "returns": "jsonb"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "whiteboard_get_render_status",
+    "arguments": "p_render_id uuid",
+    "returns": "jsonb"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "whiteboard_list_projects",
+    "arguments": "p_status text",
+    "returns": "jsonb"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "whiteboard_mark_done",
+    "arguments": "p_job_id uuid, p_video_url text, p_duration_ms integer",
+    "returns": "void"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "whiteboard_mark_failed",
+    "arguments": "p_job_id uuid, p_error_message text",
+    "returns": "void"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "whiteboard_mark_processing",
+    "arguments": "p_job_id uuid",
+    "returns": "void"
+  },
+  {
+    "schema_name": "public",
+    "function_name": "whiteboard_update_project",
+    "arguments": "p_project_id uuid, p_subject text, p_status text, p_renderer_id text, p_theme_id text, p_narration_mode text, p_storyboard_json jsonb",
+    "returns": "jsonb"
+  }
+]

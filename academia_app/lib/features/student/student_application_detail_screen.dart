@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:animate_do/animate_do.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -409,119 +410,185 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
             ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.06),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: statusColor.withOpacity(0.4)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              width: 68,
-                              child: BobodoView(
-                                state: bobodoState,
-                                size: 56,
-                                text: bobodoText,
+                FadeInDown(
+                  duration: const Duration(milliseconds: 400),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            statusColor.withOpacity(0.1),
+                            statusColor.withOpacity(0.02),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: statusColor.withOpacity(0.3), width: 1.2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: statusColor.withOpacity(0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 64,
+                                height: 64,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      statusColor.withOpacity(0.2),
+                                      statusColor.withOpacity(0.05),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Center(
+                                  child: BobodoView(
+                                    state: bobodoState,
+                                    size: 56,
+                                    text: bobodoText,
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (programTitle.isNotEmpty)
+                                      Text(
+                                        degreeLevel.isNotEmpty
+                                            ? '$programTitle · $degreeLevel'
+                                            : programTitle,
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                          color: const Color(0xFF0A2540),
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    if (universityName.isNotEmpty) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        universityName,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Color(0xFF6B7280),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                    const SizedBox(height: 12),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 4,
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: statusColor.withOpacity(0.15),
+                                            borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(color: statusColor.withOpacity(0.3)),
+                                          ),
+                                          child: Text(
+                                            statusLabel,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: statusColor,
+                                            ),
+                                          ),
+                                        ),
+                                        if (statusLine.isNotEmpty)
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.calendar_today_outlined,
+                                                size: 14,
+                                                color: const Color(0xFF9CA3AF),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                statusLine,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Color(0xFF9CA3AF),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (motivation.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFFE5E7EB)),
+                              ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  if (programTitle.isNotEmpty)
-                                    Text(
-                                      degreeLevel.isNotEmpty
-                                          ? '$programTitle · $degreeLevel'
-                                          : programTitle,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: statusColor,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  if (universityName.isNotEmpty) ...[
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      universityName,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        color: Color(0xFF6B7280),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                  const SizedBox(height: 6),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 4,
-                                    crossAxisAlignment: WrapCrossAlignment.center,
+                                  Row(
                                     children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: statusColor.withOpacity(0.12),
-                                          borderRadius: BorderRadius.circular(999),
-                                        ),
-                                        child: Text(
-                                          statusLabel,
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: statusColor,
-                                          ),
+                                      Icon(
+                                        Icons.format_quote,
+                                        color: statusColor.withOpacity(0.5),
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Text(
+                                        'Message de motivation',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF0A2540),
                                         ),
                                       ),
-                                      if (statusLine.isNotEmpty)
-                                        Text(
-                                          statusLine,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0xFF6B7280),
-                                          ),
-                                        ),
                                     ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    motivation,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF4B5563),
+                                      height: 1.5,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
                           ],
-                        ),
-                        if (motivation.isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Message de motivation',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF0A2540),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            motivation,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF4B5563),
-                              height: 1.4,
-                            ),
-                          ),
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -572,22 +639,49 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                       );
                     }
 
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
+                    return FadeInUp(
+                      duration: const Duration(milliseconds: 350),
+                      child: Container(
+                        margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.03),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 4,
-                              crossAxisAlignment: WrapCrossAlignment.center,
+                            Row(
                               children: [
-                                const Text(
-                                  'Frais de courtage',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF3275D0).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.payments_outlined,
+                                    color: Color(0xFF3275D0),
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
+                                    'Frais de courtage',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF0A2540),
+                                    ),
                                   ),
                                 ),
                                 TextButton.icon(
@@ -605,7 +699,7 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                             if (feeData == null || feeData['success'] != true) {
                                               if (!context.mounted) return;
                                               ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(content: Text(feeData?['error']?.toString() ?? 'Erreur r\u00e9cup\u00e9ration tarif')),
+                                                SnackBar(content: Text(feeData?['error']?.toString() ?? 'Erreur récupération tarif')),
                                               );
                                               return;
                                             }
@@ -613,7 +707,7 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                             if (brokerageFee <= 0) {
                                               if (!context.mounted) return;
                                               ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(content: Text('Les frais de courtage ne sont pas encore d\u00e9finis pour ce programme.')),
+                                                const SnackBar(content: Text('Les frais de courtage ne sont pas encore définis pour ce programme.')),
                                               );
                                               return;
                                             }
@@ -657,7 +751,7 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                               if (data == null || data['success'] != true) {
                                                 if (!context.mounted) return;
                                                 ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(content: Text(data?['error']?.toString() ?? 'Erreur cr\u00e9ation paiement')),
+                                                  SnackBar(content: Text(data?['error']?.toString() ?? 'Erreur création paiement')),
                                                 );
                                                 return;
                                               }
@@ -678,7 +772,7 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                             paymentType: 'application',
                                             paymentId: paymentId,
                                             amount: amountDue,
-                                            description: 'Frais de courtage \u2014 candidature',
+                                            description: 'Frais de courtage — candidature',
                                             onSuccess: () {
                                               paymentsProvider.loadPayments(appId);
                                             },
@@ -689,7 +783,7 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
                             content,
                           ],
                         ),
@@ -698,23 +792,26 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                   },
                 ),
                 const Divider(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      const Text(
-                        'Documents de candidature',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      TextButton.icon(
-                        onPressed: _pickAndUploadFile,
-                        icon: const Icon(Icons.upload_file),
-                        label: const Text('Ajouter un document'),
-                      ),
-                    ],
+                FadeInUp(
+                  duration: const Duration(milliseconds: 350),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        const Text(
+                          'Documents de candidature',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextButton.icon(
+                          onPressed: _pickAndUploadFile,
+                          icon: const Icon(Icons.upload_file),
+                          label: const Text('Ajouter un document'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 Consumer<StudentApplicationFilesProvider>(
@@ -743,168 +840,202 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                         );
                       }
 
-                      return Column(
-                        children: List.generate(files.length, (index) {
-                          final file = files[index];
-                          final type = file['file_type']?.toString() ?? '';
-                          final path = file['storage_path']?.toString() ?? '';
-                          final uploadedAt = file['uploaded_at']?.toString() ?? '';
+                      return FadeInUp(
+                        duration: const Duration(milliseconds: 350),
+                        child: Column(
+                          children: List.generate(files.length, (index) {
+                            final file = files[index];
+                            final type = file['file_type']?.toString() ?? '';
+                            final path = file['storage_path']?.toString() ?? '';
+                            final uploadedAt = file['uploaded_at']?.toString() ?? '';
 
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 6,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(Icons.insert_drive_file, size: 20),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            type.isNotEmpty ? type : 'Document',
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(fontSize: 14),
-                                          ),
-                                          Text(
-                                            path,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Color(0xFF6B7280),
-                                            ),
-                                          ),
-                                        ],
+                            return Container(
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 6,
+                              ),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFFE5E7EB)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF3275D0).withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: const Icon(
+                                          Icons.insert_drive_file,
+                                          size: 20,
+                                          color: Color(0xFF3275D0),
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Wrap(
-                                  spacing: 4,
-                                  runSpacing: 4,
-                                  crossAxisAlignment: WrapCrossAlignment.center,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.visibility, size: 20),
-                                      tooltip: 'Voir',
-                                      constraints: const BoxConstraints(),
-                                      padding: const EdgeInsets.all(6),
-                                      onPressed: () async {
-                                        final provider = context
-                                            .read<StudentApplicationFilesProvider>();
-                                        final url =
-                                            await provider.createSignedUrl(path);
-                                        if (!context.mounted) return;
-                                        if (url == null) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                provider.error ??
-                                                    'Impossible d\'ouvrir le document.',
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              type.isNotEmpty ? type : 'Document',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF0A2540),
                                               ),
                                             ),
-                                          );
-                                          return;
-                                        }
-                                        final uri = Uri.parse(url);
-                                        final opened = await launchUrl(
-                                          uri,
-                                          mode: LaunchMode.externalApplication,
-                                        );
-                                        if (!opened && context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Impossible d\'ouvrir le document.',
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              path,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Color(0xFF6B7280),
                                               ),
                                             ),
-                                          );
-                                        }
-                                      },
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete, size: 20),
-                                      tooltip: 'Supprimer',
-                                      constraints: const BoxConstraints(),
-                                      padding: const EdgeInsets.all(6),
-                                      onPressed: () async {
-                                        final id = file['id']?.toString();
-                                        if (id == null || id.isEmpty || appId.isEmpty) {
-                                          return;
-                                        }
-                                        final confirm = await showDialog<bool>(
-                                          context: context,
-                                          builder: (ctx) => AlertDialog(
-                                            title: const Text(
-                                                'Supprimer ce document ?'),
-                                            content: const Text(
-                                              'Cette action est définitive.',
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () =>
-                                                    Navigator.of(ctx).pop(false),
-                                                child: const Text('Annuler'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () =>
-                                                    Navigator.of(ctx).pop(true),
-                                                child: const Text('Supprimer'),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                        if (confirm != true || !context.mounted) {
-                                          return;
-                                        }
-                                        final provider = context
-                                            .read<StudentApplicationFilesProvider>();
-                                        final ok = await provider.deleteFile(
-                                          fileId: id,
-                                          storagePath: path,
-                                          applicationId: appId,
-                                        );
-                                        if (!context.mounted) return;
-                                        if (ok) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Document supprimé avec succès.',
-                                              ),
-                                            ),
-                                          );
-                                        } else {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                provider.error ??
-                                                    'Erreur lors de la suppression.',
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      },
-                                    ),
-                                    if (uploadedAt.isNotEmpty)
-                                      Text(
-                                        uploadedAt,
-                                        style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                                          ],
+                                        ),
                                       ),
-                                  ],
-                                ),
-                                const Divider(height: 1),
-                              ],
-                            ),
-                          );
-                        }),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 4,
+                                    crossAxisAlignment: WrapCrossAlignment.center,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.visibility, size: 20),
+                                        tooltip: 'Voir',
+                                        constraints: const BoxConstraints(),
+                                        padding: const EdgeInsets.all(6),
+                                        onPressed: () async {
+                                          final provider = context
+                                              .read<StudentApplicationFilesProvider>();
+                                          final url =
+                                              await provider.createSignedUrl(path);
+                                          if (!context.mounted) return;
+                                          if (url == null) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  provider.error ??
+                                                      'Impossible d\'ouvrir le document.',
+                                                ),
+                                              ),
+                                            );
+                                            return;
+                                          }
+                                          final uri = Uri.parse(url);
+                                          final opened = await launchUrl(
+                                            uri,
+                                            mode: LaunchMode.externalApplication,
+                                          );
+                                          if (!opened && context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Impossible d\'ouvrir le document.',
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete, size: 20),
+                                        tooltip: 'Supprimer',
+                                        constraints: const BoxConstraints(),
+                                        padding: const EdgeInsets.all(6),
+                                        onPressed: () async {
+                                          final id = file['id']?.toString();
+                                          if (id == null || id.isEmpty || appId.isEmpty) {
+                                            return;
+                                          }
+                                          final confirm = await showDialog<bool>(
+                                            context: context,
+                                            builder: (ctx) => AlertDialog(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(16),
+                                              ),
+                                              title: const Text(
+                                                  'Supprimer ce document ?'),
+                                              content: const Text(
+                                                'Cette action est définitive.',
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.of(ctx).pop(false),
+                                                  child: const Text('Annuler'),
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: () =>
+                                                      Navigator.of(ctx).pop(true),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: const Color(0xFFEF4444),
+                                                    foregroundColor: Colors.white,
+                                                  ),
+                                                  child: const Text('Supprimer'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                          if (confirm != true || !context.mounted) {
+                                            return;
+                                          }
+                                          final provider = context
+                                              .read<StudentApplicationFilesProvider>();
+                                          final ok = await provider.deleteFile(
+                                            fileId: id,
+                                            storagePath: path,
+                                            applicationId: appId,
+                                          );
+                                          if (!context.mounted) return;
+                                          if (ok) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Document supprimé avec succès.',
+                                                ),
+                                              ),
+                                            );
+                                          } else {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  provider.error ??
+                                                      'Erreur lors de la suppression.',
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        },
+                                      ),
+                                      if (uploadedAt.isNotEmpty)
+                                        Text(
+                                          uploadedAt,
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFF9CA3AF),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                        ),
                       );
                     },
                   ),
@@ -949,8 +1080,8 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                           final alignment =
                               isStudent ? Alignment.centerRight : Alignment.centerLeft;
                           final Color bubbleColor = isStudent
-                              ? const Color(0xFF3275D0).withOpacity(0.12)
-                              : Theme.of(context).colorScheme.surfaceVariant;
+                              ? const Color(0xFF3275D0).withValues(alpha: 0.12)
+                              : Theme.of(context).colorScheme.surfaceContainerHighest;
                           final Color textColor = isStudent
                               ? const Color(0xFF0A2540)
                               : const Color(0xFF111827);
@@ -959,6 +1090,9 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                           return Align(
                             alignment: alignment,
                             child: Container(
+                              constraints: BoxConstraints(
+                                maxWidth: MediaQuery.of(context).size.width * 0.8,
+                              ),
                               margin: const EdgeInsets.symmetric(vertical: 4),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
@@ -1011,42 +1145,54 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                           controller: _messageController,
                           minLines: 1,
                           maxLines: 4,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             hintText:
                                 'Écrire un message de négociation (réduction, conditions...)',
-                            border: OutlineInputBorder(),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(Icons.send),
-                        onPressed: () async {
-                          final appId = widget.application['id']?.toString();
-                          if (appId == null || appId.isEmpty) return;
-                          final text = _messageController.text.trim();
-                          if (text.isEmpty) return;
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3275D0),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.send, color: Colors.white),
+                          onPressed: () async {
+                            final appId = widget.application['id']?.toString();
+                            if (appId == null || appId.isEmpty) return;
+                            final text = _messageController.text.trim();
+                            if (text.isEmpty) return;
 
-                          final provider =
-                              context.read<StudentApplicationMessagesProvider>();
-                          final ok = await provider.sendMessage(
-                            applicationId: appId,
-                            content: text,
-                          );
-                          if (!mounted) return;
-                          if (ok) {
-                            _messageController.clear();
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  provider.error ??
-                                      'Erreur lors de l\'envoi du message.',
-                                ),
-                              ),
+                            final provider =
+                                context.read<StudentApplicationMessagesProvider>();
+                            final ok = await provider.sendMessage(
+                              applicationId: appId,
+                              content: text,
                             );
-                          }
-                        },
+                            if (!mounted) return;
+                            if (ok) {
+                              _messageController.clear();
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    provider.error ??
+                                        'Erreur lors de l\'envoi du message.',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -1070,7 +1216,7 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
                 child: const Text('Retour'),

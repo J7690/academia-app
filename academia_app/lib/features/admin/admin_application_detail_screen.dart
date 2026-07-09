@@ -315,7 +315,9 @@ class _AdminApplicationDetailScreenState extends State<AdminApplicationDetailScr
                                   if (extRef.isNotEmpty)
                                     Text('Référence externe : $extRef'),
                                   const SizedBox(height: 4),
-                                  Row(
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
                                     children: [
                                       OutlinedButton.icon(
                                         onPressed: appId == null ||
@@ -347,7 +349,6 @@ class _AdminApplicationDetailScreenState extends State<AdminApplicationDetailScr
                                         icon: const Icon(Icons.verified),
                                         label: const Text('Valider'),
                                       ),
-                                      const SizedBox(width: 8),
                                       OutlinedButton.icon(
                                         onPressed: appId == null ||
                                                 appId.isEmpty ||
@@ -378,7 +379,6 @@ class _AdminApplicationDetailScreenState extends State<AdminApplicationDetailScr
                                         icon: const Icon(Icons.clear),
                                         label: const Text('Rejeter'),
                                       ),
-                                      const SizedBox(width: 8),
                                       ElevatedButton.icon(
                                         onPressed: appId == null ||
                                                 appId.isEmpty ||
@@ -488,7 +488,9 @@ class _AdminApplicationDetailScreenState extends State<AdminApplicationDetailScr
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
                       TextButton.icon(
                         onPressed: () {
@@ -497,7 +499,6 @@ class _AdminApplicationDetailScreenState extends State<AdminApplicationDetailScr
                         icon: const Icon(Icons.edit),
                         label: const Text('Modifier les préférences'),
                       ),
-                      const SizedBox(width: 8),
                       if (!sentToUniversity)
                         ElevatedButton.icon(
                           onPressed: () async {

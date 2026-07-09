@@ -200,7 +200,7 @@ class _PrepPsychotechTabState extends State<PrepPsychotechTab> {
                   onTap: () => setState(() => _difficulty = i + 1),
                   child: Container(
                     margin: const EdgeInsets.only(right: 6),
-                    width: 28, height: 28,
+                    width: 24, height: 24,
                     decoration: BoxDecoration(
                       color: i < _difficulty ? Colors.white : Colors.white.withAlpha(40),
                       borderRadius: BorderRadius.circular(6),

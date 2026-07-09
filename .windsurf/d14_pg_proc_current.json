@@ -1,0 +1,42 @@
+[
+  {
+    "nspname": "app",
+    "proname": "whiteboard_ai_generations_updated_at",
+    "signature": ""
+  },
+  {
+    "nspname": "app",
+    "proname": "whiteboard_projects_updated_at",
+    "signature": ""
+  },
+  {
+    "nspname": "public",
+    "proname": "_audit_whiteboard_functions",
+    "signature": ""
+  },
+  {
+    "nspname": "public",
+    "proname": "whiteboard_fetch_queued_jobs",
+    "signature": "p_limit integer"
+  },
+  {
+    "nspname": "public",
+    "proname": "whiteboard_get_any_student_id",
+    "signature": ""
+  },
+  {
+    "nspname": "public",
+    "proname": "whiteboard_mark_done",
+    "signature": "p_job_id uuid, p_video_url text, p_duration_ms integer"
+  },
+  {
+    "nspname": "public",
+    "proname": "whiteboard_mark_failed",
+    "signature": "p_job_id uuid, p_error_message text"
+  },
+  {
+    "nspname": "public",
+    "proname": "whiteboard_mark_processing",
+    "signature": "p_job_id uuid"
+  }
+]

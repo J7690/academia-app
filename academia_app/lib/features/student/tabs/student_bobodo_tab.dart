@@ -1737,46 +1737,85 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.mic, color: PrepTheme.primary),
-            SizedBox(width: 8),
-            Text('Mode conversation vocale'),
+            Icon(Icons.mic, color: PrepTheme.primary, size: 24),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Mode conversation vocale',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+            ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Comment utiliser le mode conversation :',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 12),
-            Text('1. Parlez naturellement'),
-            Text('2. Appuyez sur le bouton ENVOYER (➤)'),
-            Text('3. Bobodo vous répondra vocalement'),
-            SizedBox(height: 12),
-            Text(
-              'Vous pouvez interrompre Bobodo en parlant à nouveau.',
-              style: TextStyle(fontSize: 12, color: PrepTheme.textSecondary),
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Comment utiliser le mode conversation :',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 16),
+              _buildGuideStep('1. Parlez naturellement'),
+              const SizedBox(height: 8),
+              _buildGuideStep('2. Appuyez sur le bouton ENVOYER (➤)'),
+              const SizedBox(height: 8),
+              _buildGuideStep('3. Bobodo vous répondra vocalement'),
+              const SizedBox(height: 16),
+              Text(
+                'Vous pouvez interrompre Bobodo en parlant à nouveau.',
+                style: TextStyle(fontSize: 13, color: PrepTheme.textSecondary, height: 1.4),
+              ),
+            ],
+          ),
         ),
         actions: [
-          TextButton(
-            onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setBool('has_seen_conversation_guide', true);
-              setState(() {
-                _hasSeenConversationGuide = true;
-              });
-              Navigator.of(context).pop();
-            },
-            child: Text('Compris'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setBool('has_seen_conversation_guide', true);
+                  setState(() {
+                    _hasSeenConversationGuide = true;
+                  });
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Compris', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildGuideStep(String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 2),
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color: PrepTheme.primary,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 14, height: 1.4),
+          ),
+        ),
+      ],
     );
   }
 

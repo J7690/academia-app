@@ -1,0 +1,18 @@
+{
+  "kamatera_tables": [],
+  "kamatera_rpcs": [],
+  "kamatera_edge_functions": {
+    "kamatera-render": {
+      "exists": false
+    },
+    "kamatera-worker": {
+      "exists": false
+    },
+    "render-video": {
+      "exists": false
+    },
+    "video-render": {
+      "exists": false
+    }
+  }
+}

@@ -297,35 +297,34 @@ class TdHomeTab extends StatelessWidget {
                 const Text('Actions rapides',
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: TdTheme.textPrimary)),
                 const SizedBox(height: 10),
-                Row(
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
                   children: [
-                    _QuickAction(
+                    Flexible(child: _QuickAction(
                       icon: Icons.explore,
                       label: 'Explorer',
                       color: TdTheme.studentTdPrimary,
                       onTap: () => DefaultTabController.of(context).animateTo(1),
-                    ),
-                    const SizedBox(width: 10),
-                    _QuickAction(
+                    )),
+                    Flexible(child: _QuickAction(
                       icon: Icons.menu_book,
                       label: 'Mes TD',
                       color: TdTheme.success,
                       onTap: () => DefaultTabController.of(context).animateTo(2),
-                    ),
-                    const SizedBox(width: 10),
-                    _QuickAction(
+                    )),
+                    Flexible(child: _QuickAction(
                       icon: Icons.leaderboard,
                       label: 'Classement',
                       color: const Color(0xFFF59E0B),
                       onTap: () => DefaultTabController.of(context).animateTo(4),
-                    ),
-                    const SizedBox(width: 10),
-                    _QuickAction(
+                    )),
+                    Flexible(child: _QuickAction(
                       icon: Icons.bar_chart,
                       label: 'Stats',
                       color: const Color(0xFFEF4444),
                       onTap: () => DefaultTabController.of(context).animateTo(5),
-                    ),
+                    )),
                   ],
                 ),
               ],

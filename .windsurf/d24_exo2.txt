@@ -1,0 +1,30 @@
+﻿06-28 11:40:21.773  1240  1240 D Griffin/ComponentManager: Limit start proc:com.video.fun.app for 3rd-normal-service caller=system/1240,Intent { cmp=com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService }
+06-28 11:40:21.773  1240  1240 W ActivityManager: Unable to launch app com.video.fun.app/10559 for service Intent { cmp=com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService }: AutoStart Limit
+06-28 11:40:21.773  1240  1240 D JobScheduler: Error executing JobStatus{d8f5ef5 #u0a559/242 com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService u=0 s=10559 TIME=-48m49s648ms:none READY}
+06-28 11:40:48.561  1240  1240 D Griffin/ComponentManager: Limit start proc:com.video.fun.app for 3rd-normal-service caller=system/1240,Intent { cmp=com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService }
+06-28 11:40:48.561  1240  1240 W ActivityManager: Unable to launch app com.video.fun.app/10559 for service Intent { cmp=com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService }: AutoStart Limit
+06-28 11:40:48.561  1240  1240 D JobScheduler: Error executing JobStatus{d8f5ef5 #u0a559/242 com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService u=0 s=10559 TIME=-49m16s436ms:none READY}
+06-28 11:40:53.225  1240  1240 D Griffin/ComponentManager: Limit start proc:com.video.fun.app for 3rd-normal-service caller=system/1240,Intent { cmp=com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService }
+06-28 11:40:53.225  1240  1240 W ActivityManager: Unable to launch app com.video.fun.app/10559 for service Intent { cmp=com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService }: AutoStart Limit
+06-28 11:40:53.225  1240  1240 D JobScheduler: Error executing JobStatus{d8f5ef5 #u0a559/242 com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService u=0 s=10559 TIME=-49m21s100ms:none READY}
+06-28 11:40:55.271  1240  1240 D Griffin/ComponentManager: Limit start proc:com.video.fun.app for 3rd-normal-service caller=system/1240,Intent { cmp=com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService }
+06-28 11:40:55.272  1240  1240 W ActivityManager: Unable to launch app com.video.fun.app/10559 for service Intent { cmp=com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService }: AutoStart Limit
+06-28 11:40:55.272  1240  1240 D JobScheduler: Error executing JobStatus{d8f5ef5 #u0a559/242 com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService u=0 s=10559 TIME=-49m23s147ms:none READY}
+06-28 11:41:01.508  1240  1571 D Griffin/ResourceTracker: Cat meminfo coast time: 7ms
+06-28 11:41:07.428  1240  1240 D Griffin/ComponentManager: Limit start proc:com.video.fun.app for 3rd-normal-service caller=system/1240,Intent { cmp=com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService }
+06-28 11:41:07.428  1240  1240 W ActivityManager: Unable to launch app com.video.fun.app/10559 for service Intent { cmp=com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService }: AutoStart Limit
+06-28 11:41:07.429  1240  1240 D JobScheduler: Error executing JobStatus{d8f5ef5 #u0a559/242 com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService u=0 s=10559 TIME=-49m35s304ms:none READY}
+06-28 11:42:01.556  1240  1571 D Griffin/ResourceTracker: Cat meminfo coast time: 5ms
+06-28 11:43:01.604  1240  1571 D Griffin/ResourceTracker: Cat meminfo coast time: 5ms
+06-28 11:44:01.648  1240  1571 D Griffin/ResourceTracker: Cat meminfo coast time: 5ms
+06-28 11:44:18.592  1240  1240 D Griffin/ComponentManager: Limit start proc:com.video.fun.app for 3rd-normal-service caller=system/1240,Intent { cmp=com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService }
+06-28 11:44:18.592  1240  1240 W ActivityManager: Unable to launch app com.video.fun.app/10559 for service Intent { cmp=com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService }: AutoStart Limit
+06-28 11:44:18.592  1240  1240 D JobScheduler: Error executing JobStatus{d8f5ef5 #u0a559/242 com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService u=0 s=10559 TIME=-52m46s468ms:none READY}
+06-28 11:44:18.665  1240  1240 D Griffin/ComponentManager: Limit start proc:com.video.fun.app for 3rd-normal-service caller=system/1240,Intent { cmp=com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService }
+06-28 11:44:18.665  1240  1240 W ActivityManager: Unable to launch app com.video.fun.app/10559 for service Intent { cmp=com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService }: AutoStart Limit
+06-28 11:44:18.666  1240  1240 D JobScheduler: Error executing JobStatus{d8f5ef5 #u0a559/242 com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService u=0 s=10559 TIME=-52m46s541ms:none READY}
+06-28 11:44:23.664  1240  1240 D Griffin/ComponentManager: Limit start proc:com.video.fun.app for 3rd-normal-service caller=system/1240,Intent { cmp=com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService }
+06-28 11:44:23.664  1240  1240 W ActivityManager: Unable to launch app com.video.fun.app/10559 for service Intent { cmp=com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService }: AutoStart Limit
+06-28 11:44:23.665  1240  1240 D JobScheduler: Error executing JobStatus{d8f5ef5 #u0a559/242 com.video.fun.app/androidx.work.impl.background.systemjob.SystemJobService u=0 s=10559 TIME=-52m51s540ms:none READY}
+06-28 11:45:01.693  1240  1571 D Griffin/ResourceTracker: Cat meminfo coast time: 5ms
+06-28 11:46:01.735  1240  1571 D Griffin/ResourceTracker: Cat meminfo coast time: 4ms

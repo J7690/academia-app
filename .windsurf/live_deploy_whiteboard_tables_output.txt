@@ -1,0 +1,39 @@
+================================================================================
+LIVE DEPLOY WHITEBOARD TABLES
+2026-06-24T17:53:32.486713
+================================================================================
+
+1. CRÉATION SCHÉMA 'app'
+--------------------------------------------------------------------------------
+STATUS: 200
+BODY: {"ok": true, "mode": "exec", "affected_rows": 0}
+
+2. DÉPLOIEMENT TABLES WHITEBOARD
+--------------------------------------------------------------------------------
+STATUS: 200
+BODY: {"ok": false, "error": "relation \"whiteboard_projects\" already exists", "sqlstate": "42P07"}
+
+3. DÉPLOIEMENT RPCS WORKER
+--------------------------------------------------------------------------------
+STATUS: 200
+BODY: {"ok": true, "mode": "exec", "affected_rows": 0}
+
+4. DÉPLOIEMENT RPCS EDITOR
+--------------------------------------------------------------------------------
+STATUS: 200
+BODY: {"ok": true, "mode": "exec", "affected_rows": 0}
+
+5. VÉRIFICATION SCHÉMA 'app'
+--------------------------------------------------------------------------------
+STATUS: 200
+BODY: {"ok": true, "mode": "exec", "affected_rows": 1}
+
+6. VÉRIFICATION TABLES
+--------------------------------------------------------------------------------
+STATUS: 200
+BODY: {"ok": true, "mode": "exec", "affected_rows": 3}
+
+7. VÉRIFICATION RPCS
+--------------------------------------------------------------------------------
+STATUS: 200
+BODY: {"ok": true, "mode": "exec", "affected_rows": 29}

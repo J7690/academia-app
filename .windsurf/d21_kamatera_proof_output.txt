@@ -1,0 +1,275 @@
+======================================================================
+D21 - KAMATERA GROUND TRUTH
+Timestamp: 2026-06-30T13:39:51.696815
+======================================================================
+
+=== 1. whiteboard-worker systemd status ===
+CMD: systemctl status whiteboard-worker --no-pager -l 2>&1
+● whiteboard-worker.service - Whiteboard Render Worker Service
+     Loaded: loaded (/etc/systemd/system/whiteboard-worker.service; enabled; preset: enabled)
+     Active: active (running) since Mon 2026-06-29 09:15:20 UTC; 1 day 4h ago
+   Main PID: 490198 (python3)
+      Tasks: 2 (limit: 11864)
+     Memory: 35.4M (peak: 474.0M)
+        CPU: 55min 1.394s
+     CGroup: /system.slice/whiteboard-worker.service
+             └─490198 /usr/bin/python3 /opt/whiteboard-worker/whiteboard_render_worker.py
+
+Jun 30 13:39:42 academia00 python3[490198]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 30 13:39:42 academia00 python3[490198]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 30 13:39:44 academia00 python3[490198]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 30 13:39:44 academia00 python3[490198]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 30 13:39:47 academia00 python3[490198]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 30 13:39:47 academia00 python3[490198]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 30 13:39:49 academia00 python3[490198]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabas
+
+=== 2. whiteboard-worker process ===
+CMD: ps aux | grep whiteboard | grep -v grep
+root      490198  2.9  0.5 140408 52524 ?        Ssl  Jun29  51:03 /usr/bin/python3 /opt/whiteboard-worker/whiteboard_render_worker.py
+
+=== 3. whiteboard_render_worker.py RPC calls ===
+CMD: grep -n 'rpc\|whiteboard_' /opt/whiteboard-worker/whiteboard_render_worker.py
+22:from whiteboard_png_renderer import render_storyboard_to_pngs
+23:from whiteboard_ffmpeg_assembler import assemble_pngs_to_mp4
+24:from whiteboard_upload_renderer import upload_mp4_to_storage
+32:WHITEBOARD_TABLE = "whiteboard_renders"
+41:logger = logging.getLogger("whiteboard_render_worker")
+67:    rpc_url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/rpc/whiteboard_fetch_queued_jobs"
+69:        resp = await client.post(rpc_url, headers=_supabase_headers(), json={"p_limit": limit})
+76:    rpc_url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/rpc/whiteboard_mark_processing"
+78:        resp = await client.post(rpc_url, headers=_supabase_headers(), json={"p_job_id": job_id})
+84:    rpc_url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/rpc/whiteboard_mark_done"
+86:        resp = await client.post(rpc_url, headers=_supabase_headers(), json={
+96:    rpc_url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/rpc/whiteboard_mark_failed"
+98:        resp = await client.post(rpc_url, headers=_supabase_headers(), json={
+117:        logger.info(f"[whiteboard_render_worker] Processing job {job_id}")
+124:            logger.info(f"[whiteboard_render_worker] Generating PNGs for job {job_id}")
+128:            logger.info(f"[whiteboard_render_worker] Assembling MP4 for job {job_id}")
+132:            logger.info(f"[whiteboard_render_worker] Uploading MP4 for job {job_id}")
+143:            logger.info(f"[whiteboard_render_worker] Job {job_id} completed successfully")
+146:        logger.exception(f"[whiteboard_render_worker] Err
+
+=== 4. whiteboard_render_worker.py table writes ===
+CMD: grep -n 'whiteboard_renders\|whiteboard_table\|WHITEBOARD_TABLE' /opt/whiteboard-worker/whiteboard_render_worker.py
+32:WHITEBOARD_TABLE = "whiteboard_renders"
+
+=== 5. whiteboard_upload_renderer.py bucket ===
+CMD: grep -n 'WHITEBOARD_BUCKET\|bucket\|storage' /opt/whiteboard-worker/whiteboard_upload_renderer.py
+20:WHITEBOARD_BUCKET = "whiteboard-renders"
+25:def _storage_base() -> str:
+26:    return f"{SUPABASE_URL.rstrip('/')}/storage/v1"
+40:async def upload_mp4_to_storage(mp4_path: Path, render_id: str) -> str:
+58:    storage_url = f"{_storage_base()}/object/{WHITEBOARD_BUCKET}/{object_key}"
+66:            storage_url,
+74:    public_url = f"{SUPABASE_URL}/storage/v1/object/public/{WHITEBOARD_BUCKET}/{object_key}"
+
+=== 6. .env variables ===
+CMD: cat /opt/whiteboard-worker/.env | sed 's/=.*/=***MASKED***/'
+SUPABASE_URL=***MASKED***
+SUPABASE_SERVICE_KEY=***MASKED***
+WORKER_LOOP=***MASKED***
+WORKER_INTERVAL_SECONDS=***MASKED***
+WORKER_MAX_JOBS=***MASKED***
+
+=== 7. worker logs last 50 lines ===
+CMD: journalctl -u whiteboard-worker -n 50 --no-pager 2>&1
+Jun 30 13:39:08 academia00 python3[490198]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 30 13:39:08 academia00 python3[490198]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 30 13:39:10 academia00 python3[490198]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 30 13:39:10 academia00 python3[490198]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 30 13:39:13 academia00 python3[490198]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 30 13:39:13 academia00 python3[490198]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 30 13:39:15 academia00 python3[490198]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 30 13:39:15 academia00 python3[490198]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 30 13:39:17 academia00 python3[490198]: INFO:httpx:HTTP Request: POST https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/whiteboard_fetch_queued_jobs "HTTP/1.1 200 OK"
+Jun 30 13:39:17 academia00 python3[490198]: INFO:whiteboard_render_worker:[whiteboard_render_worker] Found 0 queued job(s)
+Jun 30 13:39:19
+
+=== 8. worker.log tail 30 ===
+CMD: tail -30 /opt/whiteboard-worker/worker.log 2>&1 || echo NO_LOG_FILE
+httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/whiteboard_renders?status=eq.queued&order=created_at.asc&limit=1'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+INFO:httpx:HTTP Request: GET https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/whiteboard_renders?status=eq.queued&order=created_at.asc&limit=1 "HTTP/1.1 404 Not Found"
+ERROR:whiteboard_render_worker:[whiteboard_render_worker] Loop iteration failed
+Traceback (most recent call last):
+  File "/opt/whiteboard-worker/whiteboard_render_worker.py", line 172, in _loop
+    await run_once(max_jobs=WORKER_MAX_JOBS)
+  File "/opt/whiteboard-worker/whiteboard_render_worker.py", line 161, in run_once
+    jobs = await _fetch_queued_jobs(limit=max_jobs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/whiteboard-worker/whiteboard_render_worker.py", line 75, in _fetch_queued_jobs
+    resp.raise_for_status()
+  File "/usr/local/lib/python3.12/dist-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/whiteboard_renders?status=eq.queued&order=created_at.asc&limit=1'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+INFO:httpx:HTTP Request: GET https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/whiteboard_re
+
+=== 9. whiteboard_png_renderer key imports ===
+CMD: head -40 /opt/whiteboard-worker/whiteboard_png_renderer.py
+"""
+Whiteboard PNG Renderer - Phase C.3
+Génération de PNGs à partir d'un storyboard
+"""
+
+from pathlib import Path
+from typing import Any, Dict, List
+import json
+
+try:
+    from PIL import Image, ImageDraw, ImageFont
+except ImportError:
+    print("Pillow not installed. Install with: pip install Pillow")
+    raise
+
+# Configuration
+WIDTH = 1080
+HEIGHT = 1920
+DPI = 72
+
+# Thèmes
+THEMES = {
+    "scientific": {
+        "background": "#0a192f",
+        "text_color": "#ffffff",
+        "accent_color": "#69f0ae",
+        "title_font_size": 32,
+        "paragraph_font_size": 24,
+        "definition_font_size": 20,
+        "exercise_font_size": 24,
+        "correction_font_size": 20,
+    },
+    "notebook": {
+        "background": "#ffffff",
+        "text_color": "#000000",
+        "accent_color": "#2e7d32",
+        "title_font_size": 32,
+        "paragraph_font_size": 24,
+        "definition_font_size": 20,
+        "exercise_font_size": 24,
+
+=== 10. whiteboard_ffmpeg_assembler full ===
+CMD: cat /opt/whiteboard-worker/whiteboard_ffmpeg_assembler.py
+"""
+Whiteboard FFmpeg Assembler - v7 CORRECTION D.25
+P1: Ajout piste audio silencieuse pour compatibilite ExoPlayer Android
+    OMX Qualcomm echoue sur MP4 video-only avec format_supported=YES
+    Solution: -f lavfi -i anullsrc + -c:a aac -b:a 64k -shortest
+
+Toutes corrections precedentes maintenues:
+  v6: colorspace sRGB->BT709 (plus de smpte170m)
+  v5: BT709 metadata, Baseline 3.1, no B-frames
+  C1: concat demuxer duree explicite
+  C2: faststart (moov avant mdat)
+  C3: Baseline profile
+"""
+from pathlib import Path
+from typing import List
+import subprocess
+
+SECONDS_PER_SCENE = 5
+FPS = 30
+
+
+def assemble_pngs_to_mp4(png_paths: List[Path], output_dir: Path) -> Path:
+    if not png_paths:
+        raise ValueError("No PNGs provided")
+    for p in png_paths:
+        if not p.exists():
+            raise FileNotFoundError(f"PNG not found: {p}")
+
+    # C1: concat demuxer avec duree explicite par scene
+    concat_file = output_dir / "concat.txt"
+    with open(concat_file, "w") as f:
+        for p in png_paths:
+            safe = str(p).replace("'", "'\\''")
+            f.write(f"file '{safe}'\n")
+            f.write(f"duration {SECONDS_PER_SCENE}\n")
+        last = str(png_paths[-1]).replace("'", "'\\''")
+        f.write(f"file '{last}'\n")
+
+    mp4_path = output_dir / "output.mp4"
+
+    # v7: Encodage DIRECT avec faststart + audio silencieux (une seule passe)
+    # -f lavfi -i anullsrc: generateur audio silencieux
+    # -c:a aac -b:a 64k: encoder AAC (requis pour ExoPlayer)
+    # -sho
+
+=== 11. whiteboard_render_worker full ===
+CMD: cat /opt/whiteboard-worker/whiteboard_render_worker.py
+"""
+Whiteboard Render Worker - Phase C.3
+Worker pour le traitement des jobs de rendu Smart Whiteboard
+Basé sur le pattern de videoasset_worker.py
+"""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+import os
+import subprocess
+import tempfile
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import httpx
+from dotenv import load_dotenv
+
+from whiteboard_png_renderer import render_storyboard_to_pngs
+from whiteboard_ffmpeg_assembler import assemble_pngs_to_mp4
+from whiteboard_upload_renderer import upload_mp4_to_storage
+
+# Configuration
+load_dotenv()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+WHITEBOARD_BUCKET = "whiteboard-renders"
+WHITEBOARD_TABLE = "whiteboard_renders"
+
+WORKER_LOOP = (os.getenv("WORKER_LOOP") or "").strip().lower() in {"1", "true", "yes"}
+WORKER_INTERVAL_SECONDS = float((os.getenv("WORKER_INTERVAL_SECONDS") or "2").strip() or "2")
+WORKER_MAX_JOBS = int((os.getenv("WORKER_MAX_JOBS") or "1").strip() or "1")
+
+SUPABASE_HTTP_TIMEOUT = 600.0
+
+# Logging
+logger = logging.getLogger("whiteboard_render_worker")
+if not logging.getLogger().handlers:
+    logging.basicConfig(level=logging.INFO)
+
+
+def _rest_base() -> str:
+    return f"{SUPABASE_URL.rstrip('/')}/rest/v1"
+
+
+def _storage_base() -> str:
+    return f"{SUPABASE_URL.rstrip('/')}/storage/v1"
+
+
+def _supabase_headers(extra: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+
+=== 12. ffmpeg version ===
+CMD: ffmpeg -version 2>&1 | head -2
+ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers
+built with gcc 13 (Ubuntu 13.2.0-23ubuntu3)
+
+=== 13. python3 packages ===
+CMD: pip3 list 2>/dev/null | grep -i 'httpx\|pillow\|dotenv\|requests'
+httpx                 0.28.1
+pillow                12.2.0
+python-dotenv         1.2.2
+requests              2.31.0
+
+=== 14. storage/bucket confirmed in upload ===
+CMD: grep -n 'whiteboard-renders\|storage/v1' /opt/whiteboard-worker/whiteboard_upload_renderer.py
+20:WHITEBOARD_BUCKET = "whiteboard-renders"
+26:    return f"{SUPABASE_URL.rstrip('/')}/storage/v1"
+74:    public_url = f"{SUPABASE_URL}/storage/v1/object/public/{WHITEBOARD_BUCKET}/{object_key}"
+
+=== 15. kamatera external calls check ===
+CMD: grep -rn 'kamatera\|185.167\|external' /opt/whiteboard-worker/ 2>/dev/null || echo NONE
+NONE

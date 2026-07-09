@@ -278,26 +278,27 @@ class _BadgeCard extends StatelessWidget {
     final title = badge['title']?.toString() ?? '';
     final xpReward = badge['xp_reward'] as int? ?? 0;
 
-    return Container(
-      width: 90,
-      padding: const EdgeInsets.all(10),
-      decoration: TdTheme.cardDecoration(),
-      child: Column(
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 28)),
-          const SizedBox(height: 4),
-          Text(title,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
-          if (xpReward > 0)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text('+$xpReward XP',
-                  style: const TextStyle(fontSize: 9, color: Color(0xFFF59E0B), fontWeight: FontWeight.w600)),
-            ),
-        ],
+    return Flexible(
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: TdTheme.cardDecoration(),
+        child: Column(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 28)),
+            const SizedBox(height: 4),
+            Text(title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
+            if (xpReward > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text('+$xpReward XP',
+                    style: const TextStyle(fontSize: 9, color: Color(0xFFF59E0B), fontWeight: FontWeight.w600)),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -1,0 +1,73 @@
+import requests
+import json
+
+admin_url = "https://thevdfcwlcqzdoybfvgs.supabase.co/rest/v1/rpc/admin_execute_sql"
+headers = {
+    "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoZXZkZmN3bGNxemRveWJmdmdzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzA1NjU2MCwiZXhwIjoyMDc4NjMyNTYwfQ.U0xz7oHnUISnxzAG8ehm_gRzoOlQPucj61i2f-1FjgM",
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoZXZkZmN3bGNxemRveWJmdmdzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzA1NjU2MCwiZXhwIjoyMDc4NjMyNTYwfQ.U0xz7oHnUISnxzAG8ehm_gRzoOlQPucj61i2f-1FjgM",
+    "Content-Type": "application/json",
+}
+
+print("=" * 80)
+print("VÉRIFICATION DU SCHÉMA APP")
+print("=" * 80)
+
+# Vérifier si le schéma app existe
+sql = """
+SELECT schema_name
+FROM information_schema.schemata
+WHERE schema_name = 'app';
+"""
+
+print("\nSQL exécuté :")
+print(sql)
+
+resp = requests.post(admin_url, headers=headers, json={"p_sql": sql}, timeout=30)
+print(f"\nSTATUS: {resp.status_code}")
+
+if resp.status_code == 200:
+    data = resp.json()
+    schemas = data.get('data', [])
+    print(f"\nSchéma 'app' existe : {len(schemas) > 0}")
+    if schemas:
+        print(f"Schéma trouvé : {schemas[0][0]}")
+else:
+    print(f"Error: {resp.text}")
+
+# Vérifier toutes les fonctions dans pg_proc sans filtre de schéma
+print("\n" + "=" * 80)
+print("RECHERCHE DE TOUTES LES FONCTIONS (sans filtre)")
+print("=" * 80)
+
+sql2 = """
+SELECT
+    oid,
+    proname,
+    pg_get_function_identity_arguments(oid) as signature,
+    pronamespace::regnamespace as schema
+FROM pg_proc
+WHERE proname LIKE '%whiteboard%'
+ORDER BY schema, proname, oid;
+"""
+
+print("\nSQL exécuté :")
+print(sql2)
+
+resp2 = requests.post(admin_url, headers=headers, json={"p_sql": sql2}, timeout=30)
+print(f"\nSTATUS: {resp2.status_code}")
+
+if resp2.status_code == 200:
+    data2 = resp2.json()
+    functions = data2.get('data', [])
+    print(f"\nNombre de fonctions trouvées : {len(functions)}")
+    print("\n" + "=" * 80)
+    print("FONCTIONS TROUVÉES :")
+    print("=" * 80)
+    for i, func in enumerate(functions, 1):
+        print(f"\nFONCTION {i}:")
+        print(f"  OID: {func[0]}")
+        print(f"  NOM: {func[1]}")
+        print(f"  SCHÉMA: {func[3]}")
+        print(f"  SIGNATURE: {func[2]}")
+else:
+    print(f"Error: {resp2.text}")

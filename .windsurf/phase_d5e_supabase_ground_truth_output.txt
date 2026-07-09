@@ -1,0 +1,67 @@
+================================================================================
+PHASE D.5E – SUPABASE GROUND TRUTH
+2026-06-24T18:15:50.085455
+================================================================================
+
+SECTION A – TABLES RÉELLES (pg_class)
+--------------------------------------------------------------------------------
+
+--- Schéma: public ---
+STATUS: 200
+Aucune table trouvée
+
+--- Schéma: app ---
+STATUS: 200
+Aucune table trouvée
+
+--- Schéma: auth ---
+STATUS: 200
+Aucune table trouvée
+
+--- Schéma: storage ---
+STATUS: 200
+Aucune table trouvée
+
+
+SECTION B – RPC RÉELLES (pg_proc)
+--------------------------------------------------------------------------------
+
+--- Schéma: public ---
+STATUS: 200
+Aucune RPC trouvée
+
+--- Schéma: app ---
+STATUS: 200
+Aucune RPC trouvée
+
+--- Schéma: auth ---
+STATUS: 200
+Aucune RPC trouvée
+
+--- Schéma: storage ---
+STATUS: 200
+Aucune RPC trouvée
+
+
+SECTION C – OBJETS WHITEBOARD
+--------------------------------------------------------------------------------
+
+--- Tables whiteboard (pg_class) ---
+STATUS: 200
+Aucune table trouvée
+
+--- Tables storyboard (pg_class) ---
+STATUS: 200
+Aucune table trouvée
+
+--- Tables render (pg_class) ---
+STATUS: 200
+Aucune table trouvée
+
+--- RPCs whiteboard (pg_proc) ---
+STATUS: 200
+Aucune RPC trouvée
+
+--- RPCs storyboard (pg_proc) ---
+STATUS: 200
+Aucune RPC trouvée

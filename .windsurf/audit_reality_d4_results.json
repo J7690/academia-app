@@ -1,0 +1,36 @@
+{
+  "edge_function": {
+    "exists": true,
+    "status": "exists",
+    "note": "Edge Function exists (auth required)"
+  },
+  "table_whiteboard_projects": {
+    "exists": false
+  },
+  "table_whiteboard_renders": {
+    "exists": false
+  },
+  "bucket_whiteboard_renders": {
+    "exists": false
+  },
+  "bucket_whiteboard_narrations": {
+    "exists": false
+  },
+  "rpcs_whiteboard": {
+    "exists": false,
+    "rpcs": []
+  },
+  "rpcs_app_whiteboard": {
+    "exists": false,
+    "rpcs": []
+  },
+  "worker_kamatera": {
+    "exists": false,
+    "rpcs": [],
+    "note": "External worker, RPCs checked"
+  },
+  "renderer": {
+    "exists": false,
+    "tables": []
+  }
+}

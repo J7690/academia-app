@@ -1,0 +1,252 @@
+﻿
+============================================================
+whiteboard_render_worker.py
+============================================================
+"""
+Whiteboard Render Worker - Phase C.3
+Worker pour le traitement des jobs de rendu Smart Whiteboard
+BasÚ sur le pattern de videoasset_worker.py
+"""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+import os
+import subprocess
+import tempfile
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import httpx
+from dotenv import load_dotenv
+
+from whiteboard_png_renderer import render_storyboard_to_pngs
+from whiteboard_ffmpeg_assembler import assemble_pngs_to_mp4
+from whiteboard_upload_renderer import upload_mp4_to_storage
+
+# Configuration
+load_dotenv()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+WHITEBOARD_BUCKET = "whiteboard-renders"
+WHITEBOARD_TABLE = "whiteboard_renders"
+
+WORKER_LOOP = (os.getenv("WORKER_LOOP") or "").strip().lower() in {"1", "true", "yes"}
+WORKER_INTERVAL_SECONDS = float((os.getenv("WORKER_INTERVAL_SECONDS") or "2").strip() or "2")
+WORKER_MAX_JOBS = int((os.getenv("WORKER_MAX_JOBS") or "1").strip() or "1")
+
+SUPABASE_HTTP_TIMEOUT = 600.0
+
+# Logging
+logger = logging.getLogger("whiteboard_render_worker")
+if not logging.getLogger().handlers:
+    logging.basicConfig(level=logging.INFO)
+
+
+def _rest_base() -> str:
+    return f"{SUPABASE_URL.rstrip('/')}/rest/v1"
+
+
+def _storage_base() -> str:
+    return f"{SUPABASE_URL.rstrip('/')}/storage/v1"
+
+
+def _supabase_headers(extra: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+    }
+    if extra:
+        headers.update(extra)
+    return headers
+
+
+async def _fetch_queued_jobs(limit: int = 5) -> List[Dict[str, Any]]:
+    """RÚcupÞre les jobs en attente (status=queued) via RPC spÚcifique"""
+    rpc_url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/rpc/whiteboard_fetch_queued_jobs"
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
+        resp = await client.post(rpc_url, headers=_supabase_headers(), json={"p_limit": limit})
+    resp.raise_for_status()
+    return resp.json()
+
+
+async def _mark_job_processing(job_id: str) -> None:
+    """Marque un job comme processing via RPC spÚcifique"""
+    rpc_url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/rpc/whiteboard_mark_processing"
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
+        resp = await client.post(rpc_url, headers=_supabase_headers(), json={"p_job_id": job_id})
+    resp.raise_for_status()
+
+
+async def _mark_job_done(job_id: str, video_url: str, duration_ms: int) -> None:
+    """Marque un job comme done via RPC spÚcifique"""
+    rpc_url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/rpc/whiteboard_mark_done"
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
+        resp = await client.post(rpc_url, headers=_supabase_headers(), json={
+            "p_job_id": job_id,
+            "p_video_url": video_url,
+            "p_duration_ms": duration_ms
+        })
+    resp.raise_for_status()
+
+
+async def _mark_job_failed(job_id: str, error_message: str) -> None:
+    """Marque un job comme failed via RPC spÚcifique"""
+    rpc_url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/rpc/whiteboard_mark_failed"
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
+        resp = await client.post(rpc_url, headers=_supabase_headers(), json={
+            "p_job_id": job_id,
+            "p_error_message": error_message
+        })
+    resp.raise_for_status()
+
+
+async def _process_single_job(job: Dict[str, Any]) -> None:
+    """Traite un seul job de rendu"""
+    job_id = job["id"]
+    storyboard_json = job.get("storyboard")
+    
+    if not storyboard_json:
+        await _mark_job_failed(job_id, "storyboard_json is empty")
+        return
+    
+    try:
+        # Marquer comme processing
+        await _mark_job_processing(job_id)
+        logger.info(f"[whiteboard_render_worker] Processing job {job_id}")
+        
+        # CrÚer un rÚpertoire temporaire
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            
+            # GÚnÚrer les PNGs
+            logger.info(f"[whiteboard_render_worker] Generating PNGs for job {job_id}")
+            png_paths = render_storyboard_to_pngs(storyboard_json, temp_path)
+            
+            # Assembler les PNGs en MP4
+            logger.info(f"[whiteboard_render_worker] Assembling MP4 for job {job_id}")
+            mp4_path = assemble_pngs_to_mp4(png_paths, temp_path)
+            
+            # Uploader le MP4
+            logger.info(f"[whiteboard_render_worker] Uploading MP4 for job {job_id}")
+            video_url = await upload_mp4_to_storage(mp4_path, job_id)
+            
+            # Calculer la durÚe (estimation basÚe sur le nombre de scÞnes)
+            # Pour V1, on estime 5 secondes par scÞne
+            storyboard = storyboard_json if isinstance(storyboard_json, dict) else {}
+            scenes = storyboard.get("scenes", [])
+            duration_ms = len(scenes) * 5000
+            
+            # Marquer comme done
+            await _mark_job_done(job_id, video_url, duration_ms)
+            logger.info(f"[whiteboard_render_worker] Job {job_id} completed successfully")
+            
+    except Exception as e:
+        logger.exception(f"[whiteboard_render_worker] Error processing job {job_id}")
+        await _mark_job_failed(job_id, str(e))
+
+
+async def run_once(max_jobs: int = 1) -> None:
+    """ExÚcute une seule itÚration du worker"""
+    jobs = await _fetch_queued_jobs(limit=max_jobs)
+    logger.info(f"[whiteboard_render_worker] Found {len(jobs)} queued job(s)")
+    
+    for job in jobs:
+        await _process_single_job(job)
+
+
+async def _loop() -> None:
+    """Boucle infinie du worker"""
+    while True:
+        try:
+            await run_once(max_jobs=WORKER_MAX_JOBS)
+        except Exception:
+            logger.exception("[whiteboard_render_worker] Loop iteration failed")
+        await asyncio.sleep(max(WORKER_INTERVAL_SECONDS, 0.5))
+
+
+if __name__ == "__main__":
+    if not WORKER_LOOP:
+        asyncio.run(run_once())
+    else:
+        asyncio.run(_loop())
+
+
+============================================================
+whiteboard_ffmpeg_assembler.py
+============================================================
+"""
+Whiteboard FFmpeg Assembler - Phase C.3
+Assemblage de PNGs en MP4
+"""
+
+from pathlib import Path
+from typing import List
+import subprocess
+
+
+def assemble_pngs_to_mp4(png_paths: List[Path], output_dir: Path) -> Path:
+    """
+    Assemble des PNGs en MP4
+    
+    Args:
+        png_paths: Liste des chemins des PNGs (ordonnÚs)
+        output_dir: RÚpertoire de sortie
+        
+    Returns:
+        Chemin du MP4 gÚnÚrÚ
+    """
+    if not png_paths:
+        raise ValueError("No PNGs provided")
+    
+    # VÚrifier que les PNGs existent
+    for png_path in png_paths:
+        if not png_path.exists():
+            raise FileNotFoundError(f"PNG not found: {png_path}")
+    
+    # Chemin de sortie
+    mp4_path = output_dir / "output.mp4"
+    
+    # Construire la commande FFmpeg
+    # Les PNGs doivent Ûtre nommÚs scene_001.png, scene_002.png, etc.
+    # On utilise le pattern scene_%03d.png
+    first_png = png_paths[0]
+    pattern = first_png.parent / "scene_%03d.png"
+    
+    cmd = [
+        "ffmpeg",
+        "-y",  # ╔craser si existe
+        "-f", "image2",  # Format image
+        "-framerate", "30",  # 30 fps
+        "-i", str(pattern),  # Pattern d'entrÚe
+        "-c:v", "libx264",  # Codec vidÚo
+        "-pix_fmt", "yuv420p",  # Format pixel
+        "-r", "30",  # Framerate de sortie
+        "-preset", "medium",  # Preset d'encodage
+        "-crf", "23",  # Quality (lower = better, 18-28 range)
+        str(mp4_path),
+    ]
+    
+    # ExÚcuter la commande
+    result = subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    
+    if result.returncode != 0:
+        stderr_text = result.stderr.decode("utf-8", errors="ignore")
+        raise RuntimeError(f"FFmpeg error (code {result.returncode}): {stderr_text[:4000]}")
+    
+    # VÚrifier que le MP4 a ÚtÚ crÚÚ
+    if not mp4_path.exists():
+        raise RuntimeError(f"MP4 not created: {mp4_path}")
+    
+    return mp4_path
+

@@ -1,0 +1,121 @@
+{
+  "get_render_status_def": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "def": "CREATE OR REPLACE FUNCTION public.whiteboard_get_render_status(p_render_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  render_record RECORD;\n  result JSONB;\nBEGIN\n  SELECT\n    wr.id,\n    wr.project_id,\n    wr.status,\n    wr.video_url,\n    wr.duration_ms,\n    wr.created_at,\n    wr.completed_at,\n    wr.error_message,\n    wr.progress\n  INTO render_record\n  FROM app.whiteboard_renders wr\n  JOIN app.whiteboard_projects wp ON wr.project_id = wp.id\n  WHERE wr.id = p_render_id\n  AND wp.student_id = auth.uid();\n\n  IF NOT FOUND THEN\n    RETURN jsonb_build_object('success', false, 'error', 'Render not found');\n  END IF;\n\n  result := jsonb_build_object(\n    'success', true,\n    'render', to_jsonb(render_record)\n  );\n\n  RETURN result;\nEND;\n$function$\n",
+        "nspname": "public",
+        "proname": "whiteboard_get_render_status"
+      }
+    ]
+  },
+  "whiteboard_renders_columns": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "project_id"
+      },
+      {
+        "data_type": "text",
+        "column_name": "status"
+      },
+      {
+        "data_type": "text",
+        "column_name": "video_url"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "duration_ms"
+      },
+      {
+        "data_type": "text",
+        "column_name": "error_message"
+      },
+      {
+        "data_type": "integer",
+        "column_name": "progress"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "completed_at"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "started_at"
+      },
+      {
+        "data_type": "text",
+        "column_name": "video_storage_path"
+      },
+      {
+        "data_type": "text",
+        "column_name": "video_storage_bucket"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at"
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "export_settings"
+      }
+    ]
+  },
+  "whiteboard_projects_columns": {
+    "ok": true,
+    "mode": "select",
+    "rows": [
+      {
+        "data_type": "uuid",
+        "column_name": "id"
+      },
+      {
+        "data_type": "uuid",
+        "column_name": "student_id"
+      },
+      {
+        "data_type": "text",
+        "column_name": "subject"
+      },
+      {
+        "data_type": "text",
+        "column_name": "status"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "created_at"
+      },
+      {
+        "data_type": "timestamp with time zone",
+        "column_name": "updated_at"
+      },
+      {
+        "data_type": "text",
+        "column_name": "renderer_id"
+      },
+      {
+        "data_type": "text",
+        "column_name": "theme_id"
+      },
+      {
+        "data_type": "text",
+        "column_name": "narration_mode"
+      },
+      {
+        "data_type": "jsonb",
+        "column_name": "storyboard_json"
+      }
+    ]
+  }
+}

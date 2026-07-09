@@ -1,0 +1,566 @@
+﻿
+[ +401 ms] The client will now receive all logging from the daemon (pid: 17120). The daemon log file: C:\Users\fasop\.gradle\daemon\8.12\daemon-17120.out.log
+[        ] Loading library manifest 
+C:\Users\fasop\.gradle\caches\8.12\transforms\6ac468d987bc5401f77d083798d2d442\transformed\jetified-ffmpeg-kit-audio-2.1.0\AndroidManifest.xml
+[        ] Merging library manifest 
+C:\Users\fasop\.gradle\caches\8.12\transforms\6ac468d987bc5401f77d083798d2d442\transformed\jetified-ffmpeg-kit-audio-2.1.0\AndroidManifest.xml
+[        ] MERGED from [com.antonkarpenko:ffmpeg-kit-audio:2.1.0] 
+C:\Users\fasop\.gradle\caches\8.12\transforms\6ac468d987bc5401f77d083798d2d442\transformed\jetified-ffmpeg-kit-audio-2.1.0\AndroidManifest.xml:2:1-7:12
+[        ] MERGED from [com.antonkarpenko:ffmpeg-kit-audio:2.1.0] 
+C:\Users\fasop\.gradle\caches\8.12\transforms\6ac468d987bc5401f77d083798d2d442\transformed\jetified-ffmpeg-kit-audio-2.1.0\AndroidManifest.xml:5:5-44
+[        ] MERGED from [com.antonkarpenko:ffmpeg-kit-audio:2.1.0] 
+C:\Users\fasop\.gradle\caches\8.12\transforms\6ac468d987bc5401f77d083798d2d442\transformed\jetified-ffmpeg-kit-audio-2.1.0\AndroidManifest.xml:5:5-44
+[        ] 401        <provider
+[        ] 401-->[com.google.firebase:firebase-common:22.0.1] 
+C:\Users\fasop\.gradle\caches\8.12\transforms\356c3b2eea081d5d1b2017902759f903\transformed\jetified-firebase-common-22.0.1\AndroidManifest.xml:23:9-28:39
+flutter : [+2401 ms] Note: Some input files use or override a deprecated API.
+    + CategoryInfo          : NotSpecified: ([+2401 ms] Note...deprecated API.:String) [], RemoteException
+[   +7 ms] Merging to 'C:\Users\fasop\AndroidStudioProjects\academia\academia_app\build\app\intermediates\dex\debug\mergeExtDexDebug' with D8 from all or a subset of dex 
+files in C:\Users\fasop\.gradle\caches\8.12\transforms\e83b38f57ab21df3fbbb48793cacc54f\transformed\jetified-camera-video-1.5.3-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\18084e20459296010aebdf5d00f85108\transformed\jetified-camera-lifecycle-1.5.3-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\a2a815a0ac99bb5baf9e79834390e0fc\transformed\jetified-camera-camera2-1.5.3-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\91873820a3c373cad21f766cfa199939\transformed\jetified-camera-core-1.5.3-runtime, C:\Users\fasop\.gradle\caches\8.12\transform
+s\f7a2a846f9fc01b774b3819937bb0b2c\transformed\jetified-flutter_embedding_debug-1.0.0-78fc3012e45889657f72359b005af7beac47ba3d, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\be9ff77ceed1bc2bb02e6be05151d227\transformed\jetified-flutter_sound_core-9.30.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\176ed0daafea09479b13aea4405e82e1\transformed\media-1.7.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\a555039a8f847868b84f30f790846519\transformed\preference-1.2.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\71d4f75fbb2500c8eb43f9acd244b5c8\transformed\browser-1.8.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\e3b7460fb1f90cf3431575f69b54061e\transformed\slidingpanelayout-1.2.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\66f5bb18bdba0717491169ced0007e0f\transformed\jetified-window-1.2.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\a37383af8b1cbba04e1f5622ea4326c3\transformed\jetified-window-java-1.2.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\e5d9504e32a18bf8a6aa3a75ca30513f\transformed\jetified-play-services-auth-20.7.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\0c7d979c80a426fa664d3e5d6314bcbb\transformed\jetified-sceneform-ux-1.17.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\3548fe6de5205df1a93b6a080980d1b9\transformed\jetified-ucrop-2.2.10-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\79493e246cd58c02debf2a6d4ff719b3\transformed\jetified-media3-transformer-1.9.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\668ee64eadb153a823e5304ba6ebd36e\transformed\jetified-media3-muxer-1.9.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\ffcffa3bfb6be1e4122bc2f8d31cdd7e\transformed\jetified-media3-exoplayer-dash-1.9.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\0b25ef7a7a95e1de6e8f249692f0a5a9\transformed\jetified-media3-exoplayer-hls-1.9.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\c2fbf83cc4108c8c2b5918572eb2a4a9\transformed\jetified-media3-exoplayer-rtsp-1.9.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\d11df3baf1526c7c2a2ba7f81e854cec\transformed\jetified-media3-exoplayer-smoothstreaming-1.9.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\a21db400def21445b07c2e43c381283a\transformed\jetified-media3-inspector-1.9.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\0876b7bde3eae152319afb6a5349f028\transformed\jetified-media3-exoplayer-1.9.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\9a100e1cf28e7483df8601e3f385c065\transformed\jetified-media3-extractor-1.9.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\27e851098a548cc4a67abc5a494181dc\transformed\jetified-media3-container-1.9.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\e3dcfe0106e2a7e047d2d4ad457969a4\transformed\jetified-media3-datasource-1.9.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\71a0c589ce95cff5f10434ef1efb7324\transformed\jetified-media3-ui-1.9.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\307583fa59ebd56d69122bcc11700b8d\transformed\jetified-media3-database-1.9.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\561d946a387b93cd6078de43d6b1cd30\transformed\jetified-media3-decoder-1.9.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\a1362c3c2969cf6ca694486eae17b75b\transformed\jetified-media3-common-1.9.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\1d06dcb9d16f615d6e4562ba974fcf93\transformed\jetified-media3-effect-1.9.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\f8d203a454a269b37a55a96355ab32c0\transformed\jetified-lottie-6.6.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\415521a9be3ed4896b22c68618af557f\transformed\jetified-appcompat-resources-1.6.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\26d9bf4f00e6f8a0bf90e47ba97c3115\transformed\appcompat-1.6.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\1acb3a96b28921502558ae46d05158c4\transformed\jetified-billing-7.1.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\608e47c5dd0deae6a94896133ef06600\transformed\jetified-play-services-location-21.2.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\ffd14b9a49468b90b77516f6b96a02ac\transformed\jetified-play-services-auth-api-phone-18.0.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\4abc4275f02320c691d158257e7fd1a7\transformed\jetified-play-services-auth-base-18.0.4-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\5c9a78f922035aa20611a7555a4a78b4\transformed\jetified-play-services-fido-20.0.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\d0d7feacfabeb28d7badc63f21d8f97d\transformed\jetified-firebase-messaging-25.0.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\1120c38c6fa0c25980ab7f2446e28a2a\transformed\jetified-play-services-base-18.5.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\65a5863fcbc758f0d3554d79974e346d\transformed\jetified-fragment-ktx-1.7.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\b33c8fd94c1a5a3a79963d95152ac7fb\transformed\jetified-firebase-crashlytics-20.0.4-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\f13e4bd5c26bdff527cc976cc0dc2ede\transformed\jetified-firebase-sessions-3.0.4-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\0ff06055083856455d6dab9d444a1e1c\transformed\jetified-firebase-installations-19.0.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\f19dfda70e805556b385fa357f2bd58b\transformed\jetified-firebase-common-22.0.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\50e30d915568e9c412d0779eb440b011\transformed\jetified-kotlinx-coroutines-guava-1.9.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\edf1f56521181f528a2f5c8aae319ef9\transformed\jetified-activity-1.11.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\c7591a7ba79b5cf9735ea6eb91e9c607\transformed\jetified-sentry-android-ndk-7.22.4-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\9cefade172475ca3c44fcedf4cbb88db\transformed\jetified-sentry-android-core-7.22.4-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\496b4df5aee793f5b77daade1096f280\transformed\jetified-emoji2-views-helper-1.2.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\d287578ed2b8a9bbf0f3c2da157416aa\transformed\jetified-emoji2-1.2.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\036c0d53de183fff51f718ea3edc24c6\transformed\jetified-savedstate-ktx-1.2.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\516ce59276c113382808aa51c22dc84e\transformed\jetified-savedstate-1.2.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\d911d4d936cce0966c83db812e3ad4a4\transformed\jetified-lifecycle-viewmodel-release-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\ddf9c3a5d67f6bdc50037a471dfa7b45\transformed\jetified-lifecycle-common-jvm-2.8.7, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\96045a4e722e2bbd88a6824418ef1ca3\transformed\jetified-lifecycle-process-2.8.7-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\4693f64b31ac45a4efde29aa2cc8a132\transformed\jetified-lifecycle-viewmodel-savedstate-2.8.7-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\3fb620a79590713050dba8c3642bd9bf\transformed\lifecycle-livedata-core-2.8.7-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\92ef4b285e99265f887d4b643473ea3f\transformed\lifecycle-livedata-2.8.7-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\df0e2541394f69fb91f7bf970cc2886f\transformed\jetified-lifecycle-runtime-release-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\b5a2cc05885d7bb0edde211238dd1f50\transformed\jetified-kotlinx-coroutines-android-1.9.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\1dc2bdfe0f0440fcf4e531c833212b07\transformed\jetified-datastore-preferences-external-protobuf-1.1.7, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\c990d9ac43ddf6d59926e20267b1f931\transformed\jetified-datastore-preferences-proto-1.1.7, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\c9006617eeb6b13fa36b8d8807562706\transformed\jetified-datastore-preferences-core-release-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\2b41c93b64b7c68673d0d03b8d93737f\transformed\jetified-datastore-core-okio-jvm-1.1.7, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\f2e10df67ce6428b75ee49d60c624cb1\transformed\jetified-datastore-core-release-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\b4642bfbce841669dc04c12ad33452b5\transformed\jetified-datastore-preferences-release-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\90e73bc9a7d40238fa598b01befe8830\transformed\jetified-datastore-release-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\0179bb2a9d16f7d390fc4579306a2d94\transformed\jetified-profileinstaller-1.4.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\98e427148359c524fcdbe029b0f9f632\transformed\jetified-concurrent-futures-1.2.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\485856ef6c74062fe57902e79e38c2a7\transformed\jetified-concurrent-futures-ktx-1.2.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\14f2b1c6eb31f206207b85d053dab83c\transformed\jetified-kotlinx-coroutines-core-jvm-1.9.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\56f924c9a8c20b5c4fab10aa7f3a2d70\transformed\jetified-kotlinx-coroutines-play-services-1.9.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\532a31af6002815792d2dcc7a4e32542\transformed\jetified-firebase-installations-interop-17.2.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\6baac8ec71422a3534da052271c75423\transformed\jetified-firebase-iid-interop-17.1.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\34a00124fad4f0dbec715baaf075116d\transformed\jetified-play-services-cloud-messaging-17.2.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\cd1da8d06d58acd128eb40693306fd6d\transformed\jetified-play-services-tasks-18.4.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\19b1b26627664669b4e105c253135437\transformed\jetified-firebase-measurement-connector-20.0.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\ad6396d76d54a64b92763d8401257237\transformed\jetified-play-services-stats-17.0.2-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\2a4fdf1541a251e1f0fd27453b95aeb6\transformed\jetified-play-services-basement-18.8.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\85963c4a2c659f89e73532f33ddd445a\transformed\fragment-1.7.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\dcbe9ef94b6a225ac4d9e0f639899bba\transformed\legacy-support-core-utils-1.0.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\59b2f7ee3fcf0a77e3046274951cc9f0\transformed\loader-1.0.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\e2a726a04626c01a6dee3b1cf80e5568\transformed\transition-1.4.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\264fbb7d06c8272d13d5c9acdd7c8924\transformed\viewpager-1.0.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\23fe5ce112994234379c696aeb5b15c5\transformed\drawerlayout-1.0.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\180a9eb99fd53302539a596bb970b3ee\transformed\recyclerview-1.3.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\46895270e08f3bc9351404eaee90a5e5\transformed\customview-1.1.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\039940823c972fc537c983401bc34e1f\transformed\vectordrawable-animated-1.1.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\2779976d1c35e7b3d41bc3023217be66\transformed\vectordrawable-1.1.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\eb178fca0a2198239bcca00720b3d18a\transformed\core-1.15.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\ec34138833043606d92558c27110f429\transformed\jetified-customview-poolingcontainer-1.0.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\a25781a61e79eeae2dcfbc126de299bb\transformed\jetified-core-ktx-1.15.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\d3ba054600c2d48aebfdf2d3f1096620\transformed\jetified-audioswitch-89582c47c9a04c62f90aa5e57251af4800a62c9a-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\040ef3c031a146846257749d3f516ce0\transformed\jetified-kotlin-parcelize-runtime-2.1.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\284bd03958daa7da4e736d9e2185c7cc\transformed\jetified-transcoder-0.10.5-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\defbfc68a8cafe142af198654f166d2a\transformed\localbroadcastmanager-1.1.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\08b42928fcbbceaf8aef0ccb20d23020\transformed\jetified-security-crypto-1.1.0-alpha06-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\9fdf800a2ffd4b2c3febe8fa49c18016\transformed\jetified-tink-android-1.9.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\11c366509d0f07e9ce61503d81ba43b4\transformed\jetified-tracing-ktx-1.2.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\ddcb3e9eca5aa51705c6468643e5a009\transformed\jetified-startup-runtime-1.1.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\970a0452968e7bc510831d3d66df4511\transformed\jetified-tracing-1.2.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\fe355a305debc28b448b905192f99ba7\transformed\exifinterface-1.4.2-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\56a2893c92421eec8a8b83efaaca92f9\transformed\core-runtime-2.2.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\6733e5e84f66bd98921705e37ff1f58c\transformed\core-common-2.2.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\298bd98d53e1e11b7c1e3e342c2648e5\transformed\jetified-featurecombinationquery-1.5.3-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\22c876fc357913348e6c44f3b332e382\transformed\jetified-egloo-0.6.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\e0172033c1b1e3fc5df66edc3e86bde1\transformed\interpolator-1.0.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\f2045bd0819dbf988d887b47da45c284\transformed\versionedparcelable-1.1.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\67db7e24d5662936fdc4c2b7579034fa\transformed\jetified-firebase-datatransport-19.0.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\b89745c33810f594c745d1eafb2aace9\transformed\jetified-transport-backend-cct-3.3.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\4259253791697ebe1ed9c0bb4768eded\transformed\jetified-transport-runtime-3.3.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\b4ce85530eaed1af1cb9e2b9efcf0e94\transformed\jetified-firebase-encoders-proto-16.0.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\1f0d959abdac023376d6687ad021bee3\transformed\jetified-firebase-config-interop-16.0.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\c6f8237bcf681f3f62016a4593014fe9\transformed\jetified-firebase-encoders-json-18.0.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\a34a33c89761cb8b011484f7a28f6f73\transformed\jetified-firebase-encoders-17.0.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\b3a7ddb19764c706f4a21234ac3ea89d\transformed\jetified-collection-jvm-1.4.2, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\4536c56b1946ad978cb86c0393b0d4bc\transformed\jetified-firebase-components-19.0.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\23449726c69dd83966cb05bdd699f022\transformed\jetified-transport-api-3.2.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\21ce6a1e68503e2411a89aaa649668a4\transformed\cursoradapter-1.0.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\01219ce5f2aeb4db5b132fa15960a462\transformed\jetified-resourceinspection-annotation-1.0.1, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\5f32c92c7d2eaf3ad416b41141aefa85\transformed\jetified-core-1.0.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\840eda1686c2095a7f0c105b3d6510e9\transformed\documentfile-1.0.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\eaf93236a2b00a0714922a611563e024\transformed\print-1.0.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\282d284d7b5a030edbdd3c04685a65ce\transformed\jetified-annotation-jvm-1.9.1, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\5c0426f0244554b555a1333f3f0e2c28\transformed\jetified-annotation-experimental-1.4.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\a448a341523913cf6c75fed95ba8ff5e\transformed\jetified-core-viewtree-1.0.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\11d47ad04183bf67372edec848983869\transformed\jetified-ffmpeg-kit-audio-2.1.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\dedbb2d0b97896f3c2605037064b9d03\transformed\jetified-noise-2.0.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\d13e50a48a502f1bcaa4ded93ddb19a5\transformed\jetified-sentry-android-replay-7.22.4-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\f94155a280aad429d2a64815ff4998f3\transformed\jetified-okhttp-3.12.13, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\2a7139c86eef937404c7b22858451b78\transformed\jetified-okio-jvm-3.4.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\669e3a39954956074636d5fdad70c30a\transformed\jetified-kotlin-android-extensions-runtime-2.1.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\ab547520a98598685aa42cc3f94fe47e\transformed\jetified-kotlinx-serialization-core-jvm-1.7.3, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\87c0ff1bc6589754fd891ba4f812ee1f\transformed\jetified-kotlinx-serialization-json-jvm-1.7.3, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\41cd5c101488471d076ea23d625ce65f\transformed\jetified-kotlin-stdlib-2.2.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\60dfec96829daa62ff77a96a899d634d\transformed\jetified-ShortcutBadger-1.1.22-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\6f52f5ec49b3394df57a04d55d1b91e8\transformed\jetified-annotations-23.0.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\01a7c331c9614b6bb49f0f9fdabc25e5\transformed\jetified-core-1.17.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\d7b5d89b1047e0cd834dca8ff5a88c44\transformed\jetified-rendering-1.17.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\c3e00869e5cceca8b7088b4007e9e5c6\transformed\jetified-core-1.22.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\e02ec56b307af9c0dcf7312b7f3f3ad2\transformed\jetified-assets-1.15.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\e2aa715069f7e55e5ea00d8d1146733e\transformed\jetified-guava-33.5.0-android, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\3aa81fe42dfcd32a91f8fdee73018e20\transformed\jetified-tika-core-3.2.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\f88db64be424ebb5fe770ee42b0a49a7\transformed\jetified-gson-2.10.1, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\a192b90e5cf92c1f5b8ec45f365e46d0\transformed\jetified-android-137.7151.04-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\7c3ae8e53aa906d7eb89819338cca527\transformed\jetified-litert-1.4.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\803aa2ffdc92f64b7b33d7a226de5f8a\transformed\jetified-litert-gpu-1.4.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\a2ec70641d0d0bedaa4460f92b2e3979\transformed\jetified-error_prone_annotations-2.41.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\466dd3f3fe0c66a61ba07d00c6e717f4\transformed\jetified-relinker-1.4.5-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\b0168743299ae0c66e08da94b3214ce0\transformed\jetified-sceneform-base-1.17.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\33cb81e3ee37fafe42bf5afca486f27b\transformed\jetified-filament-android-1.17.1-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\25cf39e3827104b086a139f8345c579b\transformed\jetified-auto-value-annotations-1.6.3, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\c0f4fa01efb1bb1ac4c4a1de6ea41193\transformed\jetified-jspecify-1.0.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\bd6b3c00bcf44d3f5c06be7c59839985\transformed\jetified-failureaccess-1.0.3, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\ea5ff8235f6e9b649202556b9cd3b61d\transformed\jetified-j2objc-annotations-3.1, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\3ae2d55c046ab751678760804efe3168\transformed\jetified-slf4j-api-2.0.17, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\ce47262f471584d50d400137b68c9310\transformed\jetified-commons-io-2.19.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\d39dfe5f826beb0cdfdf3edbf1b537fb\transformed\jetified-jsr305-3.0.2, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\c0c5ff4911540678a5a9b2e2166d7398\transformed\jetified-litert-api-1.4.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\82d89584949b05fd846073b829151600\transformed\jetified-litert-gpu-api-1.4.0-runtime, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\77e926f9c6a90599f440088b9d063e04\transformed\jetified-firebase-annotations-17.0.0, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\692bc90e690b7d847ff79cb11b5e918c\transformed\jetified-javax.inject-1, 
+C:\Users\fasop\.gradle\caches\8.12\transforms\b5de81a81eb9cefe5d83ab43d8ce268b\transformed\jetified-sentry-7.22.4, and from all global synthetics files in 
+[+1401 ms] INFO: C:\Users\fasop\AndroidStudioProjects\academia\academia_app\build\firebase_core\intermediates\runtime_library_classes_dir\debug\bundleLibRuntimeToDirDebug\
+io\flutter\plugins\firebase\core\FlutterFirebaseCorePlugin.class: D8: Type `io.flutter.embedding.engine.plugins.FlutterPlugin` was not found, it is required for default 
+or static interface methods desugaring of `io.flutter.plugins.firebase.core.FlutterFirebaseCorePlugin`
+[   +1 ms] INFO: C:\Users\fasop\AndroidStudioProjects\academia\academia_app\build\share_plus\intermediates\runtime_library_classes_dir\debug\bundleLibRuntimeToDirDebug\dev
+\fluttercommunity\plus\share\Share.class: D8: Type `kotlin.jvm.functions.Function0` was not found, it is required for default or static interface methods desugaring of 
+`dev.fluttercommunity.plus.share.Share$$InternalSyntheticLambda$2$0287c6ef0a545a0dc4e775183171089ef1df4074eb9c02401d0ac351a03703e9$1`
+[        ] INFO: C:\Users\fasop\AndroidStudioProjects\academia\academia_app\build\shared_preferences_android\intermediates\runtime_library_classes_dir\debug\bundleLibRunti
+meToDirDebug\io\flutter\plugins\sharedpreferences\SharedPreferencesAsyncApi$Companion.class: D8: Type `io.flutter.plugin.common.BasicMessageChannel$MessageHandler` was 
+not found, it is required for default or static interface methods desugaring of 
+`io.flutter.plugins.sharedpreferences.SharedPreferencesAsyncApi$Companion$$InternalSyntheticLambda$2$16ba526554017a318e70c4ae774fdf6ba524eaf3d53fbcbb8086569f45aa919e$6`
+                 E: provider (line=401)
+[   +1 ms] I/flutter (12481): [RUNTIME T0] Feed ouvert - videos=69
+[   +1 ms] W/CCodec  (12481): This behavior is subject to change. It is recommended that app developers double check whether the requested max input size is in reasonable 
+range.
+[   +8 ms] W/CCodec  (12481): This behavior is subject to change. It is recommended that app developers double check whether the requested max input size is in reasonable 
+range.
+[   +9 ms] W/CCodec  (12481): This behavior is subject to change. It is recommended that app developers double check whether the requested max input size is in reasonable 
+range.
+[   +1 ms] I/flutter (12481): [RUNTIME T1] Clic sur + - _controllers size=3
+[ +160 ms] I/flutter (12481): [RUNTIME T2] Ouverture Smart Whiteboard - _controllers size=3
+[        ] I/flutter (12481): DEBUG-D19-01: createProject START subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+[        ] I/flutter (12481): DEBUG-D19-30: service.createProject RPC START
+[  +12 ms] I/flutter (12481): DEBUG-D19-31: service.createProject response={success: true, project_id: f04aa2f5-b456-4ffb-81f1-42216d7d36ae} runtimeType=_Map<String, 
+dynamic> isNull=false
+[        ] I/flutter (12481): DEBUG-D19-02: createProject result={success: true, project_id: f04aa2f5-b456-4ffb-81f1-42216d7d36ae} runtimeType=_Map<String, dynamic> 
+isNull=false
+[        ] I/flutter (12481): DEBUG-D19-03: result['success']=true runtimeType=bool
+[        ] I/flutter (12481): DEBUG-D19-04: result['project_id']=f04aa2f5-b456-4ffb-81f1-42216d7d36ae runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-05: createProject _currentProjectId=f04aa2f5-b456-4ffb-81f1-42216d7d36ae
+[   +1 ms] I/flutter (12481): DEBUG-D19-06: generateStoryboard invoke START mode=simple_subject subject= narration_mode=none
+[  +14 ms] I/flutter (12481): DEBUG-D19-07: generateStoryboard response.status=200 runtimeType=int
+[        ] I/flutter (12481): DEBUG-D19-08: generateStoryboard response.data=Instance of 'FunctionResponse'.data runtimeType=_Map<String, dynamic> isNull=false
+[        ] I/flutter (12481): DEBUG-D19-10: generateStoryboard data={success: true, storyboard_json: {version: 1.0, created_at: 2026-06-28T09:44:38.260Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: , renderer: scientific, theme: scientific, narration_mode: none, export_settings: {format: mp4, resolution: {width: 1080, 
+height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, 
+transition: {}, blocks: [{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-002, type: 
+paragraph, content: D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps dans l'univers., order: 1, visible: true, animation: {}, position: 
+{}, style: {}}]}, {id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 8000, transition: {}, blocks: [{id: block-003, type: title, 
+content: 1├¿re Loi : Principe d'Inertie, orde
+[        ] I/flutter (12481): DEBUG-D19-11: data['storyboard_json']={version: 1.0, created_at: 2026-06-28T09:44:38.260Z, created_by: 6745c7ad-732b-47d0-b5b8-06d6dcf286ff, 
+subject: , renderer: scientific, theme: scientific, narration_mode: none, export_settings: {format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, transition: {}, blocks: [{id: 
+block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-002, type: paragraph, content: 
+D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps dans l'univers., order: 1, visible: true, animation: {}, position: {}, style: {}}]}, 
+{id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 8000, transition: {}, blocks: [{id: block-003, type: title, content: 1├¿re Loi 
+: Principe d'Inertie, order: 0, visible: true, animation: {
+[        ] I/flutter (12481): DEBUG-D19-13: generateStoryboard storyboardJson={version: 1.0, created_at: 2026-06-28T09:44:38.260Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: , renderer: scientific, theme: scientific, narration_mode: none, export_settings: {format: mp4, resolution: {width: 1080, 
+height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, 
+transition: {}, blocks: [{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-002, type: 
+paragraph, content: D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps dans l'univers., order: 1, visible: true, animation: {}, position: 
+{}, style: {}}]}, {id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 8000, transition: {}, blocks: [{id: block-003, type: title, 
+content: 1├¿re Loi : Principe d'Inertie, order: 0, visible: true, an
+[        ] I/flutter (12481): DEBUG 15: Storyboard.fromJson json = {version: 1.0, created_at: 2026-06-28T09:44:38.260Z, created_by: 6745c7ad-732b-47d0-b5b8-06d6dcf286ff, 
+subject: , renderer: scientific, theme: scientific, narration_mode: none, export_settings: {format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, transition: {}, blocks: [{id: 
+block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-002, type: paragraph, content: 
+D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps dans l'univers., order: 1, visible: true, animation: {}, position: {}, style: {}}]}, 
+{id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 8000, transition: {}, blocks: [{id: block-003, type: title, content: 1├¿re Loi 
+: Principe d'Inertie, order: 0, visible: true, animation: {}
+[        ] I/flutter (12481): DEBUG 22: json['subject'] = 
+[        ] I/flutter (12481): DEBUG 23: json['subject'] type = String
+[        ] I/flutter (12481): DEBUG-D19-68: Storyboard.fromJson START json={version: 1.0, created_at: 2026-06-28T09:44:38.260Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: , renderer: scientific, theme: scientific, narration_mode: none, export_settings: {format: mp4, resolution: {width: 1080, 
+height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, 
+transition: {}, blocks: [{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-002, type: 
+paragraph, content: D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps dans l'univers., order: 1, visible: true, animation: {}, position: 
+{}, style: {}}]}, {id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 8000, transition: {}, blocks: [{id: block-003, type: title, 
+content: 1├¿re Loi : Principe d'Inertie, order: 0, visible: true, anima
+[        ] I/flutter (12481): DEBUG-D19-69: Storyboard.fromJson version=1.0 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-70: Storyboard.fromJson created_at=2026-06-28T09:44:38.260Z runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-71: Storyboard.fromJson created_by=6745c7ad-732b-47d0-b5b8-06d6dcf286ff runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-72: Storyboard.fromJson subject= runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-73: Storyboard.fromJson renderer=scientific runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-74: Storyboard.fromJson theme=scientific runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-75: Storyboard.fromJson narration_mode=none runtimeType=String isNull=false
+[  +21 ms] I/flutter (12481): DEBUG-D19-76: Storyboard.fromJson export_settings={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, 
+audio_codec: aac} runtimeType=_Map<String, dynamic> isNull=false
+[        ] I/flutter (12481): DEBUG-D19-77: Storyboard.fromJson scenes=[{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, transition: 
+{}, blocks: [{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-002, type: paragraph, 
+content: D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps dans l'univers., order: 1, visible: true, animation: {}, position: {}, style: 
+{}}]}, {id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 8000, transition: {}, blocks: [{id: block-003, type: title, content: 
+1├¿re Loi : Principe d'Inertie, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-004, type: definition, content: Tout corps pers├®v├¿re dans 
+l'├®tat de repos ou de mouvement rectiligne uniforme dans lequel il se trouve, ├á moins que quelque force n'agisse sur lui et ne le contraigne ├á changer d'├®tat., order: 
+1, visible: true, animation: {}, posi
+[        ] I/flutter (12481): DEBUG-D19-51: ExportSettings.fromJson START json={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, 
+audio_codec: aac} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-52: ExportSettings.fromJson format=mp4 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-53: ExportSettings.fromJson resolution={width: 1080, height: 1920} runtimeType=_Map<String, dynamic> isNull=false
+[        ] I/flutter (12481): DEBUG-D19-54: ExportSettings.fromJson frame_rate=30 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-55: Resolution.fromJson START json={width: 1080, height: 1920} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-56: Resolution.fromJson width=1080 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-57: Resolution.fromJson height=1920 runtimeType=int isNull=false
+[  +29 ms] I/flutter (12481): DEBUG-D19-58: Scene.fromJson START json={id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, transition: {}, 
+blocks: [{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-002, type: paragraph, 
+content: D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps dans l'univers., order: 1, visible: true, animation: {}, position: {}, style: 
+{}}]} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-59: Scene.fromJson id=scene-001 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-60: Scene.fromJson order=0 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-61: Scene.fromJson title=Introduction aux Lois de Newton runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-62: Scene.fromJson duration_ms=7000 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-63: Scene.fromJson blocks=[{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, 
+position: {}, style: {}}, {id: block-002, type: paragraph, content: D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps dans l'univers., 
+order: 1, visible: true, animation: {}, position: {}, style: {}}] runtimeType=List<dynamic> isNull=false
+[        ] I/flutter (12481): DEBUG-D19-64: Block.fromJson START json={id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, 
+position: {}, style: {}} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-65: Block.fromJson id=block-001 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-66: Block.fromJson type=title runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-67: Block.fromJson content=Les Lois de Newton runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-64: Block.fromJson START json={id: block-002, type: paragraph, content: D├®couvrez les trois principes fondamentaux qui r├®gissent 
+le mouvement des corps dans l'univers., order: 1, visible: true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-65: Block.fromJson id=block-002 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-67: Block.fromJson content=D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps dans l'univers. 
+runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-58: Scene.fromJson START json={id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 8000, 
+transition: {}, blocks: [{id: block-003, type: title, content: 1├¿re Loi : Principe d'Inertie, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: 
+block-004, type: definition, content: Tout corps pers├®v├¿re dans l'├®tat de repos ou de mouvement rectiligne uniforme dans lequel il se trouve, ├á moins que quelque 
+force n'agisse sur lui et ne le contraigne ├á changer d'├®tat., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-005, type: paragraph, 
+content: En d'autres termes, un objet au repos reste au repos, et un objet en mouvement continue ├á se d├®placer ├á vitesse constante et en ligne droite, sauf s'il est 
+soumis ├á une force ext├®rieure., order: 2, visible: true, animation: {}, position: {}, style: {}}]} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-59: Scene.fromJson id=scene-002 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-60: Scene.fromJson order=1 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-61: Scene.fromJson title=Premi├¿re Loi de Newton : Principe d'Inertie runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-62: Scene.fromJson duration_ms=8000 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-63: Scene.fromJson blocks=[{id: block-003, type: title, content: 1├¿re Loi : Principe d'Inertie, order: 0, visible: true, 
+animation: {}, position: {}, style: {}}, {id: block-004, type: definition, content: Tout corps pers├®v├¿re dans l'├®tat de repos ou de mouvement rectiligne uniforme dans 
+lequel il se trouve, ├á moins que quelque force n'agisse sur lui et ne le contraigne ├á changer d'├®tat., order: 1, visible: true, animation: {}, position: {}, style: 
+{}}, {id: block-005, type: paragraph, content: En d'autres termes, un objet au repos reste au repos, et un objet en mouvement continue ├á se d├®placer ├á vitesse 
+constante et en ligne droite, sauf s'il est soumis ├á une force ext├®rieure., order: 2, visible: true, animation: {}, position: {}, style: {}}] runtimeType=List<dynamic> 
+isNull=false
+[        ] I/flutter (12481): DEBUG-D19-64: Block.fromJson START json={id: block-003, type: title, content: 1├¿re Loi : Principe d'Inertie, order: 0, visible: true, 
+animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-65: Block.fromJson id=block-003 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-66: Block.fromJson type=title runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-67: Block.fromJson content=1├¿re Loi : Principe d'Inertie runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-64: Block.fromJson START json={id: block-004, type: definition, content: Tout corps pers├®v├¿re dans l'├®tat de repos ou de 
+mouvement rectiligne uniforme dans lequel il se trouve, ├á moins que quelque force n'agisse sur lui et ne le contraigne ├á changer d'├®tat., order: 1, visible: true, 
+animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-65: Block.fromJson id=block-004 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-66: Block.fromJson type=definition runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-67: Block.fromJson content=Tout corps pers├®v├¿re dans l'├®tat de repos ou de mouvement rectiligne uniforme dans lequel il se 
+trouve, ├á moins que quelque force n'agisse sur lui et ne le contraigne ├á changer d'├®tat. runtimeType=String isNull=false
+[  +19 ms] I/flutter (12481): DEBUG-D19-01: createProject START subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+[        ] I/flutter (12481): DEBUG-D19-30: service.createProject RPC START
+[   +5 ms] I/flutter (12481): DEBUG-D19-31: service.createProject response={success: true, project_id: 9812075e-6cb3-41b6-af78-f1cc476fc419} runtimeType=_Map<String, 
+dynamic> isNull=false
+[        ] I/flutter (12481): DEBUG-D19-02: createProject result={success: true, project_id: 9812075e-6cb3-41b6-af78-f1cc476fc419} runtimeType=_Map<String, dynamic> 
+isNull=false
+[        ] I/flutter (12481): DEBUG-D19-03: result['success']=true runtimeType=bool
+[   +1 ms] I/flutter (12481): DEBUG-D19-04: result['project_id']=9812075e-6cb3-41b6-af78-f1cc476fc419 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-05: createProject _currentProjectId=9812075e-6cb3-41b6-af78-f1cc476fc419
+[        ] I/flutter (12481): DEBUG-D19-06: generateStoryboard invoke START mode=simple_subject subject= narration_mode=none
+[   +5 ms] I/flutter (12481): DEBUG-D19-07: generateStoryboard response.status=200 runtimeType=int
+[        ] I/flutter (12481): DEBUG-D19-08: generateStoryboard response.data=Instance of 'FunctionResponse'.data runtimeType=_Map<String, dynamic> isNull=false
+[        ] I/flutter (12481): DEBUG-D19-10: generateStoryboard data={success: true, storyboard_json: {version: 1.0, created_at: 2026-06-28T09:44:56.951Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: , renderer: scientific, theme: scientific, narration_mode: none, export_settings: {format: mp4, resolution: {width: 1080, 
+height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, 
+transition: {}, blocks: [{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-002, type: 
+paragraph, content: D├®couvrez les trois lois fondamentales qui r├®gissent le mouvement des corps., order: 1, visible: true, animation: {}, position: {}, style: {}}]}, 
+{id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 8000, transition: {}, blocks: [{id: block-003, type: title, content: 1├¿re Loi 
+: Principe d'Inertie, order: 0, visible: true
+[   +1 ms] I/flutter (12481): DEBUG-D19-11: data['storyboard_json']={version: 1.0, created_at: 2026-06-28T09:44:56.951Z, created_by: 6745c7ad-732b-47d0-b5b8-06d6dcf286ff, 
+subject: , renderer: scientific, theme: scientific, narration_mode: none, export_settings: {format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, transition: {}, blocks: [{id: 
+block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-002, type: paragraph, content: 
+D├®couvrez les trois lois fondamentales qui r├®gissent le mouvement des corps., order: 1, visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-002, order: 
+1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 8000, transition: {}, blocks: [{id: block-003, type: title, content: 1├¿re Loi : Principe d'Inertie, 
+order: 0, visible: true, animation: {}, position: {}, st
+[   +1 ms] I/flutter (12481): DEBUG-D19-13: generateStoryboard storyboardJson={version: 1.0, created_at: 2026-06-28T09:44:56.951Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: , renderer: scientific, theme: scientific, narration_mode: none, export_settings: {format: mp4, resolution: {width: 1080, 
+height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, 
+transition: {}, blocks: [{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-002, type: 
+paragraph, content: D├®couvrez les trois lois fondamentales qui r├®gissent le mouvement des corps., order: 1, visible: true, animation: {}, position: {}, style: {}}]}, 
+{id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 8000, transition: {}, blocks: [{id: block-003, type: title, content: 1├¿re Loi 
+: Principe d'Inertie, order: 0, visible: true, animation: {}, positi
+[   +2 ms] I/flutter (12481): DEBUG 15: Storyboard.fromJson json = {version: 1.0, created_at: 2026-06-28T09:44:56.951Z, created_by: 6745c7ad-732b-47d0-b5b8-06d6dcf286ff, 
+subject: , renderer: scientific, theme: scientific, narration_mode: none, export_settings: {format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, transition: {}, blocks: [{id: 
+block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-002, type: paragraph, content: 
+D├®couvrez les trois lois fondamentales qui r├®gissent le mouvement des corps., order: 1, visible: true, animation: {}, position: {}, style: {}}]}, {id: scene-002, order: 
+1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 8000, transition: {}, blocks: [{id: block-003, type: title, content: 1├¿re Loi : Principe d'Inertie, 
+order: 0, visible: true, animation: {}, position: {}, sty
+[        ] I/flutter (12481): DEBUG 22: json['subject'] = 
+[        ] I/flutter (12481): DEBUG 23: json['subject'] type = String
+[        ] I/flutter (12481): DEBUG-D19-68: Storyboard.fromJson START json={version: 1.0, created_at: 2026-06-28T09:44:56.951Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: , renderer: scientific, theme: scientific, narration_mode: none, export_settings: {format: mp4, resolution: {width: 1080, 
+height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, 
+transition: {}, blocks: [{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-002, type: 
+paragraph, content: D├®couvrez les trois lois fondamentales qui r├®gissent le mouvement des corps., order: 1, visible: true, animation: {}, position: {}, style: {}}]}, 
+{id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 8000, transition: {}, blocks: [{id: block-003, type: title, content: 1├¿re Loi 
+: Principe d'Inertie, order: 0, visible: true, animation: {}, position:
+[   +1 ms] I/flutter (12481): DEBUG-D19-69: Storyboard.fromJson version=1.0 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-70: Storyboard.fromJson created_at=2026-06-28T09:44:56.951Z runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-71: Storyboard.fromJson created_by=6745c7ad-732b-47d0-b5b8-06d6dcf286ff runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-72: Storyboard.fromJson subject= runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-73: Storyboard.fromJson renderer=scientific runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-74: Storyboard.fromJson theme=scientific runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-75: Storyboard.fromJson narration_mode=none runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-76: Storyboard.fromJson export_settings={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, 
+audio_codec: aac} runtimeType=_Map<String, dynamic> isNull=false
+[        ] I/flutter (12481): DEBUG-D19-77: Storyboard.fromJson scenes=[{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, transition: 
+{}, blocks: [{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-002, type: paragraph, 
+content: D├®couvrez les trois lois fondamentales qui r├®gissent le mouvement des corps., order: 1, visible: true, animation: {}, position: {}, style: {}}]}, {id: 
+scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 8000, transition: {}, blocks: [{id: block-003, type: title, content: 1├¿re Loi : 
+Principe d'Inertie, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-004, type: definition, content: Tout corps pers├®v├¿re dans l'├®tat de 
+repos ou de mouvement rectiligne uniforme dans lequel il se trouve, ├á moins que quelque force n'agisse sur lui et ne le contraigne ├á changer d'├®tat., order: 1, 
+visible: true, animation: {}, position: {}, style: {}
+[        ] I/flutter (12481): DEBUG-D19-51: ExportSettings.fromJson START json={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, 
+audio_codec: aac} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-52: ExportSettings.fromJson format=mp4 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-53: ExportSettings.fromJson resolution={width: 1080, height: 1920} runtimeType=_Map<String, dynamic> isNull=false
+[        ] I/flutter (12481): DEBUG-D19-54: ExportSettings.fromJson frame_rate=30 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-55: Resolution.fromJson START json={width: 1080, height: 1920} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-56: Resolution.fromJson width=1080 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-57: Resolution.fromJson height=1920 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-58: Scene.fromJson START json={id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, transition: {}, 
+blocks: [{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: block-002, type: paragraph, 
+content: D├®couvrez les trois lois fondamentales qui r├®gissent le mouvement des corps., order: 1, visible: true, animation: {}, position: {}, style: {}}]} 
+runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-59: Scene.fromJson id=scene-001 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-60: Scene.fromJson order=0 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-61: Scene.fromJson title=Introduction aux Lois de Newton runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-62: Scene.fromJson duration_ms=7000 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-63: Scene.fromJson blocks=[{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, 
+position: {}, style: {}}, {id: block-002, type: paragraph, content: D├®couvrez les trois lois fondamentales qui r├®gissent le mouvement des corps., order: 1, visible: 
+true, animation: {}, position: {}, style: {}}] runtimeType=List<dynamic> isNull=false
+[        ] I/flutter (12481): DEBUG-D19-64: Block.fromJson START json={id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, animation: {}, 
+position: {}, style: {}} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-65: Block.fromJson id=block-001 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-66: Block.fromJson type=title runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-67: Block.fromJson content=Les Lois de Newton runtimeType=String isNull=false
+[   +1 ms] I/flutter (12481): DEBUG-D19-64: Block.fromJson START json={id: block-002, type: paragraph, content: D├®couvrez les trois lois fondamentales qui r├®gissent le 
+mouvement des corps., order: 1, visible: true, animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-65: Block.fromJson id=block-002 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-67: Block.fromJson content=D├®couvrez les trois lois fondamentales qui r├®gissent le mouvement des corps. runtimeType=String 
+isNull=false
+[        ] I/flutter (12481): DEBUG-D19-58: Scene.fromJson START json={id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 8000, 
+transition: {}, blocks: [{id: block-003, type: title, content: 1├¿re Loi : Principe d'Inertie, order: 0, visible: true, animation: {}, position: {}, style: {}}, {id: 
+block-004, type: definition, content: Tout corps pers├®v├¿re dans l'├®tat de repos ou de mouvement rectiligne uniforme dans lequel il se trouve, ├á moins que quelque 
+force n'agisse sur lui et ne le contraigne ├á changer d'├®tat., order: 1, visible: true, animation: {}, position: {}, style: {}}, {id: block-005, type: paragraph, 
+content: Un objet au repos reste au repos, un objet en mouvement continue ├á vitesse constante et en ligne droite, sauf si une force externe agit., order: 2, visible: 
+true, animation: {}, position: {}, style: {}}]} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-59: Scene.fromJson id=scene-002 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-60: Scene.fromJson order=1 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-61: Scene.fromJson title=Premi├¿re Loi de Newton : Principe d'Inertie runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-62: Scene.fromJson duration_ms=8000 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-63: Scene.fromJson blocks=[{id: block-003, type: title, content: 1├¿re Loi : Principe d'Inertie, order: 0, visible: true, 
+animation: {}, position: {}, style: {}}, {id: block-004, type: definition, content: Tout corps pers├®v├¿re dans l'├®tat de repos ou de mouvement rectiligne uniforme dans 
+lequel il se trouve, ├á moins que quelque force n'agisse sur lui et ne le contraigne ├á changer d'├®tat., order: 1, visible: true, animation: {}, position: {}, style: 
+{}}, {id: block-005, type: paragraph, content: Un objet au repos reste au repos, un objet en mouvement continue ├á vitesse constante et en ligne droite, sauf si une force 
+externe agit., order: 2, visible: true, animation: {}, position: {}, style: {}}] runtimeType=List<dynamic> isNull=false
+[        ] I/flutter (12481): DEBUG-D19-64: Block.fromJson START json={id: block-003, type: title, content: 1├¿re Loi : Principe d'Inertie, order: 0, visible: true, 
+animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-65: Block.fromJson id=block-003 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-66: Block.fromJson type=title runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-67: Block.fromJson content=1├¿re Loi : Principe d'Inertie runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-64: Block.fromJson START json={id: block-004, type: definition, content: Tout corps pers├®v├¿re dans l'├®tat de repos ou de 
+mouvement rectiligne uniforme dans lequel il se trouve, ├á moins que quelque force n'agisse sur lui et ne le contraigne ├á changer d'├®tat., order: 1, visible: true, 
+animation: {}, position: {}, style: {}} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-65: Block.fromJson id=block-004 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-66: Block.fromJson type=definition runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-67: Block.fromJson content=Tout corps pers├®v├¿re dans l'├®tat de repos ou de mouvement rectiligne uniforme dans lequel il se 
+trouve, ├á moins que quelque force n'agisse sur lui et ne le contraigne ├á changer d'├®tat. runtimeType=String isNull=false
+[  +26 ms] I/flutter (12481): [RUNTIME T1] Clic sur + - _controllers size=3
+[  +31 ms] I/flutter (12481): [RUNTIME T2] Ouverture Smart Whiteboard - _controllers size=3
+[  +13 ms] I/flutter (12481): DEBUG-D19-01: createProject START subject=d├®riv├®s d'une fonction rendererId=notebook themeId=notebook narrationMode=tts
+[        ] I/flutter (12481): DEBUG-D19-30: service.createProject RPC START
+[        ] I/flutter (12481): DEBUG-D19-31: service.createProject response={success: true, project_id: 073b3e3c-60d5-4104-b118-6e25a864a3c2} runtimeType=_Map<String, 
+dynamic> isNull=false
+[        ] I/flutter (12481): DEBUG-D19-02: createProject result={success: true, project_id: 073b3e3c-60d5-4104-b118-6e25a864a3c2} runtimeType=_Map<String, dynamic> 
+isNull=false
+[        ] I/flutter (12481): DEBUG-D19-03: result['success']=true runtimeType=bool
+[        ] I/flutter (12481): DEBUG-D19-04: result['project_id']=073b3e3c-60d5-4104-b118-6e25a864a3c2 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-05: createProject _currentProjectId=073b3e3c-60d5-4104-b118-6e25a864a3c2
+[        ] I/flutter (12481): DEBUG-D19-06: generateStoryboard invoke START mode=simple_subject subject= narration_mode=none
+[  +13 ms] I/flutter (12481): DEBUG-D19-07: generateStoryboard response.status=200 runtimeType=int
+[        ] I/flutter (12481): DEBUG-D19-08: generateStoryboard response.data=Instance of 'FunctionResponse'.data runtimeType=_Map<String, dynamic> isNull=false
+[        ] I/flutter (12481): DEBUG-D19-10: generateStoryboard data={success: true, storyboard_json: {version: 1.0, created_at: 2026-06-28T09:45:52.614Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: , renderer: scientific, theme: scientific, narration_mode: none, export_settings: {format: mp4, resolution: {width: 1080, 
+height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, 
+transition: {type: fade, duration_ms: 500}, blocks: [{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, style: {fontSize: 16, fontWeight: 
+normal, color: #000000}}, {id: block-002, type: paragraph, content: D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps., order: 1, visible: 
+true, style: {fontSize: 16, fontWeight: normal, color: #000000}}]}, {id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 10000, 
+transition: {type: slide_left, duration_ms: 500
+[   +2 ms] I/flutter (12481): DEBUG-D19-11: data['storyboard_json']={version: 1.0, created_at: 2026-06-28T09:45:52.614Z, created_by: 6745c7ad-732b-47d0-b5b8-06d6dcf286ff, 
+subject: , renderer: scientific, theme: scientific, narration_mode: none, export_settings: {format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, transition: {type: fade, duration_ms: 
+500}, blocks: [{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: 
+block-002, type: paragraph, content: D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps., order: 1, visible: true, style: {fontSize: 16, 
+fontWeight: normal, color: #000000}}]}, {id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 10000, transition: {type: slide_left, 
+duration_ms: 500}, blocks: [{id: block-003, type:
+[   +1 ms] I/flutter (12481): DEBUG-D19-13: generateStoryboard storyboardJson={version: 1.0, created_at: 2026-06-28T09:45:52.614Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: , renderer: scientific, theme: scientific, narration_mode: none, export_settings: {format: mp4, resolution: {width: 1080, 
+height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, 
+transition: {type: fade, duration_ms: 500}, blocks: [{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, style: {fontSize: 16, fontWeight: 
+normal, color: #000000}}, {id: block-002, type: paragraph, content: D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps., order: 1, visible: 
+true, style: {fontSize: 16, fontWeight: normal, color: #000000}}]}, {id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 10000, 
+transition: {type: slide_left, duration_ms: 500}, blocks: [{id: block-
+[   +7 ms] I/flutter (12481): DEBUG 15: Storyboard.fromJson json = {version: 1.0, created_at: 2026-06-28T09:45:52.614Z, created_by: 6745c7ad-732b-47d0-b5b8-06d6dcf286ff, 
+subject: , renderer: scientific, theme: scientific, narration_mode: none, export_settings: {format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, 
+video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, transition: {type: fade, duration_ms: 
+500}, blocks: [{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: 
+block-002, type: paragraph, content: D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps., order: 1, visible: true, style: {fontSize: 16, 
+fontWeight: normal, color: #000000}}]}, {id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 10000, transition: {type: slide_left, 
+duration_ms: 500}, blocks: [{id: block-003, type: 
+[        ] I/flutter (12481): DEBUG 22: json['subject'] = 
+[        ] I/flutter (12481): DEBUG 23: json['subject'] type = String
+[        ] I/flutter (12481): DEBUG-D19-68: Storyboard.fromJson START json={version: 1.0, created_at: 2026-06-28T09:45:52.614Z, created_by: 
+6745c7ad-732b-47d0-b5b8-06d6dcf286ff, subject: , renderer: scientific, theme: scientific, narration_mode: none, export_settings: {format: mp4, resolution: {width: 1080, 
+height: 1920}, frame_rate: 30, video_codec: h264, audio_codec: aac}, scenes: [{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, 
+transition: {type: fade, duration_ms: 500}, blocks: [{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, style: {fontSize: 16, fontWeight: 
+normal, color: #000000}}, {id: block-002, type: paragraph, content: D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps., order: 1, visible: 
+true, style: {fontSize: 16, fontWeight: normal, color: #000000}}]}, {id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 10000, 
+transition: {type: slide_left, duration_ms: 500}, blocks: [{id: block-003
+[        ] I/flutter (12481): DEBUG-D19-69: Storyboard.fromJson version=1.0 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-70: Storyboard.fromJson created_at=2026-06-28T09:45:52.614Z runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-71: Storyboard.fromJson created_by=6745c7ad-732b-47d0-b5b8-06d6dcf286ff runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-72: Storyboard.fromJson subject= runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-73: Storyboard.fromJson renderer=scientific runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-74: Storyboard.fromJson theme=scientific runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-75: Storyboard.fromJson narration_mode=none runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-76: Storyboard.fromJson export_settings={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, 
+audio_codec: aac} runtimeType=_Map<String, dynamic> isNull=false
+[        ] I/flutter (12481): DEBUG-D19-77: Storyboard.fromJson scenes=[{id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, transition: 
+{type: fade, duration_ms: 500}, blocks: [{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, style: {fontSize: 16, fontWeight: normal, 
+color: #000000}}, {id: block-002, type: paragraph, content: D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps., order: 1, visible: true, 
+style: {fontSize: 16, fontWeight: normal, color: #000000}}]}, {id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 10000, 
+transition: {type: slide_left, duration_ms: 500}, blocks: [{id: block-003, type: definition, content: Un corps pers├®v├¿re dans son ├®tat de repos ou de mouvement 
+rectiligne uniforme si aucune force ext├®rieure n'agit sur lui., order: 0, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-004, 
+type: paragraph, content: En d'autres termes, un objet au r
+[        ] I/flutter (12481): DEBUG-D19-51: ExportSettings.fromJson START json={format: mp4, resolution: {width: 1080, height: 1920}, frame_rate: 30, video_codec: h264, 
+audio_codec: aac} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-52: ExportSettings.fromJson format=mp4 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-53: ExportSettings.fromJson resolution={width: 1080, height: 1920} runtimeType=_Map<String, dynamic> isNull=false
+[   +2 ms] I/flutter (12481): DEBUG-D19-54: ExportSettings.fromJson frame_rate=30 runtimeType=int isNull=false
+[   +3 ms] I/flutter (12481): DEBUG-D19-55: Resolution.fromJson START json={width: 1080, height: 1920} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-56: Resolution.fromJson width=1080 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-57: Resolution.fromJson height=1920 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-58: Scene.fromJson START json={id: scene-001, order: 0, title: Introduction aux Lois de Newton, duration_ms: 7000, transition: 
+{type: fade, duration_ms: 500}, blocks: [{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, style: {fontSize: 16, fontWeight: normal, 
+color: #000000}}, {id: block-002, type: paragraph, content: D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps., order: 1, visible: true, 
+style: {fontSize: 16, fontWeight: normal, color: #000000}}]} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-59: Scene.fromJson id=scene-001 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-60: Scene.fromJson order=0 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-61: Scene.fromJson title=Introduction aux Lois de Newton runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-62: Scene.fromJson duration_ms=7000 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-63: Scene.fromJson blocks=[{id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, style: {fontSize: 
+16, fontWeight: normal, color: #000000}}, {id: block-002, type: paragraph, content: D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps., 
+order: 1, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}] runtimeType=List<dynamic> isNull=false
+[        ] I/flutter (12481): DEBUG-D19-64: Block.fromJson START json={id: block-001, type: title, content: Les Lois de Newton, order: 0, visible: true, style: {fontSize: 
+16, fontWeight: normal, color: #000000}} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-65: Block.fromJson id=block-001 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-66: Block.fromJson type=title runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-67: Block.fromJson content=Les Lois de Newton runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-64: Block.fromJson START json={id: block-002, type: paragraph, content: D├®couvrez les trois principes fondamentaux qui r├®gissent 
+le mouvement des corps., order: 1, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}} runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-65: Block.fromJson id=block-002 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-66: Block.fromJson type=paragraph runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-67: Block.fromJson content=D├®couvrez les trois principes fondamentaux qui r├®gissent le mouvement des corps. runtimeType=String 
+isNull=false
+[        ] I/flutter (12481): DEBUG-D19-58: Scene.fromJson START json={id: scene-002, order: 1, title: Premi├¿re Loi de Newton : Principe d'Inertie, duration_ms: 10000, 
+transition: {type: slide_left, duration_ms: 500}, blocks: [{id: block-003, type: definition, content: Un corps pers├®v├¿re dans son ├®tat de repos ou de mouvement 
+rectiligne uniforme si aucune force ext├®rieure n'agit sur lui., order: 0, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-004, 
+type: paragraph, content: En d'autres termes, un objet au repos reste au repos, et un objet en mouvement continue ├á se d├®placer ├á vitesse constante et en ligne droite, 
+sauf s'il est contraint de changer d'├®tat par une force., order: 1, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}]} runtimeType=_Map<String, 
+dynamic>
+[        ] I/flutter (12481): DEBUG-D19-59: Scene.fromJson id=scene-002 runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-60: Scene.fromJson order=1 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-61: Scene.fromJson title=Premi├¿re Loi de Newton : Principe d'Inertie runtimeType=String isNull=false
+[        ] I/flutter (12481): DEBUG-D19-62: Scene.fromJson duration_ms=10000 runtimeType=int isNull=false
+[        ] I/flutter (12481): DEBUG-D19-63: Scene.fromJson blocks=[{id: block-003, type: definition, content: Un corps pers├®v├¿re dans son ├®tat de repos ou de mouvement 
+rectiligne uniforme si aucune force ext├®rieure n'agit sur lui., order: 0, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}, {id: block-004, 
+type: paragraph, content: En d'autres termes, un objet au repos reste au repos, et un objet en mouvement continue ├á se d├®placer ├á vitesse constante et en ligne droite, 
+sauf s'il est contraint de changer d'├®tat par une force., order: 1, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}}] runtimeType=List<dynamic> 
+isNull=false
+[        ] I/flutter (12481): DEBUG-D19-64: Block.fromJson START json={id: block-003, type: definition, content: Un corps pers├®v├¿re dans son ├®tat de repos ou de 
+mouvement rectiligne uniforme si aucune force ext├®rieure n'agit sur lui., order: 0, visible: true, style: {fontSize: 16, fontWeight: normal, color: #000000}} 
+runtimeType=_Map<String, dynamic>
+[        ] I/flutter (12481): DEBUG-D19-65: Block.fromJson id=block-003 runtimeType=String isNull=false
+
+

@@ -726,8 +726,7 @@ class _MerchantMarketplaceConsoleScreenV2State
                           ),
                         ),
                         const SizedBox(width: 10),
-                        SizedBox(
-                          width: 90,
+                        Flexible(
                           child: TextField(
                             controller: currencyCtrl,
                             decoration: const InputDecoration(
