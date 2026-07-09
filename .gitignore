@@ -32,3 +32,4 @@ keys.dart
 **/google-cloud-key.json
 *-key.json
 *-credentials.json
+supabase/functions/test-bobodo-secrets/
