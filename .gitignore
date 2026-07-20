@@ -2,8 +2,6 @@
 /build/
 .dart_tool/
 .packages
-pubspec.lock
-
 **/build/
 
 # IDE files
