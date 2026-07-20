@@ -7,7 +7,8 @@
       "namespace": "android_app",
       "package_name": "com.academia.nexiomgroup.app",
       "sha256_cert_fingerprints": [
-        "67:E4:71:60:36:DC:3A:C6:C4:07:26:4B:F5:77:BE:F2:0E:4A:D5:00:A3:78:9C:E0:5E:D2:38:26:E5:73:4E:F9"
+        "67:E4:71:60:36:DC:3A:C6:C4:07:26:4B:F5:77:BE:F2:0E:4A:D5:00:A3:78:9C:E0:5E:D2:38:26:E5:73:4E:F9",
+        "E0:5B:FA:B2:55:BE:BB:E4:43:F5:66:4E:03:82:DB:C1:DB:A7:2D:E3:D9:F1:4A:F2:C6:CB:9C:D7:2E:60:BA:AF"
       ]
     }
   }
