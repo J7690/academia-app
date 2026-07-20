@@ -239,6 +239,33 @@
     })();
   </script>
   <script>
+    // KILL-SWITCH auto-reparation : desenregistre tout ancien service worker
+    // Flutter (flutter_service_worker.js) qui servait des versions cassees en
+    // cache-first (ecran gris). Le SW Firebase Messaging est conserve.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        var healed = false;
+        regs.forEach(function (reg) {
+          var sw = reg.active || reg.waiting || reg.installing;
+          var url = sw && sw.scriptURL ? sw.scriptURL : '';
+          if (url.indexOf('flutter_service_worker') !== -1) {
+            reg.unregister();
+            healed = true;
+          }
+        });
+        if (healed && typeof caches !== 'undefined' && caches.keys) {
+          caches.keys().then(function (keys) {
+            keys.forEach(function (k) {
+              if (k.indexOf('flutter') !== -1) {
+                caches.delete(k);
+              }
+            });
+          });
+        }
+      }).catch(function () {});
+    }
+  </script>
+  <script>
     // Enregistre le service worker Firebase Messaging pour les notifications web.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {

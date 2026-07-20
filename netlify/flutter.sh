@@ -11,4 +11,7 @@ flutter doctor
 cd academia_app
 
 flutter pub get --enforce-lockfile
-flutter build web --release
+# --pwa-strategy=none : pas de service worker Flutter -> plus de cache-first
+# qui servait d'anciennes versions cassees (ecran gris). Avec les headers
+# no-cache de Netlify, l'app charge toujours la derniere version.
+flutter build web --release --pwa-strategy=none
