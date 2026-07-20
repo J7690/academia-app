@@ -5,6 +5,19 @@
 [build.environment]
   TZ = "UTC"
 
+# Domaine canonique (B3) : www.app -> app
+# Exception : /.well-known/ (assetlinks.json) reste servi sur www.
+[[redirects]]
+  from = "https://www.app.academiea.com/.well-known/*"
+  to = "/.well-known/:splat"
+  status = 200
+
+[[redirects]]
+  from = "https://www.app.academiea.com/*"
+  to = "https://app.academiea.com/:splat"
+  status = 301
+  force = true
+
 # Redirection des liens de parrainage vers Supabase Edge Function
 [[redirects]]
   from = "/ref/*"

@@ -105,6 +105,8 @@ class ShareTrackingService {
     // On ne reconstruit plus d'URL en dur ici pour éviter toute divergence de domaine.
     final link = baseUrl.trim();
     if (link.isNotEmpty) return link;
-    return 'https://academiea.com/ref/$refCode';
+    // B4 : fallback sur le domaine applicatif (academiea.com est le site
+    // vitrine et ne possède pas la règle /ref/* -> lien mort).
+    return 'https://app.academiea.com/ref/$refCode';
   }
 }

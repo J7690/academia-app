@@ -2,12 +2,48 @@
   command = "bash ./netlify/flutter.sh"
   publish = "academia_app/build/web"
 
+# --- Cache (C1) ---
+# index.html et les JSON de version restent toujours frais : le mécanisme
+# app_version.json + rechargement forcé gère la propagation des mises à jour.
+# Les autres assets (main.dart.js, assets/, fonts) utilisent le comportement
+# par défaut de Netlify : ETag + revalidation -> 304 si inchangé, plus de
+# re-téléchargement complet à chaque visite (cause du loader infini).
 [[headers]]
-  for = "/*"
+  for = "/index.html"
   [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-    Pragma = "no-cache"
-    Expires = "0"
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/app_version.json"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/version.json"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+# CanvasKit est versionné par le moteur Flutter (change uniquement avec un
+# upgrade de Flutter) : cache long pour éviter ~7 Mo de wasm à chaque visite.
+[[headers]]
+  for = "/canvaskit/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+# --- Domaine canonique (B3) : www.app -> app ---
+# Exception : /.well-known/ (assetlinks.json) reste servi sur www, le
+# vérificateur Google App Links ne suit pas les redirections.
+[[redirects]]
+  from = "https://www.app.academiea.com/.well-known/*"
+  to = "/.well-known/:splat"
+  status = 200
+
+
+[[redirects]]
+  from = "https://www.app.academiea.com/*"
+  to = "https://app.academiea.com/:splat"
+  status = 301
+  force = true
 
 # Redirection des liens de parrainage vers Supabase Edge Function
 [[redirects]]

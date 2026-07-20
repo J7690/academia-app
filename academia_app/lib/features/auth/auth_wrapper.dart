@@ -156,7 +156,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     try {
       final uri = Uri.parse(link);
-      if (uri.scheme != 'https' || uri.host != 'app.academiea.com') return;
+      // B2 : accepter le domaine canonique et sa variante www (les utilisateurs
+      // tapent souvent www.app.academiea.com).
+      const allowedHosts = {'app.academiea.com', 'www.app.academiea.com'};
+      if (uri.scheme != 'https' || !allowedHosts.contains(uri.host)) return;
 
       final segments = uri.pathSegments;
       if (segments.length < 2 || segments.first != 'ref') return;

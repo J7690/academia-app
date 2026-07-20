@@ -54,6 +54,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="app.academiea.com" android:pathPrefix="/ref" />
+                <!-- B2 : variante www tapée par les utilisateurs -->
+                <data android:scheme="https" android:host="www.app.academiea.com" android:pathPrefix="/ref" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

@@ -1,3 +1,10 @@
+# Domaine canonique (B3) : www.app -> app (doit rester en premiere ligne,
+# _redirects est traite avant netlify.toml et la regle /* masquerait le 301)
+# Exception : assetlinks.json doit rester accessible sur www sans redirection
+# (le verificateur Google App Links ne suit pas les 301)
+https://www.app.academiea.com/.well-known/*  /.well-known/:splat  200
+https://www.app.academiea.com/*  https://app.academiea.com/:splat  301!
+
 /terms    /terms.html   200
 /privacy  /privacy.html 200
 /ref/*    https://thevdfcwlcqzdoybfvgs.supabase.co/functions/v1/referral-redirect/ref/:splat  302!
