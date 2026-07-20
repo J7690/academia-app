@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -15,7 +16,7 @@ class DeepLinkService {
   /// Vérifie si l'app a été ouverte depuis un deep link
   Future<String?> getInitialLink() async {
     try {
-      if (Platform.isAndroid) {
+      if (!kIsWeb && Platform.isAndroid) {
         final String? link = await _channel.invokeMethod('getInitialLink');
         return link;
       }
@@ -27,7 +28,7 @@ class DeepLinkService {
 
   /// Écoute les deep links lorsque l'app est déjà ouverte
   void listenForLinks(ValueChanged<String>? onLinkReceived) {
-    if (Platform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       _channel.setMethodCallHandler((call) async {
         if (call.method == 'onLinkReceived' &&
             onLinkReceived != null &&
