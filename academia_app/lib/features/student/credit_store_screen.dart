@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 import '../../providers/credit_provider.dart';
 import '../../widgets/ligdicash_payment_sheet.dart';
 
@@ -263,44 +264,32 @@ class _CreditStoreScreenState extends State<CreditStoreScreen> {
   }
 
   Future<void> _buyPack(String packCode, int priceXof, String packName, CreditProvider prov) async {
-    // Créer un paiement via RPC puis ouvrir LigdiCash
+    // NOTE: RPC app_student_create_profile_payment n'existe plus dans Supabase.
+    // Le paiement est créé automatiquement via Edge Function ligdicash-initiate.
+    // On génère un UUID local pour le paymentId et on ouvre LigdiCash directement.
     try {
-      final resp = await Supabase.instance.client.rpc('app_student_create_profile_payment', params: {
-        'p_payment_reason': 'credit_purchase',
-        'p_amount_due': priceXof,
-      });
-      final data = resp as Map<String, dynamic>?;
-      if (data == null || data['success'] != true) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: ${data?['error'] ?? 'Échec création paiement'}'), backgroundColor: Colors.red),
-        );
-        return;
-      }
-      final paymentId = data['payment_id']?.toString() ?? '';
-      if (paymentId.isEmpty) return;
-
+      final paymentId = const Uuid().v4();
+      
       if (!mounted) return;
 
       LigdiCashPaymentSheet.show(
         context: context,
-        paymentType: 'application',
+        paymentType: 'credit_purchase',
         paymentId: paymentId,
         amount: priceXof.toDouble(),
+        packCode: packCode,
         description: 'Achat $packName — crédits Academia',
         onSuccess: () async {
-          // Créditer les crédits
-          final result = await prov.purchaseCredits(packCode, paymentId: paymentId);
+          // Recharger le solde pour obtenir les crédits crédités
+          await prov.loadBalance();
           if (!mounted) return;
-          if (result['success'] == true) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('+${result['credits_added']} crédits ajoutés !'),
-                backgroundColor: const Color(0xFF2E7D32),
-              ),
-            );
-            prov.loadTransactions();
-          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Paiement réussi ! Solde rechargé.'),
+              backgroundColor: const Color(0xFF2E7D32),
+            ),
+          );
+          prov.loadTransactions();
         },
       );
     } catch (e) {

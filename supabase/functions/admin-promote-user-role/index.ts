@@ -164,6 +164,7 @@ serve(async (req) => {
         targetUserId,
         {
           user_metadata: newMeta,
+          app_metadata: { ...((targetUser.app_metadata as any) ?? {}), role: 'admin' }, // source de confiance
         },
       );
 
@@ -191,6 +192,7 @@ serve(async (req) => {
         targetUserId,
         {
           user_metadata: newMeta,
+          app_metadata: { ...((targetUser.app_metadata as any) ?? {}), role: 'instructor' }, // source de confiance
         },
       );
 
@@ -218,6 +220,7 @@ serve(async (req) => {
         targetUserId,
         {
           user_metadata: newMeta,
+          app_metadata: { ...((targetUser.app_metadata as any) ?? {}), role: 'commercial' }, // source de confiance
         },
       );
 
@@ -258,6 +261,7 @@ serve(async (req) => {
         targetUserId,
         {
           user_metadata: newMeta,
+          app_metadata: { ...((targetUser.app_metadata as any) ?? {}), role: 'merchant' }, // source de confiance
         },
       );
 
@@ -354,6 +358,7 @@ serve(async (req) => {
       targetUserId,
       {
         user_metadata: newMeta,
+        app_metadata: { ...((targetUser.app_metadata as any) ?? {}), role: 'university' }, // source de confiance
       },
     );
 

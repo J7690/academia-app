@@ -7,7 +7,9 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
     // Firebase / Google Services (reads google-services.json)
-    id("com.google.gms.google-services")
+    // Temporarily disabled due to missing google-services.json file
+    // To re-enable for Play Store: provide google-services.json and remove apply false
+    id("com.google.gms.google-services") apply false
 }
 
 val keystorePropertiesFile = rootProject.file("key.properties")
@@ -39,7 +41,7 @@ android {
         applicationId = "com.academia.nexiomgroup.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 28
+        minSdk = flutter.minSdkVersion
         targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName

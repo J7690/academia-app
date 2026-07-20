@@ -9,6 +9,7 @@ import '../../services/academia_livekit_service.dart' hide AcademiaSessionFeatur
 import '../../services/academia_presence_service.dart';
 import 'academia_classroom_controls.dart';
 import 'widgets/academia_participant_tile.dart';
+import 'widgets/academia_participants_panel.dart';
 import 'widgets/academia_persistent_chat_panel.dart';
 import 'widgets/academia_quiz_overlay.dart';
 import 'widgets/academia_quiz_student_overlay.dart';
@@ -54,6 +55,7 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
   bool _showQuiz = false;
   bool _showWhiteboard = false;
   bool _showReactions = false;
+  bool _showParticipants = false;
   bool _isHandRaised = false;
   int _unreadChat = 0;
   String? _egressId;
@@ -520,6 +522,21 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
               onDismiss: () => setState(() => _incomingTdExercise = null),
             ),
 
+          // ── Panneau participants (présence + modération host) ──────
+          if (_showParticipants)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: AcademiaParticipantsPanel(
+                sessionId: widget.session.id,
+                isHost: widget.isHost,
+                localParticipant: local,
+                remoteParticipants: _remoteParticipants,
+                onClose: () => setState(() => _showParticipants = false),
+              ),
+            ),
+
           // ── Contrôles bas ─────────────────────────────────────────
           Positioned(
             left: 0,
@@ -657,9 +674,23 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Text(
-                '${_remoteParticipants.length + 1}',
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              InkWell(
+                borderRadius: BorderRadius.circular(6),
+                onTap: () => setState(() => _showParticipants = !_showParticipants),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.people_outline, color: Colors.white70, size: 16),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${_remoteParticipants.length + 1}',
+                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               if (_isRecording) ...[
                 const SizedBox(width: 8),

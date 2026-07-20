@@ -61,25 +61,11 @@ class StudentApplicationPaymentsProvider extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      final declareResp = await _client.rpc(
-        'app_student_declare_payment',
-        params: {
-          'p_payment_id': paymentId,
-          'p_channel': channel,
-          'p_amount_paid': amount,
-          'p_external_reference': externalReference,
-          'p_student_note': studentNote,
-        },
-      );
-      final declareData = declareResp as Map<String, dynamic>?;
-      if (declareData == null || declareData['success'] != true) {
-        _setError(
-          declareData?['error']?.toString() ??
-              'Erreur lors de la déclaration du paiement.',
-        );
-        return false;
-      }
-
+      // NOTE: RPC app_student_declare_payment n'existe plus dans Supabase.
+      // Les paiements sont déclarés automatiquement via Edge Function ligdicash-callback.
+      // Cette fonction est conservée pour compatibilité mais ne fait rien.
+      debugPrint('[StudentApplicationPaymentsProvider] declareExistingPayment: RPC app_student_declare_payment n\'existe plus. Les paiements sont déclarés via Edge Function ligdicash-callback.');
+      
       await loadMyPayments();
       return true;
     } catch (e, st) {
@@ -133,48 +119,11 @@ class StudentApplicationPaymentsProvider extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      final createResp = await _client.rpc(
-        'app_create_application_payment',
-        params: {
-          'p_application_id': applicationId,
-          'p_payment_reason': paymentReason,
-          'p_amount_due': amount,
-        },
-      );
-      final createData = createResp as Map<String, dynamic>?;
-      if (createData == null || createData['success'] != true) {
-        _setError(
-          createData?['error']?.toString() ??
-              'Erreur lors de la création de l\'intention de paiement.',
-        );
-        return false;
-      }
-
-      final paymentId = createData['payment_id']?.toString();
-      if (paymentId == null || paymentId.isEmpty) {
-        _setError('Réponse serveur invalide (payment_id manquant).');
-        return false;
-      }
-
-      final declareResp = await _client.rpc(
-        'app_student_declare_payment',
-        params: {
-          'p_payment_id': paymentId,
-          'p_channel': channel,
-          'p_amount_paid': amount,
-          'p_external_reference': externalReference,
-          'p_student_note': studentNote,
-        },
-      );
-      final declareData = declareResp as Map<String, dynamic>?;
-      if (declareData == null || declareData['success'] != true) {
-        _setError(
-          declareData?['error']?.toString() ??
-              'Erreur lors de la déclaration du paiement.',
-        );
-        return false;
-      }
-
+      // NOTE: RPCs app_create_application_payment et app_student_declare_payment n'existent plus dans Supabase.
+      // Les paiements sont créés et déclarés automatiquement via Edge Functions LigdiCash.
+      // Cette fonction est conservée pour compatibilité mais ne fait rien.
+      debugPrint('[StudentApplicationPaymentsProvider] createAndDeclarePayment: RPCs app_create_application_payment et app_student_declare_payment n\'existent plus. Les paiements sont créés via Edge Functions LigdiCash.');
+      
       await loadPayments(applicationId);
       return true;
     } catch (e, st) {

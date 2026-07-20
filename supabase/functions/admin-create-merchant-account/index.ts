@@ -123,6 +123,7 @@ serve(async (req) => {
       password,
       email_confirm: true,
       user_metadata: baseMetadata,
+      app_metadata: { role: 'merchant' }, // source de confiance (non modifiable par le client)
     });
 
     if (createError || !createdUser || !createdUser.user) {

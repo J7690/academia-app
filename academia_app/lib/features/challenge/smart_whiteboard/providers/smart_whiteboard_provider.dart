@@ -24,7 +24,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
 
   SmartWhiteboardState _state = SmartWhiteboardState.idle;
   String? _errorMessage;
-  
+
   // Project data
   String? _currentProjectId;
   WhiteboardProject? _currentProject;
@@ -32,7 +32,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
   Narration? _currentNarration;
   ExportSettings? _exportSettings;
   List<dynamic> _projects = [];
-  
+
   // Render data
   String? _currentRenderJobId;
   RenderJob? _currentRenderJob;
@@ -41,7 +41,8 @@ class SmartWhiteboardProvider extends ChangeNotifier {
   SmartWhiteboardProvider({
     required SmartWhiteboardService projectService,
     required SmartWhiteboardRenderService renderService,
-    required SmartWhiteboardNarrationService narrationService, // TODO: Use in future
+    required SmartWhiteboardNarrationService
+        narrationService, // TODO: Use in future
   })  : _projectService = projectService,
         _renderService = renderService;
 
@@ -85,7 +86,8 @@ class SmartWhiteboardProvider extends ChangeNotifier {
     _errorMessage = null;
 
     try {
-      print("DEBUG-D19-01: createProject START subject=$subject rendererId=$rendererId themeId=$themeId narrationMode=$narrationMode");
+      print(
+          "DEBUG-D19-01: createProject START subject=$subject rendererId=$rendererId themeId=$themeId narrationMode=$narrationMode");
       final result = await _projectService.createProject(
         subject: subject,
         rendererId: rendererId,
@@ -93,9 +95,12 @@ class SmartWhiteboardProvider extends ChangeNotifier {
         narrationMode: narrationMode,
       );
 
-      print("DEBUG-D19-02: createProject result=$result runtimeType=${result.runtimeType} isNull=${result == null}");
-      print("DEBUG-D19-03: result['success']=${result['success']} runtimeType=${result['success']?.runtimeType}");
-      print("DEBUG-D19-04: result['project_id']=${result['project_id']} runtimeType=${result['project_id']?.runtimeType} isNull=${result['project_id'] == null}");
+      print(
+          "DEBUG-D19-02: createProject result=$result runtimeType=${result.runtimeType} isNull=${result == null}");
+      print(
+          "DEBUG-D19-03: result['success']=${result['success']} runtimeType=${result['success']?.runtimeType}");
+      print(
+          "DEBUG-D19-04: result['project_id']=${result['project_id']} runtimeType=${result['project_id']?.runtimeType} isNull=${result['project_id'] == null}");
 
       if (result['success'] == true) {
         _currentProjectId = result['project_id'] as String;
@@ -140,8 +145,10 @@ class SmartWhiteboardProvider extends ChangeNotifier {
             scenes: const [],
           ),
         );
-        print("DEBUG-D24-01: _currentProject BUILT subject=${_currentProject?.subject} rendererId=${_currentProject?.rendererId.name} themeId=${_currentProject?.themeId.name} narrationMode=${_currentProject?.narrationMode.name}");
-        print("DEBUG-D19-05: createProject _currentProjectId=$_currentProjectId");
+        print(
+            "DEBUG-D24-01: _currentProject BUILT subject=${_currentProject?.subject} rendererId=${_currentProject?.rendererId.name} themeId=${_currentProject?.themeId.name} narrationMode=${_currentProject?.narrationMode.name}");
+        print(
+            "DEBUG-D19-05: createProject _currentProjectId=$_currentProjectId");
         _setState(SmartWhiteboardState.idle);
       } else {
         _setError(result['error'] as String? ?? 'Failed to create project');
@@ -177,8 +184,10 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       final _payloadRenderer = _currentProject?.rendererId.name ?? 'scientific';
       final _payloadTheme = _currentProject?.themeId.name ?? 'scientific';
       final _payloadNarration = _currentProject?.narrationMode.name ?? 'none';
-      print("DEBUG-D24-02: generateStoryboard PAYLOAD subject=$_payloadSubject renderer=$_payloadRenderer theme=$_payloadTheme narration_mode=$_payloadNarration");
-      print("DEBUG-D19-06: generateStoryboard invoke START mode=$mode subject=$_payloadSubject narration_mode=$_payloadNarration");
+      print(
+          "DEBUG-D24-02: generateStoryboard PAYLOAD subject=$_payloadSubject renderer=$_payloadRenderer theme=$_payloadTheme narration_mode=$_payloadNarration");
+      print(
+          "DEBUG-D19-06: generateStoryboard invoke START mode=$mode subject=$_payloadSubject narration_mode=$_payloadNarration");
       final response = await client.functions.invoke(
         'whiteboard-generate-storyboard',
         body: {
@@ -191,18 +200,23 @@ class SmartWhiteboardProvider extends ChangeNotifier {
         },
       );
 
-      print("DEBUG-D19-07: generateStoryboard response.status=${response.status} runtimeType=${response.status.runtimeType}");
-      print("DEBUG-D19-08: generateStoryboard response.data=$response.data runtimeType=${response.data.runtimeType} isNull=${response.data == null}");
+      print(
+          "DEBUG-D19-07: generateStoryboard response.status=${response.status} runtimeType=${response.status.runtimeType}");
+      print(
+          "DEBUG-D19-08: generateStoryboard response.data=$response.data runtimeType=${response.data.runtimeType} isNull=${response.data == null}");
 
       if (response.status != 200) {
         final errorData = response.data as Map<String, dynamic>?;
-        print("DEBUG-D19-09: generateStoryboard errorData=$errorData runtimeType=${errorData?.runtimeType} isNull=${errorData == null}");
+        print(
+            "DEBUG-D19-09: generateStoryboard errorData=$errorData runtimeType=${errorData?.runtimeType} isNull=${errorData == null}");
         if (errorData?['error'] == 'insufficient_credits') {
-          _setError('Crédits insuffisants. Il vous faut 15 crédits pour générer un Storyboard.');
+          _setError(
+              'Crédits insuffisants. Il vous faut 15 crédits pour générer un Storyboard.');
         } else if (errorData?['error'] == 'invalid_json') {
           _setError('Erreur de génération: JSON invalide. Veuillez réessayer.');
         } else if (errorData?['error'] == 'invalid_storyboard') {
-          _setError('Erreur de génération: Storyboard invalide. Veuillez réessayer.');
+          _setError(
+              'Erreur de génération: Storyboard invalide. Veuillez réessayer.');
         } else {
           _setError(errorData?['error'] ?? 'Failed to generate storyboard');
         }
@@ -210,8 +224,10 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       }
 
       final data = response.data as Map<String, dynamic>;
-      print("DEBUG-D19-10: generateStoryboard data=$data runtimeType=${data.runtimeType}");
-      print("DEBUG-D19-11: data['storyboard_json']=${data['storyboard_json']} runtimeType=${data['storyboard_json']?.runtimeType} isNull=${data['storyboard_json'] == null}");
+      print(
+          "DEBUG-D19-10: generateStoryboard data=$data runtimeType=${data.runtimeType}");
+      print(
+          "DEBUG-D19-11: data['storyboard_json']=${data['storyboard_json']} runtimeType=${data['storyboard_json']?.runtimeType} isNull=${data['storyboard_json'] == null}");
 
       final storyboardJson = data['storyboard_json'] as Map<String, dynamic>?;
 
@@ -221,9 +237,11 @@ class SmartWhiteboardProvider extends ChangeNotifier {
         return;
       }
 
-      print("DEBUG-D19-13: generateStoryboard storyboardJson=$storyboardJson runtimeType=${storyboardJson.runtimeType}");
+      print(
+          "DEBUG-D19-13: generateStoryboard storyboardJson=$storyboardJson runtimeType=${storyboardJson.runtimeType}");
       _currentStoryboard = Storyboard.fromJson(storyboardJson);
-      print("DEBUG-D19-14: generateStoryboard _currentStoryboard=$_currentStoryboard runtimeType=${_currentStoryboard.runtimeType}");
+      print(
+          "DEBUG-D19-14: generateStoryboard _currentStoryboard=$_currentStoryboard runtimeType=${_currentStoryboard.runtimeType}");
       _setState(SmartWhiteboardState.editing);
     } catch (e) {
       _setError(e.toString());
@@ -233,10 +251,10 @@ class SmartWhiteboardProvider extends ChangeNotifier {
   // Editing methods
   void addScene(Scene scene) {
     if (_currentStoryboard == null) return;
-    
+
     final updatedScenes = List<Scene>.from(_currentStoryboard!.scenes);
     updatedScenes.add(scene);
-    
+
     _currentStoryboard = Storyboard(
       version: _currentStoryboard!.version,
       createdAt: _currentStoryboard!.createdAt,
@@ -248,17 +266,17 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       exportSettings: _currentStoryboard!.exportSettings,
       scenes: updatedScenes,
     );
-    
+
     notifyListeners();
   }
 
   void updateScene(Scene scene) {
     if (_currentStoryboard == null) return;
-    
+
     final updatedScenes = _currentStoryboard!.scenes.map((s) {
       return s.id == scene.id ? scene : s;
     }).toList();
-    
+
     _currentStoryboard = Storyboard(
       version: _currentStoryboard!.version,
       createdAt: _currentStoryboard!.createdAt,
@@ -270,7 +288,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       exportSettings: _currentStoryboard!.exportSettings,
       scenes: updatedScenes,
     );
-    
+
     notifyListeners();
   }
 
@@ -284,12 +302,14 @@ class SmartWhiteboardProvider extends ChangeNotifier {
     _errorMessage = null;
 
     try {
-      print("DEBUG-D19-15: updateStoryboard START projectId=$_currentProjectId");
+      print(
+          "DEBUG-D19-15: updateStoryboard START projectId=$_currentProjectId");
       final result = await _projectService.updateProject(
         projectId: _currentProjectId!,
         storyboardJson: storyboard.toJson(),
       );
-      print("DEBUG-D19-16: updateStoryboard result=$result runtimeType=${result.runtimeType} isNull=${result == null}");
+      print(
+          "DEBUG-D19-16: updateStoryboard result=$result runtimeType=${result.runtimeType} isNull=${result == null}");
 
       if (result['success'] == true) {
         _currentStoryboard = storyboard;
@@ -304,11 +324,10 @@ class SmartWhiteboardProvider extends ChangeNotifier {
 
   void deleteScene(String sceneId) {
     if (_currentStoryboard == null) return;
-    
-    final updatedScenes = _currentStoryboard!.scenes
-        .where((s) => s.id != sceneId)
-        .toList();
-    
+
+    final updatedScenes =
+        _currentStoryboard!.scenes.where((s) => s.id != sceneId).toList();
+
     _currentStoryboard = Storyboard(
       version: _currentStoryboard!.version,
       createdAt: _currentStoryboard!.createdAt,
@@ -320,16 +339,17 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       exportSettings: _currentStoryboard!.exportSettings,
       scenes: updatedScenes,
     );
-    
+
     notifyListeners();
   }
 
   void reorderScenes(List<String> sceneIds) {
     if (_currentStoryboard == null) return;
-    
+
     final sceneMap = {for (var s in _currentStoryboard!.scenes) s.id: s};
-    final updatedScenes = sceneIds.map((id) => sceneMap[id]).whereType<Scene>().toList();
-    
+    final updatedScenes =
+        sceneIds.map((id) => sceneMap[id]).whereType<Scene>().toList();
+
     _currentStoryboard = Storyboard(
       version: _currentStoryboard!.version,
       createdAt: _currentStoryboard!.createdAt,
@@ -341,13 +361,13 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       exportSettings: _currentStoryboard!.exportSettings,
       scenes: updatedScenes,
     );
-    
+
     notifyListeners();
   }
 
   void addBlock(String sceneId, Block block) {
     if (_currentStoryboard == null) return;
-    
+
     final updatedScenes = _currentStoryboard!.scenes.map((s) {
       if (s.id == sceneId) {
         final updatedBlocks = List<Block>.from(s.blocks);
@@ -362,7 +382,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       }
       return s;
     }).toList();
-    
+
     _currentStoryboard = Storyboard(
       version: _currentStoryboard!.version,
       createdAt: _currentStoryboard!.createdAt,
@@ -374,13 +394,13 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       exportSettings: _currentStoryboard!.exportSettings,
       scenes: updatedScenes,
     );
-    
+
     notifyListeners();
   }
 
   void updateBlock(String sceneId, Block block) {
     if (_currentStoryboard == null) return;
-    
+
     final updatedScenes = _currentStoryboard!.scenes.map((s) {
       if (s.id == sceneId) {
         final updatedBlocks = s.blocks.map((b) {
@@ -396,7 +416,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       }
       return s;
     }).toList();
-    
+
     _currentStoryboard = Storyboard(
       version: _currentStoryboard!.version,
       createdAt: _currentStoryboard!.createdAt,
@@ -408,13 +428,13 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       exportSettings: _currentStoryboard!.exportSettings,
       scenes: updatedScenes,
     );
-    
+
     notifyListeners();
   }
 
   void deleteBlock(String sceneId, String blockId) {
     if (_currentStoryboard == null) return;
-    
+
     final updatedScenes = _currentStoryboard!.scenes.map((s) {
       if (s.id == sceneId) {
         final updatedBlocks = s.blocks.where((b) => b.id != blockId).toList();
@@ -428,7 +448,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       }
       return s;
     }).toList();
-    
+
     _currentStoryboard = Storyboard(
       version: _currentStoryboard!.version,
       createdAt: _currentStoryboard!.createdAt,
@@ -440,7 +460,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       exportSettings: _currentStoryboard!.exportSettings,
       scenes: updatedScenes,
     );
-    
+
     notifyListeners();
   }
 
@@ -457,7 +477,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
         voice: voice,
         audioUrl: null,
       );
-      
+
       _setState(SmartWhiteboardState.editing);
     } catch (e) {
       _setError(e.toString());
@@ -476,7 +496,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
         voice: null,
         audioUrl: null,
       );
-      
+
       _setState(SmartWhiteboardState.editing);
     } catch (e) {
       _setError(e.toString());
@@ -504,8 +524,10 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       }
 
       final result = await _renderService.createRenderJob(_currentProjectId!);
-      print("DEBUG-D19-18: createRenderJob result=$result runtimeType=${result.runtimeType} isNull=${result == null}");
-      print("DEBUG-D19-19: result['render_id']=${result['render_id']} runtimeType=${result['render_id']?.runtimeType} isNull=${result['render_id'] == null}");
+      print(
+          "DEBUG-D19-18: createRenderJob result=$result runtimeType=${result.runtimeType} isNull=${result == null}");
+      print(
+          "DEBUG-D19-19: result['render_id']=${result['render_id']} runtimeType=${result['render_id']?.runtimeType} isNull=${result['render_id'] == null}");
 
       if (result['success'] == true) {
         _currentRenderJobId = result['render_id'] as String;
@@ -528,12 +550,17 @@ class SmartWhiteboardProvider extends ChangeNotifier {
     _errorMessage = null;
 
     try {
-      print("DEBUG-D19-20: pollRenderJob START renderJobId=$_currentRenderJobId");
-      final result = await _renderService.waitForRenderCompletion(_currentRenderJobId!);
-      print("DEBUG-D19-21: pollRenderJob result=$result runtimeType=${result.runtimeType} isNull=${result == null}");
-      print("DEBUG-D19-22: result['render']=${result['render']} runtimeType=${result['render']?.runtimeType} isNull=${result['render'] == null}");
+      print(
+          "DEBUG-D19-20: pollRenderJob START renderJobId=$_currentRenderJobId");
+      final result =
+          await _renderService.waitForRenderCompletion(_currentRenderJobId!);
+      print(
+          "DEBUG-D19-21: pollRenderJob result=$result runtimeType=${result.runtimeType} isNull=${result == null}");
+      print(
+          "DEBUG-D19-22: result['render']=${result['render']} runtimeType=${result['render']?.runtimeType} isNull=${result['render'] == null}");
       final render = result['render'] as Map<String, dynamic>;
-      print("DEBUG-D19-23: render['status']=${render['status']} runtimeType=${render['status']?.runtimeType}");
+      print(
+          "DEBUG-D19-23: render['status']=${render['status']} runtimeType=${render['status']?.runtimeType}");
       final status = render['status'] as String;
 
       if (status == 'done') {
@@ -556,7 +583,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       print("DEBUG-D19-24: deleteProject START projectId=$projectId");
       await _projectService.deleteProject(projectId);
       print("DEBUG-D19-25: deleteProject DONE");
-      
+
       if (_currentProjectId == projectId) {
         _currentProjectId = null;
         _currentProject = null;
@@ -566,8 +593,48 @@ class SmartWhiteboardProvider extends ChangeNotifier {
         _currentRenderJob = null;
         _renderVideoUrl = null;
       }
-      
+
       _setState(SmartWhiteboardState.idle);
+    } catch (e) {
+      _setError(e.toString());
+    }
+  }
+
+  /// Recharge un projet et son storyboard depuis son ID.
+  /// Utilisé quand l'utilisateur ouvre un projet depuis la liste.
+  Future<void> loadProject(String projectId) async {
+    _setState(SmartWhiteboardState.loading);
+    _errorMessage = null;
+
+    try {
+      final result = await _projectService.getProject(projectId);
+      if (result['success'] != true) {
+        _setError(result['error'] as String? ?? 'Failed to load project');
+        return;
+      }
+
+      final projectJson = result['project'] as Map<String, dynamic>?;
+      if (projectJson == null) {
+        _setError('Project payload missing');
+        return;
+      }
+
+      _currentProjectId = projectJson['id'] as String? ?? projectId;
+
+      final storyboardJson =
+          projectJson['storyboard_json'] as Map<String, dynamic>?;
+      if (storyboardJson == null || storyboardJson.isEmpty) {
+        _setError('Project storyboard missing');
+        return;
+      }
+
+      _currentStoryboard = Storyboard.fromJson(storyboardJson);
+      _currentProject = WhiteboardProject.fromJson({
+        ...projectJson,
+        'storyboard': storyboardJson,
+      });
+
+      _setState(SmartWhiteboardState.editing);
     } catch (e) {
       _setError(e.toString());
     }
@@ -588,15 +655,19 @@ class SmartWhiteboardProvider extends ChangeNotifier {
 
       print("DEBUG-D19-26: loadProjects rpc START userId=$userId");
       final response = await client.rpc('whiteboard_list_projects');
-      print("DEBUG-D19-27: loadProjects response=$response runtimeType=${response.runtimeType} isNull=${response == null}");
+      print(
+          "DEBUG-D19-27: loadProjects response=$response runtimeType=${response.runtimeType} isNull=${response == null}");
 
-      if (response != null) {
-        print("DEBUG-D19-28: loadProjects BEFORE CAST response.runtimeType=${response.runtimeType}");
-        _projects = response as List<dynamic>;
-        print("DEBUG-D19-29: loadProjects AFTER CAST _projects=$_projects runtimeType=${_projects.runtimeType} length=${_projects.length}");
+      // La RPC renvoie soit une liste directement, soit un objet
+      // { success: true, projects: [...] }. On gère les deux formes.
+      if (response is List) {
+        _projects = response;
+      } else if (response is Map && response['projects'] is List) {
+        _projects = response['projects'] as List<dynamic>;
       } else {
         _projects = [];
       }
+      print("DEBUG-D19-29: loadProjects _projects length=${_projects.length}");
 
       _setState(SmartWhiteboardState.idle);
     } catch (e) {

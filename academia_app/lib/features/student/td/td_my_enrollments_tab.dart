@@ -4,6 +4,7 @@ import 'package:animate_do/animate_do.dart';
 
 import '../../../providers/td_gamification_provider.dart';
 import '../../../theme/td_theme.dart';
+import 'td_enrollment_access_screen.dart';
 
 /// Onglet Mes TD — Inscriptions actives + progression + messagerie
 class TdMyEnrollmentsTab extends StatelessWidget {
@@ -115,7 +116,11 @@ class _EnrollmentCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(TdTheme.radiusLg),
           onTap: () {
-            // TODO: Navigate to enrollment detail / messages
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => TdEnrollmentAccessScreen(enrollment: enrollment),
+              ),
+            );
           },
           child: Padding(
             padding: const EdgeInsets.all(14),

@@ -4,3 +4,6 @@
  python-dotenv
  python-multipart
  livekit-api
+ Pillow
+ matplotlib
+ gTTS

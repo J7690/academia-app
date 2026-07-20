@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1080, height=1920">
+  <title>Smart Whiteboard Scene</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
+       SMART WHITEBOARD SCENE — CSS TEMPLATE
+       Résolution cible : 1080×1920 (vertical mobile)
+       ═══════════════════════════════════════════════════════════════ */
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      font-family: 'Inter', 'Noto Sans', 'Liberation Sans', sans-serif;
+      line-height: 1.5;
+    }
+
+    /* ─── THÈMES ─────────────────────────────────────────────── */
+    body.theme-scientific {
+      background: linear-gradient(180deg, #0a192f 0%, #0d2137 50%, #0a192f 100%);
+      color: #e6f1ff;
+    }
+
+    body.theme-notebook {
+      background: #fafafa;
+      color: #1a1a2e;
+      background-image: 
+        linear-gradient(90deg, transparent 79px, #e8d4d4 79px, #e8d4d4 80px, transparent 80px),
+        linear-gradient(#eee 1px, transparent 1px);
+      background-size: 100% 40px;
+      background-position: 0 100px;
+    }
+
+    /* ─── CONTENEUR PRINCIPAL ──────────────────────────────────── */
+    .scene-container {
+      width: 100%;
+      height: 100%;
+      padding: 80px 70px 60px 70px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    /* ─── BLOCS ────────────────────────────────────────────────── */
+    .block {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeSlideIn 0.6s ease-out forwards;
+    }
+
+    /* Délai progressif par bloc (espacement de 0.4s) */
+    .block:nth-child(1) { animation-delay: 0.1s; }
+    .block:nth-child(2) { animation-delay: 0.5s; }
+    .block:nth-child(3) { animation-delay: 0.9s; }
+    .block:nth-child(4) { animation-delay: 1.3s; }
+    .block:nth-child(5) { animation-delay: 1.7s; }
+    .block:nth-child(6) { animation-delay: 2.1s; }
+    .block:nth-child(7) { animation-delay: 2.5s; }
+    .block:nth-child(8) { animation-delay: 2.9s; }
+    .block:nth-child(9) { animation-delay: 3.3s; }
+    .block:nth-child(10) { animation-delay: 3.7s; }
+
+    /* Animation spécifique par type */
+    .block-title {
+      animation-name: titleReveal;
+      animation-duration: 0.8s;
+    }
+
+    .block-definition {
+      animation-name: slideFromLeft;
+      animation-duration: 0.7s;
+    }
+
+    .block-exercise {
+      animation-name: slideFromLeft;
+      animation-duration: 0.7s;
+    }
+
+    .block-correction {
+      animation-name: slideFromLeft;
+      animation-duration: 0.7s;
+    }
+
+    .block-formula {
+      animation-name: formulaReveal;
+      animation-duration: 0.8s;
+    }
+
+    .block-diagram {
+      animation-name: scaleIn;
+      animation-duration: 0.9s;
+    }
+
+    /* ─── TITRE ────────────────────────────────────────────────── */
+    .block-title {
+      text-align: center;
+      font-size: 56px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      padding: 20px 0 10px;
+    }
+
+    .theme-scientific .block-title {
+      color: #64ffda;
+      text-shadow: 0 0 30px rgba(100, 255, 218, 0.15);
+    }
+
+    .theme-notebook .block-title {
+      color: #1a1a2e;
+      border-bottom: 3px solid #2e7d32;
+      padding-bottom: 12px;
+    }
+
+    /* ─── PARAGRAPHE ───────────────────────────────────────────── */
+    .block-paragraph {
+      font-size: 38px;
+      line-height: 1.6;
+      padding: 12px 0;
+    }
+
+    .theme-scientific .block-paragraph {
+      color: #ccd6f6;
+    }
+
+    .theme-notebook .block-paragraph {
+      color: #333;
+    }
+
+    /* ─── FORMULE (KaTeX) ──────────────────────────────────────── */
+    .block-formula {
+      text-align: center;
+      padding: 30px 40px;
+      margin: 16px 0;
+      border-radius: 16px;
+    }
+
+    .theme-scientific .block-formula {
+      background: rgba(100, 255, 218, 0.05);
+      border: 1px solid rgba(100, 255, 218, 0.2);
+    }
+
+    .theme-notebook .block-formula {
+      background: #f0f8f0;
+      border: 1px solid #c8e6c9;
+    }
+
+    .block-formula .katex {
+      font-size: 48px;
+    }
+
+    .theme-scientific .block-formula .katex {
+      color: #ffffff;
+    }
+
+    .theme-notebook .block-formula .katex {
+      color: #1a1a2e;
+    }
+
+    /* ─── DÉFINITION ───────────────────────────────────────────── */
+    .block-definition {
+      padding: 28px 32px;
+      border-radius: 16px;
+      margin: 12px 0;
+      position: relative;
+      padding-left: 52px;
+    }
+
+    .block-definition::before {
+      content: "📘";
+      position: absolute;
+      left: 16px;
+      top: 28px;
+      font-size: 28px;
+    }
+
+    .theme-scientific .block-definition {
+      background: rgba(100, 255, 218, 0.08);
+      border-left: 5px solid #64ffda;
+    }
+
+    .theme-notebook .block-definition {
+      background: #e8f5e9;
+      border-left: 5px solid #2e7d32;
+    }
+
+    .block-definition .def-label {
+      font-size: 30px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .theme-scientific .block-definition .def-label {
+      color: #64ffda;
+    }
+
+    .theme-notebook .block-definition .def-label {
+      color: #2e7d32;
+    }
+
+    .block-definition .def-content {
+      font-size: 36px;
+      line-height: 1.5;
+    }
+
+    /* ─── EXERCICE ─────────────────────────────────────────────── */
+    .block-exercise {
+      padding: 28px 32px;
+      border-radius: 16px;
+      margin: 12px 0;
+      position: relative;
+      border-left: 5px solid;
+    }
+
+    .theme-scientific .block-exercise {
+      background: rgba(255, 179, 71, 0.08);
+      border-left-color: #ffb347;
+    }
+
+    .theme-notebook .block-exercise {
+      background: #fff8e1;
+      border-left-color: #f57c00;
+    }
+
+    .block-exercise .exo-label {
+      font-size: 30px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .theme-scientific .block-exercise .exo-label {
+      color: #ffb347;
+    }
+
+    .theme-notebook .block-exercise .exo-label {
+      color: #f57c00;
+    }
+
+    .block-exercise .exo-content {
+      font-size: 36px;
+      line-height: 1.5;
+    }
+
+    /* ─── CORRECTION ───────────────────────────────────────────── */
+    .block-correction {
+      padding: 28px 32px;
+      border-radius: 16px;
+      margin: 12px 0;
+      border-left: 5px solid;
+    }
+
+    .theme-scientific .block-correction {
+      background: rgba(130, 177, 255, 0.08);
+      border-left-color: #82b1ff;
+    }
+
+    .theme-notebook .block-correction {
+      background: #e3f2fd;
+      border-left-color: #1565c0;
+    }
+
+    .block-correction .corr-label {
+      font-size: 30px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .theme-scientific .block-correction .corr-label {
+      color: #82b1ff;
+    }
+
+    .theme-notebook .block-correction .corr-label {
+      color: #1565c0;
+    }
+
+    .block-correction .corr-content {
+      font-size: 36px;
+      line-height: 1.6;
+    }
+
+    .block-correction .corr-step {
+      margin: 8px 0;
+      padding-left: 20px;
+      position: relative;
+    }
+
+    .block-correction .corr-step::before {
+      content: attr(data-step);
+      position: absolute;
+      left: 0;
+      font-weight: 700;
+    }
+
+    .theme-scientific .block-correction .corr-step::before {
+      color: #82b1ff;
+    }
+
+    .theme-notebook .block-correction .corr-step::before {
+      color: #1565c0;
+    }
+
+    /* ─── DIAGRAMME ────────────────────────────────────────────── */
+    .block-diagram {
+      text-align: center;
+      padding: 20px;
+      margin: 16px 0;
+    }
+
+    .block-diagram svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* ─── GRAPHE DE FONCTION ───────────────────────────────────── */
+    .block-graph {
+      text-align: center;
+      padding: 20px;
+      margin: 16px 0;
+      border-radius: 16px;
+    }
+
+    .theme-scientific .block-graph {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .theme-notebook .block-graph {
+      background: #fafafa;
+      border: 1px solid #e0e0e0;
+    }
+
+    /* ─── ANIMATIONS ───────────────────────────────────────────── */
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.85);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes titleReveal {
+      0% {
+        opacity: 0;
+        transform: translateY(-15px);
+        letter-spacing: 8px;
+      }
+      60% {
+        opacity: 1;
+        transform: translateY(0);
+        letter-spacing: 2px;
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+        letter-spacing: -0.5px;
+      }
+    }
+
+    @keyframes slideFromLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes formulaReveal {
+      0% {
+        opacity: 0;
+        transform: scale(0.7);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.03);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes drawBorder {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+
+    /* ─── NUMÉRO DE SCÈNE (coin bas-droit) ─────────────────────── */
+    .scene-number {
+      position: absolute;
+      bottom: 30px;
+      right: 40px;
+      font-size: 24px;
+      opacity: 0.4;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ─── INDICATEUR DE SUJET (haut) ───────────────────────────── */
+    .scene-subject {
+      position: absolute;
+      top: 30px;
+      left: 70px;
+      right: 70px;
+      font-size: 22px;
+      opacity: 0.5;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 500;
+    }
+
+    .theme-scientific .scene-subject {
+      color: #8892b0;
+    }
+
+    .theme-notebook .scene-subject {
+      color: #666;
+    }
+  </style>
+</head>
+<body class="theme-{{THEME}}">
+  <div class="scene-subject">{{SUBJECT}}</div>
+  <div class="scene-container">
+    {{BLOCKS_HTML}}
+  </div>
+  <div class="scene-number">{{SCENE_NUMBER}}</div>
+</body>
+</html>

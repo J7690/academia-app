@@ -1388,7 +1388,7 @@ class _StudentTdMyEnrollmentsTab extends StatelessWidget {
                           if (!context.mounted) return;
                           Navigator.of(context).push(
                             MaterialPageRoute<void>(
-                              builder: (_) => _StudentTdMessagesScreen(
+                              builder: (_) => StudentTdMessagesScreen(
                                 enrollmentId: enrollmentId,
                               ),
                             ),
@@ -1409,8 +1409,8 @@ class _StudentTdMyEnrollmentsTab extends StatelessWidget {
   }
 }
 
-class _StudentTdMessagesScreen extends StatelessWidget {
-  const _StudentTdMessagesScreen({required this.enrollmentId});
+class StudentTdMessagesScreen extends StatelessWidget {
+  const StudentTdMessagesScreen({super.key, required this.enrollmentId});
 
   final String enrollmentId;
 

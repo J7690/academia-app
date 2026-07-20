@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
 import '../providers/smart_whiteboard_provider.dart';
 import '../models/storyboard_models.dart';
 
 /// Écran d'édition de Storyboard Smart Whiteboard
-/// 
+///
 /// Permet de modifier un storyboard généré par OpenRouter avant le rendu.
-/// 
+///
 /// Fonctionnalités :
 /// - Affichage des scènes et blocs
 /// - Édition du contenu (titre, paragraphe, définition, exercice, correction, formule)
@@ -24,31 +25,56 @@ class SmartWhiteboardStoryboardEditorScreen extends StatefulWidget {
   });
 
   @override
-  State<SmartWhiteboardStoryboardEditorScreen> createState() => _SmartWhiteboardStoryboardEditorScreenState();
+  State<SmartWhiteboardStoryboardEditorScreen> createState() =>
+      _SmartWhiteboardStoryboardEditorScreenState();
 }
 
-class _SmartWhiteboardStoryboardEditorScreenState extends State<SmartWhiteboardStoryboardEditorScreen> {
+class _SmartWhiteboardStoryboardEditorScreenState
+    extends State<SmartWhiteboardStoryboardEditorScreen> {
   late Storyboard _storyboard;
   final ScrollController _scrollController = ScrollController();
   final Map<String, TextEditingController> _controllers = {};
+  bool _isLoadingProject = false;
+  String? _loadError;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final providerStoryboard = context.read<SmartWhiteboardProvider>().currentStoryboard;
-      if (providerStoryboard != null && _storyboard.scenes.isEmpty) {
-        setState(() {
-          for (final c in _controllers.values) { c.dispose(); }
-          _controllers.clear();
-          _storyboard = providerStoryboard;
-          _initializeControllers();
-        });
-      }
-    });
     _storyboard = widget.initialStoryboard ?? _createEmptyStoryboard();
     _initializeControllers();
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _loadInitialStoryboard());
+  }
+
+  Future<void> _loadInitialStoryboard() async {
+    final provider = context.read<SmartWhiteboardProvider>();
+    if (widget.projectId != null && widget.initialStoryboard == null) {
+      setState(() => _isLoadingProject = true);
+      await provider.loadProject(widget.projectId!);
+      if (!mounted) return;
+      if (provider.errorMessage != null) {
+        setState(() {
+          _loadError = provider.errorMessage;
+          _isLoadingProject = false;
+        });
+        return;
+      }
+    }
+
+    final providerStoryboard = provider.currentStoryboard;
+    if (providerStoryboard != null && _storyboard.scenes.isEmpty) {
+      setState(() {
+        for (final controller in _controllers.values) {
+          controller.dispose();
+        }
+        _controllers.clear();
+        _storyboard = providerStoryboard;
+        _initializeControllers();
+      });
+    }
+    if (mounted) {
+      setState(() => _isLoadingProject = false);
+    }
   }
 
   @override
@@ -122,6 +148,10 @@ class _SmartWhiteboardStoryboardEditorScreenState extends State<SmartWhiteboardS
       return block.copyWith(question: newContent);
     } else if (block is CorrectionBlock) {
       return block.copyWith(explanation: newContent);
+    } else if (block is DiagramBlock) {
+      return block.copyWith(content: newContent);
+    } else if (block is GraphBlock) {
+      return block.copyWith(content: newContent);
     }
     return block;
   }
@@ -133,7 +163,8 @@ class _SmartWhiteboardStoryboardEditorScreenState extends State<SmartWhiteboardS
         order: scene.blocks.length,
         visible: true,
         content: '',
-        style: const BlockStyle(fontSize: 16, fontWeight: 'normal', color: '#000000'),
+        style: const BlockStyle(
+            fontSize: 16, fontWeight: 'normal', color: '#000000'),
       );
       final updatedBlocks = List<Block>.from(scene.blocks)..add(newBlock);
       final updatedScene = scene.copyWith(blocks: updatedBlocks);
@@ -167,16 +198,16 @@ class _SmartWhiteboardStoryboardEditorScreenState extends State<SmartWhiteboardS
       final updatedBlocks = List<Block>.from(scene.blocks);
       final index = updatedBlocks.indexOf(block);
       final newIndex = index + direction;
-      
+
       if (newIndex >= 0 && newIndex < updatedBlocks.length) {
         updatedBlocks.removeAt(index);
         updatedBlocks.insert(newIndex, block);
-        
+
         // Mettre à jour l'ordre
         for (int i = 0; i < updatedBlocks.length; i++) {
           updatedBlocks[i] = _updateBlockOrder(updatedBlocks[i], i);
         }
-        
+
         final updatedScene = scene.copyWith(blocks: updatedBlocks);
         final updatedScenes = List<Scene>.from(_storyboard.scenes);
         final sceneIndex = _storyboard.scenes.indexOf(scene);
@@ -201,6 +232,10 @@ class _SmartWhiteboardStoryboardEditorScreenState extends State<SmartWhiteboardS
       return block.copyWith(order: newOrder);
     } else if (block is CorrectionBlock) {
       return block.copyWith(order: newOrder);
+    } else if (block is DiagramBlock) {
+      return block.copyWith(order: newOrder);
+    } else if (block is GraphBlock) {
+      return block.copyWith(order: newOrder);
     }
     return block;
   }
@@ -209,7 +244,8 @@ class _SmartWhiteboardStoryboardEditorScreenState extends State<SmartWhiteboardS
     // Purge automatique des blocs vides ajoutés par l'utilisateur
     setState(() {
       final purgedScenes = _storyboard.scenes.map((scene) {
-        final filteredBlocks = scene.blocks.where((b) => b.content.trim().isNotEmpty).toList();
+        final filteredBlocks =
+            scene.blocks.where((b) => b.content.trim().isNotEmpty).toList();
         return scene.copyWith(blocks: filteredBlocks);
       }).toList();
       _storyboard = _storyboard.copyWith(scenes: purgedScenes);
@@ -242,19 +278,19 @@ class _SmartWhiteboardStoryboardEditorScreenState extends State<SmartWhiteboardS
     }
 
     final provider = context.read<SmartWhiteboardProvider>();
-    
+
     try {
       await provider.updateStoryboard(_storyboard);
-      
+
       if (provider.errorMessage != null) {
         _showError(provider.errorMessage!);
         return;
       }
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Storyboard sauvegardé')),
       );
-      
+
       Navigator.pop(context);
     } catch (e) {
       _showError('Erreur lors de la sauvegarde: $e');
@@ -267,28 +303,29 @@ class _SmartWhiteboardStoryboardEditorScreenState extends State<SmartWhiteboardS
     }
 
     final provider = context.read<SmartWhiteboardProvider>();
-    
+
     try {
       await provider.updateStoryboard(_storyboard);
-      
+
       if (provider.errorMessage != null) {
         _showError(provider.errorMessage!);
         return;
       }
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Storyboard sauvegardé, lancement du rendu...')),
+        const SnackBar(
+            content: Text('Storyboard sauvegardé, lancement du rendu...')),
       );
-      
+
       await provider.createRenderJob();
-      
+
       if (!mounted) return;
-      
+
       if (provider.errorMessage != null) {
         _showError(provider.errorMessage!);
         return;
       }
-      
+
       Navigator.of(context).pushNamed('/smart-whiteboard-preview');
     } catch (e) {
       _showError('Erreur: $e');
@@ -312,22 +349,28 @@ class _SmartWhiteboardStoryboardEditorScreenState extends State<SmartWhiteboardS
           ),
         ],
       ),
-      body: ListView.builder(
-        controller: _scrollController,
-        itemCount: _storyboard.scenes.length,
-        itemBuilder: (context, sceneIndex) {
-          final scene = _storyboard.scenes[sceneIndex];
-          return _buildSceneCard(scene, sceneIndex);
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          if (_storyboard.scenes.isNotEmpty) {
-            _addBlock(_storyboard.scenes.last);
-          }
-        },
-        child: const Icon(Icons.add),
-      ),
+      body: _isLoadingProject
+          ? const Center(child: CircularProgressIndicator())
+          : _loadError != null
+              ? Center(child: Text(_loadError!))
+              : ListView.builder(
+                  controller: _scrollController,
+                  itemCount: _storyboard.scenes.length,
+                  itemBuilder: (context, sceneIndex) {
+                    final scene = _storyboard.scenes[sceneIndex];
+                    return _buildSceneCard(scene, sceneIndex);
+                  },
+                ),
+      floatingActionButton: _isLoadingProject || _loadError != null
+          ? null
+          : FloatingActionButton(
+              onPressed: () {
+                if (_storyboard.scenes.isNotEmpty) {
+                  _addBlock(_storyboard.scenes.last);
+                }
+              },
+              child: const Icon(Icons.add),
+            ),
     );
   }
 
@@ -355,36 +398,79 @@ class _SmartWhiteboardStoryboardEditorScreenState extends State<SmartWhiteboardS
 
   Widget _buildBlockTile(Scene scene, Block block, int blockIndex) {
     final controller = _controllers[block.id];
-    
-    return ListTile(
-      leading: _getBlockIcon(block),
-      title: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: _getBlockTypeLabel(block),
-          hintText: _getBlockHint(block),
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListTile(
+          leading: _getBlockIcon(block),
+          title: TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              labelText: _getBlockTypeLabel(block),
+              hintText: _getBlockHint(block),
+            ),
+            maxLines: null,
+            onChanged: (value) => _updateBlockContent(block.id, value),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_upward),
+                onPressed:
+                    blockIndex > 0 ? () => _moveBlock(scene, block, -1) : null,
+              ),
+              IconButton(
+                icon: const Icon(Icons.arrow_downward),
+                onPressed: blockIndex < scene.blocks.length - 1
+                    ? () => _moveBlock(scene, block, 1)
+                    : null,
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () => _deleteBlock(scene, block),
+              ),
+            ],
+          ),
         ),
-        maxLines: null,
-        onChanged: (value) => _updateBlockContent(block.id, value),
+        if (block is FormulaBlock) _buildFormulaPreview(block.content),
+      ],
+    );
+  }
+
+  Widget _buildFormulaPreview(String latex) {
+    if (latex.trim().isEmpty) return const SizedBox.shrink();
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
       ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_upward),
-            onPressed: blockIndex > 0
-                ? () => _moveBlock(scene, block, -1)
-                : null,
+          Text(
+            'Aperçu',
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.arrow_downward),
-            onPressed: blockIndex < scene.blocks.length - 1
-                ? () => _moveBlock(scene, block, 1)
-                : null,
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () => _deleteBlock(scene, block),
+          const SizedBox(height: 8),
+          Center(
+            child: Math.tex(
+              latex,
+              textStyle: const TextStyle(fontSize: 22),
+              onErrorFallback: (err) => Text(
+                'Formule LaTeX invalide',
+                style: TextStyle(color: Colors.red.shade400, fontSize: 13),
+              ),
+            ),
           ),
         ],
       ),
@@ -404,6 +490,10 @@ class _SmartWhiteboardStoryboardEditorScreenState extends State<SmartWhiteboardS
       return const Icon(Icons.edit_note);
     } else if (block is CorrectionBlock) {
       return const Icon(Icons.check_circle);
+    } else if (block is DiagramBlock) {
+      return const Icon(Icons.account_tree);
+    } else if (block is GraphBlock) {
+      return const Icon(Icons.show_chart);
     }
     return const Icon(Icons.help);
   }
@@ -414,13 +504,17 @@ class _SmartWhiteboardStoryboardEditorScreenState extends State<SmartWhiteboardS
     } else if (block is ParagraphBlock) {
       return 'Paragraphe';
     } else if (block is FormulaBlock) {
-      return 'Formule';
+      return 'Formule (LaTeX)';
     } else if (block is DefinitionBlock) {
       return 'Définition';
     } else if (block is ExerciseBlock) {
       return 'Exercice';
     } else if (block is CorrectionBlock) {
       return 'Correction';
+    } else if (block is DiagramBlock) {
+      return 'Diagramme (Mermaid)';
+    } else if (block is GraphBlock) {
+      return 'Graphe de fonction';
     }
     return 'Bloc';
   }
@@ -431,13 +525,17 @@ class _SmartWhiteboardStoryboardEditorScreenState extends State<SmartWhiteboardS
     } else if (block is ParagraphBlock) {
       return 'Entrez le paragraphe...';
     } else if (block is FormulaBlock) {
-      return 'Entrez la formule...';
+      return r'Ex: \frac{-b \pm \sqrt{b^2-4ac}}{2a}';
     } else if (block is DefinitionBlock) {
       return 'Entrez la définition...';
     } else if (block is ExerciseBlock) {
       return 'Entrez l\'exercice...';
     } else if (block is CorrectionBlock) {
       return 'Entrez la correction...';
+    } else if (block is DiagramBlock) {
+      return 'Ex: graph TD; A-->B; B-->C';
+    } else if (block is GraphBlock) {
+      return 'Ex: y = x^2 - 2x + 1';
     }
     return 'Entrez le contenu...';
   }

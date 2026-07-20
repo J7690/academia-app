@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Smart Whiteboard — Prototype scène animée</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<style>
+  :root{
+    --bg:#0a192f; --text:#ffffff; --accent:#69f0ae; --muted:#9fb3c8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#05101f;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',system-ui,sans-serif}
+  /* Cadre 9:16 (vertical Reels/Shorts) — ce que Playwright filmerait */
+  #stage{
+    position:relative;width:405px;height:720px;background:var(--bg);
+    border-radius:22px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  /* léger grain de "tableau" */
+  #stage::before{
+    content:"";position:absolute;inset:0;opacity:.05;
+    background:radial-gradient(circle at 30% 20%, #fff 0, transparent 40%);
+  }
+  .block{position:absolute;left:34px;right:34px;color:var(--text);opacity:0}
+  .title{top:70px;font-size:34px;font-weight:800;letter-spacing:.3px;line-height:1.15}
+  .para{top:190px;font-size:19px;line-height:1.5;color:#e7eef7}
+  .formula{top:360px;text-align:center;font-size:22px}
+  .correction{top:520px;font-size:20px;font-weight:700;color:var(--accent)}
+  .badge{
+    position:absolute;left:34px;top:500px;background:rgba(105,240,174,.14);
+    color:var(--accent);font-size:12px;font-weight:700;letter-spacing:1px;
+    padding:4px 10px;border-radius:20px;opacity:0;text-transform:uppercase
+  }
+
+  /* --- Effet "écriture à la main" : révèle le texte de gauche à droite --- */
+  .handwrite{
+    opacity:1;
+    -webkit-mask-image:linear-gradient(90deg,#000 0,#000 100%);
+    mask-image:linear-gradient(90deg,#000 0,#000 100%);
+  }
+  .handwrite .ink{
+    clip-path:inset(0 100% 0 0);
+  }
+  .handwrite.run .ink{
+    animation:reveal 1.2s steps(30,end) forwards;
+  }
+  .pen{
+    position:absolute;width:10px;height:10px;border-radius:50%;
+    background:var(--accent);top:-6px;left:0;opacity:0;
+    box-shadow:0 0 12px var(--accent);
+  }
+  .handwrite.run .pen{animation:penmove 1.2s steps(30,end) forwards}
+  @keyframes reveal{to{clip-path:inset(0 0 0 0)}}
+  @keyframes penmove{0%{opacity:1;left:0}100%{opacity:0;left:100%}}
+
+  /* --- fade_up --- */
+  .fade_up.run{animation:fadeUp .6s ease forwards}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+
+  /* --- scale_in --- */
+  .scale_in.run{animation:scaleIn .8s cubic-bezier(.2,.8,.2,1) forwards}
+  @keyframes scaleIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+
+  /* --- reveal correction avec surlignage --- */
+  .pop.run{animation:pop .5s ease forwards}
+  @keyframes pop{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+
+  /* --- sortie fade --- */
+  .exit{animation:fadeOut .5s ease forwards}
+  @keyframes fadeOut{to{opacity:0;transform:translateY(-12px)}}
+
+  #replay{
+    position:absolute;bottom:14px;right:14px;z-index:5;border:0;cursor:pointer;
+    background:rgba(255,255,255,.12);color:#fff;font-size:12px;font-weight:700;
+    padding:8px 14px;border-radius:20px;backdrop-filter:blur(4px)
+  }
+  #caption{position:absolute;left:0;right:0;bottom:-30px;text-align:center;color:#7f8ea3;font-size:12px}
+</style>
+</head>
+<body>
+  <div id="stage">
+    <!-- Titre : écriture à la main -->
+    <div class="block title handwrite" data-anim="handwrite" data-at="0">
+      <span class="ink">Dérivée d'une fonction</span>
+      <span class="pen"></span>
+    </div>
+
+    <!-- Paragraphe : fade_up -->
+    <div class="block para fade_up" data-anim="fade_up" data-at="1300" data-exit="6400">
+      La dérivée mesure le taux de variation instantané d'une fonction en un point.
+    </div>
+
+    <!-- Formule : scale_in (KaTeX) -->
+    <div class="block formula scale_in" data-anim="scale_in" data-at="3000" id="formula"></div>
+
+    <!-- Correction : pop + badge -->
+    <div class="badge pop" data-anim="pop" data-at="5200">Réponse</div>
+    <div class="block correction pop" data-anim="pop" data-at="5200">
+      Pour f(x)=x², on obtient f'(x) = 2x
+    </div>
+
+    <button id="replay">↺ Rejouer</button>
+    <div id="caption">Prototype — ce que Playwright filmerait (scène = JSON + timeline)</div>
+  </div>
+
+<script>
+  // Le storyboard v2 pilote ce template : chaque bloc a { anim, at_ms, exit_at_ms }.
+  const FORMULA = "f'(x)=\\lim_{h\\to0}\\dfrac{f(x+h)-f(x)}{h}";
+
+  function renderFormula(){
+    if(window.katex){
+      katex.render(FORMULA, document.getElementById('formula'),
+        {throwOnError:false, displayMode:true});
+    } else {
+      document.getElementById('formula').textContent = "f'(x) = lim (f(x+h)-f(x))/h";
+    }
+  }
+
+  function play(){
+    const blocks=document.querySelectorAll('[data-anim]');
+    blocks.forEach(el=>{
+      el.classList.remove('run','exit');
+      // reset visuel
+      if(!el.classList.contains('handwrite')) el.style.opacity=0;
+      void el.offsetWidth; // reflow pour rejouer l'animation
+    });
+    blocks.forEach(el=>{
+      const at=parseInt(el.dataset.at||'0',10);
+      setTimeout(()=>el.classList.add('run'), at);
+      if(el.dataset.exit){
+        setTimeout(()=>el.classList.add('exit'), parseInt(el.dataset.exit,10));
+      }
+    });
+  }
+
+  window.addEventListener('DOMContentLoaded',()=>{
+    // KaTeX est en defer : on attend qu'il soit prêt
+    const t=setInterval(()=>{ if(window.katex){clearInterval(t);renderFormula();play();} },50);
+    setTimeout(()=>{renderFormula();play();},600); // fallback
+    document.getElementById('replay').addEventListener('click',play);
+    setInterval(play, 8500); // boucle démo
+  });
+</script>
+</body>
+</html>

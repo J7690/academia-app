@@ -23,6 +23,22 @@ from whiteboard_png_renderer import render_storyboard_to_pngs
 from whiteboard_ffmpeg_assembler import assemble_pngs_to_mp4
 from whiteboard_upload_renderer import upload_mp4_to_storage
 
+# Vision Engine (Phase B) — rendu HTML/Playwright/KaTeX
+try:
+    import sys
+    sys.path.insert(0, "/opt/whiteboard-worker/vision_engine")
+    from whiteboard_scene_engine import render_storyboard_to_pngs_vision
+    _HAS_VISION = True
+except ImportError:
+    _HAS_VISION = False
+
+# Narration Audio (Phase G) — TTS gTTS + mixage FFmpeg
+try:
+    import whiteboard_narration
+    _HAS_NARRATION = True
+except ImportError:
+    _HAS_NARRATION = False
+
 # Configuration
 load_dotenv()
 
@@ -34,6 +50,9 @@ WHITEBOARD_TABLE = "whiteboard_renders"
 WORKER_LOOP = (os.getenv("WORKER_LOOP") or "").strip().lower() in {"1", "true", "yes"}
 WORKER_INTERVAL_SECONDS = float((os.getenv("WORKER_INTERVAL_SECONDS") or "2").strip() or "2")
 WORKER_MAX_JOBS = int((os.getenv("WORKER_MAX_JOBS") or "1").strip() or "1")
+
+# Feature flag: "vision" = HTML/Playwright/KaTeX, "legacy" = Pillow text-on-image
+RENDERER_ENGINE = (os.getenv("RENDERER_ENGINE") or "vision").strip().lower()
 
 SUPABASE_HTTP_TIMEOUT = 600.0
 
@@ -120,23 +139,81 @@ async def _process_single_job(job: Dict[str, Any]) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             
-            # Générer les PNGs
-            logger.info(f"[whiteboard_render_worker] Generating PNGs for job {job_id}")
-            png_paths = render_storyboard_to_pngs(storyboard_json, temp_path)
-            
-            # Assembler les PNGs en MP4
+            # Générer les PNGs (Vision Engine ou Legacy Pillow)
+            use_vision = RENDERER_ENGINE == "vision" and _HAS_VISION
+            engine_name = "vision" if use_vision else "legacy"
+            logger.info(f"[whiteboard_render_worker] Generating PNGs for job {job_id} (engine={engine_name})")
+            if use_vision:
+                png_paths = render_storyboard_to_pngs_vision(storyboard_json, temp_path)
+            else:
+                png_paths = render_storyboard_to_pngs(storyboard_json, temp_path)
+
+            # Durées par scène : on RESPECTE le storyboard (duration_ms par scène).
+            # 1 PNG == 1 scène (aligné 1:1). Repli 5000 ms si une scène n'en a pas.
+            storyboard = storyboard_json if isinstance(storyboard_json, dict) else {}
+            scenes = storyboard.get("scenes", []) or []
+            DEFAULT_SCENE_MS = 5000
+            scene_durations_ms: List[int] = []
+            for scene in scenes:
+                raw = (scene or {}).get("duration_ms") if isinstance(scene, dict) else None
+                try:
+                    ms = int(raw)
+                    if ms <= 0:
+                        ms = DEFAULT_SCENE_MS
+                except (TypeError, ValueError):
+                    ms = DEFAULT_SCENE_MS
+                scene_durations_ms.append(ms)
+            # Aligner strictement sur le nombre de PNG réellement produits
+            if len(scene_durations_ms) < len(png_paths):
+                scene_durations_ms += [DEFAULT_SCENE_MS] * (len(png_paths) - len(scene_durations_ms))
+            scene_durations_ms = scene_durations_ms[:len(png_paths)]
+            scene_durations_sec = [ms / 1000.0 for ms in scene_durations_ms]
+
+            # Narration audio (Phase G) : si narration_mode == 'tts', on génère
+            # une piste TTS et on ajuste les durées de scène pour la synchroniser.
+            narration_mode = str(storyboard.get("narration_mode") or "none").strip().lower()
+            narration_audio_path = None
+            if (
+                narration_mode == "tts"
+                and _HAS_NARRATION
+                and whiteboard_narration.is_available()
+            ):
+                logger.info(f"[whiteboard_render_worker] Generating TTS narration for job {job_id}")
+                narration_result = whiteboard_narration.build_narration(
+                    storyboard, scene_durations_sec, temp_path
+                )
+                if narration_result is not None:
+                    narration_audio_path, adjusted_durations = narration_result
+                    scene_durations_sec = adjusted_durations[:len(png_paths)]
+                    scene_durations_ms = [int(s * 1000) for s in scene_durations_sec]
+                    logger.info(
+                        f"[whiteboard_render_worker] Narration ready, adjusted durations "
+                        f"total={sum(scene_durations_sec):.1f}s"
+                    )
+                else:
+                    logger.warning(f"[whiteboard_render_worker] Narration unavailable for job {job_id}")
+
+            # Assembler les PNGs en MP4 (durées respectées)
             logger.info(f"[whiteboard_render_worker] Assembling MP4 for job {job_id}")
-            mp4_path = assemble_pngs_to_mp4(png_paths, temp_path)
-            
+            mp4_path = assemble_pngs_to_mp4(png_paths, temp_path, durations=scene_durations_sec)
+
+            # Injecter la narration si disponible
+            if narration_audio_path is not None:
+                logger.info(f"[whiteboard_render_worker] Muxing narration into video for job {job_id}")
+                muxed_path = temp_path / "final_with_audio.mp4"
+                try:
+                    mp4_path = whiteboard_narration.mux_audio_into_video(
+                        Path(mp4_path), narration_audio_path, muxed_path
+                    )
+                except Exception as e:
+                    logger.warning(f"[whiteboard_render_worker] Mux failed, using silent video: {e}")
+
             # Uploader le MP4
             logger.info(f"[whiteboard_render_worker] Uploading MP4 for job {job_id}")
             video_url = await upload_mp4_to_storage(mp4_path, job_id)
-            
-            # Calculer la durée (estimation basée sur le nombre de scènes)
-            # Pour V1, on estime 5 secondes par scène
-            storyboard = storyboard_json if isinstance(storyboard_json, dict) else {}
-            scenes = storyboard.get("scenes", [])
-            duration_ms = len(scenes) * 5000
+
+            # Durée réelle = somme des durées de scène effectivement rendues
+            duration_ms = int(sum(scene_durations_ms))
             
             # Marquer comme done
             await _mark_job_done(job_id, video_url, duration_ms)

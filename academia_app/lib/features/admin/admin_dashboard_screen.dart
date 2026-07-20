@@ -26,6 +26,8 @@ import 'admin_hero_video_encoder_screen.dart';
 import 'admin_accounts_screen.dart';
 import 'admin_commission_rules_screen.dart';
 import '../../providers/admin_commission_rules_provider.dart';
+import 'admin_commission_share_config_screen.dart';
+import '../../providers/admin_commission_share_config_provider.dart';
 import 'admin_td_screen.dart';
 import 'admin_academic_communication_screen.dart';
 import 'admin_live_sessions_screen.dart';
@@ -416,6 +418,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const Tab(text: 'Landing'),
                   const Tab(text: 'Hero / Accueil TV'),
                   const Tab(text: 'Hero Video Studio'),
+                  const Tab(text: 'Partage commissions'),
                   const Tab(text: '👥 Comptes'),
                   const Tab(text: 'Grille commissions'),
                   const Tab(text: 'TD'),
@@ -454,6 +457,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 AdminHeroAccueilScreen(),
                 AdminHeroVideoEncoderScreen(),
                 const AdminAccountsScreen(),
+                ChangeNotifierProvider(
+                  create: (_) => AdminCommissionShareConfigProvider(),
+                  child: const AdminCommissionShareConfigScreen(),
+                ),
                 ChangeNotifierProvider(
                   create: (_) => AdminCommissionRulesProvider(),
                   child: const AdminCommissionRulesScreen(),

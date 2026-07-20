@@ -145,7 +145,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://academia-app-production.up.railway.app",
+        # Railway retiré du dispositif — origines réelles du frontend.
+        "https://academiea.com",
+        "https://www.academiea.com",
     ],
     allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
@@ -265,7 +267,7 @@ async def supabase_proxy(full_path: str, request: Request) -> Response:
                 content=body if request.method.upper() != "GET" else None,
             )
         except httpx.HTTPError as exc:
-            # Log détaillé pour les erreurs de proxy Supabase (visible dans les logs Railway)
+            # Log détaillé pour les erreurs de proxy Supabase (visible dans les logs Kamatera)
             print(
                 f"[SUPABASE_PROXY_ERROR] method={request.method} "
                 f"full_path={full_path} target={target_url} error={repr(exc)}"

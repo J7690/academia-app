@@ -166,6 +166,7 @@ serve(async (req) => {
         university_id: universityId,
         full_name: universityName,
       },
+      app_metadata: { role: 'university' }, // source de confiance (non modifiable par le client)
     });
 
     if (createError || !createdUser || !createdUser.user) {

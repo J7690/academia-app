@@ -179,7 +179,7 @@ function validateStoryboard(json: unknown): { valid: boolean; error?: string } {
       }
       
       // Type valide
-      const validTypes = ['title', 'paragraph', 'formula', 'definition', 'exercise', 'correction'];
+      const validTypes = ['title', 'paragraph', 'formula', 'definition', 'exercise', 'correction', 'diagram', 'graph'];
       if (!validTypes.includes(b.type as string)) {
         return { valid: false, error: `Invalid block type: ${b.type}` };
       }
@@ -204,15 +204,35 @@ function validateStoryboard(json: unknown): { valid: boolean; error?: string } {
 function getSystemPrompt(mode: string, renderer: string, theme: string, narrationMode: string): string {
   const basePrompt = `Tu es un expert en création de Storyboards pédagogiques pour le Smart Whiteboard Academia.
 
-Ton rôle est de générer un Storyboard JSON valide qui sera utilisé pour créer une vidéo pédagogique.
+Ton rôle est de générer un Storyboard JSON valide qui sera utilisé pour créer une vidéo pédagogique de haute qualité avec rendu LaTeX.
 
 RÈGLES STRICTES :
 1. Le Storyboard doit être conforme au format JSON version "1.0"
 2. Structure le contenu en 5-10 scènes
 3. Chaque scène contient 3-6 blocs
-4. Utilise les types de blocs appropriés (title, paragraph, formula, definition, exercise, correction)
+4. Types de blocs disponibles : title, paragraph, formula, definition, exercise, correction, diagram, graph
 5. Adapte le contenu au renderer "${renderer}" et au thème "${theme}"
 6. narration_mode DOIT être exactement "${narrationMode}" (valeurs acceptées: none, tts, userRecording)
+
+RÈGLES FORMULES (CRITIQUE) :
+- Pour les blocs "formula", le content DOIT être du LaTeX pur compatible KaTeX
+- Utilise \\frac{}{}, \\sqrt{}, \\sum, \\int, \\lim, \\vec{}, etc.
+- NE PAS écrire de texte en langage naturel dans les blocs formula, UNIQUEMENT du LaTeX
+- Exemples corrects : "\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}", "\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}"
+- Si une formule apparaît dans un paragraphe, utilise un bloc "formula" séparé pour la mettre en valeur
+- Pour les formules inline dans les paragraphes, écris-les en notation mathématique Unicode (∑, ∫, ², √)
+
+RÈGLES DIAGRAMMES :
+- Pour les blocs "diagram", le content DOIT être une définition Mermaid valide
+- Exemple : "graph TD\n    A[Début] --> B{Condition}\n    B -->|Oui| C[Action]\n    B -->|Non| D[Fin]"
+- Utilise les diagrammes pour illustrer des processus, des arbres, des flux
+
+RÈGLES PÉDAGOGIQUES :
+- Commence TOUJOURS par une scène d'introduction avec un titre clair
+- Inclus au moins UNE formule LaTeX si le sujet s'y prête
+- Inclus au moins UNE définition encadrée pour les concepts clés
+- Termine par un exercice + correction
+- Les durées de scène doivent refléter la complexité (5000-10000ms par scène)
 
 FORMAT JSON REQUIS :
 {
@@ -240,7 +260,7 @@ FORMAT JSON REQUIS :
       "blocks": [
         {
           "id": "uuid",
-          "type": "title|paragraph|formula|definition|exercise|correction",
+          "type": "title|paragraph|formula|definition|exercise|correction|diagram|graph",
           "content": "...",
           "order": 0,
           "visible": true,

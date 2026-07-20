@@ -85,6 +85,17 @@ class _SignupScreenState extends State<SignupScreen> {
       if (referralCode.isNotEmpty) {
         signUpData['ref_code'] = referralCode;
       }
+      // Attribution marketing (campagnes Facebook/Claude), ISOLÉE du référencement
+      // commercial. Lue depuis le paramètre URL ?src= (ex. src=fb-claude-vac2026-reel-a).
+      // N'affecte ni user_referrals ni les commissions.
+      String? mktRef;
+      try {
+        final s = Uri.base.queryParameters['src'];
+        if (s != null && s.trim().isNotEmpty) mktRef = s.trim();
+      } catch (_) {}
+      if (mktRef != null && mktRef.isNotEmpty) {
+        signUpData['mkt_ref'] = mktRef;
+      }
       await client.auth.signUp(
         email: email,
         password: password,
@@ -98,6 +109,13 @@ class _SignupScreenState extends State<SignupScreen> {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('pending_referral_code_v1', referralCode);
           await prefs.setString('pending_referral_source_v1', 'manual');
+        } catch (_) {}
+      }
+      // Persister l'attribution marketing pour rattachement après login (auth_wrapper).
+      if (mktRef != null && mktRef.isNotEmpty) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('pending_marketing_ref_v1', mktRef);
         } catch (_) {}
       }
 

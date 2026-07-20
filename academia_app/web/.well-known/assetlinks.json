@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.academia.nexiomgroup.app",
+      "sha256_cert_fingerprints": [
+        "67:E4:71:60:36:DC:3A:C6:C4:07:26:4B:F5:77:BE:F2:0E:4A:D5:00:A3:78:9C:E0:5E:D2:38:26:E5:73:4E:F9"
+      ]
+    }
+  }
+]

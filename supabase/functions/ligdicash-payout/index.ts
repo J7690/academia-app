@@ -43,7 +43,9 @@ serve(async (req: Request) => {
           { status: 401, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
         );
       }
-      const role = user.user_metadata?.role || '';
+      // Rôle lu depuis app_metadata (source de confiance, non modifiable par le client),
+      // avec repli sur user_metadata pour compat (les deux sont synchronisés par trigger).
+      const role = (user.app_metadata as any)?.role || (user.user_metadata as any)?.role || '';
       isAdmin = role === 'admin' || role === 'super_admin';
     }
 

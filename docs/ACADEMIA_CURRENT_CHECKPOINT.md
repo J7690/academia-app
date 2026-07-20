@@ -73,6 +73,37 @@ Compléter l'intégration Flutter du Smart Whiteboard pour permettre le lancemen
 
 ---
 
+## PHASE PARALLÈLE TERMINÉE (piste distincte de D.7 — Live/Classroom, non Smart Whiteboard)
+
+### Nom
+**Dispositif Live/Classroom unifié — Option A (LiveKit Cloud + Learning Engine Supabase)**
+
+### Date
+13-14 Juillet 2026
+
+### Résultat
+**VALIDÉ** (développement fonctionnel ; sécurisation explicitement différée à une phase ultérieure, cf. ADR-011)
+
+### Rapport / références
+- `docs/ACADEMIA_LIVE_CLASSROOM_PROPOSAL.md`
+- `docs/LIVEKIT_CLOUD_MIGRATION_RUNBOOK.md`
+- `.devin/INSTRUCTIONS_DEVIN_LIVE_CLASSROOM_SUPABASE.md`
+- ADR-011 dans `ACADEMIA_ARCHITECTURE_DECISIONS.md`
+
+### Actions réalisées
+- Edge Function `livekit-admin` déployée en production (mute/exclusion participant à distance)
+- Migration Supabase `create_academia_sessions_learning_engine` : tables `app.academia_sessions` + `app.academia_session_participants`, 16 RPC `app_learning_*` + `livekit_lookup_academia_session`
+- Migrations correctives : `fix_academia_sessions_null_auth_uid_bypass` (comparaisons `auth.uid()` sécurisées via `IS DISTINCT FROM`), `livekit_get_user_display_name_teacher_fallback` + `fix_livekit_display_name_instructors_column` (nom d'hôte enseignant affiché correctement)
+- Test de fumée SQL de bout en bout validé sur le projet Supabase `thevdfcwlcqzdoybfvgs`
+- UI Flutter : panneau Participants (mute host + export CSV présence), écran `TdEnrollmentAccessScreen`, fusion des onglets enseignant "Lives"/"Sessions"
+
+### Points restants (hors périmètre de cette phase, par décision explicite du porteur de projet)
+- Sécurisation : 32 tables avec RLS désactivé (signalées, non corrigées), grants `EXECUTE` par défaut sur les fonctions `SECURITY DEFINER`, table `app.user_roles` absente, rotation des clés — **phase ultérieure distincte**
+- Bascule effective vers LiveKit Cloud : action opérationnelle (création de compte tiers) à la charge du porteur de projet, cf. runbook
+- `flutter analyze` / `flutter test` non exécutés (SDK Flutter indisponible dans l'environnement d'exécution) — relecture manuelle uniquement, recommandé avant merge
+
+---
+
 ## PROCHAINE PHASE
 
 ### Nom

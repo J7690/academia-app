@@ -51,6 +51,8 @@ enum BlockType {
   definition,
   exercise,
   correction,
+  diagram,
+  graph,
 }
 
 // ============================================================================
@@ -387,6 +389,10 @@ abstract class Block {
         return ExerciseBlock.fromJson({...commonData, ...json});
       case BlockType.correction:
         return CorrectionBlock.fromJson({...commonData, ...json});
+      case BlockType.diagram:
+        return DiagramBlock.fromJson({...commonData, ...json});
+      case BlockType.graph:
+        return GraphBlock.fromJson({...commonData, ...json});
     }
   }
 }
@@ -789,6 +795,124 @@ class CorrectionBlock extends Block {
       exerciseId: exerciseId ?? this.exerciseId,
       steps: steps ?? this.steps,
       explanation: explanation ?? this.explanation,
+      order: order ?? this.order,
+      visible: visible ?? this.visible,
+      animation: animation ?? this.animation,
+      position: position ?? this.position,
+      style: style ?? this.style,
+    );
+  }
+}
+
+// Diagram Block (Mermaid)
+class DiagramBlock extends Block {
+  const DiagramBlock({
+    required super.id,
+    required super.content,
+    required super.order,
+    super.visible = true,
+    super.animation,
+    super.position,
+    super.style = const BlockStyle(),
+  }) : super(type: BlockType.diagram);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'type': type.name,
+      'content': content,
+      'order': order,
+      'visible': visible,
+      'animation': animation,
+      'position': position,
+      'style': style.toJson(),
+    };
+  }
+
+  factory DiagramBlock.fromJson(Map<String, dynamic> json) {
+    return DiagramBlock(
+      id: json['id'] as String,
+      content: json['content'] as String,
+      order: json['order'] as int,
+      visible: json['visible'] as bool,
+      animation: json['animation'] as Map<String, dynamic>?,
+      position: json['position'] as Map<String, dynamic>?,
+      style: BlockStyle.fromJson(json['style'] as Map<String, dynamic>? ?? {}),
+    );
+  }
+
+  DiagramBlock copyWith({
+    String? id,
+    String? content,
+    int? order,
+    bool? visible,
+    Map<String, dynamic>? animation,
+    Map<String, dynamic>? position,
+    BlockStyle? style,
+  }) {
+    return DiagramBlock(
+      id: id ?? this.id,
+      content: content ?? this.content,
+      order: order ?? this.order,
+      visible: visible ?? this.visible,
+      animation: animation ?? this.animation,
+      position: position ?? this.position,
+      style: style ?? this.style,
+    );
+  }
+}
+
+// Graph Block (function plot)
+class GraphBlock extends Block {
+  const GraphBlock({
+    required super.id,
+    required super.content,
+    required super.order,
+    super.visible = true,
+    super.animation,
+    super.position,
+    super.style = const BlockStyle(),
+  }) : super(type: BlockType.graph);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'type': type.name,
+      'content': content,
+      'order': order,
+      'visible': visible,
+      'animation': animation,
+      'position': position,
+      'style': style.toJson(),
+    };
+  }
+
+  factory GraphBlock.fromJson(Map<String, dynamic> json) {
+    return GraphBlock(
+      id: json['id'] as String,
+      content: json['content'] as String,
+      order: json['order'] as int,
+      visible: json['visible'] as bool,
+      animation: json['animation'] as Map<String, dynamic>?,
+      position: json['position'] as Map<String, dynamic>?,
+      style: BlockStyle.fromJson(json['style'] as Map<String, dynamic>? ?? {}),
+    );
+  }
+
+  GraphBlock copyWith({
+    String? id,
+    String? content,
+    int? order,
+    bool? visible,
+    Map<String, dynamic>? animation,
+    Map<String, dynamic>? position,
+    BlockStyle? style,
+  }) {
+    return GraphBlock(
+      id: id ?? this.id,
+      content: content ?? this.content,
       order: order ?? this.order,
       visible: visible ?? this.visible,
       animation: animation ?? this.animation,

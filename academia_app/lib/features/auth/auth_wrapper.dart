@@ -5,6 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../services/push_notification_service.dart';
+import '../../services/share_tracking_service.dart';
+import '../../services/install_referrer_service.dart';
+import '../../services/deep_link_service.dart';
 import '../student/student_dashboard_screen.dart';
 import '../university/university_dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
@@ -35,6 +38,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
       if (mounted) {
         setState(() {
           _referralHandledForSession = false;
+          _marketingAttrHandledForSession = false;
         });
       }
       _startActivityTracking();
@@ -47,6 +51,13 @@ class _AuthWrapperState extends State<AuthWrapper> {
     // Brancher le handler de notifications push pour les candidatures étudiant.
     PushNotificationService.instance
         .setOnApplicationNotification(_handleApplicationNotification);
+
+    // Initialiser Install Referrer Service pour Play Store attribution
+    InstallReferrerService.instance.initialize();
+    DeepLinkService.instance.getInitialLink().then((link) {
+      if (link != null) _captureReferralFromDeepLink(link);
+    });
+    DeepLinkService.instance.listenForLinks(_captureReferralFromDeepLink);
   }
 
   @override
@@ -57,6 +68,109 @@ class _AuthWrapperState extends State<AuthWrapper> {
   }
 
   Timer? _activityTimer;
+  bool _shareHandledForSession = false;
+  bool _marketingAttrHandledForSession = false;
+
+  Future<void> _captureShareIfNeeded() async {
+    if (_shareHandledForSession) {
+      debugPrint('ShareCapture: already handled for this session, skipping.');
+      return;
+    }
+
+    final session = _client.auth.currentSession;
+    if (session == null) {
+      debugPrint('ShareCapture: no current session, skipping.');
+      return;
+    }
+
+    try {
+      final shareService = ShareTrackingService();
+      final studentId = session.user.id;
+      
+      // Capturer depuis les paramètres URL actuels
+      // Note: Pour une vraie app mobile, il faudrait utiliser uni_links ou deep linking
+      // Ici on simule avec Uri.base pour le web
+      final uri = Uri.base;
+      await shareService.captureFromUrl(uri, studentId);
+      
+      _shareHandledForSession = true;
+      debugPrint('ShareCapture: share captured successfully');
+    } catch (e) {
+      debugPrint('ShareCapture: error while capturing share: ' + e.toString());
+      _shareHandledForSession = true;
+    }
+  }
+
+  /// Attribution MARKETING (campagnes Facebook pilotées par Claude, multi-canal).
+  /// Totalement ISOLÉE du référencement commercial : n'écrit QUE dans
+  /// app.marketing_attributions via la RPC dédiée, ne touche jamais aux
+  /// commissions ni à user_referrals. First-touch garanti côté base.
+  Future<void> _captureMarketingAttributionIfNeeded() async {
+    if (_marketingAttrHandledForSession) return;
+
+    final session = _client.auth.currentSession;
+    if (session == null) return;
+
+    try {
+      // Priorité : paramètre URL ?src= > SharedPreferences > user_metadata['mkt_ref'].
+      String? mktRef;
+      try {
+        final urlSrc = Uri.base.queryParameters['src'];
+        if (urlSrc != null && urlSrc.trim().isNotEmpty) mktRef = urlSrc.trim();
+      } catch (_) {}
+
+      final prefs = await SharedPreferences.getInstance();
+      if (mktRef == null || mktRef.isEmpty) {
+        final pref = prefs.getString('pending_marketing_ref_v1');
+        if (pref != null && pref.trim().isNotEmpty) mktRef = pref.trim();
+      }
+      if (mktRef == null || mktRef.isEmpty) {
+        final metaRef = session.user.userMetadata?['mkt_ref']?.toString();
+        if (metaRef != null && metaRef.trim().isNotEmpty) mktRef = metaRef.trim();
+      }
+
+      if (mktRef == null || mktRef.isEmpty) {
+        _marketingAttrHandledForSession = true;
+        return;
+      }
+
+      final result = await _client.rpc(
+        'app_register_marketing_attribution',
+        params: {'p_ref': mktRef},
+      );
+      debugPrint('MarketingAttr: RPC result=' + result.toString());
+
+      if (result is Map && result['success'] == true) {
+        await prefs.remove('pending_marketing_ref_v1');
+      }
+    } catch (e) {
+      // Ne jamais bloquer la connexion si l'attribution marketing échoue.
+      debugPrint('MarketingAttr: error while capturing attribution: ' + e.toString());
+    } finally {
+      _marketingAttrHandledForSession = true;
+    }
+  }
+
+  Future<void> _captureReferralFromDeepLink(String link) async {
+    if (_client.auth.currentSession != null) return;
+
+    try {
+      final uri = Uri.parse(link);
+      if (uri.scheme != 'https' || uri.host != 'app.academiea.com') return;
+
+      final segments = uri.pathSegments;
+      if (segments.length < 2 || segments.first != 'ref') return;
+
+      final refCode = segments[1].trim();
+      if (refCode.isEmpty) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('pending_referral_code_v1', refCode);
+      await prefs.setString('pending_referral_source_v1', 'link');
+    } catch (e) {
+      debugPrint('ReferralAppLink: error while capturing link: $e');
+    }
+  }
 
   Future<void> _attachReferralIfNeeded() async {
     if (_referralHandledForSession) {
@@ -72,13 +186,34 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     try {
       debugPrint('ReferralAttach: session userId=' + session.user.id);
-      final prefs = await SharedPreferences.getInstance();
-      String? refCode = prefs.getString('pending_referral_code_v1');
-      String source = prefs.getString('pending_referral_source_v1') ?? 'link';
-      debugPrint('ReferralAttach: SharedPrefs refCode=' + (refCode ?? 'null'));
 
-      // Fallback: read ref_code from server-side user_metadata
-      // (set during signUp when ?ref= was in the URL)
+      String? refCode;
+      String source = 'link';
+
+      // Priority 1: Install Referrer Service (Play Store attribution).
+      // Aucune saisie requise : le token capté au clic est résolu en ref_code.
+      final referrerService = InstallReferrerService.instance;
+      await referrerService.initialize();
+      final installRefCode = referrerService.resolvedRefCode;
+      debugPrint('ReferralAttach: InstallReferrer ref_code=' + (installRefCode ?? 'null'));
+      if (installRefCode != null && installRefCode.trim().isNotEmpty) {
+        refCode = installRefCode.trim();
+        source = 'play_store_install';
+      }
+
+      // Priority 2: Use URL parameters (web deep linking, ?ref= capté avant inscription)
+      final prefs = await SharedPreferences.getInstance();
+      if (refCode == null || refCode.trim().isEmpty) {
+        final prefRefCode = prefs.getString('pending_referral_code_v1');
+        debugPrint('ReferralAttach: SharedPrefs refCode=' + (prefRefCode ?? 'null'));
+        if (prefRefCode != null && prefRefCode.trim().isNotEmpty) {
+          refCode = prefRefCode.trim();
+          source = prefs.getString('pending_referral_source_v1') ?? 'link';
+        }
+      }
+
+      // Priority 3 (filet de secours): user_metadata — ?ref= capté côté serveur au
+      // signUp, ou saisie manuelle du code de parrainage par l'utilisateur.
       if (refCode == null || refCode.trim().isEmpty) {
         final metadata = session.user.userMetadata;
         final metaRef = metadata?['ref_code']?.toString();
@@ -192,6 +327,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
     // Rattacher un éventuel parrainage capturé avant la création du compte.
     // On le fait ici car on est certain que l'utilisateur est authentifié.
     _attachReferralIfNeeded();
+    
+    // Capturer les partages depuis les paramètres URL
+    _captureShareIfNeeded();
+
+    // Capturer l'attribution marketing (campagnes Facebook/Claude), isolée du commercial.
+    _captureMarketingAttributionIfNeeded();
 
     final user = session.user;
     final metadata = user.userMetadata ?? <String, dynamic>{};

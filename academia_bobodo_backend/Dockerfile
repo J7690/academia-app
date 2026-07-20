@@ -17,5 +17,5 @@ COPY . .
 
 ENV PYTHONUNBUFFERED=1
 
-# Railway provides the PORT env var
+# Le PORT est fourni par l'environnement (Kamatera/Docker), défaut 8000
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]

@@ -8,6 +8,7 @@ import '../../providers/commercial_dashboard_provider.dart';
 import '../../widgets/support_fab.dart';
 import '../student/student_settings_screen.dart';
 import '../../services/push_trigger_service.dart';
+import '../../services/share_tracking_service.dart';
 
 class CommercialDashboardScreen extends StatefulWidget {
   const CommercialDashboardScreen({super.key});
@@ -182,9 +183,18 @@ class _CommercialDashboardScreenState extends State<CommercialDashboardScreen> {
 
   Future<void> _showShareReferralDialog(
       BuildContext context, String link) async {
-    final encodedLink = Uri.encodeComponent(link);
-    final message = 'Rejoins Academia avec mon lien de parrainage : $link';
-    final encodedMessage = Uri.encodeComponent(message);
+    final shareService = ShareTrackingService();
+    final provider = context.read<CommercialDashboardProvider>();
+    final profile = provider.profile;
+    final refCode = profile?['ref_code']?.toString() ?? '';
+    
+    if (refCode.isEmpty) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Code de parrainage non disponible.')),
+      );
+      return;
+    }
 
     Future<void> launchShare(Uri uri) async {
       try {
@@ -198,43 +208,172 @@ class _CommercialDashboardScreenState extends State<CommercialDashboardScreen> {
       }
     }
 
+    Future<void> shareItem({
+      required String shareSource,
+      required String sharedItemType,
+      String? sharedItemId,
+      String? sharedItemTitle,
+    }) async {
+      final shareUrl = shareService.generateShareUrl(
+        baseUrl: link,
+        refCode: refCode,
+        shareSource: shareSource,
+        sharedItemType: sharedItemType,
+        sharedItemId: sharedItemId,
+        sharedItemTitle: sharedItemTitle,
+      );
+      
+      final encodedLink = Uri.encodeComponent(shareUrl);
+      final message = 'Rejoins Academia avec mon lien : $shareUrl';
+      final encodedMessage = Uri.encodeComponent(message);
+
+      switch (shareSource) {
+        case 'whatsapp':
+          await launchShare(Uri.parse('https://wa.me/?text=$encodedMessage'));
+          break;
+        case 'facebook':
+          await launchShare(Uri.parse(
+              'https://www.facebook.com/sharer/sharer.php?u=$encodedLink'));
+          break;
+        case 'twitter':
+          await launchShare(Uri.parse(
+              'https://twitter.com/intent/tweet?url=$encodedLink&text=$encodedMessage'));
+          break;
+        case 'linkedin':
+          await launchShare(Uri.parse(
+              'https://www.linkedin.com/sharing/share-offsite/?url=$encodedLink'));
+          break;
+        case 'telegram':
+          await launchShare(Uri.parse(
+              'https://t.me/share/url?url=$encodedLink&text=$encodedMessage'));
+          break;
+        case 'email':
+          await launchShare(Uri.parse(
+              'mailto:?subject=Rejoins Academia&body=$encodedMessage'));
+          break;
+        default:
+          await launchShare(Uri.parse(shareUrl));
+      }
+    }
+
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Partager le lien'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.chat, color: Colors.green),
-                title: const Text('WhatsApp'),
-                onTap: () async {
-                  await launchShare(
-                      Uri.parse('https://wa.me/?text=$encodedMessage'));
-                  Navigator.of(dialogContext).pop();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.facebook, color: Colors.blue),
-                title: const Text('Facebook'),
-                onTap: () async {
-                  await launchShare(Uri.parse(
-                      'https://www.facebook.com/sharer/sharer.php?u=$encodedLink'));
-                  Navigator.of(dialogContext).pop();
-                },
-              ),
-              ListTile(
-                leading:
-                    const Icon(Icons.send, color: Colors.blueAccent),
-                title: const Text('Telegram'),
-                onTap: () async {
-                  await launchShare(Uri.parse(
-                      'https://t.me/share/url?url=$encodedLink&text=$encodedMessage'));
-                  Navigator.of(dialogContext).pop();
-                },
-              ),
-            ],
+          title: const Text('Partager sur'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.chat, color: Colors.green),
+                  title: const Text('WhatsApp'),
+                  onTap: () async {
+                    await shareItem(
+                      shareSource: 'whatsapp',
+                      sharedItemType: 'generic_landing',
+                    );
+                    if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.facebook, color: Colors.blue),
+                  title: const Text('Facebook'),
+                  onTap: () async {
+                    await shareItem(
+                      shareSource: 'facebook',
+                      sharedItemType: 'generic_landing',
+                    );
+                    if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.camera_alt, color: Colors.purple),
+                  title: const Text('Instagram'),
+                  onTap: () async {
+                    await shareItem(
+                      shareSource: 'instagram',
+                      sharedItemType: 'generic_landing',
+                    );
+                    if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.alternate_email, color: Colors.blue),
+                  title: const Text('Twitter / X'),
+                  onTap: () async {
+                    await shareItem(
+                      shareSource: 'twitter',
+                      sharedItemType: 'generic_landing',
+                    );
+                    if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.work, color: Colors.blueAccent),
+                  title: const Text('LinkedIn'),
+                  onTap: () async {
+                    await shareItem(
+                      shareSource: 'linkedin',
+                      sharedItemType: 'generic_landing',
+                    );
+                    if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.send, color: Colors.blueAccent),
+                  title: const Text('Telegram'),
+                  onTap: () async {
+                    await shareItem(
+                      shareSource: 'telegram',
+                      sharedItemType: 'generic_landing',
+                    );
+                    if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.email, color: Colors.orange),
+                  title: const Text('Email'),
+                  onTap: () async {
+                    await shareItem(
+                      shareSource: 'email',
+                      sharedItemType: 'generic_landing',
+                    );
+                    if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.sms, color: Colors.red),
+                  title: const Text('SMS'),
+                  onTap: () async {
+                    await shareItem(
+                      shareSource: 'sms',
+                      sharedItemType: 'generic_landing',
+                    );
+                    if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.qr_code, color: Colors.black),
+                  title: const Text('Copier le lien'),
+                  onTap: () async {
+                    final shareUrl = shareService.generateShareUrl(
+                      baseUrl: link,
+                      refCode: refCode,
+                      shareSource: 'direct_link',
+                      sharedItemType: 'generic_landing',
+                    );
+                    await Clipboard.setData(ClipboardData(text: shareUrl));
+                    if (dialogContext.mounted) {
+                      ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        const SnackBar(content: Text('Lien copié dans le presse-papier')),
+                      );
+                      Navigator.of(dialogContext).pop();
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(

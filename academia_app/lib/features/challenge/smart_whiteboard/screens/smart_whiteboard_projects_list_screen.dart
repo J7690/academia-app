@@ -3,17 +3,19 @@ import 'package:provider/provider.dart';
 import '../providers/smart_whiteboard_provider.dart';
 
 /// Écran de liste des projets Smart Whiteboard
-/// 
+///
 /// Permet de visualiser tous les projets de l'utilisateur,
 /// de les filtrer par statut et d'effectuer des actions (éditer, supprimer, dupliquer).
 class SmartWhiteboardProjectsListScreen extends StatefulWidget {
   const SmartWhiteboardProjectsListScreen({super.key});
 
   @override
-  State<SmartWhiteboardProjectsListScreen> createState() => _SmartWhiteboardProjectsListScreenState();
+  State<SmartWhiteboardProjectsListScreen> createState() =>
+      _SmartWhiteboardProjectsListScreenState();
 }
 
-class _SmartWhiteboardProjectsListScreenState extends State<SmartWhiteboardProjectsListScreen> {
+class _SmartWhiteboardProjectsListScreenState
+    extends State<SmartWhiteboardProjectsListScreen> {
   ProjectStatusFilter _selectedFilter = ProjectStatusFilter.all;
 
   @override
@@ -51,19 +53,7 @@ class _SmartWhiteboardProjectsListScreenState extends State<SmartWhiteboardProje
                 child: Text('Brouillons'),
               ),
               const PopupMenuItem(
-                value: ProjectStatusFilter.generating,
-                child: Text('En génération'),
-              ),
-              const PopupMenuItem(
-                value: ProjectStatusFilter.ready,
-                child: Text('Prêts'),
-              ),
-              const PopupMenuItem(
-                value: ProjectStatusFilter.rendering,
-                child: Text('En rendu'),
-              ),
-              const PopupMenuItem(
-                value: ProjectStatusFilter.done,
+                value: ProjectStatusFilter.completed,
                 child: Text('Terminés'),
               ),
             ],
@@ -135,14 +125,8 @@ class _SmartWhiteboardProjectsListScreenState extends State<SmartWhiteboardProje
         return projects;
       case ProjectStatusFilter.draft:
         return projects.where((p) => p['status'] == 'draft').toList();
-      case ProjectStatusFilter.generating:
-        return projects.where((p) => p['status'] == 'generating').toList();
-      case ProjectStatusFilter.ready:
-        return projects.where((p) => p['status'] == 'ready').toList();
-      case ProjectStatusFilter.rendering:
-        return projects.where((p) => p['status'] == 'rendering').toList();
-      case ProjectStatusFilter.done:
-        return projects.where((p) => p['status'] == 'done').toList();
+      case ProjectStatusFilter.completed:
+        return projects.where((p) => p['status'] == 'completed').toList();
     }
   }
 
@@ -179,13 +163,7 @@ class _SmartWhiteboardProjectsListScreenState extends State<SmartWhiteboardProje
     switch (status) {
       case 'draft':
         return const Icon(Icons.edit_note, color: Colors.grey);
-      case 'generating':
-        return const Icon(Icons.autorenew, color: Colors.blue);
-      case 'ready':
-        return const Icon(Icons.check_circle, color: Colors.green);
-      case 'rendering':
-        return const Icon(Icons.movie_creation, color: Colors.orange);
-      case 'done':
+      case 'completed':
         return const Icon(Icons.play_circle, color: Colors.green);
       default:
         return const Icon(Icons.help);
@@ -253,8 +231,8 @@ class _SmartWhiteboardProjectsListScreenState extends State<SmartWhiteboardProje
 
   void _handleTap(dynamic project) {
     final status = project['status'] as String;
-    
-    if (status == 'done') {
+
+    if (status == 'completed') {
       final renderId = project['render_id'] as String?;
       final videoUrl = project['video_url'] as String?;
       Navigator.pushNamed(
@@ -279,8 +257,5 @@ class _SmartWhiteboardProjectsListScreenState extends State<SmartWhiteboardProje
 enum ProjectStatusFilter {
   all,
   draft,
-  generating,
-  ready,
-  rendering,
-  done,
+  completed,
 }

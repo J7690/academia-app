@@ -14,12 +14,32 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '
 const LIGDICASH_API_KEY = Deno.env.get('LIGDICASH_API_KEY') ?? '';
 const LIGDICASH_BEARER_TOKEN = Deno.env.get('LIGDICASH_BEARER_TOKEN') ?? '';
 const LIGDICASH_MODE = Deno.env.get('LIGDICASH_MODE') ?? 'mock';
+// Allowlist IP OPTIONNELLE. LigdiCash ne publie pas d'IP source stables et
+// n'envoie NI signature HMAC NI timestamp (cf. doc officielle
+// https://developers.ligdicash.com/api1/callback). La sécurité réelle repose
+// donc sur : (1) re-vérification serveur par token auprès de LigdiCash avant
+// tout crédit, (2) idempotence de la RPC. Ne définir LIGDICASH_ALLOWED_IPS que
+// si le support LigdiCash fournit des IP officielles garanties stables ; sinon
+// laisser vide (comportement par défaut : autorise tout).
+const LIGDICASH_ALLOWED_IPS = (Deno.env.get('LIGDICASH_ALLOWED_IPS') ?? '').split(',').map(ip => ip.trim()).filter(ip => ip);
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': '*',
   'Access-Control-Allow-Methods': 'POST,OPTIONS',
 };
+
+// IP allowlisting (optionnelle : autorise tout si aucune IP configurée)
+function isAllowedIP(ip: string, allowedIPs: string[]): boolean {
+  if (allowedIPs.length === 0) {
+    return true; // Aucune allowlist configurée -> on autorise (LigdiCash ne publie pas d'IP stables)
+  }
+  const isValid = allowedIPs.includes(ip);
+  if (!isValid) {
+    console.log(`[ligdicash-callback] IP ${ip} not in allowlist`);
+  }
+  return isValid;
+}
 
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -33,6 +53,18 @@ serve(async (req: Request) => {
   );
 
   try {
+    // Sécurité (optionnelle) : allowlist IP. Aucune vérif HMAC/timestamp : LigdiCash
+    // n'en envoie pas. La vraie protection anti-fraude est la re-vérification par
+    // token auprès de LigdiCash (plus bas) + l'idempotence de la RPC.
+    const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '';
+    if (!isAllowedIP(clientIP, LIGDICASH_ALLOWED_IPS)) {
+      console.log(`[ligdicash-callback] Unauthorized IP: ${clientIP}`);
+      return ok200('unauthorized_ip');
+    }
+
+    // Corps brut (LigdiCash envoie form-urlencoded ET json)
+    const rawBody = await req.text();
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // Parse body — LigdiCash sends both form-urlencoded and JSON
@@ -40,19 +72,22 @@ serve(async (req: Request) => {
     const contentType = req.headers.get('Content-Type') || '';
 
     if (contentType.includes('application/json')) {
-      callbackData = await req.json();
+      callbackData = JSON.parse(rawBody);
     } else if (contentType.includes('application/x-www-form-urlencoded')) {
-      const formData = await req.formData();
+      const formData = new FormData();
+      const params = new URLSearchParams(rawBody);
+      for (const [key, value] of params.entries()) {
+        formData.append(key, value);
+      }
       for (const [key, value] of formData.entries()) {
         callbackData[key] = value;
       }
     } else {
       // Try JSON first, fallback to text
       try {
-        callbackData = await req.json();
+        callbackData = JSON.parse(rawBody);
       } catch {
-        const text = await req.text();
-        console.log(`[ligdicash-callback] Raw body: ${text}`);
+        console.log(`[ligdicash-callback] Raw body: ${rawBody}`);
         return ok200('unrecognized_content_type');
       }
     }
@@ -93,10 +128,11 @@ serve(async (req: Request) => {
     if (!paymentId && token) {
       const { data: ap } = await supabase
         .schema('app').from('application_payments')
-        .select('id').eq('ligdicash_token', token).limit(1).single();
+        .select('id, payment_reason').eq('ligdicash_token', token).limit(1).single();
       if (ap) {
         paymentId = ap.id;
-        paymentType = 'application';
+        // Distinguer credit_purchase des autres paiements application
+        paymentType = ap.payment_reason === 'credit_purchase' ? 'credit_purchase' : 'application';
       } else {
         const { data: mp } = await supabase
           .schema('app').from('marketplace_payments')
@@ -139,8 +175,8 @@ serve(async (req: Request) => {
         console.error(`[ligdicash-callback] Verify error:`, verifyErr);
       }
     } else {
-      // Mock mode — trust the callback data
-      verified = status === 'completed' || true;
+      // Mock mode — on fait confiance au callback
+      verified = true;
     }
 
     if (!verified && LIGDICASH_MODE !== 'mock') {
@@ -149,13 +185,21 @@ serve(async (req: Request) => {
     }
 
     // CONFIRM via RPC (idempotent — will return already_confirmed if already done)
-    const { data: confirmResult, error: confirmError } = await supabase.rpc('app_confirm_ligdicash_payment', {
-      p_payment_id: paymentId,
-      p_ligdicash_token: token,
-      p_ligdicash_transaction_id: verifiedTxnId,
-      p_ligdicash_operator: verifiedOperator,
-      p_payment_type: paymentType,
-    });
+    // credit_purchase => RPC dediee (confirme + credite le pack), sinon RPC generique.
+    const { data: confirmResult, error: confirmError } = paymentType === 'credit_purchase'
+      ? await supabase.rpc('app_confirm_credit_purchase', {
+          p_payment_id: paymentId,
+          p_ligdicash_token: token,
+          p_ligdicash_transaction_id: verifiedTxnId,
+          p_ligdicash_operator: verifiedOperator,
+        })
+      : await supabase.rpc('app_confirm_ligdicash_payment', {
+          p_payment_id: paymentId,
+          p_ligdicash_token: token,
+          p_ligdicash_transaction_id: verifiedTxnId,
+          p_ligdicash_operator: verifiedOperator,
+          p_payment_type: paymentType,
+        });
 
     if (confirmError) {
       console.error(`[ligdicash-callback] RPC error:`, confirmError);

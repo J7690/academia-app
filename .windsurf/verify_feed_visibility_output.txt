@@ -1,7 +1,0 @@
-================================================================================
-VERIFICATION INSTANT VISIBILITY (free_videos)
-================================================================================
-A. Total free_videos publiables: [{"n": 64}]
-B. VISIBLES avant fix (>=1 rendition ready): [{"n": 43}]
-C. NOUVELLEMENT visibles (pas de rendition ready MAIS source ingeree): [{"n": 21}]
-D. ENCORE invisibles (ni rendition ready ni source ingeree): [{"n": 0}]

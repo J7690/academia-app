@@ -49,3 +49,22 @@ services:
     volumes:
       - /tmp/academia_render:/tmp
       - ./assets/images:/assets/images:ro
+
+  academia-whiteboard-worker:
+    build:
+      context: ./academia_bobodo_backend
+      dockerfile: Dockerfile
+    container_name: academia-whiteboard-worker
+    env_file:
+      - ./academia_bobodo_backend/.env
+    environment:
+      - WORKER_LOOP=1
+      - WORKER_INTERVAL_SECONDS=2
+      - WORKER_MAX_JOBS=1
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    command: ["python", "-u", "whiteboard_render_worker.py"]
+    restart: unless-stopped
+    volumes:
+      - /tmp/academia_render:/tmp

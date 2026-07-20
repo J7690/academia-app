@@ -10,7 +10,7 @@ class SupabaseConfig {
   // Clé SERVICE ROLE (secrète, réservée au backend et à certaines opérations admin)
   static const String serviceKey = '';
 
-  static const String frontendBaseUrl = 'https://academiea.com';
+  static const String frontendBaseUrl = 'https://app.academiea.com';
   static const String authCallbackUrl = '${frontendBaseUrl}/auth/callback';
   static const String mobileAuthCallbackUrl = 'academia://auth/callback';
 }

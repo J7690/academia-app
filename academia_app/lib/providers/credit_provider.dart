@@ -144,21 +144,22 @@ class CreditProvider extends ChangeNotifier {
   }
 
   /// Achète un pack de crédits (appelé après paiement LigdiCash confirmé).
+  /// NOTE: RPC app_student_purchase_credits n'existe plus dans Supabase.
+  /// Les crédits sont crédités automatiquement via Edge Function ligdicash-callback.
+  /// Cette fonction est conservée pour compatibilité mais ne fait rien.
   Future<Map<String, dynamic>> purchaseCredits(String packCode, {String? paymentId}) async {
     _isLoading = true;
     notifyListeners();
     try {
-      final resp = await _client.rpc('app_student_purchase_credits', params: {
-        'p_pack_code': packCode,
-        'p_payment_id': paymentId,
-      });
-      final data = resp as Map<String, dynamic>?;
-      if (data != null && data['success'] == true) {
-        _balance = (data['new_balance'] as num?)?.toInt() ?? _balance;
-        _totalPurchased += (data['credits_added'] as num?)?.toInt() ?? 0;
-        _error = null;
-      }
-      return data ?? {'success': false};
+      // RPC app_student_purchase_credits n'existe plus
+      // Les crédits sont crédités via Edge Function ligdicash-callback
+      debugPrint('[CreditProvider] purchaseCredits: RPC app_student_purchase_credits n\'existe plus. Les crédits sont crédités via Edge Function ligdicash-callback.');
+      
+      // Recharger le solde pour obtenir les crédits crédités
+      await loadBalance();
+      
+      _error = null;
+      return {'success': true, 'message': 'Solde rechargé. Les crédits sont crédités via Edge Function.'};
     } catch (e) {
       _error = e.toString();
       return {'success': false, 'error': e.toString()};

@@ -21,14 +21,40 @@ type FcmServiceAccount = {
   token_uri?: string;
 };
 
-// Hardcoded FCM service account (bypass env var issue)
-const fcmServiceAccount: FcmServiceAccount = {
-  project_id: "academia-e2c41",
-  client_email: "firebase-adminsdk-fbsvc@academia-e2c41.iam.gserviceaccount.com",
-  private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDGZpajtvuc2WRL\nk8VufyesySYq/a30mzLdPg/rbpfTfZI6pd1f4LclTFN52ipKhnNTmOc9bnoo6WXc\nseyCjfGCPYzysIXSs2IOI/ky3Xw4W0fnRlGMbMcn7XwkmcJ9zlXI9ulVyTDPIJ7B\nCGeHPqPa+PQ5yuzeU2WBTRo2li0aWLlEnXXj6gCSmBuiRQmO6We0hOVVKLCrFhIJ\nf+l85/Y2zOVRijGdP2xLPeVnM8ZlTQ2cNaH48oiyZroN7EzS9Eo3UFpXkSBNI6lL\nOuNdoLb26Sx8a3avWa0oNSnagHHJt5hUshnKTOlLyCbNfYN98Fby+hc3VOJKs8I9\nMNg0iN1ZAgMBAAECggEADVAF7J9TG8+0fKPCPCtZEK2Am6LhAMhHLfRDojMOCflj\njf7iL1RHRb/s3ADJFK4X3/SjE4qttMAQfzILIil/GpOhuQkiOaSiwDsmtgSJmMh7\nNygPQcJszJ+RVG1i0Qk+1VjICGMTHNrd/Crhs3//A6rvzE7y/OoQpg/z4dTK2vkZ\n0zsuO+/ILITxa5S/8foNHQWuasyOSE3Dwccaal+6FyDCTddH+2K1W87qRn+w8jtK\nzAEjt3HbPCMK7Jpd+zy2TGhDJumFyGoTMnygNb80Kt+VQeDV3n+9gjmAkGKZZPWj\nreWhPPaA8zdvizOdGj/FRQ3kcOWfFu+JPcXVUcWu/wKBgQDriUCv1Ima24UK65mc\nujpYlq+xARrSczaPfOptE149EwiX2J5Fj8Bz7PmgvXjPwr6ahIzPikYZbhUntbZd\n2UPbm1YwYMuIZChZGu0XFqA4yPmZyGnzIVdiBPyDocDY4acNQCq+UOle03aQ7bLG\nn8r510codEqI+xxMNITVwQhPpwKBgQDXo2CloKagjYgFxItChkTA3xbQ7XO100Zm\nuE+7uOfb2CAVFd0sxylK8fEh6eoIimIleYW8EqkikbL9oEr5KCmaszsDCYHC/iat\nRUz4s+XdU8LMVpDLomgrS8vjF4b/AxMJ10w7c1l5i7X9sUTiTtQJUWv/gsvxezdl\nbLW54VMK/wKBgG7Gq8TGmj1Z91Wufx3GPIDDxjfihCHsjAGqR3sre8wPsp/wAmhG\n9sXO84zU8AgO2KRFqRBHQTbenlaB0RaMg6y6fyvbqn4oVQ2ra0zLmGl8pF/ecW4n\nBTkVjUm/frrCTlYeErxVw5yUqhP5p3ZhWw5sYIw3PYL1T1bL8Jmz4tvLAoGBAIxw\n6JIWlk88vllbT4ONJRwkb5y0+cZzCof+BFfzrnY9RW/WJI10TM1106FN0lGrpw5X\nHiWGVceg8t1CV3H8mVQa5RUuTOftVM1GtEHKEKxcUCN7QaSOap/AJtMJUK+nle+z\n2/9gOebyeh33JTDrPCexctAfpKnqoQKakaS1PruLAoGAYvDR1CtFtS7ENYYwMLbq\nSkVYalMunHSQy1jkiUe48JYjcfa/D+lUD2C3NO/YPikLEh1YJYrKbFHB/Ce51eec\nlCwFJU+NTybtQO9M33bqu3g73K89+aXR7LN9zWnau1V04zLyiqdpFxgMClynueDx\nP1YvEYxnsFkebj/SJZ3hSoM=\n-----END PRIVATE KEY-----\n",
-  token_uri: "https://oauth2.googleapis.com/token",
-};
-console.log("[FCM] Service account hardcoded OK for project:", fcmServiceAccount.project_id);
+// FCM service account from environment variables
+// Try FCM_SERVICE_ACCOUNT_JSON first (JSON format), fallback to individual variables
+const fcmServiceAccountJson = Deno.env.get("FCM_SERVICE_ACCOUNT_JSON");
+
+let fcmServiceAccount: FcmServiceAccount;
+
+if (fcmServiceAccountJson) {
+  try {
+    fcmServiceAccount = JSON.parse(fcmServiceAccountJson);
+    console.log("[FCM] Service account loaded from FCM_SERVICE_ACCOUNT_JSON for project:", fcmServiceAccount.project_id);
+  } catch (e) {
+    console.error("[FCM] ERROR: Failed to parse FCM_SERVICE_ACCOUNT_JSON:", e);
+    fcmServiceAccount = {
+      project_id: Deno.env.get("FCM_PROJECT_ID") || "academia-e2c41",
+      client_email: Deno.env.get("FCM_CLIENT_EMAIL") || "firebase-adminsdk-fbsvc@academia-e2c41.iam.gserviceaccount.com",
+      private_key: Deno.env.get("FCM_PRIVATE_KEY") || "",
+      token_uri: "https://oauth2.googleapis.com/token",
+    };
+  }
+} else {
+  fcmServiceAccount = {
+    project_id: Deno.env.get("FCM_PROJECT_ID") || "academia-e2c41",
+    client_email: Deno.env.get("FCM_CLIENT_EMAIL") || "firebase-adminsdk-fbsvc@academia-e2c41.iam.gserviceaccount.com",
+    private_key: Deno.env.get("FCM_PRIVATE_KEY") || "",
+    token_uri: "https://oauth2.googleapis.com/token",
+  };
+}
+
+if (!fcmServiceAccount.private_key) {
+  console.error("[FCM] ERROR: FCM_PRIVATE_KEY environment variable is not set");
+  console.error("[FCM] Please set FCM_SERVICE_ACCOUNT_JSON or FCM_PROJECT_ID, FCM_CLIENT_EMAIL, and FCM_PRIVATE_KEY in Supabase Edge Function secrets");
+} else {
+  console.log("[FCM] Service account loaded for project:", fcmServiceAccount.project_id);
+}
 
 let cachedAccessToken: string | null = null;
 let cachedAccessTokenExpiry: number | null = null;

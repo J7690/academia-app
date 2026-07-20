@@ -241,6 +241,86 @@ class AcademiaLivekitService {
     }
   }
 
+  // ─── Modération hôte (contrôles distants) ───────────────────────────
+
+  /// Liste les participants LiveKit actifs dans la room (via RoomService).
+  Future<List<Map<String, dynamic>>> listParticipants(String sessionId) async {
+    try {
+      final response = await _client.functions.invoke(
+        'livekit-admin',
+        body: {
+          'action': 'list_participants',
+          'session_id': sessionId,
+          'session_source': 'academia',
+        },
+      );
+      final data = response.data;
+      if (response.status != 200 || data is! Map<String, dynamic> || data['success'] != true) {
+        return [];
+      }
+      final list = data['participants'];
+      if (list is! List) return [];
+      return list.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+    } catch (e) {
+      debugPrint('[AcademiaLivekit] listParticipants error: $e');
+      return [];
+    }
+  }
+
+  /// Coupe (ou réactive) à distance le micro d'un participant.
+  /// Utilise l'API RoomService de LiveKit côté serveur (MutePublishedTrack) :
+  /// fonctionne aussi bien avec un LiveKit self-hosted que LiveKit Cloud,
+  /// aucune différence de code entre les deux (Option A).
+  Future<bool> muteParticipantAudio({
+    required String sessionId,
+    required String participantIdentity,
+    bool muted = true,
+  }) async {
+    try {
+      final response = await _client.functions.invoke(
+        'livekit-admin',
+        body: {
+          'action': 'mute_participant',
+          'session_id': sessionId,
+          'session_source': 'academia',
+          'participant_identity': participantIdentity,
+          'track_type': 'audio',
+          'muted': muted,
+        },
+      );
+      final data = response.data;
+      if (response.status != 200 || data is! Map<String, dynamic>) return false;
+      return data['success'] == true;
+    } catch (e) {
+      debugPrint('[AcademiaLivekit] muteParticipantAudio error: $e');
+      return false;
+    }
+  }
+
+  /// Exclut un participant de la session en cours.
+  Future<bool> removeParticipant({
+    required String sessionId,
+    required String participantIdentity,
+  }) async {
+    try {
+      final response = await _client.functions.invoke(
+        'livekit-admin',
+        body: {
+          'action': 'remove_participant',
+          'session_id': sessionId,
+          'session_source': 'academia',
+          'participant_identity': participantIdentity,
+        },
+      );
+      final data = response.data;
+      if (response.status != 200 || data is! Map<String, dynamic>) return false;
+      return data['success'] == true;
+    } catch (e) {
+      debugPrint('[AcademiaLivekit] removeParticipant error: $e');
+      return false;
+    }
+  }
+
   // ─── Privé ────────────────────────────────────────────────────────────
 
   Future<void> _saveReplayUrl({

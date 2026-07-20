@@ -234,13 +234,21 @@ serve(async (req: Request) => {
     }
 
     // ============ CONFIRM IN DB via RPC ============
-    const { data: confirmResult, error: confirmError } = await supabase.rpc('app_confirm_ligdicash_payment', {
-      p_payment_id: payment_id,
-      p_ligdicash_token: ligdicashToken,
-      p_ligdicash_transaction_id: ligdicashTransactionId,
-      p_ligdicash_operator: ligdicashOperator,
-      p_payment_type: payment_type,
-    });
+    // credit_purchase => RPC dediee (confirme + credite le pack), sinon RPC generique.
+    const { data: confirmResult, error: confirmError } = payment_type === 'credit_purchase'
+      ? await supabase.rpc('app_confirm_credit_purchase', {
+          p_payment_id: payment_id,
+          p_ligdicash_token: ligdicashToken,
+          p_ligdicash_transaction_id: ligdicashTransactionId,
+          p_ligdicash_operator: ligdicashOperator,
+        })
+      : await supabase.rpc('app_confirm_ligdicash_payment', {
+          p_payment_id: payment_id,
+          p_ligdicash_token: ligdicashToken,
+          p_ligdicash_transaction_id: ligdicashTransactionId,
+          p_ligdicash_operator: ligdicashOperator,
+          p_payment_type: payment_type,
+        });
 
     if (confirmError) {
       console.error(`[ligdicash-confirm] RPC error:`, confirmError);

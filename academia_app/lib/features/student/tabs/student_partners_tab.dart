@@ -6,6 +6,7 @@ import '../../../providers/student_offers_provider.dart';
 import '../../../providers/student_applications_provider.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
+import '../widgets/student_tab_hero.dart';
 
 class StudentPartnersTab extends StatefulWidget {
   const StudentPartnersTab({super.key});
@@ -127,94 +128,40 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1200),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        'Trouver une université partenaire',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0A2540),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Hero header unifié — même style que Candidatures /
+                    // Accueil / TD / Concours. Le `Wrap` interne empêche tout
+                    // overflow horizontal (fix du 1.6px sur petits écrans).
+                    StudentTabHero(
+                      icon: Icons.school_outlined,
+                      accentColor: const Color(0xFF8B5CF6),
+                      title: 'Universités partenaires',
+                      subtitle:
+                          'Recherchez par université, filière et niveau pour trouver la formation qui vous correspond.',
+                      stats: [
+                        StudentTabHeroStat(
+                          icon: Icons.account_balance_outlined,
+                          label:
+                              '${universities.length} université${universities.length > 1 ? 's' : ''} partenaire${universities.length > 1 ? 's' : ''}',
+                          color: const Color(0xFF0EA5E9),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Recherchez par université, filière et niveau pour trouver la formation qui vous correspond.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF6B7280),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE0F2FE),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.school_outlined,
-                                  size: 14,
-                                  color: Color(0xFF0EA5E9),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  '${universities.length} université${universities.length > 1 ? 's' : ''} partenaire${universities.length > 1 ? 's' : ''}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF0369A1),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
+                        if (totalPrograms > 0)
+                          StudentTabHeroStat(
+                            icon: Icons.menu_book_outlined,
+                            label:
+                                '$totalPrograms programme${totalPrograms > 1 ? 's' : ''}',
+                            color: const Color(0xFF4F46E5),
                           ),
-                          if (totalPrograms > 0) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEEF2FF),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.menu_book_outlined,
-                                    size: 14,
-                                    color: Color(0xFF4F46E5),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    '$totalPrograms programme${totalPrograms > 1 ? 's' : ''}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF3730A3),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 16),
+                      ],
+                    ),
+                    Padding(
+                      padding:
+                          const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                       TextField(
                         controller: _universitySearchController,
                         decoration: const InputDecoration(
@@ -357,8 +304,10 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
                         )
                       else
                         _buildUniversitiesGrid(filteredUniversities, offers),
-                    ],
-                  ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

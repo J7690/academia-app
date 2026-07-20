@@ -1,5 +1,7 @@
 package com.academia.nexiomgroup.app
 
+import android.content.Intent
+import android.os.Bundle
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -40,6 +42,22 @@ object ExoPlayerRegistry {
 class MainActivity : FlutterActivity() {
 
     private val BADGE_CHANNEL = "com.academia.app/badge"
+    private val DEEP_LINK_CHANNEL = "com.academia.app/deeplink"
+    private var initialDeepLink: String? = null
+    private var deepLinkChannel: MethodChannel? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        initialDeepLink = intent?.dataString
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val deepLink = intent.dataString ?: return
+        initialDeepLink = deepLink
+        deepLinkChannel?.invokeMethod("onLinkReceived", deepLink)
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -58,6 +76,21 @@ class MainActivity : FlutterActivity() {
                 "academia_android_video",
                 AcademiaAndroidVideoViewFactory(flutterEngine.dartExecutor.binaryMessenger)
             )
+
+        deepLinkChannel = MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            DEEP_LINK_CHANNEL
+        ).also { channel ->
+            channel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "getInitialLink" -> {
+                        result.success(initialDeepLink)
+                        initialDeepLink = null
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+        }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, BADGE_CHANNEL)
             .setMethodCallHandler { call, result ->

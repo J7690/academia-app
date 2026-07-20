@@ -23,6 +23,7 @@ class LigdiCashPaymentSheet extends StatefulWidget {
   final double amount;
   final String currency;
   final String description;
+  final String? packCode;
   final VoidCallback? onSuccess;
 
   const LigdiCashPaymentSheet({
@@ -32,6 +33,7 @@ class LigdiCashPaymentSheet extends StatefulWidget {
     required this.amount,
     this.currency = 'XOF',
     required this.description,
+    this.packCode,
     this.onSuccess,
   });
 
@@ -43,6 +45,7 @@ class LigdiCashPaymentSheet extends StatefulWidget {
     required double amount,
     String currency = 'XOF',
     required String description,
+    String? packCode,
     VoidCallback? onSuccess,
   }) {
     return showModalBottomSheet<void>(
@@ -57,6 +60,7 @@ class LigdiCashPaymentSheet extends StatefulWidget {
           amount: amount,
           currency: currency,
           description: description,
+          packCode: packCode,
           onSuccess: onSuccess,
         ),
       ),
@@ -70,27 +74,13 @@ class LigdiCashPaymentSheet extends StatefulWidget {
 class _LigdiCashPaymentSheetState extends State<LigdiCashPaymentSheet> {
   final _phoneController = TextEditingController();
   final _otpController = TextEditingController();
-  late final TextEditingController _amountController;
   String _selectedOperator = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _amountController =
-        TextEditingController(text: widget.amount.toStringAsFixed(0));
-  }
 
   @override
   void dispose() {
     _phoneController.dispose();
     _otpController.dispose();
-    _amountController.dispose();
     super.dispose();
-  }
-
-  double get _enteredAmount {
-    final raw = _amountController.text.trim().replaceAll(' ', '');
-    return double.tryParse(raw) ?? widget.amount;
   }
 
   @override
@@ -155,9 +145,9 @@ class _LigdiCashPaymentSheetState extends State<LigdiCashPaymentSheet> {
                 ),
                 const SizedBox(height: 16),
 
-                // Amount card (editable)
+                // Amount card (montant FIXE, non modifiable — sécurité)
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFF1EA75C), Color(0xFF16A34A)],
@@ -165,28 +155,16 @@ class _LigdiCashPaymentSheetState extends State<LigdiCashPaymentSheet> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _amountController,
-                          enabled: provider.state != LigdiCashState.waitingOtp &&
-                              provider.state != LigdiCashState.confirming &&
-                              provider.state != LigdiCashState.success,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            isCollapsed: true,
-                            contentPadding: EdgeInsets.symmetric(vertical: 4),
-                          ),
-                          onChanged: (_) => setState(() {}),
+                      Text(
+                        widget.amount.toStringAsFixed(0),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -203,7 +181,7 @@ class _LigdiCashPaymentSheetState extends State<LigdiCashPaymentSheet> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Montant modifiable. Minimum 10 ${widget.currency}.',
+                  'Montant à payer fixé par Academia. Ce montant ne peut pas être modifié.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                 ),
@@ -212,6 +190,8 @@ class _LigdiCashPaymentSheetState extends State<LigdiCashPaymentSheet> {
                 // Content based on state
                 if (provider.state == LigdiCashState.success)
                   _buildSuccessView(provider)
+                else if (provider.state == LigdiCashState.processing)
+                  _buildProcessingView(provider)
                 else if (provider.state == LigdiCashState.waitingOtp)
                   _buildOtpView(provider)
                 else
@@ -297,20 +277,13 @@ class _LigdiCashPaymentSheetState extends State<LigdiCashPaymentSheet> {
                       );
                       return;
                     }
-                    final amt = _enteredAmount;
-                    if (amt < 10) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Le montant minimum est de 10 XOF.')),
-                      );
-                      return;
-                    }
-                    final override = (amt - widget.amount).abs() > 0.5 ? amt : null;
+                    // Montant fix\u00e9 c\u00f4t\u00e9 serveur (aucun override envoy\u00e9).
                     provider.initiatePayment(
                       paymentType: widget.paymentType,
                       paymentId: widget.paymentId,
                       phoneNumber: phone,
                       operator: _selectedOperator,
-                      amountOverride: override,
+                      packCode: widget.packCode,
                     );
                   },
             style: ElevatedButton.styleFrom(
@@ -545,6 +518,51 @@ class _LigdiCashPaymentSheetState extends State<LigdiCashPaymentSheet> {
               elevation: 0,
             ),
             child: const Text('Continuer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+
+  Widget _buildProcessingView(LigdiCashProvider provider) {
+    return Column(
+      children: [
+        const SizedBox(height: 12),
+        Container(
+          width: 72,
+          height: 72,
+          decoration: const BoxDecoration(
+            color: Color(0xFFFFF7ED),
+            shape: BoxShape.circle,
+          ),
+          child: const Padding(
+            padding: EdgeInsets.all(18),
+            child: CircularProgressIndicator(strokeWidth: 3, color: Color(0xFFEA580C)),
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text('Paiement en cours',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Color(0xFF9A3412))),
+        const SizedBox(height: 8),
+        Text(
+          provider.message ??
+              'Votre paiement est en cours de traitement. Vous serez crédité dès confirmation par l\'opérateur.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+        ),
+        const SizedBox(height: 24),
+        SizedBox(
+          height: 48,
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // On déclenche onSuccess pour rafraîchir l'écran (le solde
+              // sera à jour dès que le webhook aura confirmé).
+              widget.onSuccess?.call();
+            },
+            child: const Text('Fermer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           ),
         ),
         const SizedBox(height: 8),

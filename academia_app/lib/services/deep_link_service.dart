@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class DeepLinkService {
   static const MethodChannel _channel = MethodChannel('com.academia.app/deeplink');
   static final DeepLinkService _instance = DeepLinkService._internal();
+  static DeepLinkService get instance => _instance;
   
   factory DeepLinkService() => _instance;
   DeepLinkService._internal();
@@ -25,11 +26,13 @@ class DeepLinkService {
   }
 
   /// Écoute les deep links lorsque l'app est déjà ouverte
-  void listenForLinks(VoidCallback? onLinkReceived) {
+  void listenForLinks(ValueChanged<String>? onLinkReceived) {
     if (Platform.isAndroid) {
       _channel.setMethodCallHandler((call) async {
-        if (call.method == 'onLinkReceived' && onLinkReceived != null) {
-          onLinkReceived();
+        if (call.method == 'onLinkReceived' &&
+            onLinkReceived != null &&
+            call.arguments is String) {
+          onLinkReceived(call.arguments as String);
         }
       });
     }

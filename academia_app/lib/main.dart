@@ -10,7 +10,8 @@ import 'package:http/http.dart' as http;
 import 'package:intl/date_symbol_data_local.dart';
 import 'services/push_notification_service.dart';
 
-import 'web_update_stub.dart' if (dart.library.html) 'web_update_html.dart' as web_update;
+import 'web_update_stub.dart' if (dart.library.html) 'web_update_html.dart'
+    as web_update;
 
 import 'config/supabase_config.dart';
 import 'providers/supabase_provider.dart';
@@ -96,7 +97,9 @@ import 'providers/teacher_prep_live_sessions_provider.dart';
 import 'providers/admin_td_enrollments_provider.dart';
 import 'providers/td_messages_provider.dart';
 import 'providers/commercial_dashboard_provider.dart';
+import 'providers/admin_commission_share_config_provider.dart';
 import 'providers/subscription_provider.dart';
+import 'services/share_tracking_service.dart';
 import 'providers/credit_provider.dart';
 import 'providers/academia_session_provider.dart';
 import 'features/share/share_mode_provider.dart';
@@ -143,8 +146,7 @@ Future<void> _checkWebVersion() async {
       return;
     }
 
-    final remoteVersion =
-        (decoded['version'] ?? '').toString().trim();
+    final remoteVersion = (decoded['version'] ?? '').toString().trim();
     final required = decoded['required'] != false;
 
     if (remoteVersion.isEmpty) {
@@ -209,9 +211,12 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => StudentOffersProvider()),
       ChangeNotifierProvider(create: (_) => HomeFormationsProvider()),
       ChangeNotifierProvider(create: (_) => StudentOpportunitiesProvider()),
-      ChangeNotifierProvider(create: (_) => StudentMarketplaceListingsProviderV1()),
-      ChangeNotifierProvider(create: (_) => StudentMarketplaceCategoriesProviderV1()),
-      ChangeNotifierProvider(create: (_) => StudentMarketplaceBookmarkedListingsProviderV1()),
+      ChangeNotifierProvider(
+          create: (_) => StudentMarketplaceListingsProviderV1()),
+      ChangeNotifierProvider(
+          create: (_) => StudentMarketplaceCategoriesProviderV1()),
+      ChangeNotifierProvider(
+          create: (_) => StudentMarketplaceBookmarkedListingsProviderV1()),
       ChangeNotifierProvider(create: (_) => StudentMarketplaceCartProviderV1()),
       ChangeNotifierProvider(create: (_) => OpportunityReactionsProvider()),
       ChangeNotifierProvider(create: (_) => OpportunityCommentsProvider()),
@@ -221,7 +226,8 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => StudentChallengesProvider()),
       ChangeNotifierProvider(create: (_) => StudentApplicationsProvider()),
       ChangeNotifierProvider(create: (_) => StudentApplicationFilesProvider()),
-      ChangeNotifierProvider(create: (_) => StudentApplicationMessagesProvider()),
+      ChangeNotifierProvider(
+          create: (_) => StudentApplicationMessagesProvider()),
       ChangeNotifierProvider(create: (_) => StudentCoursesProvider()),
       ChangeNotifierProvider(create: (_) => StudentCourseLibraryProvider()),
       ChangeNotifierProvider(create: (_) => OnlineCoursesCatalogProvider()),
@@ -234,12 +240,15 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => StudentUniversitySiteProvider()),
       ChangeNotifierProvider(create: (_) => StudentDossierDocumentsProvider()),
       ChangeNotifierProvider(create: (_) => StudentShortTrainingsProvider()),
-      ChangeNotifierProvider(create: (_) => StudentShortTrainingMessagesProvider()),
-      ChangeNotifierProvider(create: (_) => StudentOnlineCourseMessagesProvider()),
+      ChangeNotifierProvider(
+          create: (_) => StudentShortTrainingMessagesProvider()),
+      ChangeNotifierProvider(
+          create: (_) => StudentOnlineCourseMessagesProvider()),
       ChangeNotifierProvider(create: (_) => AdminApplicationsProvider()),
       ChangeNotifierProvider(create: (_) => AdminApplicationMessagesProvider()),
       ChangeNotifierProvider(create: (_) => AdminProgramsProvider()),
-      ChangeNotifierProvider(create: (_) => AdminAcademicAnnouncementsProvider()),
+      ChangeNotifierProvider(
+          create: (_) => AdminAcademicAnnouncementsProvider()),
       ChangeNotifierProvider(create: (_) => AdminAcademicEventsProvider()),
       ChangeNotifierProvider(create: (_) => AdminStudentHomeSlotsProvider()),
       ChangeNotifierProvider(create: (_) => AdminCommunitiesProvider()),
@@ -249,26 +258,33 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => AdminCourseLibraryProvider()),
       ChangeNotifierProvider(create: (_) => AdminOnlineCoursesProvider()),
       ChangeNotifierProvider(create: (_) => AdminLiveSessionsProvider()),
-      ChangeNotifierProvider(create: (_) => AdminOnlineCourseMessagesProvider()),
+      ChangeNotifierProvider(
+          create: (_) => AdminOnlineCourseMessagesProvider()),
       ChangeNotifierProvider(create: (_) => AdminTdCatalogProvider()),
       ChangeNotifierProvider(create: (_) => AdminTdTeachersProvider()),
       ChangeNotifierProvider(create: (_) => AdminTdStudentRequestsProvider()),
       ChangeNotifierProvider(create: (_) => InstructorOnlineCoursesProvider()),
-      ChangeNotifierProvider(create: (_) => InstructorOnlineCourseLiveSessionsProvider()),
-      ChangeNotifierProvider(create: (_) => InstructorOnlineCourseForumProvider()),
+      ChangeNotifierProvider(
+          create: (_) => InstructorOnlineCourseLiveSessionsProvider()),
+      ChangeNotifierProvider(
+          create: (_) => InstructorOnlineCourseForumProvider()),
       ChangeNotifierProvider(create: (_) => AdminUniversitiesProvider()),
       ChangeNotifierProvider(create: (_) => AdminUserInvitationsProvider()),
       ChangeNotifierProvider(create: (_) => AdminUsersOverviewProvider()),
       ChangeNotifierProvider(create: (_) => AdminUniversitySiteProvider()),
       ChangeNotifierProvider(create: (_) => AdminShortTrainingsProvider()),
-      ChangeNotifierProvider(create: (_) => AdminShortTrainingMessagesProvider()),
+      ChangeNotifierProvider(
+          create: (_) => AdminShortTrainingMessagesProvider()),
       ChangeNotifierProvider(create: (_) => AdminBobodoConversationsProvider()),
       ChangeNotifierProvider(create: (_) => AdminBobodoNeedsProvider()),
       ChangeNotifierProvider(create: (_) => AdminBobodoUnansweredProvider()),
       ChangeNotifierProvider(create: (_) => UniversityApplicationsProvider()),
-      ChangeNotifierProvider(create: (_) => UniversityApplicationMessagesProvider()),
-      ChangeNotifierProvider(create: (_) => UniversityApplicationDetailProvider()),
-      ChangeNotifierProvider(create: (_) => SelectedUniversityApplicationProvider()),
+      ChangeNotifierProvider(
+          create: (_) => UniversityApplicationMessagesProvider()),
+      ChangeNotifierProvider(
+          create: (_) => UniversityApplicationDetailProvider()),
+      ChangeNotifierProvider(
+          create: (_) => SelectedUniversityApplicationProvider()),
       ChangeNotifierProvider(create: (_) => UniversityProgramsProvider()),
       ChangeNotifierProvider(create: (_) => UniversitySiteProvider()),
       ChangeNotifierProvider(create: (_) => BobodoProvider()),
@@ -281,6 +297,8 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => TeacherPrepLiveSessionsProvider()),
       ChangeNotifierProvider(create: (_) => AdminTdEnrollmentsProvider()),
       ChangeNotifierProvider(create: (_) => TdMessagesProvider()),
+      ChangeNotifierProvider(
+          create: (_) => AdminCommissionShareConfigProvider()),
       ChangeNotifierProvider(create: (_) => CommercialDashboardProvider()),
       ChangeNotifierProvider(create: (_) => ShareModeProvider()),
       ChangeNotifierProvider(create: (_) => PrepQuizProvider()),
@@ -296,13 +314,15 @@ class AcademiaApp extends StatelessWidget {
         create: (_) => SmartWhiteboardProvider(
           projectService: SmartWhiteboardService(Supabase.instance.client),
           renderService: SmartWhiteboardRenderService(Supabase.instance.client),
-          narrationService: SmartWhiteboardNarrationService(Supabase.instance.client),
+          narrationService:
+              SmartWhiteboardNarrationService(Supabase.instance.client),
         ),
       ),
     ];
 
     if (kDebugMode) {
-      providers.insert(0, ChangeNotifierProvider(create: (_) => SupabaseProvider()));
+      providers.insert(
+          0, ChangeNotifierProvider(create: (_) => SupabaseProvider()));
     }
 
     return MultiProvider(
@@ -321,9 +341,24 @@ class AcademiaApp extends StatelessWidget {
           '/tournaments': (_) => const TournamentListScreen(),
           '/leaderboard': (_) => const LeaderboardScreen(),
           '/smart-whiteboard-input': (_) => const SmartWhiteboardInputScreen(),
-          '/smart-whiteboard-editor': (_) => const SmartWhiteboardStoryboardEditorScreen(),
-          '/smart-whiteboard-preview': (_) => const SmartWhiteboardPreviewScreen(),
-          '/smart-whiteboard-projects': (_) => const SmartWhiteboardProjectsListScreen(),
+          '/smart-whiteboard-editor': (context) {
+            final args = ModalRoute.of(context)?.settings.arguments;
+            final map = args is Map ? args : const {};
+            return SmartWhiteboardStoryboardEditorScreen(
+              projectId: map['projectId'] as String?,
+            );
+          },
+          '/smart-whiteboard-preview': (context) {
+            final args = ModalRoute.of(context)?.settings.arguments;
+            final map = args is Map ? args : const {};
+            return SmartWhiteboardPreviewScreen(
+              projectId: map['projectId'] as String?,
+              renderId: map['renderId'] as String?,
+              videoUrl: map['videoUrl'] as String?,
+            );
+          },
+          '/smart-whiteboard-projects': (_) =>
+              const SmartWhiteboardProjectsListScreen(),
         },
       ),
     );

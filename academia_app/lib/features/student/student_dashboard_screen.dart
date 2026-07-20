@@ -16,7 +16,6 @@ import '../../utils/responsive.dart';
 import 'student_home_mobile.dart';
 import 'tabs/student_home_tab.dart';
 import 'tabs/student_applications_tab.dart';
-import 'tabs/student_opportunities_tab.dart';
 import 'tabs/student_communities_tab.dart';
 import 'tabs/student_partners_tab.dart';
 import 'tabs/student_bobodo_tab.dart';
@@ -25,8 +24,7 @@ import 'student_dashboard_nav_controller.dart';
 import 'student_td_root_screen.dart';
 import 'student_application_detail_screen.dart';
 import 'tabs/student_challenges_tab.dart';
-import 'tabs/student_courses_tab.dart';
-import 'tabs/student_live_sessions_tab.dart';
+import 'tabs/student_coming_soon_tab.dart';
 import '../share/share_mode_provider.dart';
 import '../../widgets/student_assistant_overlay.dart';
 import '../../services/push_trigger_service.dart';
@@ -428,7 +426,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           child = const StudentApplicationsTab();
           break;
         case 2:
-          child = const StudentOpportunitiesTab();
+          child = const StudentComingSoonTab(
+            title: 'Opportunités',
+            icon: Icons.work_outline,
+            subtitle:
+                'La section Opportunités est en cours de développement.\nElle sera bientôt accessible. Merci de votre patience !',
+          );
           break;
         case 3:
           child = const StudentCommunitiesTab();
@@ -446,10 +449,20 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           child = const StudentChallengesTab();
           break;
         case 8:
-          child = const StudentCoursesTab();
+          child = const StudentComingSoonTab(
+            title: 'Cours',
+            icon: Icons.menu_book_outlined,
+            subtitle:
+                'La bibliothèque de cours est en cours de développement.\nElle sera bientôt accessible. Merci de votre patience !',
+          );
           break;
         case 9:
-          child = const StudentLiveSessionsTab();
+          child = const StudentComingSoonTab(
+            title: 'Lives',
+            icon: Icons.videocam_outlined,
+            subtitle:
+                'Les sessions live sont en cours de développement.\nElles seront bientôt accessibles. Merci de votre patience !',
+          );
           break;
         default:
           child = const StudentHomeMobileTab();
@@ -477,7 +490,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           child = const StudentApplicationsTab();
           break;
         case 2:
-          child = const StudentOpportunitiesTab();
+          child = const StudentComingSoonTab(
+            title: 'Opportunités',
+            icon: Icons.work_outline,
+            subtitle:
+                'La section Opportunités est en cours de développement.\nElle sera bientôt accessible. Merci de votre patience !',
+          );
           break;
         case 3:
           child = const StudentCommunitiesTab();
@@ -495,10 +513,20 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           child = const StudentChallengesTab();
           break;
         case 8:
-          child = const StudentCoursesTab();
+          child = const StudentComingSoonTab(
+            title: 'Cours',
+            icon: Icons.menu_book_outlined,
+            subtitle:
+                'La bibliothèque de cours est en cours de développement.\nElle sera bientôt accessible. Merci de votre patience !',
+          );
           break;
         case 9:
-          child = const StudentLiveSessionsTab();
+          child = const StudentComingSoonTab(
+            title: 'Lives',
+            icon: Icons.videocam_outlined,
+            subtitle:
+                'Les sessions live sont en cours de développement.\nElles seront bientôt accessibles. Merci de votre patience !',
+          );
           break;
         default:
           child = const StudentHomeTab();
@@ -540,121 +568,117 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   }
 
   Widget _buildDesktopBottomNav(int unread) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF2E7D32), Color(0xFFE8F5E9)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+    // Barre desktop unifiée avec le mobile : fond blanc, style Salomon Bottom
+    // Bar. Les onglets gelés (Opportunités, Cours, Lives) sont à la fin, dans
+    // l'ordre visuel `_visualOrder`.
+    final List<_DesktopNavEntry> entries = [
+      _DesktopNavEntry(
+        semanticIndex: 0,
+        label: 'Accueil',
+        icon: _NavBadgeIcon(icon: Icons.home_outlined, count: _countHome),
+        selectedIcon: _NavBadgeIcon(icon: Icons.home, count: _countHome),
       ),
-      child: NavigationBar(
-        backgroundColor: Colors.transparent,
-        indicatorColor: Colors.white.withOpacity(0.2),
-        height: 52,
-        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-        selectedIndex: _currentIndex,
-        onDestinationSelected: _onDestinationSelected,
-        destinations: [
-          NavigationDestination(
-            icon: _NavBadgeIcon(
-              icon: Icons.home_outlined,
-              count: _countHome,
+      _DesktopNavEntry(
+        semanticIndex: 1,
+        label: 'Candidatures',
+        icon: _NavBadgeIcon(icon: Icons.assignment_outlined, count: unread),
+        selectedIcon: _NavBadgeIcon(icon: Icons.assignment, count: unread),
+      ),
+      _DesktopNavEntry(
+        semanticIndex: 3,
+        label: 'Communautés',
+        icon: _NavBadgeIcon(
+            icon: Icons.groups_outlined, count: _countCommunities),
+        selectedIcon:
+            _NavBadgeIcon(icon: Icons.groups, count: _countCommunities),
+      ),
+      _DesktopNavEntry(
+        semanticIndex: 4,
+        label: 'Universités',
+        icon: _NavBadgeIcon(
+            icon: Icons.school_outlined, count: _countPartners),
+        selectedIcon: _NavBadgeIcon(icon: Icons.school, count: _countPartners),
+      ),
+      const _DesktopNavEntry(
+        semanticIndex: 5,
+        label: 'Concours',
+        icon: Icon(Icons.workspace_premium_outlined),
+        selectedIcon: Icon(Icons.workspace_premium),
+      ),
+      _DesktopNavEntry(
+        semanticIndex: 6,
+        label: 'TD',
+        icon: _NavBadgeIcon(
+            icon: Icons.menu_book_outlined, count: _countTrainings),
+        selectedIcon:
+            _NavBadgeIcon(icon: Icons.menu_book, count: _countTrainings),
+      ),
+      _DesktopNavEntry(
+        semanticIndex: 7,
+        label: 'Challenges',
+        icon: _NavBadgeIcon(
+            icon: Icons.play_circle_outline, count: _countChallenges),
+        selectedIcon:
+            _NavBadgeIcon(icon: Icons.play_circle, count: _countChallenges),
+      ),
+      const _DesktopNavEntry(
+        semanticIndex: 2,
+        label: 'Opportunités',
+        icon: Icon(Icons.work_outline),
+        selectedIcon: Icon(Icons.work),
+      ),
+      _DesktopNavEntry(
+        semanticIndex: 8,
+        label: 'Cours',
+        icon: _NavBadgeIcon(
+            icon: Icons.play_lesson_outlined, count: _countCourses),
+        selectedIcon:
+            _NavBadgeIcon(icon: Icons.play_lesson, count: _countCourses),
+      ),
+      _DesktopNavEntry(
+        semanticIndex: 9,
+        label: 'Lives',
+        icon: _NavBadgeIcon(icon: Icons.live_tv_outlined, count: _countLives),
+        selectedIcon: _NavBadgeIcon(icon: Icons.live_tv, count: _countLives),
+      ),
+    ];
+
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x22000000),
+                  offset: Offset(0, 8),
+                  blurRadius: 24,
+                ),
+              ],
             ),
-            selectedIcon: _NavBadgeIcon(
-              icon: Icons.home,
-              count: _countHome,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final e in entries)
+                    _buildMobileNavItem(
+                      index: e.semanticIndex,
+                      label: e.label,
+                      icon: e.icon,
+                      selectedIcon: e.selectedIcon,
+                    ),
+                ],
+              ),
             ),
-            label: 'Accueil',
           ),
-          NavigationDestination(
-            icon: _NavBadgeIcon(
-              icon: Icons.assignment_outlined,
-              count: unread,
-            ),
-            selectedIcon: _NavBadgeIcon(
-              icon: Icons.assignment,
-              count: unread,
-            ),
-            label: 'Candidatures',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.work_outline),
-            selectedIcon: Icon(Icons.work),
-            label: 'Opportunités',
-          ),
-          NavigationDestination(
-            icon: _NavBadgeIcon(
-              icon: Icons.groups_outlined,
-              count: _countCommunities,
-            ),
-            selectedIcon: _NavBadgeIcon(
-              icon: Icons.groups,
-              count: _countCommunities,
-            ),
-            label: 'Communautés',
-          ),
-          NavigationDestination(
-            icon: _NavBadgeIcon(
-              icon: Icons.apartment_outlined,
-              count: _countPartners,
-            ),
-            selectedIcon: _NavBadgeIcon(
-              icon: Icons.apartment,
-              count: _countPartners,
-            ),
-            label: 'Universités',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.school_outlined),
-            selectedIcon: Icon(Icons.school),
-            label: 'Concours',
-          ),
-          NavigationDestination(
-            icon: _NavBadgeIcon(
-              icon: Icons.school_outlined,
-              count: _countTrainings,
-            ),
-            selectedIcon: _NavBadgeIcon(
-              icon: Icons.school,
-              count: _countTrainings,
-            ),
-            label: 'TD',
-          ),
-          NavigationDestination(
-            icon: _NavBadgeIcon(
-              icon: Icons.emoji_events_outlined,
-              count: _countChallenges,
-            ),
-            selectedIcon: _NavBadgeIcon(
-              icon: Icons.emoji_events,
-              count: _countChallenges,
-            ),
-            label: 'Challenges',
-          ),
-          NavigationDestination(
-            icon: _NavBadgeIcon(
-              icon: Icons.menu_book_outlined,
-              count: _countCourses,
-            ),
-            selectedIcon: _NavBadgeIcon(
-              icon: Icons.menu_book,
-              count: _countCourses,
-            ),
-            label: 'Cours',
-          ),
-          NavigationDestination(
-            icon: _NavBadgeIcon(
-              icon: Icons.videocam_outlined,
-              count: _countLives,
-            ),
-            selectedIcon: _NavBadgeIcon(
-              icon: Icons.videocam,
-              count: _countLives,
-            ),
-            label: 'Lives',
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -689,18 +713,20 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Row(
                       children: [
+                        // 0 - Accueil (convention TikTok/Instagram/LinkedIn)
                         _buildMobileNavItem(
                           index: 0,
-                          label: 'Explorer',
+                          label: 'Accueil',
                           icon: _NavBadgeIcon(
-                            icon: Icons.explore_outlined,
+                            icon: Icons.home_outlined,
                             count: _countHome,
                           ),
                           selectedIcon: _NavBadgeIcon(
-                            icon: Icons.explore,
+                            icon: Icons.home,
                             count: _countHome,
                           ),
                         ),
+                        // 1 - Candidatures
                         _buildMobileNavItem(
                           index: 1,
                           label: 'Candidatures',
@@ -713,12 +739,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                             count: unread,
                           ),
                         ),
-                        _buildMobileNavItem(
-                          index: 2,
-                          label: 'Opportunités',
-                          icon: const Icon(Icons.work_outline),
-                          selectedIcon: const Icon(Icons.work),
-                        ),
+                        // 3 - Communautés (WhatsApp / Facebook)
                         _buildMobileNavItem(
                           index: 3,
                           label: 'Communautés',
@@ -731,69 +752,82 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                             count: _countCommunities,
                           ),
                         ),
+                        // 4 - Universités (icône school : convention éducation)
                         _buildMobileNavItem(
                           index: 4,
                           label: 'Universités',
                           icon: _NavBadgeIcon(
-                            icon: Icons.apartment_outlined,
+                            icon: Icons.school_outlined,
                             count: _countPartners,
                           ),
                           selectedIcon: _NavBadgeIcon(
-                            icon: Icons.apartment,
+                            icon: Icons.school,
                             count: _countPartners,
                           ),
                         ),
+                        // 5 - Concours (trophée / premium)
                         _buildMobileNavItem(
                           index: 5,
                           label: 'Concours',
-                          icon: const Icon(Icons.school_outlined),
-                          selectedIcon: const Icon(Icons.school),
+                          icon: const Icon(Icons.workspace_premium_outlined),
+                          selectedIcon: const Icon(Icons.workspace_premium),
                         ),
+                        // 6 - TD (livre d'exercices)
                         _buildMobileNavItem(
                           index: 6,
                           label: 'TD',
                           icon: _NavBadgeIcon(
-                            icon: Icons.school_outlined,
+                            icon: Icons.menu_book_outlined,
                             count: _countTrainings,
                           ),
                           selectedIcon: _NavBadgeIcon(
-                            icon: Icons.school,
+                            icon: Icons.menu_book,
                             count: _countTrainings,
                           ),
                         ),
+                        // 7 - Challenges (feed vidéo TikTok)
                         _buildMobileNavItem(
                           index: 7,
                           label: 'Challenges',
                           icon: _NavBadgeIcon(
-                            icon: Icons.emoji_events_outlined,
+                            icon: Icons.play_circle_outline,
                             count: _countChallenges,
                           ),
                           selectedIcon: _NavBadgeIcon(
-                            icon: Icons.emoji_events,
+                            icon: Icons.play_circle,
                             count: _countChallenges,
                           ),
                         ),
+                        // 2 - Opportunités (LinkedIn Jobs) [GELÉ]
+                        _buildMobileNavItem(
+                          index: 2,
+                          label: 'Opportunités',
+                          icon: const Icon(Icons.work_outline),
+                          selectedIcon: const Icon(Icons.work),
+                        ),
+                        // 8 - Cours (Coursera / YT Learning) [GELÉ]
                         _buildMobileNavItem(
                           index: 8,
                           label: 'Cours',
                           icon: _NavBadgeIcon(
-                            icon: Icons.menu_book_outlined,
+                            icon: Icons.play_lesson_outlined,
                             count: _countCourses,
                           ),
                           selectedIcon: _NavBadgeIcon(
-                            icon: Icons.menu_book,
+                            icon: Icons.play_lesson,
                             count: _countCourses,
                           ),
                         ),
+                        // 9 - Lives (TikTok Live) [GELÉ]
                         _buildMobileNavItem(
                           index: 9,
                           label: 'Lives',
                           icon: _NavBadgeIcon(
-                            icon: Icons.videocam_outlined,
+                            icon: Icons.live_tv_outlined,
                             count: _countLives,
                           ),
                           selectedIcon: _NavBadgeIcon(
-                            icon: Icons.videocam,
+                            icon: Icons.live_tv,
                             count: _countLives,
                           ),
                         ),
@@ -809,57 +843,158 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     );
   }
 
+  // Palette de couleurs par onglet (index sémantique -> couleur d'accent).
+  // Inspiration : Google Bottom Bar Navigation Pattern (Aurélien Salomon),
+  // LinkedIn, TikTok, Coursera. Chaque onglet a une identité visuelle claire.
+  static const Map<int, Color> _tabColors = {
+    0: Color(0xFF2E7D32), // Accueil — vert Academia
+    1: Color(0xFF3B82F6), // Candidatures — bleu (docs officiels)
+    2: Color(0xFFF97316), // Opportunités — orange (LinkedIn Jobs)
+    3: Color(0xFF10B981), // Communautés — émeraude (WhatsApp)
+    4: Color(0xFF8B5CF6), // Universités — violet (savoir académique)
+    5: Color(0xFFF59E0B), // Concours — ambre (trophée / premium)
+    6: Color(0xFF0EA5E9), // TD — ciel (livre / étude)
+    7: Color(0xFFE11D48), // Challenges — rose vif (TikTok)
+    8: Color(0xFF6366F1), // Cours — indigo (Coursera)
+    9: Color(0xFFDC2626), // Lives — rouge (live broadcast)
+  };
+
   Widget _buildMobileNavItem({
     required int index,
     required String label,
     required Widget icon,
     required Widget selectedIcon,
   }) {
-    const double iconSize = 22;
-    const double fontSize = 10;
     final bool isSelected = _currentIndex == index;
+    final Color accent = _tabColors[index] ?? const Color(0xFF2E7D32);
+    const Color unselectedColor = Color(0xFF6B7280);
 
-    const Color selectedColor = Color(0xFF2E7D32);
-    const Color unselectedColor = Color(0xFF9E9E9E);
+    return _SalomonNavItem(
+      isSelected: isSelected,
+      accentColor: accent,
+      unselectedColor: unselectedColor,
+      label: label,
+      icon: icon,
+      selectedIcon: selectedIcon,
+      onTap: () => _onDestinationSelected(index),
+    );
+  }
+}
+
+/// Métadonnées d'un onglet pour la barre desktop (ordre visuel + icônes).
+class _DesktopNavEntry {
+  final int semanticIndex;
+  final String label;
+  final Widget icon;
+  final Widget selectedIcon;
+
+  const _DesktopNavEntry({
+    required this.semanticIndex,
+    required this.label,
+    required this.icon,
+    required this.selectedIcon,
+  });
+}
+
+/// Item de navigation style Salomon Bottom Bar :
+/// - Non sélectionné : icône seule, couleur grise, largeur minimale.
+/// - Sélectionné : le container s'étend horizontalement avec un fond de la
+///   couleur d'accent (12% opacité), l'icône passe en couleur d'accent et le
+///   label apparaît à côté de l'icône (fade + slide).
+/// Animation : 320ms, easeOutCubic — feel identique à Google/YouTube Music.
+class _SalomonNavItem extends StatelessWidget {
+  final bool isSelected;
+  final Color accentColor;
+  final Color unselectedColor;
+  final String label;
+  final Widget icon;
+  final Widget selectedIcon;
+  final VoidCallback onTap;
+
+  const _SalomonNavItem({
+    required this.isSelected,
+    required this.accentColor,
+    required this.unselectedColor,
+    required this.label,
+    required this.icon,
+    required this.selectedIcon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const Duration duration = Duration(milliseconds: 320);
+    const Curve curve = Curves.easeOutCubic;
+    const double iconSize = 22;
+    const double fontSize = 12.5;
 
     final Widget effectiveIcon = isSelected ? selectedIcon : icon;
+    final Color iconColor = isSelected ? accentColor : unselectedColor;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-      child: AnimatedScale(
-        scale: isSelected ? 1.08 : 1.0,
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeOutCubic,
+      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 8),
+      child: Material(
+        color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(22),
-          onTap: () => _onDestinationSelected(index),
+          borderRadius: BorderRadius.circular(24),
+          splashColor: accentColor.withOpacity(0.12),
+          highlightColor: accentColor.withOpacity(0.06),
+          onTap: onTap,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color:
-                  isSelected ? const Color(0xFFE8F5E9) : Colors.transparent,
-              borderRadius: BorderRadius.circular(22),
+            duration: duration,
+            curve: curve,
+            padding: EdgeInsets.symmetric(
+              horizontal: isSelected ? 14 : 12,
+              vertical: 10,
             ),
-            child: Column(
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? accentColor.withOpacity(0.14)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconTheme(
-                  data: IconThemeData(
-                    color: isSelected ? selectedColor : unselectedColor,
-                    size: iconSize,
+                // Icône : couleur animée + léger scale bounce à la sélection.
+                TweenAnimationBuilder<double>(
+                  duration: duration,
+                  curve: Curves.elasticOut,
+                  tween: Tween<double>(
+                    begin: isSelected ? 0.85 : 1.0,
+                    end: 1.0,
                   ),
-                  child: effectiveIcon,
+                  builder: (context, scale, child) => Transform.scale(
+                    scale: scale,
+                    child: child,
+                  ),
+                  child: IconTheme(
+                    data: IconThemeData(color: iconColor, size: iconSize),
+                    child: effectiveIcon,
+                  ),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected ? selectedColor : unselectedColor,
-                    fontSize: fontSize,
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.w500,
+                // Label animé : apparaît à droite de l'icône quand sélectionné.
+                AnimatedSize(
+                  duration: duration,
+                  curve: curve,
+                  child: AnimatedOpacity(
+                    duration: duration,
+                    curve: curve,
+                    opacity: isSelected ? 1.0 : 0.0,
+                    child: isSelected
+                        ? Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: Text(
+                              label,
+                              style: TextStyle(
+                                color: accentColor,
+                                fontSize: fontSize,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
                   ),
                 ),
               ],

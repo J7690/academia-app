@@ -33,6 +33,7 @@ class LigdiCashProvider extends ChangeNotifier {
   String _phoneNumber = '';
   String _selectedOperator = '';
   String? _ussdCode;
+  String? _packCode;
 
   LigdiCashState get state => _state;
   String? get error => _error;
@@ -64,6 +65,7 @@ class LigdiCashProvider extends ChangeNotifier {
     _phoneNumber = '';
     _selectedOperator = '';
     _ussdCode = null;
+    _packCode = null;
     notifyListeners();
   }
 
@@ -74,11 +76,14 @@ class LigdiCashProvider extends ChangeNotifier {
     required String phoneNumber,
     String operator = '',
     double? amountOverride,
+    String? idempotencyKey,
+    String? packCode,
   }) async {
     _paymentType = paymentType;
     _paymentId = paymentId;
     _phoneNumber = phoneNumber;
     _selectedOperator = operator;
+    _packCode = packCode;
     _state = LigdiCashState.sendingOtp;
     _error = null;
     _message = null;
@@ -90,6 +95,8 @@ class LigdiCashProvider extends ChangeNotifier {
       phoneNumber: phoneNumber,
       operator: operator,
       amountOverride: amountOverride,
+      idempotencyKey: idempotencyKey,
+      packCode: packCode,
     );
 
     if (result['success'] == true) {
@@ -140,6 +147,17 @@ class LigdiCashProvider extends ChangeNotifier {
       }
       notifyListeners();
       return true;
+    } else if (result['status'] == 'pending' ||
+        result['error'] == 'payment_pending') {
+      // Le débit peut aboutir côté opérateur : le webhook finalisera. Ne PAS
+      // re-soumettre (le serveur réutilise déjà la même facture — aucun double débit),
+      // mais on informe l'utilisateur que le paiement est en cours.
+      _state = LigdiCashState.processing;
+      _message =
+          'Paiement en cours de traitement. Vous serez crédité dès confirmation. Vous pouvez fermer cette fenêtre.';
+      _error = null;
+      notifyListeners();
+      return false;
     } else {
       _state = LigdiCashState.error;
       _error = _humanizeError(result['error']?.toString() ?? 'unknown');
@@ -181,6 +199,13 @@ class LigdiCashProvider extends ChangeNotifier {
         return 'Impossible d\'envoyer le code. Vérifiez votre numéro.';
       case 'ligdicash_payment_failed':
         return 'Le paiement a échoué. Vérifiez votre solde.';
+      case 'payment_pending':
+        return 'Paiement en cours de traitement. Vous serez crédité dès confirmation.';
+      case 'amount_mismatch':
+        return 'Le montant payé ne correspond pas au montant attendu. Opération bloquée par sécurité. Contactez le support.';
+      case 'ligdicash_no_token':
+      case 'ligdicash_not_configured':
+        return 'Service de paiement momentanément indisponible. Réessayez plus tard.';
       case 'confirmation_rpc_failed':
       case 'confirmation_failed':
         return 'Erreur lors de la confirmation. Contactez le support.';

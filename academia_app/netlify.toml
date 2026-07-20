@@ -5,6 +5,13 @@
 [build.environment]
   TZ = "UTC"
 
+# Redirection des liens de parrainage vers Supabase Edge Function
+[[redirects]]
+  from = "/ref/*"
+  to = "https://thevdfcwlcqzdoybfvgs.supabase.co/functions/v1/referral-redirect/ref/:splat"
+  status = 302
+  force = true
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

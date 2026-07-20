@@ -66,8 +66,13 @@ class _SmartWhiteboardInputScreenState extends State<SmartWhiteboardInputScreen>
       return;
     }
 
-    // Generate storyboard
-    await provider.generateStoryboard();
+    // Generate storyboard (transmet le mode ET le contenu saisi)
+    await provider.generateStoryboard(
+      mode: _selectedMode.apiValue,
+      content: _selectedMode == InputMode.simpleSubject
+          ? ''
+          : _contentController.text.trim(),
+    );
 
     if (!mounted) return;
 
@@ -328,4 +333,20 @@ enum InputMode {
   fullText,
   plan,
   existingCourse,
+}
+
+extension InputModeApi on InputMode {
+  /// Valeur attendue par l'Edge Function whiteboard-generate-storyboard.
+  String get apiValue {
+    switch (this) {
+      case InputMode.simpleSubject:
+        return 'simple_subject';
+      case InputMode.fullText:
+        return 'full_text';
+      case InputMode.plan:
+        return 'plan';
+      case InputMode.existingCourse:
+        return 'existing_course';
+    }
+  }
 }

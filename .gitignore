@@ -12,11 +12,15 @@ android/.gradle/
 .cursor/
 
 # Windsurf / Python cache
-.windsurf/__pycache__/
-.windsurf/.env
-.windsurf/.env.local
+.windsurf/
 .devin/
 *.pyc
+*.enc
+*.env
+.env.*
+.netlify/
+*.jks
+**/key.properties
 
 # Supabase CLI temp
 supabase/.temp/

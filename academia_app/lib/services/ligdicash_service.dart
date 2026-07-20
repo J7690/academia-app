@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 /// Service pour communiquer avec les Edge Functions LigdiCash.
 class LigdiCashService {
@@ -13,24 +14,37 @@ class LigdiCashService {
   /// [paymentType] : 'application', 'marketplace', 'subscription', 'td'
   /// [paymentId] : UUID du paiement dans la DB
   /// [phoneNumber] : numéro mobile money (ex: 22670123456)
+  /// [idempotencyKey] : UUID pour éviter les paiements en double
   Future<Map<String, dynamic>> initiatePayment({
     required String paymentType,
     required String paymentId,
     required String phoneNumber,
     String operator = '',
     double? amountOverride,
+    String? idempotencyKey,
+    String? packCode,
   }) async {
     try {
-      debugPrint('[LigdiCash] initiatePayment: type=$paymentType, id=$paymentId, phone=$phoneNumber, override=$amountOverride');
+      debugPrint('[LigdiCash] initiatePayment: type=$paymentType, id=$paymentId, phone=$phoneNumber, override=$amountOverride, idempotency=$idempotencyKey');
       final body = <String, dynamic>{
         'payment_type': paymentType,
         'payment_id': paymentId,
         'phone_number': phoneNumber,
         'operator': operator,
       };
+      if (packCode != null && packCode.isNotEmpty) {
+        body['pack_code'] = packCode;
+      }
       if (amountOverride != null && amountOverride > 0) {
         body['amount_override'] = amountOverride;
       }
+      if (idempotencyKey == null || idempotencyKey.isEmpty) {
+        // Générer un idempotency key UUID si non fourni
+        idempotencyKey = const Uuid().v4();
+        debugPrint('[LigdiCash] Generated idempotency key: $idempotencyKey');
+      }
+      body['idempotency_key'] = idempotencyKey;
+      
       final response = await _client.functions.invoke(
         'ligdicash-initiate',
         body: body,

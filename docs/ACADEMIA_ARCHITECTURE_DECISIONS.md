@@ -463,6 +463,59 @@ Les audits clôturés ne doivent jamais être recommencés sans un nouveau besoi
 
 ---
 
+### ADR-011
+
+**Titre** : Dispositif Live/Classroom unifié — LiveKit Cloud (Option A) + Learning Engine Supabase (`app.academia_sessions`)
+**Date** : 13-14 Juillet 2026
+**Statut** : Validée
+
+**Contexte** :
+Audit des onglets Live/Cours/TD/Concours (étudiant et enseignant) révélant une fragmentation : trois systèmes de session distincts (`app.prep_live_sessions`, `app.online_course_live_sessions`, aucune table TD), un SFU LiveKit auto-hébergé sur le VPS Kamatera partagé avec le worker Smart Whiteboard, Bobodo vocal et la compression vidéo (risque de contention CPU/RAM), et un modèle Dart (`AcademiaSession`, `AcademiaSessionProvider`, `AcademiaPresenceService`) déjà écrit côté Flutter mais sans aucune RPC ni table correspondante côté Supabase (vérifié : 0 des 16 RPC `app_learning_*` et `livekit_lookup_academia_session` n'existaient, tout comme la table `app.academia_sessions`).
+
+**Problème rencontré** :
+1. Infra SFU partagée avec d'autres charges de travail sur un unique VPS Kamatera — point de fragilité identifié dans `ACADEMIA_LIVE_CLASSROOM_PROPOSAL.md`.
+2. Absence de contrôle hôte à distance (couper un micro, exclure un participant) dans l'UI de classe.
+3. Absence de registre de présence par session (uniquement un statut global `app.user_presence`), donc aucune preuve d'assiduité exportable.
+4. Bouton étudiant "Accéder au TD" non branché (code mort dans `student_td_root_screen.dart`) et onglets enseignant "Lives"/"Sessions" dupliqués sans justification fonctionnelle.
+5. La couche d'abstraction unifiée déjà présente dans le code Flutter (`AcademiaSession`) n'avait strictement aucun support backend — tout appel à `app_learning_*` échouait silencieusement (fonction inexistante).
+
+**Options étudiées** (cf. `docs/ACADEMIA_LIVE_CLASSROOM_PROPOSAL.md`) :
+1. **Option A** — garder LiveKit comme SFU, migrer l'hébergement vers LiveKit Cloud (managed), garder Kamatera uniquement pour les workers custom (Smart Whiteboard, Bobodo vocal, compression vidéo) ; construire la couche `academia_sessions` unifiée déjà anticipée par le code Flutter.
+2. **Option B** — remplacer LiveKit par un SDK tiers (Zoom SDK, Daily.co, etc.).
+3. **Option C** — garder l'architecture actuelle fragmentée (3 systèmes de session parallèles) et ajouter les fonctionnalités manquantes à chacun séparément.
+
+**Décision retenue** :
+Option A. Bascule LiveKit self-hosted → LiveKit Cloud documentée comme un runbook opérationnel pur (0 changement de code, les 3 secrets `LIVEKIT_URL`/`LIVEKIT_API_KEY`/`LIVEKIT_API_SECRET` sont déjà lus dynamiquement par les Edge Functions — cf. `docs/LIVEKIT_CLOUD_MIGRATION_RUNBOOK.md`, exécution restant à la charge du porteur du projet car elle nécessite la création d'un compte tiers). Côté backend, construction complète de la couche Learning Engine unifiée :
+- Tables `app.academia_sessions` (10 types de session : course/td/prepConcours/orientation/conference/masterclass/livePedagogique/revisionCollective/examBlanc/gameChallenge) et `app.academia_session_participants` (registre de présence par session), RLS activé sans policy directe — accès exclusivement via RPC `SECURITY DEFINER`.
+- 16 RPC `public.app_learning_*` + `livekit_lookup_academia_session`, avec vérification d'autorité hôte (`auth.uid()` comparé via `IS DISTINCT FROM`, jamais `<>`, pour éviter le contournement par appel non authentifié où `auth.uid()` vaut NULL).
+- Edge Function `livekit-admin` (contrôle micro à distance + exclusion, via l'API Twirp `RoomService` de LiveKit).
+- Correctif additif de `livekit_get_user_display_name` (repli sur `app.td_teachers`/`app.instructors` quand l'utilisateur n'est pas un étudiant — les noms d'hôtes enseignants étaient auparavant systématiquement NULL dans le registre de présence).
+- UI : panneau Participants (mute à distance + export CSV de présence), écran `TdEnrollmentAccessScreen` branché sur `session_type='td'`, fusion des onglets enseignant "Lives"/"Sessions" en un seul onglet "Mes classes en direct".
+
+**Justification** :
+- Le code Flutter anticipait déjà cette abstraction unifiée (modèle `AcademiaSession`) — construire les tables/RPC manquantes complète une architecture déjà à moitié écrite plutôt que d'en démarrer une nouvelle.
+- LiveKit Cloud élimine le risque de contention CPU/RAM sur le VPS Kamatera partagé sans réécrire le client Flutter (déjà découplé de l'URL du SFU par design).
+- Conforme à la priorité explicite du porteur de projet : terminer le développement fonctionnel d'une infrastructure cohérente avant la phase de sécurisation (rotation de clés, policies RLS sur les 32 tables déjà signalées) — cf. section suivante.
+
+**Conséquences** :
+- `app.prep_live_sessions` et `app.online_course_live_sessions` restent en place tels quels (non migrés dans cette phase) ; seul le TD et les nouveaux types de session passent par `app.academia_sessions`. Une migration progressive des deux tables historiques vers `academia_sessions` reste un chantier futur, à cadrer par un ADR dédié si entrepris.
+- `app.user_roles` reste absente (gap pré-existant, non introduit par cette décision) : la vérification d'un rôle "admin" en plus du statut d'hôte dans `app_learning_presence_list` et `livekit-admin` dégrade silencieusement vers "non admin" — comportement identique à celui déjà en place dans `livekit-recording`.
+- Testé de bout en bout par test de fumée SQL direct (création → démarrage → jointure étudiant → heartbeat → liste de présence hôte/étudiant → fin de session → nettoyage), y compris un cas d'attaque (appel `end_session` sans JWT, correctement rejeté après le correctif `IS DISTINCT FROM`).
+- Sécurisation (RLS sur les 32 tables signalées par les advisors Supabase, rotation des clés LiveKit/Supabase) explicitement différée à une phase ultérieure distincte, par décision du porteur de projet.
+
+**Impact sur les composants** :
+- Supabase : 2 nouvelles tables + 16 nouvelles RPC (`app.academia_sessions`, `app.academia_session_participants`) + 1 nouvelle Edge Function (`livekit-admin`, déployée v1) + 1 fonction existante corrigée (`livekit_get_user_display_name`).
+- Flutter : `academia_classroom_screen.dart`, `academia_participants_panel.dart` (nouveau), `academia_livekit_service.dart`, `td_enrollment_access_screen.dart` (nouveau), `td_my_enrollments_tab.dart`, `student_td_root_screen.dart`, `instructor_dashboard_screen.dart`.
+- Infra : aucun changement de code pour la bascule LiveKit Cloud — action opérationnelle externe documentée dans le runbook.
+
+**Références** :
+- `docs/ACADEMIA_LIVE_CLASSROOM_PROPOSAL.md`
+- `docs/LIVEKIT_CLOUD_MIGRATION_RUNBOOK.md`
+- `.devin/INSTRUCTIONS_DEVIN_LIVE_CLASSROOM_SUPABASE.md`
+- Migration Supabase `create_academia_sessions_learning_engine`, `fix_academia_sessions_null_auth_uid_bypass`, `livekit_get_user_display_name_teacher_fallback`, `fix_livekit_display_name_instructors_column` (projet `thevdfcwlcqzdoybfvgs`)
+
+---
+
 ## NOUVELLE RÈGLE
 
 À chaque décision d'architecture importante :

@@ -47,13 +47,62 @@ serve(async (req: Request) => {
     }
 
     const body = await req.json();
-    const { payment_type, payment_id, phone_number, operator, amount_override } = body;
+    const { payment_type, payment_id, phone_number, operator, amount_override, idempotency_key, pack_code } = body;
 
     if (!payment_type || !payment_id || !phone_number) {
       return new Response(
         JSON.stringify({ success: false, error: 'missing_parameters', required: ['payment_type', 'payment_id', 'phone_number'] }),
         { status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Idempotency check: if payment with same idempotency_key exists, return it
+    if (idempotency_key) {
+      if (payment_type === 'application' || payment_type === 'subscription' || payment_type === 'td' || payment_type === 'short_training') {
+        const { data: existingPayment } = await supabase
+          .schema('app')
+          .from('application_payments')
+          .select('*')
+          .eq('idempotency_key', idempotency_key)
+          .single();
+        
+        if (existingPayment) {
+          console.log(`[ligdicash-initiate] Idempotency key ${idempotency_key} already used, returning existing payment`);
+          return new Response(
+            JSON.stringify({
+              success: true,
+              mode: LIGDICASH_MODE === 'live' ? 'live' : 'mock',
+              idempotent: true,
+              payment_id: existingPayment.id,
+              status: existingPayment.status,
+              message: 'Payment already exists for this idempotency key',
+            }),
+            { headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+          );
+        }
+      } else if (payment_type === 'marketplace') {
+        const { data: existingPayment } = await supabase
+          .schema('app')
+          .from('marketplace_payments')
+          .select('*')
+          .eq('idempotency_key', idempotency_key)
+          .single();
+        
+        if (existingPayment) {
+          console.log(`[ligdicash-initiate] Idempotency key ${idempotency_key} already used, returning existing payment`);
+          return new Response(
+            JSON.stringify({
+              success: true,
+              mode: LIGDICASH_MODE === 'live' ? 'live' : 'mock',
+              idempotent: true,
+              payment_id: existingPayment.id,
+              status: existingPayment.status,
+              message: 'Payment already exists for this idempotency key',
+            }),
+            { headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
     }
 
     // Validate phone (must start with 226 and have at least 11 digits)
@@ -69,11 +118,17 @@ serve(async (req: Request) => {
     let amount = 0;
     let paymentStatus = '';
 
-    // Override eventuel (mode test / dev) : montant choisi par l'utilisateur >= 10 XOF.
+    // Override du montant : AUTORISÉ UNIQUEMENT EN MODE MOCK (test/dev).
+    // En mode live, on ignore totalement amount_override : le montant fait
+    // toujours foi côté serveur (montant dû en base / prix du pack), afin qu'un
+    // client ne puisse jamais payer moins que le prix réel du service.
     const overrideNum = typeof amount_override === 'number'
       ? amount_override
       : (amount_override != null ? Number(amount_override) : NaN);
-    const hasOverride = !isNaN(overrideNum) && overrideNum > 0;
+    const hasOverride = LIGDICASH_MODE === 'mock' && !isNaN(overrideNum) && overrideNum > 0;
+    if (LIGDICASH_MODE !== 'mock' && amount_override != null) {
+      console.warn('[ligdicash-initiate] amount_override ignoré en mode live (montant serveur seul fait foi)');
+    }
 
     if (payment_type === 'application' || payment_type === 'subscription' || payment_type === 'td' || payment_type === 'short_training') {
       const { data: payment, error: payErr } = await supabase
@@ -112,7 +167,7 @@ serve(async (req: Request) => {
       const finalAmount = hasOverride ? overrideNum : amount;
       amount = finalAmount;
 
-      // Update payment: store phone + set status to processing (+ amount si override)
+      // Update payment: store phone + set status to processing (+ amount si override + idempotency_key)
       const updatePayload: Record<string, unknown> = {
         phone_number: cleanPhone,
         payment_method: 'ligdicash_otp',
@@ -122,6 +177,9 @@ serve(async (req: Request) => {
       };
       if (hasOverride) {
         updatePayload.amount_due = finalAmount;
+      }
+      if (idempotency_key) {
+        updatePayload.idempotency_key = idempotency_key;
       }
       await supabase
         .schema('app')
@@ -163,7 +221,7 @@ serve(async (req: Request) => {
       const finalMpAmount = hasOverride ? overrideNum : amount;
       amount = finalMpAmount;
 
-      // Update marketplace payment (+ amount si override)
+      // Update marketplace payment (+ amount si override + idempotency_key)
       const mpUpdatePayload: Record<string, unknown> = {
         phone_number: cleanPhone,
         payment_method: 'ligdicash_otp',
@@ -174,11 +232,131 @@ serve(async (req: Request) => {
       if (hasOverride) {
         mpUpdatePayload.gross_amount = finalMpAmount;
       }
+      if (idempotency_key) {
+        mpUpdatePayload.idempotency_key = idempotency_key;
+      }
       await supabase
         .schema('app')
         .from('marketplace_payments')
         .update(mpUpdatePayload)
         .eq('id', payment_id);
+
+    } else if (payment_type === 'credit_purchase') {
+      // Achat de credits : aucune ligne pre-existante cote client (UUID genere localement).
+      // On cree ici la ligne application_payments cote serveur, prix pris depuis credit_packs
+      // (le client ne peut pas usurper le montant).
+      if (!pack_code) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'missing_parameters', required: ['pack_code'] }),
+          { status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data: pack, error: packErr } = await supabase
+        .schema('app')
+        .from('credit_packs')
+        .select('code, name, price_xof, is_active')
+        .eq('code', pack_code)
+        .single();
+
+      if (packErr || !pack || !pack.is_active) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'pack_not_found', pack_code }),
+          { status: 404, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Montant = prix du pack (on ignore tout amount_override pour la securite).
+      amount = pack.price_xof;
+
+      // FK: app.application_payments.student_id -> app.students(id).
+      // Certains comptes 'student' n'ont pas encore de fiche app.students ; sans elle,
+      // l'INSERT du paiement echoue (violation de cle etrangere -> payment_create_failed).
+      // On garantit donc l'existence de la fiche etudiant avant d'inserer le paiement.
+      {
+        const studentName =
+          (user.user_metadata as any)?.full_name ||
+          (user.user_metadata as any)?.name ||
+          (user.email ? String(user.email).split('@')[0] : '') ||
+          'Etudiant';
+        const { error: ensureErr } = await supabase
+          .schema('app')
+          .from('students')
+          .upsert({ id: user.id, full_name: studentName }, { onConflict: 'id', ignoreDuplicates: true });
+        if (ensureErr) {
+          console.error('[ligdicash-initiate] ensure student profile error:', ensureErr);
+          return new Response(
+            JSON.stringify({ success: false, error: 'student_profile_ensure_failed', details: ensureErr.message }),
+            { status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
+      // Ligne deja existante pour ce payment_id ? (retry / idempotence)
+      const { data: existing } = await supabase
+        .schema('app')
+        .from('application_payments')
+        .select('id, status')
+        .eq('id', payment_id)
+        .maybeSingle();
+
+      if (existing) {
+        if (existing.status === 'confirmed') {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              mode: LIGDICASH_MODE === 'live' ? 'live' : 'mock',
+              idempotent: true,
+              payment_id: existing.id,
+              status: existing.status,
+              message: 'Paiement deja confirme pour ce pack.',
+            }),
+            { headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+          );
+        }
+        await supabase
+          .schema('app')
+          .from('application_payments')
+          .update({
+            phone_number: cleanPhone,
+            payment_method: 'ligdicash_otp',
+            channel: 'ligdicash',
+            status: 'processing',
+            amount_due: amount,
+            external_reference: pack.code,
+            idempotency_key: idempotency_key || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', payment_id);
+      } else {
+        const refCode = 'PR-' +
+          new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14) + '-' +
+          Math.random().toString(16).slice(2, 8);
+        const { error: insErr } = await supabase
+          .schema('app')
+          .from('application_payments')
+          .insert({
+            id: payment_id,
+            student_id: user.id,
+            payment_reason: 'credit_purchase',
+            amount_due: amount,
+            currency: 'XOF',
+            status: 'processing',
+            channel: 'ligdicash',
+            payment_method: 'ligdicash_otp',
+            reference_code: refCode,
+            external_reference: pack.code,
+            phone_number: cleanPhone,
+            idempotency_key: idempotency_key || null,
+          });
+        if (insErr) {
+          console.error('[ligdicash-initiate] credit_purchase insert error:', insErr);
+          return new Response(
+            JSON.stringify({ success: false, error: 'payment_create_failed', details: insErr.message }),
+            { status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
 
     } else {
       return new Response(

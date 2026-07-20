@@ -8,6 +8,7 @@ import '../../../theme/prep_theme.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/error_widget.dart';
 import '../../../widgets/user_avatar.dart';
+import '../widgets/student_tab_hero.dart';
 import '../student_community_detail_screen.dart';
 import '../student_dm_conversations_screen.dart';
 import '../../share/share_service.dart';
@@ -95,63 +96,61 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
             SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'Communautés',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+            // Hero unifié — même style que Candidatures / TD / Concours.
+            // Couleur d'accent = émeraude, cohérent avec l'onglet Communautés
+            // de la barre de navigation.
+            Stack(
+              children: [
+                const StudentTabHero(
+                  icon: Icons.groups_outlined,
+                  accentColor: Color(0xFF10B981),
+                  title: 'Communautés',
+                  subtitle:
+                      'Un endroit pour discuter, poser des questions et réviser avec d\'autres étudiants.',
+                ),
+                Positioned(
+                  top: 24,
+                  right: 24,
+                  child: Consumer<ShareModeProvider>(
+                    builder: (context, shareMode, _) {
+                      if (shareMode.isShareModeEnabled) {
+                        return const SizedBox.shrink();
+                      }
+                      final isBusy = shareMode.isBusy;
+                      return Material(
+                        color: Colors.transparent,
+                        child: IconButton(
+                          icon: const Icon(Icons.share, color: Color(0xFF047857)),
+                          tooltip: 'Partager',
+                          onPressed: isBusy ? null : _shareCurrentView,
                         ),
-                      ),
-                      Consumer<ShareModeProvider>(
-                        builder: (context, shareMode, _) {
-                          if (shareMode.isShareModeEnabled) {
-                            return const SizedBox.shrink();
-                          }
-                          final isBusy = shareMode.isBusy;
-                          return IconButton(
-                            icon: const Icon(Icons.share),
-                            tooltip: 'Partager',
-                            onPressed: isBusy ? null : _shareCurrentView,
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Un endroit pour discuter, poser des questions et réviser avec d\'autres étudiants.',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _searchController,
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.search),
-                      hintText: 'Rechercher une communauté (nom, description, catégorie...)',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(24)),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        _searchQuery = value.trim();
-                      });
-                      _reload();
+                      );
                     },
                   ),
-                ],
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: TextField(
+                controller: _searchController,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.search),
+                  hintText:
+                      'Rechercher une communauté (nom, description, catégorie...)',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(24)),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value.trim();
+                  });
+                  _reload();
+                },
               ),
             ),
             Expanded(

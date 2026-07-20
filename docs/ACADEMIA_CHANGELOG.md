@@ -5,6 +5,27 @@
 
 ---
 
+## JUILLET 2026
+
+### 13-14 Juillet 2026
+
+**DISPOSITIF LIVE/CLASSROOM UNIFIÉ — OPTION A (LIVEKIT CLOUD + LEARNING ENGINE SUPABASE)**
+- Audit des onglets Live/Cours/TD/Concours (étudiant + enseignant) et de l'infra LiveKit/Kamatera existante
+- Rédaction de `docs/ACADEMIA_LIVE_CLASSROOM_PROPOSAL.md` (comparaison Options A/B/C)
+- Rédaction de `docs/LIVEKIT_CLOUD_MIGRATION_RUNBOOK.md` (bascule SFU self-hosted → LiveKit Cloud, 0 changement de code)
+- Nouvelle Edge Function `livekit-admin` (mute à distance + exclusion participant, API Twirp RoomService), déployée en production (v1)
+- Nouveau panneau UI `AcademiaParticipantsPanel` (liste participants, mute host, export CSV du registre de présence)
+- Nouvel écran `TdEnrollmentAccessScreen` : bouton "Accéder au TD" étudiant branché sur le moteur de session unifié
+- Fusion des onglets enseignant "Lives" et "Sessions" en un seul onglet "Mes classes en direct"
+- **Construction complète de la couche backend "Learning Engine" manquante** (constat : le modèle Flutter `AcademiaSession` appelait 16 RPC `app_learning_*` + `livekit_lookup_academia_session` qui n'existaient pas du tout côté Supabase) :
+  - Migration `create_academia_sessions_learning_engine` : tables `app.academia_sessions` + `app.academia_session_participants`, 16 RPC `SECURITY DEFINER`
+  - Migration corrective `fix_academia_sessions_null_auth_uid_bypass` : remplacement des comparaisons `<> auth.uid()` par `IS DISTINCT FROM` (une valeur NULL de `auth.uid()` — appel non authentifié — contournait silencieusement les vérifications d'hôte)
+  - Migrations `livekit_get_user_display_name_teacher_fallback` + `fix_livekit_display_name_instructors_column` : repli du nom affiché sur `app.td_teachers`/`app.instructors` quand l'utilisateur n'est pas un étudiant
+  - Test de fumée SQL de bout en bout validé (création → démarrage → jointure → présence → fin de session → nettoyage, y compris rejet correct d'un appel non authentifié)
+- Rédaction puis mise à jour de `.devin/INSTRUCTIONS_DEVIN_LIVE_CLASSROOM_SUPABASE.md` (statut : interventions Supabase/déploiement réalisées directement, document conservé pour traçabilité)
+- Nouvelle entrée **ADR-011** dans `ACADEMIA_ARCHITECTURE_DECISIONS.md`
+- Constat de sécurité reporté à une phase ultérieure distincte (décision explicite du porteur de projet — priorité au développement fonctionnel d'abord) : 32 tables avec RLS désactivé, grants EXECUTE `anon`/`authenticated` par défaut sur toutes les fonctions `SECURITY DEFINER` (motif générique pré-existant, pas une régression de cette phase), table `app.user_roles` absente, rotation de clés LiveKit/Supabase à faire en fin de projet
+
 ## JUIN 2026
 
 ### 24 Juin 2026

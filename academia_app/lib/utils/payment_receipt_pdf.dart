@@ -34,6 +34,14 @@ Future<void> generateAndSharePaymentReceiptPdf({
   final programTitle = _string(payment['program_title']);
   final universityName = _string(payment['university_name']);
   final studentId = _string(payment['student_id']);
+  
+  // Nouveaux champs pour les reçus professionnels
+  final studentEmail = _string(receipt['student_email']);
+  final studentName = _string(receipt['student_name']);
+  final studentPhone = _string(receipt['student_phone']);
+  final signatureHash = _string(receipt['signature_hash']);
+  final trainingName = _string(receipt['training_name']);
+  final creditPackName = _string(receipt['credit_pack_name']);
 
   doc.addPage(
     pw.Page(
@@ -68,6 +76,10 @@ Future<void> generateAndSharePaymentReceiptPdf({
               pw.Text('Programme : $programTitle'),
             if (universityName.isNotEmpty)
               pw.Text('Université : $universityName'),
+            if (trainingName.isNotEmpty)
+              pw.Text('Formation : $trainingName'),
+            if (creditPackName.isNotEmpty)
+              pw.Text('Pack de crédits : $creditPackName'),
             pw.SizedBox(height: 12),
             pw.Text(
               'Informations étudiant',
@@ -77,6 +89,12 @@ Future<void> generateAndSharePaymentReceiptPdf({
               ),
             ),
             pw.SizedBox(height: 4),
+            if (studentName.isNotEmpty)
+              pw.Text('Nom : $studentName'),
+            if (studentEmail.isNotEmpty)
+              pw.Text('Email : $studentEmail'),
+            if (studentPhone.isNotEmpty)
+              pw.Text('Téléphone : $studentPhone'),
             if (studentId.isNotEmpty)
               pw.Text('Identifiant étudiant : $studentId'),
             pw.SizedBox(height: 12),
@@ -107,6 +125,11 @@ Future<void> generateAndSharePaymentReceiptPdf({
               'Il sert de justificatif de paiement et ne peut pas être modifié.',
               style: pw.TextStyle(fontSize: 10),
             ),
+            if (signatureHash.isNotEmpty)
+              pw.Text(
+                'Signature numérique : ${signatureHash.substring(0, 16)}...',
+                style: pw.TextStyle(fontSize: 8),
+              ),
           ],
         );
       },

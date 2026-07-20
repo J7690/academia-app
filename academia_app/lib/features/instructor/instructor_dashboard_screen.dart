@@ -74,7 +74,7 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 11,
+      length: 10,
       child: Scaffold(
         backgroundColor: TdTheme.scaffoldBg,
         floatingActionButton: const SupportFab(),
@@ -127,9 +127,8 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
               Tab(icon: Icon(Icons.edit_note, size: 18), text: 'Exo TD'),
               Tab(icon: Icon(Icons.school_outlined, size: 18), text: 'Prépa'),
               Tab(icon: Icon(Icons.edit_document, size: 18), text: 'Exercices'),
-              Tab(icon: Icon(Icons.cast_for_education, size: 18), text: 'Lives'),
               Tab(icon: Icon(Icons.play_lesson_outlined, size: 18), text: 'Cours'),
-              Tab(icon: Icon(Icons.videocam_outlined, size: 18), text: 'Sessions'),
+              Tab(icon: Icon(Icons.videocam_outlined, size: 18), text: 'Mes classes en direct'),
               Tab(icon: Icon(Icons.account_balance_wallet, size: 18), text: 'Revenus'),
             ],
           ),
@@ -143,9 +142,8 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
             TeacherTdExercisesScreen(),
             TeacherPrepScreen(),
             TeacherPrepAssignmentsScreen(),
-            TeacherPrepLiveSessionsScreen(),
             _InstructorCoursesTab(),
-            _InstructorLiveSessionsTab(),
+            _InstructorUnifiedLiveTab(),
             InstructorRevenueTab(),
           ],
         ),
@@ -867,6 +865,51 @@ Future<void> _showCourseDialog(
   );
 }
 
+/// Point d'entrée unique "Mes classes en direct" pour l'enseignant.
+///
+/// Fusionne ce qui était auparavant deux onglets séparés et mal nommés
+/// ("Lives" qui ne montrait que les sessions Prépa-Concours, et "Sessions"
+/// qui gérait les vrais lives de cours) : un seul onglet racine, avec un
+/// sélecteur interne pour basculer entre les deux contextes. Les deux
+/// providers/écrans sous-jacents ne sont pas modifiés — seule la
+/// navigation est unifiée, pour ne pas introduire de régression sur des
+/// flux déjà validés.
+class _InstructorUnifiedLiveTab extends StatelessWidget {
+  const _InstructorUnifiedLiveTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        children: [
+          Container(
+            color: Colors.white,
+            child: TabBar(
+              labelColor: TdTheme.instructorPrimary,
+              unselectedLabelColor: TdTheme.textTertiary,
+              indicatorColor: TdTheme.instructorPrimary,
+              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              tabs: const [
+                Tab(text: 'Cours en ligne'),
+                Tab(text: 'Prépa concours'),
+              ],
+            ),
+          ),
+          const Expanded(
+            child: TabBarView(
+              children: [
+                _InstructorLiveSessionsTab(),
+                TeacherPrepLiveSessionsScreen(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _InstructorLiveSessionsTab extends StatelessWidget {
   const _InstructorLiveSessionsTab();
 
@@ -1187,7 +1230,7 @@ Future<void> _showSessionDialog(
     text: existing?['description']?.toString() ?? '',
   );
   final providerController = TextEditingController(
-    text: existing?['provider']?.toString() ?? 'zoom',
+    text: existing?['provider']?.toString() ?? 'livekit',
   );
   final joinUrlController = TextEditingController(
     text: existing?['join_url']?.toString() ?? '',
@@ -1253,26 +1296,55 @@ Future<void> _showSessionDialog(
                     ),
                   ),
                   const SizedBox(height: 8),
-                  TextField(
-                    controller: providerController,
-                    decoration: const InputDecoration(
-                      labelText: 'Plateforme (Zoom, Meet, LiveKit, ...)',
-                      hintText: 'Exemple : zoom, meet ou livekit',
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.videocam, color: Color(0xFF2563EB), size: 18),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Salle intégrée Academia (recommandé) : chat, tableau blanc, '
+                            'quiz, enregistrement et présence sont automatiquement disponibles.',
+                            style: TextStyle(fontSize: 11, color: Color(0xFF1E3A8A)),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 8),
-                  TextField(
-                    controller: joinUrlController,
-                    decoration: const InputDecoration(
-                      labelText: 'Lien Zoom / Meet de la réunion',
-                      hintText: 'Collez ici le lien complet (https://...)',
+                  ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: const Text(
+                      'Options avancées : lien externe (Zoom / Meet)',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Pour Zoom ou Meet, créez la réunion puis collez ici le lien. '
-                    'Pour LiveKit, laissez ce champ vide : la salle vidéo sera ouverte dans Academia.',
-                    style: TextStyle(fontSize: 11),
+                    subtitle: const Text(
+                      'À éviter : pas de chat, pas de présence, pas de replay Academia.',
+                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                    ),
+                    childrenPadding: const EdgeInsets.only(bottom: 8),
+                    children: [
+                      TextField(
+                        controller: providerController,
+                        decoration: const InputDecoration(
+                          labelText: 'Plateforme (zoom, meet ou livekit)',
+                          hintText: 'Laisser "livekit" pour la salle intégrée',
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: joinUrlController,
+                        decoration: const InputDecoration(
+                          labelText: 'Lien Zoom / Meet de la réunion',
+                          hintText: 'Collez ici le lien complet (https://...)',
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   TextField(

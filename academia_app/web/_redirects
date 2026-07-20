@@ -1,3 +1,4 @@
 /terms    /terms.html   200
 /privacy  /privacy.html 200
+/ref/*    https://thevdfcwlcqzdoybfvgs.supabase.co/functions/v1/referral-redirect/ref/:splat  302!
 /*       /index.html   200
