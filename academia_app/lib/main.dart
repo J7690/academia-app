@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -187,13 +188,19 @@ void main() async {
     url: SupabaseConfig.url,
     anonKey: SupabaseConfig.anonKey,
   );
-  // Initialisation du transport de notifications push (FCM via Firebase)
-  // La logique métier et les compteurs restent gérés dans Supabase.
-  try {
-    await PushNotificationService.instance.init();
-  } catch (_) {}
 
   runApp(const AcademiaApp());
+
+  // Initialisation du transport de notifications push (FCM via Firebase)
+  // exécutée APRÈS runApp pour ne jamais bloquer le premier rendu.
+  // Sur le web, requestPermission/getToken peuvent traîner indéfiniment et
+  // gelaient auparavant tout le boot (écran vide).
+  // La logique métier et les compteurs restent gérés dans Supabase.
+  scheduleMicrotask(() async {
+    try {
+      await PushNotificationService.instance.init();
+    } catch (_) {}
+  });
 }
 
 class AcademiaApp extends StatelessWidget {

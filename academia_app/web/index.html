@@ -205,6 +205,38 @@
         loader.remove();
       }
     });
+    (function () {
+      function showBootError(label, detail) {
+        var loader = document.getElementById('loader');
+        if (!loader) return;
+        var text = loader.querySelector('.loader-text');
+        if (text) {
+          text.style.whiteSpace = 'pre-wrap';
+          text.style.color = '#b71c1c';
+          text.style.background = 'rgba(255,255,255,0.85)';
+          text.style.padding = '12px';
+          text.style.maxWidth = '90vw';
+          text.style.overflow = 'auto';
+          text.textContent = '[BOOT ERROR] ' + label + '\n' + detail;
+        }
+      }
+      window.addEventListener('error', function (event) {
+        showBootError('window.error', (event && event.message ? event.message : '') + '\n' + (event && event.filename ? event.filename + ':' + event.lineno + ':' + event.colno : ''));
+      });
+      window.addEventListener('unhandledrejection', function (event) {
+        var reason = event && event.reason;
+        var detail = reason && (reason.stack || reason.message) ? (reason.stack || reason.message) : String(reason);
+        showBootError('unhandledrejection', detail);
+      });
+      setTimeout(function () {
+        if (document.getElementById('loader')) {
+          var text = document.getElementById('loader').querySelector('.loader-text');
+          if (text && text.textContent.indexOf('[BOOT ERROR]') === -1) {
+            text.textContent = 'Chargement plus long que prévu... (ouvre la console pour voir les détails)';
+          }
+        }
+      }, 15000);
+    })();
   </script>
   <script>
     // Enregistre le service worker Firebase Messaging pour les notifications web.
