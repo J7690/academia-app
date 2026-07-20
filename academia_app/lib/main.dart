@@ -177,17 +177,40 @@ void main() async {
     ),
   );
 
-  // Initialisation des données de locale pour Intl (dates, jours en fr_FR)
-  // Nécessaire avant toute utilisation de DateFormat('EEEE', 'fr_FR') etc.
-  await initializeDateFormatting('fr_FR');
+  // Boot instrumenté : chaque étape a un timeout. En cas d'échec/blocage,
+  // on affiche un écran d'erreur visible (garantit flutter-first-frame et
+  // retire le loader) pour diagnostiquer précisément l'étape fautive.
+  String bootStep = 'start';
+  try {
+    // Initialisation des données de locale pour Intl (dates, jours en fr_FR)
+    // Nécessaire avant toute utilisation de DateFormat('EEEE', 'fr_FR') etc.
+    bootStep = 'initializeDateFormatting';
+    await initializeDateFormatting('fr_FR').timeout(
+      const Duration(seconds: 8),
+      onTimeout: () =>
+          throw TimeoutException('Timeout: initializeDateFormatting'),
+    );
 
-  await _checkWebVersion();
+    bootStep = '_checkWebVersion';
+    await _checkWebVersion().timeout(
+      const Duration(seconds: 8),
+      onTimeout: () => throw TimeoutException('Timeout: _checkWebVersion'),
+    );
 
-  // Initialisation Supabase avec configuration validée
-  await Supabase.initialize(
-    url: SupabaseConfig.url,
-    anonKey: SupabaseConfig.anonKey,
-  );
+    // Initialisation Supabase avec configuration validée
+    bootStep = 'Supabase.initialize';
+    await Supabase.initialize(
+      url: SupabaseConfig.url,
+      anonKey: SupabaseConfig.anonKey,
+    ).timeout(
+      const Duration(seconds: 8),
+      onTimeout: () => throw TimeoutException('Timeout: Supabase.initialize'),
+    );
+  } catch (e, st) {
+    debugPrint('[BOOT] FAILED at step "$bootStep": $e\n$st');
+    runApp(_BootErrorApp(step: bootStep, error: '$e'));
+    return;
+  }
 
   runApp(const AcademiaApp());
 
@@ -201,6 +224,59 @@ void main() async {
       await PushNotificationService.instance.init();
     } catch (_) {}
   });
+}
+
+class _BootErrorApp extends StatelessWidget {
+  final String step;
+  final String error;
+  const _BootErrorApp({required this.step, required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: const Color(0xFFE8F5E9),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline,
+                    color: Color(0xFFB71C1C), size: 48),
+                const SizedBox(height: 16),
+                const Text(
+                  'Erreur au démarrage',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFFB71C1C),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Étape bloquée : $step',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1B5E20),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SelectableText(
+                  error,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class AcademiaApp extends StatelessWidget {
