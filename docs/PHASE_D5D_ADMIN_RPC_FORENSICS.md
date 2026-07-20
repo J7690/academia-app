@@ -28,7 +28,7 @@ F. d'un wrapper .windsurf défectueux
 **Projet** : `thevdfcwlcqzdoybfvgs`
 
 ### Clé utilisée
-**Clé** : `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoZXZkZmN3bGNxemRveWJmdmdzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzA1NjU2MCwiZXhwIjoyMDc4NjMyNTYwfQ.U0xz7oHnUISnxzAG8ehm_gRzoOlQPucj61i2f-1FjgM`
+**Clé** : `<REDACTED_SUPABASE_SERVICE_ROLE_KEY>`
 
 **Type** : service_role_key
 
