@@ -113,6 +113,9 @@ class _ManagerTeamTabState extends State<ManagerTeamTab> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.9,
+      ),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
           left: 16, right: 16, top: 16,
