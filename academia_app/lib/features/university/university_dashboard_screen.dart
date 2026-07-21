@@ -18,6 +18,7 @@ import '../../services/notification_sound_service.dart';
 import '../student/student_settings_screen.dart';
 import '../../widgets/support_fab.dart';
 import '../../services/push_trigger_service.dart';
+import '../../services/analytics_tracking_service.dart';
 
 class UniversityDashboardScreen extends StatefulWidget {
   const UniversityDashboardScreen({super.key});
@@ -34,6 +35,8 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsTrackingService.instance.init();
+    AnalyticsTrackingService.instance.trackScreen('university_dashboard');
     _pollingTimer = Timer.periodic(const Duration(seconds: 45), (_) async {
       if (!mounted) return;
       try {

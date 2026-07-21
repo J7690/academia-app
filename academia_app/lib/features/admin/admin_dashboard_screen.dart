@@ -39,6 +39,7 @@ import 'admin_finance_screen.dart';
 import 'admin_pricing_screen.dart';
 import 'admin_moderation_screen.dart';
 import 'admin_analytics_screen.dart';
+import '../../services/analytics_tracking_service.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -64,6 +65,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsTrackingService.instance.init();
+    AnalyticsTrackingService.instance.trackScreen('admin_dashboard');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadNotificationSummary();
     });

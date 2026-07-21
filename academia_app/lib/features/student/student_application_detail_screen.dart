@@ -14,6 +14,7 @@ import '../../providers/student_application_payments_provider.dart';
 import '../../widgets/bobodo_state.dart';
 import '../../widgets/ligdicash_payment_sheet.dart';
 import '../../widgets/bobodo_view.dart';
+import '../../services/analytics_tracking_service.dart';
 
 class StudentApplicationDetailScreen extends StatefulWidget {
   final Map<String, dynamic> application;
@@ -69,6 +70,8 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
   @override
   void initState() {
     super.initState();
+    AnalyticsTrackingService.instance.init();
+    AnalyticsTrackingService.instance.trackScreen('student_application_detail');
     _hasUnreadMessages = widget.application['has_unread_for_student'] == true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final appId = widget.application['id']?.toString();

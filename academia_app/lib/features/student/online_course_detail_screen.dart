@@ -12,6 +12,7 @@ import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart';
 import '../../widgets/report_content_sheet.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../services/analytics_tracking_service.dart';
 
 class OnlineCourseDetailScreen extends StatefulWidget {
   final String courseId;
@@ -35,6 +36,8 @@ class _OnlineCourseDetailScreenState extends State<OnlineCourseDetailScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsTrackingService.instance.init();
+    AnalyticsTrackingService.instance.trackEntityView('online_course', widget.courseId, screenName: 'online_course_detail');
     _enrolled = widget.initiallyEnrolled;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context

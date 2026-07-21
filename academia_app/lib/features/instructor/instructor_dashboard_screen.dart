@@ -25,6 +25,7 @@ import 'teacher_td_resources_screen.dart';
 import '../../widgets/support_fab.dart';
 import 'instructor_revenue_tab.dart';
 import '../../services/push_trigger_service.dart';
+import '../../services/analytics_tracking_service.dart';
 
 class InstructorDashboardScreen extends StatefulWidget {
   const InstructorDashboardScreen({super.key});
@@ -39,6 +40,8 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsTrackingService.instance.init();
+    AnalyticsTrackingService.instance.trackScreen('instructor_dashboard');
     _ensureInstructorProfile();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {

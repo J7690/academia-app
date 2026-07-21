@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'admin_audience_screen.dart';
+
 /// Écran admin pour visualiser les statistiques de navigation utilisateur.
 /// Montre les top screens, top tabs, activité quotidienne.
 class AdminAnalyticsScreen extends StatefulWidget {
@@ -35,6 +37,17 @@ class _AdminAnalyticsScreenState extends State<AdminAnalyticsScreen> {
       debugPrint('[AdminAnalytics] Error: $e');
     }
     if (mounted) setState(() => _loading = false);
+  }
+
+  /// Les 3 vues historiques dépendent de `_stats` (ancienne collecte) :
+  /// on affiche un état vide si aucune donnée, sans bloquer l'onglet Audience.
+  Widget _legacyOrEmpty(Widget Function() builder) {
+    if (_stats.isEmpty) {
+      return const Center(
+        child: Text('Aucune donnée', style: TextStyle(color: Colors.grey)),
+      );
+    }
+    return builder();
   }
 
   @override
@@ -78,16 +91,16 @@ class _AdminAnalyticsScreenState extends State<AdminAnalyticsScreen> {
         Expanded(
           child: _loading
               ? const Center(child: CircularProgressIndicator())
-              : _stats.isEmpty
-                  ? const Center(child: Text('Aucune donnée', style: TextStyle(color: Colors.grey)))
-                  : DefaultTabController(
-                      length: 3,
+              : DefaultTabController(
+                      length: 4,
                       child: Column(
                         children: [
                           const TabBar(
                             labelColor: Colors.indigo,
                             unselectedLabelColor: Colors.grey,
+                            isScrollable: true,
                             tabs: [
+                              Tab(text: '📊 Audience'),
                               Tab(text: 'Top Écrans'),
                               Tab(text: 'Top Onglets'),
                               Tab(text: 'Activité'),
@@ -96,9 +109,10 @@ class _AdminAnalyticsScreenState extends State<AdminAnalyticsScreen> {
                           Expanded(
                             child: TabBarView(
                               children: [
-                                _buildTopScreens(),
-                                _buildTopTabs(),
-                                _buildDailyActivity(),
+                                const AdminAudienceScreen(),
+                                _legacyOrEmpty(_buildTopScreens),
+                                _legacyOrEmpty(_buildTopTabs),
+                                _legacyOrEmpty(_buildDailyActivity),
                               ],
                             ),
                           ),

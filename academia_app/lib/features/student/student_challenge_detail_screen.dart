@@ -5,6 +5,7 @@ import '../../providers/student_challenges_provider.dart';
 import '../../video/academia_playback_engine.dart';
 import '../../widgets/video_overlays_layer.dart';
 import 'student_challenge_video_editor_screen.dart';
+import '../../services/analytics_tracking_service.dart';
 
 class StudentChallengeDetailScreen extends StatefulWidget {
   final String challengeId;
@@ -40,6 +41,8 @@ class _StudentChallengeDetailScreenState extends State<StudentChallengeDetailScr
   @override
   void initState() {
     super.initState();
+    AnalyticsTrackingService.instance.init();
+    AnalyticsTrackingService.instance.trackEntityView('challenge', widget.challengeId, screenName: 'challenge_detail');
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final provider = context.read<StudentChallengesProvider>();
       await Future.wait([

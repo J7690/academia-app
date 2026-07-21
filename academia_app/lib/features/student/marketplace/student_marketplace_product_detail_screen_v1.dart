@@ -12,6 +12,7 @@ import '../../../providers/student_marketplace_listings_provider_v1.dart';
 import '../../../widgets/marketplace/marketplace_seller_badge.dart';
 import 'student_marketplace_cart_screen_v1.dart';
 import 'student_merchant_profile_screen_v1.dart';
+import '../../../services/analytics_tracking_service.dart';
 
 class StudentMarketplaceProductDetailScreenV1 extends StatefulWidget {
   final String listingId;
@@ -89,6 +90,8 @@ class _StudentMarketplaceProductDetailScreenV1State
   @override
   void initState() {
     super.initState();
+    AnalyticsTrackingService.instance.init();
+    AnalyticsTrackingService.instance.trackEntityView('marketplace_product', widget.listingId, screenName: 'marketplace_product_detail');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _load();
     });

@@ -9,6 +9,7 @@ import '../../widgets/support_fab.dart';
 import '../student/student_settings_screen.dart';
 import '../../services/push_trigger_service.dart';
 import '../../services/share_tracking_service.dart';
+import '../../services/analytics_tracking_service.dart';
 
 class CommercialDashboardScreen extends StatefulWidget {
   const CommercialDashboardScreen({super.key});
@@ -23,6 +24,8 @@ class _CommercialDashboardScreenState extends State<CommercialDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsTrackingService.instance.init();
+    AnalyticsTrackingService.instance.trackScreen('commercial_dashboard');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<CommercialDashboardProvider>().loadDashboard();

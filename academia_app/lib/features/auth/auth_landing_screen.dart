@@ -21,6 +21,7 @@ import 'phone_login_screen.dart';
 import '../share/share_service.dart';
 import '../share/share_mode_provider.dart';
 import '../share/widgets/share_signature.dart';
+import '../../services/analytics_tracking_service.dart';
 
 void _showSignupChoice(BuildContext context, {String? refCode}) {
   showModalBottomSheet<void>(
@@ -554,6 +555,8 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
   @override
   void initState() {
     super.initState();
+    AnalyticsTrackingService.instance.init();
+    AnalyticsTrackingService.instance.trackScreen('auth_landing');
     _tickerController = ScrollController();
     _loadHeroPlaylistFromCache();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
