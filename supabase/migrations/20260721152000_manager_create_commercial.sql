@@ -1,0 +1,2 @@
+-- M1 : RPC app_manager_create_commercial (profil+ref_code+rattachement+notif admin attribuee).
+-- Edge function manager-create-commercial-account (v1) deployee. Applique prod 2026-07-21 via MCP.
