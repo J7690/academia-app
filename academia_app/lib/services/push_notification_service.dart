@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'notification_router.dart';
 
 /// Service centralisé pour la gestion des notifications push (FCM) côté Flutter.
 ///
@@ -77,7 +80,10 @@ class PushNotificationService {
             AndroidInitializationSettings('@mipmap/ic_launcher');
         const initSettings =
             InitializationSettings(android: androidSettings);
-        await _localNotifications.initialize(initSettings);
+        await _localNotifications.initialize(
+          initSettings,
+          onDidReceiveNotificationResponse: _onLocalNotificationTap,
+        );
 
         final androidPlugin =
             _localNotifications.resolvePlatformSpecificImplementation<
@@ -249,7 +255,36 @@ class PushNotificationService {
           number: 1,
         ),
       ),
+      payload: jsonEncode(message.data),
     );
+  }
+
+  /// Clic sur une notification locale (affichée quand l'app était ouverte) :
+  /// même routage que les clics sur notifications système.
+  void _onLocalNotificationTap(NotificationResponse response) {
+    final raw = response.payload;
+    if (raw == null || raw.isEmpty) return;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) return;
+
+      final domain = decoded['domain']?.toString();
+      if (domain == 'student_applications') {
+        final appId =
+            (decoded['application_id'] ?? decoded['applicationId'])?.toString();
+        if (appId == null || appId.isEmpty) return;
+        final handler = _onApplicationNotification;
+        if (handler != null) {
+          handler(appId);
+        } else {
+          _pendingApplicationId = appId;
+        }
+        return;
+      }
+      NotificationRouter.open(decoded);
+    } catch (e) {
+      debugPrint('[PUSH] local notification tap payload error: $e');
+    }
   }
 
   Future<void> _registerToken(String token) async {
@@ -313,6 +348,9 @@ class PushNotificationService {
 
     final domain = data['domain']?.toString();
     if (domain != 'student_applications') {
+      // N1 : routeur générique — ouvre l'écran concerné pour tous les
+      // autres domaines (admin, université, commercial, instructeur...).
+      NotificationRouter.open(data);
       return;
     }
 

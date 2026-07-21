@@ -10,6 +10,7 @@ import 'package:provider/single_child_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/date_symbol_data_local.dart';
 import 'services/push_notification_service.dart';
+import 'services/app_navigator.dart';
 
 import 'web_update_stub.dart' if (dart.library.html) 'web_update_html.dart'
     as web_update;
@@ -411,6 +412,7 @@ class AcademiaApp extends StatelessWidget {
     return MultiProvider(
       providers: providers,
       child: MaterialApp(
+        navigatorKey: AppNavigator.key,
         title: 'Academia - Projet Supabase',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(

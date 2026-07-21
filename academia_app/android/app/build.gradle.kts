@@ -7,9 +7,8 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
     // Firebase / Google Services (reads google-services.json)
-    // Temporarily disabled due to missing google-services.json file
-    // To re-enable for Play Store: provide google-services.json and remove apply false
-    id("com.google.gms.google-services") apply false
+    // Réactivé 2026-07-21 : google-services.json présent (com.academia.nexiomgroup.app)
+    id("com.google.gms.google-services")
 }
 
 val keystorePropertiesFile = rootProject.file("key.properties")
