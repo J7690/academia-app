@@ -1,0 +1,2 @@
+-- Appliquee en prod le 2026-07-21 via MCP (apply_migration). Voir dashboard Supabase pour le corps complet.
+-- Note: definitions completes conservees dans l'historique des migrations Supabase (remote).

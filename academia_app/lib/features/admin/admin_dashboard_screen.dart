@@ -39,6 +39,7 @@ import 'admin_finance_screen.dart';
 import 'admin_pricing_screen.dart';
 import 'admin_moderation_screen.dart';
 import 'admin_analytics_screen.dart';
+import 'admin_commercial_coordination_screen.dart';
 import '../../services/analytics_tracking_service.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -301,7 +302,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 27,
+      length: 28,
       child: Consumer<AdminApplicationsProvider>(
         builder: (context, applicationsProvider, child) {
           final unread = applicationsProvider.unreadCount;
@@ -436,6 +437,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const Tab(text: '💰 Tarification'),
                   const Tab(text: '🚨 Modération UGC'),
                   const Tab(text: '📊 Analytics'),
+                  const Tab(text: '🧑‍💼 Coordination commerciale'),
                 ],
               ),
             ),
@@ -478,6 +480,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 const AdminPricingScreen(),
                 const AdminModerationScreen(),
                 const AdminAnalyticsScreen(),
+                const AdminCommercialCoordinationScreen(),
               ],
             ),
           );

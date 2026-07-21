@@ -1,0 +1,1 @@
+-- Appliquee en prod le 2026-07-21 via MCP (apply_migration). Voir dashboard Supabase pour le corps complet.

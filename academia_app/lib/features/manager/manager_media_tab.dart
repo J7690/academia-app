@@ -1,0 +1,169 @@
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+/// Onglet « Médiathèque » (M4) — le manager/admin met à disposition des
+/// visuels, affiches et vidéos, diffusés à l'équipe (ou à tous pour l'admin).
+/// Les commerciaux les consultent depuis leur espace ; chaque accès est
+/// journalisé (traçabilité des visuels partenaires).
+class ManagerMediaTab extends StatefulWidget {
+  final bool isAdmin;
+  const ManagerMediaTab({super.key, this.isAdmin = false});
+
+  @override
+  State<ManagerMediaTab> createState() => _ManagerMediaTabState();
+}
+
+class _ManagerMediaTabState extends State<ManagerMediaTab> {
+  bool _loading = true;
+  List<Map<String, dynamic>> _assets = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    try {
+      // Le manager/admin voit ce qu'il a créé (RLS creator/admin) — on récupère
+      // via la liste commerciale pour l'aperçu de diffusion.
+      final r = await Supabase.instance.client
+          .rpc('app_commercial_list_content_assets');
+      if (r is Map && r['success'] == true) {
+        _assets = (r['assets'] as List? ?? [])
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _loading = false);
+  }
+
+  Future<void> _openAddSheet() async {
+    final titleCtrl = TextEditingController();
+    final urlCtrl = TextEditingController();
+    final descCtrl = TextEditingController();
+    String type = 'image';
+    String audience = widget.isAdmin ? 'all_commercials' : 'team';
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          left: 16, right: 16, top: 16,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+        ),
+        child: StatefulBuilder(
+          builder: (ctx, setSheet) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Ajouter un média',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Titre')),
+              TextField(controller: urlCtrl, decoration: const InputDecoration(labelText: 'Lien (URL du visuel / vidéo)')),
+              TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description')),
+              const SizedBox(height: 8),
+              Row(children: [
+                const Text('Type : '),
+                DropdownButton<String>(
+                  value: type,
+                  items: const [
+                    DropdownMenuItem(value: 'image', child: Text('Affiche / image')),
+                    DropdownMenuItem(value: 'video', child: Text('Vidéo')),
+                    DropdownMenuItem(value: 'document', child: Text('Document')),
+                  ],
+                  onChanged: (v) => setSheet(() => type = v ?? 'image'),
+                ),
+              ]),
+              if (widget.isAdmin)
+                Row(children: [
+                  const Text('Diffusion : '),
+                  DropdownButton<String>(
+                    value: audience,
+                    items: const [
+                      DropdownMenuItem(value: 'all_commercials', child: Text('Tous les commerciaux')),
+                      DropdownMenuItem(value: 'team', child: Text('Mon équipe')),
+                    ],
+                    onChanged: (v) => setSheet(() => audience = v ?? 'all_commercials'),
+                  ),
+                ]),
+              const SizedBox(height: 8),
+              FilledButton(
+                onPressed: () async {
+                  if (titleCtrl.text.trim().isEmpty || urlCtrl.text.trim().isEmpty) return;
+                  await Supabase.instance.client.rpc('app_manager_add_content_asset', params: {
+                    'p_title': titleCtrl.text.trim(),
+                    'p_asset_type': type,
+                    'p_storage_path': null,
+                    'p_external_url': urlCtrl.text.trim(),
+                    'p_thumbnail_url': type == 'image' ? urlCtrl.text.trim() : null,
+                    'p_description': descCtrl.text.trim(),
+                    'p_audience_type': audience,
+                  });
+                  if (ctx.mounted) Navigator.pop(ctx);
+                },
+                child: const Text('Publier dans la médiathèque'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _assets.isEmpty
+              ? const Center(child: Text('Aucun média publié'))
+              : RefreshIndicator(
+                  onRefresh: _load,
+                  child: GridView.count(
+                    crossAxisCount: 2,
+                    padding: const EdgeInsets.all(12),
+                    childAspectRatio: 0.85,
+                    children: _assets.map(_card).toList(),
+                  ),
+                ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openAddSheet,
+        icon: const Icon(Icons.add),
+        label: const Text('Média'),
+      ),
+    );
+  }
+
+  Widget _card(Map<String, dynamic> a) {
+    final thumb = a['thumbnail_url']?.toString();
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: thumb != null && thumb.isNotEmpty
+                ? Image.network(thumb, fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.image, size: 40))
+                : Container(
+                    color: Colors.indigo.shade50,
+                    child: Icon(
+                        a['asset_type'] == 'video' ? Icons.play_circle : Icons.description,
+                        size: 40)),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Text(a['title']?.toString() ?? '—',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+          ),
+        ],
+      ),
+    );
+  }
+}

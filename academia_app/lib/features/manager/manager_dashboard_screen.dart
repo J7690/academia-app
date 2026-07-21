@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../../services/analytics_tracking_service.dart';
+import 'manager_team_tab.dart';
+import 'manager_announcements_tab.dart';
+import 'manager_media_tab.dart';
+import 'manager_campaigns_tab.dart';
 
-/// Tableau de bord du rôle Manager (M0 — squelette).
+/// Tableau de bord du rôle Manager — délégation du pilotage commercial.
 ///
-/// Le Manager encadre une équipe de commerciaux. Les fonctionnalités
-/// arrivent par phases :
-///  - M1 : création de comptes commerciaux rattachés
-///  - M2 : suivi statistiques de l'équipe (lecture des taux)
-///  - M3 : messagerie manager ↔ commerciaux
-///  - M4 : médiathèque sécurisée (visuels partenaires)
-///  - M5 : campagnes de communication
+/// Le Manager coordonne son équipe de commerciaux :
+///  - Mon équipe / Statistiques (M1/M2)
+///  - Coordination : diffusions notifiées aux commerciaux (M3)
+///  - Médiathèque : visuels/affiches/vidéos mis à disposition (M4)
+///  - Campagnes de communication (M5)
 ///
-/// Cet écran pose la structure en onglets ; chaque onglet affiche un
-/// état « à venir » tant que sa phase n'est pas livrée, ce qui permet de
-/// livrer et tester le rôle progressivement sans casser la navigation.
+/// Les mêmes écrans servent à l'admin (portée globale) via le dashboard admin.
 class ManagerDashboardScreen extends StatefulWidget {
   const ManagerDashboardScreen({super.key});
 
@@ -32,73 +32,27 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const tabs = <_ManagerTab>[
-      _ManagerTab('Mon équipe', Icons.groups, 'M1',
-          'Créer et gérer vos commerciaux'),
-      _ManagerTab('Statistiques', Icons.bar_chart, 'M2',
-          'Suivre les performances de votre équipe'),
-      _ManagerTab('Messages', Icons.chat_bubble, 'M3',
-          'Échanger avec vos commerciaux'),
-      _ManagerTab('Médiathèque', Icons.perm_media, 'M4',
-          'Mettre à disposition visuels, affiches et vidéos'),
-      _ManagerTab('Campagnes', Icons.campaign, 'M5',
-          'Coordonner les campagnes de communication'),
-    ];
-
     return DefaultTabController(
-      length: tabs.length,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Espace Manager'),
-          bottom: TabBar(
+          bottom: const TabBar(
             isScrollable: true,
             tabs: [
-              for (final t in tabs) Tab(icon: Icon(t.icon), text: t.label),
+              Tab(icon: Icon(Icons.groups), text: 'Mon équipe'),
+              Tab(icon: Icon(Icons.campaign), text: 'Coordination'),
+              Tab(icon: Icon(Icons.perm_media), text: 'Médiathèque'),
+              Tab(icon: Icon(Icons.stacked_bar_chart), text: 'Campagnes'),
             ],
           ),
         ),
-        body: TabBarView(
-          children: [for (final t in tabs) _ComingSoon(tab: t)],
-        ),
-      ),
-    );
-  }
-}
-
-class _ManagerTab {
-  final String label;
-  final IconData icon;
-  final String phase;
-  final String subtitle;
-  const _ManagerTab(this.label, this.icon, this.phase, this.subtitle);
-}
-
-class _ComingSoon extends StatelessWidget {
-  final _ManagerTab tab;
-  const _ComingSoon({required this.tab});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        body: const TabBarView(
           children: [
-            Icon(tab.icon, size: 56, color: Colors.grey.shade400),
-            const SizedBox(height: 16),
-            Text(tab.label,
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text(tab.subtitle,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade600)),
-            const SizedBox(height: 16),
-            Chip(
-              label: Text('Bientôt disponible · ${tab.phase}'),
-              backgroundColor: Colors.indigo.shade50,
-            ),
+            ManagerTeamTab(),
+            ManagerAnnouncementsTab(isAdmin: false),
+            ManagerMediaTab(isAdmin: false),
+            ManagerCampaignsTab(isAdmin: false),
           ],
         ),
       ),

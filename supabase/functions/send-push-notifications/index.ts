@@ -602,6 +602,11 @@ function buildFcmMessage(event: any) {
     title = "💵 Nouvelle commission";
     body = amount ? `Commission de ${amount} ${currency} générée` : "Vous avez reçu une nouvelle commission";
 
+  // --- Commercial : diffusion du manager / admin ---
+  } else if (domain === "commercial_broadcast") {
+    title = "📣 Info de votre manager";
+    body = payload.title ? String(payload.title) : "Une nouvelle information a été publiée";
+
   // --- Admin : digest d'activité / parcours utilisateurs ---
   } else if (domain === "admin_audience") {
     const visitors = Number(payload.visitors || 0);

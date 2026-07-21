@@ -7,6 +7,7 @@ import 'app_navigator.dart';
 
 import '../features/admin/admin_applications_screen.dart';
 import '../features/admin/admin_audience_screen.dart';
+import '../features/commercial/commercial_manager_info_screen.dart';
 import '../features/admin/admin_challenges_screen.dart';
 import '../features/admin/admin_communities_screen.dart';
 import '../features/admin/admin_dashboard_screen.dart';
@@ -128,6 +129,11 @@ class NotificationRouter {
         return const UniversityApplicationsScreen();
       case 'university_payments':
         return const UniversityPaymentsScreen();
+    }
+
+    // Diffusion manager/admin -> espace commercial (infos + médiathèque).
+    if (domain == 'commercial_broadcast') {
+      return const CommercialManagerInfoScreen();
     }
 
     // --- Fallbacks par rôle (couvre tous les autres domaines) ---
