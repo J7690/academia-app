@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../services/analytics_tracking_service.dart';
+import '../student/student_settings_screen.dart';
 import 'manager_team_tab.dart';
 import 'manager_announcements_tab.dart';
 import 'manager_media_tab.dart';
@@ -37,6 +38,21 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Espace Manager'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings),
+              tooltip: 'Paramètres',
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    // Même écran que l'étudiant : déconnexion + suppression de
+                    // compte (conformité Play Store). Pas de profil étudiant.
+                    builder: (_) => const StudentSettingsScreen(showProfile: false),
+                  ),
+                );
+              },
+            ),
+          ],
           bottom: const TabBar(
             isScrollable: true,
             tabs: [

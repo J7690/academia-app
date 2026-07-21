@@ -1,0 +1,2 @@
+-- Autorise le role manager a demander la suppression de son compte (Play Store).
+-- Applique en prod le 2026-07-21 via MCP (ajout de 'manager' a la liste eligible).
