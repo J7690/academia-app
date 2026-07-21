@@ -47,7 +47,8 @@ class _ManagerCampaignsTabState extends State<ManagerCampaignsTab> {
           bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
         ),
         child: StatefulBuilder(
-          builder: (ctx, setSheet) => Column(
+          builder: (ctx, setSheet) => SingleChildScrollView(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text('Nouvelle campagne',
@@ -83,7 +84,9 @@ class _ManagerCampaignsTabState extends State<ManagerCampaignsTab> {
                 },
                 child: const Text('Créer'),
               ),
+              const SizedBox(height: 8),
             ],
+          ),
           ),
         ),
       ),

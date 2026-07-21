@@ -64,7 +64,8 @@ class _ManagerMediaTabState extends State<ManagerMediaTab> {
           bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
         ),
         child: StatefulBuilder(
-          builder: (ctx, setSheet) => Column(
+          builder: (ctx, setSheet) => SingleChildScrollView(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text('Ajouter un média',
@@ -179,7 +180,9 @@ class _ManagerMediaTabState extends State<ManagerMediaTab> {
                     ? const Text('Publication…')
                     : const Text('Publier dans la médiathèque'),
               ),
+              const SizedBox(height: 8),
             ],
+          ),
           ),
         ),
       ),

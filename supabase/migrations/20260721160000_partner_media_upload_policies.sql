@@ -1,0 +1,2 @@
+-- Policies storage: admins/managers peuvent televerser dans partner-media (prive).
+-- Lecture reservee au service_role (edge function content-watermark). Applique prod 2026-07-21.

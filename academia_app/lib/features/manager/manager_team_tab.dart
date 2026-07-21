@@ -119,7 +119,8 @@ class _ManagerTeamTabState extends State<ManagerTeamTab> {
           bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
         ),
         child: StatefulBuilder(
-          builder: (ctx, setSheet) => Column(
+          builder: (ctx, setSheet) => SingleChildScrollView(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -185,7 +186,9 @@ class _ManagerTeamTabState extends State<ManagerTeamTab> {
                     : const Icon(Icons.check),
                 label: const Text('Créer le commercial'),
               ),
+              const SizedBox(height: 8),
             ],
+          ),
           ),
         ),
       ),
