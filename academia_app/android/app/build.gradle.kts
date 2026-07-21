@@ -23,11 +23,11 @@ android {
     // attributes like android:attr/lStar used transitively by plugins) and
     // recent AndroidX dependencies.
     compileSdk = 36
-    // NDK r28 : produit des binaires natifs alignes sur des pages memoire de
-    // 16 Ko (exigence Google Play Android 15+). Auto-telecharge par Gradle.
-    ndkVersion = "28.0.13004108"
+    // NDK fourni par Flutter (déjà installé, pas de nouveau téléchargement).
+    // Le moteur Flutter récent produit déjà des .so alignés 16 Ko.
+    ndkVersion = flutter.ndkVersion
 
-    // Empaquetage des .so non compresses et alignes 16 Ko dans l'app bundle.
+    // Empaquetage des .so non compressés et alignés 16 Ko dans l'app bundle.
     packaging {
         jniLibs {
             useLegacyPackaging = false
