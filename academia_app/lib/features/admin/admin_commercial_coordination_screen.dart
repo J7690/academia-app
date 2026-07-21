@@ -4,6 +4,7 @@ import '../manager/manager_team_tab.dart';
 import '../manager/manager_announcements_tab.dart';
 import '../manager/manager_media_tab.dart';
 import '../manager/manager_campaigns_tab.dart';
+import 'admin_managers_tab.dart';
 
 /// Miroir admin de l'espace Manager — portée GLOBALE.
 ///
@@ -18,7 +19,7 @@ class AdminCommercialCoordinationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 4,
+      length: 5,
       child: Column(
         children: [
           const TabBar(
@@ -26,6 +27,7 @@ class AdminCommercialCoordinationScreen extends StatelessWidget {
             labelColor: Colors.indigo,
             unselectedLabelColor: Colors.grey,
             tabs: [
+              Tab(icon: Icon(Icons.manage_accounts), text: 'Managers'),
               Tab(icon: Icon(Icons.groups), text: 'Commerciaux'),
               Tab(icon: Icon(Icons.campaign), text: 'Coordination'),
               Tab(icon: Icon(Icons.perm_media), text: 'Médiathèque'),
@@ -35,6 +37,7 @@ class AdminCommercialCoordinationScreen extends StatelessWidget {
           const Expanded(
             child: TabBarView(
               children: [
+                AdminManagersTab(),
                 ManagerTeamTab(),
                 ManagerAnnouncementsTab(isAdmin: true),
                 ManagerMediaTab(isAdmin: true),

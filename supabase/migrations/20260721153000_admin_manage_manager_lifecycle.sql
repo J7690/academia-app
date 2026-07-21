@@ -1,0 +1,2 @@
+-- Gestion cycle de vie manager par admin (suspend/block-actions/delete+reprise equipe).
+-- Applique prod 2026-07-21 via MCP. can_manager_act() garde les RPC d'ecriture.
