@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app_navigator.dart';
 
 import '../features/admin/admin_applications_screen.dart';
+import '../features/admin/admin_audience_screen.dart';
 import '../features/admin/admin_challenges_screen.dart';
 import '../features/admin/admin_communities_screen.dart';
 import '../features/admin/admin_dashboard_screen.dart';
@@ -116,6 +117,11 @@ class NotificationRouter {
         return const AdminChallengesScreen();
       case 'admin_opportunities':
         return const AdminOpportunitiesScreen();
+      case 'admin_audience':
+        return Scaffold(
+          appBar: AppBar(title: const Text('Audience — parcours utilisateurs')),
+          body: const AdminAudienceScreen(),
+        );
 
       // --- Université (écrans dédiés) ---
       case 'university_applications':

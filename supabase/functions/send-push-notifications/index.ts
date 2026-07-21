@@ -601,6 +601,17 @@ function buildFcmMessage(event: any) {
     const currency = payload.currency || "XOF";
     title = "💵 Nouvelle commission";
     body = amount ? `Commission de ${amount} ${currency} générée` : "Vous avez reçu une nouvelle commission";
+
+  // --- Admin : digest d'activité / parcours utilisateurs ---
+  } else if (domain === "admin_audience") {
+    const visitors = Number(payload.visitors || 0);
+    const offerViews = Number(payload.offer_views || 0);
+    const mins = payload.window_minutes || 15;
+    title = "📊 Activité sur Academia";
+    const parts: string[] = [];
+    parts.push(`${visitors} visiteur${visitors > 1 ? "s" : ""}`);
+    if (offerViews > 0) parts.push(`${offerViews} consultation${offerViews > 1 ? "s" : ""} d'offres`);
+    body = `${parts.join(" · ")} (${mins} dernières min)`;
   }
 
   return {
