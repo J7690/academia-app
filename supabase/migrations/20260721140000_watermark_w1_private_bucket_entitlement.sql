@@ -1,0 +1,3 @@
+-- Filigrane W1 : bucket prive partner-media + RPC app_prepare_watermarked_asset.
+-- Applique en prod le 2026-07-21 via MCP. Edge function content-watermark (v1) deployee.
+-- Voir historique migrations Supabase (remote) pour le corps complet.

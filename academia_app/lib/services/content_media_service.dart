@@ -6,6 +6,8 @@ import 'package:saver_gallery/saver_gallery.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../config/supabase_config.dart';
+
 /// Service de gestion des médias de la médiathèque commerciale :
 /// - téléchargement (enregistrement dans la galerie du téléphone)
 /// - partage / publication (WhatsApp, Facebook, etc. via la feuille de partage)
@@ -39,6 +41,31 @@ class ContentMediaService {
     return path;
   }
 
+  /// Récupère la version FILIGRANÉE d'un média image via l'edge function
+  /// `content-watermark` (le filigrane est appliqué côté serveur, non
+  /// contournable). Retourne le chemin d'un fichier temporaire.
+  Future<String> _watermarkedTempPath(String assetId, String title) async {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session == null) throw Exception('not_authenticated');
+    final dir = await getTemporaryDirectory();
+    final path = '${dir.path}/${_fileNameFor(title, '.jpg')}';
+    await _dio.download(
+      '${SupabaseConfig.url}/functions/v1/content-watermark',
+      path,
+      data: {'asset_id': assetId, 'action': 'download'},
+      options: Options(
+        method: 'POST',
+        responseType: ResponseType.bytes,
+        headers: {
+          'Authorization': 'Bearer ${session.accessToken}',
+          'apikey': SupabaseConfig.anonKey,
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
+    return path;
+  }
+
   Future<void> _log(String assetId, String action) async {
     try {
       await Supabase.instance.client.rpc('app_log_content_asset_access',
@@ -46,55 +73,86 @@ class ContentMediaService {
     } catch (_) {}
   }
 
-  /// Télécharge le média et l'enregistre dans la galerie du téléphone.
-  /// Retourne true si l'enregistrement a réussi.
+  /// Récupère un fichier prêt à enregistrer/partager :
+  /// - si `storagePath` est fourni (bucket privé) → version filigranée serveur
+  /// - sinon → téléchargement direct depuis `url` (média par lien, sans filigrane)
+  Future<String> _resolveFile({
+    required String assetId,
+    required String title,
+    String? url,
+    String? storagePath,
+  }) async {
+    if (storagePath != null && storagePath.isNotEmpty) {
+      return _watermarkedTempPath(assetId, title);
+    }
+    if (url == null || url.isEmpty) throw Exception('no_source');
+    final path = await _downloadToTemp(url, _fileNameFor(title, url));
+    await _log(assetId, 'download'); // le filigrane journalise déjà côté serveur
+    return path;
+  }
+
+  /// Télécharge le média (filigrané si privé) et l'enregistre dans la galerie.
   Future<bool> downloadToGallery({
     required String assetId,
-    required String url,
     required String title,
+    String? url,
+    String? storagePath,
   }) async {
-    final fileName = _fileNameFor(title, url);
-    final path = await _downloadToTemp(url, fileName);
+    final path = await _resolveFile(
+        assetId: assetId, title: title, url: url, storagePath: storagePath);
     final result = await SaverGallery.saveFile(
       filePath: path,
-      fileName: fileName,
+      fileName: path.split('/').last,
       androidRelativePath: 'Download/Academia',
       skipIfExists: false,
     );
-    await _log(assetId, 'download');
     return result.isSuccess;
   }
 
-  /// Ouvre la feuille de partage native pour publier le média
-  /// (WhatsApp, Facebook, Instagram, etc.).
+  /// Ouvre la feuille de partage native pour publier le média (filigrané si privé).
   Future<void> shareMedia({
     required String assetId,
-    required String url,
     required String title,
+    String? url,
+    String? storagePath,
     String? description,
   }) async {
-    final fileName = _fileNameFor(title, url);
-    final path = await _downloadToTemp(url, fileName);
-    await _log(assetId, 'download');
+    final path = await _resolveFile(
+        assetId: assetId, title: title, url: url, storagePath: storagePath);
     await Share.shareXFiles(
       [XFile(path)],
       text: description != null && description.isNotEmpty ? description : title,
     );
   }
 
-  /// Upload d'un fichier (manager/admin) vers le bucket public `marketing`.
-  /// Retourne l'URL publique, directement téléchargeable et partageable.
+  /// Upload public (bucket `marketing`) — vidéos et documents non filigranés.
   Future<String> uploadToMarketing({
     required File file,
     required String originalName,
   }) async {
-    final ext = _extFromUrl(originalName);
-    final objectPath =
-        'manager/${DateTime.now().millisecondsSinceEpoch}_'
-        '${originalName.replaceAll(RegExp(r'[^a-zA-Z0-9_.-]'), '_')}$ext';
+    final objectPath = _objectPath(originalName);
     final storage = Supabase.instance.client.storage.from('marketing');
     await storage.upload(objectPath, file,
         fileOptions: const FileOptions(upsert: true));
     return storage.getPublicUrl(objectPath);
+  }
+
+  /// Upload privé (bucket `partner-media`) — images filigranées à la demande.
+  /// Retourne le `storage_path` (jamais d'URL publique : accès via filigrane).
+  Future<String> uploadToPartnerMedia({
+    required File file,
+    required String originalName,
+  }) async {
+    final objectPath = _objectPath(originalName);
+    await Supabase.instance.client.storage
+        .from('partner-media')
+        .upload(objectPath, file, fileOptions: const FileOptions(upsert: true));
+    return objectPath;
+  }
+
+  String _objectPath(String originalName) {
+    final ext = _extFromUrl(originalName);
+    final safe = originalName.replaceAll(RegExp(r'[^a-zA-Z0-9_.-]'), '_');
+    return 'manager/${DateTime.now().millisecondsSinceEpoch}_$safe$ext';
   }
 }

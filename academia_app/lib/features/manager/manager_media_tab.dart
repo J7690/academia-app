@@ -51,9 +51,9 @@ class _ManagerMediaTabState extends State<ManagerMediaTab> {
     final descCtrl = TextEditingController();
     String type = 'image';
     String audience = widget.isAdmin ? 'all_commercials' : 'team';
-    String? uploadedUrl;
-    String? uploadedName;
-    bool uploading = false;
+    File? pickedFile;
+    String? pickedName;
+    bool busy = false;
 
     await showModalBottomSheet(
       context: context,
@@ -76,42 +76,23 @@ class _ManagerMediaTabState extends State<ManagerMediaTab> {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: uploading
+                      onPressed: busy
                           ? null
                           : () async {
                               final res = await FilePicker.platform.pickFiles(
                                 type: FileType.media, withData: false);
                               final picked = res?.files.single;
                               if (picked?.path == null) return;
-                              setSheet(() => uploading = true);
-                              try {
-                                final url = await ContentMediaService.instance
-                                    .uploadToMarketing(
-                                  file: File(picked!.path!),
-                                  originalName: picked.name,
-                                );
-                                setSheet(() {
-                                  uploadedUrl = url;
-                                  uploadedName = picked.name;
-                                  urlCtrl.text = url;
-                                });
-                              } catch (e) {
-                                if (ctx.mounted) {
-                                  ScaffoldMessenger.of(ctx).showSnackBar(
-                                      SnackBar(content: Text('Upload échoué : $e')));
-                                }
-                              } finally {
-                                setSheet(() => uploading = false);
-                              }
+                              setSheet(() {
+                                pickedFile = File(picked!.path!);
+                                pickedName = picked.name;
+                                urlCtrl.clear();
+                              });
                             },
-                      icon: uploading
-                          ? const SizedBox(
-                              width: 16, height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.upload_file),
-                      label: Text(uploadedName == null
+                      icon: const Icon(Icons.upload_file),
+                      label: Text(pickedName == null
                           ? 'Importer un fichier'
-                          : 'Importé : ${uploadedName!}'),
+                          : 'Fichier : ${pickedName!}'),
                     ),
                   ),
                 ],
@@ -149,20 +130,54 @@ class _ManagerMediaTabState extends State<ManagerMediaTab> {
                 ]),
               const SizedBox(height: 8),
               FilledButton(
-                onPressed: () async {
-                  if (titleCtrl.text.trim().isEmpty || urlCtrl.text.trim().isEmpty) return;
-                  await Supabase.instance.client.rpc('app_manager_add_content_asset', params: {
-                    'p_title': titleCtrl.text.trim(),
-                    'p_asset_type': type,
-                    'p_storage_path': null,
-                    'p_external_url': urlCtrl.text.trim(),
-                    'p_thumbnail_url': type == 'image' ? urlCtrl.text.trim() : null,
-                    'p_description': descCtrl.text.trim(),
-                    'p_audience_type': audience,
-                  });
-                  if (ctx.mounted) Navigator.pop(ctx);
-                },
-                child: const Text('Publier dans la médiathèque'),
+                onPressed: busy
+                    ? null
+                    : () async {
+                        if (titleCtrl.text.trim().isEmpty) return;
+                        if (pickedFile == null && urlCtrl.text.trim().isEmpty) return;
+                        setSheet(() => busy = true);
+                        try {
+                          String? storagePath;
+                          String? externalUrl;
+                          String? thumbUrl;
+                          if (pickedFile != null) {
+                            if (type == 'image') {
+                              // Image => bucket privé, filigrané à la demande.
+                              storagePath = await ContentMediaService.instance
+                                  .uploadToPartnerMedia(
+                                      file: pickedFile!, originalName: pickedName!);
+                            } else {
+                              // Vidéo / document => bucket public.
+                              externalUrl = await ContentMediaService.instance
+                                  .uploadToMarketing(
+                                      file: pickedFile!, originalName: pickedName!);
+                            }
+                          } else {
+                            externalUrl = urlCtrl.text.trim();
+                            if (type == 'image') thumbUrl = externalUrl;
+                          }
+                          await Supabase.instance.client
+                              .rpc('app_manager_add_content_asset', params: {
+                            'p_title': titleCtrl.text.trim(),
+                            'p_asset_type': type,
+                            'p_storage_path': storagePath,
+                            'p_external_url': externalUrl,
+                            'p_thumbnail_url': thumbUrl,
+                            'p_description': descCtrl.text.trim(),
+                            'p_audience_type': audience,
+                          });
+                          if (ctx.mounted) Navigator.pop(ctx);
+                        } catch (e) {
+                          if (ctx.mounted) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                                SnackBar(content: Text('Publication échouée : $e')));
+                          }
+                          setSheet(() => busy = false);
+                        }
+                      },
+                child: busy
+                    ? const Text('Publication…')
+                    : const Text('Publier dans la médiathèque'),
               ),
             ],
           ),

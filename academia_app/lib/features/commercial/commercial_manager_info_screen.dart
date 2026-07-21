@@ -141,26 +141,14 @@ class _MediaViewState extends State<_MediaView> {
     if (mounted) setState(() => _loading = false);
   }
 
-  String? _mediaUrl(Map<String, dynamic> a) {
-    final ext = a['external_url']?.toString();
-    if (ext != null && ext.isNotEmpty) return ext;
-    final path = a['storage_path']?.toString();
-    if (path != null && path.isNotEmpty) {
-      // storage_path relatif au bucket marketing (public).
-      return Supabase.instance.client.storage.from('marketing').getPublicUrl(path);
-    }
-    return null;
-  }
-
   Future<void> _download(Map<String, dynamic> a) async {
-    final url = _mediaUrl(a);
-    if (url == null) return;
     _snack('Téléchargement en cours…');
     try {
       final ok = await ContentMediaService.instance.downloadToGallery(
         assetId: a['id'].toString(),
-        url: url,
         title: a['title']?.toString() ?? 'media',
+        url: a['external_url']?.toString(),
+        storagePath: a['storage_path']?.toString(),
       );
       _snack(ok ? 'Enregistré dans votre galerie' : 'Échec de l\'enregistrement');
     } catch (e) {
@@ -169,13 +157,12 @@ class _MediaViewState extends State<_MediaView> {
   }
 
   Future<void> _share(Map<String, dynamic> a) async {
-    final url = _mediaUrl(a);
-    if (url == null) return;
     try {
       await ContentMediaService.instance.shareMedia(
         assetId: a['id'].toString(),
-        url: url,
         title: a['title']?.toString() ?? 'media',
+        url: a['external_url']?.toString(),
+        storagePath: a['storage_path']?.toString(),
         description: a['description']?.toString(),
       );
     } catch (e) {
