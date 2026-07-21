@@ -2,7 +2,7 @@ name: academia_app
 description: Projet Flutter avec intégration Supabase automatisée
 publish_to: 'none'
 
-version: 1.0.0+17
+version: 1.0.0+19
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -61,7 +61,10 @@ dependencies:
 
   share_plus: ^10.0.3
 
-  ar_flutter_plugin: ^0.7.3
+  # ar_flutter_plugin retire temporairement : ses .so AR (Sceneform, abandonne)
+  # ne sont pas alignes 16 Ko (exigence Play Android 15+). Ecrans AR remplaces
+  # par un message "bientot disponible". A reintegrer via io.github.sceneview 2.x.
+  # ar_flutter_plugin: ^0.7.3
 
   academia_universal_video_player:
     path: ../packages/academia_universal_video_player
@@ -160,8 +163,9 @@ dependencies:
   dio: ^5.9.2
 
 dependency_overrides:
-  ar_flutter_plugin:
-    path: ../packages/ar_flutter_plugin
+  # ar_flutter_plugin retire temporairement (voir dependencies ci-dessus).
+  # ar_flutter_plugin:
+  #   path: ../packages/ar_flutter_plugin
   supabase: 2.10.0
   supabase_flutter: 2.10.3
   app_links: 6.4.1
