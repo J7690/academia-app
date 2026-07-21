@@ -1,5 +1,10 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../services/content_media_service.dart';
 
 /// Onglet « Médiathèque » (M4) — le manager/admin met à disposition des
 /// visuels, affiches et vidéos, diffusés à l'équipe (ou à tous pour l'admin).
@@ -46,6 +51,9 @@ class _ManagerMediaTabState extends State<ManagerMediaTab> {
     final descCtrl = TextEditingController();
     String type = 'image';
     String audience = widget.isAdmin ? 'all_commercials' : 'team';
+    String? uploadedUrl;
+    String? uploadedName;
+    bool uploading = false;
 
     await showModalBottomSheet(
       context: context,
@@ -62,7 +70,57 @@ class _ManagerMediaTabState extends State<ManagerMediaTab> {
               const Text('Ajouter un média',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Titre')),
-              TextField(controller: urlCtrl, decoration: const InputDecoration(labelText: 'Lien (URL du visuel / vidéo)')),
+              const SizedBox(height: 8),
+              // Option 1 : importer un fichier (téléchargeable/partageable par les commerciaux)
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: uploading
+                          ? null
+                          : () async {
+                              final res = await FilePicker.platform.pickFiles(
+                                type: FileType.media, withData: false);
+                              final picked = res?.files.single;
+                              if (picked?.path == null) return;
+                              setSheet(() => uploading = true);
+                              try {
+                                final url = await ContentMediaService.instance
+                                    .uploadToMarketing(
+                                  file: File(picked!.path!),
+                                  originalName: picked.name,
+                                );
+                                setSheet(() {
+                                  uploadedUrl = url;
+                                  uploadedName = picked.name;
+                                  urlCtrl.text = url;
+                                });
+                              } catch (e) {
+                                if (ctx.mounted) {
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                      SnackBar(content: Text('Upload échoué : $e')));
+                                }
+                              } finally {
+                                setSheet(() => uploading = false);
+                              }
+                            },
+                      icon: uploading
+                          ? const SizedBox(
+                              width: 16, height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.upload_file),
+                      label: Text(uploadedName == null
+                          ? 'Importer un fichier'
+                          : 'Importé : ${uploadedName!}'),
+                    ),
+                  ),
+                ],
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 4),
+                child: Text('— ou —', style: TextStyle(color: Colors.grey)),
+              ),
+              TextField(controller: urlCtrl, decoration: const InputDecoration(labelText: 'Coller un lien (URL du visuel / vidéo)')),
               TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description')),
               const SizedBox(height: 8),
               Row(children: [

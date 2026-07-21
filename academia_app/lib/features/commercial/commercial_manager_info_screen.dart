@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../services/content_media_service.dart';
+
 /// Espace commercial : les infos diffusées par son manager (ou l'admin)
 /// + la médiathèque mise à sa disposition. Accessible depuis une
 /// notification « commercial_broadcast » (routeur) ou depuis son dashboard.
@@ -139,11 +141,52 @@ class _MediaViewState extends State<_MediaView> {
     if (mounted) setState(() => _loading = false);
   }
 
-  Future<void> _logAccess(String id, String action) async {
+  String? _mediaUrl(Map<String, dynamic> a) {
+    final ext = a['external_url']?.toString();
+    if (ext != null && ext.isNotEmpty) return ext;
+    final path = a['storage_path']?.toString();
+    if (path != null && path.isNotEmpty) {
+      // storage_path relatif au bucket marketing (public).
+      return Supabase.instance.client.storage.from('marketing').getPublicUrl(path);
+    }
+    return null;
+  }
+
+  Future<void> _download(Map<String, dynamic> a) async {
+    final url = _mediaUrl(a);
+    if (url == null) return;
+    _snack('Téléchargement en cours…');
     try {
-      await Supabase.instance.client.rpc('app_log_content_asset_access',
-          params: {'p_asset': id, 'p_action': action});
-    } catch (_) {}
+      final ok = await ContentMediaService.instance.downloadToGallery(
+        assetId: a['id'].toString(),
+        url: url,
+        title: a['title']?.toString() ?? 'media',
+      );
+      _snack(ok ? 'Enregistré dans votre galerie' : 'Échec de l\'enregistrement');
+    } catch (e) {
+      _snack('Erreur : $e');
+    }
+  }
+
+  Future<void> _share(Map<String, dynamic> a) async {
+    final url = _mediaUrl(a);
+    if (url == null) return;
+    try {
+      await ContentMediaService.instance.shareMedia(
+        assetId: a['id'].toString(),
+        url: url,
+        title: a['title']?.toString() ?? 'media',
+        description: a['description']?.toString(),
+      );
+    } catch (e) {
+      _snack('Erreur : $e');
+    }
+  }
+
+  void _snack(String m) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(m), duration: const Duration(seconds: 2)));
   }
 
   @override
@@ -154,41 +197,60 @@ class _MediaViewState extends State<_MediaView> {
     }
     return RefreshIndicator(
       onRefresh: _load,
-      child: GridView.count(
-        crossAxisCount: 2,
+      child: ListView(
         padding: const EdgeInsets.all(12),
-        childAspectRatio: 0.85,
         children: _assets.map((a) {
           final thumb = a['thumbnail_url']?.toString();
-          return InkWell(
-            onTap: () => _logAccess(a['id'].toString(), 'view'),
-            child: Card(
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: thumb != null && thumb.isNotEmpty
-                        ? Image.network(thumb, fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(Icons.image, size: 40))
-                        : Container(
-                            color: Colors.indigo.shade50,
-                            child: Icon(
-                                a['asset_type'] == 'video'
-                                    ? Icons.play_circle
-                                    : Icons.description,
-                                size: 40)),
+          return Card(
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  height: 170,
+                  child: thumb != null && thumb.isNotEmpty
+                      ? Image.network(thumb, fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.image, size: 40))
+                      : Container(
+                          color: Colors.indigo.shade50,
+                          child: Icon(
+                              a['asset_type'] == 'video'
+                                  ? Icons.play_circle
+                                  : Icons.description,
+                              size: 48)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(a['title']?.toString() ?? '—',
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      if ((a['description']?.toString() ?? '').isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(a['description'].toString(),
+                              style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        ),
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Text(a['title']?.toString() ?? '—',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 12)),
-                  ),
-                ],
-              ),
+                ),
+                OverflowBar(
+                  alignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => _download(a),
+                      icon: const Icon(Icons.download),
+                      label: const Text('Télécharger'),
+                    ),
+                    FilledButton.icon(
+                      onPressed: () => _share(a),
+                      icon: const Icon(Icons.share),
+                      label: const Text('Partager / Publier'),
+                    ),
+                  ],
+                ),
+              ],
             ),
           );
         }).toList(),
