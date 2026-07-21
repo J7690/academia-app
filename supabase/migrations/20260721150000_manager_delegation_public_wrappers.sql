@@ -1,0 +1,2 @@
+-- Wrappers public pour les RPC Manager (Flutter appelle le schema public).
+-- Applique en prod le 2026-07-21 via MCP. Chaque wrapper delegue a app.*.
