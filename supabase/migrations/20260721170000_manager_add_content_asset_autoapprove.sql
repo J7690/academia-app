@@ -1,0 +1,2 @@
+-- app_manager_add_content_asset : auto-approbation des medias publies par un
+-- manager (approved_at) - sinon invisibles pour ses commerciaux. Prod 2026-07-21.

@@ -83,13 +83,48 @@ class _ManagerMediaTabState extends State<ManagerMediaTab> {
                       onPressed: busy
                           ? null
                           : () async {
+                              // Pattern éprouvé de l'app : FileType.custom +
+                              // extensions (FileType.media est peu fiable sur Android).
                               final res = await FilePicker.platform.pickFiles(
-                                type: FileType.media, withData: true);
-                              final picked = res?.files.single;
-                              if (picked?.bytes == null) return;
+                                allowMultiple: false,
+                                withData: true,
+                                type: FileType.custom,
+                                allowedExtensions: const [
+                                  'jpg', 'jpeg', 'png', 'webp', 'gif',
+                                  'mp4', 'mov', 'webm', 'm4v',
+                                  'pdf',
+                                ],
+                              );
+                              if (res == null || res.files.isEmpty) return;
+                              final picked = res.files.first;
+                              if (picked.bytes == null) {
+                                if (ctx.mounted) {
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              'Impossible de lire ce fichier. Réessayez ou choisissez-en un autre.')));
+                                }
+                                return;
+                              }
+                              if (picked.size > 200 * 1024 * 1024) {
+                                if (ctx.mounted) {
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              'Fichier trop volumineux (max 200 Mo).')));
+                                }
+                                return;
+                              }
+                              // Détection auto du type selon l'extension.
+                              final ext = picked.extension?.toLowerCase() ?? '';
+                              final detected = ['mp4', 'mov', 'webm', 'm4v']
+                                      .contains(ext)
+                                  ? 'video'
+                                  : (ext == 'pdf' ? 'document' : 'image');
                               setSheet(() {
-                                pickedBytes = picked!.bytes;
+                                pickedBytes = picked.bytes;
                                 pickedName = picked.name;
+                                type = detected;
                                 urlCtrl.clear();
                               });
                             },
