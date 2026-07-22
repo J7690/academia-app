@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -51,7 +51,7 @@ class _ManagerMediaTabState extends State<ManagerMediaTab> {
     final descCtrl = TextEditingController();
     String type = 'image';
     String audience = widget.isAdmin ? 'all_commercials' : 'team';
-    File? pickedFile;
+    Uint8List? pickedBytes;
     String? pickedName;
     bool busy = false;
 
@@ -84,11 +84,11 @@ class _ManagerMediaTabState extends State<ManagerMediaTab> {
                           ? null
                           : () async {
                               final res = await FilePicker.platform.pickFiles(
-                                type: FileType.media, withData: false);
+                                type: FileType.media, withData: true);
                               final picked = res?.files.single;
-                              if (picked?.path == null) return;
+                              if (picked?.bytes == null) return;
                               setSheet(() {
-                                pickedFile = File(picked!.path!);
+                                pickedBytes = picked!.bytes;
                                 pickedName = picked.name;
                                 urlCtrl.clear();
                               });
@@ -138,23 +138,23 @@ class _ManagerMediaTabState extends State<ManagerMediaTab> {
                     ? null
                     : () async {
                         if (titleCtrl.text.trim().isEmpty) return;
-                        if (pickedFile == null && urlCtrl.text.trim().isEmpty) return;
+                        if (pickedBytes == null && urlCtrl.text.trim().isEmpty) return;
                         setSheet(() => busy = true);
                         try {
                           String? storagePath;
                           String? externalUrl;
                           String? thumbUrl;
-                          if (pickedFile != null) {
+                          if (pickedBytes != null) {
                             if (type == 'image') {
                               // Image => bucket privé, filigrané à la demande.
                               storagePath = await ContentMediaService.instance
                                   .uploadToPartnerMedia(
-                                      file: pickedFile!, originalName: pickedName!);
+                                      bytes: pickedBytes!, originalName: pickedName!);
                             } else {
                               // Vidéo / document => bucket public.
                               externalUrl = await ContentMediaService.instance
                                   .uploadToMarketing(
-                                      file: pickedFile!, originalName: pickedName!);
+                                      bytes: pickedBytes!, originalName: pickedName!);
                             }
                           } else {
                             externalUrl = urlCtrl.text.trim();
