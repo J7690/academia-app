@@ -13,7 +13,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_sound
   flutter_tts
   flutter_webrtc
-  geolocator_windows
   livekit_client
   permission_handler_windows
   printing

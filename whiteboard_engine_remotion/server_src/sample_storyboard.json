@@ -1,0 +1,40 @@
+{
+  "theme": "notebook",
+  "scenes": [
+    {
+      "id": "scene-001",
+      "order": 0,
+      "title": "Mathématiques",
+      "duration_ms": 7000,
+      "narration": "Aujourd'hui, découvrons ce qu'est une primitive.",
+      "blocks": [
+        { "type": "title", "content": "Primitive d'une fonction" },
+        { "type": "paragraph", "content": "La primitive est l'opération inverse de la dérivée." }
+      ]
+    },
+    {
+      "id": "scene-002",
+      "order": 1,
+      "title": "Définition",
+      "duration_ms": 8000,
+      "narration": "On cherche une fonction F dont la dérivée redonne f.",
+      "blocks": [
+        { "type": "definition", "content": "On cherche F telle que F′(x) = f(x).", "emphasis": "underline" },
+        { "type": "formula", "content": "F(x) = \\int f(x)\\,dx + C" }
+      ]
+    },
+    {
+      "id": "scene-003",
+      "order": 2,
+      "title": "Exemple",
+      "duration_ms": 9000,
+      "narration": "Rappelle-toi la définition : on remonte la voir, puis on applique.",
+      "transition": { "kind": "slide" },
+      "recall": { "target": 1, "kind": "circle" },
+      "blocks": [
+        { "type": "exercise", "content": "Trouver une primitive de f(x) = 2x." },
+        { "type": "correction", "content": "Une primitive de 2x est x² + C.", "emphasis": "circle" }
+      ]
+    }
+  ]
+}

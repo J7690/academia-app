@@ -30,7 +30,9 @@ class WatermarkService {
     }
 
     try {
-      final byteData = await rootBundle.load('assets/ACADEMIA_logo1.png');
+      // Filigrane détouré (logo blanc + halo sombre, fond transparent) : lisible
+      // sur fond clair comme sombre, sans rectangle gris. Cf. audit 2026-07-22.
+      final byteData = await rootBundle.load('assets/academia_wm.png');
       final tempDir = await getTemporaryDirectory();
       final logoFile = File('${tempDir.path}/academia_watermark.png');
       await logoFile.writeAsBytes(byteData.buffer.asUint8List());
@@ -136,7 +138,7 @@ class WatermarkService {
 
       // ── Probe video dimensions ──
       final videoH = await _probeVideoHeight(inputPath);
-      int logoH = (videoH * 0.08).round();
+      int logoH = (videoH * 0.16).round();
       logoH = math.max(logoH, 24);
       if (logoH.isOdd) logoH += 1;
       final margin = math.max((videoH * 0.04).round(), 10);
@@ -147,16 +149,17 @@ class WatermarkService {
       String? result;
 
       // ── LEVEL 1: Animated TikTok-style overlay ──
-      // 4-corner diagonal jump every 3s: TL→BR→TR→BL
-      // Commas escaped as \, inside expressions for FFmpeg
+      // Aligné sur le rendu serveur Kamatera : saut aux 4 coins toutes les 5s
+      // (BL→TR→BR→TL), logo semi-transparent (aa=0.85 sur un PNG déjà détouré).
+      // Commas escaped as \, inside expressions for FFmpeg.
       result = await _tryOverlay(
         inputPath,
         logoPath,
         '${tempDir.path}/wm_anim_$ts.mp4',
-        '[1:v]format=rgba,scale=-1:$logoH,colorchannelmixer=aa=0.35[wm];'
+        '[1:v]format=rgba,scale=-1:$logoH,colorchannelmixer=aa=0.85[wm];'
         '[0:v][wm]overlay='
-        'x=if(between(mod(floor(t/3)\\,4)\\,1\\,2)\\,W-w-$margin\\,$margin):'
-        'y=if(mod(mod(floor(t/3)\\,4)\\,2)\\,H-h-$margin\\,$margin)',
+        'x=if(between(mod(floor(t/5)\\,4)\\,1\\,2)\\,W-w-$margin\\,$margin):'
+        'y=if(eq(mod(mod(floor(t/5)\\,4)\\,2)\\,0)\\,H-h-$margin\\,$margin)',
         'L1-animated',
       );
       if (result != null) return result;
@@ -166,7 +169,7 @@ class WatermarkService {
         inputPath,
         logoPath,
         '${tempDir.path}/wm_static_$ts.mp4',
-        '[1:v]format=rgba,scale=-1:$logoH,colorchannelmixer=aa=0.35[wm];'
+        '[1:v]format=rgba,scale=-1:$logoH,colorchannelmixer=aa=0.85[wm];'
         '[0:v][wm]overlay=W-w-$margin:$margin',
         'L2-static',
       );

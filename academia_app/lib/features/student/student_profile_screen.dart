@@ -497,10 +497,13 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                                   .loadWeatherFromStudentProfile();
                             } catch (_) {}
                           } else {
+                            if (provider.error != null) {
+                              debugPrint('Erreur RPC profil étudiant: ${provider.error}');
+                            }
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
+                              const SnackBar(
                                 content: Text(
-                                  provider.error ?? 'Erreur lors de la mise à jour du profil.',
+                                  "Impossible d’enregistrer le profil pour le moment. Veuillez réessayer.",
                                 ),
                               ),
                             );

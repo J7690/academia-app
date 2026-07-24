@@ -106,32 +106,31 @@ class StudentProfileProvider extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      final params = <String, dynamic>{};
-      if (fullName != null) params['p_full_name'] = fullName;
-      if (phone != null) params['p_phone'] = phone;
-      if (country != null) params['p_country'] = country;
-      if (city != null) params['p_city'] = city;
-      if (dateOfBirth != null) params['p_date_of_birth'] = dateOfBirth;
-      if (avatarUrl != null) params['p_avatar_url'] = avatarUrl;
-      if (bepcYear != null) params['p_bepc_year'] = bepcYear;
-      if (bepcInstitution != null) params['p_bepc_institution'] = bepcInstitution;
-      if (bepcCountry != null) params['p_bepc_country'] = bepcCountry;
-      if (bepcMention != null) params['p_bepc_mention'] = bepcMention;
-      if (bacYear != null) params['p_bac_year'] = bacYear;
-      if (bacSeries != null) params['p_bac_series'] = bacSeries;
-      if (bacMention != null) params['p_bac_mention'] = bacMention;
-      if (bacInstitution != null) params['p_bac_institution'] = bacInstitution;
-      if (bacCountry != null) params['p_bac_country'] = bacCountry;
-      if (studyProjectText != null) {
-        params['p_study_project_text'] = studyProjectText;
-      }
-      if (timezone != null) params['p_timezone'] = timezone;
-      if (geoLatitude != null) params['p_geo_latitude'] = geoLatitude;
-      if (geoLongitude != null) params['p_geo_longitude'] = geoLongitude;
-      if (bio != null) params['p_bio'] = bio;
-      if (websiteUrl != null) params['p_website_url'] = websiteUrl;
+      final params = <String, dynamic>{
+        'p_full_name': fullName,
+        'p_phone': phone,
+        'p_country': country,
+        'p_city': city,
+        'p_date_of_birth': dateOfBirth,
+        'p_avatar_url': avatarUrl,
+        'p_bepc_year': bepcYear,
+        'p_bepc_institution': bepcInstitution,
+        'p_bepc_country': bepcCountry,
+        'p_bepc_mention': bepcMention,
+        'p_bac_year': bacYear,
+        'p_bac_series': bacSeries,
+        'p_bac_mention': bacMention,
+        'p_bac_institution': bacInstitution,
+        'p_bac_country': bacCountry,
+        'p_study_project_text': studyProjectText,
+        'p_timezone': timezone,
+        'p_geo_latitude': geoLatitude,
+        'p_geo_longitude': geoLongitude,
+        'p_bio': bio,
+        'p_website_url': websiteUrl,
+      };
 
-      final result = await _client.rpc('app_update_student_profile', params: params);
+      final result = await _client.rpc('app_student_update_full_profile', params: params);
       if (result is Map) {
         final map = Map<String, dynamic>.from(result);
         if (map['success'] == true && map['profile'] is Map) {

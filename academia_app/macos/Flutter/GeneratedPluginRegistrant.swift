@@ -22,7 +22,6 @@ import flutter_secure_storage_macos
 import flutter_sound
 import flutter_tts
 import flutter_webrtc
-import geolocator_apple
 import in_app_purchase_storekit
 import just_audio
 import livekit_client
@@ -59,7 +58,6 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   FlutterSoundPlugin.register(with: registry.registrar(forPlugin: "FlutterSoundPlugin"))
   FlutterTtsPlugin.register(with: registry.registrar(forPlugin: "FlutterTtsPlugin"))
   FlutterWebRTCPlugin.register(with: registry.registrar(forPlugin: "FlutterWebRTCPlugin"))
-  GeolocatorPlugin.register(with: registry.registrar(forPlugin: "GeolocatorPlugin"))
   InAppPurchasePlugin.register(with: registry.registrar(forPlugin: "InAppPurchasePlugin"))
   JustAudioPlugin.register(with: registry.registrar(forPlugin: "JustAudioPlugin"))
   LiveKitPlugin.register(with: registry.registrar(forPlugin: "LiveKitPlugin"))

@@ -32,13 +32,27 @@
     }
 
     body.theme-notebook {
-      background: #fafafa;
-      color: #1a1a2e;
-      background-image: 
-        linear-gradient(90deg, transparent 79px, #e8d4d4 79px, #e8d4d4 80px, transparent 80px),
-        linear-gradient(#eee 1px, transparent 1px);
-      background-size: 100% 40px;
+      background: #fffdf7;
+      color: #20303f;
+      background-image:
+        /* marge rouge verticale, bien visible */
+        linear-gradient(90deg, transparent 76px, #e8896b 76px, #e8896b 80px, transparent 80px),
+        /* lignes de cahier bleues, bien visibles */
+        linear-gradient(#a9c7e8 2px, transparent 2px);
+      background-size: 100% 48px;
       background-position: 0 100px;
+    }
+
+    /* Ornement : cadre décoratif + lueur (feuille moins fade) */
+    body.theme-notebook::before {
+      content: "";
+      position: fixed;
+      inset: 18px;
+      border-radius: 26px;
+      border: 4px solid rgba(59, 111, 224, 0.30);
+      box-shadow: inset 0 0 0 2px rgba(26, 161, 121, 0.20), 0 0 60px rgba(59,111,224,0.10);
+      pointer-events: none;
+      z-index: 5;
     }
 
     /* ─── CONTENEUR PRINCIPAL ──────────────────────────────────── */
@@ -116,16 +130,21 @@
     }
 
     .theme-notebook .block-title {
-      color: #1a1a2e;
-      border-bottom: 3px solid #2e7d32;
-      padding-bottom: 12px;
+      color: #ffffff;
+      align-self: center;
+      max-width: 92%;
+      padding: 22px 40px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, #3b6fe0, #1aa179);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
     }
 
     /* ─── PARAGRAPHE ───────────────────────────────────────────── */
     .block-paragraph {
-      font-size: 38px;
-      line-height: 1.6;
+      font-size: 46px;
+      line-height: 1.55;
       padding: 12px 0;
+      font-weight: 500;
     }
 
     .theme-scientific .block-paragraph {
@@ -210,7 +229,7 @@
     }
 
     .block-definition .def-content {
-      font-size: 36px;
+      font-size: 42px;
       line-height: 1.5;
     }
 
@@ -250,7 +269,7 @@
     }
 
     .block-exercise .exo-content {
-      font-size: 36px;
+      font-size: 42px;
       line-height: 1.5;
     }
 

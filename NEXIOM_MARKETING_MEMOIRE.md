@@ -1,5 +1,5 @@
 # Mémoire & Plan Marketing — Nexiom Group
-*Dernière mise à jour : 19 juillet 2026*
+*Dernière mise à jour : 20 juillet 2026*
 
 Ce fichier est la référence unique à pointer au début de toute nouvelle conversation avec Claude sur la communication Nexiom Group. Il vit dans le dossier `academia/` connecté, donc persistant sur cet ordinateur — contrairement à la mémoire de conversation qui, elle, ne survit pas d'une session à l'autre.
 
@@ -38,6 +38,7 @@ Ce fichier est la référence unique à pointer au début de toute nouvelle conv
 | Texte recentré sur le courtage | Version finale proposée |
 | Post "courtage" déjà en ligne sur la Page (17/07 22h15, en Reel) | **Constaté, mais je ne l'ai pas publié moi-même** — origine à clarifier avec l'équipe |
 | Chronogramme de publication | **Recherché partout (Supabase, Canva, fichiers, connaissances) — introuvable, n'existe pas encore réellement** |
+| **20/07 — Campagne "C'est quoi le courtage ?"** : recherche concurrents + tendances Facebook, script spot pub, vidéo HeyGen (avatar Khady, femme noire, décor bureau chaleureux/modeste, voix Khady), visuel Canva assorti, texte de post | **Package complet préparé, en attente de validation avant publication** (voir détails ci-dessous) |
 
 ---
 
@@ -47,6 +48,25 @@ Ce fichier est la référence unique à pointer au début de toute nouvelle conv
 - **Avatar HeyGen alternatif :** "Vernon" — look "Vernon Office Side 2" (costume bleu, bureau)
 - **Voix clonée :** "N group" (From Avatar, ElevenLabs) — utilisée sur les 2 vidéos. Alternative existante : "Nexiom audio" (Cartesia), non testée
 - **Design Canva "DEMAIN" :** id `DAHPqZUcO84`
+- **Avatar HeyGen féminin :** "Khady" — look "Khady Warm, Inviting Interior" (cardigan beige, décor chaleureux/modeste, plante, tons bois) + voix "Khady" native. 22 looks disponibles au total (lawyer, therapy coach, marketing presenter, etc.) si besoin d'un autre registre.
+- **Design Canva "C'est quoi le courtage ?" :** id `DAHP7wC3atA` (copie de DAHPqZUcO84, même charte)
+- **Logos officiels dans HeyGen (Brand Systems, vérifiés 22/07)** — déjà en place, réutilisables sans re-upload :
+  - `logo_academia_1` → ACADEMIA_logo1.png (fond noir)
+  - `logo_academia` → academia.png (fond blanc)
+  - `Nexiom Group _1` → nexiom_logo_4.png (fond noir/métal)
+  - `Nexiom Group` → Nexiom_group.png (fond blanc) + ACADEMIA_logo1.png en second logo — kit combiné utile pour vidéos citant les deux marques
+  - Existe aussi `Elevated Nexiom Academia` (palette rouge/vert/noir, à vérifier si besoin d'un kit unique combinant les 2 marques dans notre charte officielle)
+
+---
+
+## 3bis. Procédure de recherche avant toute création (à refaire à chaque campagne)
+
+1. **Concurrents/secteur** : chercher les acteurs similaires (ex. courtage/orientation formation Burkina Faso — CampusFaso, Prépa Concours Directs, BIRBA Formations, Damko Formations) pour situer le positionnement.
+2. **Tendances/algorithme Facebook** : rechercher les règles à jour (en 2026 : tout est traité comme Reel, hook 1-2s, 80/20 valeur/promo, réponse aux commentaires dans les 60 min = signal fort, 3-5 posts feed/semaine + 2-4 Reels/semaine).
+3. **Rédaction** en appliquant les règles de la section 4.
+4. **Sélection avatar/voix** cohérents avec la demande (ex. éviter l'avatar personnel du fondateur quand on veut un ton "spot publicitaire" neutre).
+5. **Visuel Canva assorti** dans la charte établie.
+6. **Présentation du package complet à validation humaine avant toute publication** — jamais de publication automatique.
 
 ---
 

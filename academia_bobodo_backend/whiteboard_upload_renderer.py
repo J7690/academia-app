@@ -12,18 +12,22 @@ import uuid
 import httpx
 from dotenv import load_dotenv
 
-# Configuration
-load_dotenv()
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env", override=True)
+
+SUPABASE_URL = (os.getenv("SUPABASE_URL") or "").rstrip("/")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY") or ""
+SUPABASE_PROXY_URL = (os.getenv("SUPABASE_PROXY_URL") or "").rstrip("/")
 WHITEBOARD_BUCKET = "whiteboard-renders"
 
 SUPABASE_HTTP_TIMEOUT = 600.0
 
 
 def _storage_base() -> str:
-    return f"{SUPABASE_URL.rstrip('/')}/storage/v1"
+    if SUPABASE_PROXY_URL:
+        return f"{SUPABASE_PROXY_URL}/supabase/storage/v1"
+    return f"{SUPABASE_URL}/storage/v1"
 
 
 def _supabase_headers(extra: Optional[dict] = None) -> dict:

@@ -197,6 +197,9 @@ class SmartWhiteboardProvider extends ChangeNotifier {
           'renderer': _payloadRenderer,
           'theme': _payloadTheme,
           'narration_mode': _payloadNarration,
+          // Moteur de rendu : 'vision' = HTML/Playwright/KaTeX (stable, joli).
+          // ('remotion' est désactivé — trop gourmand en mémoire sur ce serveur.)
+          'engine': 'vision',
         },
       );
 

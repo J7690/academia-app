@@ -20,6 +20,7 @@ import '../../../services/adaptive_quality_service.dart';
 import '../../../services/video_analytics_service.dart';
 import '../../../services/video_cache_service.dart';
 import '../../../services/video_share_service.dart';
+import '../../../games/services/watermark_service.dart';
 import '../../../services/video_orientation_service.dart';
 import '../../../services/video_player_lifecycle_service.dart';
 import '../../../widgets/adaptive_video_container.dart';
@@ -1597,10 +1598,10 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
                     StudentDashboardNavController.setIndex(0);
                   },
                 ),
-                // 2. Challenges
+                // 2. Arène (hub : Challenges, Live, Duo, Compétitions, Classements)
                 buildNavItem(
                   icon: Icons.emoji_events_outlined,
-                  label: 'Challenges',
+                  label: 'Arène',
                   onTap: () {
                     _pauseAllControllers();
                     Navigator.of(context).push(
@@ -1608,11 +1609,11 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
                         builder: (_) => Scaffold(
                           backgroundColor: const Color(0xFFF3F4F6),
                           appBar: AppBar(
-                            title: const Text('Challenges'),
+                            title: const Text('Arène'),
                             backgroundColor: const Color(0xFF1EA75C),
                             foregroundColor: Colors.white,
                           ),
-                          body: const _ChallengesListBody(),
+                          body: const _AreneHubBody(),
                         ),
                       ),
                     ).then((_) {
@@ -1670,24 +1671,7 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
                     });
                   },
                 ),
-                // 5. Live TikTok
-                buildNavItem(
-                  icon: Icons.sensors,
-                  label: 'Live',
-                  onTap: () {
-                    _pauseAllControllers();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const ChallengeLiveScreen(isHost: true),
-                      ),
-                    ).then((_) {
-                      if (!mounted) return;
-                      final ctrl = _controllers[_currentPage];
-                      if (ctrl != null && ctrl.isAttached) ctrl.play();
-                    });
-                  },
-                ),
-                // 6. Profil TikTok-like
+                // 5. Profil TikTok-like
                 buildNavItem(
                   icon: Icons.person_outline,
                   label: 'Profil',
@@ -2380,8 +2364,8 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
     super.dispose();
   }
 
-  Widget _buildLoadingPlaceholder(Map<String, dynamic> video) {
-    // Extract poster URL from playback manifest or video data
+  /// Résout l'URL du poster (miniature) depuis le manifest ou les données vidéo.
+  String _resolvePosterUrl(Map<String, dynamic> video) {
     final playback = video['playback'];
     String posterUrl = '';
     if (playback is Map) {
@@ -2390,6 +2374,11 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
     if (posterUrl.isEmpty) {
       posterUrl = (video['poster_url'] ?? video['thumbnail_url'] ?? '').toString().trim();
     }
+    return posterUrl;
+  }
+
+  Widget _buildLoadingPlaceholder(Map<String, dynamic> video) {
+    final posterUrl = _resolvePosterUrl(video);
 
     if (posterUrl.isNotEmpty) {
       return Stack(
@@ -2533,6 +2522,8 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
             isChallenge: isChallenge,
             isOwner: isOwner,
             allowDownload: allowDownload,
+            authorUserId: authorUserId,
+            authorName: authorName,
             onDeleted: widget.onDeleted,
           ),
         ],
@@ -2559,7 +2550,10 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
                                 looping: true,
                                 muted: !_isActive,
                                 showControls: false,
-                                fit: _getOptimalBoxFit(),
+                                // Plein écran net façon TikTok : on remplit le cadre
+                                // 9:16 (les bords qui débordent sont rognés), sans flou
+                                // ni perte de définition. Cf. recherche TikTok 9:16.
+                                fit: BoxFit.cover,
                                 playbackController: _playbackController,
                                 videoAspectRatio: _videoAspectRatio > 0 ? _videoAspectRatio : null,
                               ),
@@ -2655,9 +2649,58 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
           isChallenge: isChallenge,
           isOwner: isOwner,
           allowDownload: allowDownload,
+          authorUserId: authorUserId,
+          authorName: authorName,
           onDeleted: widget.onDeleted,
         ),
+        // Sélecteur de flux (Pour toi / Challenges / Live) — visuel façon TikTok.
+        // Le filtrage réel du feed sera branché ensuite ; ici on pose l'UI.
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 10,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _feedTab(context, 'Pour toi', false),
+                const SizedBox(width: 18),
+                _feedTab(context, 'Challenges', true),
+                const SizedBox(width: 18),
+                _feedTab(context, 'Live', false),
+              ],
+            ),
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _feedTab(BuildContext context, String label, bool active) {
+    return GestureDetector(
+      onTap: active
+          ? null
+          : () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Bientôt disponible')),
+              );
+            },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: active ? Colors.white : Colors.white70,
+              fontSize: 16,
+              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+              shadows: const [Shadow(color: Colors.black54, blurRadius: 6)],
+            ),
+          ),
+          const SizedBox(height: 3),
+          if (active) Container(width: 20, height: 2.5, color: Colors.white),
+        ],
+      ),
     );
   }
 
@@ -2750,6 +2793,8 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
     required bool isChallenge,
     required bool isOwner,
     required bool allowDownload,
+    required String authorUserId,
+    required String authorName,
     required Future<void> Function()? onDeleted,
   }) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -2776,6 +2821,8 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
         isChallenge: isChallenge,
         isOwner: isOwner,
         allowDownload: allowDownload,
+        authorUserId: authorUserId,
+        authorName: authorName,
         onDeleted: onDeleted,
       ),
     );
@@ -2799,6 +2846,8 @@ class _ChallengeVideoActions extends StatelessWidget {
   final bool isChallenge;
   final bool isOwner;
   final bool allowDownload;
+  final String authorUserId;
+  final String authorName;
   final Future<void> Function()? onDeleted;
 
   const _ChallengeVideoActions({
@@ -2819,6 +2868,8 @@ class _ChallengeVideoActions extends StatelessWidget {
     required this.isChallenge,
     required this.isOwner,
     required this.allowDownload,
+    required this.authorUserId,
+    required this.authorName,
     required this.onDeleted,
   }) : super(key: key);
 
@@ -2895,6 +2946,9 @@ class _ChallengeVideoActions extends StatelessWidget {
       debugPrint('╚══════════════════════════════════════════════════════');
       try {
         String urlToDownload = existing;
+        // Vrai indicateur : la vidéo pointée est-elle filigranée côté serveur ?
+        // Si on retombe sur la source brute, on appliquera le filigrane localement.
+        bool serverWatermarked = existing.isNotEmpty;
         debugPrint('[DL-FLOW] STEP 0: urlToDownload from existing="${urlToDownload.isEmpty ? "(empty)" : "len=${urlToDownload.length}"}"');
 
         // ── 1. Try server-side watermarked rendition (quick check) ──
@@ -2902,7 +2956,11 @@ class _ChallengeVideoActions extends StatelessWidget {
         // don't waste time waiting for a server rendition that may not exist.
         // If no fallback, allow longer timeout (10s) + polling.
         final bool hasFallback = fallbackVideoUrl.trim().isNotEmpty;
-        final rpcTimeout = hasFallback ? const Duration(seconds: 3) : const Duration(seconds: 10);
+        // On attend réellement le rendu filigrané côté serveur (Kamatera),
+        // même si un fallback existe : le logo Academia doit toujours être présent.
+        // Le rendu serveur est rapide (quelques secondes) ; en dernier recours
+        // seulement, on incruste le filigrane localement (cf. STEP 5b).
+        const rpcTimeout = Duration(seconds: 12);
         debugPrint('[DL-FLOW] hasFallback=$hasFallback → rpcTimeout=${rpcTimeout.inSeconds}s');
 
         if (urlToDownload.isEmpty && videoAssetId.trim().isNotEmpty) {
@@ -2922,6 +2980,7 @@ class _ChallengeVideoActions extends StatelessWidget {
             debugPrint('[DL-FLOW] STEP 1: status="$status" urlLen=${url.length}');
             if (status == 'ready' && url.trim().isNotEmpty) {
               urlToDownload = url.trim();
+              serverWatermarked = true;
               debugPrint('[DL-FLOW] STEP 1: GOT URL from server rendition');
             } else {
               debugPrint('[DL-FLOW] STEP 1: NOT ready, will poll or fallback');
@@ -2935,8 +2994,8 @@ class _ChallengeVideoActions extends StatelessWidget {
 
         // ── 2. Brief polling — only if no fallback URL available ──
         // When a fallback exists, skip polling entirely (saves 15s+ of wait).
-        if (urlToDownload.isEmpty && videoAssetId.trim().isNotEmpty && !hasFallback) {
-          debugPrint('[DL-FLOW] STEP 2: start polling (15s max, no fallback)...');
+        if (urlToDownload.isEmpty && videoAssetId.trim().isNotEmpty) {
+          debugPrint('[DL-FLOW] STEP 2: start polling (15s max) for watermarked rendition...');
           final deadline = DateTime.now().add(const Duration(seconds: 15));
           int pollCount = 0;
 
@@ -2959,6 +3018,7 @@ class _ChallengeVideoActions extends StatelessWidget {
 
             if (status == 'ready' && url.trim().isNotEmpty) {
               urlToDownload = url.trim();
+              serverWatermarked = true;
               debugPrint('[DL-FLOW] STEP 2: GOT URL from polling');
               break;
             }
@@ -2974,8 +3034,9 @@ class _ChallengeVideoActions extends StatelessWidget {
 
         // ── 3. Fallback: use source video URL (already watermarked locally) ──
         if (urlToDownload.isEmpty && fallbackVideoUrl.trim().isNotEmpty) {
-          debugPrint('[DL-FLOW] STEP 3: using FALLBACK URL (source video)');
+          debugPrint('[DL-FLOW] STEP 3: using FALLBACK URL (source video, NOT watermarked)');
           urlToDownload = fallbackVideoUrl.trim();
+          serverWatermarked = false;
         } else if (urlToDownload.isEmpty) {
           debugPrint('[DL-FLOW] STEP 3: NO fallback available either! fallbackVideoUrl="${fallbackVideoUrl}"');
         } else {
@@ -3033,7 +3094,7 @@ class _ChallengeVideoActions extends StatelessWidget {
           int received = 0;
           final tmpDir = await getTemporaryDirectory();
           final safeName = 'academia_${videoType}_$videoId';
-          final file = File('${tmpDir.path}/$safeName.mp4');
+          File file = File('${tmpDir.path}/$safeName.mp4');
           debugPrint('[DL-FLOW] STEP 5: saving to ${file.path} (total=${total ?? "unknown"} bytes)');
           final sink = file.openWrite();
           try {
@@ -3061,6 +3122,28 @@ class _ChallengeVideoActions extends StatelessWidget {
 
           final fileSize = await file.length();
           debugPrint('[DL-FLOW] STEP 5 done: downloaded $received bytes, file size=$fileSize bytes');
+
+          // ── 4b. Filigrane de repli (garantie « logo toujours présent ») ──
+          // Si la vidéo téléchargée n'a PAS été filigranée côté serveur
+          // (on est retombé sur la source brute), on incruste le logo Academia
+          // localement, avec le même rythme TikTok (saut 4 coins / 5s).
+          if (!serverWatermarked) {
+            debugPrint('[DL-FLOW] STEP 5b: source non filigranée → filigrane local Academia');
+            phase.value = 'save';
+            message.value = 'Application du filigrane Academia...';
+            progress.value = null;
+            try {
+              final wmPath = await WatermarkService.addWatermark(file.path);
+              if (wmPath != file.path && await File(wmPath).exists()) {
+                file = File(wmPath);
+                debugPrint('[DL-FLOW] STEP 5b: filigrane local appliqué → $wmPath');
+              } else {
+                debugPrint('[DL-FLOW] STEP 5b: filigrane local ignoré (pas de sortie)');
+              }
+            } catch (e) {
+              debugPrint('[DL-FLOW] STEP 5b: erreur filigrane local: $e');
+            }
+          }
 
           // ── 5. Save to gallery ──
           debugPrint('[DL-FLOW] STEP 6: saving to gallery...');
@@ -3216,9 +3299,219 @@ class _ChallengeVideoActions extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Avatar auteur + Suivre (visuel façon TikTok ; le suivi réel arrive
+        // avec son backend — l'appui ouvre déjà le profil du créateur).
+        if (authorUserId.isNotEmpty) ...[
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => StudentSocialProfileScreen(
+                    userId: authorUserId,
+                    displayName: authorName.isNotEmpty ? authorName : null,
+                  ),
+                ),
+              );
+            },
+            child: SizedBox(
+              width: 52,
+              height: 58,
+              child: Stack(
+                alignment: Alignment.topCenter,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey.shade800,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: const Icon(Icons.person, color: Colors.white, size: 30),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFF1EA75C),
+                      ),
+                      child: const Icon(Icons.add, color: Colors.white, size: 15),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        // Action principale: Like
+        IconButton(
+          onPressed: () async {
+            bool ok = false;
+            if (isChallenge && participationId.isNotEmpty) {
+              if (hasLiked) {
+                ok = await provider.unlikeChallengeVideo(participationId: participationId);
+              } else {
+                ok = await provider.likeChallengeVideo(participationId: participationId);
+              }
+            } else if (videoType.isNotEmpty && videoId.isNotEmpty) {
+              if (hasLiked) {
+                ok = await provider.unlikeVideo(videoType: videoType, videoId: videoId);
+              } else {
+                ok = await provider.likeVideo(videoType: videoType, videoId: videoId);
+              }
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Impossible d\'identifier cette vidéo pour le like.')),
+              );
+              return;
+            }
+            if (!ok && provider.error != null && context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(provider.error!)),
+              );
+            }
+          },
+          icon: Icon(
+            hasLiked ? Icons.favorite : Icons.favorite_border,
+            color: hasLiked ? Colors.redAccent : Colors.white,
+            size: 34,
+            shadows: const [Shadow(color: Colors.black54, blurRadius: 6)],
+          ),
+        ),
+        Text(
+          '$likesCount',
+          style: const TextStyle(color: Colors.white, fontSize: 12),
+        ),
+        const SizedBox(height: 8),
+        // Commentaires (action visible)
+        IconButton(
+          onPressed: () async {
+            if (isChallenge && participationId.isNotEmpty) {
+              await _showCommentsSheet(context, provider, participationId);
+            } else if (videoType.isNotEmpty && videoId.isNotEmpty) {
+              await _showGenericCommentsSheet(
+                context,
+                provider,
+                videoType,
+                videoId,
+              );
+            }
+          },
+          icon: const Icon(
+            Icons.chat_bubble_outline,
+            color: Colors.white,
+            size: 32,
+            shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
+          ),
+        ),
+        Text(
+          '$commentsCount',
+          style: const TextStyle(color: Colors.white, fontSize: 12),
+        ),
+        const SizedBox(height: 8),
+        // Favori (action visible)
+        IconButton(
+          onPressed: () async {
+            bool ok = false;
+            if (isChallenge && participationId.isNotEmpty) {
+              ok = hasFavorited
+                  ? await provider.unfavoriteChallengeVideo(participationId: participationId)
+                  : await provider.favoriteChallengeVideo(participationId: participationId);
+            } else if (videoType.isNotEmpty && videoId.isNotEmpty) {
+              ok = hasFavorited
+                  ? await provider.unfavoriteVideo(videoType: videoType, videoId: videoId)
+                  : await provider.favoriteVideo(videoType: videoType, videoId: videoId);
+            }
+            if (!ok && provider.error != null && context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(provider.error!)),
+              );
+            }
+          },
+          icon: Icon(
+            hasFavorited ? Icons.star : Icons.star_border,
+            color: hasFavorited ? Colors.amber : Colors.white,
+            size: 34,
+            shadows: const [Shadow(color: Colors.black54, blurRadius: 6)],
+          ),
+        ),
+        Text(
+          '$favoritesCount',
+          style: const TextStyle(color: Colors.white, fontSize: 12),
+        ),
+        const SizedBox(height: 8),
+        // Télécharger — action mise en avant (moteur de partage externe)
+        if (allowDownload) ...[
+          GestureDetector(
+            onTap: () async {
+              final ok = await _downloadWatermarkedWithProgressSheet(
+                context: context,
+                provider: provider,
+                videoType: videoType,
+                videoId: videoId,
+                videoAssetId: videoAssetId,
+                fallbackVideoUrl: videoUrl,
+                videoRenditions: videoRenditions,
+              );
+              if (!context.mounted) return;
+              if (ok) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Vidéo enregistrée dans la galerie')),
+                );
+              }
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF1EA75C),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.download, color: Colors.white, size: 26),
+                ),
+                const SizedBox(height: 3),
+                const Text(
+                  'Enregistrer',
+                  style: TextStyle(color: Color(0xFFA3D65C), fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+        // Partage
+        IconButton(
+          onPressed: () async {
+            await VideoShareService.shareVideo(
+              videoUrl: videoUrl,
+              videoId: videoId.isNotEmpty ? videoId : participationId,
+              title: isChallenge ? 'Challenge Academia' : 'Vidéo Academia',
+            );
+          },
+          icon: const Icon(
+            Icons.share,
+            color: Colors.white,
+            size: 32,
+            shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
+          ),
+        ),
+        const SizedBox(height: 8),
         // Menu "..." pour actions secondaires
         IconButton(
-          icon: const Icon(Icons.more_horiz, color: Colors.white),
+          icon: const Icon(
+            Icons.more_horiz,
+            color: Colors.white,
+            size: 30,
+            shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
+          ),
           onPressed: () async {
             await showModalBottomSheet<void>(
               context: context,
@@ -3230,87 +3523,6 @@ class _ChallengeVideoActions extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Favoris (déplacé ici)
-                        ListTile(
-                          leading: Icon(
-                            hasFavorited ? Icons.star : Icons.star_border,
-                            color: hasFavorited ? Colors.amber : Colors.white,
-                          ),
-                          title: Text(
-                            hasFavorited ? 'Retirer des favoris' : 'Ajouter aux favoris',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          onTap: () async {
-                            Navigator.of(sheetContext).pop();
-                            bool ok = false;
-                            if (isChallenge && participationId.isNotEmpty) {
-                              if (hasFavorited) {
-                                ok = await provider.unfavoriteChallengeVideo(
-                                  participationId: participationId,
-                                );
-                              } else {
-                                ok = await provider.favoriteChallengeVideo(
-                                  participationId: participationId,
-                                );
-                              }
-                            } else if (videoType.isNotEmpty && videoId.isNotEmpty) {
-                              if (hasFavorited) {
-                                ok = await provider.unfavoriteVideo(
-                                  videoType: videoType,
-                                  videoId: videoId,
-                                );
-                              } else {
-                                ok = await provider.favoriteVideo(
-                                  videoType: videoType,
-                                  videoId: videoId,
-                                );
-                              }
-                            }
-                            if (!context.mounted) return;
-                            if (!ok && provider.error != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(provider.error!)),
-                              );
-                            }
-                          },
-                        ),
-                        // Télécharger (déplacé ici)
-                        if (allowDownload)
-                          ListTile(
-                            leading: const Icon(Icons.download, color: Colors.white),
-                            title: const Text('Télécharger', style: TextStyle(color: Colors.white)),
-                            onTap: () async {
-                              Navigator.of(sheetContext).pop();
-                              final ok = await _downloadWatermarkedWithProgressSheet(
-                                context: context,
-                                provider: provider,
-                                videoType: videoType,
-                              videoId: videoId,
-                              videoAssetId: videoAssetId,
-                              fallbackVideoUrl: videoUrl,
-                              videoRenditions: videoRenditions,
-                            );
-                            if (!context.mounted) return;
-                            if (ok) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Vidéo enregistrée dans la galerie')),
-                              );
-                            }
-                          },
-                        ),
-                        // Partager
-                        ListTile(
-                          leading: const Icon(Icons.share, color: Colors.white),
-                          title: const Text('Partager', style: TextStyle(color: Colors.white)),
-                          onTap: () async {
-                            Navigator.of(sheetContext).pop();
-                            await VideoShareService.shareVideo(
-                              videoUrl: videoUrl,
-                              videoId: videoId.isNotEmpty ? videoId : participationId,
-                              title: isChallenge ? 'Challenge Academia' : 'Vidéo Academia',
-                            );
-                          },
-                        ),
                         // Signaler
                         ListTile(
                           leading: const Icon(Icons.flag_outlined, color: Colors.white),
@@ -3420,68 +3632,6 @@ class _ChallengeVideoActions extends StatelessWidget {
           },
         ),
         const SizedBox(height: 8),
-        // Commentaires (action visible)
-        IconButton(
-          onPressed: () async {
-            if (isChallenge && participationId.isNotEmpty) {
-              await _showCommentsSheet(context, provider, participationId);
-            } else if (videoType.isNotEmpty && videoId.isNotEmpty) {
-              await _showGenericCommentsSheet(
-                context,
-                provider,
-                videoType,
-                videoId,
-              );
-            }
-          },
-          icon: const Icon(
-            Icons.chat_bubble_outline,
-            color: Colors.white,
-          ),
-        ),
-        Text(
-          '$commentsCount',
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
-        const SizedBox(height: 8),
-        // Action principale: Like
-        IconButton(
-          onPressed: () async {
-            bool ok = false;
-            if (isChallenge && participationId.isNotEmpty) {
-              if (hasLiked) {
-                ok = await provider.unlikeChallengeVideo(participationId: participationId);
-              } else {
-                ok = await provider.likeChallengeVideo(participationId: participationId);
-              }
-            } else if (videoType.isNotEmpty && videoId.isNotEmpty) {
-              if (hasLiked) {
-                ok = await provider.unlikeVideo(videoType: videoType, videoId: videoId);
-              } else {
-                ok = await provider.likeVideo(videoType: videoType, videoId: videoId);
-              }
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Impossible d\'identifier cette vidéo pour le like.')),
-              );
-              return;
-            }
-            if (!ok && provider.error != null && context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(provider.error!)),
-              );
-            }
-          },
-          icon: Icon(
-            hasLiked ? Icons.favorite : Icons.favorite_border,
-            color: hasLiked ? Colors.redAccent : Colors.white,
-          ),
-        ),
-        Text(
-          '$likesCount',
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
-        const SizedBox(height: 8),
         // Rang personnel (si disponible)
         Consumer<StudentChallengesProvider>(
           builder: (context, provider, child) {
@@ -3504,18 +3654,6 @@ class _ChallengeVideoActions extends StatelessWidget {
               ],
             );
           },
-        ),
-        const SizedBox(height: 8),
-        // Partage
-        IconButton(
-          onPressed: () async {
-            await VideoShareService.shareVideo(
-              videoUrl: videoUrl,
-              videoId: videoId.isNotEmpty ? videoId : participationId,
-              title: isChallenge ? 'Challenge Academia' : 'Vidéo Academia',
-            );
-          },
-          icon: const Icon(Icons.share, color: Colors.white),
         ),
       ],
     );
@@ -3872,6 +4010,127 @@ class _VideoProgressBarState extends State<_VideoProgressBar> {
       backgroundColor: Colors.white.withValues(alpha: 0.3),
       valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
       minHeight: 3,
+    );
+  }
+}
+
+/// Hub « Arène » — regroupe les modes compétitifs (Phase 2 de la charte UI).
+/// Challenges et Live sont opérationnels ; Duo / Compétitions / Classements
+/// sont signalés « Bientôt » tant que leur backend n'existe pas (aucun faux lien).
+class _AreneHubBody extends StatelessWidget {
+  const _AreneHubBody();
+
+  void _soon(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Bientôt disponible')),
+    );
+  }
+
+  Widget _tile(
+    BuildContext context, {
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    bool soon = false,
+  }) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: color),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+        ),
+        subtitle: Text(subtitle),
+        trailing: soon
+            ? const Text('Bientôt', style: TextStyle(color: Colors.grey, fontSize: 12))
+            : const Icon(Icons.chevron_right),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _tile(
+          context,
+          icon: Icons.emoji_events,
+          color: const Color(0xFF1EA75C),
+          title: 'Challenges',
+          subtitle: 'Relève les défis et grimpe au classement',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => Scaffold(
+                  backgroundColor: const Color(0xFFF3F4F6),
+                  appBar: AppBar(
+                    title: const Text('Challenges'),
+                    backgroundColor: const Color(0xFF1EA75C),
+                    foregroundColor: Colors.white,
+                  ),
+                  body: const _ChallengesListBody(),
+                ),
+              ),
+            );
+          },
+        ),
+        _tile(
+          context,
+          icon: Icons.sensors,
+          color: const Color(0xFFE0245E),
+          title: 'Live',
+          subtitle: 'Passe en direct devant la communauté',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const ChallengeLiveScreen(isHost: true),
+              ),
+            );
+          },
+        ),
+        _tile(
+          context,
+          icon: Icons.groups,
+          color: const Color(0xFF7C4DFF),
+          title: 'Duo',
+          subtitle: 'Défie un ami en duo',
+          soon: true,
+          onTap: () => _soon(context),
+        ),
+        _tile(
+          context,
+          icon: Icons.military_tech,
+          color: const Color(0xFFF5A623),
+          title: 'Compétitions',
+          subtitle: 'Tournois et saisons',
+          soon: true,
+          onTap: () => _soon(context),
+        ),
+        _tile(
+          context,
+          icon: Icons.leaderboard,
+          color: const Color(0xFF2D9CDB),
+          title: 'Classements',
+          subtitle: 'Top créateurs et récompenses',
+          soon: true,
+          onTap: () => _soon(context),
+        ),
+      ],
     );
   }
 }
