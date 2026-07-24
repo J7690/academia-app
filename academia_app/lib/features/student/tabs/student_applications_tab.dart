@@ -544,6 +544,8 @@ class _ApplicationsStatPill extends StatelessWidget {
               fontWeight: FontWeight.w700,
               color: color,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -750,6 +752,8 @@ class _StatusBadge extends StatelessWidget {
           fontWeight: FontWeight.w500,
           color: color,
         ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }

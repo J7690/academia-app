@@ -520,6 +520,8 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                               fontWeight: FontWeight.w700,
                                               color: statusColor,
                                             ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
                                         if (statusLine.isNotEmpty)
@@ -662,7 +664,10 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 Container(
                                   padding: const EdgeInsets.all(8),
@@ -677,14 +682,12 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Text(
-                                    'Frais de courtage',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFF0A2540),
-                                    ),
+                                Text(
+                                  'Frais de courtage',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0A2540),
                                   ),
                                 ),
                                 TextButton.icon(
@@ -782,7 +785,11 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                           );
                                         },
                                   icon: const Icon(Icons.payment),
-                                  label: const Text('Payer maintenant'),
+                                  label: const Text(
+                                    'Payer maintenant',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ],
                             ),

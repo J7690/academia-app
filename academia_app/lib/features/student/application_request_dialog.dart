@@ -126,7 +126,9 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
       child: Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 500),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.9,
+          ),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [Color(0xFFFFFFFF), Color(0xFFF8FAFC)],
@@ -271,6 +273,8 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF6B7280),
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
@@ -293,6 +297,8 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
