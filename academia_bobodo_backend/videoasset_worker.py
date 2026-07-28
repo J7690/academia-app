@@ -526,10 +526,9 @@ async def _process_generate_hls_job(job: Dict[str, Any], worker_id: str) -> None
 
     await _mark_job_running(job_id, worker_id)
 
-    source = await _get_primary_source_for_asset(video_asset_id)
-    if not source:
-        raise RuntimeError("Aucune source trouvée pour ce VideoAsset.")
-
+    # NB (28/07/2026) : la recherche de source doit rester DANS le try. Sortie du
+    # try, une exception ici echappe au except -> le job reste "running" pour
+    # toujours (bug trouve en production : job bloque 1h+ sans jamais echouer).
     input_path: Optional[Path] = None
     out_main: Optional[Path] = None
     out_480: Optional[Path] = None
@@ -537,6 +536,9 @@ async def _process_generate_hls_job(job: Dict[str, Any], worker_id: str) -> None
     out_240: Optional[Path] = None
 
     try:
+        source = await _get_primary_source_for_asset(video_asset_id)
+        if not source:
+            raise RuntimeError("Aucune source trouvée pour ce VideoAsset.")
         input_path = await _download_source_to_temp(source)
 
         # Génère des MP4 ultra-compatibles (mêmes profils que le Studio)
@@ -589,13 +591,12 @@ async def _process_export_watermarked_job(job: Dict[str, Any], worker_id: str) -
 
     await _mark_job_running(job_id, worker_id)
 
-    source = await _get_primary_source_for_asset(video_asset_id)
-    if not source:
-        raise RuntimeError("Aucune source trouvée pour ce VideoAsset.")
-
     input_path: Optional[Path] = None
     out_path: Optional[Path] = None
     try:
+        source = await _get_primary_source_for_asset(video_asset_id)
+        if not source:
+            raise RuntimeError("Aucune source trouvée pour ce VideoAsset.")
         input_path = await _download_source_to_temp(source)
 
         logo_path = Path(WATERMARK_LOGO_PATH)
