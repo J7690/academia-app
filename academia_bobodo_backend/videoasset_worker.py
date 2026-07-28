@@ -42,7 +42,7 @@ SUPABASE_PROXY_URL = (os.getenv("SUPABASE_PROXY_URL") or "").rstrip("/")
 SUPABASE_HTTP_TIMEOUT = float(os.getenv("SUPABASE_HTTP_TIMEOUT") or "30")
 
 WATERMARK_LOGO_PATH = os.getenv("WATERMARK_LOGO_PATH") or str(
-    (BASE_DIR.parent / "assets" / "images" / "academia.png").resolve()
+    (BASE_DIR / "academia_wm.png").resolve()
 )
 
 
@@ -363,6 +363,45 @@ async def _upsert_video_rendition(row: Dict[str, Any]) -> None:
         raise RuntimeError("Echec de l'upsert video_renditions.")
 
 
+def _probe_video_height(path: Path) -> int:
+    """Hauteur video en pixels (repli 1280 si la sonde echoue)."""
+    try:
+        out = subprocess.run(
+            ["ffprobe", "-v", "error", "-select_streams", "v:0",
+             "-show_entries", "stream=height",
+             "-of", "default=noprint_wrappers=1:nokey=1", str(path)],
+            capture_output=True, text=True, timeout=30,
+        )
+        h = int(out.stdout.strip())
+        return h if h > 0 else 1280
+    except (ValueError, OSError, subprocess.SubprocessError):
+        return 1280
+
+
+# Filigrane "4 coins" : le logo saute d'un coin a l'autre toutes les 5 s
+# (BL->TR->BR->TL), aligne sur le client Flutter (watermark_service.dart) et
+# sur l'ancien correctif serveur du 22/07/2026 (cf.
+# docs/AUDIT_WATERMARK_LOGO_TELECHARGEMENT_CHALLENGE_2026-07-22.md).
+#
+# NB (28/07/2026) : une transition en FONDU (disparition/reapparition) a ete
+# demandee et deux implementations ont ete tentees puis abandonnees apres
+# verification reelle sur le VPS (ffmpeg 6.1.1) :
+#   1. `geq` avec une expression dependante du temps (`T`) dans l'alpha : toute
+#      fonction (sin/mod/if/lt/gt) prenant `T` en argument s'evalue a une valeur
+#      figee/incorrecte (l'arithmetique directe sur `T` fonctionne, mais pas les
+#      appels de fonction) -- limitation ou bug de ce `geq` specifique.
+#   2. Un enchainement de plusieurs filtres `fade` (un couple entree/sortie par
+#      periode) : chaque `fade=in` force l'alpha a 0 AVANT son propre `st`,
+#      effacant donc la visibilite etablie par les periodes precedentes des
+#      qu'on chaine plusieurs instances -- confirme par test direct.
+# Le saut instantane (sans fondu) reste donc la seule version fiable ; il
+# reproduit le comportement deja valide en production le 22/07.
+WATERMARK_PERIOD_SEC = 5.0   # duree a chaque coin avant de sauter au suivant
+WATERMARK_OPACITY = 0.85
+WATERMARK_HEIGHT_PCT = 0.08  # hauteur du logo = 8% de la hauteur video
+WATERMARK_MARGIN_PCT = 0.05  # marge depuis les bords = 5% de la hauteur video
+
+
 def _run_ffmpeg_export_watermarked(input_path: Path, logo_path: Path) -> Path:
     if not input_path.exists():
         raise RuntimeError(f"Input video missing: {input_path}")
@@ -372,14 +411,22 @@ def _run_ffmpeg_export_watermarked(input_path: Path, logo_path: Path) -> Path:
     tmp_dir = Path(tempfile.mkdtemp(prefix="videoasset_watermark_"))
     output_path = tmp_dir / "export_watermarked.mp4"
 
-    # Baseline-ish H.264 for compatibility, and overlay bottom-right.
-    # watermark scale: ~12% width, keep ratio.
+    # scale2ref (ancien filtre) est rejete par certaines versions de ffmpeg
+    # ("Expressions with scale2ref variables are not valid in scale filter",
+    # cf. docs/AUDIT_WATERMARK_LOGO_TELECHARGEMENT_CHALLENGE_2026-07-22.md).
+    # On sonde la hauteur reelle en amont et on redimensionne le logo avec un
+    # `scale` simple, portable sur toutes les versions.
+    video_h = _probe_video_height(input_path)
+    logo_h = max(24, round(video_h * WATERMARK_HEIGHT_PCT))
+    margin = max(10, round(video_h * WATERMARK_MARGIN_PCT))
+    period = WATERMARK_PERIOD_SEC
+
     filter_complex = (
-        "[1:v]format=rgba,colorchannelmixer=aa=0.5[wm0];"
-        "[wm0][0:v]scale2ref=w='min(iw,main_w*0.12)':h=-1[wm][base];"
-        "[base][wm]overlay="
-        "x='W-w-24-20*(0.5+0.5*sin(2*PI*t/6))':"
-        "y='H-h-24-12*(0.5+0.5*cos(2*PI*t/7))':"
+        f"[1:v]format=rgba,scale=-1:{logo_h},"
+        f"colorchannelmixer=aa={WATERMARK_OPACITY}[wm];"
+        "[0:v][wm]overlay="
+        f"x=if(between(mod(floor(t/{period})\\,4)\\,1\\,2)\\,W-w-{margin}\\,{margin}):"
+        f"y=if(eq(mod(mod(floor(t/{period})\\,4)\\,2)\\,0)\\,H-h-{margin}\\,{margin}):"
         "format=auto,format=yuv420p[v]"
     )
 
