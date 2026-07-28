@@ -7,6 +7,8 @@ import '../../providers/admin_universities_provider.dart';
 import '../../providers/admin_university_site_provider.dart';
 import '../../providers/admin_programs_provider.dart';
 import '../../providers/admin_courses_provider.dart';
+import '../../utils/responsive.dart';
+import '../../widgets/adaptive_dialog.dart';
 import '../../widgets/mini_site_hero_video.dart';
 import 'admin_programs_screen.dart';
 
@@ -36,83 +38,116 @@ class _AdminUniversitySitesScreenState extends State<AdminUniversitySitesScreen>
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 260,
-          child: Consumer<AdminUniversitiesProvider>(
-            builder: (context, provider, child) {
-              if (provider.isLoading && provider.universities.isEmpty) {
-                return const Center(child: CircularProgressIndicator());
-              }
+  void _openUniversity(BuildContext context, String id, String name) {
+    setState(() => _selectedUniversityId = id);
+    context.read<AdminUniversitySiteProvider>().loadSiteForUniversity(id);
 
-              if (provider.error != null) {
-                return Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(provider.error!),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: provider.loadUniversities,
-                        child: const Text('Recharger les universités'),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              final universities = provider.universities;
-              if (universities.isEmpty) {
-                return const Center(
-                  child: Text('Aucune université partenaire.'),
-                );
-              }
-
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: universities.length,
-                itemBuilder: (context, index) {
-                  final uni = universities[index];
-                  final id = uni['id']?.toString();
-                  final selected = id != null && id == _selectedUniversityId;
-
-                  return Card(
-                    elevation: 0,
-                    color: selected ? const Color(0xFFE5F9E7) : Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      title: Text(uni['name']?.toString() ?? ''),
-                      subtitle: Text(
-                        '${uni['city'] ?? ''}, ${uni['country'] ?? ''}',
-                      ),
-                      onTap: () {
-                        if (id == null) return;
-                        setState(() {
-                          _selectedUniversityId = id;
-                        });
-                        context
-                            .read<AdminUniversitySiteProvider>()
-                            .loadSiteForUniversity(id);
-                      },
-                    ),
-                  );
-                },
-              );
-            },
+    // Sur téléphone, la liste et le panneau ne peuvent pas cohabiter en
+    // largeur : on pousse le panneau en plein écran avec un bouton retour.
+    if (context.isMobile || context.isTablet) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => Scaffold(
+            appBar: AppBar(title: Text(name)),
+            body: _AdminUniversitySitePanel(selectedUniversityId: id),
           ),
         ),
-        const VerticalDivider(width: 1),
-        Expanded(
-          child: _AdminUniversitySitePanel(selectedUniversityId: _selectedUniversityId),
-        ),
-      ],
+      );
+    }
+  }
+
+  Widget _buildUniversityList(BuildContext context) {
+    return Consumer<AdminUniversitiesProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading && provider.universities.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (provider.error != null) {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(provider.error!),
+                const SizedBox(height: 8),
+                ElevatedButton(
+                  onPressed: provider.loadUniversities,
+                  child: const Text('Recharger les universités'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final universities = provider.universities;
+        if (universities.isEmpty) {
+          return const Center(
+            child: Text('Aucune université partenaire.'),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: universities.length,
+          itemBuilder: (context, index) {
+            final uni = universities[index];
+            final id = uni['id']?.toString();
+            final name = uni['name']?.toString() ?? '';
+            final selected = id != null && id == _selectedUniversityId;
+
+            return Card(
+              elevation: 0,
+              color: selected ? const Color(0xFFE5F9E7) : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                title: Text(name),
+                subtitle: Text(
+                  '${uni['city'] ?? ''}, ${uni['country'] ?? ''}',
+                ),
+                trailing: (context.isMobile || context.isTablet)
+                    ? const Icon(Icons.chevron_right)
+                    : null,
+                onTap: id == null ? null : () => _openUniversity(context, id, name),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Écran étroit : uniquement la liste, le panneau s'ouvre en poussant
+    // une nouvelle page (voir _openUniversity). Écran large : les deux
+    // colonnes classiques côte à côte, largeur du panneau de gauche
+    // proportionnelle et bornée au lieu d'être figée à 260px.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < AppBreakpoints.tablet) {
+          return _buildUniversityList(context);
+        }
+
+        final sidebarWidth =
+            (constraints.maxWidth * 0.22).clamp(240.0, 320.0);
+
+        return Row(
+          children: [
+            SizedBox(
+              width: sidebarWidth,
+              child: _buildUniversityList(context),
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(
+              child: _AdminUniversitySitePanel(selectedUniversityId: _selectedUniversityId),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -311,8 +346,10 @@ class _AdminUniversitySitePanel extends StatelessWidget {
                                       ),
                                     ],
                                     const SizedBox(height: 8),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
+                                    Wrap(
+                                      alignment: WrapAlignment.end,
+                                      spacing: 8,
+                                      runSpacing: 4,
                                       children: [
                                         TextButton.icon(
                                           onPressed: () =>
@@ -420,8 +457,10 @@ class _AdminUniversitySitePanel extends StatelessWidget {
                                       ),
                                     ],
                                     const SizedBox(height: 8),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
+                                    Wrap(
+                                      alignment: WrapAlignment.end,
+                                      spacing: 8,
+                                      runSpacing: 4,
                                       children: [
                                         TextButton.icon(
                                           onPressed: () =>
@@ -550,8 +589,10 @@ class _AdminUniversitySitePanel extends StatelessWidget {
                                       ),
                                     ],
                                     const SizedBox(height: 8),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
+                                    Wrap(
+                                      alignment: WrapAlignment.end,
+                                      spacing: 8,
+                                      runSpacing: 4,
                                       children: [
                                         TextButton.icon(
                                           onPressed: () =>
@@ -668,8 +709,10 @@ class _AdminUniversitySitePanel extends StatelessWidget {
                                       ),
                                     ],
                                     const SizedBox(height: 8),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
+                                    Wrap(
+                                      alignment: WrapAlignment.end,
+                                      spacing: 8,
+                                      runSpacing: 4,
                                       children: [
                                         TextButton.icon(
                                           onPressed: () =>
@@ -778,8 +821,10 @@ class _AdminUniversitySitePanel extends StatelessWidget {
                                       ),
                                     ],
                                     const SizedBox(height: 8),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
+                                    Wrap(
+                                      alignment: WrapAlignment.end,
+                                      spacing: 8,
+                                      runSpacing: 4,
                                       children: [
                                         TextButton.icon(
                                           onPressed: () =>
@@ -2013,8 +2058,10 @@ class _AdminSiteMediaTab extends StatelessWidget {
                       ),
                     ],
                     const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                    Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
                         TextButton.icon(
                           onPressed: () =>
@@ -2154,8 +2201,10 @@ class _AdminSiteEventsTab extends StatelessWidget {
                       ),
                     ],
                     const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                    Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
                         TextButton.icon(
                           onPressed: () =>
@@ -2286,8 +2335,10 @@ class _AdminSiteNewsTab extends StatelessWidget {
                       ),
                     ],
                     const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                    Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
                         TextButton.icon(
                           onPressed: () =>
@@ -2410,8 +2461,10 @@ class _AdminSiteStaffTab extends StatelessWidget {
                       ),
                     ],
                     const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                    Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
                         TextButton.icon(
                           onPressed: () =>
@@ -2467,12 +2520,13 @@ Future<void> _showAdminEditBlockDialog(
 
   await showDialog<void>(
     context: context,
+    useSafeArea: true,
     builder: (context) {
-      return AlertDialog(
+      return AdaptiveDialog(
         title: Text(block == null ? 'Ajouter un bloc' : 'Modifier le bloc'),
-        content: SingleChildScrollView(
-          child: Column(
+        child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextField(
                 controller: keyController,
@@ -2497,7 +2551,6 @@ Future<void> _showAdminEditBlockDialog(
               ),
             ],
           ),
-        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -2580,14 +2633,15 @@ Future<void> _showAdminEditHeroConfigDialog(
 
   await showDialog<void>(
     context: context,
+    useSafeArea: true,
     builder: (context) {
       return StatefulBuilder(
         builder: (context, setState) {
-          return AlertDialog(
+          return AdaptiveDialog(
             title: const Text('Configuration du hero du mini-site'),
-            content: SingleChildScrollView(
-              child: Column(
+            child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   TextField(
                     controller: titleController,
@@ -2653,7 +2707,6 @@ Future<void> _showAdminEditHeroConfigDialog(
                     ),
                 ],
               ),
-            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
@@ -2731,14 +2784,15 @@ Future<void> _showAdminEditEventDialog(
 
   await showDialog<void>(
     context: context,
+    useSafeArea: true,
     builder: (context) {
       return StatefulBuilder(
         builder: (context, setState) {
-          return AlertDialog(
+          return AdaptiveDialog(
             title: Text(event == null ? 'Ajouter un événement' : 'Modifier l\'événement'),
-            content: SingleChildScrollView(
-              child: Column(
+            child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   TextField(
                     controller: titleController,
@@ -2813,7 +2867,6 @@ Future<void> _showAdminEditEventDialog(
                   ),
                 ],
               ),
-            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
@@ -2918,16 +2971,17 @@ Future<void> _showAdminEditNewsDialog(
 
   await showDialog<void>(
     context: context,
+    useSafeArea: true,
     builder: (context) {
       final mediaItems = provider.media;
 
       return StatefulBuilder(
         builder: (context, setState) {
-          return AlertDialog(
+          return AdaptiveDialog(
             title: Text(news == null ? 'Ajouter une actualité' : 'Modifier l\'actualité'),
-            content: SingleChildScrollView(
-              child: Column(
+            child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   TextField(
                     controller: titleController,
@@ -3015,7 +3069,6 @@ Future<void> _showAdminEditNewsDialog(
                   ),
                 ],
               ),
-            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
@@ -3105,17 +3158,18 @@ Future<void> _showAdminEditStaffDialog(
 
   await showDialog<void>(
     context: context,
+    useSafeArea: true,
     builder: (context) {
       final mediaItems = provider.media;
 
       return StatefulBuilder(
         builder: (context, setState) {
-          return AlertDialog(
+          return AdaptiveDialog(
             title: Text(
                 staff == null ? "Ajouter un membre de l'équipe" : "Modifier le membre de l'équipe"),
-            content: SingleChildScrollView(
-              child: Column(
+            child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   TextField(
                     controller: fullNameController,
@@ -3209,7 +3263,6 @@ Future<void> _showAdminEditStaffDialog(
                   ),
                 ],
               ),
-            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
@@ -3307,6 +3360,7 @@ Future<void> _showAdminEditMediaDialog(
 
   await showDialog<void>(
     context: context,
+    useSafeArea: true,
     builder: (context) {
       Uint8List? pickedBytes;
       String? pickedFileName;
@@ -3324,11 +3378,11 @@ Future<void> _showAdminEditMediaDialog(
               lowerType == 'pdf' ||
               lowerType == 'doc';
 
-          return AlertDialog(
+          return AdaptiveDialog(
             title: Text(media == null ? 'Ajouter un média' : 'Modifier le média'),
-            content: SingleChildScrollView(
-              child: Column(
+            child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   DropdownButtonFormField<String>(
                     value: selectedType,
@@ -3476,7 +3530,6 @@ Future<void> _showAdminEditMediaDialog(
                   ),
                 ],
               ),
-            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),

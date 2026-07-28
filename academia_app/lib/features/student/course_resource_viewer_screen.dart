@@ -217,8 +217,14 @@ class _CourseResourceViewerScreenState extends State<CourseResourceViewerScreen>
       if (url == null || url.isEmpty) {
         return const SizedBox.shrink();
       }
+      // Hauteur relative à l'écran plutôt que figée : sur petit téléphone
+      // 600px de PDF forçait un défilement excessif, sur desktop ça
+      // laissait un vide disproportionné.
+      final screenHeight = MediaQuery.of(context).size.height;
+      final viewerHeight = (screenHeight * 0.75).clamp(360.0, 900.0);
       return SizedBox(
-        height: 600,
+        height: viewerHeight,
+        width: double.infinity,
         child: PdfViewer(url: url),
       );
     }

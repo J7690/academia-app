@@ -370,7 +370,7 @@ class _CollapsibleSectionState extends State<_CollapsibleSection> {
     elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     child: Column(children: [
       ListTile(leading: Icon(widget.icon, color: widget.color),
-        title: Text(widget.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+        title: Text(widget.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
         trailing: Icon(_expanded ? Icons.expand_less : Icons.expand_more, color: Colors.grey),
         onTap: () => setState(() => _expanded = !_expanded)),
       if (_expanded) Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 16), child: widget.child),

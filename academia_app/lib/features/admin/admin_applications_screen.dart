@@ -1,15 +1,20 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/admin_applications_provider.dart';
 import '../../providers/admin_application_payments_provider.dart';
+import '../../utils/responsive.dart';
 import 'admin_application_detail_screen.dart';
+import 'admin_application_status.dart';
 
 class AdminApplicationsScreen extends StatefulWidget {
   const AdminApplicationsScreen({super.key});
 
   @override
-  State<AdminApplicationsScreen> createState() => _AdminApplicationsScreenState();
+  State<AdminApplicationsScreen> createState() =>
+      _AdminApplicationsScreenState();
 }
 
 class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {
@@ -23,6 +28,24 @@ class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {
     });
   }
 
+  Future<void> _openApplication(Map<String, dynamic> app) async {
+    final appId = app['id']?.toString();
+    if (appId != null && appId.isNotEmpty) {
+      try {
+        await context.read<AdminApplicationsProvider>().markApplicationSeen(appId);
+      } catch (_) {}
+    }
+    if (!mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChangeNotifierProvider(
+          create: (_) => AdminApplicationPaymentsProvider(),
+          child: AdminApplicationDetailScreen(application: app),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AdminApplicationsProvider>(
@@ -32,18 +55,32 @@ class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {
         }
 
         if (provider.error != null) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(provider.error!),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: provider.loadApplications,
-                  child: const Text('Recharger'),
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          provider.error!,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton(
+                          onPressed: provider.loadApplications,
+                          child: const Text('Recharger'),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
-            ),
+              );
+            },
           );
         }
 
@@ -53,138 +90,288 @@ class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {
                 .where((app) => app['discount_requested'] == true)
                 .toList()
             : allApplications;
-        if (applications.isEmpty) {
-          return const Center(
-            child: Text('Aucune candidature pour le moment.'),
-          );
-        }
 
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: FilterChip(
-                  label: const Text('Avec demande de réduction'),
-                  selected: _onlyDiscountRequested,
-                  onSelected: (selected) {
-                    setState(() {
-                      _onlyDiscountRequested = selected;
-                    });
-                  },
-                ),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final isCompact = width < AppBreakpoints.mobile;
+            // Marges fluides : proportionnelles à la largeur réelle du
+            // conteneur parent, jamais figées.
+            final horizontalPadding = isCompact
+                ? 12.0
+                : math.min(32.0, math.max(16.0, width * 0.03));
+            // Sur très grand écran, on limite la largeur de lecture.
+            const maxContentWidth = 1100.0;
+
+            final filterBar = Padding(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                8,
+                horizontalPadding,
+                4,
               ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: applications.length,
-                itemBuilder: (context, index) {
-                  final app = applications[index];
-                  final requestedDegree =
-                      (app['requested_degree_level']?.toString() ?? '').trim();
-                  final requestedMode =
-                      (app['requested_study_mode']?.toString() ?? '').trim();
-                  final requestedSchedule =
-                      (app['requested_schedule']?.toString() ?? '').trim();
-                  final discountRequested = app['discount_requested'] == true;
-                  final hasPreferences =
-                      requestedDegree.isNotEmpty ||
-                      requestedMode.isNotEmpty ||
-                      requestedSchedule.isNotEmpty ||
-                      discountRequested;
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    color: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      onTap: () async {
-                        final appId = app['id']?.toString();
-                        if (appId != null && appId.isNotEmpty) {
-                          try {
-                            await context
-                                .read<AdminApplicationsProvider>()
-                                .markApplicationSeen(appId);
-                          } catch (_) {}
-                        }
-                        if (!context.mounted) return;
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => ChangeNotifierProvider(
-                              create: (_) => AdminApplicationPaymentsProvider(),
-                              child: AdminApplicationDetailScreen(
-                                application: app,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                      leading: _AdminApplicationLeading(application: app),
-                      title: Text(
-                        app['program_title']?.toString() ?? 'Programme inconnu',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilterChip(
+                    label: const Text('Avec demande de réduction'),
+                    selected: _onlyDiscountRequested,
+                    onSelected: (selected) {
+                      setState(() => _onlyDiscountRequested = selected);
+                    },
+                  ),
+                  Chip(
+                    avatar: const Icon(Icons.assignment, size: 16),
+                    label: Text('${applications.length} candidature(s)'),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
+              ),
+            );
+
+            Widget listArea;
+            if (applications.isEmpty) {
+              listArea = LayoutBuilder(
+                builder: (context, innerConstraints) {
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(24),
+                    child: ConstrainedBox(
+                      constraints:
+                          BoxConstraints(minHeight: innerConstraints.maxHeight),
+                      child: const Center(
+                        child: Text(
+                          'Aucune candidature pour le moment.',
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(app['university_name']?.toString() ?? ''),
-                          Text('Étudiant : ${app['student_full_name'] ?? ''}'),
-                          if (app['last_message_at'] != null)
-                            Text('Dernier message : ${app['last_message_at']}'),
-                          if (hasPreferences) ...[
-                            const SizedBox(height: 4),
-                            Wrap(
-                              spacing: 4,
-                              runSpacing: 2,
-                              children: [
-                                if (requestedDegree.isNotEmpty)
-                                  Chip(
-                                    label: Text('Niveau : $requestedDegree'),
-                                    visualDensity: VisualDensity.compact,
-                                    materialTapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                if (requestedMode.isNotEmpty)
-                                  Chip(
-                                    label: Text('Mode : $requestedMode'),
-                                    visualDensity: VisualDensity.compact,
-                                    materialTapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                if (requestedSchedule.isNotEmpty)
-                                  Chip(
-                                    label:
-                                        Text('Horaires : $requestedSchedule'),
-                                    visualDensity: VisualDensity.compact,
-                                    materialTapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                if (discountRequested)
-                                  Chip(
-                                    label: const Text('Demande de réduction'),
-                                    visualDensity: VisualDensity.compact,
-                                    materialTapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                              ],
-                            ),
-                          ],
-                        ],
-                      ),
-                      trailing: _AdminStatusAndUnread(application: app),
                     ),
                   );
                 },
-              ),
-            ),
-          ],
+              );
+            } else {
+              listArea = ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  8,
+                  horizontalPadding,
+                  // Marge basse généreuse : la dernière carte reste
+                  // atteignable au-dessus des barres système / FAB.
+                  24 + MediaQuery.of(context).padding.bottom,
+                ),
+                itemCount: applications.length,
+                itemBuilder: (context, index) {
+                  return _AdminApplicationCard(
+                    application: applications[index],
+                    isCompact: isCompact,
+                    onTap: () => _openApplication(applications[index]),
+                  );
+                },
+              );
+            }
+
+            return Column(
+              children: [
+                Center(
+                  child: ConstrainedBox(
+                    constraints:
+                        const BoxConstraints(maxWidth: maxContentWidth),
+                    child: filterBar,
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints:
+                          const BoxConstraints(maxWidth: maxContentWidth),
+                      child: RefreshIndicator(
+                        onRefresh: provider.loadApplications,
+                        child: listArea,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
+    );
+  }
+}
+
+/// Carte de candidature entièrement fluide.
+///
+/// On n'utilise plus `ListTile` : ses contraintes internes fixes coupaient le
+/// sous-titre et les puces sur téléphone. Ici tout se replie naturellement.
+class _AdminApplicationCard extends StatelessWidget {
+  const _AdminApplicationCard({
+    required this.application,
+    required this.isCompact,
+    required this.onTap,
+  });
+
+  final Map<String, dynamic> application;
+  final bool isCompact;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final app = application;
+    final theme = Theme.of(context);
+
+    final requestedDegree =
+        (app['requested_degree_level']?.toString() ?? '').trim();
+    final requestedMode =
+        (app['requested_study_mode']?.toString() ?? '').trim();
+    final requestedSchedule =
+        (app['requested_schedule']?.toString() ?? '').trim();
+    final discountRequested = app['discount_requested'] == true;
+    final hasPreferences = requestedDegree.isNotEmpty ||
+        requestedMode.isNotEmpty ||
+        requestedSchedule.isNotEmpty ||
+        discountRequested;
+
+    final status = app['status']?.toString() ?? '';
+    final lastMessageAt = app['last_message_at']?.toString() ?? '';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: Colors.white,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.black.withValues(alpha: 0.06)),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: EdgeInsets.all(isCompact ? 12 : 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Ligne de tête : icône + titre + statut.
+              // Sur écran étroit le statut passe à la ligne suivante.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _AdminApplicationLeading(application: app),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      app['program_title']?.toString() ?? 'Programme inconnu',
+                      style: theme.textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (!isCompact) ...[
+                    const SizedBox(width: 8),
+                    _AdminStatusBadge(status: status),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 8),
+              _InfoLine(
+                icon: Icons.account_balance,
+                text: app['university_name']?.toString() ?? '',
+              ),
+              _InfoLine(
+                icon: Icons.person_outline,
+                text: app['student_full_name']?.toString() ?? '',
+              ),
+              if (lastMessageAt.isNotEmpty)
+                _InfoLine(
+                  icon: Icons.schedule,
+                  text: 'Dernier message : $lastMessageAt',
+                ),
+              if (hasPreferences) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    if (requestedDegree.isNotEmpty)
+                      _CompactChip(label: 'Niveau : $requestedDegree'),
+                    if (requestedMode.isNotEmpty)
+                      _CompactChip(label: 'Mode : $requestedMode'),
+                    if (requestedSchedule.isNotEmpty)
+                      _CompactChip(label: 'Horaires : $requestedSchedule'),
+                    if (discountRequested)
+                      const _CompactChip(label: 'Demande de réduction'),
+                  ],
+                ),
+              ],
+              if (isCompact) ...[
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: _AdminStatusBadge(status: status),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoLine extends StatelessWidget {
+  const _InfoLine({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    if (text.trim().isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(icon, size: 14, color: const Color(0xFF6B7280)),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactChip extends StatelessWidget {
+  const _CompactChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 11, color: Color(0xFF374151)),
+      ),
     );
   }
 }
@@ -199,41 +386,28 @@ class _AdminApplicationLeading extends StatelessWidget {
     final hasUnread = application['has_unread_for_admin'] == true;
     final hasUnseen = application['has_unseen_for_admin'] == true;
     final hasNotification = hasUnread || hasUnseen;
-    return Stack(
-      children: [
-        const Icon(Icons.assignment),
-        if (hasNotification)
-          Positioned(
-            right: 0,
-            top: 0,
-            child: Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFF3B30),
-                shape: BoxShape.circle,
+    return SizedBox(
+      width: 24,
+      height: 24,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          const Icon(Icons.assignment, size: 22),
+          if (hasNotification)
+            Positioned(
+              right: -1,
+              top: -1,
+              child: Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFF3B30),
+                  shape: BoxShape.circle,
+                ),
               ),
             ),
-          ),
-      ],
-    );
-  }
-}
-
-class _AdminStatusAndUnread extends StatelessWidget {
-  final Map<String, dynamic> application;
-
-  const _AdminStatusAndUnread({required this.application});
-
-  @override
-  Widget build(BuildContext context) {
-    final status = application['status']?.toString() ?? '';
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        _AdminStatusBadge(status: status),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -245,12 +419,12 @@ class _AdminStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = _adminStatusLabel(status);
-    final color = _adminStatusColor(status);
+    final label = adminStatusLabel(status);
+    final color = adminStatusColor(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
@@ -265,40 +439,3 @@ class _AdminStatusBadge extends StatelessWidget {
   }
 }
 
-String _adminStatusLabel(String? status) {
-  switch (status) {
-    case 'draft':
-      return 'Brouillon';
-    case 'submitted':
-      return 'Soumise';
-    case 'under_review':
-      return 'En étude';
-    case 'accepted':
-      return 'Acceptée';
-    case 'rejected':
-      return 'Refusée';
-    case 'canceled':
-      return 'Annulée';
-    default:
-      return status ?? 'Inconnu';
-  }
-}
-
-Color _adminStatusColor(String? status) {
-  switch (status) {
-    case 'draft':
-      return const Color(0xFF9CA3AF);
-    case 'submitted':
-      return const Color(0xFF1EA75C);
-    case 'under_review':
-      return const Color(0xFFF59E0B);
-    case 'accepted':
-      return const Color(0xFFA3D65C);
-    case 'rejected':
-      return const Color(0xFFFF3B30);
-    case 'canceled':
-      return const Color(0xFF6B7280);
-    default:
-      return const Color(0xFF9CA3AF);
-  }
-}

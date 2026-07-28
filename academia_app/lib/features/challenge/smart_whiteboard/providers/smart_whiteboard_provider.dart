@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../config/backend_hosts.dart';
 import '../models/storyboard_models.dart';
 import '../services/smart_whiteboard_service.dart';
 import '../services/smart_whiteboard_render_service.dart';
@@ -38,6 +41,10 @@ class SmartWhiteboardProvider extends ChangeNotifier {
   RenderJob? _currentRenderJob;
   String? _renderVideoUrl;
 
+  /// Aperçu court (15 s sonorisées) disponible bien avant la vidéo complète.
+  /// Sert à faire patienter l'étudiant en lui montrant déjà son cours.
+  String? _previewVideoUrl;
+
   SmartWhiteboardProvider({
     required SmartWhiteboardService projectService,
     required SmartWhiteboardRenderService renderService,
@@ -57,6 +64,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
   String? get currentRenderJobId => _currentRenderJobId;
   RenderJob? get currentRenderJob => _currentRenderJob;
   String? get renderVideoUrl => _renderVideoUrl;
+  String? get previewVideoUrl => _previewVideoUrl;
   List<dynamic> get projects => _projects;
 
   // State management
@@ -197,9 +205,11 @@ class SmartWhiteboardProvider extends ChangeNotifier {
           'renderer': _payloadRenderer,
           'theme': _payloadTheme,
           'narration_mode': _payloadNarration,
-          // Moteur de rendu : 'vision' = HTML/Playwright/KaTeX (stable, joli).
-          // ('remotion' est désactivé — trop gourmand en mémoire sur ce serveur.)
-          'engine': 'vision',
+          // Moteur de rendu et style d'écriture : point de configuration unique
+          // (lib/config/backend_hosts.dart), surchargeable au build sans toucher
+          // au code — voir la documentation de `whiteboardEngine` pour le repli.
+          'engine': BackendHosts.whiteboardEngine,
+          'writing_style': BackendHosts.whiteboardWritingStyle,
         },
       );
 
@@ -208,23 +218,10 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       print(
           "DEBUG-D19-08: generateStoryboard response.data=$response.data runtimeType=${response.data.runtimeType} isNull=${response.data == null}");
 
-      if (response.status != 200) {
-        final errorData = response.data as Map<String, dynamic>?;
-        print(
-            "DEBUG-D19-09: generateStoryboard errorData=$errorData runtimeType=${errorData?.runtimeType} isNull=${errorData == null}");
-        if (errorData?['error'] == 'insufficient_credits') {
-          _setError(
-              'Crédits insuffisants. Il vous faut 15 crédits pour générer un Storyboard.');
-        } else if (errorData?['error'] == 'invalid_json') {
-          _setError('Erreur de génération: JSON invalide. Veuillez réessayer.');
-        } else if (errorData?['error'] == 'invalid_storyboard') {
-          _setError(
-              'Erreur de génération: Storyboard invalide. Veuillez réessayer.');
-        } else {
-          _setError(errorData?['error'] ?? 'Failed to generate storyboard');
-        }
-        return;
-      }
+      // NOTE : un statut d'erreur ne parvient JAMAIS ici. `functions.invoke` leve
+      // une FunctionException des que le statut n'est pas 2xx (functions_client :
+      // `if (isSuccessStatus) return ...; throw FunctionException(...)`). Toute la
+      // traduction des erreurs se fait donc dans le `catch`, via _messageForError.
 
       final data = response.data as Map<String, dynamic>;
       print(
@@ -246,9 +243,56 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       print(
           "DEBUG-D19-14: generateStoryboard _currentStoryboard=$_currentStoryboard runtimeType=${_currentStoryboard.runtimeType}");
       _setState(SmartWhiteboardState.editing);
+    } on FunctionException catch (e) {
+      print(
+          "DEBUG-D19-09: generateStoryboard FunctionException status=${e.status} details=${e.details} runtimeType=${e.details.runtimeType}");
+      _setError(_messageForError(e, 'Échec de la génération du storyboard.'));
     } catch (e) {
       _setError(e.toString());
     }
+  }
+
+  /// Traduit une erreur d'Edge Function en message lisible par l'étudiant.
+  ///
+  /// Les Edge Functions repondent un corps JSON `{ "error": "<code>", ... }`.
+  /// `FunctionException.details` contient ce corps : deja decode en Map quand la
+  /// reponse est annoncee en JSON, mais parfois une chaine brute. On gere les deux,
+  /// sinon l'etudiant voit un vidage technique au lieu d'une explication.
+  String _messageForError(FunctionException e, String fallback) {
+    Map<String, dynamic>? body;
+    final details = e.details;
+    if (details is Map<String, dynamic>) {
+      body = details;
+    } else if (details is String && details.trim().startsWith('{')) {
+      try {
+        final decoded = jsonDecode(details);
+        if (decoded is Map<String, dynamic>) body = decoded;
+      } catch (_) {
+        // Corps illisible : on retombe sur le message generique.
+      }
+    }
+
+    final code = body?['error']?.toString();
+    switch (code) {
+      case 'insufficient_credits':
+        final cost = body?['cost'] ?? 15;
+        final balance = body?['balance'] ?? 0;
+        return 'Crédits insuffisants : il vous faut $cost crédits (solde : $balance).';
+      case 'not_authenticated':
+        return 'Session expirée. Reconnectez-vous puis réessayez.';
+      case 'llm_error':
+        return "Le service de génération n'a pas répondu. Réessayez dans un instant.";
+      case 'invalid_json':
+      case 'invalid_storyboard':
+        // Le detail technique est precieux pour le diagnostic mais illisible pour
+        // l'etudiant : il part dans les logs, pas a l'ecran.
+        print(
+            "DEBUG-D19-09b: generateStoryboard $code detail=${body?['detail']}");
+        return 'La génération a produit un cours inexploitable. Veuillez réessayer.';
+      case 'internal_error':
+        return "Une erreur interne est survenue. Vos crédits n'ont pas été débités si la génération a échoué.";
+    }
+    return code ?? fallback;
   }
 
   // Editing methods
@@ -555,8 +599,16 @@ class SmartWhiteboardProvider extends ChangeNotifier {
     try {
       print(
           "DEBUG-D19-20: pollRenderJob START renderJobId=$_currentRenderJobId");
-      final result =
-          await _renderService.waitForRenderCompletion(_currentRenderJobId!);
+      final result = await _renderService.waitForRenderCompletion(
+        _currentRenderJobId!,
+        onPreview: (previewUrl) {
+          // Publié en cours de rendu : on notifie tout de suite pour que l'écran
+          // lance la lecture, l'état reste `rendering` puisque la vidéo complète
+          // n'est pas encore là.
+          _previewVideoUrl = previewUrl;
+          notifyListeners();
+        },
+      );
       print(
           "DEBUG-D19-21: pollRenderJob result=$result runtimeType=${result.runtimeType} isNull=${result == null}");
       print(
@@ -568,6 +620,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
 
       if (status == 'done') {
         _renderVideoUrl = render['video_url'] as String?;
+        _previewVideoUrl = null;
         _setState(SmartWhiteboardState.done);
       } else if (status == 'failed') {
         _setError(render['error_message'] as String? ?? 'Render failed');
@@ -595,6 +648,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
         _currentRenderJobId = null;
         _currentRenderJob = null;
         _renderVideoUrl = null;
+        _previewVideoUrl = null;
       }
 
       _setState(SmartWhiteboardState.idle);
@@ -684,6 +738,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
     _currentRenderJobId = null;
     _currentRenderJob = null;
     _renderVideoUrl = null;
+    _previewVideoUrl = null;
     _setState(SmartWhiteboardState.idle);
   }
 
@@ -697,6 +752,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
     _currentRenderJobId = null;
     _currentRenderJob = null;
     _renderVideoUrl = null;
+    _previewVideoUrl = null;
     _errorMessage = null;
     _setState(SmartWhiteboardState.idle);
   }

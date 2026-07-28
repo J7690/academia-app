@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../providers/prep_quiz_provider.dart';
 import '../../../providers/prep_weakness_provider.dart';
 import '../../../theme/prep_theme.dart';
+import '../../../widgets/adaptive_dialog.dart';
 import 'psychotech/psychotech_profile_widget.dart';
 import 'prep_progress_dashboard.dart';
 
@@ -699,9 +700,10 @@ class _BadgesSection extends StatelessWidget {
   void _showBadgeDetail(BuildContext context, _Badge badge) {
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        content: Column(
+      useSafeArea: true,
+      builder: (ctx) => AdaptiveDialog(
+        maxWidth: 380,
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(badge.emoji, style: const TextStyle(fontSize: 48)),

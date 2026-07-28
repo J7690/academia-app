@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import '../config/backend_hosts.dart';
 
 /// VoiceProvider abstrait pour multilingue
 abstract class VoiceProvider {
@@ -50,7 +51,7 @@ class PiperVoiceProvider extends VoiceProvider {
     try {
       // Connexion WebSocket au serveur vocal
       _channel = WebSocketChannel.connect(
-        Uri.parse('ws://185.167.97.144:8000/ws'),
+        Uri.parse(BackendHosts.bobodoVocalWs),
       );
       
       // Attendre la connexion

@@ -31,6 +31,7 @@ import '../../providers/admin_commission_share_config_provider.dart';
 import 'admin_td_screen.dart';
 import 'admin_academic_communication_screen.dart';
 import 'admin_live_sessions_screen.dart';
+import 'admin_studio_live_screen.dart';
 import 'admin_marketplace_control_tower_screen.dart';
 import '../../services/push_trigger_service.dart';
 import 'admin_support_screen.dart';
@@ -302,7 +303,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 28,
+      // 29 onglets et 29 vues. La valeur était à 28 : le dernier onglet
+      // (Coordination commerciale) n'était donc jamais atteignable par le
+      // contrôleur, et l'alignement onglet/vue devenait imprévisible.
+      length: 29,
       child: Consumer<AdminApplicationsProvider>(
         builder: (context, applicationsProvider, child) {
           final unread = applicationsProvider.unreadCount;
@@ -452,7 +456,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 AdminChallengesScreen(),
                 AdminCourseLibraryScreen(),
                 AdminOnlineCoursesScreen(),
-                AdminLiveSessionsScreen(),
+                const _AdminLiveTab(),
                 AdminShortTrainingsScreen(),
                 AdminUniversitySitesScreen(),
                 AdminBobodoScreen(),
@@ -461,11 +465,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 AdminLandingScreen(),
                 AdminHeroAccueilScreen(),
                 AdminHeroVideoEncoderScreen(),
-                const AdminAccountsScreen(),
+                // L'ordre suit celui des onglets :
+                //   'Partage commissions' · '👥 Comptes' · 'Grille commissions'
+                // Ces deux premières vues étaient inversées : l'onglet Comptes
+                // affichait la répartition des commissions, et inversement.
                 ChangeNotifierProvider(
                   create: (_) => AdminCommissionShareConfigProvider(),
                   child: const AdminCommissionShareConfigScreen(),
                 ),
+                const AdminAccountsScreen(),
                 ChangeNotifierProvider(
                   create: (_) => AdminCommissionRulesProvider(),
                   child: const AdminCommissionRulesScreen(),
@@ -553,6 +561,52 @@ class _AdminDotLabel extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Onglet « Lives » de l'administration.
+///
+/// Deux sous-onglets : l'ancienne console des séances de cours en ligne
+/// (inchangée, pour ne rien casser sur un flux déjà validé), et la
+/// supervision du Studio Live unifié.
+///
+/// Le sous-onglet Studio est actif par défaut : c'est celui qui couvre
+/// désormais tous les modules.
+class _AdminLiveTab extends StatelessWidget {
+  const _AdminLiveTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      initialIndex: 1,
+      child: Column(
+        children: [
+          Container(
+            color: Colors.white,
+            child: const TabBar(
+              labelColor: Color(0xFF6C5CE7),
+              unselectedLabelColor: Color(0xFF8A90A0),
+              indicatorColor: Color(0xFF6C5CE7),
+              labelStyle:
+                  TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              tabs: [
+                Tab(text: 'Cours en ligne'),
+                Tab(text: 'Studio Live — supervision'),
+              ],
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                AdminLiveSessionsScreen(),
+                const AdminStudioLiveScreen(),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

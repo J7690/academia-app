@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../../providers/prep_concours_provider.dart';
 import '../../../widgets/academia_rich_content.dart';
+import '../../../widgets/adaptive_dialog.dart';
 
 class PrepSujetBlancExamScreen extends StatefulWidget {
   final ExamBlanc exam;
@@ -158,9 +159,11 @@ class _PrepSujetBlancExamScreenState extends State<PrepSujetBlancExamScreen> {
       if (unanswered > 0) {
         final confirm = await showDialog<bool>(
           context: context,
-          builder: (ctx) => AlertDialog(
+          useSafeArea: true,
+          builder: (ctx) => AdaptiveDialog(
+            maxWidth: 420,
             title: const Text('Terminer l\'examen ?'),
-            content: Text('Il te reste $unanswered question(s) sans réponse.'),
+            child: Text('Il te reste $unanswered question(s) sans réponse.'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
@@ -220,9 +223,11 @@ class _PrepSujetBlancExamScreenState extends State<PrepSujetBlancExamScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
+      useSafeArea: true,
+      builder: (ctx) => AdaptiveDialog(
+        maxWidth: 460,
         title: const Text('Résultats'),
-        content: Column(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(

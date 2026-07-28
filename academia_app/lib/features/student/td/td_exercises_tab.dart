@@ -157,7 +157,10 @@ class _TdExercisesTabState extends State<TdExercisesTab> {
             left: 20, right: 20, top: 20,
             bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
           ),
-          child: Column(
+          // Formulaire scrollable : évite que le clavier pousse le bouton
+          // de génération hors de la zone visible sur petit écran.
+          child: SingleChildScrollView(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -276,6 +279,7 @@ class _TdExercisesTabState extends State<TdExercisesTab> {
                 ),
               ),
             ],
+            ),
           ),
         ),
       ),
@@ -426,7 +430,11 @@ class _TdExercisesTabState extends State<TdExercisesTab> {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(ctx).viewInsets.bottom + 20),
-        child: Column(
+        // Description + statut + champ de réponse peuvent dépasser la
+        // hauteur disponible une fois le clavier ouvert : on rend le
+        // formulaire scrollable plutôt que de risquer un bouton inatteignable.
+        child: SingleChildScrollView(
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -476,6 +484,7 @@ class _TdExercisesTabState extends State<TdExercisesTab> {
               )),
             ],
           ],
+          ),
         ),
       ),
     );

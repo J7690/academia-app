@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart';
 
+import '../../services/academia_room_options.dart';
 import '../../services/livekit_token_service.dart';
 
 /// TikTok-style Duo Live: 2 streamers in split-screen + N viewers with chat & reactions.
@@ -78,7 +79,7 @@ class _ChallengeLiveDuoScreenState extends State<ChallengeLiveDuoScreen> {
       _displayName = (tokenData['display_name'] ?? '').toString();
       if (tokenData['is_host'] == true) _isPublisher = true;
 
-      final room = Room();
+      final room = Room(roomOptions: AcademiaRoomOptions.broadcast);
       room.addListener(_onRoomChanged);
       _roomListener = room.createListener();
       _roomListener!.on<DataReceivedEvent>(_onDataReceived);

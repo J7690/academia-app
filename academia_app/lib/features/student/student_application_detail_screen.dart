@@ -15,6 +15,7 @@ import '../../widgets/bobodo_state.dart';
 import '../../widgets/ligdicash_payment_sheet.dart';
 import '../../widgets/bobodo_view.dart';
 import '../../services/analytics_tracking_service.dart';
+import '../../widgets/adaptive_dialog.dart';
 
 class StudentApplicationDetailScreen extends StatefulWidget {
   final Map<String, dynamic> application;
@@ -973,13 +974,12 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                           }
                                           final confirm = await showDialog<bool>(
                                             context: context,
-                                            builder: (ctx) => AlertDialog(
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(16),
-                                              ),
+                                            useSafeArea: true,
+                                            builder: (ctx) => AdaptiveDialog(
+                                              maxWidth: 420,
                                               title: const Text(
                                                   'Supprimer ce document ?'),
-                                              content: const Text(
+                                              child: const Text(
                                                 'Cette action est définitive.',
                                               ),
                                               actions: [

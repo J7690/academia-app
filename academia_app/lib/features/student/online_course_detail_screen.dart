@@ -13,6 +13,7 @@ import '../../widgets/error_widget.dart';
 import '../../widgets/report_content_sheet.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/analytics_tracking_service.dart';
+import '../../widgets/adaptive_dialog.dart';
 
 class OnlineCourseDetailScreen extends StatefulWidget {
   final String courseId;
@@ -102,11 +103,12 @@ class _OnlineCourseDetailScreenState extends State<OnlineCourseDetailScreen> {
 
     final result = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (dialogContext) {
-        return AlertDialog(
+        return AdaptiveDialog(
+          maxWidth: 480,
           title: const Text("Confirmation d'inscription"),
-          content: SingleChildScrollView(
-            child: Column(
+          child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -159,7 +161,6 @@ class _OnlineCourseDetailScreenState extends State<OnlineCourseDetailScreen> {
                 ],
               ],
             ),
-          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -815,12 +816,14 @@ class _OnlineCourseDetailScreenState extends State<OnlineCourseDetailScreen> {
 
     final result = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (context) {
-        return AlertDialog(
+        return AdaptiveDialog(
+          maxWidth: 480,
           title: const Text('Nouveau sujet de forum'),
-          content: SingleChildScrollView(
-            child: Column(
+          child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 TextField(
                   controller: titleController,
@@ -836,7 +839,6 @@ class _OnlineCourseDetailScreenState extends State<OnlineCourseDetailScreen> {
                 ),
               ],
             ),
-          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -924,7 +926,7 @@ class _OnlineCourseDetailScreenState extends State<OnlineCourseDetailScreen> {
                       if (p.isLoadingMessages)
                         const LinearProgressIndicator(),
                       SizedBox(
-                        height: 260,
+                        height: MediaQuery.of(context).size.height * 0.42,
                         child: ListView.builder(
                           itemCount: messages.length,
                           itemBuilder: (context, index) {

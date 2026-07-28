@@ -367,4 +367,103 @@ class AdminUserInvitationsProvider extends ChangeNotifier {
       _setSaving(false);
     }
   }
+
+  /// Crée un conseiller d'orientation.
+  ///
+  /// Contrairement aux autres rôles, l'Edge Function pose deux choses en une
+  /// seule opération : le compte avec `role = orientation_counselor`, qui
+  /// déclenche l'aiguillage à la connexion, et le profil métier dans
+  /// `app.orientation_counselors`, sans lequel le conseiller n'apparaîtrait
+  /// dans aucune recherche d'élève.
+  Future<Map<String, dynamic>?> createOrientationCounselorAccount({
+    required String email,
+    required String password,
+    required String fullName,
+    String kind = 'orientation',
+    List<String> specialites = const [],
+    List<String> niveaux = const [],
+    List<String> langues = const ['fr'],
+    String? bio,
+    int tarifFcfa = 0,
+    int dureeMinutes = 45,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final response = await _client.functions.invoke(
+        'admin-create-orientation-counselor',
+        body: <String, dynamic>{
+          'email': email.trim().toLowerCase(),
+          'password': password,
+          'full_name': fullName.trim(),
+          'kind': kind,
+          'specialites': specialites,
+          'niveaux': niveaux,
+          'langues': langues,
+          if (bio != null && bio.trim().isNotEmpty) 'bio': bio.trim(),
+          'tarif_fcfa': tarifFcfa,
+          'duree_minutes': dureeMinutes,
+        },
+      );
+
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        _setError('Réponse invalide lors de la création du conseiller.');
+        return null;
+      }
+      if (data['success'] != true) {
+        _setError(_counselorErrorMessage(
+            data['error']?.toString(), data['detail']?.toString()));
+        return null;
+      }
+      return data;
+    } on FunctionException catch (e) {
+      // functions.invoke lève sur tout statut hors 2xx : le corps JSON n'est
+      // alors pas dans response.data mais dans e.details. Sans ce cas, une
+      // erreur métier parfaitement prévisible — adresse déjà prise — remontait
+      // à l'utilisateur sous la forme d'une exception technique brute.
+      final details = e.details;
+      _setError(_counselorErrorMessage(
+        details is Map ? details['error']?.toString() : null,
+        details is Map ? details['detail']?.toString() : null,
+      ));
+      return null;
+    } catch (e) {
+      _setError('Création impossible. Vérifiez votre connexion et réessayez.');
+      debugPrint('[AdminUserInvitations] createOrientationCounselor: $e');
+      return null;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  /// Traduit un code d'erreur de l'Edge Function en phrase actionnable.
+  ///
+  /// Le détail technique est conservé pour les cas serveur : sans lui, un
+  /// échec comme celui du 26 juillet — droits manquants sur la table du module
+  /// d'orientation — reste indiagnosticable depuis l'application.
+  String _counselorErrorMessage(String? code, [String? detail]) {
+    final message = switch (code) {
+      'email_already_exists' =>
+        'Cette adresse est déjà utilisée par un autre compte. '
+            'Choisissez-en une autre.',
+      'password_too_short' =>
+        'Le mot de passe doit comporter 8 caractères au minimum.',
+      'invalid_email' => 'Cette adresse e-mail n\'est pas valide.',
+      'full_name_required' => 'Le nom complet est obligatoire.',
+      'invalid_kind' => 'Type de conseil non reconnu.',
+      'not_admin' => 'Cette action est réservée aux administrateurs.',
+      'not_authenticated' =>
+        'Votre session a expiré. Reconnectez-vous et réessayez.',
+      'user_not_found' => 'Ce compte est introuvable.',
+      'profile_creation_failed' =>
+        'Le compte n\'a pas pu être rattaché au module d\'orientation. '
+            'Aucun compte n\'a été créé.',
+      _ => 'Création impossible. Réessayez dans un instant.',
+    };
+    if (detail != null && detail.trim().isNotEmpty) {
+      return '$message\n($detail)';
+    }
+    return message;
+  }
 }

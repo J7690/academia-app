@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../providers/prep_concours_provider.dart';
 import '../../../theme/prep_theme.dart';
+import '../../../widgets/adaptive_dialog.dart';
 import '../prep_concours/prep_sujet_blanc_exam_screen.dart';
 
 /// Onglet Sujets — Sujets blancs générés par l'IA + possibilité d'en demander un nouveau.
@@ -54,9 +55,11 @@ class _PrepSubjectsTabState extends State<PrepSubjectsTab> {
 
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      useSafeArea: true,
+      builder: (ctx) => AdaptiveDialog(
+        maxWidth: 420,
         title: const Text('Générer un nouveau sujet'),
-        content: Text(
+        child: Text(
           'L\'IA va composer un sujet blanc complet pour "$label".\n\nCela peut prendre 30 à 60 secondes.',
         ),
         actions: [
@@ -187,9 +190,13 @@ class _PrepSubjectsTabState extends State<PrepSubjectsTab> {
             ),
 
             // ─── FAB: generate new exam ──────────────────────────
+            // Ancré à gauche : le FAB flottant Bobodo (+ Support) du
+            // dashboard occupe en permanence le coin bas-droit de l'écran
+            // au-dessus de tous les onglets — un FAB local à droite se
+            // retrouvait caché dessous ou juste collé en dessous.
             if (!provider.isGeneratingExam)
               Positioned(
-                right: 16,
+                left: 16,
                 bottom: 16,
                 child: FloatingActionButton.extended(
                   heroTag: 'fab_generate_exam',
@@ -331,6 +338,8 @@ class _ExamBlancCard extends StatelessWidget {
                     children: [
                       Text(
                         exam.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,

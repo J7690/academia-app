@@ -24,7 +24,10 @@ void _showRequestTeacherSheet(BuildContext context) {
     builder: (ctx) => StatefulBuilder(
       builder: (ctx, setS) => Padding(
         padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(ctx).viewInsets.bottom + 20),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // Formulaire scrollable : sur petit écran + clavier ouvert, le
+        // Column figé poussait le bouton d'envoi hors de la zone visible.
+        child: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)))),
           const SizedBox(height: 16),
           const Text('Demander un enseignant humain', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
@@ -90,6 +93,7 @@ void _showRequestTeacherSheet(BuildContext context) {
             ),
           )),
         ]),
+        ),
       ),
     ),
   );

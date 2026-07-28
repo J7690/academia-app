@@ -7,6 +7,7 @@ import '../services/game_live_service.dart';
 import '../services/gameplay_recorder_service.dart';
 import '../services/watermark_service.dart';
 import 'package:livekit_client/livekit_client.dart' as lk;
+import '../../services/academia_room_options.dart';
 import '../../services/livekit_token_service.dart';
 import 'package:provider/provider.dart';
 import '../../features/student/video_publish_screen.dart';
@@ -99,7 +100,7 @@ class _AutoRecordGameWrapperState extends State<AutoRecordGameWrapper> {
         final token = tokenData['token'] as String?;
         final url = tokenData['url'] as String?;
         if (token != null && url != null && token.isNotEmpty && url.isNotEmpty) {
-          final room = lk.Room();
+          final room = lk.Room(roomOptions: AcademiaRoomOptions.gameplay);
           await room.connect(url, token);
           // Micro ON pour les commentaires audio du joueur
           await room.localParticipant?.setMicrophoneEnabled(true);

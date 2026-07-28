@@ -82,6 +82,9 @@ class _StudentCommunitiesTabState extends State<StudentCommunitiesTab> {
         context.select<ShareModeProvider, bool>((p) => p.isShareModeEnabled);
     return Scaffold(
       backgroundColor: PrepTheme.scaffoldBg,
+      // Ancré à gauche : le FAB Bobodo (+ Support) du dashboard occupe en
+      // permanence le coin bas-droit au-dessus de tous les onglets.
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       floatingActionButton: isShareModeEnabled
           ? null
           : FloatingActionButton(

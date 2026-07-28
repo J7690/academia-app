@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../providers/admin_bobodo_conversations_provider.dart';
 import '../../providers/admin_bobodo_needs_provider.dart';
 import '../../providers/admin_bobodo_unanswered_provider.dart';
+import '../../utils/responsive.dart';
 
 class AdminBobodoScreen extends StatelessWidget {
   const AdminBobodoScreen({super.key});
@@ -93,155 +94,198 @@ class _AdminBobodoConversationsTabState extends State<_AdminBobodoConversationsT
         final sessions = provider.sessionsForStudent(_selectedStudentId);
         final messages = provider.messages;
 
-        return Row(
-          children: [
-            SizedBox(
-              width: 220,
-              child: Column(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text('Étudiants', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                  const Divider(height: 1),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: students.length,
-                      itemBuilder: (context, index) {
-                        final student = students[index];
-                        final id = student['student_id'];
-                        final selected = id == _selectedStudentId;
-                        return ListTile(
-                          selected: selected,
-                          title: Text(student['student_full_name'] ?? ''),
-                          onTap: () {
-                            setState(() {
-                              _selectedStudentId = id;
-                              _selectedSessionId = null;
-                            });
-                          },
-                        );
+        final studentsPane = _Pane(
+          title: 'Étudiants',
+          child: ListView.builder(
+            itemCount: students.length,
+            itemBuilder: (context, index) {
+              final student = students[index];
+              final id = student['student_id'];
+              final selected = id == _selectedStudentId;
+              return ListTile(
+                selected: selected,
+                title: Text(student['student_full_name'] ?? ''),
+                trailing: const Icon(Icons.chevron_right, size: 18),
+                onTap: () {
+                  setState(() {
+                    _selectedStudentId = id;
+                    _selectedSessionId = null;
+                  });
+                },
+              );
+            },
+          ),
+        );
+
+        final sessionsPane = _Pane(
+          title: 'Sessions',
+          onBack: () => setState(() => _selectedStudentId = null),
+          child: sessions.isEmpty
+              ? const Center(child: Text('Aucune session Bobodo.'))
+              : ListView.builder(
+                  itemCount: sessions.length,
+                  itemBuilder: (context, index) {
+                    final session = sessions[index];
+                    final id = session['id']?.toString();
+                    final selected = id == _selectedSessionId;
+                    final title = session['title']?.toString();
+                    final createdAt = session['created_at']?.toString();
+                    return ListTile(
+                      selected: selected,
+                      title: Text(title?.isNotEmpty == true
+                          ? title!
+                          : 'Session ${createdAt ?? ''}'),
+                      subtitle: createdAt != null ? Text(createdAt) : null,
+                      trailing: const Icon(Icons.chevron_right, size: 18),
+                      onTap: () {
+                        if (id == null) return;
+                        setState(() => _selectedSessionId = id);
+                        provider.loadMessages(id);
                       },
+                    );
+                  },
+                ),
+        );
+
+        final conversationPane = _Pane(
+          title: 'Conversation',
+          onBack: () => setState(() => _selectedSessionId = null),
+          child: _selectedSessionId == null
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      'Sélectionnez un étudiant puis une session pour voir la conversation.',
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                ],
-              ),
-            ),
-            const VerticalDivider(width: 1),
-            SizedBox(
-              width: 260,
-              child: Column(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text('Sessions', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                  const Divider(height: 1),
-                  Expanded(
-                    child: sessions.isEmpty
-                        ? const Center(child: Text('Aucune session Bobodo.'))
-                        : ListView.builder(
-                            itemCount: sessions.length,
-                            itemBuilder: (context, index) {
-                              final session = sessions[index];
-                              final id = session['id']?.toString();
-                              final selected = id == _selectedSessionId;
-                              final title = session['title']?.toString();
-                              final createdAt = session['created_at']?.toString();
-                              return ListTile(
-                                selected: selected,
-                                title: Text(title?.isNotEmpty == true
-                                    ? title!
-                                    : 'Session ${createdAt ?? ''}'),
-                                subtitle: createdAt != null
-                                    ? Text(createdAt)
-                                    : null,
-                                onTap: () {
-                                  if (id == null) return;
-                                  setState(() {
-                                    _selectedSessionId = id;
-                                  });
-                                  provider.loadMessages(id);
-                                },
-                              );
-                            },
-                          ),
-                  ),
-                ],
-              ),
-            ),
-            const VerticalDivider(width: 1),
-            Expanded(
-              child: Column(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text('Conversation', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                  const Divider(height: 1),
-                  Expanded(
-                    child: _selectedSessionId == null
-                        ? const Center(
-                            child: Text('Sélectionnez un étudiant puis une session pour voir la conversation.'),
-                          )
-                        : provider.isLoadingMessages && messages.isEmpty
-                            ? const Center(child: CircularProgressIndicator())
-                            : messages.isEmpty
-                                ? const Center(child: Text('Aucun message dans cette session.'))
-                                : ListView.builder(
-                                    padding: const EdgeInsets.all(16),
-                                    itemCount: messages.length,
-                                    itemBuilder: (context, index) {
-                                      final msg = messages[index];
-                                      final isStudent = msg['sender'] == 'student';
-                                      final content = msg['content']?.toString() ?? '';
-                                      final createdAt = msg['created_at']?.toString();
-                                      return Align(
-                                        alignment: isStudent
-                                            ? Alignment.centerLeft
-                                            : Alignment.centerRight,
-                                        child: Container(
-                                          margin: const EdgeInsets.only(bottom: 8),
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            color: isStudent
-                                                ? Colors.white
-                                                : const Color(0xFFE5F9E7),
-                                            borderRadius: BorderRadius.circular(12),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black.withOpacity(0.03),
-                                                blurRadius: 6,
-                                                offset: const Offset(0, 3),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(content),
-                                              if (createdAt != null) ...[
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  createdAt,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .bodySmall,
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    },
+                )
+              : provider.isLoadingMessages && messages.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : messages.isEmpty
+                      ? const Center(child: Text('Aucun message dans cette session.'))
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: messages.length,
+                          itemBuilder: (context, index) {
+                            final msg = messages[index];
+                            final isStudent = msg['sender'] == 'student';
+                            final content = msg['content']?.toString() ?? '';
+                            final createdAt = msg['created_at']?.toString();
+                            return Align(
+                              alignment: isStudent
+                                  ? Alignment.centerLeft
+                                  : Alignment.centerRight,
+                              child: ConstrainedBox(
+                                // Largeur de bulle relative : jamais figée.
+                                constraints: BoxConstraints(
+                                  maxWidth: MediaQuery.of(context).size.width *
+                                      (context.isMobile ? 0.86 : 0.7),
+                                ),
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: isStudent
+                                        ? Colors.white
+                                        : const Color(0xFFE5F9E7),
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.03),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
                                   ),
-                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(content),
+                                      if (createdAt != null) ...[
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          createdAt,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall,
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+        );
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            // Trois panneaux côte à côte : viable seulement à partir de la
+            // largeur tablette. Sur téléphone, un seul panneau à la fois
+            // (navigation par étapes) sinon chaque colonne devient illisible.
+            if (constraints.maxWidth >= AppBreakpoints.tablet) {
+              final studentsWidth =
+                  (constraints.maxWidth * 0.18).clamp(200.0, 260.0);
+              final sessionsWidth =
+                  (constraints.maxWidth * 0.22).clamp(220.0, 320.0);
+              return Row(
+                children: [
+                  SizedBox(width: studentsWidth, child: studentsPane),
+                  const VerticalDivider(width: 1),
+                  SizedBox(width: sessionsWidth, child: sessionsPane),
+                  const VerticalDivider(width: 1),
+                  Expanded(child: conversationPane),
                 ],
-              ),
-            ),
-          ],
+              );
+            }
+
+            if (_selectedSessionId != null) return conversationPane;
+            if (_selectedStudentId != null) return sessionsPane;
+            return studentsPane;
+          },
         );
       },
+    );
+  }
+}
+
+/// Panneau à en-tête avec titre et retour optionnel (utilisé en navigation
+/// pas-à-pas sur téléphone, et côte à côte sur grand écran).
+class _Pane extends StatelessWidget {
+  const _Pane({required this.title, required this.child, this.onBack});
+
+  final String title;
+  final Widget child;
+  final VoidCallback? onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              if (onBack != null)
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, size: 20),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onBack,
+                ),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+        Expanded(child: child),
+      ],
     );
   }
 }
@@ -310,14 +354,19 @@ class _AdminBobodoNeedsTabState extends State<_AdminBobodoNeedsTab> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(studentName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        if (createdAt != null)
+                        Expanded(
+                          child: Text(studentName,
+                              style: const TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                        if (createdAt != null) ...[
+                          const SizedBox(width: 8),
                           Text(
                             createdAt,
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 4),

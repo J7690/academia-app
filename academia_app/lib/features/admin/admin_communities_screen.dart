@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/admin_communities_provider.dart';
+import '../../widgets/adaptive_dialog.dart';
 
 class AdminCommunitiesScreen extends StatefulWidget {
   const AdminCommunitiesScreen({super.key});
@@ -33,23 +34,27 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
 
     await showDialog<void>(
       context: context,
+      useSafeArea: true,
       builder: (dialogContext) {
         return Consumer<AdminCommunitiesProvider>(
           builder: (context, p, child) {
             final posts = p.posts;
-            return AlertDialog(
+            return AdaptiveDialog(
+              maxWidth: 560,
               title: Text('Messages - $name'),
-              content: SizedBox(
-                width: 520,
-                height: 400,
-                child: posts.isEmpty
+              child: posts.isEmpty
                     ? const Center(
-                        child: Text(
-                          'Aucun message pour cette communauté.',
-                          style: TextStyle(fontSize: 13),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Text(
+                            'Aucun message pour cette communauté.',
+                            style: TextStyle(fontSize: 13),
+                          ),
                         ),
                       )
                     : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
                         itemCount: posts.length,
                         itemBuilder: (context, index) {
                           final post = posts[index];
@@ -146,7 +151,6 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
                           );
                         },
                       ),
-              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(),
@@ -171,10 +175,12 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
 
     final confirmed = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (dialogContext) {
-        return AlertDialog(
+        return AdaptiveDialog(
+          maxWidth: 460,
           title: const Text('Supprimer la communauté'),
-          content: Text(
+          child: Text(
             'Cette opération supprimera définitivement le groupe "$name" et toutes ses données associées (messages, membres, sondages...). Continuer ?',
           ),
           actions: [
@@ -216,23 +222,27 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
 
     await showDialog<void>(
       context: context,
+      useSafeArea: true,
       builder: (dialogContext) {
         return Consumer<AdminCommunitiesProvider>(
           builder: (context, p, child) {
             final members = p.members;
-            return AlertDialog(
+            return AdaptiveDialog(
+              maxWidth: 520,
               title: Text('Membres - $name'),
-              content: SizedBox(
-                width: 480,
-                height: 360,
-                child: members.isEmpty
+              child: members.isEmpty
                     ? const Center(
-                        child: Text(
-                          'Aucun membre pour cette communauté.',
-                          style: TextStyle(fontSize: 13),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Text(
+                            'Aucun membre pour cette communauté.',
+                            style: TextStyle(fontSize: 13),
+                          ),
                         ),
                       )
                     : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
                         itemCount: members.length,
                         itemBuilder: (context, index) {
                           final m = members[index];
@@ -302,7 +312,6 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
                           );
                         },
                       ),
-              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(),
@@ -330,23 +339,27 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
 
     await showDialog<void>(
       context: context,
+      useSafeArea: true,
       builder: (dialogContext) {
         return Consumer<AdminCommunitiesProvider>(
           builder: (context, p, child) {
             final requests = p.joinRequests;
-            return AlertDialog(
+            return AdaptiveDialog(
+              maxWidth: 520,
               title: Text('Demandes d\'adhésion - $name'),
-              content: SizedBox(
-                width: 480,
-                height: 360,
-                child: requests.isEmpty
+              child: requests.isEmpty
                     ? const Center(
-                        child: Text(
-                          'Aucune demande d\'adhésion en attente pour cette communauté.',
-                          style: TextStyle(fontSize: 13),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Text(
+                            'Aucune demande d\'adhésion en attente pour cette communauté.',
+                            style: TextStyle(fontSize: 13),
+                          ),
                         ),
                       )
                     : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
                         itemCount: requests.length,
                         itemBuilder: (context, index) {
                           final r = requests[index];
@@ -429,7 +442,6 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
                           );
                         },
                       ),
-              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(),
@@ -544,6 +556,199 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
                 metaParts.add('$postsCount message${postsCount > 1 ? 's' : ''}');
               }
 
+              final info = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (description.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ],
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      Chip(
+                        label: Text(
+                          kind == 'official' ? 'Officiel' : 'Groupe étudiant',
+                        ),
+                        backgroundColor: kind == 'official'
+                            ? const Color(0xFFE0F2FE)
+                            : const Color(0xFFE5F4EA),
+                      ),
+                      Chip(
+                        label: Text(
+                          () {
+                            switch (status) {
+                              case 'restricted':
+                                return 'Restreint';
+                              case 'suspended':
+                                return 'Suspendu';
+                              case 'closed':
+                                return 'Fermé';
+                              default:
+                                return 'Actif';
+                            }
+                          }(),
+                        ),
+                        backgroundColor: () {
+                          switch (status) {
+                            case 'restricted':
+                              return const Color(0xFFFFF7E0);
+                            case 'suspended':
+                            case 'closed':
+                              return const Color(0xFFFFE4E6);
+                            default:
+                              return const Color(0xFFE5F4EA);
+                          }
+                        }(),
+                      ),
+                      Chip(
+                        label: Text(
+                          () {
+                            switch (moderationState) {
+                              case 'flagged':
+                                return 'Signalé';
+                              case 'under_review':
+                                return 'En revue';
+                              default:
+                                return 'Clean';
+                            }
+                          }(),
+                        ),
+                        backgroundColor: () {
+                          switch (moderationState) {
+                            case 'flagged':
+                              return const Color(0xFFFFF7E0);
+                            case 'under_review':
+                              return const Color(0xFFE0EAFF);
+                            default:
+                              return const Color(0xFFE5F4EA);
+                          }
+                        }(),
+                      ),
+                    ],
+                  ),
+                  if (metaParts.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      metaParts.join(' • '),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ],
+              );
+
+              final toggles = Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Switch(
+                    value: isActive,
+                    onChanged: id == null
+                        ? null
+                        : (value) async {
+                            final ok = await provider.updateCommunityStatus(
+                              communityId: id,
+                              isActive: value,
+                            );
+                            if (!context.mounted) return;
+                            if (!ok && provider.error != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(provider.error!)),
+                              );
+                            }
+                          },
+                  ),
+                  IconButton(
+                    tooltip: isFeatured
+                        ? 'Retirer des communautés en vedette'
+                        : 'Mettre en vedette',
+                    icon: Icon(
+                      isFeatured ? Icons.star : Icons.star_border,
+                      color: isFeatured ? Colors.orange : Colors.grey,
+                    ),
+                    onPressed: id == null
+                        ? null
+                        : () async {
+                            final ok = await provider.updateCommunityStatus(
+                              communityId: id,
+                              isFeatured: !isFeatured,
+                            );
+                            if (!context.mounted) return;
+                            if (!ok && provider.error != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(provider.error!)),
+                              );
+                            }
+                          },
+                  ),
+                  IconButton(
+                    tooltip: 'Modifier',
+                    icon: const Icon(Icons.edit),
+                    onPressed: () {
+                      _showCommunityDialog(context, provider, existing: c);
+                    },
+                  ),
+                ],
+              );
+
+              final secondaryActions = Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                children: [
+                  TextButton.icon(
+                    onPressed: id == null
+                        ? null
+                        : () => _openMembersDialog(context, provider, c),
+                    icon: const Icon(Icons.group_outlined, size: 18),
+                    label: const Text('Membres'),
+                  ),
+                  TextButton.icon(
+                    onPressed: id == null
+                        ? null
+                        : () => _openJoinRequestsDialog(context, provider, c),
+                    icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
+                    label: const Text('Demandes'),
+                  ),
+                  TextButton.icon(
+                    onPressed: id == null
+                        ? null
+                        : () => _openPostsDialog(context, provider, c),
+                    icon: const Icon(Icons.forum_outlined, size: 18),
+                    label: const Text('Messages'),
+                  ),
+                  TextButton.icon(
+                    onPressed: id == null
+                        ? null
+                        : () => _openModerationDialog(context, provider, c),
+                    icon: const Icon(Icons.shield_outlined, size: 18),
+                    label: const Text('Modération'),
+                  ),
+                  TextButton.icon(
+                    onPressed: id == null
+                        ? null
+                        : () => _confirmDeleteCommunity(context, provider, c),
+                    icon: const Icon(Icons.delete_outline,
+                        color: Colors.redAccent, size: 18),
+                    label: const Text('Supprimer'),
+                  ),
+                ],
+              );
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
                 color: Colors.white,
@@ -553,243 +758,30 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              name,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            if (description.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                description,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                            ],
-                            const SizedBox(height: 4),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 4,
-                              children: [
-                                Chip(
-                                  label: Text(
-                                    kind == 'official'
-                                        ? 'Officiel'
-                                        : 'Groupe étudiant',
-                                  ),
-                                  backgroundColor: kind == 'official'
-                                      ? const Color(0xFFE0F2FE)
-                                      : const Color(0xFFE5F4EA),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final narrow = constraints.maxWidth < 520;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: narrow
+                            ? [info, const SizedBox(height: 8), toggles, secondaryActions]
+                            : [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(child: info),
+                                    const SizedBox(width: 8),
+                                    toggles,
+                                  ],
                                 ),
-                                Chip(
-                                  label: Text(
-                                    () {
-                                      switch (status) {
-                                        case 'restricted':
-                                          return 'Restreint';
-                                        case 'suspended':
-                                          return 'Suspendu';
-                                        case 'closed':
-                                          return 'Fermé';
-                                        default:
-                                          return 'Actif';
-                                      }
-                                    }(),
-                                  ),
-                                  backgroundColor: () {
-                                    switch (status) {
-                                      case 'restricted':
-                                        return const Color(0xFFFFF7E0);
-                                      case 'suspended':
-                                      case 'closed':
-                                        return const Color(0xFFFFE4E6);
-                                      default:
-                                        return const Color(0xFFE5F4EA);
-                                    }
-                                  }(),
-                                ),
-                                Chip(
-                                  label: Text(
-                                    () {
-                                      switch (moderationState) {
-                                        case 'flagged':
-                                          return 'Signalé';
-                                        case 'under_review':
-                                          return 'En revue';
-                                        default:
-                                          return 'Clean';
-                                      }
-                                    }(),
-                                  ),
-                                  backgroundColor: () {
-                                    switch (moderationState) {
-                                      case 'flagged':
-                                        return const Color(0xFFFFF7E0);
-                                      case 'under_review':
-                                        return const Color(0xFFE0EAFF);
-                                      default:
-                                        return const Color(0xFFE5F4EA);
-                                    }
-                                  }(),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: secondaryActions,
                                 ),
                               ],
-                            ),
-                            if (metaParts.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                metaParts.join(' • '),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Switch(
-                                value: isActive,
-                                onChanged: id == null
-                                    ? null
-                                    : (value) async {
-                                        final ok = await provider
-                                            .updateCommunityStatus(
-                                          communityId: id,
-                                          isActive: value,
-                                        );
-                                        if (!context.mounted) return;
-                                        if (!ok && provider.error != null) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(provider.error!),
-                                            ),
-                                          );
-                                        }
-                                      },
-                              ),
-                              IconButton(
-                                tooltip: isFeatured
-                                    ? 'Retirer des communautés en vedette'
-                                    : 'Mettre en vedette',
-                                icon: Icon(
-                                  isFeatured
-                                      ? Icons.star
-                                      : Icons.star_border,
-                                  color:
-                                      isFeatured ? Colors.orange : Colors.grey,
-                                ),
-                                onPressed: id == null
-                                    ? null
-                                    : () async {
-                                        final ok = await provider
-                                            .updateCommunityStatus(
-                                          communityId: id,
-                                          isFeatured: !isFeatured,
-                                        );
-                                        if (!context.mounted) return;
-                                        if (!ok && provider.error != null) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(provider.error!),
-                                            ),
-                                          );
-                                        }
-                                      },
-                              ),
-                            ],
-                          ),
-                          IconButton(
-                            tooltip: 'Modifier',
-                            icon: const Icon(Icons.edit),
-                            onPressed: () {
-                              _showCommunityDialog(
-                                context,
-                                provider,
-                                existing: c,
-                              );
-                            },
-                          ),
-                          TextButton.icon(
-                            onPressed: id == null
-                                ? null
-                                : () {
-                                    _openMembersDialog(context, provider, c);
-                                  },
-                            icon: const Icon(Icons.group_outlined),
-                            label: const Text('Membres'),
-                          ),
-                          TextButton.icon(
-                            onPressed: id == null
-                                ? null
-                                : () {
-                                    _openJoinRequestsDialog(
-                                      context,
-                                      provider,
-                                      c,
-                                    );
-                                  },
-                            icon: const Icon(Icons.person_add_alt_1_outlined),
-                            label: const Text('Demandes'),
-                          ),
-                          TextButton.icon(
-                            onPressed: id == null
-                                ? null
-                                : () {
-                                    _openPostsDialog(context, provider, c);
-                                  },
-                            icon: const Icon(Icons.forum_outlined),
-                            label: const Text('Messages'),
-                          ),
-                          TextButton.icon(
-                            onPressed: id == null
-                                ? null
-                                : () {
-                                    _openModerationDialog(
-                                      context,
-                                      provider,
-                                      c,
-                                    );
-                                  },
-                            icon: const Icon(Icons.shield_outlined),
-                            label: const Text('Modération'),
-                          ),
-                          TextButton.icon(
-                            onPressed: id == null
-                                ? null
-                                : () {
-                                    _confirmDeleteCommunity(
-                                      context,
-                                      provider,
-                                      c,
-                                    );
-                                  },
-                            icon: const Icon(
-                              Icons.delete_outline,
-                              color: Colors.redAccent,
-                            ),
-                            label: const Text('Supprimer'),
-                          ),
-                        ],
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ),
               );
@@ -814,23 +806,27 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
 
     await showDialog<void>(
       context: context,
+      useSafeArea: true,
       builder: (dialogContext) {
         return Consumer<AdminCommunitiesProvider>(
           builder: (context, p, child) {
             final events = p.moderationEvents;
-            return AlertDialog(
+            return AdaptiveDialog(
+              maxWidth: 520,
               title: Text('Modération - $name'),
-              content: SizedBox(
-                width: 480,
-                height: 360,
-                child: events.isEmpty
+              child: events.isEmpty
                     ? const Center(
-                        child: Text(
-                          'Aucun événement de modération pour cette communauté.',
-                          style: TextStyle(fontSize: 13),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Text(
+                            'Aucun événement de modération pour cette communauté.',
+                            style: TextStyle(fontSize: 13),
+                          ),
                         ),
                       )
                     : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
                         itemCount: events.length,
                         itemBuilder: (context, index) {
                           final event = events[index];
@@ -930,7 +926,6 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
                           );
                         },
                       ),
-              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(),
@@ -969,18 +964,19 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
 
     final result = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
-            return AlertDialog(
+            return AdaptiveDialog(
               title: Text(
                 existing == null
                     ? 'Nouvelle communauté'
                     : 'Modifier la communauté',
               ),
-              content: SingleChildScrollView(
-                child: Column(
+              child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextField(
                       controller: nameController,
@@ -1140,7 +1136,6 @@ class _AdminCommunitiesScreenState extends State<AdminCommunitiesScreen> {
                     ),
                   ],
                 ),
-              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),

@@ -46,7 +46,11 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.universityName ?? 'Mini-site université'),
+        title: Text(
+          widget.universityName ?? 'Mini-site université',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           Consumer<ShareModeProvider>(
             builder: (context, shareMode, _) {

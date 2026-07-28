@@ -104,6 +104,9 @@ import 'providers/subscription_provider.dart';
 import 'services/share_tracking_service.dart';
 import 'providers/credit_provider.dart';
 import 'providers/academia_session_provider.dart';
+import 'providers/admin_learning_sessions_provider.dart';
+import 'providers/orientation_provider.dart';
+import 'providers/orientation_quiz_provider.dart';
 import 'features/share/share_mode_provider.dart';
 import 'providers/prep_quiz_provider.dart';
 import 'providers/prep_flashcard_provider.dart';
@@ -394,6 +397,9 @@ class AcademiaApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
       ChangeNotifierProvider(create: (_) => CreditProvider()),
       ChangeNotifierProvider(create: (_) => AcademiaSessionProvider()),
+      ChangeNotifierProvider(create: (_) => AdminLearningSessionsProvider()),
+      ChangeNotifierProvider(create: (_) => OrientationProvider()),
+      ChangeNotifierProvider(create: (_) => OrientationQuizProvider()),
       ChangeNotifierProvider(
         create: (_) => SmartWhiteboardProvider(
           projectService: SmartWhiteboardService(Supabase.instance.client),

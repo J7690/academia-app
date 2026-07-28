@@ -15,6 +15,7 @@ import '../instructor/instructor_dashboard_screen.dart';
 import '../commercial/commercial_dashboard_screen.dart';
 import '../merchant/merchant_dashboard_screen_v2.dart';
 import '../manager/manager_dashboard_screen.dart';
+import '../orientation/counselor_dashboard_screen.dart';
 import 'auth_landing_screen.dart';
 
 class AuthWrapper extends StatefulWidget {
@@ -359,6 +360,11 @@ class _AuthWrapperState extends State<AuthWrapper> {
         return const ManagerDashboardScreen();
       case 'merchant':
         return const MerchantDashboardScreenV2();
+      case 'orientation_counselor':
+        // Le conseiller d'orientation n'anime ni cours ni TD : son espace est
+        // son agenda de consultations, le dossier de chaque élève, les fiches
+        // d'orientation qu'il rédige et ses revenus.
+        return const CounselorDashboardScreen();
       default:
         return const AuthLandingScreen();
     }

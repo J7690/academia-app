@@ -122,35 +122,64 @@ class _AcademiaParticipantsPanelState
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
-              child: Row(
-                children: [
-                  Text(
-                    'Participants ($total)',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const Spacer(),
-                  if (widget.isHost)
-                    TextButton.icon(
-                      onPressed: _exportingAttendance ? null : _exportAttendance,
-                      icon: _exportingAttendance
-                          ? const SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.file_download_outlined, size: 18),
-                      label: const Text('Présence (CSV)'),
-                      style: TextButton.styleFrom(foregroundColor: const Color(0xFF60A5FA)),
-                    ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white54),
-                    onPressed: widget.onClose,
-                  ),
-                ],
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Sur écran étroit, le libellé "Présence (CSV)" ferait
+                  // déborder la ligne à côté du titre + bouton fermer : on
+                  // le réduit à une icône seule en dessous de 380px.
+                  final compact = constraints.maxWidth < 380;
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Participants ($total)',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (widget.isHost)
+                        compact
+                            ? IconButton(
+                                tooltip: 'Présence (CSV)',
+                                onPressed:
+                                    _exportingAttendance ? null : _exportAttendance,
+                                icon: _exportingAttendance
+                                    ? const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child:
+                                            CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.file_download_outlined,
+                                        color: Color(0xFF60A5FA), size: 18),
+                              )
+                            : TextButton.icon(
+                                onPressed:
+                                    _exportingAttendance ? null : _exportAttendance,
+                                icon: _exportingAttendance
+                                    ? const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child:
+                                            CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.file_download_outlined, size: 18),
+                                label: const Text('Présence (CSV)'),
+                                style: TextButton.styleFrom(
+                                    foregroundColor: const Color(0xFF60A5FA)),
+                              ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white54),
+                        onPressed: widget.onClose,
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
             const Divider(color: Colors.white12, height: 1),
@@ -212,7 +241,12 @@ class _ParticipantRow extends StatelessWidget {
           style: const TextStyle(color: Color(0xFF60A5FA), fontSize: 13),
         ),
       ),
-      title: Text(name, style: const TextStyle(color: Colors.white, fontSize: 13)),
+      title: Text(
+        name,
+        style: const TextStyle(color: Colors.white, fontSize: 13),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       trailing: canModerate
           ? (isBusy
               ? const SizedBox(

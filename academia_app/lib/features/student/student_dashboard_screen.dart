@@ -25,6 +25,9 @@ import 'student_td_root_screen.dart';
 import 'student_application_detail_screen.dart';
 import 'tabs/student_challenges_tab.dart';
 import 'tabs/student_coming_soon_tab.dart';
+import 'tabs/student_courses_tab.dart';
+import 'tabs/student_live_sessions_tab.dart';
+import 'tabs/student_orientation_tab.dart';
 import '../share/share_mode_provider.dart';
 import '../../widgets/student_assistant_overlay.dart';
 import '../../services/push_trigger_service.dart';
@@ -377,34 +380,65 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
               if (_currentIndex != 7)
                 const StudentAssistantOverlay(),
               if (_currentIndex != 7)
-                Positioned(
-                  right: 16,
-                  bottom: 96,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // FAB Bobodo (IA) — style Meta AI WhatsApp
-                      FloatingActionButton(
-                        heroTag: 'bobodo_fab',
-                        onPressed: () {
-                          _markStudentBobodoSeen();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const Scaffold(
-                                body: SafeArea(child: StudentBobodoTab()),
-                              ),
+                Builder(
+                  builder: (context) {
+                    // Positionnement responsive : jamais de valeur figée qui
+                    // pourrait pousser un des deux boutons hors de l'écran
+                    // (paysage, petit téléphone, écran partagé) ou le faire
+                    // chevaucher le bouton propre à certains onglets
+                    // (Communautés, Concours, TD ont leur propre FAB).
+                    final mq = MediaQuery.of(context);
+                    final size = mq.size;
+                    final safeBottom = mq.padding.bottom;
+                    final isShort = size.height < 560; // paysage / petit écran
+                    final horizontalMargin = size.width < 360 ? 12.0 : 16.0;
+                    final relativeBottom = size.height * 0.09;
+                    final bottomOffset =
+                        (relativeBottom < 72 ? 72.0 : relativeBottom) + safeBottom * 0.2;
+
+                    final bobodoButton = FloatingActionButton(
+                      heroTag: 'bobodo_fab',
+                      onPressed: () {
+                        _markStudentBobodoSeen();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const Scaffold(
+                              body: SafeArea(child: StudentBobodoTab()),
                             ),
-                          );
-                        },
-                        backgroundColor: const Color(0xFF6C63FF),
-                        elevation: 4,
-                        child: const Icon(Icons.smart_toy, color: Colors.white, size: 26),
-                      ),
-                      const SizedBox(height: 12),
-                      // FAB Support (messagerie admin)
-                      SupportFab(),
-                    ],
-                  ),
+                          ),
+                        );
+                      },
+                      backgroundColor: const Color(0xFF6C63FF),
+                      elevation: 4,
+                      child: const Icon(Icons.smart_toy, color: Colors.white, size: 26),
+                    );
+                    const supportButton = SupportFab();
+
+                    return Positioned(
+                      right: horizontalMargin,
+                      bottom: bottomOffset,
+                      // Sur écran bas (paysage), on empile horizontalement
+                      // plutôt que verticalement pour ne jamais pousser le
+                      // bouton Bobodo hors de la zone visible.
+                      child: isShort
+                          ? Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                supportButton,
+                                const SizedBox(width: 12),
+                                bobodoButton,
+                              ],
+                            )
+                          : Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                bobodoButton,
+                                const SizedBox(height: 12),
+                                supportButton,
+                              ],
+                            ),
+                    );
+                  },
                 ),
             ],
           ),
@@ -449,20 +483,13 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           child = const StudentChallengesTab();
           break;
         case 8:
-          child = const StudentComingSoonTab(
-            title: 'Cours',
-            icon: Icons.menu_book_outlined,
-            subtitle:
-                'La bibliothèque de cours est en cours de développement.\nElle sera bientôt accessible. Merci de votre patience !',
-          );
+          child = const StudentCoursesTab();
           break;
         case 9:
-          child = const StudentComingSoonTab(
-            title: 'Lives',
-            icon: Icons.videocam_outlined,
-            subtitle:
-                'Les sessions live sont en cours de développement.\nElles seront bientôt accessibles. Merci de votre patience !',
-          );
+          child = const StudentLiveSessionsTab();
+          break;
+        case 10:
+          child = const StudentOrientationTab();
           break;
         default:
           child = const StudentHomeMobileTab();
@@ -513,20 +540,13 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           child = const StudentChallengesTab();
           break;
         case 8:
-          child = const StudentComingSoonTab(
-            title: 'Cours',
-            icon: Icons.menu_book_outlined,
-            subtitle:
-                'La bibliothèque de cours est en cours de développement.\nElle sera bientôt accessible. Merci de votre patience !',
-          );
+          child = const StudentCoursesTab();
           break;
         case 9:
-          child = const StudentComingSoonTab(
-            title: 'Lives',
-            icon: Icons.videocam_outlined,
-            subtitle:
-                'Les sessions live sont en cours de développement.\nElles seront bientôt accessibles. Merci de votre patience !',
-          );
+          child = const StudentLiveSessionsTab();
+          break;
+        case 10:
+          child = const StudentOrientationTab();
           break;
         default:
           child = const StudentHomeTab();
@@ -538,6 +558,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   static const List<String> _tabNames = [
     'Accueil', 'Candidatures', 'Cours', 'Communautes',
     'Partenaires', 'Prep Concours', 'TD', 'Bobodo', 'Challenges', 'Lives',
+    'Orientation',
   ];
 
   void _onDestinationSelected(int index) {
@@ -640,6 +661,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         label: 'Lives',
         icon: _NavBadgeIcon(icon: Icons.live_tv_outlined, count: _countLives),
         selectedIcon: _NavBadgeIcon(icon: Icons.live_tv, count: _countLives),
+      ),
+      const _DesktopNavEntry(
+        semanticIndex: 10,
+        label: 'Orientation',
+        icon: Icon(Icons.explore_outlined),
+        selectedIcon: Icon(Icons.explore),
       ),
     ];
 
@@ -818,7 +845,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                             count: _countCourses,
                           ),
                         ),
-                        // 9 - Lives (TikTok Live) [GELÉ]
+                        // 9 - Lives (TikTok Live)
                         _buildMobileNavItem(
                           index: 9,
                           label: 'Lives',
@@ -830,6 +857,13 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                             icon: Icons.live_tv,
                             count: _countLives,
                           ),
+                        ),
+                        // 10 - Orientation (conseillers, prise de rendez-vous)
+                        _buildMobileNavItem(
+                          index: 10,
+                          label: 'Orientation',
+                          icon: const Icon(Icons.explore_outlined),
+                          selectedIcon: const Icon(Icons.explore),
                         ),
                       ],
                     ),

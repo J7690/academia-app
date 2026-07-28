@@ -19,6 +19,14 @@ class AcademiaHostControls extends StatelessWidget {
   final VoidCallback onEndSession;
   final AcademiaSessionFeatures features;
 
+  /// Bascule caméra avant / arrière. Masquée si la plateforme ne la gère pas.
+  final VoidCallback? onSwitchCamera;
+
+  /// Mode caméra-document : caméra arrière pour filmer une feuille ou un
+  /// tableau, mise en avant pour tous les participants.
+  final VoidCallback? onToggleDocumentMode;
+  final bool isDocumentMode;
+
   const AcademiaHostControls({
     super.key,
     required this.micEnabled,
@@ -36,6 +44,9 @@ class AcademiaHostControls extends StatelessWidget {
     required this.onToggleWhiteboard,
     required this.onEndSession,
     required this.features,
+    this.onSwitchCamera,
+    this.onToggleDocumentMode,
+    this.isDocumentMode = false,
   });
 
   @override
@@ -45,9 +56,19 @@ class AcademiaHostControls extends StatelessWidget {
       color: const Color(0xFF111827).withValues(alpha: 0.92),
       child: SafeArea(
         top: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
+        // La barre hôte peut porter jusqu'à neuf boutons. Sur un écran étroit
+        // elle déborderait ; on la rend défilante horizontalement tout en
+        // gardant la répartition régulière quand la place suffit.
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: MediaQuery.of(context).size.width - 24,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
             _Btn(
               icon: micEnabled ? Icons.mic : Icons.mic_off,
               label: micEnabled ? 'Micro' : 'Muet',
@@ -60,6 +81,24 @@ class AcademiaHostControls extends StatelessWidget {
               color: cameraEnabled ? Colors.white : const Color(0xFFEF4444),
               onTap: onToggleCamera,
             ),
+            if (onSwitchCamera != null)
+              _Btn(
+                icon: Icons.flip_camera_ios_outlined,
+                label: 'Retourner',
+                color: cameraEnabled ? Colors.white : Colors.white24,
+                onTap: onSwitchCamera!,
+              ),
+            if (onToggleDocumentMode != null)
+              _Btn(
+                icon: isDocumentMode
+                    ? Icons.description
+                    : Icons.description_outlined,
+                label: 'Document',
+                color: isDocumentMode
+                    ? const Color(0xFF34D399)
+                    : (cameraEnabled ? Colors.white54 : Colors.white24),
+                onTap: onToggleDocumentMode!,
+              ),
             if (features.isScreenShareEnabled)
               _Btn(
                 icon: Icons.screen_share,
@@ -98,7 +137,9 @@ class AcademiaHostControls extends StatelessWidget {
               onTap: onEndSession,
               filled: true,
             ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );

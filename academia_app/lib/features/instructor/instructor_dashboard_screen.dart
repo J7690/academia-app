@@ -19,6 +19,7 @@ import 'teacher_td_assignments_screen.dart';
 import 'teacher_prep_screen.dart';
 import 'teacher_prep_assignments_screen.dart';
 import 'teacher_prep_live_sessions_screen.dart';
+import 'teacher_live_sessions_screen.dart';
 import 'teacher_td_local_groups_screen.dart';
 import 'teacher_td_exercises_screen.dart';
 import 'teacher_td_resources_screen.dart';
@@ -883,12 +884,15 @@ class _InstructorUnifiedLiveTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
+      initialIndex: 2,
       child: Column(
         children: [
           Container(
             color: Colors.white,
             child: TabBar(
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
               labelColor: TdTheme.instructorPrimary,
               unselectedLabelColor: TdTheme.textTertiary,
               indicatorColor: TdTheme.instructorPrimary,
@@ -896,6 +900,7 @@ class _InstructorUnifiedLiveTab extends StatelessWidget {
               tabs: const [
                 Tab(text: 'Cours en ligne'),
                 Tab(text: 'Prépa concours'),
+                Tab(text: 'Studio unifié'),
               ],
             ),
           ),
@@ -904,6 +909,7 @@ class _InstructorUnifiedLiveTab extends StatelessWidget {
               children: [
                 _InstructorLiveSessionsTab(),
                 TeacherPrepLiveSessionsScreen(),
+                TeacherLiveSessionsScreen(),
               ],
             ),
           ),

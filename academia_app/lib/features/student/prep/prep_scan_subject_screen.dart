@@ -639,6 +639,8 @@ class _CollapsibleCardState extends State<_CollapsibleCard> {
             leading: Icon(widget.icon, color: widget.color),
             title: Text(
               widget.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
             ),
             trailing: Icon(

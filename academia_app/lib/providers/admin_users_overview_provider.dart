@@ -190,6 +190,77 @@ class AdminUsersOverviewProvider extends ChangeNotifier {
     }
   }
 
+  /// Promeut un compte existant en conseiller d'orientation.
+  ///
+  /// Fonction dédiée plutôt qu'un `targetRole` de plus dans [promoteUserRole] :
+  /// la promotion ne se limite pas à changer un rôle, elle crée aussi le profil
+  /// métier dans `app.orientation_counselors`. Sans lui, le conseiller
+  /// n'apparaîtrait dans aucune recherche d'élève.
+  Future<bool> promoteToOrientationCounselor({
+    required String userId,
+    String? fullName,
+    String kind = 'orientation',
+    List<String> specialites = const [],
+    List<String> langues = const ['fr'],
+    int dureeMinutes = 45,
+    int tarifFcfa = 0,
+  }) async {
+    _setUpdating(true);
+    _setError(null);
+    try {
+      final response = await _client.functions.invoke(
+        'admin-promote-to-orientation-counselor',
+        body: <String, dynamic>{
+          'user_id': userId,
+          if (fullName != null && fullName.trim().isNotEmpty)
+            'full_name': fullName.trim(),
+          'kind': kind,
+          'specialites': specialites,
+          'langues': langues,
+          'duree_minutes': dureeMinutes,
+          'tarif_fcfa': tarifFcfa,
+        },
+      );
+
+      final data = response.data;
+      if (data is Map<String, dynamic> && data['success'] == true) {
+        await loadUsers();
+        return true;
+      }
+      _setError(_promotionErrorMessage(
+          data is Map ? data['error']?.toString() : null));
+      return false;
+    } on FunctionException catch (e) {
+      // functions.invoke lève sur tout statut hors 2xx : le corps de la réponse
+      // se trouve alors dans e.details, pas dans response.data. Sans ce cas,
+      // une erreur métier prévisible remonterait en exception technique brute.
+      final details = e.details;
+      _setError(_promotionErrorMessage(
+          details is Map ? details['error']?.toString() : null));
+      return false;
+    } catch (e) {
+      _setError('Promotion impossible. Vérifiez votre connexion et réessayez.');
+      debugPrint('[AdminUsersOverview] promoteToOrientationCounselor: $e');
+      return false;
+    } finally {
+      _setUpdating(false);
+    }
+  }
+
+  String _promotionErrorMessage(String? code) => switch (code) {
+        'cannot_demote_admin' =>
+          'Un compte administrateur ne peut pas être converti en conseiller.',
+        'user_not_found' => 'Ce compte est introuvable.',
+        'not_admin' => 'Cette action est réservée aux administrateurs.',
+        'not_authenticated' =>
+          'Votre session a expiré. Reconnectez-vous et réessayez.',
+        'profile_creation_failed' =>
+          'Le profil de conseiller n\'a pas pu être créé. Le compte n\'a pas été modifié.',
+        'role_update_failed' =>
+          'Le rôle n\'a pas pu être changé. La promotion a été annulée.',
+        _ => 'Promotion impossible. Réessayez dans un instant.',
+      };
+
   Future<List<Map<String, dynamic>>> fetchUserActionLogs(String userId) async {
     try {
       final response = await _client.rpc(

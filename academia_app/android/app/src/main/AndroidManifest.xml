@@ -13,8 +13,22 @@
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" tools:node="remove"/>
+    <!--
+      Partage d'écran en séance (Studio Live) et enregistrement de gameplay
+      (Challenges). Depuis Android 14 (API 34), une capture d'écran doit être
+      hébergée par un service de premier plan de type mediaProjection, sous
+      peine de SecurityException au démarrage de la capture.
+
+      Ces deux permissions avaient été retirées via tools:node="remove", ce qui
+      rendait le partage d'écran et l'enregistrement de gameplay inopérants.
+      L'audit des permissions du 4 juin 2026 les listait pourtant comme
+      « À retirer : NON (feature active) ».
+
+      Restaurées le 26 juillet 2026. Nécessite une déclaration d'usage dans la
+      Play Console — voir docs/PLAY_STORE_DECLARATION_MEDIA_PROJECTION.md
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="remove"/>
     <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
     <application
@@ -88,6 +102,21 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT"/>
             </intent-filter>
         </service>
+
+        <!--
+          Service de premier plan hébergeant la capture d'écran.
+          Fourni par le paquet flutter_background. Le type mediaProjection est
+          obligatoire depuis Android 14 : sans lui, MediaProjection lève une
+          SecurityException et l'application se ferme.
+          Le service n'est démarré que le temps d'un partage d'écran, puis
+          arrêté — il ne tourne jamais en tâche de fond.
+        -->
+        <service
+            android:name="de.julianassmann.flutter_background.IsolateHolderService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection"
+            tools:replace="android:foregroundServiceType"/>
 
     </application>
     <!-- Required to query activities that can process text, see:

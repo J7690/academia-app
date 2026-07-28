@@ -2,7 +2,7 @@ name: academia_app
 description: Projet Flutter avec intégration Supabase automatisée
 publish_to: 'none'
 
-version: 1.0.0+19
+version: 1.0.0+20
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -56,6 +56,12 @@ dependencies:
   video_player: ^2.10.1
 
   livekit_client: ^2.6.0
+
+  # Service de premier plan Android hebergeant la capture d'ecran.
+  # Obligatoire depuis Android 14 : sans service de type mediaProjection,
+  # MediaProjection leve une SecurityException et l'application se ferme.
+  # Utilise uniquement pendant un partage d'ecran, jamais en tache de fond.
+  flutter_background: ^1.3.0
 
   image_picker: ^1.0.7
 

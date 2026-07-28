@@ -105,17 +105,39 @@ class _SmartWhiteboardPreviewScreenState extends State<SmartWhiteboardPreviewScr
     // URL résolue → AcademiaPlaybackView (natif Android avec safeCodecSelector)
     if (_resolvedVideoUrl != null) {
       debugPrint('[WB-PREVIEW] Building AcademiaPlaybackView for url=${_resolvedVideoUrl!.substring(0, _resolvedVideoUrl!.length.clamp(0, 60))}...');
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: AcademiaPlaybackView(
-          url: _resolvedVideoUrl!,
-          autoplay: true,
-          looping: true,
-          muted: false,
-          showControls: true,
-          fit: BoxFit.contain,
-          showErrorText: true,
-        ),
+      return _player(_resolvedVideoUrl!);
+    }
+
+    // Pas encore de vidéo complète : si le worker a déjà déposé l'aperçu court,
+    // on le joue pour que l'étudiant voie son cours démarrer sans attendre.
+    final previewUrl = context.watch<SmartWhiteboardProvider>().previewVideoUrl;
+    if (previewUrl != null) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(child: _player(previewUrl)),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            color: const Color(0xFF1EA75C).withValues(alpha: 0.12),
+            child: const Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Aperçu des premières secondes — la vidéo complète finit de se préparer.',
+                    style: TextStyle(fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       );
     }
 
@@ -132,6 +154,23 @@ class _SmartWhiteboardPreviewScreenState extends State<SmartWhiteboardPreviewScr
           const SizedBox(height: 16),
           Text(label),
         ],
+      ),
+    );
+  }
+
+  /// Lecteur natif. La clé force la recréation lors du passage aperçu → complet.
+  Widget _player(String url) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: AcademiaPlaybackView(
+        key: ValueKey(url),
+        url: url,
+        autoplay: true,
+        looping: true,
+        muted: false,
+        showControls: true,
+        fit: BoxFit.contain,
+        showErrorText: true,
       ),
     );
   }

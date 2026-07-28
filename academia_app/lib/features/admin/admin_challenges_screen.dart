@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/admin_challenges_provider.dart';
 import '../../video/academia_playback_engine.dart';
+import '../../widgets/adaptive_dialog.dart';
 
 class AdminChallengesScreen extends StatefulWidget {
   const AdminChallengesScreen({super.key});
@@ -160,6 +161,130 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
                 statsParts.add('Score moyen: $averageScore');
               }
 
+              final info = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (description.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ],
+                  if (metaParts.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      metaParts.join(' • '),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                  if (statsParts.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      statsParts.join(' • '),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ],
+              );
+
+              final toggles = Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Switch(
+                    value: isActive,
+                    onChanged: id == null
+                        ? null
+                        : (value) async {
+                            final ok = await provider.updateChallengeStatus(
+                              challengeId: id,
+                              isActive: value,
+                            );
+                            if (!context.mounted) return;
+                            if (!ok && provider.error != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(provider.error!)),
+                              );
+                            }
+                          },
+                  ),
+                  IconButton(
+                    tooltip: isFeatured
+                        ? 'Retirer des challenges en vedette'
+                        : 'Mettre en vedette',
+                    icon: Icon(
+                      isFeatured ? Icons.star : Icons.star_border,
+                      color: isFeatured ? Colors.orange : Colors.grey,
+                    ),
+                    onPressed: id == null
+                        ? null
+                        : () async {
+                            final ok = await provider.updateChallengeStatus(
+                              challengeId: id,
+                              isFeatured: !isFeatured,
+                            );
+                            if (!context.mounted) return;
+                            if (!ok && provider.error != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(provider.error!)),
+                              );
+                            }
+                          },
+                  ),
+                  IconButton(
+                    tooltip: 'Modifier',
+                    icon: const Icon(Icons.edit),
+                    onPressed: () {
+                      _showChallengeDialog(context, provider, existing: c);
+                    },
+                  ),
+                ],
+              );
+
+              // Boutons secondaires en Wrap : ils passent à la ligne au lieu
+              // d'imposer une colonne large qui écrase le titre sur téléphone.
+              final secondaryActions = Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                children: [
+                  TextButton.icon(
+                    onPressed: id == null
+                        ? null
+                        : () => _openParticipationsDialog(context, provider, c),
+                    icon: const Icon(Icons.people_outline, size: 18),
+                    label: const Text('Participations'),
+                  ),
+                  TextButton.icon(
+                    onPressed: id == null
+                        ? null
+                        : () => _openVideosDialog(context, provider, c),
+                    icon: const Icon(Icons.ondemand_video, size: 18),
+                    label: const Text('Vidéos'),
+                  ),
+                  TextButton.icon(
+                    onPressed: id == null
+                        ? null
+                        : () => _openLeaderboardDialog(context, provider, c),
+                    icon: const Icon(Icons.leaderboard_outlined, size: 18),
+                    label: const Text('Classement'),
+                  ),
+                ],
+              );
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
                 color: Colors.white,
@@ -169,164 +294,35 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              title,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            if (description.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                description,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                            ],
-                            if (metaParts.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                metaParts.join(' • '),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                            if (statsParts.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                statsParts.join(' • '),
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Column(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final narrow = constraints.maxWidth < 520;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Switch(
-                                value: isActive,
-                                onChanged: id == null
-                                    ? null
-                                    : (value) async {
-                                        final ok = await provider
-                                            .updateChallengeStatus(
-                                          challengeId: id,
-                                          isActive: value,
-                                        );
-                                        if (!context.mounted) return;
-                                        if (!ok && provider.error != null) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(provider.error!),
-                                            ),
-                                          );
-                                        }
-                                      },
-                              ),
-                              IconButton(
-                                tooltip: isFeatured
-                                    ? 'Retirer des challenges en vedette'
-                                    : 'Mettre en vedette',
-                                icon: Icon(
-                                  isFeatured
-                                      ? Icons.star
-                                      : Icons.star_border,
-                                  color:
-                                      isFeatured ? Colors.orange : Colors.grey,
+                        children: narrow
+                            ? [
+                                info,
+                                const SizedBox(height: 8),
+                                toggles,
+                                secondaryActions,
+                              ]
+                            : [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(child: info),
+                                    const SizedBox(width: 8),
+                                    toggles,
+                                  ],
                                 ),
-                                onPressed: id == null
-                                    ? null
-                                    : () async {
-                                        final ok = await provider
-                                            .updateChallengeStatus(
-                                          challengeId: id,
-                                          isFeatured: !isFeatured,
-                                        );
-                                        if (!context.mounted) return;
-                                        if (!ok && provider.error != null) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(provider.error!),
-                                            ),
-                                          );
-                                        }
-                                      },
-                              ),
-                            ],
-                          ),
-                          IconButton(
-                            tooltip: 'Modifier',
-                            icon: const Icon(Icons.edit),
-                            onPressed: () {
-                              _showChallengeDialog(
-                                context,
-                                provider,
-                                existing: c,
-                              );
-                            },
-                          ),
-                          TextButton.icon(
-                            onPressed: id == null
-                                ? null
-                                : () {
-                                    _openParticipationsDialog(
-                                      context,
-                                      provider,
-                                      c,
-                                    );
-                                  },
-                            icon: const Icon(Icons.people_outline),
-                            label: const Text('Participations'),
-                          ),
-                          TextButton.icon(
-                            onPressed: id == null
-                                ? null
-                                : () {
-                                    _openVideosDialog(
-                                      context,
-                                      provider,
-                                      c,
-                                    );
-                                  },
-                            icon: const Icon(Icons.ondemand_video),
-                            label: const Text('Vidéos'),
-                          ),
-                          TextButton.icon(
-                            onPressed: id == null
-                                ? null
-                                : () {
-                                    _openLeaderboardDialog(
-                                      context,
-                                      provider,
-                                      c,
-                                    );
-                                  },
-                            icon: const Icon(Icons.leaderboard_outlined),
-                            label: const Text('Classement'),
-                          ),
-                        ],
-                      ),
-                    ],
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: secondaryActions,
+                                ),
+                              ],
+                      );
+                    },
                   ),
                 ),
               );
@@ -371,18 +367,19 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
 
     final result = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
-            return AlertDialog(
+            return AdaptiveDialog(
               title: Text(
                 existing == null
                     ? 'Nouveau challenge'
                     : 'Modifier le challenge',
               ),
-              content: SingleChildScrollView(
-                child: Column(
+              child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextField(
                       controller: titleController,
@@ -498,7 +495,6 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
                     ),
                   ],
                 ),
-              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
@@ -576,20 +572,24 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
 
     await showDialog<void>(
       context: context,
+      useSafeArea: true,
       builder: (dialogContext) {
-        return AlertDialog(
+        return AdaptiveDialog(
+          maxWidth: 560,
           title: Text('Participations - $title'),
-          content: SizedBox(
-            width: 520,
-            height: 420,
-            child: participations.isEmpty
+          child: participations.isEmpty
                 ? const Center(
-                    child: Text(
-                      'Aucune participation pour ce challenge pour le moment.',
-                      style: TextStyle(fontSize: 13),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'Aucune participation pour ce challenge pour le moment.',
+                        style: TextStyle(fontSize: 13),
+                      ),
                     ),
                   )
                 : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: participations.length,
                     itemBuilder: (context, index) {
                       final p = participations[index];
@@ -677,7 +677,6 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
                       );
                     },
                   ),
-          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -709,13 +708,16 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
 
     final result = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
-            return AlertDialog(
+            return AdaptiveDialog(
+              maxWidth: 460,
               title: Text('Revue de participation - $challengeTitle'),
-              content: Column(
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   DropdownButtonFormField<String>(
                     value: status,
@@ -818,20 +820,24 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
 
     await showDialog<void>(
       context: context,
+      useSafeArea: true,
       builder: (dialogContext) {
-        return AlertDialog(
+        return AdaptiveDialog(
+          maxWidth: 520,
           title: Text('Classement - $title'),
-          content: SizedBox(
-            width: 480,
-            height: 380,
-            child: leaderboard.isEmpty
+          child: leaderboard.isEmpty
                 ? const Center(
-                    child: Text(
-                      'Aucun classement disponible pour ce challenge.',
-                      style: TextStyle(fontSize: 13),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'Aucun classement disponible pour ce challenge.',
+                        style: TextStyle(fontSize: 13),
+                      ),
                     ),
                   )
                 : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: leaderboard.length,
                     itemBuilder: (context, index) {
                       final e = leaderboard[index];
@@ -872,7 +878,6 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
                       );
                     },
                   ),
-          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -902,20 +907,24 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
 
     await showDialog<void>(
       context: context,
+      useSafeArea: true,
       builder: (dialogContext) {
-        return AlertDialog(
+        return AdaptiveDialog(
+          maxWidth: 600,
           title: Text('Vidéos - $title'),
-          content: SizedBox(
-            width: 560,
-            height: 460,
-            child: videos.isEmpty
+          child: videos.isEmpty
                 ? const Center(
-                    child: Text(
-                      'Aucune vidéo pour ce challenge pour le moment.',
-                      style: TextStyle(fontSize: 13),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'Aucune vidéo pour ce challenge pour le moment.',
+                        style: TextStyle(fontSize: 13),
+                      ),
                     ),
                   )
                 : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: videos.length,
                     itemBuilder: (context, index) {
                       final v = videos[index];
@@ -1234,7 +1243,6 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
                       );
                     },
                   ),
-          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -1261,20 +1269,24 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
 
     await showDialog<void>(
       context: context,
+      useSafeArea: true,
       builder: (dialogContext) {
-        return AlertDialog(
+        return AdaptiveDialog(
+          maxWidth: 560,
           title: Text('Vidéos supplémentaires - $userId'),
-          content: SizedBox(
-            width: 520,
-            height: 420,
-            child: videos.isEmpty
+          child: videos.isEmpty
                 ? const Center(
-                    child: Text(
-                      'Aucune vidéo supplémentaire pour cette participation.',
-                      style: TextStyle(fontSize: 13),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'Aucune vidéo supplémentaire pour cette participation.',
+                        style: TextStyle(fontSize: 13),
+                      ),
                     ),
                   )
                 : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: videos.length,
                     itemBuilder: (context, index) {
                       final v = videos[index];
@@ -1376,7 +1388,6 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
                       );
                     },
                   ),
-          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -1396,11 +1407,15 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
 
     await showDialog<void>(
       context: context,
+      useSafeArea: true,
       builder: (dialogContext) {
-        return AlertDialog(
+        return AdaptiveDialog(
+          maxWidth: 520,
           title: const Text('Prévisualisation de la vidéo'),
-          content: SizedBox(
-            width: 480,
+          // AspectRatio donne une hauteur déterminée au lecteur : sans elle
+          // la vidéo n'a aucune contrainte dans la zone scrollable.
+          child: AspectRatio(
+            aspectRatio: 9 / 16,
             child: AcademiaPlaybackEngine.view(
               url: videoUrl,
               autoplay: true,
@@ -1430,20 +1445,24 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
 
     await showDialog<void>(
       context: context,
+      useSafeArea: true,
       builder: (dialogContext) {
-        return AlertDialog(
+        return AdaptiveDialog(
+          maxWidth: 640,
           title: const Text('Signalements de vidéos de challenges'),
-          content: SizedBox(
-            width: 600,
-            height: 480,
-            child: reports.isEmpty
+          child: reports.isEmpty
                 ? const Center(
-                    child: Text(
-                      'Aucun signalement en attente.',
-                      style: TextStyle(fontSize: 13),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'Aucun signalement en attente.',
+                        style: TextStyle(fontSize: 13),
+                      ),
                     ),
                   )
                 : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: reports.length,
                     itemBuilder: (context, index) {
                       final r = reports[index];
@@ -1638,7 +1657,6 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
                       );
                     },
                   ),
-          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -1659,20 +1677,24 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
 
     await showDialog<void>(
       context: context,
+      useSafeArea: true,
       builder: (dialogContext) {
-        return AlertDialog(
+        return AdaptiveDialog(
+          maxWidth: 600,
           title: const Text('Assets vidéo académiques'),
-          content: SizedBox(
-            width: 560,
-            height: 460,
-            child: assets.isEmpty
+          child: assets.isEmpty
                 ? const Center(
-                    child: Text(
-                      'Aucun asset vidéo défini pour le moment.',
-                      style: TextStyle(fontSize: 13),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'Aucun asset vidéo défini pour le moment.',
+                        style: TextStyle(fontSize: 13),
+                      ),
                     ),
                   )
                 : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: assets.length,
                     itemBuilder: (context, index) {
                       final a = assets[index];
@@ -1805,7 +1827,6 @@ class _AdminChallengesScreenState extends State<AdminChallengesScreen> {
                       );
                     },
                   ),
-          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),

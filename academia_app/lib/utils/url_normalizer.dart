@@ -1,19 +1,15 @@
+import '../config/backend_hosts.dart';
+
 class UrlNormalizer {
-  // Backend proxy host. Railway a été retiré du dispositif : la production
-  // bascule sur Kamatera Cloud. Configurable au build sans toucher au code :
-  //   --dart-define=BACKEND_PROXY_HOST=api.academiea.com
-  //   --dart-define=BACKEND_PROXY_HOST=185.167.97.144:8001
-  // Défaut = VPS Kamatera actif (LiveKit/Nginx), backend expose sur :8001.
-  static const String _backendProxyHost = String.fromEnvironment(
-    'BACKEND_PROXY_HOST',
-    defaultValue: '185.167.97.144:8001',
-  );
+  // Hôte du proxy backend. L'IP n'est plus codée ici : elle vient du point unique
+  // `BackendHosts` (lib/config/backend_hosts.dart), surchargeable au build :
+  //   --dart-define=VPS_HOST=31.207.38.60
+  static String get _backendProxyHost => BackendHosts.backendProxyAuthority;
 
   // Anciens hôtes proxy encore présents dans des URLs stockées en base.
-  // Conservés en "legacy" pour que ces URLs héritées restent normalisées.
-  static const Set<String> _legacyProxyHosts = {
-    'academia-app-production.up.railway.app',
-  };
+  // Conservés en "legacy" pour que ces URLs héritées restent normalisées, y
+  // compris après un changement d'hébergeur (Railway -> Kamatera -> LWS).
+  static Set<String> get _legacyProxyHosts => BackendHosts.legacyProxyHosts;
 
   static const String _supabaseHost = 'thevdfcwlcqzdoybfvgs.supabase.co';
 
@@ -22,6 +18,7 @@ class UrlNormalizer {
 
   static bool _isProxyHost(Uri uri) {
     if (_legacyProxyHosts.contains(uri.host)) return true;
+    if (_legacyProxyHosts.contains(_authority(uri))) return true;
     if (_backendProxyHost.isEmpty) return false;
     // Match exact sur host (domaine) ou host:port (IP directe), afin de ne
     // pas capturer par erreur d'autres services du même IP (ex. LiveKit :7880).

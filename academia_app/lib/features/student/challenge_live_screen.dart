@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../games/services/game_live_service.dart';
+import '../../services/academia_room_options.dart';
 import '../../services/livekit_token_service.dart';
 import 'challenge_live_duo_screen.dart';
 
@@ -108,7 +109,7 @@ class _ChallengeLiveScreenState extends State<ChallengeLiveScreen> {
       _displayName = (tokenData['display_name'] ?? '').toString();
       _isHost = tokenData['is_host'] == true || widget.isHost;
 
-      final room = Room();
+      final room = Room(roomOptions: AcademiaRoomOptions.broadcast);
       room.addListener(_onRoomChanged);
 
       _roomListener = room.createListener();

@@ -8,6 +8,7 @@ import '../../../providers/prep_quiz_provider.dart';
 import '../../../widgets/academia_rich_content.dart';
 import '../../../providers/prep_flashcard_provider.dart';
 import '../../../theme/prep_theme.dart';
+import '../../../widgets/adaptive_dialog.dart';
 import 'prep_scan_subject_screen.dart';
 
 /// Onglet Quiz — QCM adaptatifs, examens blancs, flashcards.
@@ -535,9 +536,11 @@ class _QuizPlayViewState extends State<_QuizPlayView> {
   void _showQuitDialog(BuildContext context, PrepQuizProvider provider) {
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      useSafeArea: true,
+      builder: (ctx) => AdaptiveDialog(
+        maxWidth: 420,
         title: const Text('Quitter le quiz ?'),
-        content: const Text('Ta progression sur ce quiz sera perdue.'),
+        child: const Text('Ta progression sur ce quiz sera perdue.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),

@@ -12,6 +12,7 @@ import '../../widgets/bobodo_state.dart';
 import '../../widgets/credit_balance_chip.dart';
 import '../../widgets/ligdicash_payment_sheet.dart';
 import '../../widgets/bobodo_view.dart';
+import '../../widgets/adaptive_dialog.dart';
 import '../share/share_service.dart';
 import '../share/share_mode_provider.dart';
 import '../share/widgets/share_signature.dart';
@@ -70,9 +71,12 @@ class _StudentTdRootScreenState extends State<StudentTdRootScreen> {
   void _openShareOptions() {
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
       builder: (ctx) {
         return SafeArea(
-          child: Wrap(
+          child: SingleChildScrollView(
+            child: Wrap(
             children: [
               // Section: Partage complet
               Padding(
@@ -164,6 +168,7 @@ class _StudentTdRootScreenState extends State<StudentTdRootScreen> {
                 },
               ),
             ],
+            ),
           ),
         );
       },
@@ -583,10 +588,14 @@ class _StudentTdCatalogTab extends StatelessWidget {
                     ),
                     title: const Text(
                       'Je ne trouve pas mon TD',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                     subtitle: const Text(
                       'Demande un TD spécifique à l\'administrateur si aucun programme ne correspond.',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontSize: 12),
                     ),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -689,12 +698,14 @@ class _StudentTdCatalogTab extends StatelessWidget {
 
     final result = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (context) {
-        return AlertDialog(
+        return AdaptiveDialog(
+          maxWidth: 480,
           title: const Text('Demander un TD non proposé'),
-          content: SingleChildScrollView(
-            child: Column(
+          child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
                   'Décris le TD que tu souhaites suivre. L\'administrateur pourra programmer un nouveau TD adapté.',
@@ -735,7 +746,6 @@ class _StudentTdCatalogTab extends StatelessWidget {
                 ),
               ],
             ),
-          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -1093,12 +1103,14 @@ Future<String?> _promptPersonalization(BuildContext context) async {
 
   final result = await showDialog<String?>(
     context: context,
+    useSafeArea: true,
     builder: (context) {
-      return AlertDialog(
+      return AdaptiveDialog(
+        maxWidth: 480,
         title: const Text('Personnaliser ce TD'),
-        content: SingleChildScrollView(
-          child: Column(
+        child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextField(
                 controller: typeController,
@@ -1134,7 +1146,6 @@ Future<String?> _promptPersonalization(BuildContext context) async {
               ),
             ],
           ),
-        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(null),

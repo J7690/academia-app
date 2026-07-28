@@ -62,9 +62,12 @@ class _StudentPrepConcoursScreenState extends State<StudentPrepConcoursScreen> {
   void _openShareOptions() {
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
       builder: (ctx) {
         return SafeArea(
-          child: Wrap(
+          child: SingleChildScrollView(
+            child: Wrap(
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -110,6 +113,7 @@ class _StudentPrepConcoursScreenState extends State<StudentPrepConcoursScreen> {
                 },
               ),
             ],
+            ),
           ),
         );
       },

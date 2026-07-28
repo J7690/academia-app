@@ -23,8 +23,10 @@ import '../../../theme/prep_theme.dart';
 import '../../share/share_service.dart';
 import '../../share/share_mode_provider.dart';
 import '../../share/widgets/share_signature.dart';
+import '../../../config/backend_hosts.dart';
 import '../../../services/bobodo_vocal_service.dart';
 import '../../../services/voice_provider.dart';
+import '../../../widgets/adaptive_dialog.dart';
 
 enum ConversationState {
   idle,           // En attente
@@ -88,7 +90,7 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
 
   // WebSocket vocal
   BobodoVocalService _vocalService = BobodoVocalService(
-    'ws://185.167.97.144:8000/ws',
+    BackendHosts.bobodoVocalWs,
   );
   bool _isVocalConnected = false;
   StreamSubscription? _messageSubscription;
@@ -409,6 +411,8 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       provider.isLoading ? 'En train de réfléchir...' : 'Assistant Academia',
@@ -416,6 +420,8 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
                         fontSize: 12,
                         color: Colors.white.withValues(alpha: 0.8),
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -1736,8 +1742,9 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
     await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      useSafeArea: true,
+      builder: (context) => AdaptiveDialog(
+        maxWidth: 440,
         title: Row(
           children: [
             Icon(Icons.mic, color: PrepTheme.primary, size: 24),
@@ -1746,49 +1753,44 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
               child: Text(
                 'Mode conversation vocale',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
         ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Comment utiliser le mode conversation :',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 16),
-              _buildGuideStep('1. Parlez naturellement'),
-              const SizedBox(height: 8),
-              _buildGuideStep('2. Appuyez sur le bouton ENVOYER (➤)'),
-              const SizedBox(height: 8),
-              _buildGuideStep('3. Bobodo vous répondra vocalement'),
-              const SizedBox(height: 16),
-              Text(
-                'Vous pouvez interrompre Bobodo en parlant à nouveau.',
-                style: TextStyle(fontSize: 13, color: PrepTheme.textSecondary, height: 1.4),
-              ),
-            ],
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Comment utiliser le mode conversation :',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
+            _buildGuideStep('1. Parlez naturellement'),
+            const SizedBox(height: 8),
+            _buildGuideStep('2. Appuyez sur le bouton ENVOYER (➤)'),
+            const SizedBox(height: 8),
+            _buildGuideStep('3. Bobodo vous répondra vocalement'),
+            const SizedBox(height: 16),
+            Text(
+              'Vous pouvez interrompre Bobodo en parlant à nouveau.',
+              style: TextStyle(fontSize: 13, color: PrepTheme.textSecondary, height: 1.4),
+            ),
+          ],
         ),
         actions: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: () async {
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.setBool('has_seen_conversation_guide', true);
-                  setState(() {
-                    _hasSeenConversationGuide = true;
-                  });
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Compris', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              ),
-            ],
+          TextButton(
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('has_seen_conversation_guide', true);
+              setState(() {
+                _hasSeenConversationGuide = true;
+              });
+              Navigator.of(context).pop();
+            },
+            child: const Text('Compris', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -1932,12 +1934,16 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
             children: [
               Icon(stateIcon, size: 28, color: stateColor),
               SizedBox(width: 12),
-              Text(
-                stateText,
-                style: TextStyle(
-                  color: stateColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
+              Flexible(
+                child: Text(
+                  stateText,
+                  style: TextStyle(
+                    color: stateColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

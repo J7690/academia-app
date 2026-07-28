@@ -12,6 +12,9 @@ class AcademiaSessionProvider extends ChangeNotifier {
   bool _isSaving = false;
   String? _error;
   List<AcademiaSession> _sessions = [];
+  List<AcademiaSession> _replays = [];
+  bool _isLoadingReplays = false;
+  bool _hasMoreReplays = false;
   AcademiaSession? _currentSession;
   List<SessionParticipant> _participants = [];
   Map<String, dynamic>? _presenceStats;
@@ -20,6 +23,9 @@ class AcademiaSessionProvider extends ChangeNotifier {
   bool get isSaving => _isSaving;
   String? get error => _error;
   List<AcademiaSession> get sessions => List.unmodifiable(_sessions);
+  List<AcademiaSession> get replays => List.unmodifiable(_replays);
+  bool get isLoadingReplays => _isLoadingReplays;
+  bool get hasMoreReplays => _hasMoreReplays;
   AcademiaSession? get currentSession => _currentSession;
   List<SessionParticipant> get participants => List.unmodifiable(_participants);
   Map<String, dynamic>? get presenceStats => _presenceStats;
@@ -170,6 +176,55 @@ class AcademiaSessionProvider extends ChangeNotifier {
     }
   }
 
+  // ─── 3 bis. Replays ────────────────────────────────────────────────
+
+  /// Charge les séances terminées disposant d'un replay.
+  ///
+  /// Appel séparé et paginé (`app_learning_list_replays`) : l'historique des
+  /// séances grossit indéfiniment, il ne doit pas peser sur le chargement de
+  /// l'onglet Lives. Passer [append] à `true` pour charger la page suivante.
+  Future<void> loadReplays({
+    String? sessionType,
+    int limit = 12,
+    bool append = false,
+  }) async {
+    _isLoadingReplays = true;
+    notifyListeners();
+    try {
+      final response = await _client.rpc(
+        'app_learning_list_replays',
+        params: {
+          'p_session_type': sessionType,
+          'p_limit': limit,
+          'p_offset': append ? _replays.length : 0,
+        },
+      );
+      if (response is! Map<String, dynamic> || response['success'] != true) {
+        if (!append) _replays = [];
+        _hasMoreReplays = false;
+        return;
+      }
+      final data = response['sessions'];
+      final page = data is List
+          ? data
+              .whereType<Map<String, dynamic>>()
+              .map(AcademiaSession.fromJson)
+              .toList(growable: false)
+          : const <AcademiaSession>[];
+      _replays = append ? [..._replays, ...page] : page;
+      _hasMoreReplays = response['has_more'] == true;
+      notifyListeners();
+    } catch (_) {
+      // Les replays sont un bonus : une erreur ici ne doit pas faire
+      // basculer tout l'onglet Lives en état d'erreur.
+      if (!append) _replays = [];
+      _hasMoreReplays = false;
+    } finally {
+      _isLoadingReplays = false;
+      notifyListeners();
+    }
+  }
+
   // ─── 4. Obtenir une session par ID ─────────────────────────────────
 
   Future<AcademiaSession?> getSession(String sessionId) async {
@@ -267,6 +322,41 @@ class AcademiaSessionProvider extends ChangeNotifier {
     } catch (e) {
       _setError(e.toString());
       return null;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  // ─── 5 bis. Publier / remettre en brouillon / annuler ──────────────
+
+  /// Fait passer une séance entre `draft`, `scheduled` et `cancelled`.
+  ///
+  /// Une séance nouvellement créée est en `draft` : l'enseignant la prépare
+  /// sans qu'elle apparaisse aux étudiants. La publier (`scheduled`) la rend
+  /// visible dans `app_learning_list_available_sessions`.
+  ///
+  /// Le passage à `running` et `ended` reste réservé à [startSession] et
+  /// [endSession], qui posent les horodatages réels.
+  Future<bool> setSessionStatus(String sessionId, String status) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(
+        'app_learning_set_session_status',
+        params: {'p_session_id': sessionId, 'p_status': status},
+      );
+      if (response is! Map<String, dynamic>) {
+        _setError('Réponse invalide.');
+        return false;
+      }
+      if (response['success'] != true) {
+        _setError(response['error']?.toString() ?? 'Changement de statut refusé.');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
     } finally {
       _setSaving(false);
     }

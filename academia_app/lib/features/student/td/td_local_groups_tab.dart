@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../theme/td_theme.dart';
+import '../../../widgets/adaptive_dialog.dart';
 
 /// Onglet Groupes Locaux — Matching par matière/quartier, inscription, création de groupes.
 class TdLocalGroupsTab extends StatefulWidget {
@@ -302,15 +303,14 @@ class _TdLocalGroupsTabState extends State<TdLocalGroupsTab> {
 
     showDialog<void>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        builder: (ctx, setDialogState) => AdaptiveDialog(
+          maxWidth: 480,
           title: const Text('Mon profil TD', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: SingleChildScrollView(
-              child: Column(
+          child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   DropdownButtonFormField<String>(
                     value: _universities.contains(university) ? university : null,
@@ -364,8 +364,6 @@ class _TdLocalGroupsTabState extends State<TdLocalGroupsTab> {
                   ),
                 ],
               ),
-            ),
-          ),
           actions: [
             TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Annuler')),
             ElevatedButton(
@@ -398,13 +396,14 @@ class _TdLocalGroupsTabState extends State<TdLocalGroupsTab> {
 
     showDialog<void>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        builder: (ctx, setDialogState) => AdaptiveDialog(
+          maxWidth: 460,
           title: const Text('Créer un groupe d\'étude', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-          content: SingleChildScrollView(
-            child: Column(
+          child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 DropdownButtonFormField<String>(
                   value: subject,
@@ -440,7 +439,6 @@ class _TdLocalGroupsTabState extends State<TdLocalGroupsTab> {
                 ]),
               ],
             ),
-          ),
           actions: [
             TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Annuler')),
             ElevatedButton(
