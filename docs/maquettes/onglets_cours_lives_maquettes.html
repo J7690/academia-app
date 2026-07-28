@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Onglets Cours et Lives — maquettes</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.11.0/tabler-icons.min.css">
+<style>
+:root{--acc:#6C5CE7;--acc2:#5B4BD6;--teal:#12B886;--red:#E14D4D;--amber:#F0A020;
+--txt:#14161A;--txt2:#5C6270;--txt3:#8A90A0;--line:#E2E5EA;--line2:#EDEFF2;--bg:#F5F6F8;--card:#fff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--txt);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1400px;margin:0 auto;padding:28px 24px 80px}
+h1{font-size:26px;font-weight:600;letter-spacing:-.3px}
+.sub{color:var(--txt2);font-size:14px;margin-top:6px;max-width:820px;line-height:1.6}
+.nav{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 8px;border-bottom:1px solid var(--line);padding-bottom:16px}
+.nav button{font:inherit;font-size:13px;padding:8px 14px;border:1px solid var(--line);background:#fff;color:#3A4150;border-radius:20px;cursor:pointer}
+.nav button.on{background:var(--txt);color:#fff;border-color:var(--txt)}
+.caption{font-size:13px;color:var(--txt2);line-height:1.65;margin:20px 0 14px;max-width:940px}
+.caption b{font-weight:600;color:var(--txt)}
+.view{display:none}.view.on{display:block}
+.note{font-size:12px;color:var(--txt3);margin-top:12px;display:flex;gap:7px;align-items:flex-start;line-height:1.55}
+.note i{color:var(--acc);font-size:15px;flex:none;margin-top:1px}
+.phones{display:flex;gap:26px;flex-wrap:wrap;justify-content:center}
+.phone{width:310px;height:650px;background:#000;border-radius:34px;padding:9px;flex:none}
+.screen{width:100%;height:100%;border-radius:26px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column;font-size:12px}
+.plabel{text-align:center;font-size:12px;color:var(--txt2);margin-top:10px}
+.appbar{padding:12px 14px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px;flex:none}
+.appbar b{font-size:15px;font-weight:600}
+.body{flex:1;overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:11px}
+.tabbar{display:flex;background:#fff;border-top:1px solid var(--line);padding:7px 0;flex:none}
+.tabbar div{flex:1;text-align:center;color:var(--txt3);font-size:9.5px}
+.tabbar div i{display:block;font-size:19px;margin-bottom:2px}
+.tabbar div.on{color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.sect{font-size:10.5px;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;font-weight:500}
+.live{background:#FDF0F0;border-color:#F5D5D5}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block;animation:p 1.6s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.35}}
+.bar{height:5px;background:var(--line2);border-radius:3px;overflow:hidden;margin-top:7px}
+.bar i{display:block;height:100%;background:var(--acc);border-radius:3px}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:20px;font-weight:500}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 13px;font:inherit;font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.btn.red{background:var(--red)}
+.btn.ghost{background:#fff;border:1px solid var(--line);color:#3A4150}
+.chips{display:flex;gap:6px;overflow:hidden;flex:none}
+.chip{font-size:11px;padding:5px 11px;border-radius:20px;background:#fff;border:1px solid var(--line);color:#3A4150;white-space:nowrap}
+.chip.on{background:var(--txt);color:#fff;border-color:var(--txt)}
+.desk{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.deskbar{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:11px}
+.two{display:flex;gap:16px}
+.crow{display:flex;gap:11px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line2);font-size:13px}
+.crow:last-child{border:0}
+.cnum{width:26px;height:26px;border-radius:7px;background:#F2F3F6;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--txt2);flex:none}
+table{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;border-radius:12px;overflow:hidden}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line2);text-align:left}
+th{background:#F7F8FA;font-weight:600;font-size:11.5px}
+.ko{color:var(--red);font-weight:500}.ok{color:var(--teal);font-weight:500}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Onglets Cours et Lives — architecture proposée</h1>
+<p class="sub">Deux onglets dégelés, repensés autour d'un principe : ce qui compte en haut n'est pas ce qu'on peut acheter, c'est ce qu'on est en train d'apprendre. Et un seul point d'entrée pour tout ce qui est en direct, quel que soit le module d'origine.</p>
+
+<div class="nav" id="nav"></div>
+
+<!-- 1 ÉTAT ACTUEL -->
+<div class="view on" id="v1">
+<p class="caption"><b>Ce que verrait un étudiant aujourd'hui, une fois les onglets dégelés et déployés.</b> Le dégel seul ne suffit pas : les deux onglets pointent vers du vide ou vers la mauvaise source.</p>
+<table>
+<tr><th>Élément</th><th>Source appelée</th><th>Contenu réel en base</th><th>Ce que voit l'étudiant</th></tr>
+<tr><td><b>Cours</b> — catalogue</td><td>OnlineCoursesCatalogProvider</td><td>3 cours, <span class="ko">tous is_published = false</span></td><td class="ko">Écran vide</td></tr>
+<tr><td><b>Cours</b> — mes cours</td><td>StudentOnlineCoursesProvider</td><td>3 inscriptions</td><td>3 cartes</td></tr>
+<tr><td><b>Cours</b> — contenu d'un cours</td><td>sections / leçons</td><td class="ko">0 section, 0 leçon</td><td class="ko">Cours vide à l'ouverture</td></tr>
+<tr><td><b>Cours</b> — progression</td><td>lesson_progress</td><td class="ko">0 ligne</td><td class="ko">Aucune reprise possible</td></tr>
+<tr><td><b>Cours</b> — bibliothèque</td><td>StudentCourseLibraryProvider</td><td class="ok">5 ressources</td><td class="ok">Fonctionne</td></tr>
+<tr><td><b>Lives</b> — liste</td><td class="ko">app_student_list_my_online_course_live_sessions</td><td>1 session legacy de nov. 2025</td><td class="ko">Ne voit pas le moteur unifié</td></tr>
+<tr><td><b>Lives</b> — rejoindre</td><td>AcademiaSession fabriqué à la volée</td><td>hostId vide, statut forcé</td><td>Vidéo OK, <span class="ko">chat rejeté</span></td></tr>
+</table>
+<p class="note"><i class="ti ti-alert-triangle"></i><b>Le point bloquant :</b> aucun écran de l'application n'écrit dans <code>academia_sessions</code>, et aucun écran étudiant ne la lit. Le moteur unifié — rendu opérationnel jusqu'au SFU en vague 0 — n'a ni producteur ni consommateur.</p>
+</div>
+
+<!-- 2 COURS MOBILE -->
+<div class="view" id="v2">
+<p class="caption"><b>Onglet Cours — accueil et détail.</b> « Reprendre où j'en étais » occupe la seule place au-dessus de la ligne de flottaison. La séance en direct, quand il y en a une, passe devant tout le reste.</p>
+<div class="phones">
+
+ <div><div class="phone"><div class="screen">
+  <div class="appbar"><b>Cours</b><span style="flex:1"></span><i class="ti ti-search" style="font-size:19px;color:var(--txt2)"></i></div>
+  <div class="body">
+   <div class="card live" style="padding:11px">
+    <div style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:#C0392B;font-weight:500"><span class="dot"></span>EN DIRECT · Analyse</div>
+    <div style="font-size:13px;font-weight:500;margin-top:5px">Correction des exercices 8 à 14</div>
+    <div style="font-size:11.5px;color:var(--txt2);margin-top:2px">Prof. Sylvie Ouédraogo · 28 présents</div>
+    <button class="btn red" style="margin-top:9px;width:100%;justify-content:center"><i class="ti ti-video"></i>Rejoindre</button>
+   </div>
+
+   <div>
+    <div class="sect" style="margin-bottom:7px">Reprendre où j'en étais</div>
+    <div class="card" style="padding:11px">
+     <div style="display:flex;gap:10px">
+      <div style="width:52px;height:52px;border-radius:9px;background:#EDE9FE;display:flex;align-items:center;justify-content:center;flex:none"><i class="ti ti-player-play" style="color:var(--acc);font-size:21px"></i></div>
+      <div style="flex:1;min-width:0">
+       <div style="font-size:13px;font-weight:500">Analyse — Licence 1</div>
+       <div style="font-size:11.5px;color:var(--txt2);margin-top:2px">Leçon 4.2 · Convergence · 7 min restantes</div>
+       <div class="bar"><i style="width:62%"></i></div>
+      </div>
+     </div>
+    </div>
+   </div>
+
+   <div>
+    <div class="sect" style="margin-bottom:7px">Mes cours · 3</div>
+    <div class="card" style="padding:11px;margin-bottom:8px">
+     <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:13px;font-weight:500">Analyse — Licence 1</b><span style="font-size:11px;color:var(--acc);font-weight:500">62 %</span></div>
+     <div style="font-size:11.5px;color:var(--txt2);margin-top:2px">14 leçons · 2 séances live à venir</div>
+     <div class="bar"><i style="width:62%"></i></div>
+    </div>
+    <div class="card" style="padding:11px">
+     <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:13px;font-weight:500">Actuariat — initiation</b><span style="font-size:11px;color:var(--txt3);font-weight:500">12 %</span></div>
+     <div style="font-size:11.5px;color:var(--txt2);margin-top:2px">9 leçons · certificat à la clé</div>
+     <div class="bar"><i style="width:12%;background:var(--amber)"></i></div>
+    </div>
+   </div>
+
+   <div>
+    <div class="sect" style="margin-bottom:7px">Catalogue</div>
+    <div class="card" style="padding:11px;display:flex;gap:10px;align-items:center">
+     <div style="width:44px;height:44px;border-radius:9px;background:#E6F6EF;display:flex;align-items:center;justify-content:center;flex:none"><i class="ti ti-book" style="color:var(--teal);font-size:19px"></i></div>
+     <div style="flex:1"><div style="font-size:13px;font-weight:500">Statistiques descriptives</div><div style="font-size:11.5px;color:var(--txt2)">8 h · débutant · gratuit</div></div>
+     <i class="ti ti-chevron-right" style="color:var(--txt3)"></i>
+    </div>
+   </div>
+  </div>
+  <div class="tabbar">
+   <div><i class="ti ti-home"></i>Accueil</div><div><i class="ti ti-school"></i>TD</div>
+   <div class="on"><i class="ti ti-book-2"></i>Cours</div><div><i class="ti ti-video"></i>Lives</div><div><i class="ti ti-user"></i>Profil</div>
+  </div>
+ </div></div><p class="plabel">Accueil Cours</p></div>
+
+ <div><div class="phone"><div class="screen">
+  <div class="appbar"><i class="ti ti-arrow-left" style="font-size:19px"></i><b>Analyse — L1</b></div>
+  <div class="body" style="gap:9px">
+   <div class="card" style="padding:12px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11.5px;color:var(--txt2)">Progression</span><b style="font-size:16px;font-weight:600;color:var(--acc)">62 %</b></div>
+    <div class="bar"><i style="width:62%"></i></div>
+    <div style="font-size:11px;color:var(--txt3);margin-top:6px">9 leçons sur 14 · certificat à 100 %</div>
+   </div>
+   <div class="chips">
+    <span class="chip on">Programme</span><span class="chip">Séances live</span><span class="chip">Ressources</span><span class="chip">Forum</span>
+   </div>
+   <div class="card" style="padding:11px 13px;flex:1;overflow:hidden">
+    <div class="sect" style="margin-bottom:5px">Chapitre 4 — Suites numériques</div>
+    <div class="crow"><span class="cnum" style="background:#E6F6EF;color:#0F7A57"><i class="ti ti-check"></i></span><span style="flex:1">4.1 Définitions</span><span style="font-size:11px;color:var(--txt3)">12 min</span></div>
+    <div class="crow"><span class="cnum" style="background:var(--acc);color:#fff">2</span><span style="flex:1;font-weight:500">4.2 Convergence</span><i class="ti ti-player-play" style="color:var(--acc)"></i></div>
+    <div class="crow"><span class="cnum">3</span><span style="flex:1;color:var(--txt2)">4.3 Suites bornées</span><span style="font-size:11px;color:var(--txt3)">15 min</span></div>
+    <div class="crow"><span class="cnum">4</span><span style="flex:1;color:var(--txt2)">4.4 Th. des gendarmes</span><span style="font-size:11px;color:var(--txt3)">18 min</span></div>
+    <div class="crow"><span class="cnum" style="background:#FDF0F0;color:#C0392B"><i class="ti ti-video"></i></span><span style="flex:1;color:var(--txt2)">Séance live — jeu. 30, 18 h</span></div>
+    <div class="sect" style="margin:10px 0 5px">Chapitre 5 — Séries</div>
+    <div class="crow"><span class="cnum">1</span><span style="flex:1;color:var(--txt3)">5.1 Introduction</span><i class="ti ti-lock" style="color:var(--txt3);font-size:14px"></i></div>
+   </div>
+  </div>
+  <div class="tabbar">
+   <div><i class="ti ti-home"></i>Accueil</div><div><i class="ti ti-school"></i>TD</div>
+   <div class="on"><i class="ti ti-book-2"></i>Cours</div><div><i class="ti ti-video"></i>Lives</div><div><i class="ti ti-user"></i>Profil</div>
+  </div>
+ </div></div><p class="plabel">Détail d'un cours</p></div>
+
+ <div><div class="phone"><div class="screen">
+  <div style="background:#0E1013;height:190px;position:relative;flex:none;display:flex;align-items:center;justify-content:center">
+   <div style="width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center"><i class="ti ti-player-play" style="color:#fff;font-size:22px"></i></div>
+   <i class="ti ti-arrow-left" style="position:absolute;left:12px;top:12px;color:#fff;font-size:19px"></i>
+   <div style="position:absolute;left:12px;right:12px;bottom:10px"><div style="height:3px;background:rgba(255,255,255,.2);border-radius:2px"><div style="width:64%;height:100%;background:var(--acc);border-radius:2px"></div></div>
+   <div style="color:#9BA3B2;font-size:10px;margin-top:5px">11:32 / 18:04</div></div>
+  </div>
+  <div class="body" style="gap:9px">
+   <div><div style="font-size:14px;font-weight:600">4.2 Convergence des suites</div><div style="font-size:11.5px;color:var(--txt2);margin-top:2px">Chapitre 4 · leçon 2 sur 6</div></div>
+   <div class="chips"><span class="chip on">Notes</span><span class="chip">Exercices</span><span class="chip">Transcript</span></div>
+   <div class="card" style="padding:11px;flex:1">
+    <div style="display:flex;gap:8px;font-size:12px;line-height:1.5;padding-bottom:9px;border-bottom:1px solid var(--line2)">
+     <span style="color:var(--acc);font-weight:500;flex:none">08:12</span><span style="color:#3A4150">Définition : ∀ε&gt;0, ∃N tel que n&gt;N ⟹ |uₙ−ℓ|&lt;ε</span></div>
+    <div style="display:flex;gap:8px;font-size:12px;line-height:1.5;padding-top:9px">
+     <span style="color:var(--acc);font-weight:500;flex:none">10:45</span><span style="color:#3A4150">Bornée ≠ convergente. Contre-exemple (−1)ⁿ</span></div>
+    <div style="margin-top:11px;background:#F7F8FA;border-radius:8px;padding:9px 11px;font-size:11.5px;color:var(--txt3)">Prendre une note à 11:32…</div>
+   </div>
+   <div style="display:flex;gap:7px">
+    <button class="btn ghost" style="flex:1;justify-content:center"><i class="ti ti-bookmark"></i>Marquer</button>
+    <button class="btn" style="flex:1.4;justify-content:center;background:#fff;border:1px solid var(--acc);color:var(--acc2)"><i class="ti ti-user-question"></i>Demander de l'aide</button>
+   </div>
+  </div>
+ </div></div><p class="plabel">Lecteur de leçon</p></div>
+
+</div>
+<p class="note"><i class="ti ti-info-circle"></i>Le bouton <b>« Demander de l'aide »</b> appelle <code>StudioLauncher</code> en mode consultation avec le contexte de la leçon. C'est le même studio que la classe virtuelle, reconfiguré — pas un second écran.</p>
+</div>
+
+<!-- 3 LIVES MOBILE -->
+<div class="view" id="v3">
+<p class="caption"><b>Onglet Lives — point d'entrée unique de tout ce qui est en direct.</b> Aujourd'hui il ne montre que les séances de cours en ligne. Il doit couvrir cours, TD, prépa concours, orientation et communauté, via <code>app_learning_list_available_sessions</code> qui existe déjà.</p>
+<div class="phones">
+
+ <div><div class="phone"><div class="screen">
+  <div class="appbar"><b>Lives</b><span style="flex:1"></span><span class="pill" style="background:#FDF0F0;color:#C0392B"><span class="dot"></span>1 en direct</span></div>
+  <div class="body" style="gap:10px">
+   <div class="chips"><span class="chip on">Tout</span><span class="chip">Cours</span><span class="chip">TD</span><span class="chip">Prépa</span><span class="chip">Orientation</span></div>
+
+   <div class="card live" style="padding:12px">
+    <div style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:#C0392B;font-weight:500"><span class="dot"></span>EN DIRECT · depuis 32 min</div>
+    <div style="font-size:13.5px;font-weight:500;margin-top:5px">Correction des exercices 8 à 14</div>
+    <div style="font-size:11.5px;color:var(--txt2);margin-top:2px">Analyse L1 · Prof. Sylvie Ouédraogo</div>
+    <div style="display:flex;align-items:center;gap:9px;margin-top:9px">
+     <span class="pill" style="background:#F2F3F6;color:#3A4150"><i class="ti ti-users"></i>28</span>
+     <span class="pill" style="background:#EDE9FE;color:#4C3BB5">Classe</span>
+     <span style="flex:1"></span><button class="btn red"><i class="ti ti-video"></i>Rejoindre</button>
+    </div>
+   </div>
+
+   <div>
+    <div class="sect" style="margin-bottom:7px">Aujourd'hui</div>
+    <div class="card" style="padding:11px;display:flex;gap:11px;align-items:center;margin-bottom:8px">
+     <div style="text-align:center;flex:none"><div style="font-size:14px;font-weight:600">18:00</div><div style="font-size:10px;color:var(--txt3)">1 h 30</div></div>
+     <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:500">Atelier — préparation du devoir</div>
+      <div style="display:flex;gap:5px;margin-top:4px"><span class="pill" style="background:#E6F6EF;color:#0F7A57">TD</span><span class="pill" style="background:#F2F3F6;color:#3A4150">Atelier · 4 places</span></div></div>
+     <i class="ti ti-bell-plus" style="color:var(--acc);font-size:19px"></i>
+    </div>
+    <div class="card" style="padding:11px;display:flex;gap:11px;align-items:center">
+     <div style="text-align:center;flex:none"><div style="font-size:14px;font-weight:600">20:30</div><div style="font-size:10px;color:var(--txt3)">1 h</div></div>
+     <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:500">Révision collective — Bac D</div>
+      <div style="display:flex;gap:5px;margin-top:4px"><span class="pill" style="background:#FAEEDA;color:#854F0B">Prépa</span><span class="pill" style="background:#F2F3F6;color:#3A4150">Amphi</span></div></div>
+     <i class="ti ti-bell-plus" style="color:var(--acc);font-size:19px"></i>
+    </div>
+   </div>
+
+   <div>
+    <div class="sect" style="margin-bottom:7px">Cette semaine</div>
+    <div class="card" style="padding:11px;display:flex;gap:11px;align-items:center">
+     <div style="text-align:center;flex:none"><div style="font-size:10px;color:var(--txt3)">JEU</div><div style="font-size:16px;font-weight:600">30</div></div>
+     <div style="flex:1"><div style="font-size:12.5px;font-weight:500">Masterclass actuariat</div>
+      <div style="display:flex;gap:5px;margin-top:4px"><span class="pill" style="background:#EDE9FE;color:#4C3BB5">Cours</span><span class="pill" style="background:#F2F3F6;color:#3A4150">Amphi</span></div></div>
+     <i class="ti ti-bell-plus" style="color:var(--acc);font-size:19px"></i>
+    </div>
+   </div>
+
+   <div>
+    <div class="sect" style="margin-bottom:7px">Replays</div>
+    <div class="card" style="padding:11px;display:flex;gap:11px;align-items:center">
+     <div style="width:44px;height:44px;border-radius:9px;background:#F2F3F6;display:flex;align-items:center;justify-content:center;flex:none"><i class="ti ti-player-play" style="color:var(--txt2);font-size:19px"></i></div>
+     <div style="flex:1"><div style="font-size:12.5px;font-weight:500">Introduction aux suites</div>
+      <div style="font-size:11px;color:var(--txt3);margin-top:2px">21 juil. · 1 h 04 · transcript · résumé</div></div>
+    </div>
+   </div>
+  </div>
+  <div class="tabbar">
+   <div><i class="ti ti-home"></i>Accueil</div><div><i class="ti ti-school"></i>TD</div>
+   <div><i class="ti ti-book-2"></i>Cours</div><div class="on"><i class="ti ti-video"></i>Lives</div><div><i class="ti ti-user"></i>Profil</div>
+  </div>
+ </div></div><p class="plabel">Onglet Lives — vue étudiant</p></div>
+
+ <div><div class="phone"><div class="screen">
+  <div class="appbar"><i class="ti ti-arrow-left" style="font-size:19px"></i><b>Créer une séance</b></div>
+  <div class="body" style="gap:12px">
+   <div><div class="sect" style="margin-bottom:6px">Type de séance</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+     <span class="chip on">Cours</span><span class="chip">TD</span><span class="chip">Prépa concours</span><span class="chip">Orientation</span>
+    </div></div>
+   <div><div class="sect" style="margin-bottom:6px">Rattacher à</div>
+    <div class="card" style="padding:10px 12px;display:flex;align-items:center"><span style="flex:1;font-size:12.5px">Analyse — Licence 1</span><i class="ti ti-chevron-down" style="color:var(--txt3)"></i></div></div>
+   <div><div class="sect" style="margin-bottom:6px">Titre</div>
+    <div class="card" style="padding:10px 12px;font-size:12.5px">Correction des exercices 8 à 14</div></div>
+   <div style="display:flex;gap:9px">
+    <div style="flex:1"><div class="sect" style="margin-bottom:6px">Début</div>
+     <div class="card" style="padding:10px 12px;font-size:12.5px">30 juil. 18:00</div></div>
+    <div style="width:88px"><div class="sect" style="margin-bottom:6px">Durée</div>
+     <div class="card" style="padding:10px 12px;font-size:12.5px">1 h 30</div></div>
+   </div>
+   <div><div class="sect" style="margin-bottom:6px">Mode</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+     <span class="chip on">Classe</span><span class="chip">Amphi</span><span class="chip">Atelier</span><span class="chip">Consultation</span>
+    </div></div>
+   <div><div class="sect" style="margin-bottom:6px">Options</div>
+    <div class="card" style="padding:10px 12px">
+     <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12.5px">Chat<span style="color:var(--teal)"><i class="ti ti-check"></i></span></div>
+     <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12.5px">Quiz en direct<span style="color:var(--teal)"><i class="ti ti-check"></i></span></div>
+     <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12.5px">Tableau blanc<span style="color:var(--teal)"><i class="ti ti-check"></i></span></div>
+     <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12.5px;color:var(--txt3)">Enregistrement<span><i class="ti ti-x"></i></span></div>
+    </div></div>
+   <span style="flex:1"></span>
+   <button class="btn" style="width:100%;justify-content:center;padding:12px"><i class="ti ti-video-plus"></i>Créer la séance</button>
+  </div>
+ </div></div><p class="plabel" style="color:var(--acc2)"><b>L'écran manquant</b><br>côté enseignant</p></div>
+
+</div>
+<p class="note"><i class="ti ti-info-circle"></i>L'écran de droite est le <b>chaînon absent</b>. <code>AcademiaSessionProvider.upsertSession</code> est déjà écrit et fonctionnel — il ne lui manque que ce formulaire. Sans lui, rien n'alimente <code>academia_sessions</code> et le Studio ne peut pas être testé complètement.</p>
+</div>
+
+<!-- 4 CHEMIN TEST -->
+<div class="view" id="v4">
+<p class="caption"><b>Deux chemins vers votre test, comparés honnêtement.</b></p>
+<div class="two">
+ <div class="desk" style="flex:1">
+  <div class="deskbar" style="background:#FFFAF0"><i class="ti ti-clock-bolt" style="color:#B07510;font-size:20px"></i><b style="font-weight:600">Option A — aujourd'hui, sans code</b></div>
+  <div style="padding:16px">
+   <p style="font-size:13px;color:var(--txt2);line-height:1.65">Créer une séance par l'écran enseignant existant (Cours en ligne), avec <code>provider = livekit</code>. Le chemin legacy fonctionne, le token est délivré.</p>
+   <div style="margin-top:14px;font-size:12.5px;line-height:2">
+    <div><span class="ok"><i class="ti ti-check"></i></span> Vidéo, audio, partage d'écran</div>
+    <div><span class="ok"><i class="ti ti-check"></i></span> Réactions, tableau blanc, participants</div>
+    <div><span class="ko"><i class="ti ti-x"></i></span> Chat persistant — rejeté</div>
+    <div><span class="ko"><i class="ti ti-x"></i></span> Registre de présence</div>
+    <div><span class="ko"><i class="ti ti-x"></i></span> Quiz, replay</div>
+   </div>
+   <div style="margin-top:14px;padding:11px 13px;background:#FFFAF0;border-radius:9px;font-size:12.5px;color:#7A5510;line-height:1.6">
+    Teste LiveKit et confirme la bascule Cloud. <b>Ne teste pas le Studio.</b>
+   </div>
+  </div>
+ </div>
+ <div class="desk" style="flex:1;border-color:var(--acc)">
+  <div class="deskbar" style="background:#F5F3FF"><i class="ti ti-checkbox" style="color:var(--acc2);font-size:20px"></i><b style="font-weight:600">Option B — après une demi-journée</b></div>
+  <div style="padding:16px">
+   <p style="font-size:13px;color:var(--txt2);line-height:1.65">Trois livrables, tous déjà au programme de la vague 1.</p>
+   <div style="margin-top:12px;font-size:12.5px;line-height:1.8">
+    <div style="display:flex;gap:9px;margin-bottom:7px"><span class="cnum" style="background:#EDE9FE;color:var(--acc2)">1</span><span>Écran enseignant « Créer une séance » branché sur <code>app_learning_upsert_session</code></span></div>
+    <div style="display:flex;gap:9px;margin-bottom:7px"><span class="cnum" style="background:#EDE9FE;color:var(--acc2)">2</span><span>Onglet Lives repointé sur <code>app_learning_list_available_sessions</code></span></div>
+    <div style="display:flex;gap:9px"><span class="cnum" style="background:#EDE9FE;color:var(--acc2)">3</span><span>Un cours de démonstration publié : 2 sections, 4 leçons, 1 séance</span></div>
+   </div>
+   <div style="margin-top:14px;font-size:12.5px;line-height:2">
+    <div><span class="ok"><i class="ti ti-check"></i></span> Tout le Studio, chat persistant compris</div>
+    <div><span class="ok"><i class="ti ti-check"></i></span> Le parcours réel de vos utilisateurs</div>
+   </div>
+   <div style="margin-top:14px;padding:11px 13px;background:#F5F3FF;border-radius:9px;font-size:12.5px;color:#4C3BB5;line-height:1.6">
+    <b>Recommandé.</b> L'option A donnera une belle image et un faux sentiment de validation — puis le premier vrai usage butera sur le chat.
+   </div>
+  </div>
+ </div>
+</div>
+<p class="note"><i class="ti ti-info-circle"></i>Dans les deux cas, une étape préalable vous revient : <code>flutter analyze</code>, puis build et déploiement. Le dégel des onglets est dans le dépôt, pas encore chez vos utilisateurs.</p>
+</div>
+
+</div>
+<script>
+var views=[['v1',"Ce qu'on verrait aujourd'hui"],['v2','Onglet Cours'],['v3','Onglet Lives'],['v4','Chemin vers le test']];
+var nav=document.getElementById('nav');
+views.forEach(function(v,i){
+  var b=document.createElement('button');
+  b.textContent=v[1]; if(i===0)b.className='on';
+  b.onclick=function(){
+    document.querySelectorAll('.view').forEach(function(e){e.classList.remove('on')});
+    document.querySelectorAll('#nav button').forEach(function(e){e.classList.remove('on')});
+    document.getElementById(v[0]).classList.add('on'); b.classList.add('on');
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+  nav.appendChild(b);
+});
+</script>
+</body>
+</html>

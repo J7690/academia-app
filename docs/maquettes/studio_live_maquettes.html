@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio Live Academia — maquettes</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.11.0/tabler-icons.min.css">
+<style>
+:root{
+  --bg:#0E1013; --panel:#16191F; --panel2:#1D2129; --line:#2A2F3A; --line2:#363C48;
+  --txt:#EDEFF3; --txt2:#9BA3B2; --txt3:#6B7383;
+  --acc:#6C5CE7; --acc2:#8B7DF0; --teal:#12B886; --amber:#F0A020; --red:#E14D4D; --pink:#E255A1;
+  --r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#F5F6F8;color:#14161A;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1440px;margin:0 auto;padding:28px 24px 80px}
+h1{font-size:26px;font-weight:600;letter-spacing:-.3px}
+.sub{color:#5C6270;font-size:14px;margin-top:6px;max-width:760px;line-height:1.6}
+.nav{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 8px;border-bottom:1px solid #E2E5EA;padding-bottom:16px}
+.nav button{font:inherit;font-size:13px;padding:8px 14px;border:1px solid #DDE1E7;background:#fff;color:#3A4150;border-radius:20px;cursor:pointer;transition:.15s}
+.nav button:hover{border-color:#B9BFC9}
+.nav button.on{background:#14161A;color:#fff;border-color:#14161A}
+.caption{font-size:13px;color:#5C6270;line-height:1.65;margin:20px 0 14px;max-width:900px}
+.caption b{font-weight:600;color:#14161A}
+.view{display:none}.view.on{display:block}
+.stage{background:var(--bg);border-radius:14px;padding:16px;overflow:hidden}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500}
+.note{font-size:12px;color:#7A8090;margin-top:10px;display:flex;gap:7px;align-items:flex-start;line-height:1.55}
+.note i{color:var(--acc);font-size:15px;flex:none;margin-top:1px}
+
+/* studio chrome */
+.app{display:flex;flex-direction:column;height:660px;color:var(--txt);font-size:13px}
+.topbar{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--panel);border-radius:var(--r) var(--r) 0 0;border-bottom:1px solid var(--line)}
+.livedot{width:7px;height:7px;border-radius:50%;background:var(--red);animation:p 1.6s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.35}}
+.body{flex:1;display:flex;gap:12px;background:#0B0D10;padding:12px;min-height:0}
+.mainarea{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
+.grid{flex:1;display:grid;gap:10px;min-height:0}
+.tile{background:var(--panel2);border-radius:var(--r);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid var(--line)}
+.tile.spk{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal)}
+.av{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:17px;color:#fff}
+.tname{position:absolute;left:8px;bottom:8px;font-size:11px;background:rgba(0,0,0,.6);padding:3px 8px;border-radius:6px;display:flex;align-items:center;gap:5px}
+.tbadge{position:absolute;right:8px;top:8px;font-size:10px;background:rgba(0,0,0,.6);padding:3px 7px;border-radius:6px}
+.rail{width:290px;flex:none;background:var(--panel);border-radius:var(--r);display:flex;flex-direction:column;border:1px solid var(--line);overflow:hidden}
+.railtabs{display:flex;border-bottom:1px solid var(--line);flex:none}
+.railtabs div{flex:1;text-align:center;padding:10px 0;font-size:11px;color:var(--txt3);cursor:pointer;border-bottom:2px solid transparent}
+.railtabs div.on{color:var(--txt);border-bottom-color:var(--acc)}
+.railbody{flex:1;overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:10px}
+.msg{display:flex;gap:8px;font-size:12px;line-height:1.5}
+.msg .mav{width:26px;height:26px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff}
+.msg b{font-weight:600;font-size:11px;color:var(--txt2);display:block;margin-bottom:2px}
+.msg p{color:var(--txt)}
+.ctrl{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;background:var(--panel);border-radius:0 0 var(--r) var(--r);border-top:1px solid var(--line)}
+.cbtn{width:40px;height:40px;border-radius:var(--r);background:var(--panel2);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--txt);cursor:pointer;transition:.15s}
+.cbtn:hover{background:#2A2F3A}
+.cbtn.act{background:var(--acc);border-color:var(--acc)}
+.cbtn.dgr{background:var(--red);border-color:var(--red);width:auto;padding:0 16px;gap:6px;font-size:13px}
+.cbtn.off{background:#3A2226;border-color:#5A2F34;color:#FF8B8B}
+.pill{font-size:11px;padding:4px 10px;border-radius:20px;background:var(--panel2);border:1px solid var(--line2);color:var(--txt2);display:inline-flex;align-items:center;gap:5px}
+
+/* teacher insight bar */
+.insight{display:flex;gap:8px;flex:none}
+.icard{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:9px 11px}
+.icard .k{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px}
+.icard .v{font-size:19px;font-weight:600;margin-top:3px}
+.bar{height:3px;background:var(--line2);border-radius:2px;margin-top:7px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:2px}
+
+/* phone */
+.phones{display:flex;gap:26px;flex-wrap:wrap;justify-content:center}
+.phone{width:296px;height:620px;background:#000;border-radius:34px;padding:9px;flex:none;border:1px solid #2A2F3A}
+.screen{width:100%;height:100%;border-radius:26px;overflow:hidden;position:relative;background:var(--bg);color:var(--txt);font-size:12px;display:flex;flex-direction:column}
+.plabel{text-align:center;font-size:12px;color:#5C6270;margin-top:10px}
+
+/* course page */
+.course{display:flex;gap:16px;height:600px}
+.clesson{flex:1;background:#fff;border:1px solid #E2E5EA;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.cvid{height:300px;background:#0E1013;position:relative;display:flex;align-items:center;justify-content:center;color:#9BA3B2}
+.cside{width:300px;flex:none;background:#fff;border:1px solid #E2E5EA;border-radius:12px;padding:14px;overflow:hidden}
+.crow{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #F0F2F5;font-size:13px}
+.crow:last-child{border:0}
+.cnum{width:24px;height:24px;border-radius:6px;background:#F2F3F6;display:flex;align-items:center;justify-content:center;font-size:11px;color:#5C6270;flex:none}
+.livebtn{background:#E14D4D;color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:7px;cursor:pointer}
+.helpbtn{background:#fff;border:1px solid #DDE1E7;border-radius:8px;padding:9px 14px;font:inherit;font-size:13px;display:inline-flex;align-items:center;gap:7px;cursor:pointer;color:#3A4150}
+.matrix{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;border-radius:12px;overflow:hidden}
+.matrix th,.matrix td{padding:9px 10px;border-bottom:1px solid #EDEFF2;text-align:center}
+.matrix th{background:#F7F8FA;font-weight:600;font-size:11.5px;color:#3A4150}
+.matrix td:first-child,.matrix th:first-child{text-align:left;font-weight:500}
+.yes{color:#12B886}.no{color:#C9CDD4}.par{color:#F0A020;font-size:11px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Studio Live Academia — maquettes d'interface</h1>
+<p class="sub">Un seul écran-hôte, six modes. Chaque vue ci-dessous est le même composant <code>StudioShell</code> reconfiguré par la matrice de capacités du mode — pas un écran différent.</p>
+
+<div class="nav" id="nav"></div>
+
+<!-- 1 CLASSE ENSEIGNANT -->
+<div class="view on" id="v1">
+<p class="caption"><b>Mode classroom — vue enseignant, desktop.</b> Grille adaptative, rail latéral à modules, et le bandeau de suivi de séance que Zoom n'offre pas : présence, mains levées, réponses au dernier quiz, et surtout le compteur « je n'ai pas compris » — anonyme, agrégé, visible de l'enseignant seul.</p>
+<div class="stage">
+ <div class="app">
+  <div class="topbar">
+   <span class="livedot"></span><b style="font-weight:600">Analyse — Chapitre 4 : suites numériques</b>
+   <span class="pill"><i class="ti ti-users"></i>28</span>
+   <span class="pill"><i class="ti ti-clock"></i>32:14</span>
+   <span class="pill" style="border-color:#12B886;color:#12B886"><i class="ti ti-wifi"></i>Excellent · 720p</span>
+   <span style="flex:1"></span>
+   <span class="pill" style="border-color:#E14D4D;color:#FF8B8B"><i class="ti ti-circle-dot"></i>Enregistrement</span>
+   <span class="pill"><i class="ti ti-captions"></i>Sous-titres</span>
+  </div>
+  <div class="body">
+   <div class="mainarea">
+    <div class="insight">
+     <div class="icard"><div class="k">Présence</div><div class="v">28<span style="font-size:12px;color:var(--txt3)"> / 31</span></div><div class="bar"><i style="width:90%;background:#12B886"></i></div></div>
+     <div class="icard"><div class="k">Mains levées</div><div class="v" style="color:#F0A020">3</div><div class="bar"><i style="width:11%;background:#F0A020"></i></div></div>
+     <div class="icard"><div class="k">Dernier quiz</div><div class="v">71<span style="font-size:12px;color:var(--txt3)">%</span></div><div class="bar"><i style="width:71%;background:#6C5CE7"></i></div></div>
+     <div class="icard" style="border-color:#5A3A1A"><div class="k" style="color:#F0A020">Je n'ai pas compris</div><div class="v" style="color:#F0A020">7</div><div class="bar"><i style="width:25%;background:#F0A020"></i></div></div>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr)">
+     <div class="tile spk" style="grid-column:span 2;grid-row:span 2">
+      <div class="av" style="background:#6C5CE7;width:88px;height:88px;font-size:26px">SO</div>
+      <span class="tname"><i class="ti ti-microphone" style="color:#12B886"></i>Sylvie Ouédraogo · vous</span>
+      <span class="tbadge" style="background:#12B886;color:#04342C">Parle</span>
+      <div style="position:absolute;left:0;right:0;bottom:0;padding:26px 12px 10px;background:linear-gradient(transparent,rgba(0,0,0,.75));font-size:12px;color:#EDEFF3;text-align:center">« …donc une suite est bornée si elle est majorée <b>et</b> minorée. »</div>
+     </div>
+     <div class="tile"><div class="av" style="background:#12B886">AK</div><span class="tname">A. Kaboré</span><span class="tbadge" style="background:#F0A020;color:#412402"><i class="ti ti-hand-stop"></i></span></div>
+     <div class="tile"><div class="av" style="background:#E255A1">FS</div><span class="tname"><i class="ti ti-microphone-off" style="color:#E14D4D"></i>F. Sawadogo</span></div>
+     <div class="tile"><div class="av" style="background:#F0A020">MT</div><span class="tname">M. Traoré</span></div>
+     <div class="tile" style="background:#12161B"><div style="text-align:center;color:var(--txt3)"><i class="ti ti-users" style="font-size:22px"></i><div style="margin-top:5px;font-size:11px">+24 autres</div></div></div>
+    </div>
+   </div>
+   <div class="rail">
+    <div class="railtabs"><div class="on">Chat</div><div>Quiz</div><div>Notes</div><div>Participants</div></div>
+    <div class="railbody">
+     <div class="msg"><div class="mav" style="background:#12B886">AK</div><div><b>Adama K.</b><p>Est-ce qu'une suite bornée est forcément convergente ?</p></div></div>
+     <div class="msg"><div class="mav" style="background:#6C5CE7">SO</div><div><b>Sylvie O. · enseignante</b><p>Bonne question — non. Contre-exemple : (−1)ⁿ. Je le fais au tableau.</p></div></div>
+     <div class="msg"><div class="mav" style="background:#E255A1">FS</div><div><b>Fatimata S.</b><p>Merci 🙏</p></div></div>
+     <div style="border:1px dashed var(--line2);border-radius:var(--r);padding:10px;font-size:11.5px;color:var(--txt2)">
+      <div style="color:var(--amber);font-weight:500;margin-bottom:5px"><i class="ti ti-bulb"></i> Suggestion de l'assistant</div>
+      7 étudiants ont signalé une incompréhension dans les 2 dernières minutes. Lancer un quiz de vérification ?
+      <div style="margin-top:8px;display:flex;gap:6px"><span class="pill" style="border-color:var(--acc);color:var(--acc2)">Lancer le quiz</span><span class="pill">Plus tard</span></div>
+     </div>
+     <span style="flex:1"></span>
+     <div style="display:flex;gap:6px;align-items:center;background:var(--panel2);border:1px solid var(--line2);border-radius:var(--r);padding:8px 10px;color:var(--txt3);font-size:12px"><i class="ti ti-message"></i>Écrire un message…</div>
+    </div>
+   </div>
+  </div>
+  <div class="ctrl">
+   <div class="cbtn act" title="Micro"><i class="ti ti-microphone"></i></div>
+   <div class="cbtn act" title="Caméra"><i class="ti ti-video"></i></div>
+   <div class="cbtn" title="Partage d'écran"><i class="ti ti-screen-share"></i></div>
+   <div class="cbtn" title="Tableau blanc"><i class="ti ti-writing"></i></div>
+   <div class="cbtn" title="Quiz"><i class="ti ti-help-circle"></i></div>
+   <div class="cbtn" title="Sous-groupes"><i class="ti ti-layout-grid"></i></div>
+   <div class="cbtn" title="Réactions"><i class="ti ti-mood-smile"></i></div>
+   <div class="cbtn" title="Participants"><i class="ti ti-users"></i></div>
+   <div class="cbtn" title="Plus"><i class="ti ti-dots"></i></div>
+   <div style="width:14px"></div>
+   <div class="cbtn dgr"><i class="ti ti-phone-off"></i>Terminer</div>
+  </div>
+ </div>
+ <p class="note"><i class="ti ti-info-circle"></i>Le bandeau de suivi est réservé à l'hôte. Les étudiants ne voient jamais qui a cliqué « je n'ai pas compris » — seul le total agrégé remonte, ce qui est la condition pour que le bouton soit réellement utilisé.</p>
+</div>
+</div>
+
+<!-- 2 ATELIER TABLEAU BLANC -->
+<div class="view" id="v2">
+<p class="caption"><b>Mode workshop — le tableau blanc domine.</b> Douze participants maximum, vignettes réduites en bande, exercice TD affiché et annotable collectivement. Le tableau est vectoriel : il pèse quelques kilo-octets par minute, reste net à toutes les résolutions, et se rejoue en replay.</p>
+<div class="stage">
+ <div class="app">
+  <div class="topbar"><span class="livedot"></span><b style="font-weight:600">Atelier TD — Mécanique du point, exercice 12</b>
+   <span class="pill"><i class="ti ti-users"></i>9</span><span class="pill"><i class="ti ti-clock"></i>18:02</span>
+   <span style="flex:1"></span><span class="pill"><i class="ti ti-file-text"></i>Exercice 12 affiché</span></div>
+  <div class="body">
+   <div class="mainarea">
+    <div style="flex:1;background:#F8F7F2;border-radius:var(--r);position:relative;overflow:hidden;border:1px solid var(--line)">
+     <svg viewBox="0 0 900 400" style="width:100%;height:100%">
+      <text x="34" y="44" font-size="20" fill="#1B4A8C" font-family="Georgia,serif">Exercice 12 — projectile lancé avec v₀ = 20 m/s, α = 35°</text>
+      <line x1="60" y1="330" x2="820" y2="330" stroke="#8A8F98" stroke-width="2"/>
+      <line x1="60" y1="330" x2="60" y2="90" stroke="#8A8F98" stroke-width="2"/>
+      <path d="M60 330 Q 400 60 740 330" stroke="#C0392B" stroke-width="3" fill="none"/>
+      <line x1="60" y1="330" x2="200" y2="240" stroke="#1B7A4A" stroke-width="2.5" marker-end="url(#a)"/>
+      <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#1B7A4A"/></marker></defs>
+      <text x="150" y="228" font-size="15" fill="#1B7A4A" font-family="Georgia,serif">v₀</text>
+      <text x="88" y="322" font-size="14" fill="#8A8F98" font-family="Georgia,serif">α</text>
+      <text x="410" y="88" font-size="15" fill="#C0392B" font-family="Georgia,serif">portée maximale ?</text>
+      <text x="430" y="374" font-size="17" fill="#14161A" font-family="Georgia,serif">x(t) = v₀·cos(α)·t</text>
+      <text x="430" y="396" font-size="17" fill="#14161A" font-family="Georgia,serif">y(t) = v₀·sin(α)·t − ½gt²</text>
+      <circle cx="620" cy="196" r="16" fill="none" stroke="#8B5CF6" stroke-width="2.5"/>
+      <text x="642" y="200" font-size="13" fill="#8B5CF6" font-family="Georgia,serif">Adama</text>
+     </svg>
+     <div style="position:absolute;left:10px;top:10px;display:flex;gap:6px;background:rgba(255,255,255,.95);border:1px solid #E2E5EA;border-radius:8px;padding:5px">
+      <span style="width:28px;height:28px;border-radius:6px;background:#14161A;color:#fff;display:flex;align-items:center;justify-content:center"><i class="ti ti-pencil"></i></span>
+      <span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:#5C6270"><i class="ti ti-line"></i></span>
+      <span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:#5C6270"><i class="ti ti-circle"></i></span>
+      <span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:#5C6270"><i class="ti ti-typography"></i></span>
+      <span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:#5C6270"><i class="ti ti-eraser"></i></span>
+      <span style="width:1px;background:#E2E5EA;margin:2px 3px"></span>
+      <span style="width:16px;height:16px;border-radius:50%;background:#C0392B;margin:6px 2px"></span>
+      <span style="width:16px;height:16px;border-radius:50%;background:#1B7A4A;margin:6px 2px"></span>
+      <span style="width:16px;height:16px;border-radius:50%;background:#8B5CF6;margin:6px 2px"></span>
+     </div>
+     <div style="position:absolute;right:10px;bottom:10px;display:flex;gap:6px">
+      <span class="pill" style="background:#fff;border-color:#E2E5EA;color:#3A4150"><i class="ti ti-camera"></i>Capturer</span>
+      <span class="pill" style="background:#fff;border-color:#E2E5EA;color:#3A4150">Page 2 / 3</span>
+     </div>
+    </div>
+    <div style="display:flex;gap:8px;flex:none;height:76px">
+     <div class="tile spk" style="width:118px;flex:none"><div class="av" style="background:#6C5CE7;width:34px;height:34px;font-size:12px">SO</div><span class="tname" style="font-size:10px">Prof. Sylvie</span></div>
+     <div class="tile" style="width:118px;flex:none"><div class="av" style="background:#8B5CF6;width:34px;height:34px;font-size:12px">AK</div><span class="tname" style="font-size:10px">Adama</span></div>
+     <div class="tile" style="width:118px;flex:none"><div class="av" style="background:#12B886;width:34px;height:34px;font-size:12px">FS</div><span class="tname" style="font-size:10px">Fatimata</span></div>
+     <div class="tile" style="width:118px;flex:none"><div class="av" style="background:#F0A020;width:34px;height:34px;font-size:12px">MT</div><span class="tname" style="font-size:10px">Moussa</span></div>
+     <div class="tile" style="flex:1;background:#12161B;color:var(--txt3);font-size:11px">+5 participants</div>
+    </div>
+   </div>
+   <div class="rail">
+    <div class="railtabs"><div>Chat</div><div class="on">Sous-groupes</div><div>Notes</div></div>
+    <div class="railbody">
+     <div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px">3 salles actives</div>
+     <div style="background:var(--panel2);border:1px solid var(--line2);border-radius:var(--r);padding:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-weight:600">Groupe A</b><span class="pill" style="border-color:#12B886;color:#12B886">actif</span></div>
+      <div style="color:var(--txt3);font-size:11px;margin-top:4px">3 participants · question 1 résolue</div>
+      <div style="margin-top:8px;display:flex;gap:6px"><span class="pill" style="border-color:var(--acc);color:var(--acc2)"><i class="ti ti-door-enter"></i>Rejoindre</span></div>
+     </div>
+     <div style="background:var(--panel2);border:1px solid var(--line2);border-radius:var(--r);padding:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-weight:600">Groupe B</b><span class="pill" style="border-color:#F0A020;color:#F0A020">bloqué 6 min</span></div>
+      <div style="color:var(--txt3);font-size:11px;margin-top:4px">3 participants · aucune écriture depuis 6 min</div>
+      <div style="margin-top:8px;display:flex;gap:6px"><span class="pill" style="border-color:var(--acc);color:var(--acc2)"><i class="ti ti-door-enter"></i>Rejoindre</span></div>
+     </div>
+     <div style="background:var(--panel2);border:1px solid var(--line2);border-radius:var(--r);padding:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-weight:600">Groupe C</b><span class="pill" style="border-color:#12B886;color:#12B886">actif</span></div>
+      <div style="color:var(--txt3);font-size:11px;margin-top:4px">3 participants · question 2 en cours</div>
+     </div>
+     <span style="flex:1"></span>
+     <div style="text-align:center"><span class="pill" style="border-color:var(--acc);color:var(--acc2);padding:8px 16px"><i class="ti ti-arrow-back-up"></i>Rappeler tout le monde</span></div>
+    </div>
+   </div>
+  </div>
+  <div class="ctrl">
+   <div class="cbtn act"><i class="ti ti-microphone"></i></div><div class="cbtn off"><i class="ti ti-video-off"></i></div>
+   <div class="cbtn"><i class="ti ti-screen-share"></i></div><div class="cbtn act"><i class="ti ti-writing"></i></div>
+   <div class="cbtn"><i class="ti ti-help-circle"></i></div><div class="cbtn act"><i class="ti ti-layout-grid"></i></div>
+   <div class="cbtn"><i class="ti ti-users"></i></div><div style="width:14px"></div><div class="cbtn dgr"><i class="ti ti-phone-off"></i>Terminer</div>
+  </div>
+ </div>
+ <p class="note"><i class="ti ti-info-circle"></i>Le <b>room hopping</b> permet à l'enseignant de circuler entre sous-groupes depuis un tableau de bord qui signale ceux qui n'avancent plus. C'est ce qui manque à Zoom, où l'enseignant entre à l'aveugle.</p>
+</div>
+</div>
+
+<!-- 3 MOBILE -->
+<div class="view" id="v3">
+<p class="caption"><b>Mobile — trois modes, un seul code.</b> Le même <code>StudioShell</code> bascule de disposition selon le mode et l'orientation. À gauche le live vertical façon TikTok, au centre la classe en portrait, à droite le mode faible débit — le seul des trois qui fonctionne à 40 kb/s.</p>
+<div class="stage">
+<div class="phones">
+
+ <div><div class="phone"><div class="screen">
+  <div style="flex:1;background:linear-gradient(160deg,#1D2129,#0E1013);position:relative">
+   <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><div class="av" style="background:#E255A1;width:78px;height:78px;font-size:26px">IB</div></div>
+   <div style="position:absolute;top:12px;left:12px;right:12px;display:flex;align-items:center;gap:7px">
+    <div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.5);border-radius:20px;padding:4px 9px 4px 5px">
+     <div class="av" style="width:24px;height:24px;background:#E255A1;font-size:9px">IB</div>
+     <div style="font-size:11px"><b style="font-weight:600">Ibrahim B.</b><div style="color:#9BA3B2;font-size:9.5px">Révision Bac D</div></div>
+    </div>
+    <span class="tag" style="background:#E14D4D;color:#fff"><span class="livedot" style="background:#fff"></span>LIVE</span>
+    <span class="tag" style="background:rgba(0,0,0,.5);color:#EDEFF3"><i class="ti ti-eye"></i>1 284</span>
+    <span style="flex:1"></span><i class="ti ti-x" style="font-size:19px"></i>
+   </div>
+   <div style="position:absolute;right:10px;bottom:130px;display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center;font-size:9.5px;color:#9BA3B2">
+    <div><i class="ti ti-heart" style="font-size:26px;color:#E255A1;display:block"></i>3,2k</div>
+    <div><i class="ti ti-gift" style="font-size:26px;color:#F0A020;display:block"></i>Crédits</div>
+    <div><i class="ti ti-users-plus" style="font-size:26px;display:block"></i>Duo</div>
+    <div><i class="ti ti-share" style="font-size:26px;display:block"></i>Partager</div>
+   </div>
+   <div style="position:absolute;left:0;right:74px;bottom:56px;padding:0 12px;display:flex;flex-direction:column;gap:7px">
+    <div style="background:rgba(108,92,231,.28);border-left:2px solid #8B7DF0;border-radius:0 6px 6px 0;padding:5px 8px;font-size:10.5px"><b style="font-weight:600;color:#B9AEFF">Épinglé</b> · Chapitre 7 : les alcools</div>
+    <div style="font-size:11px"><b style="font-weight:600;color:#12B886">Awa</b> tu peux refaire l'exo 4 ?</div>
+    <div style="font-size:11px"><b style="font-weight:600;color:#F0A020">Karim</b> 🔥🔥</div>
+    <div style="font-size:11px"><b style="font-weight:600;color:#E255A1">Nadia</b> merci pour hier</div>
+   </div>
+   <div style="position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:8px;align-items:center">
+    <div style="flex:1;background:rgba(255,255,255,.1);border-radius:20px;padding:8px 13px;font-size:11px;color:#6B7383">Ajouter un commentaire…</div>
+    <i class="ti ti-mood-smile" style="font-size:20px"></i>
+   </div>
+  </div>
+ </div></div><p class="plabel">Mode broadcast · portrait</p></div>
+
+ <div><div class="phone"><div class="screen">
+  <div style="padding:10px 12px;background:var(--panel);display:flex;align-items:center;gap:7px;font-size:11px">
+   <span class="livedot"></span><b style="font-weight:600">Suites numériques</b><span style="flex:1"></span>
+   <span style="color:#12B886"><i class="ti ti-wifi"></i></span><i class="ti ti-dots-vertical"></i>
+  </div>
+  <div style="flex:1;padding:8px;display:flex;flex-direction:column;gap:8px">
+   <div class="tile spk" style="flex:2"><div class="av" style="background:#6C5CE7">SO</div><span class="tname" style="font-size:10px"><i class="ti ti-microphone" style="color:#12B886"></i>Prof. Sylvie</span>
+    <div style="position:absolute;left:0;right:0;bottom:0;padding:18px 8px 7px;background:linear-gradient(transparent,rgba(0,0,0,.8));font-size:10.5px;text-align:center">« une suite bornée n'est pas forcément convergente »</div></div>
+   <div style="flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+    <div class="tile"><div class="av" style="background:#12B886;width:30px;height:30px;font-size:11px">AK</div></div>
+    <div class="tile"><div class="av" style="background:#E255A1;width:30px;height:30px;font-size:11px">FS</div></div>
+    <div class="tile" style="background:#12161B;color:var(--txt3);font-size:10px">+25</div>
+   </div>
+   <div style="background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:9px">
+    <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Quiz en cours · 18 s</div>
+    <div style="font-size:11.5px;margin-bottom:7px">Une suite bornée est-elle convergente ?</div>
+    <div style="display:flex;flex-direction:column;gap:5px">
+     <div style="border:1px solid var(--line2);border-radius:7px;padding:7px 10px;font-size:11px">Oui, toujours</div>
+     <div style="border:1px solid var(--acc);background:rgba(108,92,231,.18);border-radius:7px;padding:7px 10px;font-size:11px;color:#B9AEFF">Non, pas nécessairement</div>
+    </div>
+   </div>
+  </div>
+  <div style="display:flex;justify-content:space-around;padding:10px 6px;background:var(--panel);border-top:1px solid var(--line)">
+   <div class="cbtn act" style="width:36px;height:36px;font-size:16px"><i class="ti ti-microphone"></i></div>
+   <div class="cbtn off" style="width:36px;height:36px;font-size:16px"><i class="ti ti-video-off"></i></div>
+   <div class="cbtn" style="width:36px;height:36px;font-size:16px"><i class="ti ti-hand-stop"></i></div>
+   <div class="cbtn" style="width:36px;height:36px;font-size:16px"><i class="ti ti-message"></i></div>
+   <div class="cbtn" style="width:36px;height:36px;font-size:16px"><i class="ti ti-dots"></i></div>
+   <div class="cbtn dgr" style="width:36px;height:36px;padding:0;font-size:16px"><i class="ti ti-phone-off"></i></div>
+  </div>
+ </div></div><p class="plabel">Mode classroom · portrait</p></div>
+
+ <div><div class="phone"><div class="screen">
+  <div style="padding:9px 12px;background:#3A2A12;display:flex;align-items:center;gap:7px;font-size:10.5px;color:#F0A020">
+   <i class="ti ti-wifi-1"></i><b style="font-weight:600">Réseau faible</b> — vidéo suspendue, le cours continue
+  </div>
+  <div style="flex:1;background:#F8F7F2;position:relative">
+   <svg viewBox="0 0 300 380" style="width:100%;height:100%">
+    <text x="18" y="34" font-size="14" fill="#1B4A8C" font-family="Georgia,serif">Suites — convergence</text>
+    <line x1="30" y1="230" x2="270" y2="230" stroke="#8A8F98" stroke-width="1.5"/>
+    <line x1="30" y1="230" x2="30" y2="70" stroke="#8A8F98" stroke-width="1.5"/>
+    <path d="M30 210 Q 90 96 150 140 T 270 128" stroke="#C0392B" stroke-width="2.5" fill="none"/>
+    <line x1="30" y1="128" x2="270" y2="128" stroke="#1B7A4A" stroke-width="1.5" stroke-dasharray="5 4"/>
+    <text x="238" y="120" font-size="12" fill="#1B7A4A" font-family="Georgia,serif">ℓ</text>
+    <text x="20" y="272" font-size="13" fill="#14161A" font-family="Georgia,serif">∀ε&gt;0, ∃N, n&gt;N ⟹</text>
+    <text x="20" y="294" font-size="13" fill="#14161A" font-family="Georgia,serif">|uₙ − ℓ| &lt; ε</text>
+    <circle cx="196" cy="132" r="13" fill="none" stroke="#8B5CF6" stroke-width="2"/>
+   </svg>
+   <div style="position:absolute;left:8px;bottom:8px;right:8px;background:rgba(0,0,0,.82);border-radius:8px;padding:8px 10px;color:#EDEFF3;font-size:11px;line-height:1.5">
+    <div style="color:#12B886;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Sous-titres en direct</div>
+    « …et donc pour tout epsilon strictement positif, il existe un rang N à partir duquel la distance à la limite reste inférieure à epsilon. »
+   </div>
+  </div>
+  <div style="padding:8px 12px;background:var(--panel);display:flex;gap:8px;align-items:center;font-size:10.5px;color:var(--txt2);border-top:1px solid var(--line)">
+   <i class="ti ti-volume" style="color:#12B886;font-size:15px"></i>Audio + tableau + sous-titres
+   <span style="flex:1"></span><span class="pill" style="font-size:9.5px;padding:3px 8px">38 kb/s</span>
+  </div>
+  <div style="display:flex;justify-content:space-around;padding:9px 6px;background:var(--panel);border-top:1px solid var(--line)">
+   <div class="cbtn act" style="width:34px;height:34px;font-size:15px"><i class="ti ti-microphone"></i></div>
+   <div class="cbtn off" style="width:34px;height:34px;font-size:15px"><i class="ti ti-video-off"></i></div>
+   <div class="cbtn" style="width:34px;height:34px;font-size:15px"><i class="ti ti-hand-stop"></i></div>
+   <div class="cbtn" style="width:34px;height:34px;font-size:15px"><i class="ti ti-message"></i></div>
+   <div class="cbtn dgr" style="width:34px;height:34px;padding:0;font-size:15px"><i class="ti ti-phone-off"></i></div>
+  </div>
+ </div></div><p class="plabel" style="color:#C08010"><b>Mode faible débit pédagogique</b><br>38 kb/s — le cours continue</p></div>
+
+</div>
+ <p class="note"><i class="ti ti-info-circle"></i>Sur un réseau où Zoom coupe la vidéo et laisse une voix seule, Academia garde <b>l'audio, le tableau blanc vectoriel et les sous-titres</b>. L'étudiant voit le professeur écrire et lit ce qu'il dit, à 38 kb/s.</p>
+</div>
+</div>
+
+<!-- 4 COURS -->
+<div class="view" id="v4">
+<p class="caption"><b>Le live à l'intérieur d'un cours.</b> C'est là que se joue la réutilisabilité : la leçon n'ouvre pas « un écran de live », elle appelle <code>StudioLauncher</code> avec son contexte. Trois points d'entrée sur la même page — rejoindre la séance en cours, revoir le replay, demander de l'aide.</p>
+<div class="stage" style="background:#F0F1F4;padding:18px">
+ <div class="course">
+  <div class="clesson">
+   <div class="cvid">
+    <div style="text-align:center">
+     <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;margin:0 auto 10px"><i class="ti ti-player-play" style="font-size:24px;color:#fff"></i></div>
+     <div style="font-size:13px">Leçon 4.2 — Convergence des suites · 18 min</div>
+    </div>
+    <div style="position:absolute;left:14px;top:14px" class="tag"><span style="background:#12B886;color:#04342C;padding:3px 9px;border-radius:20px;font-size:11px">Vidéo enregistrée</span></div>
+   </div>
+   <div style="padding:16px;flex:1;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;gap:10px;background:#FDF0F0;border:1px solid #F5D5D5;border-radius:10px;padding:12px 14px">
+     <span class="livedot" style="width:8px;height:8px"></span>
+     <div style="flex:1;font-size:13px"><b style="font-weight:600">Séance en direct maintenant</b><div style="color:#8A6060;font-size:12px;margin-top:2px">Correction des exercices 8 à 14 · Prof. Sylvie Ouédraogo · 28 présents</div></div>
+     <button class="livebtn"><i class="ti ti-video"></i>Rejoindre</button>
+    </div>
+    <h3 style="font-size:15px;font-weight:600;margin:16px 0 8px">Convergence et limites</h3>
+    <p style="font-size:13px;color:#4A5160;line-height:1.7">Une suite (uₙ) converge vers ℓ si pour tout ε &gt; 0, il existe un rang N à partir duquel tous les termes restent à une distance inférieure à ε de ℓ. On note lim uₙ = ℓ.</p>
+    <div style="margin-top:auto;display:flex;gap:8px;padding-top:14px;border-top:1px solid #F0F2F5">
+     <button class="helpbtn"><i class="ti ti-help-circle"></i>Je n'ai pas compris</button>
+     <button class="helpbtn" style="border-color:#6C5CE7;color:#5B4BD6"><i class="ti ti-user-question"></i>Demander de l'aide à un professeur</button>
+     <span style="flex:1"></span>
+     <button class="helpbtn"><i class="ti ti-notes"></i>Mes notes</button>
+    </div>
+   </div>
+  </div>
+  <div class="cside">
+   <div style="font-size:11px;color:#8A90A0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Chapitre 4 — 6 leçons</div>
+   <div class="crow"><span class="cnum" style="background:#E6F6EF;color:#0F7A57"><i class="ti ti-check"></i></span><span style="flex:1">4.1 Définitions</span></div>
+   <div class="crow"><span class="cnum" style="background:#6C5CE7;color:#fff">2</span><span style="flex:1;font-weight:500">4.2 Convergence</span><i class="ti ti-player-play" style="color:#6C5CE7"></i></div>
+   <div class="crow"><span class="cnum">3</span><span style="flex:1;color:#6B7383">4.3 Suites bornées</span></div>
+   <div class="crow"><span class="cnum">4</span><span style="flex:1;color:#6B7383">4.4 Théorème des gendarmes</span></div>
+
+   <div style="font-size:11px;color:#8A90A0;text-transform:uppercase;letter-spacing:.5px;margin:18px 0 8px">Séances live du chapitre</div>
+   <div style="border:1px solid #F5D5D5;background:#FDF6F6;border-radius:10px;padding:10px;margin-bottom:8px">
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#C0392B;font-weight:500"><span class="livedot" style="width:6px;height:6px"></span>EN DIRECT</div>
+    <div style="font-size:12.5px;margin-top:4px;font-weight:500">Correction exercices 8–14</div>
+    <div style="font-size:11.5px;color:#8A90A0;margin-top:2px">Depuis 32 min · 28 présents</div>
+   </div>
+   <div style="border:1px solid #E2E5EA;border-radius:10px;padding:10px;margin-bottom:8px">
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#5C6270"><i class="ti ti-calendar"></i>Jeudi 30 juil. · 18 h 00</div>
+    <div style="font-size:12.5px;margin-top:4px;font-weight:500">Atelier — préparation du devoir</div>
+    <div style="font-size:11.5px;color:#8A90A0;margin-top:2px">Mode atelier · 12 places · 4 restantes</div>
+   </div>
+   <div style="border:1px solid #E2E5EA;border-radius:10px;padding:10px">
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#5C6270"><i class="ti ti-player-play"></i>Replay · 21 juil.</div>
+    <div style="font-size:12.5px;margin-top:4px;font-weight:500">Introduction aux suites</div>
+    <div style="font-size:11.5px;color:#8A90A0;margin-top:2px">1 h 04 · transcript · résumé · quiz</div>
+   </div>
+  </div>
+ </div>
+ <p class="note" style="color:#5C6270"><i class="ti ti-info-circle"></i>La page ne connaît ni LiveKit, ni les tokens, ni les modes. Elle appelle <code>StudioLauncher.open(mode: classroom, origin: {course, lesson 4.2})</code> et le studio se charge du reste. Le même appel depuis un TD ou une prépa concours produirait le même studio, avec un autre contexte.</p>
+</div>
+</div>
+
+<!-- 5 CONSULTATION -->
+<div class="view" id="v5">
+<p class="caption"><b>Mode consultation — le professeur arrive déjà informé.</b> La demande d'aide est partie depuis l'exercice sur lequel l'étudiant bloquait. Le panneau de contexte affiche l'exercice, ses quatre tentatives et sa question avant même que la conversation commence.</p>
+<div class="stage">
+ <div class="app" style="height:600px">
+  <div class="topbar"><i class="ti ti-user-check" style="color:#12B886"></i><b style="font-weight:600">Consultation — Adama Kaboré</b>
+   <span class="pill"><i class="ti ti-clock"></i>12:40 / 30:00</span>
+   <span class="pill" style="border-color:#12B886;color:#12B886"><i class="ti ti-shield-lock"></i>Chiffré · non enregistré</span>
+   <span style="flex:1"></span><span class="pill"><i class="ti ti-school"></i>TD Mécanique · L1</span></div>
+  <div class="body">
+   <div class="mainarea">
+    <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+     <div class="tile spk"><div class="av" style="background:#12B886;width:74px;height:74px;font-size:23px">AK</div><span class="tname"><i class="ti ti-microphone" style="color:#12B886"></i>Adama Kaboré</span></div>
+     <div class="tile"><div class="av" style="background:#6C5CE7;width:74px;height:74px;font-size:23px">RD</div><span class="tname">Dr. Rasmané D. · vous</span></div>
+    </div>
+   </div>
+   <div class="rail" style="width:330px">
+    <div class="railtabs"><div class="on">Contexte</div><div>Historique</div><div>Notes</div></div>
+    <div class="railbody" style="gap:12px">
+     <div style="background:rgba(108,92,231,.12);border:1px solid rgba(108,92,231,.4);border-radius:var(--r);padding:11px">
+      <div style="font-size:10px;color:#B9AEFF;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px">Sa question</div>
+      <div style="font-size:12.5px;line-height:1.55">« Je ne comprends pas pourquoi la portée est maximale à 45° et pas à 60°. J'ai refait le calcul 4 fois. »</div>
+     </div>
+     <div>
+      <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Exercice bloquant</div>
+      <div style="background:#F8F7F2;border-radius:var(--r);padding:10px;color:#14161A;font-size:12px;line-height:1.6;font-family:Georgia,serif">
+       <b>Ex. 12</b> — Un projectile est lancé avec v₀ = 20 m/s selon un angle α. Déterminer α pour lequel la portée est maximale.
+      </div>
+     </div>
+     <div>
+      <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Ses 4 tentatives</div>
+      <div style="display:flex;flex-direction:column;gap:5px;font-size:11.5px">
+       <div style="display:flex;gap:8px;align-items:center"><i class="ti ti-x" style="color:#E14D4D"></i><span style="color:var(--txt2)">α = 60° — erreur de dérivation</span></div>
+       <div style="display:flex;gap:8px;align-items:center"><i class="ti ti-x" style="color:#E14D4D"></i><span style="color:var(--txt2)">α = 60° — même erreur</span></div>
+       <div style="display:flex;gap:8px;align-items:center"><i class="ti ti-x" style="color:#E14D4D"></i><span style="color:var(--txt2)">α = 30° — signe inversé</span></div>
+       <div style="display:flex;gap:8px;align-items:center"><i class="ti ti-x" style="color:#E14D4D"></i><span style="color:var(--txt2)">α = 60° — retour à l'erreur initiale</span></div>
+      </div>
+      <div style="margin-top:8px;background:rgba(240,160,32,.12);border-left:2px solid var(--amber);border-radius:0 6px 6px 0;padding:8px 10px;font-size:11.5px;color:#F5C87A;line-height:1.5">
+       Diagnostic : confusion probable entre sin(2α) et 2·sin(α). Le blocage est algébrique, pas physique.
+      </div>
+     </div>
+     <div>
+      <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Son niveau en mécanique</div>
+      <div style="display:flex;gap:6px;align-items:center;font-size:11.5px;color:var(--txt2)">Cinématique <div class="bar" style="flex:1;margin:0"><i style="width:78%;background:#12B886"></i></div> 78 %</div>
+      <div style="display:flex;gap:6px;align-items:center;font-size:11.5px;color:var(--txt2);margin-top:5px">Trigonométrie <div class="bar" style="flex:1;margin:0"><i style="width:42%;background:#F0A020"></i></div> 42 %</div>
+     </div>
+    </div>
+   </div>
+  </div>
+  <div class="ctrl">
+   <div class="cbtn act"><i class="ti ti-microphone"></i></div><div class="cbtn act"><i class="ti ti-video"></i></div>
+   <div class="cbtn"><i class="ti ti-screen-share"></i></div><div class="cbtn"><i class="ti ti-writing"></i></div>
+   <div class="cbtn"><i class="ti ti-file-text"></i></div><div class="cbtn"><i class="ti ti-notes"></i></div>
+   <div style="width:14px"></div><div class="cbtn dgr"><i class="ti ti-phone-off"></i>Terminer</div>
+  </div>
+ </div>
+ <p class="note"><i class="ti ti-info-circle"></i>La consultation démarre sur le fond, pas sur « alors, c'était quoi ta question ? ». Sur un créneau de 30 minutes, c'est cinq à huit minutes récupérées — et un diagnostic déjà posé.</p>
+</div>
+</div>
+
+<!-- 6 REPLAY -->
+<div class="view" id="v6">
+<p class="caption"><b>Replay composite.</b> Ce n'est pas la vidéo de la séance, c'est un objet à cinq pistes : vidéo, transcript cliquable, tableau blanc vectoriel rejouable, notes ancrées au timecode, et résumé IA avec quiz auto-généré. La recherche plein texte saute à l'instant exact où un terme a été prononcé.</p>
+<div class="stage" style="background:#F0F1F4;padding:18px">
+ <div style="display:flex;gap:16px;height:600px">
+  <div style="flex:1;display:flex;flex-direction:column;gap:12px;min-width:0">
+   <div style="background:#0E1013;border-radius:12px;flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden">
+    <div style="text-align:center;color:#9BA3B2"><i class="ti ti-player-play" style="font-size:38px"></i><div style="margin-top:8px;font-size:13px">Suites numériques — 21 juillet · 1 h 04</div></div>
+    <div style="position:absolute;right:12px;top:12px;display:flex;gap:6px"><span class="pill">720p</span><span class="pill"><i class="ti ti-captions"></i>FR</span></div>
+    <div style="position:absolute;left:0;right:0;bottom:0;padding:14px">
+     <div style="height:4px;background:rgba(255,255,255,.18);border-radius:2px;position:relative">
+      <div style="width:38%;height:100%;background:#6C5CE7;border-radius:2px"></div>
+      <span style="position:absolute;left:12%;top:-3px;width:2px;height:10px;background:#F0A020"></span>
+      <span style="position:absolute;left:31%;top:-3px;width:2px;height:10px;background:#F0A020"></span>
+      <span style="position:absolute;left:38%;top:-4px;width:11px;height:11px;background:#fff;border-radius:50%;margin-left:-5px"></span>
+      <span style="position:absolute;left:56%;top:-3px;width:2px;height:10px;background:#12B886"></span>
+      <span style="position:absolute;left:74%;top:-3px;width:2px;height:10px;background:#F0A020"></span>
+     </div>
+     <div style="display:flex;gap:14px;align-items:center;margin-top:10px;color:#EDEFF3;font-size:12px">
+      <i class="ti ti-player-skip-back" style="font-size:17px"></i><i class="ti ti-player-pause" style="font-size:21px"></i><i class="ti ti-player-skip-forward" style="font-size:17px"></i>
+      <span>24:18 / 1:04:32</span><span style="flex:1"></span>
+      <span class="pill" style="font-size:10.5px"><i class="ti ti-bookmark" style="color:#F0A020"></i>3 signets</span>
+      <span class="pill" style="font-size:10.5px"><i class="ti ti-writing" style="color:#12B886"></i>Tableau</span>
+     </div>
+    </div>
+   </div>
+   <div style="background:#fff;border:1px solid #E2E5EA;border-radius:12px;padding:14px;flex:none">
+    <div style="display:flex;align-items:center;gap:9px;background:#F7F8FA;border:1px solid #E2E5EA;border-radius:8px;padding:9px 12px;font-size:13px;color:#14161A">
+     <i class="ti ti-search" style="color:#8A90A0"></i>théorème des gendarmes<span style="flex:1"></span><span style="color:#8A90A0;font-size:12px">3 occurrences</span>
+    </div>
+    <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px;font-size:12.5px">
+     <div style="display:flex;gap:10px"><span style="color:#5B4BD6;font-weight:500;flex:none">18:42</span><span style="color:#4A5160">« …on va utiliser le <mark style="background:#EDE9FE;padding:0 2px">théorème des gendarmes</mark> pour encadrer cette suite… »</span></div>
+     <div style="display:flex;gap:10px"><span style="color:#5B4BD6;font-weight:500;flex:none">31:07</span><span style="color:#4A5160">« …le <mark style="background:#EDE9FE;padding:0 2px">théorème des gendarmes</mark> exige les trois conditions simultanées… »</span></div>
+     <div style="display:flex;gap:10px"><span style="color:#5B4BD6;font-weight:500;flex:none">52:19</span><span style="color:#4A5160">« …reprenez le <mark style="background:#EDE9FE;padding:0 2px">théorème des gendarmes</mark> pour l'exercice 9. »</span></div>
+    </div>
+   </div>
+  </div>
+  <div style="width:330px;flex:none;background:#fff;border:1px solid #E2E5EA;border-radius:12px;padding:14px;overflow:hidden">
+   <div style="display:flex;gap:14px;font-size:12.5px;border-bottom:1px solid #EDEFF2;padding-bottom:9px;margin-bottom:12px">
+    <span style="font-weight:600;border-bottom:2px solid #6C5CE7;padding-bottom:9px;margin-bottom:-10px">Résumé</span>
+    <span style="color:#8A90A0">Chapitres</span><span style="color:#8A90A0">Mes notes</span><span style="color:#8A90A0">Quiz</span>
+   </div>
+   <div style="font-size:11px;color:#8A90A0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Généré automatiquement</div>
+   <p style="font-size:12.5px;line-height:1.65;color:#4A5160">La séance définit la convergence d'une suite, distingue suites bornées et convergentes par contre-exemple, puis démontre le théorème des gendarmes avec deux applications.</p>
+   <div style="font-size:11px;color:#8A90A0;text-transform:uppercase;letter-spacing:.5px;margin:16px 0 6px">Concepts clés</div>
+   <div style="display:flex;flex-wrap:wrap;gap:6px">
+    <span class="tag" style="background:#EDE9FE;color:#4C3BB5">Convergence</span>
+    <span class="tag" style="background:#EDE9FE;color:#4C3BB5">Suite bornée</span>
+    <span class="tag" style="background:#EDE9FE;color:#4C3BB5">Th. des gendarmes</span>
+    <span class="tag" style="background:#EDE9FE;color:#4C3BB5">Limite</span>
+   </div>
+   <div style="font-size:11px;color:#8A90A0;text-transform:uppercase;letter-spacing:.5px;margin:16px 0 6px">Questions posées en séance</div>
+   <div style="font-size:12.5px;line-height:1.6;color:#4A5160;border-left:2px solid #E2E5EA;padding-left:10px">
+    <b style="font-weight:600">Adama, 21:04</b> — Une suite bornée est-elle convergente ?<br><span style="color:#8A90A0">Réponse : non, contre-exemple (−1)ⁿ.</span>
+   </div>
+   <div style="margin-top:16px;background:#F7F8FA;border-radius:10px;padding:12px">
+    <div style="font-size:12.5px;font-weight:600;margin-bottom:4px">Quiz de révision généré</div>
+    <div style="font-size:12px;color:#6B7383;line-height:1.55">5 questions issues de cette séance, reliées à la banque d'exercices du chapitre.</div>
+    <button class="helpbtn" style="margin-top:10px;width:100%;justify-content:center;border-color:#6C5CE7;color:#5B4BD6"><i class="ti ti-player-play"></i>Démarrer le quiz</button>
+   </div>
+  </div>
+ </div>
+ <p class="note" style="color:#5C6270"><i class="ti ti-info-circle"></i>Le tableau blanc est rejoué en <b>vectoriel</b> et non en pixels : un replay consulté en 240p garde un tableau parfaitement net. Aucune capture vidéo ne permet cela.</p>
+</div>
+</div>
+
+<!-- 7 RDV -->
+<div class="view" id="v7">
+<p class="caption"><b>Prise de rendez-vous et tableau de bord intervenant.</b> Conseillers d'orientation, professeurs de TD, professeurs de prépa concours, tuteurs — une seule table <code>advisor_profiles</code>, un seul parcours de réservation, un seul studio à l'arrivée.</p>
+<div class="stage" style="background:#F0F1F4;padding:18px">
+ <div style="display:flex;gap:16px">
+  <div style="flex:1;background:#fff;border:1px solid #E2E5EA;border-radius:12px;padding:16px">
+   <div style="font-size:15px;font-weight:600;margin-bottom:3px">Prendre rendez-vous</div>
+   <div style="font-size:12.5px;color:#6B7383;margin-bottom:14px">Vue étudiant</div>
+   <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
+    <span class="tag" style="background:#14161A;color:#fff;padding:6px 13px;font-size:12px">Tous</span>
+    <span class="tag" style="background:#F2F3F6;color:#3A4150;padding:6px 13px;font-size:12px">Orientation</span>
+    <span class="tag" style="background:#F2F3F6;color:#3A4150;padding:6px 13px;font-size:12px">Prof. TD</span>
+    <span class="tag" style="background:#F2F3F6;color:#3A4150;padding:6px 13px;font-size:12px">Prépa concours</span>
+    <span class="tag" style="background:#F2F3F6;color:#3A4150;padding:6px 13px;font-size:12px">Tuteur</span>
+   </div>
+   <div style="border:1px solid #E2E5EA;border-radius:10px;padding:13px;margin-bottom:10px">
+    <div style="display:flex;gap:11px;align-items:flex-start">
+     <div class="av" style="background:#6C5CE7;width:42px;height:42px;font-size:14px;flex:none">RD</div>
+     <div style="flex:1">
+      <div style="display:flex;align-items:center;gap:7px"><b style="font-weight:600;font-size:13.5px">Dr. Rasmané Diallo</b><span class="tag" style="background:#EDE9FE;color:#4C3BB5;font-size:10.5px">Prof. TD</span></div>
+      <div style="font-size:12px;color:#6B7383;margin-top:3px">Mécanique · Thermodynamique · L1–L2 · fr, dioula</div>
+      <div style="font-size:12px;color:#6B7383;margin-top:4px"><i class="ti ti-star" style="color:#F0A020"></i> 4,8 · 126 consultations</div>
+     </div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:11px">
+     <span class="tag" style="background:#F7F8FA;border:1px solid #E2E5EA;color:#3A4150;padding:6px 11px;font-size:12px">Lun 28 · 14:00</span>
+     <span class="tag" style="background:#EDE9FE;border:1px solid #6C5CE7;color:#4C3BB5;padding:6px 11px;font-size:12px">Lun 28 · 16:30</span>
+     <span class="tag" style="background:#F7F8FA;border:1px solid #E2E5EA;color:#3A4150;padding:6px 11px;font-size:12px">Mar 29 · 09:00</span>
+     <span class="tag" style="background:#F7F8FA;border:1px solid #E2E5EA;color:#3A4150;padding:6px 11px;font-size:12px">Mar 29 · 17:00</span>
+     <span class="tag" style="background:#fff;border:1px solid #E2E5EA;color:#8A90A0;padding:6px 11px;font-size:12px">+8 créneaux</span>
+    </div>
+   </div>
+   <div style="border:1px solid #E2E5EA;border-radius:10px;padding:13px">
+    <div style="display:flex;gap:11px;align-items:flex-start">
+     <div class="av" style="background:#12B886;width:42px;height:42px;font-size:14px;flex:none">MZ</div>
+     <div style="flex:1">
+      <div style="display:flex;align-items:center;gap:7px"><b style="font-weight:600;font-size:13.5px">Mariam Zongo</b><span class="tag" style="background:#E6F6EF;color:#0F7A57;font-size:10.5px">Orientation</span></div>
+      <div style="font-size:12px;color:#6B7383;margin-top:3px">Filières scientifiques · concours ENAM, ENAREF · fr, mooré</div>
+      <div style="font-size:12px;color:#6B7383;margin-top:4px"><i class="ti ti-star" style="color:#F0A020"></i> 4,9 · 341 consultations</div>
+     </div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:11px">
+     <span class="tag" style="background:#F7F8FA;border:1px solid #E2E5EA;color:#3A4150;padding:6px 11px;font-size:12px">Mer 30 · 10:00</span>
+     <span class="tag" style="background:#F7F8FA;border:1px solid #E2E5EA;color:#3A4150;padding:6px 11px;font-size:12px">Mer 30 · 15:00</span>
+     <span class="tag" style="background:#fff;border:1px solid #E2E5EA;color:#8A90A0;padding:6px 11px;font-size:12px">+4 créneaux</span>
+    </div>
+   </div>
+  </div>
+
+  <div style="width:400px;flex:none;background:#fff;border:1px solid #E2E5EA;border-radius:12px;padding:16px">
+   <div style="font-size:15px;font-weight:600;margin-bottom:3px">Mes demandes d'aide</div>
+   <div style="font-size:12.5px;color:#6B7383;margin-bottom:14px">Vue intervenant — Dr. Rasmané Diallo</div>
+   <div style="border:1px solid #F0D5A0;background:#FFFAF0;border-radius:10px;padding:12px;margin-bottom:9px">
+    <div style="display:flex;align-items:center;gap:7px;font-size:11px;color:#B07510;font-weight:500"><i class="ti ti-clock-exclamation"></i>EN ATTENTE · 2 h</div>
+    <div style="font-size:13px;font-weight:500;margin-top:5px">Adama Kaboré — TD Mécanique</div>
+    <div style="font-size:12px;color:#6B7383;margin-top:3px;line-height:1.5">Exercice 12 · 4 tentatives échouées · « pourquoi 45° et pas 60° ? »</div>
+    <div style="display:flex;gap:6px;margin-top:10px">
+     <button class="helpbtn" style="border-color:#6C5CE7;color:#5B4BD6;font-size:12px;padding:7px 12px">Proposer 3 créneaux</button>
+     <button class="helpbtn" style="font-size:12px;padding:7px 12px">Répondre par écrit</button>
+    </div>
+   </div>
+   <div style="border:1px solid #E2E5EA;border-radius:10px;padding:12px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:7px;font-size:11px;color:#8A90A0"><i class="ti ti-clock"></i>EN ATTENTE · 20 min</div>
+    <div style="font-size:13px;font-weight:500;margin-top:5px">Fatimata Sawadogo — TD Thermo</div>
+    <div style="font-size:12px;color:#6B7383;margin-top:3px;line-height:1.5">Chapitre 2 · « différence entre isotherme et adiabatique »</div>
+   </div>
+
+   <div style="font-size:11px;color:#8A90A0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Consultations à venir</div>
+   <div style="display:flex;gap:11px;align-items:center;padding:10px;border:1px solid #E2E5EA;border-radius:10px;margin-bottom:8px">
+    <div style="text-align:center;flex:none"><div style="font-size:11px;color:#8A90A0">LUN</div><div style="font-size:17px;font-weight:600">28</div></div>
+    <div style="flex:1"><div style="font-size:13px;font-weight:500">16:30 · Adama Kaboré</div><div style="font-size:12px;color:#6B7383">Exercice 12 · contexte pré-chargé</div></div>
+    <i class="ti ti-video" style="color:#6C5CE7;font-size:19px"></i>
+   </div>
+   <div style="display:flex;gap:11px;align-items:center;padding:10px;border:1px solid #E2E5EA;border-radius:10px">
+    <div style="text-align:center;flex:none"><div style="font-size:11px;color:#8A90A0">MAR</div><div style="font-size:17px;font-weight:600">29</div></div>
+    <div style="flex:1"><div style="font-size:13px;font-weight:500">09:00 · Groupe L1-B</div><div style="font-size:12px;color:#6B7383">Atelier · 6 étudiants</div></div>
+    <i class="ti ti-video" style="color:#6C5CE7;font-size:19px"></i>
+   </div>
+  </div>
+ </div>
+ <p class="note" style="color:#5C6270"><i class="ti ti-info-circle"></i>La demande d'Adama n'a pas été écrite dans un formulaire : elle est partie d'un clic sur « Demander de l'aide » depuis l'exercice 12, et a emporté avec elle ses quatre tentatives.</p>
+</div>
+</div>
+
+<!-- 8 MATRICE -->
+<div class="view" id="v8">
+<p class="caption"><b>La matrice de capacités.</b> C'est la seule chose qui distingue les six modes. Elle vit dans une table Supabase, pas dans du code Dart — ajouter un mode « soutenance » ou « jury de concours » est un <code>INSERT</code>.</p>
+<div style="background:#fff;border:1px solid #E2E5EA;border-radius:12px;overflow:hidden">
+<table class="matrix">
+<tr><th>Capacité</th><th>classroom</th><th>amphi</th><th>broadcast</th><th>duo</th><th>consultation</th><th>workshop</th></tr>
+<tr><td>Vidéo participants</td><td class="yes">✓</td><td class="par">scène</td><td class="no">—</td><td class="par">2</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+<tr><td>Micro participants</td><td class="yes">✓</td><td class="par">sur demande</td><td class="no">—</td><td class="par">2</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+<tr><td>Chat texte</td><td class="yes">✓</td><td class="yes">✓</td><td class="par">défilant</td><td class="par">défilant</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+<tr><td>Réactions emoji</td><td class="yes">✓</td><td class="yes">✓</td><td class="par">pluie</td><td class="par">pluie</td><td class="no">—</td><td class="yes">✓</td></tr>
+<tr><td>Main levée</td><td class="yes">✓</td><td class="par">montée scène</td><td class="par">demande duo</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+<tr><td>Partage d'écran</td><td class="par">hôte</td><td class="par">hôte</td><td class="par">hôte</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+<tr><td>Tableau blanc</td><td class="yes">✓</td><td class="par">hôte</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td><td class="par">dominant</td></tr>
+<tr><td>Quiz / sondage</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="yes">✓</td></tr>
+<tr><td>Exercice poussé</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+<tr><td>Notes horodatées</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+<tr><td>Sous-titres live</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+<tr><td>Enregistrement</td><td class="par">option</td><td class="yes">✓</td><td class="par">option</td><td class="par">option</td><td class="par">consentement</td><td class="par">option</td></tr>
+<tr><td>Résumé IA</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+<tr><td>Sous-groupes</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+<tr><td>Crédits / cadeaux</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td></tr>
+<tr><td>Compteur spectateurs</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td></tr>
+</table>
+</div>
+<p class="note" style="color:#5C6270;margin-top:16px"><i class="ti ti-info-circle"></i>Chaque module Academia — Cours, TD, Prépa concours, Orientation, Challenge, Communauté — appelle <code>StudioLauncher</code> avec un mode et un contexte. Il n'écrit jamais un écran de live.</p>
+</div>
+
+</div>
+<script>
+var views=[['v1','Classe · enseignant'],['v2','Atelier · tableau blanc'],['v3','Mobile · 3 modes'],['v4','Live dans un cours'],['v5','Consultation'],['v6','Replay intelligent'],['v7','Rendez-vous'],['v8','Matrice des modes']];
+var nav=document.getElementById('nav');
+views.forEach(function(v,i){
+  var b=document.createElement('button');
+  b.textContent=v[1]; if(i===0)b.className='on';
+  b.onclick=function(){
+    document.querySelectorAll('.view').forEach(function(e){e.classList.remove('on')});
+    document.querySelectorAll('#nav button').forEach(function(e){e.classList.remove('on')});
+    document.getElementById(v[0]).classList.add('on'); b.classList.add('on');
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+  nav.appendChild(b);
+});
+</script>
+</body>
+</html>
