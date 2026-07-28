@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import socket
+import subprocess
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -20,7 +21,7 @@ from dotenv import load_dotenv
 
 from whiteboard_png_renderer import render_storyboard_to_pngs
 from whiteboard_ffmpeg_assembler import assemble_pngs_to_mp4
-from whiteboard_upload_renderer import upload_mp4_to_storage
+from whiteboard_upload_renderer import upload_mp4_to_storage, upload_preview_sync
 
 # Vision Engine (Phase B) — rendu HTML/Playwright/KaTeX
 try:
@@ -31,6 +32,16 @@ try:
 except ImportError:
     _HAS_VISION = False
 
+# Vision v2 (25/07/2026) — cahier continu FILMÉ pendant que les animations se jouent.
+# Écriture manuscrite mot par mot, annotations ciblées, rappel pédagogique, défilement.
+# Mesuré à ~1,5x le temps réel, contre 4-5x pour le moteur studio Remotion (abandonné).
+try:
+    from whiteboard_vision_v2 import render_storyboard_v2, planned_duration, INTRO_SEC
+    _HAS_VISION_V2 = True
+except ImportError:
+    _HAS_VISION_V2 = False
+    INTRO_SEC = 0.0
+
 # Narration Audio (Phase G) — TTS gTTS + mixage FFmpeg
 try:
     import whiteboard_narration
@@ -38,15 +49,23 @@ try:
 except ImportError:
     _HAS_NARRATION = False
 
-# Moteur STUDIO Remotion (cahier continu, annotations, rappel, Kokoro).
-# Opt-in via storyboard.engine == 'remotion'. Repli automatique sinon.
-try:
-    import sys as _sys_remotion
-    _sys_remotion.path.insert(0, os.environ.get("REMOTION_ENGINE_DIR", "/opt/whiteboard-engine-remotion"))
-    from render_bridge import render_storyboard_remotion
-    _HAS_REMOTION = True
-except Exception:
-    _HAS_REMOTION = False
+# Moteur STUDIO Remotion : RETIRÉ le 25/07/2026.
+# Motif : 4-5x le temps réel sur ce serveur et échecs mémoire répétés (voir
+# docs/PLAN_REMPLACEMENT_MOTEUR_2026-07-25.md). L'import est supprimé pour que le
+# worker cesse d'ouvrir le dossier du moteur et que celui-ci puisse être archivé.
+
+
+def _probe_seconds(path: Path) -> float:
+    """Duree d'un fichier media en secondes (0.0 si illisible)."""
+    try:
+        out = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "default=noprint_wrappers=1:nokey=1", str(path)],
+            capture_output=True, text=True, timeout=30,
+        )
+        return float(out.stdout.strip())
+    except (ValueError, OSError, subprocess.SubprocessError):
+        return 0.0
 
 
 def _storyboard_total_ms(storyboard: Dict[str, Any]) -> int:
@@ -79,6 +98,10 @@ WHITEBOARD_TABLE = "whiteboard_renders"
 WORKER_LOOP = (os.getenv("WORKER_LOOP") or "").strip().lower() in {"1", "true", "yes"}
 WORKER_INTERVAL_SECONDS = float((os.getenv("WORKER_INTERVAL_SECONDS") or "2").strip() or "2")
 WORKER_MAX_JOBS = int((os.getenv("WORKER_MAX_JOBS") or "1").strip() or "1")
+
+# Cle d'identification aupres de la file de rendu (table app.whiteboard_workers).
+# Sans cle valide, la file renvoie zero job une fois le mode strict active.
+WORKER_KEY = (os.getenv("WORKER_KEY") or "lws-whiteboard-01").strip()
 
 # Feature flag: "vision" = HTML/Playwright/KaTeX, "legacy" = Pillow text-on-image
 RENDERER_ENGINE = (os.getenv("RENDERER_ENGINE") or "vision").strip().lower()
@@ -132,9 +155,23 @@ async def _fetch_queued_jobs(limit: int = 5) -> List[Dict[str, Any]]:
     _check_config()
     _diagnose_supabase_dns()
     rpc_url = f"{_rest_base()}/rpc/whiteboard_fetch_queued_jobs"
+    # IDENTIFICATION DU WORKER (25/07/2026).
+    #
+    # Un worker non identifie, tournant sur une machine devenue inaccessible (SSH
+    # refuse), consommait la meme file avec une version ancienne du code : il ignorait
+    # `storyboard.engine` et rendait tout avec le moteur Vision. Une video sur deux
+    # sortait donc sans ecriture manuscrite ni annotations, selon qui raflait le job.
+    # Ne pouvant pas arreter cette machine, on la coupe de sa source : la file exige
+    # desormais une cle de worker connue (table app.whiteboard_workers). Un appelant
+    # non identifie recoit une file vide, sans erreur -- il tourne a vide, sans bruit.
+    payload = {
+        "p_limit": limit,
+        "p_worker_key": WORKER_KEY,
+        "p_host": socket.gethostname(),
+    }
     try:
         async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
-            resp = await client.post(rpc_url, headers=_supabase_headers(), json={"p_limit": limit})
+            resp = await client.post(rpc_url, headers=_supabase_headers(), json=payload)
     except Exception as exc:
         logger.exception("[whiteboard_render_worker] whiteboard_fetch_queued_jobs HTTP error: %s", exc)
         return []
@@ -235,22 +272,159 @@ async def _process_single_job(job: Dict[str, Any], worker_id: str) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
 
-            # ── Moteur STUDIO Remotion (opt-in) ────────────────────────────
-            # IMPORTANT : si engine=remotion est demandé, on NE retombe PAS en
-            # silence sur vision/legacy. On échoue bruyamment (visible dans
-            # error_message) pour ne jamais rendre avec le mauvais moteur.
-            if str(storyboard.get("engine") or "").strip().lower() == "remotion":
-                if not _HAS_REMOTION:
+            # ── Moteur VISION v2 (cahier continu filmé) ────────────────────
+            # Demandé via storyboard.engine == 'vision2' (ou RENDERER_ENGINE).
+            # Comme pour Remotion : on N'ACCEPTE PAS de dégrader en silence. Si le
+            # moteur est demandé mais indisponible, le job échoue explicitement —
+            # une vidéo rendue par le mauvais moteur passerait inaperçue, et c'est
+            # exactement ce qui a coûté une journée le 25/07.
+            engine_asked = str(storyboard.get("engine") or "").strip().lower()
+            if engine_asked == "vision2" or RENDERER_ENGINE == "vision2":
+                if not _HAS_VISION_V2:
                     raise RuntimeError(
-                        "engine=remotion demandé mais Remotion indisponible "
-                        f"(_HAS_REMOTION=False, REMOTION_ENGINE_DIR={os.environ.get('REMOTION_ENGINE_DIR')}). "
-                        "Redémarre le worker après un import propre de render_bridge."
+                        "engine=vision2 demandé mais Vision v2 indisponible "
+                        "(_HAS_VISION_V2=False). Vérifie que whiteboard_vision_v2.py, "
+                        "whiteboard_page_builder.py et whiteboard_video_capture.py sont "
+                        "bien dans /opt/whiteboard-worker/vision_engine/."
                     )
-                logger.info("[whiteboard_render_worker] Job %s: moteur REMOTION", job_id)
-                mp4_path = render_storyboard_remotion(storyboard, temp_path)
+                logger.info("[whiteboard_render_worker] Job %s: moteur VISION v2", job_id)
+
+                # La narration est produite AVANT la page : c'est elle qui fixe la
+                # durée de chaque scène, pour que la voix ne soit jamais coupée.
+                scenes = storyboard.get("scenes") or []
+                base_durations = []
+                for sc in scenes:
+                    raw = (sc or {}).get("duration_ms") if isinstance(sc, dict) else None
+                    try:
+                        base_durations.append(max(1.0, int(raw) / 1000.0))
+                    except (TypeError, ValueError):
+                        base_durations.append(5.0)
+
+                narration_manifest = None
+                narration_audio = None
+                if (
+                    str(storyboard.get("narration_mode") or "").strip().lower() == "tts"
+                    and _HAS_NARRATION
+                    and getattr(whiteboard_narration, "is_available", lambda: False)()
+                ):
+                    # NARRATION PAR BLOC (contiguïté temporelle) : un segment de voix
+                    # par bloc, et la durée d'écriture du bloc EST celle de sa parole.
+                    # Ce qui s'écrit est donc exactement ce qui se dit.
+                    per_block = getattr(whiteboard_narration, "build_block_narration", None)
+                    result = per_block(storyboard, temp_path) if per_block else None
+                    if result is not None:
+                        narration_audio, block_durations = result
+                        narration_manifest = [
+                            {"scene_index": i, "audio_path": None,
+                             "block_durations": durs,
+                             "duration_sec": sum(durs)}
+                            for i, durs in enumerate(block_durations)
+                        ]
+                        logger.info(
+                            "[whiteboard_render_worker] Narration PAR BLOC prete "
+                            "(%d scenes, %d blocs, %.1f s)",
+                            len(block_durations),
+                            sum(len(d) for d in block_durations),
+                            sum(sum(d) for d in block_durations),
+                        )
+                    else:
+                        # Repli : ancienne narration par scène, moins bien synchronisée
+                        # mais préférable au silence.
+                        result = whiteboard_narration.build_narration(
+                            storyboard, base_durations, temp_path
+                        )
+                        if result is not None:
+                            narration_audio, adjusted = result
+                            narration_manifest = [
+                                {"scene_index": i, "audio_path": None, "duration_sec": d}
+                                for i, d in enumerate(adjusted)
+                            ]
+                            logger.warning(
+                                "[whiteboard_render_worker] Repli narration par SCENE "
+                                "(%d scenes, %.1f s)", len(adjusted), sum(adjusted),
+                            )
+
+                # GÉNÉRIQUE D'OUVERTURE : la page commence par une carte-titre de
+                # INTRO_SEC pendant laquelle personne ne parle. La narration est donc
+                # décalée d'autant (silence en tête de piste), sinon la voix parlerait
+                # par-dessus le générique et resterait en avance sur toute la vidéo.
+                if narration_audio and Path(narration_audio).exists() and INTRO_SEC > 0:
+                    decalee = temp_path / "narration_decalee.wav"
+                    subprocess.run(
+                        ["ffmpeg", "-y", "-v", "error", "-i", str(narration_audio),
+                         "-af", f"adelay={int(INTRO_SEC * 1000)}:all=1",
+                         str(decalee)],
+                        capture_output=True, text=True, timeout=300, check=True,
+                    )
+                    narration_audio = decalee
+
+                # APERÇU IMMÉDIAT : la première tranche de capture (15 s) est
+                # sonorisée et publiée dès qu'elle existe, pendant que le reste du
+                # cours se fabrique. L'étudiant commence à regarder vers 25-35 s au
+                # lieu d'attendre les ~115 s du rendu complet.
+                #
+                # L'aperçu est un CONFORT : toute erreur ici est journalisée et
+                # ignorée, le rendu se poursuit normalement.
+                def _publish_preview(silent_preview: Path) -> None:
+                    sonorise = silent_preview.with_name("apercu.mp4")
+                    source = silent_preview
+                    if narration_audio and Path(narration_audio).exists():
+                        extrait = silent_preview.with_name("apercu.m4a")
+                        duree = _probe_seconds(silent_preview)
+                        subprocess.run(
+                            ["ffmpeg", "-y", "-v", "error", "-i", str(narration_audio),
+                             "-t", f"{duree:.3f}", "-c:a", "aac", "-b:a", "128k",
+                             str(extrait)],
+                            capture_output=True, text=True, timeout=120, check=True,
+                        )
+                        subprocess.run(
+                            ["ffmpeg", "-y", "-v", "error", "-i", str(silent_preview),
+                             "-i", str(extrait), "-map", "0:v", "-map", "1:a",
+                             "-c:v", "copy", "-c:a", "copy", "-shortest",
+                             "-movflags", "+faststart", str(sonorise)],
+                            capture_output=True, text=True, timeout=120, check=True,
+                        )
+                        source = sonorise
+                    url = upload_preview_sync(source, job_id)
+                    logger.info(
+                        "[whiteboard_render_worker] Job %s: APERCU publie (%.1f s) -> %s",
+                        job_id, _probe_seconds(source), url,
+                    )
+
+                mp4_path = render_storyboard_v2(
+                    storyboard, temp_path, narration_manifest, narration_audio,
+                    on_preview=_publish_preview,
+                )
                 video_url = await upload_mp4_to_storage(mp4_path, job_id)
-                await _mark_job_done(job_id, video_url, _storyboard_total_ms(storyboard))
-                logger.info("[whiteboard_render_worker] Job %s completed (remotion)", job_id)
+                duration_ms = int(planned_duration(storyboard, narration_manifest) * 1000)
+                await _mark_job_done(job_id, video_url, duration_ms)
+                logger.info("[whiteboard_render_worker] Job %s completed (vision2)", job_id)
+                return
+
+            # ── Moteur Remotion : RETIRÉ le 25/07/2026 ─────────────────────
+            # Mesuré à 4-5x le temps réel sur ce serveur (12 à 20 minutes pour 2 min 30
+            # de vidéo) et sujet à des échecs mémoire répétés. Remplacé par Vision v2,
+            # qui rend le même cahier animé à ~1,5x le temps réel.
+            #
+            # Un storyboard demandant encore `remotion` (généré avant la bascule) est
+            # redirigé vers Vision v2 : le résultat visuel est équivalent, et refuser le
+            # job priverait l'étudiant de sa vidéo pour une raison qui ne le concerne pas.
+            if engine_asked == "remotion":
+                logger.warning(
+                    "[whiteboard_render_worker] Job %s: engine=remotion (moteur retire) "
+                    "-> redirige vers Vision v2", job_id,
+                )
+                if not _HAS_VISION_V2:
+                    raise RuntimeError(
+                        "engine=remotion demandé (moteur retiré) et Vision v2 "
+                        "indisponible : impossible de rendre ce job."
+                    )
+                mp4_path = render_storyboard_v2(storyboard, temp_path, None, None)
+                video_url = await upload_mp4_to_storage(mp4_path, job_id)
+                await _mark_job_done(
+                    job_id, video_url, int(planned_duration(storyboard, None) * 1000)
+                )
+                logger.info("[whiteboard_render_worker] Job %s completed (vision2)", job_id)
                 return
 
             # Générer les PNGs (Vision Engine ou Legacy Pillow)

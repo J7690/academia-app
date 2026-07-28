@@ -8,8 +8,14 @@
       "duration_ms": 7000,
       "narration": "Aujourd'hui, découvrons ce qu'est une primitive.",
       "blocks": [
-        { "type": "title", "content": "Primitive d'une fonction" },
-        { "type": "paragraph", "content": "La primitive est l'opération inverse de la dérivée." }
+        {
+          "type": "title",
+          "content": "Primitive d'une fonction"
+        },
+        {
+          "type": "paragraph",
+          "content": "La primitive est l'opération inverse de la dérivée."
+        }
       ]
     },
     {
@@ -19,8 +25,16 @@
       "duration_ms": 8000,
       "narration": "On cherche une fonction F dont la dérivée redonne f.",
       "blocks": [
-        { "type": "definition", "content": "On cherche F telle que F′(x) = f(x).", "emphasis": "underline" },
-        { "type": "formula", "content": "F(x) = \\int f(x)\\,dx + C" }
+        {
+          "type": "definition",
+          "content": "On cherche F telle que F′(x) = f(x).",
+          "emphasis": "circle",
+          "emphasis_target": "F telle que"
+        },
+        {
+          "type": "formula",
+          "content": "F(x) = \\int f(x)\\,dx + C"
+        }
       ]
     },
     {
@@ -29,12 +43,28 @@
       "title": "Exemple",
       "duration_ms": 9000,
       "narration": "Rappelle-toi la définition : on remonte la voir, puis on applique.",
-      "transition": { "kind": "slide" },
-      "recall": { "target": 1, "kind": "circle" },
+      "transition": {
+        "kind": "slide"
+      },
+      "recall": {
+        "target": 1,
+        "kind": "circle"
+      },
       "blocks": [
-        { "type": "exercise", "content": "Trouver une primitive de f(x) = 2x." },
-        { "type": "correction", "content": "Une primitive de 2x est x² + C.", "emphasis": "circle" }
+        {
+          "type": "exercise",
+          "content": "Trouver une primitive de f(x) = 2x.",
+          "emphasis": "highlight",
+          "emphasis_target": "une primitive"
+        },
+        {
+          "type": "correction",
+          "content": "Une primitive de 2x est x² + C.",
+          "emphasis": "underline",
+          "emphasis_target": "x² + C"
+        }
       ]
     }
-  ]
+  ],
+  "writing_style": "handwriting"
 }

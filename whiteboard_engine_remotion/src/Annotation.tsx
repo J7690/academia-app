@@ -7,8 +7,11 @@ import { useCurrentFrame, useVideoConfig, interpolate, AbsoluteFill } from "remo
 
 type Kind = "circle" | "underline" | "highlight";
 
-const DRAW_SEC = 0.6;
-const ERASE_SEC = 0.5;
+export const DRAW_SEC = 0.6;
+export const ERASE_SEC = 0.5;
+/** Durée totale d'une annotation transitoire (tracé + maintien + effacement). */
+export const annotationSeconds = (holdSec = 1.6): number =>
+  DRAW_SEC + holdSec + ERASE_SEC;
 
 const Drawn: React.FC<{
   viewBox: string;
@@ -29,7 +32,13 @@ const Drawn: React.FC<{
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const opacity = interpolate(frame, [t2, t3], [1, 0], {
+  // Opacité 0 AVANT le début du tracé.
+  // Correctif 25/07/2026 : `strokeLinecap="round"` dessine des bouts arrondis visibles
+  // même quand le trait est entièrement décalé (dashoffset = 1). D'où les « petits
+  // tirets verts » qui flottaient dans le vide sur les rendus de test, parfois très
+  // longtemps avant l'annotation. On masque donc franchement tant que le tracé n'a pas
+  // commencé, et après son effacement.
+  const opacity = interpolate(frame, [t0 - 1, t0, t2, t3], [0, 1, 1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -62,16 +71,21 @@ export const AnnotationOverlay: React.FC<{
   delay: number;
   holdSec?: number;
 }> = ({ kind, color, delay, holdSec = 1.4 }) => {
+  // Positions en PIXELS et non en pourcentages.
+  // Correctif 25/07/2026 : en pourcentage, l'annotation se calait sur la hauteur du
+  // bloc — sur un bloc long, le souligné partait 16 % plus bas (donc très loin sous le
+  // texte) et le cercle devenait un ovale démesuré. En pixels, le geste garde la même
+  // taille quel que soit le bloc, comme un vrai stylo.
   if (kind === "underline") {
     return (
-      <div style={{ position: "absolute", left: 0, right: 0, bottom: "-16%", height: "26%" }}>
-        <Drawn viewBox="0 0 100 20" d={UNDERLINE_D} delay={delay} color={color} strokeWidth={2.6} holdSec={holdSec} />
+      <div style={{ position: "absolute", left: -4, right: -4, bottom: -14, height: 38 }}>
+        <Drawn viewBox="0 0 100 20" d={UNDERLINE_D} delay={delay} color={color} strokeWidth={3.2} holdSec={holdSec} />
       </div>
     );
   }
   return (
-    <div style={{ position: "absolute", inset: "-14% -8%" }}>
-      <Drawn viewBox="0 0 100 100" d={CIRCLE_D} delay={delay} color={color} strokeWidth={2.4} holdSec={holdSec} />
+    <div style={{ position: "absolute", top: -18, bottom: -18, left: -16, right: -16 }}>
+      <Drawn viewBox="0 0 100 100" d={CIRCLE_D} delay={delay} color={color} strokeWidth={2.8} holdSec={holdSec} />
     </div>
   );
 };

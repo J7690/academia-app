@@ -50,3 +50,22 @@ export const getTheme = (name?: string): Theme =>
   THEMES[name ?? "notebook"] ?? THEMES.notebook;
 
 export const VIDEO = { width: 720, height: 1280, fps: 30 };
+
+// ── Polices ────────────────────────────────────────────────────────────────
+// "handwriting" : police manuscrite lisible, avec repli sur des manuscrites
+// courantes puis sur une cursive générique si la police n'est pas chargée.
+// "typed" : police machine (lecture confortable, style manuel scolaire).
+export const FONTS = {
+  handwriting: "'Caveat', 'Patrick Hand', 'Segoe Script', cursive",
+  typed: "Inter, 'Helvetica Neue', Arial, sans-serif",
+};
+
+/** Famille de police à utiliser selon le style d'écriture du storyboard. */
+export const fontFor = (style?: string): string =>
+  style === "typed" ? FONTS.typed : FONTS.handwriting;
+
+/**
+ * L'écriture manuscrite est plus petite à taille de police égale (hampes courtes,
+ * lettres serrées) : on l'agrandit pour conserver la même lisibilité à l'écran.
+ */
+export const fontScaleFor = (style?: string): number => (style === "typed" ? 1 : 1.28);

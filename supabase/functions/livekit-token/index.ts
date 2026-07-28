@@ -221,18 +221,26 @@ serve(async (req: Request) => {
   });
 
   // ── Register participant ───────────────────────────────────────────────
-  if (sessionType === 'academia') {
-    // Unified join — tracked via app_learning_join_session RPC called by Flutter
-    // (already done in AcademiaSessionProvider.joinSession before token request)
-  } else if (sessionType === 'prep') {
-    await supabase.rpc('app_prep_student_join_live_session', {
-      p_session_id: sessionId,
-    }).catch(() => null);
-  } else if (sessionType === 'course') {
-    await supabase.rpc('app_register_online_course_live_session_participant', {
-      p_session_id: sessionId,
-      p_user_id: user.id,
-    }).catch(() => null);
+  // NB : supabase.rpc() renvoie un PostgrestFilterBuilder « thenable » qui
+  // n'expose pas .catch() — l'enchaîner lève un TypeError et fait échouer la
+  // fonction en 500 alors que le token est déjà généré. try/catch obligatoire.
+  try {
+    if (sessionType === 'academia') {
+      // Jointure unifiée — déjà faite côté Flutter via app_learning_join_session
+      // (AcademiaSessionProvider.joinSession, avant la demande de token).
+    } else if (sessionType === 'prep') {
+      await supabase.rpc('app_prep_student_join_live_session', {
+        p_session_id: sessionId,
+      });
+    } else if (sessionType === 'course') {
+      await supabase.rpc('app_register_online_course_live_session_participant', {
+        p_session_id: sessionId,
+        p_user_id: user.id,
+      });
+    }
+  } catch (e) {
+    // L'enregistrement du participant ne doit jamais empêcher l'entrée en salle.
+    console.error('[livekit-token] participant registration failed', e);
   }
 
   return jsonResponse({

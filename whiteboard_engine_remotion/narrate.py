@@ -23,6 +23,7 @@ import argparse
 import json
 import os
 import subprocess
+import sys
 import wave
 from pathlib import Path
 from urllib import request, error
@@ -33,11 +34,31 @@ KOKORO_MODEL = os.environ.get("KOKORO_MODEL", "kokoro")
 PIPER_BIN = os.environ.get("PIPER_BIN", "")
 PIPER_MODEL = os.environ.get("PIPER_MODEL", "")
 
+# Verbalisation française des maths. Le module vit à côté du worker ; on l'ajoute au
+# chemin de recherche pour pouvoir l'importer depuis le moteur Remotion.
+sys.path.insert(0, os.environ.get("WORKER_DIR", "/opt/whiteboard-worker"))
+try:
+    from math_speech_fr import verbalize as _verbalize
+except ImportError:  # pragma: no cover - repli si le module n'est pas déployé
+    _verbalize = None
+
+
+def _speakable(text: str) -> str:
+    """Rend le texte prononçable (maths -> français). Sans effet s'il n'y a pas de maths."""
+    if not text:
+        return ""
+    return _verbalize(text) if _verbalize else text
+
 
 def scene_narration_text(scene: dict) -> str:
-    """Texte à dire : champ `narration` sinon concaténation des blocs lisibles."""
+    """Texte à dire : champ `narration` sinon concaténation des blocs lisibles.
+
+    Le résultat passe par `math_speech_fr.verbalize` : filet de sécurité si l'IA laisse
+    passer du LaTeX dans la narration (« \\lim_{x \\to 1} » deviendrait sinon du
+    charabia à l'oral). Un texte sans maths ressort inchangé.
+    """
     if scene.get("narration"):
-        return str(scene["narration"]).strip()
+        return _speakable(str(scene["narration"]).strip())
     parts = []
     for b in scene.get("blocks", []) or []:
         t = (b or {}).get("type")
@@ -45,7 +66,7 @@ def scene_narration_text(scene: dict) -> str:
         if not content or t in ("formula", "image"):  # on ne lit pas le LaTeX / les images
             continue
         parts.append(content)
-    return " ".join(parts).strip()
+    return _speakable(" ".join(parts).strip())
 
 
 def synth_kokoro(text: str, out_wav: Path) -> bool:

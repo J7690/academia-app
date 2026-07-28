@@ -20,8 +20,13 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-const KAMATERA_IP = '185.167.97.144';
-const KAMATERA_FFMPEG_URL = `http://${KAMATERA_IP}:8001/compress`;
+// VPS_IP dérivé du secret LIVEKIT_URL (même machine que LiveKit) — même pattern que
+// transcode-multi-resolution/index.ts. Un seul secret à changer lors d'une migration
+// d'infra (ex. Kamatera -> LWS) fait basculer LiveKit ET la compression ensemble.
+// Repli sur l'ancienne IP Kamatera si le secret n'est pas encore renseigné.
+const LIVEKIT_URL = Deno.env.get('LIVEKIT_URL') ?? '';
+const VPS_IP = LIVEKIT_URL.replace('wss://', '').replace('ws://', '').replace(':7880', '').trim() || '185.167.97.144';
+const KAMATERA_FFMPEG_URL = `http://${VPS_IP}:8001/compress`;
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',

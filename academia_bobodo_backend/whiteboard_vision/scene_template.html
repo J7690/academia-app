@@ -185,6 +185,36 @@
       color: #1a1a2e;
     }
 
+    /* ─── MATHS EN LIGNE (correctif 25/07/2026) ────────────────────
+       Les formules qui apparaissent AU MILIEU d'une phrase (corrections,
+       paragraphes, définitions). Elles doivent rester sur la ligne du texte,
+       ne pas créer de saut de ligne, et suivre la couleur du texte porteur. */
+    .math-inline {
+      display: inline-block;
+      vertical-align: middle;
+      margin: 0 2px;
+    }
+
+    .math-inline .katex-inline,
+    .math-inline .katex-display {
+      display: inline-block !important;
+      margin: 0 !important;
+      text-align: inherit !important;
+    }
+
+    .math-inline .katex {
+      font-size: 1.05em;      /* légèrement plus grand que le texte porteur */
+      color: inherit;
+    }
+
+    /* Repli si KaTeX échoue : lisible, jamais de syntaxe LaTeX brute affichée telle
+       quelle sans mise en forme distincte. */
+    .math-fallback {
+      font-family: 'Courier New', monospace;
+      font-style: italic;
+      opacity: 0.85;
+    }
+
     /* ─── DÉFINITION ───────────────────────────────────────────── */
     .block-definition {
       padding: 28px 32px;

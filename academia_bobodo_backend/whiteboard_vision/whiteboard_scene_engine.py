@@ -17,6 +17,7 @@ from __future__ import annotations
 import html as html_module
 import json
 import logging
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -70,6 +71,86 @@ def _render_katex(latex: str) -> str:
     return f'<span class="katex-fallback" style="font-family:monospace;font-size:40px;">{html_module.escape(latex)}</span>'
 
 
+# ─── MATHS EN LIGNE (correctif 25/07/2026) ─────────────────────────────────────
+# Constat : les blocs `correction` / `paragraph` / `definition` contiennent souvent du
+# LaTeX au milieu d'une phrase (ex. "Limite à gauche : \lim_{x \to 1^-} (x+1) = 2").
+# Jusqu'ici seuls les blocs `type=formula` passaient par KaTeX : tout le reste était
+# échappé en texte, et l'étudiant voyait « \lim_{x \to 1^-} » à l'écran.
+# On rend désormais les atomes LaTeX partout, sans toucher au texte français autour.
+
+# 1) Segment explicitement délimité par des $...$ (forme préférée, à privilégier
+#    côté générateur).
+_MATH_DOLLAR = re.compile(r"\$([^$]{1,400})\$")
+
+# 2) Commande LaTeX suivie de ses arguments immédiats : \lim_{x \to 1^-}, \neq,
+#    \frac{a}{b}, \alpha... On s'arrête volontairement aux arguments collés à la
+#    commande pour ne JAMAIS avaler le texte français qui suit.
+_MATH_COMMAND = re.compile(
+    r"\\[a-zA-Z]+"                                  # \lim, \neq, \frac...
+    r"(?:\s*(?:\{[^{}]{0,200}\}|\^\{[^{}]{0,80}\}|_\{[^{}]{0,80}\}|\^[^\s{]|_[^\s{]))*"
+)
+
+# 3) Puissances écrites en clair hors commande : x^2, 1^2, n^{k+1}
+_MATH_POWER = re.compile(r"(?<![\\A-Za-z0-9])([A-Za-z0-9])\^(\{[^{}]{1,40}\}|[A-Za-z0-9]+)")
+
+# Cache : une même formule revient souvent dans une correction, et chaque rendu
+# KaTeX coûte un lancement de process Node.
+_katex_cache: Dict[str, str] = {}
+
+# Une ligne de correction porte-t-elle déjà sa propre numérotation / puce ?
+# Ex. « 3. Est-ce que... », « - Limite à gauche », « • ... », « a) ... », « 1) ... »
+_ALREADY_NUMBERED = re.compile(r"^\s*(?:\d+\s*[\.\)]|[a-zA-Z]\s*\)|[-–—•*])\s+")
+
+
+def _render_katex_inline(latex: str) -> str:
+    """Rend un atome LaTeX en HTML inline (pas de displayMode), avec cache."""
+    key = latex.strip()
+    if not key:
+        return ""
+    if key in _katex_cache:
+        return _katex_cache[key]
+    html_out = _call_node(KATEX_RENDERER, key)
+    if not html_out:
+        # Repli lisible : on n'affiche pas la syntaxe LaTeX brute à l'étudiant.
+        html_out = f'<span class="math-fallback">{html_module.escape(key)}</span>'
+    else:
+        # Le renderer est en displayMode (bloc) : on le repasse en ligne pour ne pas
+        # casser la phrase qui l'entoure.
+        html_out = html_out.replace('class="katex-display"', 'class="katex-inline"')
+        html_out = f'<span class="math-inline">{html_out}</span>'
+    _katex_cache[key] = html_out
+    return html_out
+
+
+def _escape_with_math(text: str) -> str:
+    """
+    Échappe le texte pour le HTML **tout en rendant les maths via KaTeX**.
+
+    Le texte français est échappé normalement ; seuls les atomes mathématiques
+    détectés sont remplacés par du HTML KaTeX. Ordre : $...$, puis commandes, puis
+    puissances en clair.
+    """
+    if not text:
+        return ""
+
+    placeholders: Dict[str, str] = {}
+
+    def _stash(latex: str) -> str:
+        token = f"\x00MATH{len(placeholders)}\x00"
+        placeholders[token] = _render_katex_inline(latex)
+        return token
+
+    working = text
+    working = _MATH_DOLLAR.sub(lambda m: _stash(m.group(1)), working)
+    working = _MATH_COMMAND.sub(lambda m: _stash(m.group(0)), working)
+    working = _MATH_POWER.sub(lambda m: _stash(f"{m.group(1)}^{m.group(2)}"), working)
+
+    escaped = html_module.escape(working)
+    for token, html_frag in placeholders.items():
+        escaped = escaped.replace(token, html_frag)
+    return escaped
+
+
 def _render_diagram(mermaid_def: str) -> str:
     """Rend un diagramme Mermaid en SVG."""
     if not mermaid_def or not mermaid_def.strip():
@@ -82,7 +163,9 @@ def _build_block_html(block: Dict[str, Any], block_index: int) -> str:
     """Construit le HTML d'un bloc individuel."""
     block_type = block.get("type", "paragraph")
     content = block.get("content", "") or ""
-    escaped = html_module.escape(content)
+    # Correctif 25/07/2026 : on échappe ET on rend les maths en ligne (KaTeX), au lieu
+    # d'échapper bêtement le LaTeX qui s'affichait alors en clair à l'écran.
+    escaped = _escape_with_math(content)
 
     if block_type == "title":
         return f'<div class="block block-title">{escaped}</div>'
@@ -118,10 +201,18 @@ def _build_block_html(block: Dict[str, Any], block_index: int) -> str:
         # Découper en étapes (par ligne)
         lines = content.split("\n")
         steps_html = ""
-        for i, line in enumerate(lines, 1):
-            line_escaped = html_module.escape(line.strip())
-            if line_escaped:
-                steps_html += f'<div class="corr-step" data-step="{i}. ">{line_escaped}</div>'
+        # Correctif 25/07/2026 (numérotation en double) : on préfixait systématiquement
+        # un compteur `{i}. ` calculé SUR LES LIGNES DU BLOC. Or chaque bloc ne contient
+        # qu'une ligne -> i valait toujours 1, et le contenu de l'IA porte déjà sa propre
+        # numérotation. Résultat à l'écran : « 11. f(1) existe », « 1Conclusion : ... ».
+        # On ne numérote donc que si le bloc a plusieurs étapes ET que la ligne ne porte
+        # pas déjà un marqueur (« 3. », « - », « • », « a) »...).
+        real_lines = [ln for ln in (l.strip() for l in lines) if ln]
+        multi_step = len(real_lines) > 1
+        for i, line in enumerate(real_lines, 1):
+            already_marked = bool(_ALREADY_NUMBERED.match(line))
+            step_attr = f' data-step="{i}. "' if (multi_step and not already_marked) else ""
+            steps_html += f'<div class="corr-step"{step_attr}>{_escape_with_math(line)}</div>'
         return (
             f'<div class="block block-correction">'
             f'<div class="corr-label">Correction</div>'

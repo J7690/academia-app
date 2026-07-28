@@ -2,6 +2,7 @@ import React from "react";
 import {
   AbsoluteFill,
   Audio,
+  Easing,
   Sequence,
   staticFile,
   useCurrentFrame,
@@ -12,7 +13,8 @@ import type { SmartWhiteboardProps, Scene, Block, NarrationEntry } from "./types
 import { getTheme, VIDEO } from "./theme";
 import { renderBlock } from "./blocks";
 import { GlowSweep } from "./effects";
-import { AnnotationOverlay } from "./Annotation";
+import { AnnotationOverlay, annotationSeconds } from "./Annotation";
+import { ensureHandwritingFont } from "./fonts";
 
 const MIN_SCENE_SEC = 3;
 const TAIL_SEC = 0.6;
@@ -21,55 +23,121 @@ const RECALL_SEC = 4.0; // budget d'un rappel (remonter + maintenir + redescendr
 const PAD_LEFT = 80;
 const PAD_RIGHT = 48;
 const GAP = 36;
+// Hauteur réservée en haut : le bandeau (sujet, numéro de scène) est FIXE tandis que
+// la feuille défile. Le contenu démarre sous cette zone, et un dégradé de la couleur du
+// papier masque ce qui remonte derrière — sinon le texte traverse le bandeau.
+const TOP_SAFE = 132;
 const CONTENT_W = VIDEO.width - PAD_LEFT - PAD_RIGHT;
 
 const hasRecall = (s: Scene) =>
   !!s.recall && typeof s.recall.target === "number" && s.recall.target >= 0;
 
-// ── Durées ────────────────────────────────────────────────────────────────
+// ── Durées et séquencement ─────────────────────────────────────────────────
+// Vitesses d'écriture (caractères/seconde) — doivent rester alignées sur CPS
+// dans blocks.tsx, qui pilote l'animation réelle.
+const CPS_SEC: Record<string, number> = { slow: 13, normal: 20, fast: 30 };
+const BLOCK_GAP_SEC = 0.35; // respiration entre deux blocs
+const HOLD_SEC = 1.6; // maintien d'une annotation avant effacement
+
+/** Le bloc porte-t-il une annotation (fournie par l'IA ou ajoutée automatiquement) ? */
+const blockHasEmphasis = (b: Block, isKey: boolean) => !!b.emphasis || isKey;
+
+/**
+ * Plan temporel d'une scène : pour chaque bloc, le temps d'écriture puis, le cas
+ * échéant, le temps d'annotation pendant lequel LA CAMÉRA NE BOUGE PAS.
+ *
+ * Principe (confirmé par les bonnes pratiques de montage pédagogique) : la caméra
+ * doit se poser AVANT que le spectateur ait à lire, et ne pas bouger pendant qu'il
+ * interprète un détail. On enchaîne donc : écrire → s'arrêter → annoter → avancer.
+ */
+interface BlockPlan {
+  writeF: number;
+  annotF: number; // 0 si pas d'annotation
+  gapF: number;
+}
+
+export const planScene = (
+  scene: Scene,
+  fps: number,
+  handwriting: boolean
+): { plans: BlockPlan[]; totalF: number } => {
+  const blocks = scene.blocks || [];
+  const keyIdx = pickKeyBlockIndex(blocks);
+  const plans = blocks.map((b, i) => {
+    let writeF: number;
+    if (!handwriting) writeF = Math.round(fps * 0.5);
+    else if (b.type === "image" || b.type === "formula") writeF = Math.round(fps * 0.8);
+    else {
+      const cps = CPS_SEC[b.write_speed ?? (b.type === "definition" ? "slow" : "normal")] ?? 20;
+      writeF = Math.ceil(((b.content || "").length / cps) * fps);
+    }
+    const annotF = blockHasEmphasis(b, i === keyIdx)
+      ? Math.round(annotationSeconds(HOLD_SEC) * fps)
+      : 0;
+    return { writeF, annotF, gapF: Math.round(BLOCK_GAP_SEC * fps) };
+  });
+  const totalF = plans.reduce((s, p) => s + p.writeF + p.annotF + p.gapF, 0);
+  return { plans, totalF };
+};
+
 export const sceneDurationInFrames = (
   scene: Scene,
   narration: NarrationEntry | undefined,
-  fps: number
+  fps: number,
+  handwriting = true
 ): number => {
-  const storyboardSec = (scene.duration_ms ?? 0) / 1000;
   const narrSec = narration?.duration_sec ?? 0;
-  const base = Math.max(storyboardSec, narrSec > 0 ? narrSec + TAIL_SEC : 0, MIN_SCENE_SEC);
-  const recall = hasRecall(scene) ? RECALL_SEC : 0;
-  return Math.max(1, Math.round((base + recall) * fps));
+  // La scène dure au moins le temps d'écrire ET d'annoter son contenu : sinon la
+  // caméra passait à la suite avant la fin du geste, et les soulignements/encerclages
+  // n'étaient jamais visibles à l'écran (défaut constaté sur le rendu complet).
+  const { totalF } = planScene(scene, fps, handwriting);
+  const contentF = totalF + Math.round(TAIL_SEC * fps);
+  const base = Math.max(
+    contentF,
+    narrSec > 0 ? Math.round((narrSec + TAIL_SEC) * fps) : 0,
+    Math.round(MIN_SCENE_SEC * fps)
+  );
+  const recall = hasRecall(scene) ? Math.round(RECALL_SEC * fps) : 0;
+  return Math.max(1, base + recall);
 };
 
 export const totalDurationInFrames = (props: SmartWhiteboardProps): number => {
   const { storyboard, narration, fps } = props;
+  const hand = (storyboard.writing_style ?? "handwriting") !== "typed";
   return storyboard.scenes.reduce(
-    (sum, sc, i) => sum + sceneDurationInFrames(sc, narration[i], fps),
+    (sum, sc, i) => sum + sceneDurationInFrames(sc, narration[i], fps, hand),
     0
   );
 };
 
 // ── Estimation de hauteur d'un bloc (px) ────────────────────────────────────
+// L'écriture manuscrite change la métrique : police 28 % plus grande (donc lignes
+// plus hautes) mais lettres plus étroites (donc plus de caractères par ligne).
+// Sans cet ajustement, les blocs se chevaucheraient en mode manuscrit.
 const lineCount = (text: string, perLine: number) =>
   Math.max(1, Math.ceil((text || "").length / perLine));
 
-function estimateHeight(b: Block): number {
+function estimateHeight(b: Block, hand: boolean): number {
+  const perLine = hand ? 30 : 24;
+  const lineH = hand ? 84 : 72;
   switch (b.type) {
     case "title":
       return 200;
     case "formula":
       return b.videoSrc ? 320 : 230;
     case "definition":
-      return lineCount(b.content, 24) * 72 + 34;
+      return lineCount(b.content, perLine) * lineH + 34;
     case "exercise":
     case "correction":
-      return lineCount(b.content, 24) * 70 + 64;
+      return lineCount(b.content, perLine) * lineH + 64;
     case "list": {
       const items = b.items?.length ?? (b.content || "").split("\n").filter(Boolean).length;
-      return Math.max(1, items) * 72 + 20;
+      return Math.max(1, items) * lineH + 20;
     }
     case "image":
       return 380;
     default:
-      return lineCount(b.content, 22) * 72 + 24;
+      return lineCount(b.content, hand ? 28 : 22) * lineH + 24;
   }
 }
 
@@ -86,8 +154,10 @@ interface Item {
   block: Block;
   y: number;
   h: number;
-  appear: number;
+  appear: number; // début de l'écriture
   sceneIndex: number;
+  writeEnd: number; // fin de l'écriture = début de l'annotation
+  annotEnd: number; // fin de l'annotation (= writeEnd s'il n'y en a pas)
 }
 
 interface RecallEvent {
@@ -107,9 +177,14 @@ export const SmartWhiteboard: React.FC<SmartWhiteboardProps> = ({
   const frame = useCurrentFrame();
   const { height: H } = useVideoConfig();
   const scenes = storyboard.scenes;
+  // Style d'écriture choisi par l'étudiant. Défaut : manuscrit (signature visuelle).
+  const writingStyle = storyboard.writing_style ?? "handwriting";
+  // Charge la police manuscrite (un seul fichier) avant la première image.
+  ensureHandwritingFont();
 
   // 1) Timeline des scènes.
-  const sceneFrames = scenes.map((s, i) => sceneDurationInFrames(s, narration[i], fps));
+  const hand = writingStyle !== "typed";
+  const sceneFrames = scenes.map((s, i) => sceneDurationInFrames(s, narration[i], fps, hand));
   const sceneStart: number[] = [];
   sceneFrames.reduce((acc, f, i) => ((sceneStart[i] = acc), acc + f), 0);
 
@@ -117,15 +192,17 @@ export const SmartWhiteboard: React.FC<SmartWhiteboardProps> = ({
   //    décalent l'apparition de leurs blocs après le budget de rappel.
   const items: Item[] = [];
   const firstItemOfScene: number[] = [];
-  let y = 40;
-  let lastAppear = 0;
+  // Marge haute : le contenu commence SOUS le bandeau fixe (sujet + numéro de scène).
+  // Sans elle, le titre de la première scène chevauchait la pastille du bandeau.
+  let y = TOP_SAFE;
   scenes.forEach((scene, si) => {
     const blocks = scene.blocks || [];
-    const start = sceneStart[si] + (hasRecall(scene) ? RECALL_SEC * fps : 0);
-    const dur = sceneFrames[si] - (hasRecall(scene) ? RECALL_SEC * fps : 0);
-    const step = dur / (blocks.length + 0.8);
+    // Le curseur avance bloc par bloc : écriture, puis annotation, puis respiration.
+    // (Auparavant les blocs étaient répartis uniformément dans la scène, sans lien
+    // avec le temps réel d'écriture — d'où des annotations déclenchées hors champ.)
+    let cursor = sceneStart[si] + (hasRecall(scene) ? Math.round(RECALL_SEC * fps) : 0);
+    const { plans } = planScene(scene, fps, hand);
     firstItemOfScene[si] = items.length;
-    // Bloc clé à mettre en valeur (auto) si le modèle n'a pas fourni d'emphasis.
     const keyIdx = pickKeyBlockIndex(blocks);
     blocks.forEach((block, bi) => {
       let b = block;
@@ -133,21 +210,40 @@ export const SmartWhiteboard: React.FC<SmartWhiteboardProps> = ({
         const kind = block.type === "formula" ? "circle" : "underline";
         b = { ...block, emphasis: kind };
       }
-      const h = estimateHeight(b);
-      let appear = Math.round(start + (bi + 0.4) * step);
-      appear = Math.max(appear, lastAppear + 2);
-      lastAppear = appear;
-      items.push({ block: b, y, h, appear, sceneIndex: si });
+      const h = estimateHeight(b, hand);
+      const p = plans[bi];
+      items.push({
+        block: b,
+        y,
+        h,
+        appear: cursor,
+        sceneIndex: si,
+        writeEnd: cursor + p.writeF,
+        annotEnd: cursor + p.writeF + p.annotF,
+      });
+      cursor += p.writeF + p.annotF + p.gapF;
       y += h + GAP;
     });
   });
   const docHeight = y + 220;
 
+  // Position de défilement pour que la ligne en cours d'écriture reste dans la zone
+  // confortable de lecture (≈60 % de la hauteur), sans jamais remonter le contenu
+  // au-dessus de la zone protégée par le bandeau.
   const writeTarget = (it: Item) => Math.max(0, it.y + it.h - H * 0.6);
 
   // 3) Keyframes de défilement (écriture) + détours de rappel.
+  //
+  // La caméra se POSE sur le bloc au début de son écriture, puis reste IMMOBILE
+  // jusqu'à la fin de son annotation. C'est la règle de montage : « le plan se pose
+  // avant qu'on ait à lire, et ne bouge plus pendant qu'on interprète un détail ».
   const kf: Array<{ f: number; y: number }> = [{ f: 0, y: 0 }];
-  items.forEach((it) => kf.push({ f: it.appear, y: writeTarget(it) }));
+  items.forEach((it) => {
+    const target = writeTarget(it);
+    kf.push({ f: it.appear, y: target });
+    // Immobilité pendant l'écriture ET l'annotation.
+    kf.push({ f: Math.max(it.appear + 1, it.annotEnd), y: target });
+  });
 
   const recalls: RecallEvent[] = [];
   scenes.forEach((scene, si) => {
@@ -190,9 +286,13 @@ export const SmartWhiteboard: React.FC<SmartWhiteboardProps> = ({
       ys.push(k.y);
     }
   }
+  // Adoucissement du mouvement : une interpolation linéaire donne un défilement
+  // mécanique, « de machine ». L'accélération/décélération progressive imite le geste
+  // d'un opérateur — c'est ce qui distingue un mouvement de caméra soigné.
   const scroll = interpolate(frame, xs, ys, {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
+    easing: Easing.inOut(Easing.cubic),
   });
 
   // 4) Scène active (sous-titre).
@@ -226,7 +326,17 @@ export const SmartWhiteboard: React.FC<SmartWhiteboardProps> = ({
 
           {items.map((it, i) => (
             <div key={i} style={{ position: "absolute", top: it.y, left: PAD_LEFT, width: CONTENT_W }}>
-              {renderBlock(it.block, theme, it.appear, i)}
+              {renderBlock(
+                it.block,
+                theme,
+                it.appear,
+                i,
+                writingStyle,
+                // L'annotation démarre exactement à la fin de l'écriture du bloc :
+                // c'est le geste du professeur qui relit puis souligne. La caméra est
+                // immobile pendant tout ce temps (cf. keyframes ci-dessus).
+                it.writeEnd
+              )}
             </div>
           ))}
 
@@ -238,6 +348,20 @@ export const SmartWhiteboard: React.FC<SmartWhiteboardProps> = ({
           ))}
         </div>
       </AbsoluteFill>
+
+      {/* Masque haut : le contenu qui remonte disparaît PROGRESSIVEMENT derrière le
+          bandeau, au lieu de le traverser. Dégradé de la couleur du papier. */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: TOP_SAFE - 18,
+          background: `linear-gradient(${theme.paper} 62%, ${theme.paper}00 100%)`,
+          pointerEvents: "none",
+        }}
+      />
 
       {/* Bandeau haut FIXE */}
       <div style={{ position: "absolute", top: 30, left: 24, right: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>

@@ -19,20 +19,31 @@ const defaultProps: SmartWhiteboardProps = {
   fps: VIDEO.fps,
 };
 
+// `Composition` type ses props via un schéma Zod (absent ici) et retombe donc sur
+// `Record<string, unknown>`. Les deux conversions ci-dessous relient ce type générique
+// à nos props réelles ; elles n'ont aucun effet à l'exécution, elles rendent seulement
+// l'intention explicite pour TypeScript.
+const CompositionComponent = SmartWhiteboard as unknown as React.FC<
+  Record<string, unknown>
+>;
+
 export const RemotionRoot: React.FC = () => {
   return (
     <Composition
       id="SmartWhiteboard"
-      component={SmartWhiteboard}
+      component={CompositionComponent}
       durationInFrames={300}
       fps={VIDEO.fps}
       width={VIDEO.width}
       height={VIDEO.height}
-      defaultProps={defaultProps}
-      calculateMetadata={({ props }) => ({
-        durationInFrames: totalDurationInFrames(props),
-        fps: props.fps ?? VIDEO.fps,
-      })}
+      defaultProps={defaultProps as unknown as Record<string, unknown>}
+      calculateMetadata={({ props }) => {
+        const p = props as unknown as SmartWhiteboardProps;
+        return {
+          durationInFrames: totalDurationInFrames(p),
+          fps: p.fps ?? VIDEO.fps,
+        };
+      }}
     />
   );
 };

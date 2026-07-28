@@ -27,6 +27,13 @@ export interface Block {
   videoSrc?: string;
   // Annotation manuscrite sur ce bloc clé : "circle" | "underline" | "highlight".
   emphasis?: "circle" | "underline" | "highlight";
+  // Sur QUELS MOTS porte l'annotation. Un professeur entoure un mot, pas un
+  // paragraphe entier. Si absent, l'annotation couvre tout le bloc (ancien
+  // comportement). Ex. "n'est PAS continue".
+  emphasis_target?: string;
+  // Vitesse d'écriture de ce bloc : "slow" pour une notion clé (le prof ralentit),
+  // "fast" pour une transition. Défaut "normal".
+  write_speed?: "slow" | "normal" | "fast";
 }
 
 export interface Scene {
@@ -50,8 +57,18 @@ export interface Scene {
   recall?: { target: number; kind?: "circle" | "underline" };
 }
 
+// Style d'écriture choisi par l'étudiant :
+//  - "handwriting" : le texte se TRACE, caractère par caractère, en police manuscrite,
+//    comme un professeur qui écrit au tableau (effet GoodNotes) ;
+//  - "typed" : révélation propre ligne par ligne, en police machine.
+export type WritingStyle = "handwriting" | "typed";
+
 export interface Storyboard {
   theme?: string; // "notebook" | "scientific"
+  // Sujet du cours (affiché dans le bandeau haut).
+  subject?: string;
+  // Défaut : "handwriting" (c'est la signature visuelle recherchée).
+  writing_style?: WritingStyle;
   scenes: Scene[];
 }
 
