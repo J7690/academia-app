@@ -1,0 +1,30 @@
+-- 29/07/2026 — Publication de texte dans le feed.
+--
+-- Trace des migrations appliquees en production :
+--   1. publication_de_texte          (table + fonctions)
+--   2. feed_avec_publications_texte  (contraintes + feed unifie)
+--
+-- CONSTAT. Le menu « Creer du contenu » proposait « Publication texte », mais la
+-- fonction correspondante contenait un TODO et affichait « a implementer ». Rien
+-- n'existait : ni table, ni prise en charge dans le feed. Publier demandait donc
+-- de filmer.
+--
+-- CE QUI EST POSE.
+--   * `app.text_posts` : conventions reprises de `free_videos` (is_active,
+--     is_deleted, moderation_status, suppression douce). Corps limite a 2000
+--     caracteres, fond colore choisi par l'auteur -- le feed est plein ecran, une
+--     carte de texte nue serait terne a cote des videos.
+--   * RLS : lecture des publications publiees pour tout etudiant connecte,
+--     ecriture reservee a l'auteur.
+--   * `public.text_post_create(...)` et `public.text_post_delete(...)`.
+--   * Les contraintes de `video_likes` / `video_comments` acceptent desormais le
+--     type 'text' : sans cela une publication texte n'aurait pu etre ni aimee ni
+--     commentee. Aucune autre table n'a ete touchee -- les compteurs du feed
+--     fonctionnent tels quels.
+--   * Le feed unifie accueille un troisieme flux et expose deux champs de plus
+--     (`body`, `background`), nuls pour les videos. Sa condition finale ne peut
+--     plus exiger une URL : on accepte « une URL OU un texte », ce qui continue
+--     d'ecarter les videos dont la source manque (garde-fou d'origine).
+--
+-- Verifie en production : publication de test creee, remontee en tete du feed
+-- melangee aux videos, puis supprimee.

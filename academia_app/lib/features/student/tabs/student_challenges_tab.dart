@@ -35,6 +35,7 @@ import '../../../widgets/bobodo_view.dart';
 import '../student_challenge_detail_screen.dart';
 import '../student_challenge_video_editor_screen.dart';
 import '../challenge_camera_capture_screen.dart';
+import '../text_post_composer_screen.dart';
 import '../student_social_profile_screen.dart';
 import '../student_dashboard_nav_controller.dart';
 import '../student_recently_deleted_videos_screen.dart';
@@ -54,6 +55,88 @@ class StudentChallengesFeedScreen extends StatelessWidget {
     );
   }
 
+}
+
+/// Une publication texte, en plein écran dans le feed.
+///
+/// Le feed est vertical et plein écran : une carte de texte doit tenir la
+/// comparaison avec une vidéo. D'où le fond coloré choisi par l'auteur, et une
+/// taille de texte qui s'adapte à la longueur — un texte court est mis en avant,
+/// un texte long reste lisible et défilable.
+class _TextPostCard extends StatelessWidget {
+  const _TextPostCard({
+    required this.title,
+    required this.body,
+    required this.background,
+  });
+
+  final String title;
+  final String body;
+  final String background;
+
+  static const _fonds = <String, List<Color>>{
+    'vert': [Color(0xFF1EA75C), Color(0xFF0B7A3E)],
+    'nuit': [Color(0xFF2B3A55), Color(0xFF141C2B)],
+    'ocre': [Color(0xFFD9822B), Color(0xFF9C4C10)],
+    'prune': [Color(0xFF6D3B8E), Color(0xFF3E1F55)],
+    'ardoise': [Color(0xFF4A5A63), Color(0xFF23303A)],
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final couleurs = _fonds[background] ?? _fonds['vert']!;
+    // Le texte court respire en grand ; le texte long redescend pour rester lisible.
+    final taille = body.length < 90
+        ? 30.0
+        : body.length < 300
+            ? 22.0
+            : 17.0;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: couleurs,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: SafeArea(
+        child: Padding(
+          // Marge droite plus large : la colonne d'actions occupe ce bord.
+          padding: const EdgeInsets.fromLTRB(24, 72, 96, 120),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (title.isNotEmpty) ...[
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      height: 1.25,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                ],
+                Text(
+                  body,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: taille,
+                    height: 1.45,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _TimedVideoOverlaysLayer extends StatefulWidget {
@@ -1906,10 +1989,18 @@ class _ChallengeVideosFeedState extends State<_ChallengeVideosFeed>
 
     debugPrint('[RUNTIME T2] Ouverture Publication Texte - _controllers size=${_controllers.length}');
 
-    // TODO: Implement text publication
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Publication texte à implémenter')),
+    final publie = await Navigator.of(context).push<bool?>(
+      MaterialPageRoute(builder: (_) => const TextPostComposerScreen()),
     );
+
+    if (!mounted) return;
+
+    if (publie == true) {
+      // Même retour que le studio vidéo : on recharge pour que la publication
+      // apparaisse en tête du feed.
+      await _onReturnFromStudio(true);
+      return;
+    }
 
     _releaseFeedAudio();
     final ctrl = _controllers[_currentPage];
@@ -2155,6 +2246,13 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
   }
 
   Future<void> _startInit() async {
+    // Une publication texte n'a pas de vidéo à charger : sans cette garde, on
+    // partirait chercher une URL qui n'existe pas et la page afficherait une
+    // erreur de lecture à la place du texte.
+    if (widget.video['video_type']?.toString() == 'text') {
+      return;
+    }
+
     String url = '';
 
     // Extract video dimensions from renditions to calculate aspect ratio
@@ -2522,6 +2620,56 @@ class _ChallengeVideoItemState extends State<_ChallengeVideoItem>
             isChallenge: isChallenge,
             isOwner: isOwner,
             allowDownload: allowDownload,
+            authorUserId: authorUserId,
+            authorName: authorName,
+            onDeleted: widget.onDeleted,
+          ),
+        ],
+      );
+    }
+
+    // ── Publication texte ───────────────────────────────────────────────────
+    // Pas de lecteur à instancier : on rend la carte directement, avec les mêmes
+    // actions latérales que les vidéos (aimer, commenter, signaler), qui
+    // acceptent désormais ce type de contenu.
+    if (videoType == 'text') {
+      return Stack(
+        children: [
+          Positioned.fill(
+            child: _TextPostCard(
+              title: video['title']?.toString() ?? '',
+              body: video['body']?.toString() ?? '',
+              background: video['background']?.toString() ?? 'vert',
+            ),
+          ),
+          _buildOverlayMeta(
+            challengeTitle: challengeTitle,
+            metaParts: metaParts,
+            remixType: remixType,
+            parentParticipationId: parentParticipationId,
+            authorUserId: authorUserId,
+            authorName: authorName,
+            context: context,
+          ),
+          _buildRightActions(
+            context: context,
+            participationId: participationId,
+            videoType: videoType,
+            videoId: videoId,
+            videoAssetId: videoAssetId,
+            videoRenditions: videoRenditions,
+            likesCount: likesCount,
+            favoritesCount: favoritesCount,
+            commentsCount: commentsCount,
+            hasLiked: hasLiked,
+            hasFavorited: hasFavorited,
+            videoUrl: videoUrl,
+            parentParticipationId: parentParticipationId,
+            remixType: remixType,
+            isChallenge: isChallenge,
+            isOwner: isOwner,
+            // Rien à télécharger sur un texte : le bouton n'a pas lieu d'être.
+            allowDownload: false,
             authorUserId: authorUserId,
             authorName: authorName,
             onDeleted: widget.onDeleted,
