@@ -2992,16 +2992,29 @@ class _ChallengeVideoActions extends StatelessWidget {
           debugPrint('[DL-FLOW] STEP 1 SKIP: existing="${urlToDownload.isNotEmpty ? "has URL" : "(empty)"}" assetId="${videoAssetId.trim().isEmpty ? "(empty)" : videoAssetId}"');
         }
 
-        // ── 2. Brief polling — only if no fallback URL available ──
-        // When a fallback exists, skip polling entirely (saves 15s+ of wait).
+        // ── 2. Attente du rendu filigrané côté serveur ──
+        // Le serveur est la SEULE source fiable de filigrane : le repli local
+        // (STEP 5b) ne peut pas fonctionner sur cette app, cf. la note détaillée
+        // à cet endroit. On attend donc réellement, avec un compte à rebours
+        // visible plutôt qu'un abandon silencieux au bout de quelques secondes.
+        //
+        // Délai mesuré le 28/07/2026 sur une vidéo réelle du feed : transcodage
+        // (mp4_main/480p/360p/240p) terminé 79 s après l'upload, filigrane prêt
+        // 14 s plus tard — soit ~95 s dans le pire cas, quand on télécharge
+        // immédiatement après avoir publié. 15 s d'attente ne suffisaient jamais
+        // dans ce cas : on repartait avec la source brute, sans logo.
         if (urlToDownload.isEmpty && videoAssetId.trim().isNotEmpty) {
-          debugPrint('[DL-FLOW] STEP 2: start polling (15s max) for watermarked rendition...');
-          final deadline = DateTime.now().add(const Duration(seconds: 15));
+          debugPrint('[DL-FLOW] STEP 2: start polling (120s max) for watermarked rendition...');
+          final deadline = DateTime.now().add(const Duration(seconds: 120));
           int pollCount = 0;
 
           while (!cancelled && DateTime.now().isBefore(deadline)) {
             await Future.delayed(const Duration(seconds: 3));
             pollCount++;
+            final remaining = deadline.difference(DateTime.now()).inSeconds;
+            message.value = remaining > 0
+                ? 'Préparation de ta vidéo... (~$remaining s)'
+                : 'Préparation de ta vidéo...';
             debugPrint('[DL-FLOW] STEP 2: poll #$pollCount...');
             final st = await _withTimeout<Map<String, dynamic>?>(
               provider.getVideoExportWatermarkedStatus(videoAssetId: videoAssetId),
@@ -3123,12 +3136,26 @@ class _ChallengeVideoActions extends StatelessWidget {
           final fileSize = await file.length();
           debugPrint('[DL-FLOW] STEP 5 done: downloaded $received bytes, file size=$fileSize bytes');
 
-          // ── 4b. Filigrane de repli (garantie « logo toujours présent ») ──
-          // Si la vidéo téléchargée n'a PAS été filigranée côté serveur
-          // (on est retombé sur la source brute), on incruste le logo Academia
-          // localement, avec le même rythme TikTok (saut 4 coins / 5s).
+          // ── 4b. Filigrane de repli, puis GARDE-FOU ───────────────────────
+          // ATTENTION (28/07/2026) : ce repli local ne peut PAS fonctionner en
+          // l'état. L'app embarque `ffmpeg_kit_flutter_new_audio`, la variante
+          // AUDIO de FFmpegKit : elle ne contient pas libx264 et ne sait donc
+          // pas encoder de vidéo H.264. Les trois niveaux de repli de
+          // WatermarkService échouent, la fonction rend le fichier d'entrée
+          // inchangé, et la vidéo partait SANS logo — sans que rien ne le
+          // signale. C'est ce qui a été observé en production le 28/07.
+          //
+          // Passer à une variante `-gpl` (seule à embarquer x264) contaminerait
+          // toute l'app par la GPL : ce n'est pas une décision technique, elle
+          // n'est donc pas prise ici. On garde l'appel en best-effort (il
+          // fonctionnera tel quel le jour où le paquet changera), MAIS on ne
+          // fait plus confiance à son résultat : le garde-fou ci-dessous refuse
+          // d'enregistrer une vidéo qui n'a été filigranée ni par le serveur
+          // ni localement. Mieux vaut demander à l'étudiant de réessayer que
+          // de laisser sortir une vidéo sans le logo Academia.
+          bool watermarked = serverWatermarked;
           if (!serverWatermarked) {
-            debugPrint('[DL-FLOW] STEP 5b: source non filigranée → filigrane local Academia');
+            debugPrint('[DL-FLOW] STEP 5b: source non filigranée → tentative filigrane local');
             phase.value = 'save';
             message.value = 'Application du filigrane Academia...';
             progress.value = null;
@@ -3136,13 +3163,23 @@ class _ChallengeVideoActions extends StatelessWidget {
               final wmPath = await WatermarkService.addWatermark(file.path);
               if (wmPath != file.path && await File(wmPath).exists()) {
                 file = File(wmPath);
+                watermarked = true;
                 debugPrint('[DL-FLOW] STEP 5b: filigrane local appliqué → $wmPath');
               } else {
-                debugPrint('[DL-FLOW] STEP 5b: filigrane local ignoré (pas de sortie)');
+                debugPrint('[DL-FLOW] STEP 5b: filigrane local INOPERANT (variante ffmpeg sans encodeur video)');
               }
             } catch (e) {
               debugPrint('[DL-FLOW] STEP 5b: erreur filigrane local: $e');
             }
+          }
+
+          if (!watermarked) {
+            debugPrint('[DL-FLOW] ✘ ABORT: aucune version filigranée disponible — enregistrement refusé');
+            phase.value = 'error';
+            message.value =
+                'Ta vidéo est encore en préparation. Réessaie dans une minute.';
+            canClose.value = true;
+            return;
           }
 
           // ── 5. Save to gallery ──

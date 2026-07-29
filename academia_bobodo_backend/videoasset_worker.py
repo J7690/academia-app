@@ -178,25 +178,96 @@ async def _get_primary_source_for_asset(video_asset_id: str) -> Optional[Dict[st
     if isinstance(data, list) and data:
         row = data[0]
         if isinstance(row, dict):
-            return row
-    return None
+            bucket = str(row.get("storage_bucket") or "").strip()
+            path = str(row.get("storage_path") or "").strip()
+            if bucket and path:
+                return row
+
+    # REPLI VIDEOS "LEGACY" (28/07/2026). Les videos publiees par l'ancien
+    # dispositif n'ont pas de ligne exploitable dans `video_sources` : soit rien
+    # du tout, soit un chemin fictif (`challenge-media/legacy/external`) ou aucun
+    # fichier n'existe. Leur emplacement reel n'est connu que par le
+    # `public_url_hint` de leur rendition. Sans ce repli, elles ne peuvent JAMAIS
+    # etre filigranees -- et comme le filigrane local de l'app est inoperant
+    # (variante ffmpeg sans encodeur video), elles sortaient sans logo.
+    return await _get_rendition_source_for_asset(video_asset_id)
+
+
+async def _get_rendition_source_for_asset(video_asset_id: str) -> Optional[Dict[str, Any]]:
+    """Source de repli : l'URL publique d'une rendition deja produite.
+
+    `export_watermarked` est exclue : filigraner une video deja filigranee
+    superposerait deux logos.
+    """
+    url = f"{_rest_base()}/video_renditions"
+    params = {
+        "video_asset_id": f"eq.{video_asset_id}",
+        "status": "eq.ready",
+        "rendition_key": "neq.export_watermarked",
+        "select": "rendition_key,public_url_hint",
+    }
+    async with httpx.AsyncClient(timeout=SUPABASE_HTTP_TIMEOUT) as client:
+        resp = await client.get(url, headers=_supabase_headers(), params=params)
+
+    if resp.status_code >= 400:
+        logger.error(
+            "[videoasset_worker] get_rendition_source failed: %s %s",
+            resp.status_code, resp.text[:400],
+        )
+        return None
+
+    try:
+        rows = resp.json()
+    except ValueError:
+        return None
+    if not isinstance(rows, list):
+        return None
+
+    usable = [
+        r for r in rows
+        if isinstance(r, dict) and str(r.get("public_url_hint") or "").strip()
+    ]
+    if not usable:
+        return None
+
+    # mp4_main d'abord (meilleure qualite), sinon n'importe quelle rendition
+    # utilisable -- en pratique `legacy_primary` pour ces videos.
+    best = sorted(
+        usable,
+        key=lambda r: 0 if str(r.get("rendition_key") or "") == "mp4_main" else 1,
+    )[0]
+    logger.info(
+        "[videoasset_worker] source de repli pour %s : rendition %s",
+        video_asset_id, best.get("rendition_key"),
+    )
+    return {"public_url": str(best["public_url_hint"]).strip()}
 
 
 async def _download_source_to_temp(source: Dict[str, Any]) -> Path:
     _check_config()
-    bucket = str(source.get("storage_bucket") or "").strip()
-    storage_path = str(source.get("storage_path") or "").strip()
-    if not bucket or not storage_path:
-        raise RuntimeError("storage_bucket ou storage_path manquant pour la source vidéo.")
 
-    url = f"{_storage_base()}/object/{bucket}/{storage_path}"
-    headers = _supabase_headers()
+    # Deux formes de source acceptees :
+    #  - {storage_bucket, storage_path} : cas normal (table `video_sources`) ;
+    #  - {public_url}                   : repli pour les videos "legacy", dont
+    #    l'emplacement reel n'est connu que par le `public_url_hint` de leur
+    #    rendition (cf. `_get_rendition_source_for_asset`).
+    public_url = str(source.get("public_url") or "").strip()
+    if public_url:
+        url = public_url
+        headers = None  # URL publique complete : pas d'en-tetes Supabase a joindre
+    else:
+        bucket = str(source.get("storage_bucket") or "").strip()
+        storage_path = str(source.get("storage_path") or "").strip()
+        if not bucket or not storage_path:
+            raise RuntimeError("storage_bucket ou storage_path manquant pour la source vidéo.")
+        url = f"{_storage_base()}/object/{bucket}/{storage_path}"
+        headers = _supabase_headers()
 
     tmp_dir = Path(tempfile.gettempdir())
     file_name = f"videoasset_input_{uuid.uuid4().hex}.mp4"
     dest_path = tmp_dir / file_name
 
-    async with httpx.AsyncClient(timeout=600.0) as client:
+    async with httpx.AsyncClient(timeout=600.0, follow_redirects=True) as client:
         resp = await client.get(url, headers=headers)
 
     if resp.status_code >= 400:
