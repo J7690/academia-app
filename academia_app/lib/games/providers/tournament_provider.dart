@@ -27,7 +27,7 @@ class TournamentProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print('Error loading tournaments: $e');
+      debugPrint('[Tournament] loading tournaments: $e');
     }
   }
   
@@ -36,48 +36,65 @@ class TournamentProvider extends ChangeNotifier {
       final response = await _supabase
           .rpc('tournament_register', params: {'p_tournament_id': tournamentId});
       
-      if (response['success'] == true) {
+      if (response is Map && response['success'] == true) {
         await loadAvailableTournaments();
         await loadMyTournaments();
         return true;
       }
     } catch (e) {
-      print('Error registering tournament: $e');
+      debugPrint('[Tournament] registering tournament: $e');
     }
     return false;
   }
   
+  /// Les tournois auxquels je participe.
+  ///
+  /// Appelait `tournament_get_details` avec un `p_user_id` que cette fonction
+  /// n'accepte pas — elle prend un tournoi, pas un utilisateur. L'appel ne
+  /// pouvait donc jamais aboutir. `tournament_list_mine` repond a l'intention.
   Future<void> loadMyTournaments() async {
     try {
-      final response = await _supabase
-          .rpc('tournament_get_details', params: {'p_user_id': _supabase.auth.currentUser?.id});
-      
-      if (response != null) {
-        _myTournaments = (response as List)
-            .map((json) => Tournament.fromJson(json))
+      final response = await _supabase.rpc('tournament_list_mine');
+
+      if (response is List) {
+        _myTournaments = response
+            .whereType<Map<String, dynamic>>()
+            .map(Tournament.fromJson)
             .toList();
-        
+
         await loadMyMatches();
         notifyListeners();
       }
     } catch (e) {
-      print('Error loading my tournaments: $e');
+      debugPrint('[Tournament] chargement de mes tournois: $e');
     }
   }
-  
+
+  /// Le classement du tournoi en cours. Sans tournoi, il n'y a rien a demander :
+  /// on vidait la liste en appelant la fonction avec un identifiant nul, ce qui
+  /// se terminait en erreur cote serveur.
   Future<void> loadMyMatches() async {
+    final tournamentId = _myTournaments.firstOrNull?.id;
+    if (tournamentId == null || tournamentId.isEmpty) {
+      _myMatches = [];
+      notifyListeners();
+      return;
+    }
     try {
-      final response = await _supabase
-          .rpc('tournament_get_standings', params: {'p_tournament_id': _myTournaments.firstOrNull?.id});
-      
-      if (response != null) {
-        _myMatches = (response as List)
-            .map((json) => TournamentMatch.fromJson(json))
+      final response = await _supabase.rpc(
+        'tournament_get_standings',
+        params: {'p_tournament_id': tournamentId},
+      );
+
+      if (response is List) {
+        _myMatches = response
+            .whereType<Map<String, dynamic>>()
+            .map(TournamentMatch.fromJson)
             .toList();
         notifyListeners();
       }
     } catch (e) {
-      print('Error loading my matches: $e');
+      debugPrint('[Tournament] chargement du classement: $e');
     }
   }
   
@@ -100,12 +117,12 @@ class TournamentProvider extends ChangeNotifier {
             'p_max_participants': maxParticipants,
           });
       
-      if (response['success'] == true) {
+      if (response is Map && response['success'] == true) {
         await loadMyTournaments();
         return true;
       }
     } catch (e) {
-      print('Error creating tournament: $e');
+      debugPrint('[Tournament] creating tournament: $e');
     }
     return false;
   }
@@ -115,12 +132,12 @@ class TournamentProvider extends ChangeNotifier {
       final response = await _supabase
           .rpc('tournament_start', params: {'p_tournament_id': tournamentId});
       
-      if (response['success'] == true) {
+      if (response is Map && response['success'] == true) {
         await loadMyTournaments();
         return true;
       }
     } catch (e) {
-      print('Error starting tournament: $e');
+      debugPrint('[Tournament] starting tournament: $e');
     }
     return false;
   }
@@ -140,13 +157,13 @@ class TournamentProvider extends ChangeNotifier {
             'p_player2_score': player2Score,
           });
       
-      if (response['success'] == true) {
+      if (response is Map && response['success'] == true) {
         await loadMyTournaments();
         await loadMyMatches();
         return true;
       }
     } catch (e) {
-      print('Error reporting match result: $e');
+      debugPrint('[Tournament] reporting match result: $e');
     }
     return false;
   }
@@ -164,7 +181,7 @@ class TournamentProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print('Error loading leagues: $e');
+      debugPrint('[Tournament] loading leagues: $e');
     }
   }
   
@@ -173,30 +190,35 @@ class TournamentProvider extends ChangeNotifier {
       final response = await _supabase
           .rpc('league_join', params: {'p_league_id': leagueId});
       
-      if (response['success'] == true) {
+      if (response is Map && response['success'] == true) {
         await loadAvailableLeagues();
         await loadMyLeagues();
         return true;
       }
     } catch (e) {
-      print('Error joining league: $e');
+      debugPrint('[Tournament] joining league: $e');
     }
     return false;
   }
   
+  /// Les ligues auxquelles je participe.
+  ///
+  /// Demandait le CLASSEMENT de la premiere ligue disponible et rangeait le
+  /// resultat dans « mes ligues » : ni la bonne question, ni le bon type. Et si
+  /// aucune ligue n'etait chargee, l'identifiant partait a nul.
   Future<void> loadMyLeagues() async {
     try {
-      final response = await _supabase
-          .rpc('league_get_standings', params: {'p_league_id': _availableLeagues.firstOrNull?.id});
-      
-      if (response != null) {
-        _myLeagues = (response as List)
-            .map((json) => League.fromJson(json))
+      final response = await _supabase.rpc('league_list_mine');
+
+      if (response is List) {
+        _myLeagues = response
+            .whereType<Map<String, dynamic>>()
+            .map(League.fromJson)
             .toList();
         notifyListeners();
       }
     } catch (e) {
-      print('Error loading my leagues: $e');
+      debugPrint('[Tournament] chargement de mes ligues: $e');
     }
   }
   
@@ -217,12 +239,12 @@ class TournamentProvider extends ChangeNotifier {
             'p_season_number': seasonNumber,
           });
       
-      if (response['success'] == true) {
+      if (response is Map && response['success'] == true) {
         await loadMyLeagues();
         return true;
       }
     } catch (e) {
-      print('Error creating league: $e');
+      debugPrint('[Tournament] creating league: $e');
     }
     return false;
   }
@@ -242,12 +264,12 @@ class TournamentProvider extends ChangeNotifier {
             'p_player2_score': player2Score,
           });
       
-      if (response['success'] == true) {
+      if (response is Map && response['success'] == true) {
         await loadMyLeagues();
         return true;
       }
     } catch (e) {
-      print('Error reporting league match result: $e');
+      debugPrint('[Tournament] reporting league match result: $e');
     }
     return false;
   }

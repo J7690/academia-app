@@ -1,0 +1,31 @@
+-- 29/07/2026 — Tournois et ligues : rendre l'existant utilisable.
+--
+-- Trace des migrations appliquees en production ce jour (via l'outil Supabase) :
+--   1. exposer_tournois_ligues_dans_public
+--   2. corriger_types_fonctions_tournois
+--   3. corriger_tournament_get_standings
+--   4. corriger_league_get_standings
+--
+-- CONTEXTE. Les 12 fonctions de tournois/ligues existaient dans le schema `app`
+-- uniquement. Le client Supabase de l'application appelle `public` : tous les appels
+-- echouaient avec « function does not exist ». La regle du projet (CLAUDE.md) est
+-- pourtant claire : metier dans `app`, appelable dans `public`.
+--
+-- En les branchant, elles se sont revelees n'avoir JAMAIS ete executees :
+--   * `tournament_list_available` : COALESCE(...) rend du `text` sur une colonne
+--     declaree `character varying`.
+--   * `tournament_get_details` : idem, plus des COUNT()/MAX() en `bigint` sur des
+--     colonnes `integer`, plus un bloc « IF NOT FOUND » renvoyant 26 colonnes la ou
+--     la signature en declare 23 (et un BOOLEAN a la place de `created_by`).
+--   * `tournament_get_standings` et `league_get_standings` : appel a `COALESCECE(...)`
+--     — une fonction qui n'existe pas.
+--
+-- Les enveloppes publiques retournent du `jsonb` (tableau pour les listes, objet pour
+-- les actions), comme les autres fonctions publiques du projet. Toute la logique
+-- metier et les controles de droits restent dans `app`.
+--
+-- Deux fonctions ont ete ajoutees pour repondre a l'intention reelle du client, qui
+-- n'avait pas d'equivalent : `tournament_list_mine()` et `league_list_mine()`.
+--
+-- Verifie en production apres application : creation d'un tournoi, puis lecture par
+-- `tournament_list_available()` -> le tournoi remonte avec le nom de son createur.
