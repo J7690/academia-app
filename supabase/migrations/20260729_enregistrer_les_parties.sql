@@ -1,0 +1,26 @@
+-- 29/07/2026 — Garder une trace des parties jouees.
+--
+-- Trace de la migration appliquee en production : `enregistrer_les_parties_de_jeu`.
+--
+-- CONSTAT. Les 7 jeux se jouaient, le score s'affichait, puis disparaissait :
+-- aucune table ne conservait le resultat d'une partie. Sans cette trace, ni
+-- classement, ni progression, ni tournoi ne pouvaient exister -- meme une fois les
+-- fonctions de tournoi reparees.
+--
+-- CE QUI EST POSE.
+--   * `app.game_results` : une ligne par partie terminee. Les compteurs de detail
+--     sont optionnels : un mini-jeu de profil (« Quel etudiant es-tu ») n'a ni
+--     bonnes ni mauvaises reponses, son resultat part dans `details`.
+--   * RLS : un joueur n'ecrit et ne lit que SES parties. Le classement passe par
+--     une fonction agregee, jamais par la table en direct.
+--   * `public.game_record_result(...)` : enregistre une partie. Volontairement
+--     tolerante -- une partie qui se termine ne doit jamais faire echouer l'ecran
+--     de fin. Renvoie le record personnel, de quoi feliciter le joueur.
+--   * `public.game_leaderboard(jeu, periode, limite)` : le MEILLEUR score de chaque
+--     joueur, pas la somme -- sinon enchainer les parties suffirait a depasser un
+--     meilleur joueur. Periodes : day / week / month / all.
+--   * `public.game_my_stats(jeu)` : mes statistiques par jeu.
+--
+-- Verifie en production : trois parties fictives inserees, classement correct
+-- (meilleur score retenu, nombre de parties exact, nom du joueur resolu), puis
+-- donnees de test supprimees.

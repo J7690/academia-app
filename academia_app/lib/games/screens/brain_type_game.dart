@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'auto_record_game_wrapper.dart';
+import '../services/game_results_service.dart';
 
 /// Jeu viral "Découvre ton Type de Cerveau"
 /// 8 questions → 4 profils (Visuel, Auditif, Kinesthésique, Analytique)
@@ -101,6 +102,14 @@ class _BrainTypeGameScreenState extends State<BrainTypeGameScreen> {
       setState(() => _showResult = true);
       // Signaler au wrapper que le jeu est terminé → arrêter enregistrement
       GameRecordController.of(context)?.onGameFinished();
+      // Conserver la partie. Ce jeu donne un PROFIL, pas un score de performance :
+      // on garde le profil obtenu dans `details` et un score neutre, pour qu'il
+      // compte dans « parties jouées » sans polluer le classement.
+      GameResultsService.record(
+        gameType: 'Type de Cerveau',
+        score: 0,
+        details: {'profil': _result.name},
+      );
     } else {
       setState(() => _currentQ++);
     }

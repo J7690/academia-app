@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:share_plus/share_plus.dart';
 import 'auto_record_game_wrapper.dart';
+import '../services/game_results_service.dart';
 
 /// Jeu "Défi 10 Secondes" — 10 questions flash, 10s par question.
 /// Score = exactitude × rapidité. Résultat partageable.
@@ -185,6 +186,13 @@ class _SpeedChallengeGameScreenState extends State<SpeedChallengeGameScreen> {
     if (_currentQ + 1 >= _questions.length) {
       setState(() => _gameOver = true);
       GameRecordController.of(context)?.onGameFinished();
+      // Conserver la partie : sans cela le score disparaissait avec l'écran.
+      GameResultsService.record(
+        gameType: 'Défi 10 Secondes',
+        score: _score,
+        correctAnswers: _correctCount,
+        wrongAnswers: _questions.length - _correctCount,
+      );
       return;
     }
     setState(() {

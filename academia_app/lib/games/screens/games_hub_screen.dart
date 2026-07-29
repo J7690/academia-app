@@ -9,6 +9,7 @@ import '../services/game_scoring_system.dart';
 import '../services/gameplay_recorder_service.dart';
 import '../services/watermark_service.dart';
 import '../services/game_live_service.dart';
+import '../services/game_results_service.dart';
 import '../utils/game_constants.dart';
 import '../providers/game_provider.dart';
 import 'package:livekit_client/livekit_client.dart' as lk;
@@ -937,6 +938,19 @@ class _GamePlayScreenState extends State<GamePlayScreen> {
     // Arrêter l'enregistrement et le live automatiquement
     _autoStopRecordingAndLive();
 
+    // Conserver la partie (29/07/2026). Sans cette trace, le score disparaissait
+    // avec l'écran : ni classement, ni progression n'étaient possibles.
+    // L'enregistrement ne bloque pas l'affichage : il se fait en parallèle et le
+    // record personnel s'affiche dès qu'il est connu.
+    final recorded = GameResultsService.record(
+      gameType: widget.session.gameType,
+      score: _scoringSystem.currentScore,
+      correctAnswers: _scoringSystem.totalCorrectAnswers,
+      wrongAnswers: _scoringSystem.totalWrongAnswers,
+      bestStreak: _scoringSystem.streakCount,
+      durationSec: GameConstants.defaultGameDuration - _timeRemaining,
+    );
+
     if (!mounted) return;
     showDialog(
       context: context,
@@ -947,7 +961,24 @@ class _GamePlayScreenState extends State<GamePlayScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Score final : ${_scoringSystem.currentScore}'),
-            Text('Meilleur score : ${_scoringSystem.highScore}'),
+            FutureBuilder<GameResultOutcome?>(
+              future: recorded,
+              builder: (context, snap) {
+                final outcome = snap.data;
+                if (outcome == null) {
+                  // Hors ligne, ou enregistrement encore en cours : on retombe
+                  // sur le meilleur score local, jamais sur un écran vide.
+                  return Text('Meilleur score : ${_scoringSystem.highScore}');
+                }
+                if (outcome.isPersonalBest) {
+                  return const Text(
+                    'Nouveau record personnel !',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1EA75C)),
+                  );
+                }
+                return Text('Ton record : ${outcome.personalBest}');
+              },
+            ),
             const SizedBox(height: 16),
             const Text('Statistiques :'),
             Text('Bonnes réponses : ${_scoringSystem.totalCorrectAnswers}'),

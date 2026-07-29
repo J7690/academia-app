@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:share_plus/share_plus.dart';
 import 'auto_record_game_wrapper.dart';
+import '../services/game_results_service.dart';
 
 /// Jeu viral "Quel Étudiant Es-Tu ?"
 /// 10 questions → 6 profils étudiants → résultat partageable + CTA Academia.
@@ -97,6 +98,13 @@ class _StudentTypeGameScreenState extends State<StudentTypeGameScreen> {
       _result = _scores.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
       setState(() => _showResult = true);
       GameRecordController.of(context)?.onGameFinished();
+      // Conserver la partie. Comme « Type de Cerveau », ce jeu donne un PROFIL :
+      // le profil part dans `details`, le score reste neutre.
+      GameResultsService.record(
+        gameType: 'Quel Étudiant Es-Tu',
+        score: 0,
+        details: {'profil': _result.name},
+      );
     } else {
       setState(() => _currentQ++);
     }
