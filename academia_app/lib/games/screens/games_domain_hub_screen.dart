@@ -9,6 +9,7 @@ import 'leaderboard_screen.dart';
 import 'duel_home_screen.dart';
 import 'memory_game_screen.dart';
 import 'pharmacy_game_screen.dart';
+import 'clinical_game_screen.dart';
 import '../widgets/live_game_feed_card.dart';
 
 /// Hub principal multi-domaines des jeux Academia.
@@ -69,8 +70,10 @@ class GamesDomainHubScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           // --- Santé : s'adresse aux formations paramédicales du catalogue
-          // (auxiliaire de pharmacie, délégué médical).
-          const _SectionTitle(title: 'Santé', icon: Icons.local_pharmacy, color: Color(0xFF0D8B8B)),
+          // (auxiliaire de pharmacie, délégué médical). La médecine n'est pas
+          // encore une filière du catalogue, mais les deux jeux tournent — c'est
+          // ici que la section remplace l'ancienne carte « Bientôt disponible ».
+          const _SectionTitle(title: 'Santé & Médecine', icon: Icons.local_pharmacy, color: Color(0xFF0D8B8B)),
           const SizedBox(height: 8),
           _MiniGameCard(
             title: 'Le comptoir',
@@ -79,6 +82,16 @@ class GamesDomainHubScreen extends StatelessWidget {
             color: const Color(0xFF0D8B8B),
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const PharmacyGameScreen()),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _MiniGameCard(
+            title: 'La consultation',
+            subtitle: 'Interroge, examine, décide — le temps est compté',
+            icon: Icons.medical_information_outlined,
+            color: const Color(0xFF2563A8),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ClinicalGameScreen()),
             ),
           ),
           const SizedBox(height: 16),
@@ -153,33 +166,23 @@ class GamesDomainHubScreen extends StatelessWidget {
             },
           ),
           const SizedBox(height: 16),
-          _DomainCard(
+          const _DomainCard(
             title: 'Mathematiques',
             subtitle: 'Bientôt disponible',
             icon: Icons.calculate,
             color: Colors.blue,
             isAvailable: false,
-            chips: const ['Calcul mental', 'Équations', 'Géométrie'],
+            chips: ['Calcul mental', 'Équations', 'Géométrie'],
             onTap: null,
           ),
           const SizedBox(height: 16),
-          _DomainCard(
-            title: 'Medecine',
-            subtitle: 'Bientôt disponible',
-            icon: Icons.local_hospital,
-            color: Colors.red,
-            isAvailable: false,
-            chips: const ['Diagnostic', 'Anatomie', 'Pharmacologie'],
-            onTap: null,
-          ),
-          const SizedBox(height: 16),
-          _DomainCard(
+          const _DomainCard(
             title: 'Sciences',
             subtitle: 'Bientôt disponible',
             icon: Icons.science,
             color: Colors.purple,
             isAvailable: false,
-            chips: const ['Physique', 'Chimie', 'Biologie'],
+            chips: ['Physique', 'Chimie', 'Biologie'],
             onTap: null,
           ),
         ],

@@ -1,0 +1,57 @@
+-- 29/07/2026 — « La consultation » : raisonnement diagnostique.
+--
+-- Trace des migrations appliquees en production :
+--   1. jeu_consultation_diagnostic  (app.clinical_cases, app.clinical_rounds,
+--                                    public.clinical_start, public.clinical_submit)
+--   2. consultation_cas_initiaux    (quatre cas d'ecole)
+--
+-- POURQUOI MAINTENANT. La medecine ne figure pas dans les 155 programmes du
+-- catalogue -- la carte « Medecine » du hub affichait donc « Bientot disponible ».
+-- Choix retenu : rendre le jeu operationnel quand meme et activer la carte. Un
+-- jeu qui tourne attire la filiere ; une carte grisee n'attire personne. Le jeu
+-- parle aussi aux formations de sante deja presentes (auxiliaire de pharmacie,
+-- delegue medical), qui ont besoin de reconnaitre un tableau clinique.
+--
+-- CE QUE LE JOUEUR FAIT. Un patient, une plainte, et un TEMPS CLINIQUE limite
+-- (`budget`, 10 unites). Chaque question posee, chaque examen physique, chaque
+-- examen de laboratoire le consomme. La question du jeu n'est pas « quelle est la
+-- bonne reponse » mais « qu'est-ce que je peux me permettre de chercher avant de
+-- decider ». C'est la mecanique relevee chez Prognosis lors de l'audit externe.
+--
+-- ANIMATION. Demande explicite : pas un QCM deguise. Les actions ne sont pas des
+-- lignes de texte mais des cartes qui changent d'etat quand on les joue et qui
+-- GARDENT leur resultat a l'ecran -- le raisonnement s'accumule sous les yeux du
+-- joueur au lieu de devoir etre retenu. La jauge de temps clinique glisse vers sa
+-- nouvelle valeur (450 ms) et passe au corail sous 30 % : c'est ce glissement qui
+-- rend une depense coûteuse perceptible.
+--
+-- SCORING. `10 + temps restant` si le diagnostic est juste, `0` sinon. Un
+-- diagnostic faux ne rapporte rien, meme decide vite : en clinique, se tromper
+-- rapidement n'est pas une qualite. Le bonus recompense la sobriete des examens,
+-- pas la vitesse de clic. Le resultat part dans `game_record_result` comme les
+-- autres jeux, donc dans le classement.
+--
+-- SECURITE. Deux secrets ne quittent pas le serveur pendant la partie :
+--   * `correct_option` et `explanation`, absents de la reponse de `clinical_start` ;
+--   * le drapeau `is_useful` de chaque action, retire un a un par
+--     `SELECT JSONB_AGG(a - 'is_useful')` -- sans quoi la reponse reseau dirait
+--     quelles pistes sont les bonnes avant tout choix.
+-- Le reste des actions EST envoye d'un coup, volontairement : le joueur explore
+-- sans aller-retour reseau, ce qui compte sur une connexion instable. RLS active
+-- sur `app.clinical_cases` SANS aucune policy de lecture -- tout passe par les
+-- fonctions SECURITY DEFINER. Une consultation ne peut etre rendue qu'une fois
+-- (`deja_rendue`), et seulement par son auteur (`pas_ta_consultation`).
+--
+-- CONTENU MEDICAL — POINT IMPORTANT.
+-- Les quatre cas livres (paludisme au retour d'un sejour rural, deshydratation
+-- severe de l'enfant, hypertension, suspicion de tuberculose) sont des tableaux
+-- d'ecole choisis pour leur pertinence au Burkina Faso. Ils sont tous marques
+-- `is_validated = FALSE` : AUCUN n'a ete relu par un medecin. L'application
+-- affiche l'avertissement au joueur au debrief, et rappelle qu'un cas
+-- d'entrainement exerce une demarche sans jamais remplacer une consultation. Une
+-- fois la relecture faite, `clinical_start` peut etre restreinte aux cas valides.
+--
+-- Verifie en production : consultation generee sans fuite (`actions_qui_trahissent`
+-- = 0, diagnostic et explication absents de la charge utile), diagnostic juste
+-- avec 4/10 depenses -> score 16, diagnostic faux -> score 0. Donnees de test
+-- supprimees ensuite (les quatre cas restent).
