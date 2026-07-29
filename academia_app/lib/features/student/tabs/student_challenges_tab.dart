@@ -38,6 +38,7 @@ import '../challenge_camera_capture_screen.dart';
 import '../text_post_composer_screen.dart';
 import '../../../games/screens/tournament_list_screen.dart';
 import '../../../games/screens/leaderboard_screen.dart';
+import '../../../games/screens/duel_home_screen.dart';
 import '../student_social_profile_screen.dart';
 import '../student_dashboard_nav_controller.dart';
 import '../student_recently_deleted_videos_screen.dart';
@@ -4207,12 +4208,6 @@ class _VideoProgressBarState extends State<_VideoProgressBar> {
 class _AreneHubBody extends StatelessWidget {
   const _AreneHubBody();
 
-  void _soon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Bientôt disponible')),
-    );
-  }
-
   Widget _tile(
     BuildContext context, {
     required IconData icon,
@@ -4292,12 +4287,15 @@ class _AreneHubBody extends StatelessWidget {
         ),
         _tile(
           context,
-          icon: Icons.groups,
+          icon: Icons.sports_kabaddi,
           color: const Color(0xFF7C4DFF),
-          title: 'Duo',
-          subtitle: 'Défie un ami en duo',
-          soon: true,
-          onTap: () => _soon(context),
+          title: 'Duel de Concours',
+          subtitle: 'Cinq questions, un adversaire, le meilleur gagne',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const DuelHomeScreen()),
+            );
+          },
         ),
         // Tournois et Classements ne sont plus annoncés « Bientôt » : leur
         // backend est en service depuis le 29/07 et l'onglet Jeux y menait

@@ -6,6 +6,7 @@ import 'student_type_game.dart';
 import 'games_hub_screen.dart';
 import 'tournament_list_screen.dart';
 import 'leaderboard_screen.dart';
+import 'duel_home_screen.dart';
 import '../widgets/live_game_feed_card.dart';
 
 /// Hub principal multi-domaines des jeux Academia.
@@ -38,6 +39,21 @@ class GamesDomainHubScreen extends StatelessWidget {
         children: [
           // --- En direct maintenant ---
           const LiveGameFeedSection(),
+          // --- Duel de Concours : le seul jeu adossé aux matières réellement
+          // préparées par les étudiants (147 QCM de concours en base). Placé en
+          // tête pour cette raison.
+          _SectionTitle(title: 'Affronter quelqu\'un', icon: Icons.sports_kabaddi, color: const Color(0xFF1EA75C)),
+          const SizedBox(height: 8),
+          _MiniGameCard(
+            title: 'Duel de Concours',
+            subtitle: 'Cinq questions de concours, un adversaire',
+            icon: Icons.flash_on,
+            color: const Color(0xFF1EA75C),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const DuelHomeScreen()),
+            ),
+          ),
+          const SizedBox(height: 16),
           // --- Défis Rapides (jeux viraux) ---
           _SectionTitle(title: 'Défis Rapides', icon: Icons.bolt, color: const Color(0xFF6C63FF)),
           const SizedBox(height: 8),

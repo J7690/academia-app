@@ -1,0 +1,26 @@
+-- 29/07/2026 — Duel de Concours.
+--
+-- Trace de la migration appliquee en production : `duel_de_concours`.
+--
+-- PRINCIPE. Deux etudiants repondent AUX MEMES cinq questions, le meilleur score
+-- gagne ; a egalite, le plus rapide. Le duel est ASYNCHRONE -- chacun joue quand
+-- il veut. Ce n'est pas une facilite : un duel en temps reel exclurait de fait
+-- les etudiants dont la connexion est instable, ce que deconseille toute la
+-- recherche sur l'edtech africaine.
+--
+-- SECURITE. Le point sensible d'un jeu de questions est la fuite des reponses.
+-- `duel_questions` ne renvoie JAMAIS `correct_index` : le client envoie ses
+-- choix, le SERVEUR corrige. Sans cela, il suffirait de lire la reponse reseau
+-- pour gagner a tous les coups. `duel_submit` refuse aussi un second envoi
+-- (`deja_joue`) : on ne rejoue pas pour ameliorer son score.
+--
+-- CONTENU. Les questions viennent de `prep_questions` : 147 QCM deja publies,
+-- avec options, bonne reponse, difficulte et duree. Aucun contenu n'a eu besoin
+-- d'etre ecrit -- 10 matieres ont assez de questions pour un duel, Culture
+-- Generale (47) et Tests Psychotechniques (26) en tete.
+--
+-- Chaque manche alimente aussi `game_results`, donc le classement general.
+--
+-- Verifie en production : duel cree (aucune bonne reponse dans la reponse),
+-- joueur 1 a 4/5, joueur 2 a 5/5, vainqueur correctement designe, second envoi
+-- refuse, classement alimente. Donnees de test supprimees ensuite.
