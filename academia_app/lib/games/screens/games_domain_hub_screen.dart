@@ -7,6 +7,7 @@ import 'games_hub_screen.dart';
 import 'tournament_list_screen.dart';
 import 'leaderboard_screen.dart';
 import 'duel_home_screen.dart';
+import 'memory_game_screen.dart';
 import '../widgets/live_game_feed_card.dart';
 
 /// Hub principal multi-domaines des jeux Academia.
@@ -42,7 +43,7 @@ class GamesDomainHubScreen extends StatelessWidget {
           // --- Duel de Concours : le seul jeu adossé aux matières réellement
           // préparées par les étudiants (147 QCM de concours en base). Placé en
           // tête pour cette raison.
-          _SectionTitle(title: 'Affronter quelqu\'un', icon: Icons.sports_kabaddi, color: const Color(0xFF1EA75C)),
+          const _SectionTitle(title: 'Affronter quelqu\'un', icon: Icons.sports_kabaddi, color: const Color(0xFF1EA75C)),
           const SizedBox(height: 8),
           _MiniGameCard(
             title: 'Duel de Concours',
@@ -53,9 +54,21 @@ class GamesDomainHubScreen extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const DuelHomeScreen()),
             ),
           ),
+          const SizedBox(height: 8),
+          // Mémoire éclair : aucune filière requise, aucun contenu à produire.
+          // C'est le jeu qui peut s'adresser d'emblée aux 155 programmes.
+          _MiniGameCard(
+            title: 'Mémoire éclair',
+            subtitle: 'Mémorise une suite de chiffres, restitue-la',
+            icon: Icons.psychology_alt,
+            color: const Color(0xFF2563a8),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const MemoryGameScreen()),
+            ),
+          ),
           const SizedBox(height: 16),
           // --- Défis Rapides (jeux viraux) ---
-          _SectionTitle(title: 'Défis Rapides', icon: Icons.bolt, color: const Color(0xFF6C63FF)),
+          const _SectionTitle(title: 'Défis Rapides', icon: Icons.bolt, color: const Color(0xFF6C63FF)),
           const SizedBox(height: 8),
           _MiniGameCard(
             title: 'Type de Cerveau',

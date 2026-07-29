@@ -1,0 +1,31 @@
+-- 29/07/2026 — Memoire eclair.
+--
+-- Trace de la migration appliquee en production : `memoire_eclair`.
+--
+-- Une suite de chiffres s'affiche, il faut la restituer dans l'ordre. Modele des
+-- championnats de memoire : un temps pour memoriser, un temps borne pour
+-- restituer, un point par chiffre correctement place.
+--
+-- POURQUOI CE JEU EN PREMIER. C'est le seul du catalogue qui reunit trois
+-- qualites : aucun contenu a produire (tout est genere), aucune filiere requise
+-- (les 155 programmes sont concernes), et la triche largement sans objet -- la
+-- suite n'existait nulle part dix secondes plus tot.
+--
+-- CE QUE CETTE CONCEPTION PROTEGE, ET CE QU'ELLE NE PROTEGE PAS.
+--   * La suite est generee ET corrigee par le serveur : un score ne peut pas
+--     etre falsifie depuis l'application.
+--   * Une manche ne peut etre rendue qu'une fois (`deja_rendue`).
+--   * Le temps est mesure cote serveur, pas d'apres le chrono du client :
+--     au-dela du delai, la manche ne compte pas au classement. Cela ecarte le
+--     « je note tranquillement et je reviens dans dix minutes ».
+--   * EN REVANCHE : le client doit recevoir la suite pour l'afficher, donc une
+--     capture d'ecran reste possible. L'affichage par paquets successifs cote
+--     application rend l'exercice nettement plus penible, sans l'interdire. Pour
+--     une finale a enjeu, la reponse reste le presentiel dans les universites
+--     partenaires. C'est assume, pas ignore.
+--
+-- Chaque manche valide alimente `game_results`, donc le classement general.
+--
+-- Verifie en production : suite de 10 chiffres, reponse partiellement fausse et
+-- saisie avec des espaces -> 8 points, plus longue serie 6, espaces ignores,
+-- second envoi refuse, classement alimente. Donnees de test supprimees ensuite.
