@@ -1,0 +1,38 @@
+-- 29/07/2026 — « Le comptoir » : jeu d'officine.
+--
+-- Trace des migrations appliquees en production :
+--   1. jeu_comptoir_pharmacie   (tables + fonctions)
+--   2. comptoir_cas_initiaux    (six cas de depart)
+--
+-- POUR QUI. Deux formations existantes du catalogue : auxiliaire de pharmacie
+-- (deux programmes) et delegue medical. C'est le jeu de sante qui parle a des
+-- abonnes reels, contrairement a un jeu de chirurgie -- la medecine et les soins
+-- infirmiers ne figurent pas encore dans les 155 programmes.
+--
+-- CE QUE LE JOUEUR FAIT. Un client se presente avec une ordonnance, ou sans. Il
+-- faut delivrer ce qui doit l'etre, refuser ce qui ne doit pas, et reperer les
+-- pieges : doublon de molecule sous deux noms, antibiotique sans prescription,
+-- forme adulte pour un enfant, ordonnance illisible.
+--
+-- SCORING. Un client n'est bien servi que si TOUT l'attendu est delivre et RIEN
+-- d'interdit ne l'est. Pas de demi-point : en officine, delivrer un produit
+-- dangereux annule le benefice d'avoir eu raison sur le reste.
+--
+-- SECURITE. `pharmacy_start` ne renvoie ni `expected` ni `explanation` : la
+-- reponse reseau ne contient pas la solution. La table des cas a RLS active
+-- SANS aucune policy de lecture -- tout passe par les fonctions SECURITY
+-- DEFINER, jamais par la table en direct. Un service ne peut etre rendu qu'une
+-- fois (`deja_rendu`).
+--
+-- CONTENU MEDICAL — POINT IMPORTANT.
+-- Les six cas livres reposent sur des regles largement enseignees (dose maximale
+-- de paracetamol, antibiotique soumis a prescription, dose pediatrique au poids,
+-- test avant antipaludique). Ils sont tous marques `is_validated = FALSE` : ils
+-- font tourner le jeu, mais AUCUN n'a ete relu par un pharmacien. L'application
+-- affiche cet avertissement au joueur, et la colonne existe pour que la
+-- relecture laisse une trace. Une fois la validation faite, `pharmacy_start`
+-- peut etre restreinte aux cas valides.
+--
+-- Verifie en production : service de cinq clients genere sans fuite des reponses,
+-- correction exacte sur un melange de bonnes et mauvaises delivrances (3/5),
+-- second envoi refuse. Donnees de test supprimees ensuite.

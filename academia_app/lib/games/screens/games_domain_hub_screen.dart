@@ -8,6 +8,7 @@ import 'tournament_list_screen.dart';
 import 'leaderboard_screen.dart';
 import 'duel_home_screen.dart';
 import 'memory_game_screen.dart';
+import 'pharmacy_game_screen.dart';
 import '../widgets/live_game_feed_card.dart';
 
 /// Hub principal multi-domaines des jeux Academia.
@@ -43,7 +44,7 @@ class GamesDomainHubScreen extends StatelessWidget {
           // --- Duel de Concours : le seul jeu adossé aux matières réellement
           // préparées par les étudiants (147 QCM de concours en base). Placé en
           // tête pour cette raison.
-          const _SectionTitle(title: 'Affronter quelqu\'un', icon: Icons.sports_kabaddi, color: const Color(0xFF1EA75C)),
+          const _SectionTitle(title: 'Affronter quelqu\'un', icon: Icons.sports_kabaddi, color: Color(0xFF1EA75C)),
           const SizedBox(height: 8),
           _MiniGameCard(
             title: 'Duel de Concours',
@@ -67,8 +68,22 @@ class GamesDomainHubScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+          // --- Santé : s'adresse aux formations paramédicales du catalogue
+          // (auxiliaire de pharmacie, délégué médical).
+          const _SectionTitle(title: 'Santé', icon: Icons.local_pharmacy, color: Color(0xFF0D8B8B)),
+          const SizedBox(height: 8),
+          _MiniGameCard(
+            title: 'Le comptoir',
+            subtitle: 'Sers les clients d\'une officine sans te tromper',
+            icon: Icons.storefront,
+            color: const Color(0xFF0D8B8B),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const PharmacyGameScreen()),
+            ),
+          ),
+          const SizedBox(height: 16),
           // --- Défis Rapides (jeux viraux) ---
-          const _SectionTitle(title: 'Défis Rapides', icon: Icons.bolt, color: const Color(0xFF6C63FF)),
+          const _SectionTitle(title: 'Défis Rapides', icon: Icons.bolt, color: Color(0xFF6C63FF)),
           const SizedBox(height: 8),
           _MiniGameCard(
             title: 'Type de Cerveau',
