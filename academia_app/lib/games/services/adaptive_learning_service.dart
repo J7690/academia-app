@@ -354,7 +354,10 @@ class AdaptiveLearningService {
   /// Sauvegarder le profil
   static Future<void> _saveProfile(AdaptiveProfile profile) async {
     try {
+      // Schema `app` explicite : sans lui, l'appel vise `public` — ou la table
+      // n'existe pas — et l'echec passait inapercu dans le catch ci-dessous.
       await Supabase.instance.client
+          .schema('app')
           .from('adaptive_learning_profiles')
           .upsert(profile.toJson(), onConflict: 'user_id,game_type');
     } catch (e) {

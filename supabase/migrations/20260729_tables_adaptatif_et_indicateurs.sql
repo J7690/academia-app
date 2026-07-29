@@ -1,0 +1,21 @@
+-- 29/07/2026 — Les deux tables que le code attendait sans qu'elles existent.
+--
+-- Trace de la migration appliquee en production :
+-- `tables_apprentissage_adaptatif_et_indicateurs`.
+--
+-- CONSTAT. `AdaptiveLearningService` et `EconomicDataService` sont bien utilises
+-- par le jeu Market Master, mais ils ecrivaient vers `adaptive_learning_profiles`
+-- et `economic_indicators` -- deux tables absentes. Les deux ecritures echouaient
+-- en silence dans un `catch` qui se contentait d'un `print`.
+--
+-- Consequence concrete : l'apprentissage adaptatif repartait de zero a chaque
+-- partie (le jeu ne pouvait pas se souvenir du niveau du joueur), et les donnees
+-- economiques etaient rechargees a chaque fois faute de cache.
+--
+-- Ces tables suivent exactement la forme envoyee par le code (`toJson`), y
+-- compris les cles de conflit des `upsert` : (user_id, game_type) pour les
+-- profils, (country, indicator, date) pour les indicateurs.
+--
+-- A noter : le code appelait ces tables sans preciser le schema, donc visait
+-- `public`. Corrige cote application par un `.schema('app')` explicite, comme le
+-- fait deja le reste du projet.

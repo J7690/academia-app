@@ -36,6 +36,8 @@ import '../student_challenge_detail_screen.dart';
 import '../student_challenge_video_editor_screen.dart';
 import '../challenge_camera_capture_screen.dart';
 import '../text_post_composer_screen.dart';
+import '../../../games/screens/tournament_list_screen.dart';
+import '../../../games/screens/leaderboard_screen.dart';
 import '../student_social_profile_screen.dart';
 import '../student_dashboard_nav_controller.dart';
 import '../student_recently_deleted_videos_screen.dart';
@@ -4297,23 +4299,33 @@ class _AreneHubBody extends StatelessWidget {
           soon: true,
           onTap: () => _soon(context),
         ),
+        // Tournois et Classements ne sont plus annoncés « Bientôt » : leur
+        // backend est en service depuis le 29/07 et l'onglet Jeux y menait
+        // déjà. Le même produit annonçait deux états différents selon le
+        // chemin emprunté.
         _tile(
           context,
           icon: Icons.military_tech,
           color: const Color(0xFFF5A623),
           title: 'Compétitions',
-          subtitle: 'Tournois et saisons',
-          soon: true,
-          onTap: () => _soon(context),
+          subtitle: 'Tournois et ligues',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const TournamentListScreen()),
+            );
+          },
         ),
         _tile(
           context,
           icon: Icons.leaderboard,
           color: const Color(0xFF2D9CDB),
           title: 'Classements',
-          subtitle: 'Top créateurs et récompenses',
-          soon: true,
-          onTap: () => _soon(context),
+          subtitle: 'Meilleurs scores par jeu et par période',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
+            );
+          },
         ),
       ],
     );

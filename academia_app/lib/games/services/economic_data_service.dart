@@ -155,7 +155,10 @@ class EconomicDataService {
   static Future<void> _saveLocalData(List<EconomicIndicator> data) async {
     try {
       for (final indicator in data) {
+        // Schema `app` explicite (cf. adaptive_learning_service) : sans lui,
+        // l'appel vise `public` et l'echec passe inapercu.
         await Supabase.instance.client
+            .schema('app')
             .from('economic_indicators')
             .upsert(indicator.toJson(), onConflict: 'country,indicator,date');
       }
