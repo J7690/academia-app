@@ -46,7 +46,7 @@ serve(async (req: Request) => {
     return jsonResponse({ error: 'OPENROUTER_API_KEY is not configured' }, 500);
   }
 
-  let payload: { input?: unknown; voice?: unknown };
+  let payload: { input?: unknown; voice?: unknown; model?: unknown };
   try {
     payload = await req.json();
   } catch (_) {
@@ -60,6 +60,15 @@ serve(async (req: Request) => {
   const voice = typeof payload.voice === 'string' && payload.voice.trim()
     ? payload.voice.trim()
     : OPENROUTER_TTS_VOICE;
+
+  // Modele choisissable PAR REQUETE, avec le reglage global en defaut.
+  // Sans ca, essayer une voix pour le Studio visuel changerait aussi celle du
+  // Smart Whiteboard, qui est en production. Les deux produits doivent pouvoir
+  // diverger sans se gener.
+  const model = typeof payload.model === 'string' && payload.model.trim()
+    ? payload.model.trim()
+    : OPENROUTER_TTS_MODEL;
+
   try {
     const response = await fetch('https://openrouter.ai/api/v1/audio/speech', {
       method: 'POST',
@@ -69,7 +78,7 @@ serve(async (req: Request) => {
         Accept: 'audio/mpeg',
       },
       body: JSON.stringify({
-        model: OPENROUTER_TTS_MODEL,
+        model,
         input,
         voice,
         response_format: 'mp3',
@@ -97,7 +106,7 @@ serve(async (req: Request) => {
         'Content-Type': response.headers.get('Content-Type') ?? 'audio/mpeg',
         'Content-Length': audio.byteLength.toString(),
         'X-TTS-Provider': 'openrouter',
-        'X-TTS-Model': OPENROUTER_TTS_MODEL,
+        'X-TTS-Model': model,
       },
     });
   } catch (error) {
