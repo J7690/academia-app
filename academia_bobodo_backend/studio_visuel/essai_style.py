@@ -61,7 +61,10 @@ def feu():
     bpy.ops.mesh.primitive_cube_add(size=2.0, location=(0, 0, 3.2))
     colonne = bpy.context.object
     colonne.scale = (1.6, 1.6, 3.4)
-    colonne.data.materials.append(style.matiere_feu(densite=6.0, force=3.2))
+    # Densite et emission relevees pour compenser l'enveloppe : celle-ci
+    # eteint la flamme sur tout son rayon, il faut donc partir de bien plus
+    # haut au coeur pour que le coeur reste incandescent.
+    colonne.data.materials.append(style.matiere_feu(densite=22.0, force=16.0))
 
     bpy.ops.mesh.primitive_cube_add(size=44, location=(0, 0, 6))
     brume = bpy.context.object

@@ -113,17 +113,28 @@ def matiere_feu(nom="feu", echelle_bruit=9.0, densite=7.0, force=3.0):
     liens.new(separer.outputs["Y"], aplati.inputs["Y"])
     liens.new(aplati.outputs["Vector"], rayon.inputs[0])
 
+    # L'attenuation commence des le centre et va jusqu'au bord : une plage
+    # courte laisse une zone pleine au milieu, et c'est elle qu'on lit comme
+    # une « boite ». Il faut degrader sur tout le rayon.
     bord = arbre.nodes.new("ShaderNodeMapRange")
-    bord.inputs["From Min"].default_value = 0.95
-    bord.inputs["From Max"].default_value = 0.15
+    bord.inputs["From Min"].default_value = 0.62
+    bord.inputs["From Max"].default_value = 0.0
     bord.inputs["To Min"].default_value = 0.0
     bord.inputs["To Max"].default_value = 1.0
     liens.new(rayon.outputs["Value"], bord.inputs["Value"])
 
+    produit = arbre.nodes.new("ShaderNodeMath")
+    produit.operation = "MULTIPLY"
+    liens.new(fondu.outputs["Result"], produit.inputs[0])
+    liens.new(bord.outputs["Result"], produit.inputs[1])
+
+    # Eleve au carre : un degrade lineaire garde un bord franc a l'oeil, alors
+    # qu'une courbe s'eteint doucement. C'est ce qui efface les dernieres
+    # aretes du cube.
     enveloppe = arbre.nodes.new("ShaderNodeMath")
-    enveloppe.operation = "MULTIPLY"
-    liens.new(fondu.outputs["Result"], enveloppe.inputs[0])
-    liens.new(bord.outputs["Result"], enveloppe.inputs[1])
+    enveloppe.operation = "POWER"
+    enveloppe.inputs[1].default_value = 1.7
+    liens.new(produit.outputs["Value"], enveloppe.inputs[0])
 
     masque = arbre.nodes.new("ShaderNodeMath")
     masque.operation = "MULTIPLY"
