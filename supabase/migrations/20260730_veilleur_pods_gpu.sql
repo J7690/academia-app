@@ -1,0 +1,52 @@
+-- 30/07/2026 — Veilleur des machines GPU louees (RunPod).
+--
+-- Trace de la migration appliquee en production : `veilleur_pods_gpu`
+--   app.gpu_pods
+--   public.gpu_pod_heartbeat(text, boolean, text, text)
+--   public.gpu_pods_a_eteindre()
+--   public.gpu_pod_marquer_eteint(text, text, boolean)
+-- Plus : Edge Function `runpod-watchdog` (v1) et tache pg_cron du meme nom,
+-- toutes les deux minutes.
+--
+-- LE PROBLEME. RunPod facture a l'heure, machine allumee, qu'elle produise ou
+-- non. Un pod GPU oublie en marche un week-end coute plusieurs dizaines de
+-- dollars pour rien. Le garde-fou doit exister AVANT le premier pod, jamais
+-- apres -- c'est la seule erreur de sequencement qui coute vraiment cher ici.
+--
+-- OU VIT LA LOGIQUE, ET POURQUOI. Premiere idee : un service sur LWS. Ecartee.
+-- Si l'agent se tue lui-meme, le scenario couteux est justement celui ou
+-- l'agent est mort. Et si c'est LWS qui tue, un VPS tombe laisse le pod GPU
+-- facturer.
+--   Regle retenue : c'est le composant qui SURVIT qui eteint celui qui ne
+--   survit pas. Supabase survit aux deux.
+-- Consequence heureuse : la cle RunPod n'existe qu'a UN endroit, les secrets
+-- Supabase, et ne touche aucune machine que nous administrons -- ni le VPS, ni
+-- le pod. C'est la meilleure propriete qu'un secret puisse avoir.
+--
+-- TROIS CAUSES D'EXTINCTION, trois fuites d'argent distinctes :
+--   `agent_muet`              : plus de battement de coeur -> l'agent est mort
+--   `inactif`                 : vivant, mais sans travail depuis trop longtemps
+--   `duree_maximale_depassee` : filet absolu, quoi qu'il arrive (4 h par defaut)
+--
+-- terminate D'ABORD, stop EN REPLI. `podTerminate` ramene la facture a zero
+-- mais detruit ce qui n'est pas sur un volume persistant -- d'ou la necessite
+-- d'une image Docker prete a l'emploi. `podStop` conserve le disque, donc
+-- continue de couter un peu, mais libere le GPU qui est le poste cher. En
+-- repli c'est bien mieux que rien.
+--
+-- LES ECHECS NE SONT PAS AVALES. Un pod qu'on n'a pas reussi a eteindre passe
+-- en statut `orphan` avec le message de RunPod : ce sont exactement ceux qui
+-- coutent, ils doivent etre visibles.
+--
+-- Verifie en production de bout en bout : pod fictif muet depuis 30 min ->
+-- detecte comme `agent_muet`, Edge Function declenchee, RunPod a REPONDU
+-- (« pod not found to terminate »), donc la cle des secrets Supabase
+-- s'authentifie bien et les deux mutations ont la bonne syntaxe. Echec
+-- correctement enregistre en `orphan`. Donnees de test supprimees.
+--
+-- LIMITE CONNUE, A CORRIGER AVANT LA PREMIERE VRAIE LOCATION.
+-- Le veilleur ne protege que les pods INSCRITS dans `app.gpu_pods`, via le
+-- premier battement de coeur de l'agent. Un pod dont l'agent ne demarre jamais
+-- (mauvaise image, plantage au boot) reste donc invisible -- et facture
+-- indefiniment. Le correctif est de faire lister les pods par le veilleur
+-- aupres de RunPod plutot que de se fier a notre seule table.
