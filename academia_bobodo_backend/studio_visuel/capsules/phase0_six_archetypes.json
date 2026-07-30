@@ -1,0 +1,55 @@
+{
+  "capsule_id": "phase0_six_archetypes",
+  "titre": "155 programmes, et vous n'en connaissez que cinq",
+  "format": { "largeur": 1080, "hauteur": 1920, "fps": 25 },
+  "scenes": [
+    {
+      "id": "hook",
+      "archetype": "titre",
+      "narration": "Cent cinquante-cinq programmes. Vous en citez cinq.",
+      "accent": "orange",
+      "camera": "avance",
+      "parametres": { "texte": "155", "texte_second": "5", "taille": 2.2 }
+    },
+    {
+      "id": "monde",
+      "archetype": "terrain",
+      "narration": "Le reste existe pourtant, juste a cote.",
+      "accent": "orange",
+      "camera": "montee",
+      "parametres": { "ondes": 10 }
+    },
+    {
+      "id": "champ",
+      "archetype": "reseau",
+      "narration": "Chaque formation en touche d'autres, par ses debouches.",
+      "accent": "orange",
+      "camera": "orbite",
+      "parametres": { "noeuds": 40, "chemin": 5 }
+    },
+    {
+      "id": "choix",
+      "archetype": "comparaison",
+      "narration": "Deux noms voisins menent parfois a deux metiers opposes.",
+      "accent": "or",
+      "camera": "recul",
+      "parametres": { "noeuds_par_groupe": 20 }
+    },
+    {
+      "id": "paliers",
+      "archetype": "strates",
+      "narration": "Chaque niveau ouvre le suivant, et ferme les autres.",
+      "accent": "orange",
+      "camera": "montee",
+      "parametres": { "couches": 5 }
+    },
+    {
+      "id": "issue",
+      "archetype": "flux",
+      "narration": "Partez du metier vise. Le chemin devient lisible.",
+      "accent": "vert",
+      "camera": "avance",
+      "parametres": { "particules": 55, "tours": 1.5 }
+    }
+  ]
+}
