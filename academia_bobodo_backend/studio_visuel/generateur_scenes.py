@@ -59,6 +59,10 @@ def _pulser(materiau, debut, duree_images, force_max, force_repos=0.5):
     C'est le geste de base de toute la grammaire : un element s'allume quand
     on en parle, puis reste visible sans voler l'attention. Sans ce retour au
     repos, tous les elements finissent allumes et l'image redevient plate.
+
+    L'ACCROCHE fait exception, voir `_debut_accroche` : 50 a 60 % des abandons
+    se produisent dans les trois premieres secondes, une premiere image terne
+    a deja perdu la moitie de l'audience.
     """
     noeud = materiau.node_tree.nodes.get("Emission")
     if noeud is None:
@@ -73,6 +77,30 @@ def _pulser(materiau, debut, duree_images, force_max, force_repos=0.5):
     force.keyframe_insert("default_value", frame=debut + montee)
     force.default_value = force_max * 0.55
     force.keyframe_insert("default_value", frame=debut + montee + tenue)
+
+
+def _debut_accroche(images, rang, total, proportion_normale):
+    """A quelle image un element doit-il s'allumer.
+
+    Regle : la PREMIERE scene n'attend pas. 50 a 60 % des abandons se
+    produisent dans les trois premieres secondes, et les plateformes mesurent
+    desormais la « retention d'intro » -- le pourcentage de spectateurs encore
+    la apres trois secondes. Une capsule qui s'ouvre sur un fondu lent a deja
+    perdu la moitie de son audience.
+
+    Sur la scene d'accroche, le premier element est donc allume des l'image 1
+    et les suivants s'enchainent vite. Ailleurs, on respire.
+    """
+    if _EST_ACCROCHE:
+        if rang == 0:
+            return 1
+        return 1 + rang * max(2, int(images * 0.34 / max(total, 1)))
+    return int(images * proportion_normale) + rang * int(images * 0.66 / max(total, 1))
+
+
+# Positionne par `rendre_scene` : seule la premiere scene de la capsule est
+# traitee en accroche.
+_EST_ACCROCHE = False
 
 
 # ── Archetype : reseau ────────────────────────────────────────────────────
@@ -119,7 +147,7 @@ def _archetype_reseau(scene_def, images, accent, alea):
             mat = style.matiere_emissive(f"etape_{rang}", accent, 0.5)
             sphere.data.materials.append(mat)
             sphere.scale = (1.9, 1.9, 1.9)
-            debut = int(images * 0.10) + rang * int(images * 0.66 / max(len(chemin), 1))
+            debut = _debut_accroche(images, rang, len(chemin), 0.10)
             _pulser(mat, debut, images, 24.0)
 
     return 9.5   # distance de cadrage conseillee
@@ -192,7 +220,7 @@ def _archetype_strates(scene_def, images, accent, alea):
         anneau.data.materials.append(mat)
         style.filaire(anneau, 0.035)
 
-        debut = int(images * 0.08) + indice * int(images * 0.70 / max(nb, 1))
+        debut = _debut_accroche(images, indice, nb, 0.08)
         _pulser(mat, debut, images, 22.0 if derniere else 6.0)
 
         # Elles montent en place au lieu d'apparaitre : l'empilement se
@@ -295,7 +323,9 @@ def _camera(mouvement, distance, images):
 
 # ── Rendu d'une scene ─────────────────────────────────────────────────────
 
-def rendre_scene(scene_def, format_capsule, dossier, graine=0):
+def rendre_scene(scene_def, format_capsule, dossier, graine=0, accroche=False):
+    global _EST_ACCROCHE
+    _EST_ACCROCHE = accroche
     images = max(1, int(round(scene_def["duree_s"] * format_capsule["fps"])))
     accent = academia_scene.ACCENTS[scene_def["accent"]]
     alea = random.Random(graine)
@@ -346,7 +376,8 @@ def main() -> int:
     total_images = 0
     total_secondes = 0.0
     for rang, scene_def in enumerate(capsule["scenes"]):
-        images, ecoule = rendre_scene(scene_def, capsule["format"], dossier, graine=rang * 7 + 3)
+        images, ecoule = rendre_scene(scene_def, capsule["format"], dossier,
+                                      graine=rang * 7 + 3, accroche=(rang == 0))
         total_images += images
         total_secondes += ecoule
 
