@@ -268,11 +268,80 @@ def _archetype_comparaison(scene_def, images, accent, alea):
     return 12.0
 
 
+# ── Archetype : titre ─────────────────────────────────────────────────────
+
+def _archetype_titre(scene_def, images, accent, alea):
+    """Le sujet EST l'objet.
+
+    Lecon tiree des trois references : elles n'illustrent pas leur propos, elles
+    rendent le propos lui-meme en geometrie lumineuse. « 0.999… » et « 1 » ne
+    sont pas dessines a cote du texte, ils SONT la scene.
+
+    C'est aussi l'archetype qui rend le studio universel : une formule pour les
+    mathematiques, un mot pour la litterature, un symbole pour la chimie, une
+    note pour la musique. Un seul outil, tous les themes.
+    """
+    p = scene_def["parametres"]
+    principal = str(p.get("texte") or scene_def.get("titre") or "?")
+    secondaire = str(p.get("texte_second") or "")
+    taille = float(p.get("taille", 1.7))
+
+    sol = style.sol_grille(cote=30.0, pas=54, amplitude=0.6, graine=alea.randint(1, 99))
+    sol.location = (0, 0, -3.4)
+    sol.data.materials.append(style.matiere_emissive("grille", style.BLEU_FROID, 0.75))
+    style.filaire(sol, 0.008)
+
+    ecart = 3.1 if secondaire else 0.0
+    objet = style.texte_3d(principal, taille=taille, position=(-ecart, 0, 0.4))
+    objet.data.materials.append(
+        style.matiere_hologramme("titre_principal", style.BLEU_FROID, 7.0))
+
+    if secondaire:
+        second = style.texte_3d(secondaire, taille=taille, position=(ecart, 0, 0.4))
+        mat = style.matiere_hologramme("titre_second", accent, 1.0)
+        second.data.materials.append(mat)
+        # Le second terme s'allume APRES : on pose la question avant de donner
+        # la reponse, sinon il n'y a plus de question.
+        _pulser(mat, _debut_accroche(images, 1, 2, 0.35), images, 11.0)
+
+    return 12.5
+
+
+# ── Archetype : terrain ───────────────────────────────────────────────────
+
+def _archetype_terrain(scene_def, images, accent, alea):
+    """Le plan d'ambiance : sol quadrille, ondes qui se propagent, brume.
+
+    Sert de respiration entre deux idees, et d'etablissement au debut. C'est le
+    plan qui ne dit rien mais qui installe le monde -- toutes les references en
+    ont un.
+    """
+    p = scene_def["parametres"]
+    nb_ondes = int(p.get("ondes", 12))
+
+    sol = style.sol_grille(cote=34.0, pas=60, amplitude=0.75, graine=alea.randint(1, 99))
+    sol.location = (0, 0, -2.2)
+    sol.data.materials.append(style.matiere_emissive("grille", style.BLEU_FROID, 0.8))
+    style.filaire(sol, 0.009)
+
+    for rang, cercle in enumerate(style.ondes(nb_ondes, rayon_max=13.0, hauteur=-2.0)):
+        mat = style.matiere_emissive(f"onde_{rang}", accent if rang % 3 == 0 else style.BLEU_FROID, 0.4)
+        cercle.data.materials.append(mat)
+        style.filaire(cercle, 0.014)
+        # Les ondes s'allument du centre vers l'exterieur : la propagation se
+        # lit dans le temps, pas dans une legende.
+        _pulser(mat, _debut_accroche(images, rang, nb_ondes, 0.05), images, 9.0)
+
+    return 15.0
+
+
 ARCHETYPES = {
     "reseau": _archetype_reseau,
     "flux": _archetype_flux,
     "strates": _archetype_strates,
     "comparaison": _archetype_comparaison,
+    "titre": _archetype_titre,
+    "terrain": _archetype_terrain,
 }
 
 

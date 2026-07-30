@@ -16,6 +16,10 @@
 #   4. le sol n'emet plus : il noyait l'image ;
 #   5. cadrage cinema (bandes noires) et sujet plus petit dans le cadre.
 
+import math
+import os
+import random
+
 import bpy
 
 # Deux teintes, jamais trois. C'est la discipline la plus visible de la
@@ -72,6 +76,151 @@ def matiere_emissive(nom, couleur, force):
     sortie = arbre.nodes.new("ShaderNodeOutputMaterial")
     arbre.links.new(emission.outputs["Emission"], sortie.inputs["Surface"])
     return mat
+
+
+def matiere_hologramme(nom, couleur=BLEU_FROID, force=6.0, densite_bord=1.6):
+    """La matiere qui fait « hologramme » : transparente de face, lumineuse sur
+    les bords.
+
+    C'est LE traitement commun aux trois references analysees -- la silhouette
+    humaine filaire, les chiffres translucides, les cadres de portes. Un nœud
+    Fresnel mesure l'angle de vue : de face on voit a travers, en incidence
+    rasante l'objet s'illumine. C'est ce qui donne le volume sans masquer ce
+    qu'il y a derriere, et c'est exactement ce qu'il faut en pedagogie : on
+    montre l'interieur sans couper l'objet.
+
+    Fonctionne dans les deux moteurs. En EEVEE il faut en plus autoriser la
+    transparence sur la matiere -- l'attribut a change de nom entre les
+    versions, d'ou les essais successifs.
+    """
+    mat = bpy.data.materials.new(nom)
+    arbre = _arbre_vierge(mat)
+    liens = arbre.links
+
+    fresnel = arbre.nodes.new("ShaderNodeFresnel")
+    fresnel.inputs["IOR"].default_value = densite_bord
+
+    emission = arbre.nodes.new("ShaderNodeEmission")
+    emission.inputs["Color"].default_value = couleur
+    emission.inputs["Strength"].default_value = force
+
+    transparent = arbre.nodes.new("ShaderNodeBsdfTransparent")
+
+    melange = arbre.nodes.new("ShaderNodeMixShader")
+    liens.new(fresnel.outputs["Fac"], melange.inputs["Fac"])
+    liens.new(transparent.outputs["BSDF"], melange.inputs[1])
+    liens.new(emission.outputs["Emission"], melange.inputs[2])
+
+    sortie = arbre.nodes.new("ShaderNodeOutputMaterial")
+    liens.new(melange.outputs["Shader"], sortie.inputs["Surface"])
+
+    # Sans ceci, EEVEE rend l'objet opaque et tout l'effet disparait.
+    for attribut, valeurs in (
+        ("surface_render_method", ("BLENDED",)),
+        ("blend_method", ("HASHED", "BLEND")),
+    ):
+        if hasattr(mat, attribut):
+            for valeur in valeurs:
+                try:
+                    setattr(mat, attribut, valeur)
+                    break
+                except TypeError:
+                    continue
+    mat.use_backface_culling = False
+    return mat
+
+
+def texte_3d(contenu, taille=1.0, extrusion=0.06, position=(0, 0, 0), rotation=(0, 0, 0)):
+    """Du texte comme geometrie lumineuse.
+
+    C'EST LA BRIQUE QUI REND LE STUDIO UNIVERSEL. On ne peut pas modeliser
+    procedurallement un violon pour la musique ni une molecule pour la chimie
+    -- mais on peut TOUJOURS rendre une formule, un mot, un chiffre, un
+    symbole. Les references le montrent : « 0.999… » et « 1 » ne sont pas
+    illustres, ils SONT les objets de la scene.
+
+    Une seule brique couvre donc les mathematiques, la physique, la chimie, la
+    litterature, la musique et l'architecture.
+    """
+    bpy.ops.object.text_add(location=position, rotation=rotation)
+    objet = bpy.context.object
+    donnees = objet.data
+    donnees.body = str(contenu)
+    donnees.size = taille
+    donnees.extrude = extrusion
+    donnees.bevel_depth = extrusion * 0.15
+    donnees.bevel_resolution = 1
+    donnees.align_x = "CENTER"
+    donnees.align_y = "CENTER"
+
+    # DejaVu est installee par install_pod.sh. La police par defaut de Blender
+    # rend mal les accents francais -- « é », « à », « ç » -- ce qui serait
+    # visible sur chaque capsule.
+    for chemin in ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+                   "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"):
+        if os.path.isfile(chemin):
+            try:
+                donnees.font = bpy.data.fonts.load(chemin)
+                break
+            except Exception:  # noqa: BLE001
+                pass
+    return objet
+
+
+def sol_grille(cote=26.0, pas=52, amplitude=0.55, graine=3):
+    """Le sol quadrille et ondule, present dans presque toutes les references.
+
+    Il donne l'echelle et l'horizon. Sans lui, un objet flotte dans le vide et
+    l'oeil n'a aucun repere -- c'est ce qui separe une image « 3D » d'une image
+    « cinema ».
+
+    Le relief est calcule en Python plutot que par un modificateur : c'est
+    deterministe, donc la meme capsule rendue deux fois donne exactement la
+    meme image.
+    """
+    alea = random.Random(graine)
+    phase_x = alea.uniform(0, 6.28)
+    phase_y = alea.uniform(0, 6.28)
+
+    points = []
+    for iy in range(pas + 1):
+        for ix in range(pas + 1):
+            x = -cote / 2 + cote * ix / pas
+            y = -cote / 2 + cote * iy / pas
+            z = (math.sin(x * 0.42 + phase_x) * math.cos(y * 0.37 + phase_y)) * amplitude
+            points.append((x, y, z))
+
+    aretes = []
+    largeur = pas + 1
+    for iy in range(largeur):
+        for ix in range(largeur):
+            indice = iy * largeur + ix
+            if ix < pas:
+                aretes.append((indice, indice + 1))
+            if iy < pas:
+                aretes.append((indice, indice + largeur))
+
+    maille = bpy.data.meshes.new("sol_grille")
+    maille.from_pydata(points, aretes, [])
+    maille.update()
+    objet = bpy.data.objects.new("sol_grille", maille)
+    bpy.context.collection.objects.link(objet)
+    return objet
+
+
+def ondes(nombre=14, rayon_max=11.0, hauteur=0.0):
+    """Cercles concentriques : la propagation, l'onde, le champ, l'influence.
+
+    Present tel quel dans la troisieme reference. Sert a montrer ce qui se
+    diffuse -- un son, une chaleur, une idee, une reputation.
+    """
+    cercles = []
+    for indice in range(nombre):
+        rayon = rayon_max * (indice + 1) / nombre
+        bpy.ops.mesh.primitive_circle_add(vertices=96, radius=rayon,
+                                          location=(0, 0, hauteur))
+        cercles.append(bpy.context.object)
+    return cercles
 
 
 def matiere_sol(nom="sol"):

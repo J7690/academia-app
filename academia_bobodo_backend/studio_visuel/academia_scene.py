@@ -34,7 +34,11 @@ DUREE_MAX_S = 25.0
 SCENES_MAX = 7
 DUREE_TOTALE_MAX_S = 150.0
 
-ARCHETYPES = ("reseau", "flux", "strates", "comparaison")
+# `titre` et `terrain` viennent de l'analyse des references mathoholic : elles
+# ne dessinent pas un schema a cote du propos, elles rendent LE PROPOS en
+# geometrie lumineuse. C'est `titre` qui rend le studio universel -- une
+# formule, un mot, un symbole, une note : tous les themes passent par la.
+ARCHETYPES = ("reseau", "flux", "strates", "comparaison", "titre", "terrain")
 
 ACCENTS = {
     "orange": (1.0, 0.32, 0.04, 1.0),
