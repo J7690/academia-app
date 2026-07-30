@@ -28,7 +28,16 @@ apt-get update -qq
 apt-get install -y -qq \
   libxi6 libxxf86vm1 libxfixes3 libxrender1 libgl1 libsm6 libxkbcommon0 \
   git wget curl jq bc procps \
-  fonts-dejavu-core fonts-liberation2 fontconfig
+  fonts-dejavu-core fonts-liberation2 fontconfig \
+  libegl1 libgles2 libglvnd0 libgbm1 libopengl0 libglx0
+
+# libEGL est INDISPENSABLE a EEVEE Next pour rendre sans ecran. Sans elle,
+# Blender meurt sur « Couldn't open libEGL.so.1 ». Et comme ses `print` sont
+# bufferises quand la sortie passe dans un tube, le processus emporte TOUT le
+# journal en mourant -- y compris les mesures deja faites. Panne invisible :
+# journal vide, aucune erreur, aucune image produite.
+# Mesure du 30/07 sur A40 : EEVEE Next 2,51 s/image contre 6,00 s en Cycles,
+# sur une scene volumetrique + vegetation en filaments.
 
 # Les polices comptent : sans elles, tout objet texte 3D et toute incrustation
 # ffmpeg tombe sur une police de remplacement, et le rendu « premium » s'effondre.

@@ -196,13 +196,27 @@ def regler_eevee():
 
 
 def mesurer(nom_moteur, dossier):
+    """La PREMIERE image d'EEVEE paie la compilation des shaders -- une vingtaine
+    de secondes qui ne se represente jamais. La mesurer avec les autres
+    fausserait la comparaison du simple au double : on la sort du calcul."""
     scene = bpy.context.scene
     scene.render.filepath = f"{dossier}/{nom_moteur}_"
+
+    scene.frame_start = scene.frame_end = 1
+    debut_amorce = time.time()
+    bpy.ops.render.render(animation=True)
+    amorce = time.time() - debut_amorce
+
+    scene.frame_start, scene.frame_end = 2, IMAGES
     debut = time.time()
     bpy.ops.render.render(animation=True)
     total = time.time() - debut
-    print(f"BANC {nom_moteur} total={total:.1f}s par_image={total/IMAGES:.2f}s")
-    return total / IMAGES
+    par_image = total / max(IMAGES - 1, 1)
+
+    print(f"BANC {nom_moteur} amorce={amorce:.1f}s regime={total:.1f}s "
+          f"par_image={par_image:.2f}s", flush=True)
+    scene.frame_start, scene.frame_end = 1, IMAGES
+    return par_image
 
 
 def main():
@@ -213,18 +227,27 @@ def main():
     commun()
 
     os.makedirs(SORTIE, exist_ok=True)
+    moteurs = os.environ.get("BANC_MOTEURS", "cycles,eevee").split(",")
+    resultats = {}
 
-    regler_cycles()
-    cycles = mesurer("cycles", SORTIE)
+    if "cycles" in moteurs:
+        regler_cycles()
+        resultats["cycles"] = mesurer("cycles", SORTIE)
 
-    moteur = regler_eevee()
-    eevee = mesurer("eevee", SORTIE)
+    if "eevee" in moteurs:
+        # EEVEE Next exige libEGL pour rendre sans ecran. Sans elle, Blender
+        # meurt sur « Couldn't open libEGL.so.1 » -- et comme les `print` de
+        # Blender sont bufferises quand la sortie est un tube, TOUT le journal
+        # part avec, y compris les mesures deja faites. Piege coûteux.
+        regler_eevee()
+        resultats["eevee"] = mesurer("eevee", SORTIE)
 
-    print(f"BANC_RESULTAT cycles={cycles:.2f}s eevee={eevee:.2f}s "
-          f"rapport={cycles/eevee if eevee else 0:.1f}x moteur_eevee={moteur}")
+    print("BANC_RESULTAT " + " ".join(f"{n}={v:.2f}s" for n, v in resultats.items()), flush=True)
+    if len(resultats) == 2:
+        print(f"BANC_RAPPORT {resultats['cycles'] / resultats['eevee']:.1f}x", flush=True)
     # 4200 images = la video de reference (140 s a 30 i/s), a 0,44 $/h.
-    print(f"BANC_COUT_4200 cycles={cycles*4200/3600*0.44:.2f}USD "
-          f"eevee={eevee*4200/3600*0.44:.2f}USD")
+    for nom, valeur in resultats.items():
+        print(f"BANC_COUT_4200 {nom}={valeur * 4200 / 3600 * 0.44:.2f}USD", flush=True)
 
 
 main()
