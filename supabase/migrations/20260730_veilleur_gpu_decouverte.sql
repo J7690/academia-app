@@ -1,0 +1,47 @@
+-- 30/07/2026 — Veilleur GPU : decouverte automatique et mode de prototypage.
+--
+-- Trace des migrations appliquees en production :
+--   1. veilleur_gpu_decouverte_et_mode_manuel
+--   2. veilleur_gpu_reconciliation_par_liste
+-- Plus : Edge Function `runpod-watchdog` v2.
+--
+-- Suite de `20260730_veilleur_pods_gpu.sql`, qui laissait une limite explicite :
+-- le veilleur ne protegeait que les pods inscrits en base par le premier
+-- battement de coeur de l'agent. Un pod cree a la main dans la console, ou dont
+-- l'agent ne demarre jamais (mauvaise image, plantage au boot), restait
+-- invisible -- et facturait indefiniment. C'etait le trou par lequel l'argent
+-- part vraiment.
+--
+-- LA CORRECTION. Le veilleur demande desormais sa liste de pods a RunPod
+-- (`query { myself { pods { id name desiredStatus costPerHr } } }`) au lieu de
+-- se fier a notre seule table. Trois temps a chaque passage : decouverte,
+-- reconciliation, extinction.
+--
+-- DEUX MODES, et c'est le point de conception important.
+-- La phase 1 du cahier des charges prevoit un pod de PROTOTYPAGE : on installe
+-- ComfyUI et Blender a la main, en SSH, pendant des heures. Ce pod n'a aucun
+-- agent, donc aucun battement de coeur. Un veilleur applique betement l'aurait
+-- tue au bout de dix minutes de silence, en detruisant le travail en cours.
+--   `manuel` (defaut des pods decouverts) : seule la duree maximale s'applique,
+--            4 h. Le silence est normal, il ne prouve rien.
+--   `auto`   (des le premier battement de coeur) : les trois regles s'appliquent.
+-- Un pod bascule de `manuel` a `auto` quand son agent se manifeste -- il a
+-- prouve qu'il existe, on peut donc interpreter son silence comme une mort.
+--
+-- LE PLAFOND EST UNE LIMITE DE DEPENSE. La duree maximale de 4 h transforme un
+-- risque non borne (un pod oublie tout un week-end) en incident borne : quatre
+-- heures de GPU, une fois.
+--
+-- DEUX GARDE-FOUS CONTRE NOS PROPRES PANNES.
+--   * `gpu_pods_reconcilier(NULL)` ne fait RIEN. Sans ca, un echec reseau de
+--     l'appel RunPod ferait croire que toutes les machines ont disparu, et le
+--     veilleur cesserait de surveiller celles qui facturent.
+--   * La requete GraphQL n'interroge que des champs dont la syntaxe est
+--     confirmee. Un champ inconnu ferait echouer la requete ENTIERE et
+--     desactiverait la decouverte en silence -- la panne qu'on ne verrait pas.
+--
+-- Verifie en production : appel declenche, RunPod a repondu
+-- (`liste_runpod: 0`, valeur numerique et non message d'echec, donc la requete
+-- est valide et le compte n'a effectivement aucun pod), reconciliation
+-- `success: true`, aucune extinction. Le dispositif est en place AVANT la
+-- premiere location, ce qui etait tout l'objet.
