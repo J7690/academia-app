@@ -50,7 +50,18 @@ def journal(message: str) -> None:
 
 def deposer(chemin: str, cle: str) -> tuple[bool, str]:
     """Depot dans le bucket prive. C'est l'etape qui fait EXISTER le resultat ;
-    tout ce qui precede n'est que calcul jetable."""
+    tout ce qui precede n'est que calcul jetable.
+
+    PAS D'`x-upsert`. Il a coute une heure de diagnostic : l'ecrasement oblige
+    Supabase a VERIFIER si l'objet existe, donc a le LIRE -- or la lecture du
+    bucket est volontairement fermee, les videos ne sortant que par URL signee.
+    Resultat : un 403 « row-level security » parfaitement trompeur, alors que
+    la policy d'ecriture etait correcte.
+
+    Le chemin horodate resout les deux problemes a la fois : plus besoin
+    d'ecraser, et on conserve l'historique des rendus -- ce qui compte pour la
+    validation editoriale, ou l'on veut pouvoir comparer deux versions.
+    """
     if not (SUPABASE_URL and SUPABASE_KEY):
         return False, "configuration_supabase_absente"
     try:
@@ -64,7 +75,6 @@ def deposer(chemin: str, cle: str) -> tuple[bool, str]:
                 "apikey": SUPABASE_KEY,
                 "Authorization": f"Bearer {SUPABASE_KEY}",
                 "Content-Type": "video/mp4",
-                "x-upsert": "true",
             })
         with urllib.request.urlopen(requete, timeout=600) as reponse:
             return reponse.status < 300, str(reponse.status)
@@ -130,7 +140,9 @@ def main() -> int:
         return 4
 
     # ── 5. Depot ──────────────────────────────────────────────────────────
-    cle = f"capsules/{capsule['capsule_id']}/capsule.mp4"
+    # Horodate : chaque rendu garde sa trace, et aucun ecrasement n'est
+    # necessaire — voir `deposer`.
+    cle = f"capsules/{capsule['capsule_id']}/{int(depart)}/capsule.mp4"
     depose, detail = deposer(video, cle)
     journal(f"DEPOT {'reussi' if depose else 'ECHEC'} — {cle} ({detail})")
     if not depose:

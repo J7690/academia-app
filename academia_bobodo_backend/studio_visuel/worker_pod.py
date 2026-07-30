@@ -81,7 +81,6 @@ def deposer(chemin: pathlib.Path, cle: str) -> bool:
                     "apikey": SUPABASE_KEY,
                     "Authorization": f"Bearer {SUPABASE_KEY}",
                     "Content-Type": "video/mp4",
-                    "x-upsert": "true",
                 },
                 data=f,
                 timeout=600,
@@ -169,7 +168,9 @@ def traiter(job: dict) -> None:
         shutil.rmtree(dossier, ignore_errors=True)
         return
 
-    cle = f"capsules/{job['id']}/capsule.mp4"
+    # Pas d'ecrasement : voir le commentaire de `deposer` dans
+    # executer_capsule.py — l'upsert exige une lecture, fermee ici.
+    cle = f"capsules/{job['id']}/{int(debut)}/capsule.mp4"
     if not deposer(video, cle):
         # On NE marque PAS le job termine : sans depot, le resultat n'existe
         # pas. Il repassera en file plutot que d'etre perdu en silence.
