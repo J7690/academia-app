@@ -35,6 +35,32 @@ def _arbre_vierge(materiau):
     return arbre
 
 
+def filaire(objet, epaisseur=0.012):
+    """Transforme les aretes d'une maille en tubes visibles.
+
+    LE PIEGE. Le modificateur Wireframe travaille sur les FACES : il epaissit
+    le contour des polygones. Sur une geometrie qui n'a QUE des aretes -- un
+    reseau de noeuds, un cercle, un rail -- il ne produit rien du tout, et
+    surtout il ne produit rien EN SILENCE. Aucune erreur, juste un objet
+    invisible.
+
+    Un seul defaut expliquait trois symptomes : reseau sans liens, rail
+    invisible, et strates entierement noires.
+
+    La conversion en courbe avec un biseau est la seule methode fiable sur de
+    la geometrie purement filaire.
+    """
+    bpy.context.view_layer.objects.active = objet
+    bpy.ops.object.select_all(action="DESELECT")
+    objet.select_set(True)
+    bpy.ops.object.convert(target="CURVE")
+    courbe = objet.data
+    courbe.bevel_depth = epaisseur
+    courbe.bevel_resolution = 1      # 1 suffit a cette echelle, et coute moitie moins
+    courbe.fill_mode = "FULL"
+    return objet
+
+
 def matiere_emissive(nom, couleur, force):
     """Emission pure. Aucune lumiere dans la scene : ce sont les objets qui
     eclairent. C'est ce qui rend le style peu couteux -- rien a tracer."""

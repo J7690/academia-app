@@ -94,11 +94,9 @@ def _archetype_reseau(scene_def, images, accent, alea):
     maille.update()
     objet = bpy.data.objects.new("reseau", maille)
     bpy.context.collection.objects.link(objet)
-    # Le modificateur Wireframe transforme les aretes en tubes : la matiere
-    # « filaire » sans modeliser un seul lien.
-    fil = objet.modifiers.new("fil", "WIREFRAME")
-    fil.thickness = 0.011
+    # La matiere « filaire » sans modeliser un seul lien.
     objet.data.materials.append(style.matiere_emissive("lien", style.BLEU_FROID, 1.0))
+    style.filaire(objet, 0.011)
 
     # Chemin de proche en proche : un parcours qui saute d'un bout a l'autre
     # ne raconterait rien.
@@ -148,9 +146,8 @@ def _archetype_flux(scene_def, images, accent, alea):
     rail_mesh.update()
     rail = bpy.data.objects.new("rail", rail_mesh)
     bpy.context.collection.objects.link(rail)
-    fil = rail.modifiers.new("fil", "WIREFRAME")
-    fil.thickness = 0.02
     rail.data.materials.append(style.matiere_emissive("rail", style.BLEU_FROID, 0.9))
+    style.filaire(rail, 0.02)
 
     mat = style.matiere_emissive("particule", accent, 16.0)
     for indice in range(nb):
@@ -186,8 +183,6 @@ def _archetype_strates(scene_def, images, accent, alea):
         bpy.ops.mesh.primitive_circle_add(vertices=64, radius=rayon * (1 - indice * 0.09),
                                           location=(0, 0, z))
         anneau = bpy.context.object
-        fil = anneau.modifiers.new("fil", "WIREFRAME")
-        fil.thickness = 0.035
 
         # La derniere couche porte l'accent : c'est le palier vise. Les autres
         # restent froides -- une seule chose doit attirer l'oeil.
@@ -195,6 +190,7 @@ def _archetype_strates(scene_def, images, accent, alea):
         mat = style.matiere_emissive(
             f"strate_{indice}", accent if derniere else style.BLEU_FROID, 0.5)
         anneau.data.materials.append(mat)
+        style.filaire(anneau, 0.035)
 
         debut = int(images * 0.08) + indice * int(images * 0.70 / max(nb, 1))
         _pulser(mat, debut, images, 22.0 if derniere else 6.0)
@@ -229,8 +225,7 @@ def _archetype_comparaison(scene_def, images, accent, alea):
         maille.update()
         objet = bpy.data.objects.new(f"groupe_{cote}", maille)
         bpy.context.collection.objects.link(objet)
-        fil = objet.modifiers.new("fil", "WIREFRAME")
-        fil.thickness = 0.014
+
 
         # Le groupe retenu s'allume en second : on montre l'alternative AVANT
         # de designer le choix, sinon la comparaison n'a pas eu lieu.
@@ -238,6 +233,7 @@ def _archetype_comparaison(scene_def, images, accent, alea):
         mat = style.matiere_emissive(
             f"groupe_{cote}", accent if retenu else style.BLEU_FROID, 0.6)
         objet.data.materials.append(mat)
+        style.filaire(objet, 0.014)
         debut = int(images * (0.45 if retenu else 0.12))
         _pulser(mat, debut, images, 18.0 if retenu else 5.0)
 
