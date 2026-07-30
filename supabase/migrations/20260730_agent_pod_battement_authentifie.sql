@@ -1,0 +1,52 @@
+-- 30/07/2026 — Battement de coeur authentifie, et extinction sur inactivite reelle.
+--
+-- Trace de la migration appliquee en production :
+--   `agent_pod_battement_de_coeur_authentifie`
+--   app.gpu_pods : colonnes `jeton` et `activite`
+--   public.gpu_pod_heartbeat(pod_id, jeton, busy, activite)  -- ancienne signature supprimee
+-- Plus : `academia_bobodo_backend/studio_visuel/agent_pod.sh`, deploye sur le pod.
+--
+-- LE TROU QU'ON BOUCHE. Le mode `manuel` protegeait le prototypage en SSH en
+-- desactivant les regles d'inactivite -- mais du coup une machine oubliee
+-- facturait jusqu'au plafond de 4 h, meme sans rien faire. Or 4 h a 0,44 $/h
+-- font 1,76 $ a chaque oubli.
+--
+-- POURQUOI « PERSONNE NE PARLE » NE PEUT PAS SIGNIFIER « INACTIF ». Le silence
+-- ne prouve rien : une installation apt/pip ne sollicite pas le GPU, et un
+-- rendu de quarante minutes ne produit aucune connexion. Prendre le silence
+-- pour de l'inactivite ferait tuer des machines en plein travail -- c'est
+-- exactement l'erreur que le mode `manuel` evitait.
+--
+-- LA MACHINE DECLARE DONC SON ACTIVITE REELLE. L'agent repond « occupee » si
+-- l'une quelconque de ces trois preuves existe :
+--   gpu     : utilisation du GPU au-dessus du seuil
+--   rendu   : un processus blender / ComfyUI / ffmpeg tourne
+--   session : quelqu'un est connecte en SSH
+-- Aucune des trois -> `rien`, et le compteur d'inactivite court. Le troisieme
+-- point est ce qui remplace le mode `manuel` : le prototypage reste protege,
+-- mais parce qu'on constate une session ouverte, pas parce qu'on a desactive
+-- la surveillance.
+--
+-- LE JETON. L'agent tourne SUR une machine louee : il ne peut pas y detenir la
+-- cle de service, qui ouvrirait toute la base. Chaque pod recoit donc un jeton
+-- propre, sans aucun pouvoir au-dela du battement de coeur. Meme vole, il ne
+-- permet que de maintenir SA machine en vie -- ce que borne de toute facon
+-- `max_lifetime_minutes`. La fonction est ouverte a `anon` : c'est le jeton qui
+-- authentifie, pas la session Supabase, puisqu'un pod n'a pas de compte.
+--
+-- SENS DE LA PANNE. Si l'agent meurt, le silence declenche l'extinction au
+-- bout de 12 minutes. Un rendu en cours serait perdu -- c'est assume : perdre
+-- un rendu coute quelques centimes, laisser une machine facturer un week-end
+-- en coute plusieurs dizaines. La panne doit toujours pencher du cote qui ne
+-- coute rien.
+--
+-- Delais retenus : inactivite 15 min, silence 12 min, duree maximale 4 h.
+--
+-- Verifie en production : agent demarre sur le pod tmbctbnpiux3lb, bascule
+-- automatique de `manuel` a `auto` des le premier battement, `activite=rendu`
+-- correctement detectee pendant que Blender tournait, battements toutes les
+-- 60 s.
+--
+-- PIEGE RENCONTRE, note pour la prochaine fois : `pkill -f agent_pod.sh` tue
+-- la session SSH qui lance la commande, puisque le motif correspond a sa
+-- propre ligne de commande. Utiliser `pkill -f 'agent[_]pod\.sh'`.
