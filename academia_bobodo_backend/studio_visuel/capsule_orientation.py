@@ -22,16 +22,24 @@
 
 import bpy
 import math
+import os
 import random
 
 # ── Parametres ────────────────────────────────────────────────────────────
-FPS = 25
-DUREE_S = 20
+# Pilotables par le manifeste du job (section 6 du cahier des charges) : le
+# worker les passe en variables d'environnement, seule voie propre pour
+# parametrer un script Blender lance en `-b --python`.
+FPS = int(os.environ.get("STUDIO_FPS", "25"))
+DUREE_S = int(os.environ.get("STUDIO_DUREE_S", "20"))
+SAMPLES = int(os.environ.get("STUDIO_SAMPLES", "64"))
+LARGEUR = int(os.environ.get("STUDIO_LARGEUR", "1080"))
+HAUTEUR = int(os.environ.get("STUDIO_HAUTEUR", "1920"))
+SORTIE = os.environ.get("STUDIO_SORTIE", "/workspace/pilote/frames/f_")
+
 IMAGES = FPS * DUREE_S
 NB_NOEUDS = 44
 DISTANCE_LIEN = 2.6          # deux noeuds plus proches que ca sont relies
 CHEMIN = 7                   # nombre d'etapes du parcours mis en avant
-SORTIE = "/workspace/pilote/frames/f_"
 
 CYAN = (0.15, 0.62, 1.0, 1.0)
 ORANGE = (1.0, 0.36, 0.09, 1.0)
@@ -187,13 +195,22 @@ def reglages_rendu():
         appareil.use = (appareil.type == "OPTIX")
     scene.cycles.device = "GPU"
 
-    scene.cycles.samples = 64
+    scene.cycles.samples = SAMPLES
     scene.cycles.use_denoising = True
     scene.cycles.denoiser = "OPTIX"
     scene.cycles.max_bounces = 2          # scene emissive : les rebonds ne servent a rien
 
-    scene.render.resolution_x = 1080
-    scene.render.resolution_y = 1920
+    # AgX : la gestion couleur par defaut de Blender 4.x. Elle tient les hautes
+    # lumieres au lieu de les cramer en blanc -- decisif quand toute la scene
+    # est faite d'emissions vives sur fond noir.
+    try:
+        scene.view_settings.view_transform = "AgX"
+        scene.view_settings.look = "AgX - Medium High Contrast"
+    except TypeError:
+        pass                              # versions anterieures : on garde Filmic
+
+    scene.render.resolution_x = LARGEUR
+    scene.render.resolution_y = HAUTEUR
     scene.render.fps = FPS
     scene.frame_start = 1
     scene.frame_end = IMAGES

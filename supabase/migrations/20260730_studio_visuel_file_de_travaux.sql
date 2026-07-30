@@ -1,0 +1,43 @@
+-- 30/07/2026 — Studio visuel : file de travaux et depot des resultats.
+--
+-- Trace de la migration appliquee en production : `studio_visuel_file_de_travaux`
+--   app.studio_jobs
+--   public.studio_prendre_job(pod_id, jeton)
+--   public.studio_avancement(job_id, pod_id, jeton, faites, total)
+--   public.studio_terminer_job(job_id, pod_id, jeton, chemin, duree, poids, secondes, erreur)
+--   bucket prive `studio-visuel`
+--
+-- LA LECON QUI A ETE PAYEE. Le 30/07, la capsule pilote a ete rendue avec
+-- succes -- 500 images, 18 min 38 s, 0,137 $ -- puis PERDUE. L'agent de
+-- presence est mort, le veilleur a constate le silence et supprime la machine
+-- pendant le telechargement manuel du fichier. `podTerminate` efface
+-- /workspace.
+--   => UN RESULTAT QUI N'EST PAS SORTI DE LA MACHINE N'EXISTE PAS.
+-- Le depot dans Supabase Storage fait donc partie du travail, pas d'une etape
+-- manuelle posterieure. C'est exactement l'etape 8 du cahier des charges, et
+-- il a fallu perdre un rendu pour la prendre au serieux.
+--
+-- Le worker ne marque JAMAIS un job termine avant que l'upload ait reussi. En
+-- cas d'echec de depot, le job part en `failed` plutot que de disparaitre en
+-- silence -- une panne visible vaut mieux qu'un resultat fantome.
+--
+-- ARCHITECTURE. Le worker sur le pod INTERROGE cette table vers l'exterieur,
+-- comme le worker Smart Whiteboard interroge `whiteboard_renders`. Aucun port
+-- entrant, aucun tunnel, rien a ouvrir sur le pare-feu -- et l'adresse
+-- changeante d'un pod ephemere n'a aucune importance.
+--
+-- AUTHENTIFICATION. Le pod s'identifie par son jeton (voir
+-- `20260730_agent_pod_battement_authentifie.sql`), jamais par la cle de
+-- service : il tourne sur une machine louee dont nous ne controlons pas
+-- l'hote. `studio_prendre_job` refuse d'ailleurs un pod qui n'est pas
+-- `running` dans app.gpu_pods.
+--
+-- FILE CONCURRENTE. `FOR UPDATE SKIP LOCKED` : plusieurs pods peuvent piocher
+-- sans se marcher dessus, ce qui prepare la parallelisation sans rien changer.
+--
+-- VALIDATION HUMAINE. Un job termine passe en `preview_ready`, JAMAIS en
+-- `approved`. Le cahier des charges impose une validation humaine avant toute
+-- mise en ligne, et la section d'en-tete interdit toute diffusion automatique.
+-- Le bucket est prive : les videos sortent par URL signee.
+--
+-- Statuts alignes sur la section 11 du cahier des charges.
