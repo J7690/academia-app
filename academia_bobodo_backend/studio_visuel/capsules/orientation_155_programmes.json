@@ -1,0 +1,43 @@
+{
+  "capsule_id": "orientation_155_programmes",
+  "titre": "155 programmes, et vous n'en connaissez que cinq",
+  "format": { "largeur": 1080, "hauteur": 1920, "fps": 25 },
+  "scenes": [
+    {
+      "id": "accroche",
+      "archetype": "reseau",
+      "titre": "L'accroche",
+      "narration": "Cent cinquante-cinq programmes sont ouverts au Burkina Faso. La plupart des etudiants n'en citent que cinq.",
+      "accent": "orange",
+      "camera": "orbite",
+      "parametres": { "noeuds": 48, "chemin": 5 }
+    },
+    {
+      "id": "probleme",
+      "archetype": "comparaison",
+      "titre": "Le probleme",
+      "narration": "Choisir sur le nom d'une filiere, ce n'est pas choisir. Deux formations voisines peuvent mener a des metiers opposes.",
+      "accent": "or",
+      "camera": "recul",
+      "parametres": { "noeuds_par_groupe": 24 }
+    },
+    {
+      "id": "mecanisme",
+      "archetype": "strates",
+      "titre": "Le mecanisme",
+      "narration": "Un parcours se construit palier par palier. Chaque niveau ouvre les portes du suivant, et referme celles qu'on n'a pas prises.",
+      "accent": "orange",
+      "camera": "montee",
+      "parametres": { "couches": 5 }
+    },
+    {
+      "id": "solution",
+      "archetype": "flux",
+      "titre": "La solution",
+      "narration": "Remonter depuis le metier vise jusqu'a la formation, plutot que l'inverse. Le chemin devient lisible.",
+      "accent": "vert",
+      "camera": "avance",
+      "parametres": { "particules": 60, "tours": 1.6 }
+    }
+  ]
+}
