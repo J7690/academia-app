@@ -23,6 +23,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import httpx
+
 logger = logging.getLogger("whiteboard_video_capture")
 
 VISION_DIR = Path("/opt/whiteboard-worker/vision_engine")
@@ -58,6 +60,56 @@ PREVIEW_SEC = 15.0
 # En dessous de cette durée totale, l'aperçu n'a pas de sens : la vidéo complète
 # arrivera de toute façon presque aussi vite.
 MIN_DURATION_FOR_PREVIEW = 60.0
+
+# ── Parallélisation MULTI-MACHINES (28/07/2026) ─────────────────────────────
+# `PARALLEL_SLICES` distribue déjà les tranches sur les cœurs d'UNE machine. Au-delà
+# de son nombre de cœurs, ajouter des tranches n'aide plus (cf. mesure du 26/07 :
+# 17 % de surcoût par tranche). Le vrai levier, utilisé par les plateformes qui
+# rendent vite (Remotion Lambda et consorts), est de distribuer sur PLUSIEURS
+# machines. `WHITEBOARD_REMOTE_WORKERS` (URLs séparées par des virgules, ex.
+# "http://31.207.x.x:8077,http://31.207.y.y:8077") ajoute des machines de capture
+# (voir capture_agent.py + docs/PARALLELISATION_MULTI_MACHINES_2026-07-28.md).
+# Vide par défaut : comportement inchangé, tout reste local.
+REMOTE_WORKERS = [
+    u.strip() for u in (os.getenv("WHITEBOARD_REMOTE_WORKERS") or "").split(",") if u.strip()
+]
+REMOTE_WORKER_KEY = os.getenv("WHITEBOARD_REMOTE_WORKER_KEY", "").strip()
+REMOTE_CAPTURE_OVERHEAD_SEC = 120  # marge reseau/upload en plus du temps de capture
+
+
+def _record_page_remote(
+    worker_url: str,
+    html_path: Path,
+    output_path: Path,
+    duration_sec: float,
+    fps: int,
+    start_sec: float,
+) -> Path:
+    """Delegue la capture d'une tranche a un agent distant (voir capture_agent.py)."""
+    payload = {
+        "html": html_path.read_text(encoding="utf-8"),
+        "duration_sec": duration_sec,
+        "fps": fps,
+        "start_sec": start_sec,
+    }
+    timeout = duration_sec + REMOTE_CAPTURE_OVERHEAD_SEC
+    logger.info(
+        "[capture] tranche de %.1f s (depart %.1f s) deleguee a %s",
+        duration_sec, start_sec, worker_url,
+    )
+    resp = httpx.post(
+        f"{worker_url.rstrip('/')}/capture",
+        json=payload,
+        headers={"X-Capture-Key": REMOTE_WORKER_KEY},
+        timeout=timeout,
+    )
+    if resp.status_code != 200:
+        raise RuntimeError(
+            f"agent distant {worker_url} a repondu {resp.status_code}: {resp.text[:300]}"
+        )
+    output_path.write_bytes(resp.content)
+    return output_path
+
 
 # Marge filmée EN PLUS de la durée demandée, puis jetée au rognage.
 # Le fichier brut commence par une amorce (~1,2 s : le temps que Playwright ouvre la

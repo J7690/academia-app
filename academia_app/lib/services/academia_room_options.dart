@@ -23,6 +23,26 @@ import 'package:livekit_client/livekit_client.dart';
 class AcademiaRoomOptions {
   const AcademiaRoomOptions._();
 
+  /// Traitement du signal micro, appliqué à TOUS les profils.
+  ///
+  /// Ces trois filtres tournent dans le moteur WebRTC et sont la seule défense
+  /// contre l'effet Larsen quand un participant écoute au haut-parleur — le cas
+  /// normal sur téléphone. Ils étaient jusqu'ici laissés implicites : les
+  /// rendre explicites documente l'intention et protège d'un changement de
+  /// valeur par défaut du SDK.
+  ///
+  /// * **echoCancellation** — retire du micro le son que le haut-parleur vient
+  ///   d'émettre. Sans lui, la voix de l'interlocuteur lui revient en écho.
+  /// * **noiseSuppression** — atténue les bruits de fond continus (ventilateur,
+  ///   rue), fréquents en contexte scolaire.
+  /// * **autoGainControl** — égalise le niveau : l'élève qui parle loin du
+  ///   téléphone reste audible sans saturer quand il se rapproche.
+  static const AudioCaptureOptions _audio = AudioCaptureOptions(
+    echoCancellation: true,
+    noiseSuppression: true,
+    autoGainControl: true,
+  );
+
   /// Salle interactive : classe, atelier, consultation, TD.
   /// Tout le monde peut publier, la grille affiche plusieurs vignettes —
   /// c'est le cas où adaptiveStream rapporte le plus.
@@ -32,6 +52,7 @@ class AcademiaRoomOptions {
     defaultVideoPublishOptions: VideoPublishOptions(
       simulcast: true,
     ),
+    defaultAudioCaptureOptions: _audio,
   );
 
   /// Diffusion verticale et duo : un ou deux publieurs, N spectateurs.
@@ -43,6 +64,7 @@ class AcademiaRoomOptions {
     defaultVideoPublishOptions: VideoPublishOptions(
       simulcast: true,
     ),
+    defaultAudioCaptureOptions: _audio,
   );
 
   /// Live de partie de jeu : le joueur publie sa voix et éventuellement sa
@@ -54,6 +76,7 @@ class AcademiaRoomOptions {
     defaultVideoPublishOptions: VideoPublishOptions(
       simulcast: true,
     ),
+    defaultAudioCaptureOptions: _audio,
   );
 
   /// Entretien à deux : consultation d'orientation, aide TD individuelle.
@@ -71,6 +94,7 @@ class AcademiaRoomOptions {
     defaultVideoPublishOptions: VideoPublishOptions(
       simulcast: false,
     ),
+    defaultAudioCaptureOptions: _audio,
   );
 
   /// Choisit le profil d'après le nombre de places de la séance.
