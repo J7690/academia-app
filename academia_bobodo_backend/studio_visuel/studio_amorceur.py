@@ -154,11 +154,27 @@ SUP
 chmod +x /workspace/superviseur.sh
 pkill -f 'superviseur[.]sh' 2>/dev/null || true
 setsid bash /workspace/superviseur.sh </dev/null >>/workspace/superviseur.log 2>&1 &
+sleep 2
+# Le temoin n'est pose QUE si le superviseur tourne reellement. Un fichier
+# ecrit avant verification ne prouverait rien.
+pgrep -f 'superviseur[.]sh' >/dev/null && touch /workspace/amorce.ok
 echo AMORCAGE_OK
 """
-    r = _ssh(hote, port, f"cat > /workspace/amorcer.sh <<'SCRIPT'\n{script}\nSCRIPT\nbash /workspace/amorcer.sh; tail -2 /workspace/amorcage.log", 2400)
-    if "AMORCAGE_OK" not in (r.stdout or ""):
-        journal(f"amorcage incomplet : {(r.stdout or r.stderr)[-300:]}")
+    # LE SUCCES SE CONSTATE PAR UN FICHIER TEMOIN, PAS PAR LA SORTIE STANDARD.
+    #
+    # Premiere version : on cherchait « AMORCAGE_OK » dans la sortie de la
+    # commande SSH. Or le script redirige tout vers son journal, et il finit par
+    # un `setsid ... &` qui garde le canal ouvert -- la sortie revenait vide et
+    # l'amorcage etait declare incomplet ALORS QU'IL AVAIT REUSSI. L'amorceur
+    # reessayait alors toutes les trente secondes sur une machine deja au
+    # travail.
+    #
+    # Un fichier ne ment pas et survit a la fermeture du canal.
+    _ssh(hote, port,
+         f"cat > /workspace/amorcer.sh <<'SCRIPT'\n{script}\nSCRIPT\nbash /workspace/amorcer.sh", 2400)
+    temoin = _ssh(hote, port, "test -f /workspace/amorce.ok && echo TEMOIN_PRESENT", 60)
+    if "TEMOIN_PRESENT" not in (temoin.stdout or ""):
+        journal(f"amorcage incomplet : {(temoin.stdout or temoin.stderr or '')[-200:] or 'temoin absent'}")
         return False
 
     rpc("gpu_pod_marquer_amorce", {"p_pod_id": pod_id})
