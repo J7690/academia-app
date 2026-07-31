@@ -55,7 +55,15 @@ async function appelRunpod(cle: string, query: string): Promise<Resultat> {
  * decouverte en silence, ce qui est exactement la panne qu'on ne verrait pas.
  */
 async function listerPods(cle: string) {
-  const r = await appelRunpod(cle, `query { myself { pods { id name desiredStatus costPerHr } } }`);
+  // On releve aussi les ports : l'adresse SSH n'existe pas au moment de la
+  // creation -- le `runtime` est nul pendant une minute environ. Le veilleur
+  // passant toutes les deux minutes, c'est lui qui est le mieux place pour
+  // l'inscrire des qu'elle apparait. Sans elle, LWS ne peut pas amorcer la
+  // machine, et une machine non amorcee facture sans pouvoir travailler.
+  const r = await appelRunpod(cle, `query { myself { pods {
+    id name desiredStatus costPerHr
+    runtime { ports { ip isIpPublic privatePort publicPort type } }
+  } } }`);
   if (!r.ok) return { ok: false, pods: [] as any[], detail: r.detail };
   const pods = r.corps?.data?.myself?.pods;
   if (!Array.isArray(pods)) return { ok: false, pods: [] as any[], detail: "liste_illisible" };
@@ -113,6 +121,7 @@ Deno.serve(async () => {
       String(p?.desiredStatus ?? "").toUpperCase() === "RUNNING"
     );
 
+    let adresses = 0;
     for (const p of actifs) {
       await rpc("gpu_pod_inscrire_decouvert", {
         p_pod_id: String(p.id ?? ""),
@@ -120,8 +129,23 @@ Deno.serve(async () => {
         p_gpu: null,
         p_cout: typeof p.costPerHr === "number" ? p.costPerHr : null,
       });
+
+      // Le port 22 expose en TCP public : c'est par la que LWS amorcera.
+      const ssh = (p?.runtime?.ports ?? []).find(
+        (port: any) => Number(port?.privatePort) === 22 &&
+                       String(port?.type ?? "").toLowerCase() === "tcp" &&
+                       port?.isIpPublic === true);
+      if (ssh?.ip && ssh?.publicPort) {
+        await rpc("gpu_pod_adresse", {
+          p_pod_id: String(p.id ?? ""),
+          p_hote: String(ssh.ip),
+          p_port: Number(ssh.publicPort),
+        });
+        adresses += 1;
+      }
     }
     rapport.actifs_chez_runpod = actifs.length;
+    rapport.adresses_relevees = adresses;
 
     // ── 2. Reconciliation ──────────────────────────────────────────────────
     // Uniquement si la liste a bien ete obtenue : sinon une panne reseau

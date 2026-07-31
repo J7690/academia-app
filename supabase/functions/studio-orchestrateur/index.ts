@@ -114,14 +114,23 @@ Deno.serve(async () => {
   }
 
   // ── Creation ──────────────────────────────────────────────────────────
-  const clePublique = Deno.env.get("STUDIO_CLE_PUBLIQUE") ?? "";
-  if (!/^ssh-(ed25519|rsa) [A-Za-z0-9+/=]+( \S+)?$/.test(clePublique.trim())) {
+  // PLUSIEURS cles, une par ligne : celle de LWS pour amorcer la machine,
+  // celle du poste de developpement pour pouvoir diagnostiquer. Une validation
+  // mono-ligne aurait rejete l'ensemble, et un retour a la ligne brut casserait
+  // la requete GraphQL -- d'ou l'echappement en `\n` litteral.
+  const lignes = (Deno.env.get("STUDIO_CLE_PUBLIQUE") ?? "")
+    .split("\n").map((l) => l.trim()).filter(Boolean);
+  const valides = lignes.filter((l) => /^ssh-(ed25519|rsa) [A-Za-z0-9+/=]+( \S+)?$/.test(l));
+
+  if (valides.length === 0) {
     // Sans cle publique, l'image ne demarre pas sshd : la machine facturerait
     // sans etre joignable, donc sans jamais pouvoir etre amorcee.
     return new Response(JSON.stringify({
       success: false, error: "STUDIO_CLE_PUBLIQUE absente ou invalide",
+      lignes_lues: lignes.length,
     }), { status: 500, headers: { "content-type": "application/json" } });
   }
+  const clePublique = valides.join("\\n").replace(/"/g, "");
 
   const creation = await appelRunpod(cleRunpod, `mutation {
     podFindAndDeployOnDemand(input: {
@@ -132,7 +141,7 @@ Deno.serve(async () => {
       imageName: "${IMAGE}",
       ports: "22/tcp",
       volumeMountPath: "/workspace",
-      env: [{key: "PUBLIC_KEY", value: "${clePublique.trim().replace(/"/g, "")}"}]
+      env: [{key: "PUBLIC_KEY", value: "${clePublique}"}]
     }) { id name costPerHr }
   }`);
 
