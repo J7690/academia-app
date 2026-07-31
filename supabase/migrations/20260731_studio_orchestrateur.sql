@@ -1,0 +1,47 @@
+-- 31/07/2026 — Phase 4 : la file cree la machine, plus l'humain.
+--
+-- Trace des migrations appliquees : `studio_orchestrateur_amorcage`
+--   app.gpu_pods : colonnes ssh_hote, ssh_port, amorce, amorce_at
+--   public.studio_etat_file()
+--   public.gpu_pod_adresse(pod_id, hote, port)
+--   public.gpu_pod_a_amorcer()
+--   public.gpu_pod_marquer_amorce(pod_id)
+-- Plus : Edge Function `studio-orchestrateur` et tache pg_cron du meme nom,
+-- toutes les trois minutes -- CREEE INACTIVE, voir plus bas.
+--
+-- L'ORCHESTRATEUR REFUSE TROIS FOIS, et chaque refus a coute quelque chose
+-- pour etre compris :
+--
+--   1. Jamais deux machines. Le cahier des charges impose une seule tache GPU
+--      pendant le prototype, et deux pods oublies coutent deux fois. On
+--      interroge RUNPOD lui-meme, pas seulement notre table : une machine
+--      creee hors de ce circuit facture tout autant.
+--   2. Jamais sans travail en attente. Une machine sans file facture pour rien.
+--   3. Jamais au-dela de 5 $ par jour. C'est le garde-fou qui manquait
+--      partout : sans lui, une boucle de jobs en echec relancerait des
+--      machines indefiniment.
+--
+-- Plus un quatrieme, appris a nos depens le 30/07 : le tarif reel n'est connu
+-- qu'APRES la creation -- le catalogue annonce le prix le plus bas, la machine
+-- attribuee peut couter davantage. L'orchestrateur revalide et DEFAIT la
+-- machine si elle depasse le plafond horaire, plutot que de la laisser tourner
+-- au mauvais tarif.
+--
+-- POURQUOI LA TACHE EST CREEE INACTIVE.
+-- L'orchestrateur sait creer une machine, mais personne ne sait encore
+-- l'AMORCER : un pod neuf ne contient ni Blender ni nos scripts, et une Edge
+-- Function ne peut pas s'y connecter en SSH. L'activer maintenant creerait une
+-- machine incapable de travailler, qui facturerait jusqu'a son plafond de
+-- quatre heures -- soit 1,76 $ jetes a chaque travail mis en file.
+-- Elle s'active quand `studio_amorceur.py` tournera sur LWS.
+--
+-- LE PARTAGE DES SECRETS EST VOLONTAIRE. La cle RunPod reste chez Supabase,
+-- la cle SSH reste sur LWS, et aucune des deux moities n'a besoin de ce que
+-- detient l'autre. C'est ce qui permet a la machine louee de n'avoir jamais
+-- que son propre jeton.
+--
+-- Verifie en production : file vide -> `action: rien`, aucune machine creee, et
+-- la depense des 24 h correctement remontee (1,258 $).
+--
+-- Note d'exploitation : `cron.job` n'est pas modifiable en UPDATE direct
+-- (permission denied). Passer par `cron.alter_job(jobid, active := ...)`.
