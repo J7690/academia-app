@@ -335,13 +335,222 @@ def _archetype_terrain(scene_def, images, accent, alea):
     return 15.0
 
 
+# ── Archetype : silhouette ────────────────────────────────────────────────
+
+def _archetype_silhouette(scene_def, images, accent, alea):
+    """Un contour quelconque, en volume et en hologramme.
+
+    C'EST LA BRIQUE QUI OUVRE TOUTES LES DISCIPLINES. Un fichier SVG de
+    quelques kilo-octets remplace des semaines de modelisation : un organe pour
+    la medecine, un os pour l'archeologie, un pays pour la geographie, un
+    instrument pour la musique, une feuille pour l'agroalimentaire, un plan
+    pour l'architecture, un symbole pour la religion.
+
+    Le contenu change, le traitement reste -- c'est exactement ce qui fait
+    qu'une chaine comme mathoholic garde la meme identite sur des sujets sans
+    rapport.
+
+    Sans SVG fourni, on retombe sur du texte en volume : degradation gracieuse,
+    la scene existe toujours.
+    """
+    p = scene_def["parametres"]
+    chemin = str(p.get("svg") or "")
+    echelle = float(p.get("echelle", 6.0))
+
+    objets = []
+    if chemin and os.path.isfile(chemin):
+        avant = set(bpy.data.objects)
+        try:
+            bpy.ops.import_curve.svg(filepath=chemin)
+            objets = [o for o in bpy.data.objects if o not in avant]
+        except Exception as e:  # noqa: BLE001
+            print(f"SVG illisible ({e}) — repli sur le texte", flush=True)
+
+    if not objets:
+        # Repli : le sujet en toutes lettres plutot qu'une scene vide.
+        secours = str(p.get("texte") or scene_def.get("titre") or "?")
+        objets = [style.texte_3d(secours, taille=1.6, extrusion=0.10)]
+        echelle = 1.0
+
+    matiere = style.matiere_hologramme("silhouette", style.BLEU_FROID, 6.5)
+    accent_mat = style.matiere_hologramme("silhouette_accent", accent, 0.8)
+
+    for indice, objet in enumerate(objets):
+        if objet.type == "CURVE":
+            objet.data.extrude = 0.05
+            objet.data.bevel_depth = 0.008
+            objet.data.fill_mode = "BOTH"
+        objet.scale = (echelle, echelle, echelle)
+        objet.location = (0, 0, 0)
+        objet.data.materials.clear()
+        # Une piece sur trois prend l'accent : c'est ce qui fait lire un objet
+        # comme « compose de parties » plutot que comme une masse uniforme.
+        objet.data.materials.append(accent_mat if indice % 3 == 1 else matiere)
+
+    _pulser(accent_mat, _debut_accroche(images, 0, 1, 0.18), images, 9.0)
+
+    sol = style.sol_grille(cote=26.0, pas=46, amplitude=0.5, graine=alea.randint(1, 99))
+    sol.location = (0, 0, -3.2)
+    sol.data.materials.append(style.matiere_emissive("grille", style.BLEU_FROID, 0.6))
+    style.filaire(sol, 0.008)
+
+    return 11.0
+
+
+# ── Archetype : chronologie ───────────────────────────────────────────────
+
+def _archetype_chronologie(scene_def, images, accent, alea):
+    """Une frise dans l'espace : jalons qui s'allument l'un apres l'autre.
+
+    Histoire, archeologie, biographie, etapes d'un dossier, evolution d'une
+    reglementation. Le temps se lit dans le TEMPS de la video, pas dans une
+    legende -- c'est ce qui distingue une frise animee d'une image fixe.
+    """
+    p = scene_def["parametres"]
+    jalons = p.get("jalons")
+    if not isinstance(jalons, list) or not jalons:
+        jalons = ["1", "2", "3", "4"]
+    jalons = [str(j) for j in jalons][:8]
+    longueur = float(p.get("longueur", 14.0))
+
+    # L'axe : on voit la duree entiere avant que les jalons ne s'allument.
+    pas = longueur / max(len(jalons) - 1, 1)
+    debut_x = -longueur / 2
+    axe_points = [(debut_x + longueur * i / 40, 0, 0) for i in range(41)]
+    axe_mesh = bpy.data.meshes.new("axe")
+    axe_mesh.from_pydata(axe_points, [(i, i + 1) for i in range(40)], [])
+    axe_mesh.update()
+    axe = bpy.data.objects.new("axe", axe_mesh)
+    bpy.context.collection.objects.link(axe)
+    axe.data.materials.append(style.matiere_emissive("axe", style.BLEU_FROID, 1.2))
+    style.filaire(axe, 0.02)
+
+    for rang, etiquette in enumerate(jalons):
+        x = debut_x + rang * pas
+        bpy.ops.mesh.primitive_ico_sphere_add(radius=0.16, subdivisions=2, location=(x, 0, 0))
+        borne = bpy.context.object
+        mat = style.matiere_emissive(f"jalon_{rang}", accent, 0.5)
+        borne.data.materials.append(mat)
+
+        # L'etiquette alterne au-dessus et en dessous : sur huit jalons, tout
+        # aligner du meme cote rend le texte illisible.
+        hauteur = 0.85 if rang % 2 == 0 else -0.95
+        texte = style.texte_3d(etiquette, taille=0.42, extrusion=0.03,
+                               position=(x, 0, hauteur),
+                               rotation=(math.radians(90), 0, 0))
+        texte.data.materials.append(style.matiere_hologramme(f"date_{rang}", accent, 5.0))
+
+        debut = _debut_accroche(images, rang, len(jalons), 0.10)
+        _pulser(mat, debut, images, 20.0)
+
+    return longueur * 0.95
+
+
+# ── Archetype : carte ─────────────────────────────────────────────────────
+
+def _archetype_carte(scene_def, images, accent, alea):
+    """Un territoire, des points, des routes en arc.
+
+    Geographie, migrations, commerce, propagation d'une epidemie, reseau
+    d'etablissements. L'arc plutot que la ligne droite : il se lit comme un
+    trajet, quand une droite se lit comme une simple relation.
+    """
+    p = scene_def["parametres"]
+    nb_points = int(p.get("points", 7))
+    etendue = float(p.get("etendue", 9.0))
+
+    sol = style.sol_grille(cote=etendue * 2.6, pas=54, amplitude=0.45,
+                           graine=alea.randint(1, 99))
+    sol.data.materials.append(style.matiere_emissive("territoire", style.BLEU_FROID, 0.7))
+    style.filaire(sol, 0.007)
+
+    lieux = [(alea.uniform(-etendue, etendue), alea.uniform(-etendue, etendue), 0.35)
+             for _ in range(nb_points)]
+
+    for rang, lieu in enumerate(lieux):
+        bpy.ops.mesh.primitive_ico_sphere_add(radius=0.17, subdivisions=2, location=lieu)
+        point = bpy.context.object
+        mat = style.matiere_emissive(f"lieu_{rang}", accent, 0.5)
+        point.data.materials.append(mat)
+        _pulser(mat, _debut_accroche(images, rang, nb_points, 0.08), images, 18.0)
+
+    # Les routes relient chaque lieu au suivant, en arc.
+    matiere_route = style.matiere_emissive("route", accent, 3.2)
+    for rang in range(len(lieux) - 1):
+        depart, arrivee = lieux[rang], lieux[rang + 1]
+        distance = math.dist(depart[:2], arrivee[:2])
+        sommet = 0.35 + distance * 0.28
+        points_arc = []
+        for i in range(25):
+            t = i / 24
+            x = depart[0] + (arrivee[0] - depart[0]) * t
+            y = depart[1] + (arrivee[1] - depart[1]) * t
+            z = 0.35 + math.sin(t * math.pi) * sommet
+            points_arc.append((x, y, z))
+        maille = bpy.data.meshes.new(f"route_{rang}")
+        maille.from_pydata(points_arc, [(i, i + 1) for i in range(24)], [])
+        maille.update()
+        route = bpy.data.objects.new(f"route_{rang}", maille)
+        bpy.context.collection.objects.link(route)
+        route.data.materials.append(matiere_route)
+        style.filaire(route, 0.012)
+
+    return etendue * 1.9
+
+
+# ── Archetype : ondes ─────────────────────────────────────────────────────
+
+def _archetype_ondes(scene_def, images, accent, alea):
+    """Ce qui se propage depuis une source.
+
+    Un son, une chaleur, une epidemie, une influence, une reputation. La
+    troisieme reference l'utilise telle quelle pour le nombre d'or.
+
+    Different de `terrain` : ici la propagation EST le sujet, pas l'ambiance.
+    La source est visible, les cercles partent d'elle, et le rythme
+    d'allumage donne la vitesse.
+    """
+    p = scene_def["parametres"]
+    nb = int(p.get("cercles", 16))
+    rayon_max = float(p.get("rayon", 12.0))
+    verticales = bool(p.get("verticales", False))
+
+    # La source : sans elle on voit des cercles, pas une propagation.
+    bpy.ops.mesh.primitive_ico_sphere_add(radius=0.34, subdivisions=3, location=(0, 0, 0))
+    source = bpy.context.object
+    mat_source = style.matiere_emissive("source", accent, 0.6)
+    source.data.materials.append(mat_source)
+    _pulser(mat_source, _debut_accroche(images, 0, 1, 0.04), images, 30.0)
+
+    for rang in range(nb):
+        rayon = rayon_max * (rang + 1) / nb
+        rotation = (math.radians(90), 0, 0) if verticales else (0, 0, 0)
+        bpy.ops.mesh.primitive_circle_add(vertices=96, radius=rayon,
+                                          location=(0, 0, 0), rotation=rotation)
+        cercle = bpy.context.object
+        mat = style.matiere_emissive(f"onde_{rang}", accent, 0.3)
+        cercle.data.materials.append(mat)
+        # Plus fin en s'eloignant : l'onde s'attenue, elle ne se contente pas
+        # de grandir. C'est ce qui la fait lire comme une energie qui se perd.
+        style.filaire(cercle, 0.022 * (1 - 0.6 * rang / max(nb - 1, 1)))
+
+        debut = _debut_accroche(images, rang, nb, 0.06)
+        _pulser(mat, debut, images, 14.0 * (1 - 0.55 * rang / max(nb - 1, 1)))
+
+    return rayon_max * 1.35
+
+
 ARCHETYPES = {
+    "ondes": _archetype_ondes,
     "reseau": _archetype_reseau,
     "flux": _archetype_flux,
     "strates": _archetype_strates,
     "comparaison": _archetype_comparaison,
     "titre": _archetype_titre,
     "terrain": _archetype_terrain,
+    "silhouette": _archetype_silhouette,
+    "chronologie": _archetype_chronologie,
+    "carte": _archetype_carte,
 }
 
 

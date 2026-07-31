@@ -38,7 +38,37 @@ DUREE_TOTALE_MAX_S = 150.0
 # ne dessinent pas un schema a cote du propos, elles rendent LE PROPOS en
 # geometrie lumineuse. C'est `titre` qui rend le studio universel -- une
 # formule, un mot, un symbole, une note : tous les themes passent par la.
-ARCHETYPES = ("reseau", "flux", "strates", "comparaison", "titre", "terrain")
+ARCHETYPES = ("reseau", "flux", "strates", "comparaison", "titre", "terrain",
+              "silhouette", "chronologie", "carte", "ondes")
+
+# Quel archetype pour quelle discipline. Ce n'est pas un catalogue decoratif :
+# c'est la reponse a « peu importe le sujet ». Un theme n'est pas une forme,
+# c'est un CHOIX DE FORMES parmi les neuf.
+#
+# `strates` EST la stratigraphie archeologique. `flux` EST la circulation
+# sanguine autant que la route de la soie. `silhouette` avale tout le reste :
+# un organe, un os, un pays, un instrument, une feuille, un plan, un symbole.
+DISCIPLINES = {
+    "medecine": ("silhouette", "flux", "comparaison", "ondes"),
+    "archeologie": ("strates", "chronologie", "silhouette", "carte"),
+    "histoire": ("chronologie", "carte", "comparaison", "reseau"),
+    "geographie": ("carte", "terrain", "flux", "strates"),
+    "religion": ("silhouette", "chronologie", "reseau", "terrain"),
+    "art": ("silhouette", "titre", "comparaison", "strates"),
+    "musique": ("ondes", "flux", "silhouette", "titre"),
+    "agroalimentaire": ("flux", "silhouette", "strates", "carte"),
+    "mathematiques": ("titre", "reseau", "flux", "strates"),
+    "physique": ("ondes", "flux", "titre", "comparaison"),
+    "chimie": ("reseau", "flux", "silhouette", "titre"),
+    "architecture": ("silhouette", "strates", "titre", "terrain"),
+    "orientation": ("titre", "reseau", "comparaison", "strates", "flux"),
+}
+
+
+def archetypes_pour(discipline: str) -> tuple[str, ...]:
+    """Les formes conseillees pour une discipline. Rien n'interdit les autres :
+    c'est une aide a l'ecriture, pas une contrainte."""
+    return DISCIPLINES.get(str(discipline or "").strip().lower(), ARCHETYPES[:4])
 
 ACCENTS = {
     "orange": (1.0, 0.32, 0.04, 1.0),
