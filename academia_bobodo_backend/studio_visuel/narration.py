@@ -39,6 +39,7 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import academia_scene  # noqa: E402
+import sound_design  # noqa: E402
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
 SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
@@ -184,7 +185,13 @@ def _coller(clips: list[str], capsule: dict, sortie: str) -> bool:
     with open(morceaux, "w", encoding="utf-8") as f:
         for indice, (clip, scene) in enumerate(zip(clips, capsule["scenes"])):
             if clip and os.path.isfile(clip):
-                f.write(f"file '{clip}'\n")
+                # CHEMIN ABSOLU, TOUJOURS. ffmpeg resout les chemins relatifs
+                # d'une liste de concatenation par rapport au FICHIER DE LISTE,
+                # pas au repertoire courant : « p4bis/ouverture.wav » devenait
+                # « p4bis/p4bis/ouverture.wav ». Le defaut ne se manifestait que
+                # si l'appelant passait un chemin relatif -- il avait donc
+                # survecu a tous les essais precedents, faits en absolu.
+                f.write(f"file '{os.path.abspath(clip)}'\n")
             else:
                 blanc = os.path.join(os.path.dirname(sortie), f"silence_{indice}.wav")
                 subprocess.run([
@@ -193,7 +200,7 @@ def _coller(clips: list[str], capsule: dict, sortie: str) -> bool:
                     "-t", str(scene["duree_s"]), blanc,
                 ], capture_output=True, timeout=120)
                 silences.append(blanc)
-                f.write(f"file '{blanc}'\n")
+                f.write(f"file '{os.path.abspath(blanc)}'\n")
 
     resultat = subprocess.run([
         "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", morceaux,
@@ -255,6 +262,29 @@ def main() -> int:
 
     journal("CAPSULE " + academia_scene.resume(capsule))
     capsule, bande = preparer(capsule, dossier)
+
+    # ── Sound design ──────────────────────────────────────────────────────
+    # On depose la bande COMPLETE -- voix, nappe attenuee et accents -- et non
+    # la voix seule.
+    #
+    # LE RACCORD QUI MANQUAIT. `sound_design` etait ecrit, teste, et jamais
+    # appele : la chaine automatique produisait des capsules avec la voix mais
+    # sans musique. Meme defaut qu'hier avec la narration, ou les deux moities
+    # fonctionnaient sans jamais se rencontrer.
+    #
+    # Ici plutot que sur le pod, pour deux raisons : le mixage ne demande aucun
+    # GPU -- le faire a 0,44 $/h serait du gaspillage -- et c'est ici que la
+    # capsule calee et la voix existent deja.
+    if bande:
+        complete = os.path.join(dossier, "bande_complete.wav")
+        ok, resultat = sound_design.melanger(bande, capsule,
+                                             os.path.join(dossier, "son"), complete)
+        if ok and resultat != bande:
+            journal("SON nappe et accents ajoutes")
+            bande = resultat
+        else:
+            # Degradation gracieuse : la voix seule vaut mieux que pas de son.
+            journal(f"SON indisponible ({resultat}) — voix seule")
 
     # La capsule emporte le chemin de sa bande : le pod saura ou la chercher,
     # sans qu'aucune information ne transite par un canal parallele.

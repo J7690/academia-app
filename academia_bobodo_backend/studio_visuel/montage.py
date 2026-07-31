@@ -157,16 +157,24 @@ def assembler(dossier_images: str, capsule: dict, sortie: str,
     # storyboard via un fichier de liste, pour ne pas dependre d'une
     # numerotation globale continue.
     liste = os.path.join(os.path.dirname(sortie) or ".", "sequence.txt")
+    # CHEMINS ABSOLUS, TOUJOURS. ffmpeg resout les chemins relatifs d'une liste
+    # de concatenation par rapport au FICHIER DE LISTE, pas au repertoire
+    # courant. Le defaut ne se manifeste que si l'appelant passe un chemin
+    # relatif -- il a donc survecu a tous les essais, tous faits en absolu.
+    racine = os.path.abspath(dossier_images)
     with open(liste, "w", encoding="utf-8") as f:
+        fichiers: list[str] = []
         for scene in scenes:
             prefixe = scene["id"] + "_"
             fichiers = sorted(n for n in os.listdir(dossier_images)
                               if n.startswith(prefixe) and n.endswith(".png"))
             for nom in fichiers:
-                f.write(f"file '{os.path.join(dossier_images, nom)}'\n")
+                f.write(f"file '{os.path.join(racine, nom)}'\n")
                 f.write(f"duration {1.0 / fps}\n")
+        # La derniere image est repetee : sans elle, ffmpeg ignore la duree du
+        # dernier element et la video se termine une image trop tot.
         if fichiers:
-            f.write(f"file '{os.path.join(dossier_images, fichiers[-1])}'\n")
+            f.write(f"file '{os.path.join(racine, fichiers[-1])}'\n")
 
     filtres = []
     if chemin_ass and os.path.isfile(chemin_ass):

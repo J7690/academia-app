@@ -142,6 +142,13 @@ def melanger(voix: str | None, capsule: dict, dossier: str, sortie: str) -> tupl
     duree = float(capsule.get("duree_totale_s") or 0) or sum(
         s["duree_s"] for s in capsule["scenes"])
 
+    # LE DOSSIER D'ABORD. La nappe s'ecrit ici, et `_banque` ne creait le
+    # repertoire qu'ENSUITE : sur un dossier neuf, ffmpeg echouait a ecrire, la
+    # nappe etait declaree indisponible, et le melange retombait silencieusement
+    # sur la voix seule. Le defaut ne se voyait pas en rejouant a la main --
+    # le dossier existait deja de l'essai precedent.
+    os.makedirs(dossier, exist_ok=True)
+
     chemin_nappe = os.path.join(dossier, "nappe.wav")
     if not nappe(duree, chemin_nappe):
         if voix and os.path.isfile(voix):
