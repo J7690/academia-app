@@ -115,14 +115,20 @@ def recuperer_narration(capsule: dict) -> str | None:
         return None
 
 
-def main() -> int:
-    if len(sys.argv) < 2:
-        journal("ERREUR chemin_json_manquant")
-        return 1
+def executer(capsule: dict, travail: str | None = None) -> tuple[bool, str]:
+    """Produit la capsule complete. Renvoie (succes, chemin_video | erreur).
 
-    with open(sys.argv[1], encoding="utf-8") as f:
-        capsule = academia_scene.normaliser(json.load(f))
+    Extrait de `main` pour que le worker de la file l'appelle directement :
+    sans cela, deux chemins de code auraient diverge -- l'un pour les rendus
+    manuels, l'autre pour la file -- et un correctif applique a l'un aurait
+    manque a l'autre. C'est exactement ainsi qu'on se retrouve avec une capsule
+    muette d'un cote et sonore de l'autre.
+    """
+    global TRAVAIL
+    if travail:
+        TRAVAIL = travail
 
+    capsule = academia_scene.normaliser(capsule)
     journal("CAPSULE " + academia_scene.resume(capsule))
     for correction in capsule["avertissements"]:
         journal(f"  correction: {correction}")
@@ -149,7 +155,7 @@ def main() -> int:
     if not produites:
         journal("ECHEC aucune image produite")
         journal(rendu.stdout[-800:] or rendu.stderr[-800:])
-        return 2
+        return False, "aucune_image_produite"
     journal(f"RENDU termine — {len(produites)} images en {int(time.time()-depart)}s")
 
     # ── 2. Sous-titres ────────────────────────────────────────────────────
@@ -169,7 +175,7 @@ def main() -> int:
     ok, detail = montage.assembler(images, capsule, video, chemin_ass=ass, audio=bande)
     if not ok:
         journal(f"ECHEC assemblage: {detail}")
-        return 3
+        return False, f"assemblage:{detail}"
     journal(f"ASSEMBLAGE termine — {os.path.getsize(video)//1024} Ko")
 
     # ── 4. Controle automatique (etape 10 du cahier des charges) ──────────
@@ -177,7 +183,7 @@ def main() -> int:
     journal(f"CONTROLE {infos}")
     if infos.get("lisible") != "True":
         journal("ECHEC video illisible — on ne depose pas un fichier corrompu")
-        return 4
+        return False, "video_illisible"
 
     # ── 5. Depot ──────────────────────────────────────────────────────────
     # Horodate : chaque rendu garde sa trace, et aucun ecrasement n'est
@@ -186,12 +192,24 @@ def main() -> int:
     depose, detail = deposer(video, cle)
     journal(f"DEPOT {'reussi' if depose else 'ECHEC'} — {cle} ({detail})")
     if not depose:
-        return 5
+        return False, f"depot:{detail}"
 
     total = int(time.time() - depart)
-    journal(f"TERMINE en {total}s — cout GPU estime "
-            f"{total/3600*0.44:.3f} USD")
+    journal(f"TERMINE en {total}s — cout GPU estime {total/3600*0.44:.3f} USD")
     journal(f"RESULTAT {BUCKET}/{cle}")
+    return True, cle
+
+
+def main() -> int:
+    if len(sys.argv) < 2:
+        journal("ERREUR chemin_json_manquant")
+        return 1
+    with open(sys.argv[1], encoding="utf-8") as f:
+        capsule = json.load(f)
+    ok, detail = executer(capsule)
+    if not ok:
+        journal(f"ECHEC {detail}")
+        return 2
     return 0
 
 

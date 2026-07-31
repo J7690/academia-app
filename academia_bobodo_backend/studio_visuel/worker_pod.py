@@ -94,59 +94,26 @@ def deposer(chemin: pathlib.Path, cle: str) -> bool:
         return False
 
 
-def rendre(job: dict, dossier: pathlib.Path) -> tuple[pathlib.Path | None, str | None]:
-    """Rend la sequence puis l'assemble. Renvoie (video, erreur)."""
+def rendre(job: dict, dossier: pathlib.Path) -> tuple[str | None, str | None]:
+    """Delegue a `executer_capsule`, qui sait tout faire : rendu, sous-titres,
+    narration, montage, controle et depot.
+
+    Le worker ne refait PAS le travail lui-meme. Il l'a fait un temps, avec son
+    propre ffmpeg et son propre schema de manifeste -- et les deux chemins ont
+    diverge : l'un produisait des capsules sonores, l'autre des capsules
+    muettes. Un seul chemin de code, un seul correctif a appliquer.
+
+    Le manifeste EST la definition de capsule, telle que LWS l'a calee sur la
+    voix reelle.
+    """
+    import executer_capsule
+
     manifeste = job.get("manifeste") or {}
-    images = dossier / "frames"
-    images.mkdir(parents=True, exist_ok=True)
+    if not manifeste.get("scenes"):
+        return None, "manifeste_sans_scenes"
 
-    scene = manifeste.get("scene", "capsule_orientation.py")
-    script = pathlib.Path("/workspace") / pathlib.Path(scene).name
-    if not script.is_file():
-        return None, f"scene_introuvable:{script.name}"
-
-    env = dict(os.environ)
-    env["STUDIO_SORTIE"] = str(images / "f_")
-    env["STUDIO_DUREE_S"] = str(manifeste.get("duree_s", 20))
-    env["STUDIO_SAMPLES"] = str(manifeste.get("samples", 64))
-    env["STUDIO_LARGEUR"] = str(manifeste.get("largeur", 1080))
-    env["STUDIO_HAUTEUR"] = str(manifeste.get("hauteur", 1920))
-
-    debut = time.time()
-    rendu = subprocess.run(
-        [BLENDER, "-b", "--python", str(script)],
-        capture_output=True, text=True, env=env, timeout=7200,
-    )
-    if rendu.returncode != 0:
-        return None, f"blender:{rendu.stderr[-300:] or rendu.stdout[-300:]}"
-
-    produites = sorted(images.glob("*.png"))
-    if not produites:
-        return None, "aucune_image_produite"
-
-    rpc("studio_avancement", {
-        "p_job_id": job["id"], "p_pod_id": POD_ID, "p_jeton": POD_JETON,
-        "p_images_faites": len(produites), "p_images_total": len(produites),
-    })
-
-    video = dossier / "capsule.mp4"
-    fps = manifeste.get("fps", 25)
-    # yuv420p et +faststart ne sont pas des details : sans le premier, les
-    # reseaux sociaux refusent la video ; sans le second, la lecture ne demarre
-    # qu'apres telechargement complet -- fatal sur connexion lente.
-    encodage = subprocess.run([
-        "ffmpeg", "-y", "-framerate", str(fps),
-        "-i", str(images / "f_%04d.png"),
-        "-c:v", "libx264", "-preset", "slow", "-crf", "18",
-        "-pix_fmt", "yuv420p", "-movflags", "+faststart",
-        str(video),
-    ], capture_output=True, text=True, timeout=1800)
-
-    if encodage.returncode != 0 or not video.is_file():
-        return None, f"ffmpeg:{encodage.stderr[-300:]}"
-
-    journal(f"rendu termine en {int(time.time()-debut)}s, {len(produites)} images")
-    return video, None
+    ok, detail = executer_capsule.executer(manifeste, str(dossier))
+    return (detail, None) if ok else (None, detail)
 
 
 def traiter(job: dict) -> None:
@@ -157,7 +124,7 @@ def traiter(job: dict) -> None:
     dossier.mkdir(parents=True, exist_ok=True)
 
     debut = time.time()
-    video, erreur = rendre(job, dossier)
+    cle, erreur = rendre(job, dossier)
 
     if erreur:
         journal(f"echec : {erreur}")
@@ -168,29 +135,9 @@ def traiter(job: dict) -> None:
         shutil.rmtree(dossier, ignore_errors=True)
         return
 
-    # Pas d'ecrasement : voir le commentaire de `deposer` dans
-    # executer_capsule.py — l'upsert exige une lecture, fermee ici.
-    cle = f"capsules/{job['id']}/{int(debut)}/capsule.mp4"
-    if not deposer(video, cle):
-        # On NE marque PAS le job termine : sans depot, le resultat n'existe
-        # pas. Il repassera en file plutot que d'etre perdu en silence.
-        rpc("studio_terminer_job", {
-            "p_job_id": job["id"], "p_pod_id": POD_ID, "p_jeton": POD_JETON,
-            "p_erreur": "depot_impossible",
-        })
-        return
-
-    duree = subprocess.run(
-        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
-         "-of", "default=nw=1:nk=1", str(video)],
-        capture_output=True, text=True,
-    ).stdout.strip()
-
     rpc("studio_terminer_job", {
         "p_job_id": job["id"], "p_pod_id": POD_ID, "p_jeton": POD_JETON,
         "p_chemin_video": cle,
-        "p_duree_ms": int(float(duree) * 1000) if duree else None,
-        "p_poids_octets": video.stat().st_size,
         "p_secondes_rendu": int(time.time() - debut),
     })
     journal(f"job {job['id']} depose : {cle}")

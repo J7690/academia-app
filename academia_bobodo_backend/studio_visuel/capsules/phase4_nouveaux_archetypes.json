@@ -1,0 +1,39 @@
+{
+  "capsule_id": "phase4_auto",
+  "titre": "Le Burkina Faso en quatre formes",
+  "format": { "largeur": 1080, "hauteur": 1920, "fps": 25 },
+  "scenes": [
+    {
+      "id": "ouverture",
+      "archetype": "titre",
+      "narration": "Quatre facons de raconter un pays.",
+      "accent": "orange",
+      "camera": "avance",
+      "parametres": { "texte": "BURKINA", "taille": 1.5 }
+    },
+    {
+      "id": "territoire",
+      "archetype": "carte",
+      "narration": "Treize regions, relies par des routes que l'on emprunte chaque jour.",
+      "accent": "or",
+      "camera": "montee",
+      "parametres": { "points": 7, "etendue": 8.5 }
+    },
+    {
+      "id": "temps",
+      "archetype": "chronologie",
+      "narration": "Une histoire qui se lit par etapes, et non d'un seul bloc.",
+      "accent": "orange",
+      "camera": "recul",
+      "parametres": { "jalons": ["1960", "1984", "2000", "2026"], "longueur": 13 }
+    },
+    {
+      "id": "propagation",
+      "archetype": "ondes",
+      "narration": "Une idee part d'un point, puis gagne tout le territoire.",
+      "accent": "vert",
+      "camera": "orbite",
+      "parametres": { "cercles": 14, "rayon": 11 }
+    }
+  ]
+}
