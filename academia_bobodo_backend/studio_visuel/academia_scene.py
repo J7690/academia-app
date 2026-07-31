@@ -117,10 +117,17 @@ def _nettoyer_scene(brut: dict, rang: int, alertes: list[str]) -> dict:
     else:
         duree = max(DUREE_MIN_S, min(DUREE_MAX_S, float(duree)))
 
-    # La voix commande l'image : si la narration demande plus que la duree
-    # annoncee, c'est la narration qui gagne. Sans ca la phrase est coupee.
+    # Une duree MESUREE sur la voix reellement synthetisee ne se discute pas.
+    #
+    # PIEGE EVITE DE JUSTESSE : sans ce garde, le pod re-normalisait la capsule
+    # calee par LWS et remplacait chaque duree mesuree par mon estimation. Sur
+    # `monde`, 3,32 s mesurees seraient redevenues 3,6 s -- et l'ecart, cumule
+    # scene apres scene, aurait desynchronise la voix de l'image sur toute la
+    # capsule. `normaliser` doit etre idempotente.
+    mesuree = bool(brut.get("mesuree"))
+
     besoin = duree_depuis_narration(narration) if narration else 0.0
-    if besoin > duree:
+    if not mesuree and besoin > duree:
         alertes.append(f"{identifiant}:duree_{duree}s_portee_a_{besoin}s_par_la_narration")
         duree = min(DUREE_MAX_S, besoin)
 
@@ -149,6 +156,7 @@ def _nettoyer_scene(brut: dict, rang: int, alertes: list[str]) -> dict:
         "accent": accent,
         "camera": camera,
         "parametres": parametres,
+        "mesuree": mesuree,
     }
 
 
@@ -209,6 +217,8 @@ def normaliser(capsule: dict) -> dict:
         "duree_totale_s": round(total, 2),
         "images_total": int(round(total * fps)),
         "avertissements": avertissements,
+        # Conservee telle quelle : c'est par elle que le pod retrouve la voix.
+        "narration_cle": capsule.get("narration_cle"),
     }
 
 

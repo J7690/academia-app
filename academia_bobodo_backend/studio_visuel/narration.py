@@ -152,6 +152,9 @@ def preparer(capsule: dict, dossier: str) -> tuple[dict, str | None]:
         # LA VOIX COMMANDE L'IMAGE : la duree mesuree remplace l'estimation.
         scene["duree_s"] = round(max(academia_scene.DUREE_MIN_S,
                                      min(academia_scene.DUREE_MAX_S, duree)), 2)
+        # Marque la duree comme MESUREE : elle ne devra plus jamais etre
+        # remplacee par une estimation, sous peine de desynchroniser la voix.
+        scene["mesuree"] = True
         journal(f"  {scene['id']}: {ancienne}s estimee -> {scene['duree_s']}s mesuree")
 
     if obtenues == 0:
@@ -205,6 +208,39 @@ def _coller(clips: list[str], capsule: dict, sortie: str) -> bool:
     return resultat.returncode == 0 and os.path.isfile(sortie)
 
 
+def deposer_bande(chemin: str, capsule_id: str) -> str | None:
+    """Depose la narration dans Storage pour que le pod la recupere.
+
+    LE DEFAUT QUE CECI CORRIGE. La voix etait produite ici, sur LWS, et le
+    montage se faisait la-bas, sur le pod : les deux ne se rejoignaient jamais,
+    et la capsule deposee etait MUETTE. Le defaut ne se voyait pas dans les
+    journaux -- chaque moitie de la chaine fonctionnait parfaitement.
+
+    Un fichier descend, un fichier monte, et le resultat est complet du premier
+    coup. Le pod n'a pas besoin de la cle de service : la bande passe par le
+    bucket, ou l'ecriture lui est ouverte sous `capsules/`.
+    """
+    cle = f"capsules/{capsule_id}/{int(time.time())}/narration.wav"
+    try:
+        with open(chemin, "rb") as f:
+            donnees = f.read()
+        requete = urllib.request.Request(
+            f"{SUPABASE_URL}/storage/v1/object/studio-visuel/{cle}",
+            data=donnees, method="POST",
+            headers={
+                "apikey": SERVICE_KEY,
+                "Authorization": f"Bearer {SERVICE_KEY}",
+                "Content-Type": "audio/wav",
+            })
+        with urllib.request.urlopen(requete, timeout=600) as reponse:
+            if reponse.status < 300:
+                return cle
+            journal(f"depot bande refuse: HTTP {reponse.status}")
+    except Exception as e:  # noqa: BLE001
+        journal(f"depot bande impossible: {e}")
+    return None
+
+
 def main() -> int:
     if len(sys.argv) < 3:
         journal("usage: narration.py capsule.json dossier_sortie/")
@@ -220,12 +256,21 @@ def main() -> int:
     journal("CAPSULE " + academia_scene.resume(capsule))
     capsule, bande = preparer(capsule, dossier)
 
+    # La capsule emporte le chemin de sa bande : le pod saura ou la chercher,
+    # sans qu'aucune information ne transite par un canal parallele.
+    if bande:
+        cle = deposer_bande(bande, capsule["capsule_id"])
+        if cle:
+            capsule["narration_cle"] = cle
+            journal(f"BANDE deposee — {cle}")
+        else:
+            journal("BANDE non deposee — le pod produira une capsule muette")
+
     chemin_json = os.path.join(dossier, "capsule_calee.json")
     with open(chemin_json, "w", encoding="utf-8") as f:
         json.dump(capsule, f, ensure_ascii=False, indent=2)
 
     journal(f"CALEE {chemin_json}")
-    journal(f"BANDE {bande or 'aucune (capsule muette)'}")
     return 0
 
 

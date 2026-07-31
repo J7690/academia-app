@@ -82,6 +82,39 @@ def deposer(chemin: str, cle: str) -> tuple[bool, str]:
         return False, str(e)[:200]
 
 
+def recuperer_narration(capsule: dict) -> str | None:
+    """Telecharge la bande produite par LWS, si elle existe.
+
+    Degradation gracieuse : sans narration, la capsule est produite muette
+    plutot que pas produite du tout. Le journal le dit clairement -- une
+    capsule silencieuse par accident et une capsule silencieuse par choix ne
+    doivent pas se ressembler.
+    """
+    cle = capsule.get("narration_cle")
+    if not cle:
+        journal("NARRATION aucune bande annoncee — capsule muette")
+        return None
+    if not (SUPABASE_URL and SUPABASE_KEY):
+        journal("NARRATION configuration absente — capsule muette")
+        return None
+    try:
+        import urllib.request
+        requete = urllib.request.Request(
+            f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{cle}",
+            headers={"apikey": SUPABASE_KEY,
+                     "Authorization": f"Bearer {SUPABASE_KEY}"})
+        with urllib.request.urlopen(requete, timeout=300) as reponse:
+            donnees = reponse.read()
+        chemin = os.path.join(TRAVAIL, "narration.wav")
+        with open(chemin, "wb") as f:
+            f.write(donnees)
+        journal(f"NARRATION recuperee — {len(donnees)//1024} Ko")
+        return chemin
+    except Exception as e:  # noqa: BLE001
+        journal(f"NARRATION indisponible ({e}) — capsule muette")
+        return None
+
+
 def main() -> int:
     if len(sys.argv) < 2:
         journal("ERREUR chemin_json_manquant")
@@ -124,9 +157,16 @@ def main() -> int:
     nombre = montage.ecrire_sous_titres(capsule, ass)
     journal(f"SOUS-TITRES {nombre} ecrits")
 
-    # ── 3. Assemblage ─────────────────────────────────────────────────────
+    # ── 3. Narration ──────────────────────────────────────────────────────
+    # Produite en amont sur LWS, deposee dans Storage, recuperee ici. Sans
+    # cette etape la capsule sortait MUETTE : la voix existait, le montage
+    # aussi, mais ils ne se rencontraient jamais -- et les deux journaux
+    # affichaient un succes.
+    bande = recuperer_narration(capsule)
+
+    # ── 4. Assemblage ─────────────────────────────────────────────────────
     video = os.path.join(TRAVAIL, "capsule.mp4")
-    ok, detail = montage.assembler(images, capsule, video, chemin_ass=ass)
+    ok, detail = montage.assembler(images, capsule, video, chemin_ass=ass, audio=bande)
     if not ok:
         journal(f"ECHEC assemblage: {detail}")
         return 3
