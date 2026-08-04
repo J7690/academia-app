@@ -48,7 +48,24 @@ def _envelopper(texte: str, largeur_max: int) -> list[str]:
     return lignes
 
 
-def _decouper(texte: str) -> list[str]:
+def caracteres_par_ligne(largeur_px: int, taille_px: int, marge: float = 0.07) -> int:
+    """Combien de caracteres tiennent VRAIMENT sur une ligne.
+
+    Calcule plutot que devine. La premiere version coupait a 42 caracteres en
+    dur : a 57 px de police sur 1080 de large, la ligne debordait des deux
+    cotes de l'image et la phrase etait illisible. Le defaut ne pouvait se voir
+    qu'en regardant une capsule rendue -- aucune verification de code ne
+    l'aurait signale.
+
+    0,55 est le rapport largeur/hauteur moyen d'un caractere en DejaVu Sans
+    gras. On garde une marge de securite de 8 % : les majuscules et les
+    accents depassent cette moyenne.
+    """
+    utile = largeur_px * (1 - 2 * marge)
+    return max(18, int(utile / (taille_px * 0.55) * 0.92))
+
+
+def _decouper(texte: str, largeur_max: int = 30) -> list[str]:
     """Deux lignes maximum, comme le prescrit le cahier des charges.
 
     Un sous-titre de trois lignes mange l'image et se lit mal en vertical.
@@ -57,10 +74,18 @@ def _decouper(texte: str) -> list[str]:
     d'empiler trois lignes, ce qui recouvre l'animation.
     """
     propre = _echapper(texte)
-    for largeur in (42, 50, 58, 66):
-        lignes = _envelopper(propre, largeur)
-        if len(lignes) <= 2:
-            return lignes
+    lignes = _envelopper(propre, largeur_max)
+    if len(lignes) <= 2:
+        return lignes
+
+    # NE JAMAIS ELARGIR LA LIGNE. La premiere version elargissait
+    # progressivement jusqu'a tenir en deux lignes -- et debordait de l'image.
+    # Une TROISIEME ligne mange un peu d'animation ; une ligne coupee fait
+    # perdre le sens. On prefere la troisieme ligne, et au-dela on rend la
+    # main : c'est le storyboard qu'il faut raccourcir, pas le sous-titre qu'il
+    # faut mutiler.
+    if len(lignes) == 3:
+        return lignes
     # Phrase vraiment trop longue : on equilibre en deux lignes plutot que de
     # perdre la fin. C'est le storyboard qu'il faudra raccourcir.
     milieu = len(propre) // 2
@@ -96,7 +121,7 @@ def ecrire_sous_titres(capsule: dict, chemin_ass: str) -> int:
 ScriptType: v4.00+
 PlayResX: {largeur}
 PlayResY: {hauteur}
-WrapStyle: 2
+WrapStyle: 0
 ScaledBorderAndShadow: yes
 
 [V4+ Styles]
@@ -126,7 +151,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             for phrase in phrases:
                 part = len(phrase) / total_signes
                 fin = debut + duree * part
-                texte = "\\N".join(_decouper(phrase))
+                texte = "\\N".join(_decouper(phrase, largeur_ligne))
                 lignes.append(
                     f"Dialogue: 0,{_temps_ass(debut)},{_temps_ass(fin)},Academia,,0,0,0,,{texte}")
                 ecrits += 1

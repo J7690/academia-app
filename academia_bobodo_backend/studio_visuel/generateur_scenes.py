@@ -150,7 +150,7 @@ def _archetype_reseau(scene_def, images, accent, alea):
             debut = _debut_accroche(images, rang, len(chemin), 0.10)
             _pulser(mat, debut, images, 24.0)
 
-    return 9.5   # distance de cadrage conseillee
+    return 13.0  # distance de cadrage conseillee
 
 
 # ── Archetype : flux ──────────────────────────────────────────────────────
@@ -195,7 +195,7 @@ def _archetype_flux(scene_def, images, accent, alea):
                 for point in courbe.keyframe_points:
                     point.interpolation = "LINEAR"
 
-    return 11.0
+    return 14.5
 
 
 # ── Archetype : strates ───────────────────────────────────────────────────
@@ -230,7 +230,7 @@ def _archetype_strates(scene_def, images, accent, alea):
         anneau.location = (0, 0, z)
         anneau.keyframe_insert("location", frame=debut + max(3, int(images * 0.12)))
 
-    return 10.0
+    return 13.5
 
 
 # ── Archetype : comparaison ───────────────────────────────────────────────
@@ -265,7 +265,7 @@ def _archetype_comparaison(scene_def, images, accent, alea):
         debut = int(images * (0.45 if retenu else 0.12))
         _pulser(mat, debut, images, 18.0 if retenu else 5.0)
 
-    return 12.0
+    return 16.0
 
 
 # ── Archetype : titre ─────────────────────────────────────────────────────
@@ -288,23 +288,31 @@ def _archetype_titre(scene_def, images, accent, alea):
 
     sol = style.sol_grille(cote=30.0, pas=54, amplitude=0.6, graine=alea.randint(1, 99))
     sol.location = (0, 0, -3.4)
-    sol.data.materials.append(style.matiere_emissive("grille", style.BLEU_FROID, 0.75))
+    sol.data.materials.append(style.matiere_emissive("grille", style.BLEU_FROID, 2.4))
     style.filaire(sol, 0.008)
 
+    # DEBOUT ET FACE A LA CAMERA. Un objet texte Blender naît couche dans le
+    # plan horizontal : vu depuis une camera basse, il apparaît de profil et
+    # devient une simple barre lumineuse illisible. C'est ce qui est arrive au
+    # premier rendu automatique. 90 deg le redressent, 45 deg l'orientent vers
+    # l'azimut des cameras du studio.
+    DEBOUT = (math.radians(90), 0, math.radians(45))
     ecart = 3.1 if secondaire else 0.0
-    objet = style.texte_3d(principal, taille=taille, position=(-ecart, 0, 0.4))
+    objet = style.texte_3d(principal, taille=taille, position=(-ecart, 0, 0.4),
+                           rotation=DEBOUT)
     objet.data.materials.append(
         style.matiere_hologramme("titre_principal", style.BLEU_FROID, 7.0))
 
     if secondaire:
-        second = style.texte_3d(secondaire, taille=taille, position=(ecart, 0, 0.4))
+        second = style.texte_3d(secondaire, taille=taille, position=(ecart, 0, 0.4),
+                                rotation=DEBOUT)
         mat = style.matiere_hologramme("titre_second", accent, 1.0)
         second.data.materials.append(mat)
         # Le second terme s'allume APRES : on pose la question avant de donner
         # la reponse, sinon il n'y a plus de question.
         _pulser(mat, _debut_accroche(images, 1, 2, 0.35), images, 11.0)
 
-    return 12.5
+    return 15.0
 
 
 # ── Archetype : terrain ───────────────────────────────────────────────────
@@ -321,7 +329,7 @@ def _archetype_terrain(scene_def, images, accent, alea):
 
     sol = style.sol_grille(cote=34.0, pas=60, amplitude=0.75, graine=alea.randint(1, 99))
     sol.location = (0, 0, -2.2)
-    sol.data.materials.append(style.matiere_emissive("grille", style.BLEU_FROID, 0.8))
+    sol.data.materials.append(style.matiere_emissive("grille", style.BLEU_FROID, 2.6))
     style.filaire(sol, 0.009)
 
     for rang, cercle in enumerate(style.ondes(nb_ondes, rayon_max=13.0, hauteur=-2.0)):
@@ -391,7 +399,7 @@ def _archetype_silhouette(scene_def, images, accent, alea):
 
     sol = style.sol_grille(cote=26.0, pas=46, amplitude=0.5, graine=alea.randint(1, 99))
     sol.location = (0, 0, -3.2)
-    sol.data.materials.append(style.matiere_emissive("grille", style.BLEU_FROID, 0.6))
+    sol.data.materials.append(style.matiere_emissive("grille", style.BLEU_FROID, 2.2))
     style.filaire(sol, 0.008)
 
     return 11.0
@@ -422,7 +430,7 @@ def _archetype_chronologie(scene_def, images, accent, alea):
     axe_mesh.update()
     axe = bpy.data.objects.new("axe", axe_mesh)
     bpy.context.collection.objects.link(axe)
-    axe.data.materials.append(style.matiere_emissive("axe", style.BLEU_FROID, 1.2))
+    axe.data.materials.append(style.matiere_emissive("axe", style.BLEU_FROID, 3.0))
     style.filaire(axe, 0.02)
 
     for rang, etiquette in enumerate(jalons):
@@ -443,7 +451,7 @@ def _archetype_chronologie(scene_def, images, accent, alea):
         debut = _debut_accroche(images, rang, len(jalons), 0.10)
         _pulser(mat, debut, images, 20.0)
 
-    return longueur * 0.95
+    return longueur * 1.45
 
 
 # ── Archetype : carte ─────────────────────────────────────────────────────
@@ -461,7 +469,7 @@ def _archetype_carte(scene_def, images, accent, alea):
 
     sol = style.sol_grille(cote=etendue * 2.6, pas=54, amplitude=0.45,
                            graine=alea.randint(1, 99))
-    sol.data.materials.append(style.matiere_emissive("territoire", style.BLEU_FROID, 0.7))
+    sol.data.materials.append(style.matiere_emissive("territoire", style.BLEU_FROID, 2.4))
     style.filaire(sol, 0.007)
 
     lieux = [(alea.uniform(-etendue, etendue), alea.uniform(-etendue, etendue), 0.35)
@@ -495,7 +503,7 @@ def _archetype_carte(scene_def, images, accent, alea):
         route.data.materials.append(matiere_route)
         style.filaire(route, 0.012)
 
-    return etendue * 1.9
+    return etendue * 2.4
 
 
 # ── Archetype : ondes ─────────────────────────────────────────────────────
@@ -513,7 +521,10 @@ def _archetype_ondes(scene_def, images, accent, alea):
     p = scene_def["parametres"]
     nb = int(p.get("cercles", 16))
     rayon_max = float(p.get("rayon", 12.0))
-    verticales = bool(p.get("verticales", False))
+    # VERTICALES PAR DEFAUT. A plat, les cercles sont vus de profil et se
+    # lisent comme des rayures horizontales, pas comme une propagation. La
+    # reference les montre bien face au spectateur.
+    verticales = bool(p.get("verticales", True))
 
     # La source : sans elle on voit des cercles, pas une propagation.
     bpy.ops.mesh.primitive_ico_sphere_add(radius=0.34, subdivisions=3, location=(0, 0, 0))
@@ -537,7 +548,7 @@ def _archetype_ondes(scene_def, images, accent, alea):
         debut = _debut_accroche(images, rang, nb, 0.06)
         _pulser(mat, debut, images, 14.0 * (1 - 0.55 * rang / max(nb - 1, 1)))
 
-    return rayon_max * 1.35
+    return rayon_max * 1.55
 
 
 ARCHETYPES = {
