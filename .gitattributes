@@ -1,0 +1,9 @@
+# Les scripts partent sur des machines Linux : ils doivent garder des fins de
+# ligne LF. Un CRLF fait echouer bash sur « syntax error near unexpected token
+# $'do\r' » -- message parfaitement opaque quand on ne connait pas la cause.
+# C'est arrive une fois, en deployant depuis Windows vers un pod.
+*.sh   text eol=lf
+*.py   text eol=lf
+*.ts   text eol=lf
+*.sql  text eol=lf
+*.json text eol=lf
