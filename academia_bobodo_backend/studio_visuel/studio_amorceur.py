@@ -41,8 +41,8 @@ INTERVALLE = int(os.environ.get("STUDIO_INTERVALLE", "30"))
 # Fichiers a deposer sur la machine. Ce sont eux qui la rendent capable de
 # travailler ; sans eux elle n'est qu'un GPU qui chauffe.
 FICHIERS = ("style_reference.py", "academia_scene.py", "generateur_scenes.py",
-            "montage.py", "sound_design.py", "executer_capsule.py",
-            "worker_pod.py", "agent_pod.sh")
+            "generateur_ia.py", "montage.py", "sound_design.py",
+            "executer_capsule.py", "worker_pod.py", "agent_pod.sh")
 
 
 def journal(message: str) -> None:
@@ -144,6 +144,7 @@ if [ ! -x /workspace/blender/blender ]; then
   apt-get install -y -qq libxi6 libxxf86vm1 libxfixes3 libxrender1 libgl1 libsm6 \
     libxkbcommon0 wget curl fonts-dejavu-core fontconfig \
     libegl1 libgles2 libglvnd0 libgbm1 libopengl0 libglx0 python3-requests
+  pip install --break-system-packages -q diffusers transformers accelerate protobuf sentencepiece ftfy
   fc-cache -f >/dev/null 2>&1
   cd /workspace
   VER=$(wget -qO- https://download.blender.org/release/ | grep -oE 'Blender4\.[0-9]+' | sort -uV | tail -1)

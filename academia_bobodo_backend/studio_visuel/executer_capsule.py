@@ -137,24 +137,49 @@ def executer(capsule: dict, travail: str | None = None) -> tuple[bool, str]:
     os.makedirs(images, exist_ok=True)
     depart = time.time()
 
-    # ── 1. Rendu ──────────────────────────────────────────────────────────
-    journal("RENDU en cours")
-    with open(os.path.join(TRAVAIL, "capsule_normalisee.json"), "w", encoding="utf-8") as f:
-        json.dump(capsule, f, ensure_ascii=False)
+    # ── 1. Rendu, en DEUX voies ───────────────────────────────────────────
+    # Les scenes `genere` passent par la generation d'images, les autres par
+    # Blender. Une meme capsule melange donc structure et matiere -- ce qui est
+    # tout l'interet : le raisonnement se lit dans la geometrie, l'emotion dans
+    # la matiere.
+    scenes_ia = [s for s in capsule["scenes"] if s["archetype"] in academia_scene.ARCHETYPES_IA]
+    scenes_3d = [s for s in capsule["scenes"] if s["archetype"] not in academia_scene.ARCHETYPES_IA]
 
-    rendu = subprocess.run(
-        [BLENDER, "-b", "--python", GENERATEUR, "--",
-         os.path.join(TRAVAIL, "capsule_normalisee.json"), images],
-        capture_output=True, text=True, timeout=10800)
+    if scenes_ia:
+        journal(f"GENERATION IA — {len(scenes_ia)} scene(s)")
+        import generateur_ia
+        for scene in list(scenes_ia):
+            produites = generateur_ia.rendre_scene(scene, capsule["format"], images)
+            if produites == 0:
+                # Degradation gracieuse : une scene qui n'a pas pu etre generee
+                # devient `terrain`, qui illustre sans mentir. Mieux vaut une
+                # capsule complete avec un plan de repli qu'un trou.
+                journal(f"  {scene['id']} : generation impossible, repli sur `terrain`")
+                scene["archetype"] = "terrain"
+                scenes_3d.append(scene)
 
-    for ligne in rendu.stdout.splitlines():
-        if ligne.startswith(("SCENE ", "GENERATEUR_", "CAPSULE ")):
-            journal("  " + ligne)
+    if scenes_3d:
+        journal(f"RENDU 3D — {len(scenes_3d)} scene(s)")
+        partielle = dict(capsule, scenes=scenes_3d)
+        with open(os.path.join(TRAVAIL, "capsule_normalisee.json"), "w", encoding="utf-8") as f:
+            json.dump(partielle, f, ensure_ascii=False)
+
+        rendu = subprocess.run(
+            [BLENDER, "-b", "--python", GENERATEUR, "--",
+             os.path.join(TRAVAIL, "capsule_normalisee.json"), images],
+            capture_output=True, text=True, timeout=10800)
+
+        for ligne in rendu.stdout.splitlines():
+            if ligne.startswith(("SCENE ", "GENERATEUR_", "CAPSULE ")):
+                journal("  " + ligne)
+    else:
+        rendu = None
 
     produites = [n for n in os.listdir(images) if n.endswith(".png")]
     if not produites:
         journal("ECHEC aucune image produite")
-        journal(rendu.stdout[-800:] or rendu.stderr[-800:])
+        if rendu is not None:
+            journal(rendu.stdout[-800:] or rendu.stderr[-800:])
         return False, "aucune_image_produite"
     journal(f"RENDU termine — {len(produites)} images en {int(time.time()-depart)}s")
 

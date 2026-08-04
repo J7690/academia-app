@@ -39,7 +39,14 @@ DUREE_TOTALE_MAX_S = 150.0
 # geometrie lumineuse. C'est `titre` qui rend le studio universel -- une
 # formule, un mot, un symbole, une note : tous les themes passent par la.
 ARCHETYPES = ("reseau", "flux", "strates", "comparaison", "titre", "terrain",
-              "silhouette", "chronologie", "carte", "ondes")
+              "silhouette", "chronologie", "carte", "ondes", "genere")
+
+# `genere` n'est pas un archetype comme les autres : il ne passe pas par
+# Blender mais par la generation d'images. C'est la voie « matiere » --
+# corps, atmosphere, texture -- la ou les dix autres font la « structure ».
+# Voir `generateur_ia.py`. Mesure du 04/08 : 0,004 $ l'image fixe avec
+# mouvement de camera, 0,026 $ les trois secondes en animation reelle.
+ARCHETYPES_IA = ("genere",)
 
 # Quel archetype pour quelle discipline. Ce n'est pas un catalogue decoratif :
 # c'est la reponse a « peu importe le sujet ». Un theme n'est pas une forme,
@@ -49,16 +56,16 @@ ARCHETYPES = ("reseau", "flux", "strates", "comparaison", "titre", "terrain",
 # sanguine autant que la route de la soie. `silhouette` avale tout le reste :
 # un organe, un os, un pays, un instrument, une feuille, un plan, un symbole.
 DISCIPLINES = {
-    "medecine": ("silhouette", "flux", "comparaison", "ondes"),
-    "archeologie": ("strates", "chronologie", "silhouette", "carte"),
+    "medecine": ("genere", "silhouette", "flux", "comparaison", "ondes"),
+    "archeologie": ("genere", "strates", "chronologie", "silhouette", "carte"),
     "histoire": ("chronologie", "carte", "comparaison", "reseau"),
     "geographie": ("carte", "terrain", "flux", "strates"),
     "religion": ("silhouette", "chronologie", "reseau", "terrain"),
-    "art": ("silhouette", "titre", "comparaison", "strates"),
-    "musique": ("ondes", "flux", "silhouette", "titre"),
-    "agroalimentaire": ("flux", "silhouette", "strates", "carte"),
+    "art": ("genere", "silhouette", "titre", "comparaison", "strates"),
+    "musique": ("genere", "ondes", "flux", "silhouette", "titre"),
+    "agroalimentaire": ("genere", "flux", "silhouette", "strates", "carte"),
     "mathematiques": ("titre", "reseau", "flux", "strates"),
-    "physique": ("ondes", "flux", "titre", "comparaison"),
+    "physique": ("genere", "ondes", "flux", "titre", "comparaison"),
     "chimie": ("reseau", "flux", "silhouette", "titre"),
     "architecture": ("silhouette", "strates", "titre", "terrain"),
     "orientation": ("titre", "reseau", "comparaison", "strates", "flux"),
