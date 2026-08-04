@@ -116,6 +116,7 @@ def ecrire_sous_titres(capsule: dict, chemin_ass: str) -> int:
 
     taille = max(34, int(hauteur * 0.030))
     contour = max(2, int(taille * 0.10))
+    largeur_ligne = caracteres_par_ligne(largeur, taille)
 
     entetes = f"""[Script Info]
 ScriptType: v4.00+
