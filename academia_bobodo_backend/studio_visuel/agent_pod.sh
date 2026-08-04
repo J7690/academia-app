@@ -9,11 +9,13 @@
 # quarante minutes ne produit aucune connexion. Prendre le silence pour de
 # l'inactivite ferait tuer des machines en plein travail.
 #
-# « Occupee » vaut donc pour l'une quelconque de ces trois preuves :
-#   gpu     : le GPU calcule (utilisation > SEUIL_GPU %)
-#   rendu   : un processus de production tourne (blender / comfyui / ffmpeg)
-#   session : quelqu'un est connecte en SSH
-# Aucune des trois -> `rien`, et le compteur d'inactivite commence a courir.
+# « Occupee » vaut pour l'une quelconque de ces CINQ preuves :
+#   gpu          : le GPU calcule (utilisation > SEUIL_GPU %)
+#   rendu        : un processus de production tourne (blender / comfyui / ffmpeg)
+#   installation : un telechargement ou une installation est en cours
+#   ecriture     : le disque ecrit massivement -- filet pour l'imprevu
+#   session      : quelqu'un est connecte en SSH
+# Aucune des cinq -> `rien`, et le compteur d'inactivite commence a courir.
 #
 # Le jeton n'a aucun pouvoir au-dela du battement de coeur. Meme vole, il ne
 # permet que de maintenir SA propre machine en vie -- ce que borne de toute
@@ -51,7 +53,32 @@ while true; do
     activite="rendu"; occupe="true"
   fi
 
-  # 3. Quelqu'un travaille-t-il dessus ? C'est ce qui protege le prototypage.
+  # 3. INSTALLE-T-ELLE QUELQUE CHOSE ? Cette question a coute 17 Go et une
+  #    machine. Un telechargement de modele, un `apt` ou un `pip` ne sollicitent
+  #    ni le GPU ni aucun processus de rendu : l'agent declarait « rien », le
+  #    veilleur constatait l'inactivite, et supprimait une machine en plein
+  #    travail d'installation.
+  #    Une machine qui prepare son environnement travaille tout autant qu'une
+  #    machine qui calcule.
+  if [ "$occupe" = "false" ] && pgrep -f 'wget|curl|apt-get|dpkg|pip|git-remote|tar ' >/dev/null 2>&1; then
+    activite="installation"; occupe="true"
+  fi
+
+  # 4. Le disque ecrit-il massivement ? Filet pour tout ce que la liste
+  #    ci-dessus ne nomme pas -- une decompression, une copie, un outil qu'on
+  #    n'a pas prevu. Mieux vaut garder une machine de trop que perdre une
+  #    heure de telechargement.
+  if [ "$occupe" = "false" ] && [ -r /proc/diskstats ]; then
+    secteurs_avant=$(awk '{s+=$10} END {print s+0}' /proc/diskstats)
+    sleep 3
+    secteurs_apres=$(awk '{s+=$10} END {print s+0}' /proc/diskstats)
+    # 3 Mo en trois secondes : au-dessus, il se passe reellement quelque chose.
+    if [ $((secteurs_apres - secteurs_avant)) -gt 6000 ] 2>/dev/null; then
+      activite="ecriture"; occupe="true"
+    fi
+  fi
+
+  # 5. Quelqu'un travaille-t-il dessus ? C'est ce qui protege le prototypage.
   if [ "$occupe" = "false" ] && [ -n "$(who 2>/dev/null)" ]; then
     activite="session"; occupe="true"
   fi
