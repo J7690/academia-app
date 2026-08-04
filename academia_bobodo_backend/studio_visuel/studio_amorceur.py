@@ -111,6 +111,18 @@ def amorcer(pod: dict) -> bool:
     if not _scp(hote, port, list(FICHIERS)):
         return False
 
+    # Les contours SVG : sans eux, `silhouette` retombe sur son texte de
+    # secours et la capsule perd le sujet qu'elle devait montrer.
+    contours = os.path.join(SOURCES, "contours")
+    if os.path.isdir(contours):
+        _ssh(hote, port, "mkdir -p /workspace/contours", 60)
+        subprocess.run(
+            ["scp", "-o", "StrictHostKeyChecking=accept-new", "-o", "BatchMode=yes",
+             "-i", CLE_SSH, "-P", str(port),
+             *[os.path.join(contours, f) for f in os.listdir(contours) if f.endswith(".svg")],
+             f"root@{hote}:/workspace/contours/"],
+            capture_output=True, text=True, timeout=300)
+
     # 3. Environnement de l'agent. Le pod ne recoit QUE son jeton : ni la cle
     #    de service, ni la cle RunPod.
     env = (f"export POD_ID={pod_id}\n"

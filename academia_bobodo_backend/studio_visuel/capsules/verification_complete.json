@@ -1,0 +1,39 @@
+{
+  "capsule_id": "verification_v2",
+  "titre": "Verification apres corrections",
+  "format": { "largeur": 1080, "hauteur": 1920, "fps": 25 },
+  "scenes": [
+    {
+      "id": "titre",
+      "archetype": "titre",
+      "narration": "Le titre doit se lire.",
+      "accent": "orange",
+      "camera": "avance",
+      "parametres": { "texte": "155", "texte_second": "5", "taille": 2.0 }
+    },
+    {
+      "id": "silhouette",
+      "archetype": "silhouette",
+      "narration": "Un contour devient un volume.",
+      "accent": "or",
+      "camera": "orbite",
+      "parametres": { "svg": "/workspace/contours/coeur.svg", "echelle": 0.014 }
+    },
+    {
+      "id": "ondes",
+      "archetype": "ondes",
+      "narration": "Les ondes font face au spectateur.",
+      "accent": "vert",
+      "camera": "recul",
+      "parametres": { "cercles": 12, "rayon": 9 }
+    },
+    {
+      "id": "chrono",
+      "archetype": "chronologie",
+      "narration": "La frise tient dans le cadre.",
+      "accent": "orange",
+      "camera": "recul",
+      "parametres": { "jalons": ["1960", "1984", "2026"], "longueur": 11 }
+    }
+  ]
+}
