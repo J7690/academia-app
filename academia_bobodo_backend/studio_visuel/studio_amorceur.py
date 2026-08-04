@@ -154,6 +154,26 @@ fi
 /workspace/blender/blender --version | head -1
 chmod +x /workspace/agent_pod.sh 2>/dev/null || true
 
+# Le jeton HuggingFace : la machine va le CHERCHER elle-meme, en prouvant son
+# identite avec son propre jeton. Il ne transite jamais par LWS, et Supabase
+# reste la source unique. Sans lui, seuls les depots ouverts sont accessibles
+# -- ce qui suffit pour les modeles que nous utilisons aujourd'hui.
+source /workspace/agent.env
+REP=$(curl -s --max-time 30 -X POST "$SUPABASE_URL/functions/v1/studio-jeton-huggingface"   -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY"   -H 'Content-Type: application/json'   -d "{\"pod_id\":\"$POD_ID\",\"jeton\":\"$POD_JETON\"}")
+HF=$(echo "$REP" | sed -n 's/.*"jeton":"\([^"]*\)".*//p')
+if [ -n "$HF" ]; then
+  echo "export HF_TOKEN=$HF" >> /workspace/agent.env
+  echo "export HUGGING_FACE_HUB_TOKEN=$HF" >> /workspace/agent.env
+  echo 'jeton HuggingFace obtenu'
+else
+  echo 'aucun jeton HuggingFace — depots ouverts seulement'
+fi
+# Le cache des modeles va sur le VOLUME, pas sur le disque conteneur : 40 Go
+# contre 60, et un modele d'images en pese 32. Le disque plein a coute un
+# cycle complet.
+echo 'export HF_HOME=/workspace/hf' >> /workspace/agent.env
+mkdir -p /workspace/hf
+
 cat > /workspace/superviseur.sh <<'SUP'
 #!/bin/bash
 source /workspace/agent.env
