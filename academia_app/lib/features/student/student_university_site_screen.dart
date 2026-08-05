@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/student_university_site_provider.dart';
-import '../../providers/student_applications_provider.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart';
 import '../../widgets/mini_site_hero_video.dart';
 import 'mini_site_media_viewer_screen.dart';
-import 'application_request_dialog.dart';
+import 'apply_to_program.dart';
 import '../share/share_service.dart';
 import '../share/share_mode_provider.dart';
 import '../share/widgets/share_signature.dart';
@@ -1403,49 +1402,14 @@ class _ProgramCard extends StatelessWidget {
                 TextButton.icon(
                   onPressed: programId == null
                       ? null
-                      : () async {
-                          final request = await showApplicationRequestDialog(
+                      : () => applyToProgram(
                             context,
+                            programId: programId,
                             programTitle: title,
                             initialDegreeLevel:
                                 degree.isNotEmpty ? degree : null,
                             initialStudyMode: mode.isNotEmpty ? mode : null,
-                          );
-                          if (!context.mounted) return;
-                          if (request == null) {
-                            return;
-                          }
-
-                          final applicationsProvider =
-                              context.read<StudentApplicationsProvider>();
-                          final success = await applicationsProvider.createApplication(
-                            programId: programId,
-                            requestedDegreeLevel:
-                                request.requestedDegreeLevel,
-                            requestedStudyMode: request.requestedStudyMode,
-                            requestedSchedule: request.requestedSchedule,
-                            discountRequested: request.discountRequested,
-                            discountDetails: request.discountDetails,
-                            studentComment: request.studentComment,
-                          );
-                          if (!context.mounted) return;
-                          if (success) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Candidature créée avec succès.'),
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  applicationsProvider.error ??
-                                      'Erreur lors de la création de la candidature.',
-                                ),
-                              ),
-                            );
-                          }
-                        },
+                          ),
                   icon: const Icon(Icons.send),
                   label: const Text('Candidater'),
                   style: TextButton.styleFrom(

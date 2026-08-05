@@ -10,7 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../student_profile_screen.dart';
 import '../student_university_site_screen.dart';
-import '../application_request_dialog.dart';
+import '../apply_to_program.dart';
 import '../student_payments_screen.dart';
 import '../student_home_mobile.dart' show StudentAssistantSection;
 import '../../../providers/student_profile_provider.dart';
@@ -1821,50 +1821,14 @@ class _OfferCard extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: programId == null
                       ? null
-                      : () async {
-                          final request = await showApplicationRequestDialog(
+                      : () => applyToProgram(
                             context,
+                            programId: programId,
                             programTitle: title,
                             initialDegreeLevel:
                                 degree.isNotEmpty ? degree : null,
                             initialStudyMode: mode.isNotEmpty ? mode : null,
-                          );
-                          if (!context.mounted) return;
-                          if (request == null) {
-                            return;
-                          }
-
-                          final applicationsProvider =
-                              context.read<StudentApplicationsProvider>();
-                          final success = await applicationsProvider
-                              .createApplication(
-                            programId: programId,
-                            requestedDegreeLevel:
-                                request.requestedDegreeLevel,
-                            requestedStudyMode: request.requestedStudyMode,
-                            requestedSchedule: request.requestedSchedule,
-                            discountRequested: request.discountRequested,
-                            discountDetails: request.discountDetails,
-                            studentComment: request.studentComment,
-                          );
-                          if (!context.mounted) return;
-                          if (success) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Candidature créée avec succès.'),
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  applicationsProvider.error ??
-                                      'Erreur lors de la création de la candidature.',
-                                ),
-                              ),
-                            );
-                          }
-                        },
+                          ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF3275D0),
                     foregroundColor: Colors.white,

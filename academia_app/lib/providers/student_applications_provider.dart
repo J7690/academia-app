@@ -9,10 +9,20 @@ class StudentApplicationsProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   List<Map<String, dynamic>> _applications = [];
+  bool _dossierIncomplete = false;
+  List<String> _missingFields = const <String>[];
 
   bool get isLoading => _isLoading;
   String? get error => _error;
   List<Map<String, dynamic>> get applications => _applications;
+
+  /// Vrai si le dernier envoi a été refusé faute de dossier complet.
+  /// Distingue ce refus rattrapable d'une vraie erreur technique.
+  bool get dossierIncomplete => _dossierIncomplete;
+
+  /// Noms de colonnes renvoyés par le serveur. Bruts exprès : la mise en
+  /// français appartient à l'interface, pas au provider.
+  List<String> get missingFields => _missingFields;
   int get unreadCount =>
       _applications.where((app) => app['has_unread_for_student'] == true).length;
 
@@ -93,6 +103,8 @@ class StudentApplicationsProvider extends ChangeNotifier {
   }) async {
     _setLoading(true);
     _setError(null);
+    _dossierIncomplete = false;
+    _missingFields = const <String>[];
     try {
       String? _normalizeText(String? value) {
         if (value == null) return null;
@@ -126,22 +138,19 @@ class StudentApplicationsProvider extends ChangeNotifier {
 
         if (errorCode == 'dossier_incomplete') {
           final details = data['details'];
-          List<dynamic> missingFields = const [];
+          _dossierIncomplete = true;
           if (details is Map && details['missing_fields'] is List) {
-            missingFields = List<dynamic>.from(details['missing_fields'] as List);
+            _missingFields = (details['missing_fields'] as List)
+                .map((e) => e.toString())
+                .toList();
           }
 
-          if (missingFields.isNotEmpty) {
-            _setError(
-              'Votre dossier de candidature n\'est pas complet. '
-              'Champs manquants : ${missingFields.join(', ')}.',
-            );
-          } else {
-            _setError(
-              'Votre dossier de candidature n\'est pas complet. '
-              'Veuillez compléter votre profil académique avant de candidater.',
-            );
-          }
+          // Message de repli seulement : l'appelant dispose de
+          // `missingFields` et affiche des libellés lisibles.
+          _setError(
+            'Votre dossier de candidature n\'est pas complet. '
+            'Veuillez le compléter avant de candidater.',
+          );
         } else {
           _setError(
             data['error']?.toString() ??

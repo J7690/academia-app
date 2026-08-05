@@ -3,6 +3,28 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// Réponse de `app_is_student_dossier_complete()`.
+///
+/// [verified] distingue « le serveur a répondu » de « on n'a pas pu savoir ».
+/// Sans cette distinction, une coupure réseau bloquerait l'étudiant alors que
+/// le serveur reste de toute façon l'arbitre au moment de l'envoi.
+class DossierStatus {
+  final bool verified;
+  final bool isComplete;
+  final List<String> missingFields;
+
+  const DossierStatus({
+    required this.verified,
+    required this.isComplete,
+    required this.missingFields,
+  });
+
+  const DossierStatus.unverified()
+      : verified = false,
+        isComplete = false,
+        missingFields = const <String>[];
+}
+
 class StudentProfileProvider extends ChangeNotifier {
   final SupabaseClient _client = Supabase.instance.client;
 
@@ -43,6 +65,44 @@ class StudentProfileProvider extends ChangeNotifier {
       _setError(e.toString());
     } finally {
       _setLoading(false);
+    }
+  }
+
+  /// Demande au serveur si le dossier de candidature est complet.
+  ///
+  /// On appelle le RPC plutôt que de rejouer les 12 règles côté Dart : une
+  /// seconde définition de « complet » finirait par diverger de celle qui
+  /// décide réellement, dans `app_create_application`.
+  ///
+  /// Ne touche ni `_isLoading` ni `_error` : c'est une vérification de
+  /// passage, elle n'a pas à faire basculer l'écran profil en erreur.
+  Future<DossierStatus> checkDossier() async {
+    try {
+      final result = await _client.rpc('app_is_student_dossier_complete');
+      if (result is! Map) {
+        debugPrint(
+          '[StudentProfileProvider] checkDossier réponse inattendue: ${result.runtimeType}',
+        );
+        return const DossierStatus.unverified();
+      }
+      final map = Map<String, dynamic>.from(result);
+      if (map['success'] != true) {
+        debugPrint(
+          '[StudentProfileProvider] checkDossier échec serveur: ${map['error']}',
+        );
+        return const DossierStatus.unverified();
+      }
+      final rawMissing = map['missing_fields'];
+      return DossierStatus(
+        verified: true,
+        isComplete: map['is_complete'] == true,
+        missingFields: rawMissing is List
+            ? rawMissing.map((e) => e.toString()).toList()
+            : const <String>[],
+      );
+    } catch (e) {
+      debugPrint('[StudentProfileProvider] checkDossier error=$e');
+      return const DossierStatus.unverified();
     }
   }
 
