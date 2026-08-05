@@ -208,3 +208,62 @@ En pratique, sur ce dépôt :
   (`whiteboard_engine_remotion/`, `scene_template.html`, chaîne Pillow) conservés comme
   archives : **le moteur de production est `whiteboard_vision/`**.
 - **Documenter en ajoutant un fichier daté**, sans réécrire l'historique.
+
+---
+
+## 11. Environnement de l'agent (installé le 05/08/2026)
+
+Le dépôt configure lui-même l'agent. Ces fichiers sont **versionnés exprès** :
+ils doivent être lisibles et critiquables, pas subis.
+
+| Fichier | Rôle |
+|---|---|
+| `.claude/settings.json` | garde-fous : `deny` / `ask` / `allow`, et les hooks |
+| `.claude/settings.local.json` | autorisations **personnelles**, non versionné |
+| `.mcp.json` | serveur MCP Supabase **en lecture seule**, aucun secret |
+| `.claude/skills/` | 7 compétences : orientation, vérification, débogage, recherche, revues |
+| `.claude/agents/` | 4 sous-agents en lecture seule |
+| `.claude/hooks/` | 3 hooks Python |
+
+### Les trois hooks
+
+- **`garde_secrets.py`** (PreToolUse) — refuse toute commande qui lirait une clé
+  privée ou toucherait au pare-feu. Il rend exécutoires les deux interdits du §3.
+- **`anti_boucle.py`** (PostToolUse) — compte les retouches d'un même fichier et
+  alerte à la 4ᵉ **sans mesure entre-temps**. Une commande de vérification
+  (`flutter analyze`, `deno test`, `pytest`…) remet le compteur à zéro.
+- **`etat_projet.py`** (SessionStart) — annonce l'état **mesuré** du dépôt
+  (branche, avance sur `origin`, fichiers non commités) plutôt que l'état
+  supposé. Ce fichier-ci vieillit ; ce hook, non.
+
+Tous **échouent en laissant passer** : un garde-fou qui casse la session est un
+garde-fou qu'on désactive.
+
+### Ce qui est interdit sans autorisation explicite de Jocelyn
+
+Écriture en base de production, déploiement d'Edge Function, migration distante,
+`git commit`, `git push`, publication Facebook ou Canva. `.claude/settings.json`
+les met en `deny` ou en `ask` : **ne pas contourner** en passant par une autre
+commande.
+
+### La règle qui prime sur toutes les autres
+
+> **Ne jamais déduire un état de ce qu'on ne voit pas.**
+> Vérifier qu'un fichier est valide ne dit rien de ce qu'il contient.
+
+Elle vient des sept défauts recensés dans
+`docs/STUDIO_VISUEL_ETAT_2026-08-05.md`. Six se cachaient derrière une absence
+de message ; le septième derrière un message de **succès** — une vidéo noire et
+muette livrée à un étudiant comme « prête ».
+
+### Extensions installées
+
+Cinq plugins officiels Anthropic, manifestes vérifiés avant installation :
+`feature-dev`, `pr-review-toolkit`, `code-review`, `commit-commands`,
+`security-guidance`. Les quatre premiers n'ajoutent **ni hook ni serveur MCP**.
+`security-guidance` ajoute des hooks Python (dont une relecture par LLM à
+l'arrêt) et installe l'Agent SDK au démarrage de session — c'est le seul à avoir
+une empreinte sur la machine.
+
+Écartés : `hookify` (hooks Python sur *chaque* appel d'outil) et `ralph-wiggum`
+(boucles auto-référentielles, contraire à `anti_boucle.py`).

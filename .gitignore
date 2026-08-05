@@ -74,3 +74,11 @@ android/app/*.keystore
 
 .DS_Store
 Thumbs.db
+
+# Configuration Claude Code.
+# `.claude/settings.json`, les skills, les agents et les hooks sont versionnes
+# EXPRES : ils doivent etre lisibles et critiquables. Seul le personnel et le
+# jetable restent dehors.
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+.claude/.etat/

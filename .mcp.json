@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json.schemastore.org/mcp.json",
+
+  "//": [
+    "Serveurs MCP du depot Academia. AUCUN SECRET ICI — ce fichier est versionne.",
+    "Les jetons passent par des variables d'environnement, jamais par ce fichier.",
+    "",
+    "Le serveur Supabase est declare EN LECTURE SEULE (--read-only). Ce n'est pas",
+    "une precaution theorique : la base porte les credits, les paiements et les",
+    "comptes etudiants. Une ecriture accidentelle ne se rattrape pas.",
+    "Pour une ecriture ponctuelle : la faire par migration relue, pas en elargissant",
+    "ce fichier.",
+    "",
+    "Prerequis : definir SUPABASE_ACCESS_TOKEN dans l'environnement.",
+    "  PowerShell : $env:SUPABASE_ACCESS_TOKEN = '<jeton>'",
+    "  bash       : export SUPABASE_ACCESS_TOKEN='<jeton>'",
+    "Le jeton se cree sur https://supabase.com/dashboard/account/tokens",
+    "Sans lui, le serveur ne demarre pas — c'est le comportement voulu."
+  ],
+
+  "mcpServers": {
+    "supabase-lecture": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--read-only",
+        "--project-ref=thevdfcwlcqzdoybfvgs"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
+      }
+    }
+  }
+}

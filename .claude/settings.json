@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+
+  "//": [
+    "Garde-fous du depot Academia. Versionne exprès : il doit etre lisible et",
+    "critiquable. Les autorisations personnelles et jetables vont dans",
+    "settings.local.json, qui n'est pas versionne.",
+    "",
+    "PRINCIPE : `deny` pour ce qui est irreversible ou public. `ask` pour ce qui",
+    "touche la production mais fait partie du travail normal. Rien d'autre.",
+    "",
+    "Les serveurs MCP sont nommes par leur identifiant de connecteur. Si un",
+    "connecteur est reinstalle, son identifiant change et la regle ne mord plus.",
+    "Verification : `claude mcp list` puis comparer aux noms ci-dessous.",
+    "",
+    "`supabase-lecture` (declare dans .mcp.json) est lance --read-only, mais il",
+    "PUBLIE quand meme ses outils d'ecriture : le refus n'a lieu qu'a l'execution.",
+    "D'ou leur presence dans `deny` — cela evite surtout de croire qu'une ecriture",
+    "est passee."
+  ],
+
+  "permissions": {
+    "deny": [
+      "Read(**/.ssh/**)",
+      "Read(**/id_ed25519*)",
+      "Read(**/id_rsa*)",
+      "Read(**/*.pem)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/service_role*)",
+      "Bash(cat ~/.ssh/*)",
+      "Bash(cat /root/.ssh/*)",
+
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -fd:*)",
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~*)",
+
+      "Bash(ufw:*)",
+      "Bash(iptables:*)",
+      "Bash(ssh lws-nexiom \"ufw:*)",
+      "Bash(ssh lws-nexiom \"iptables:*)",
+
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__pause_project",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__restore_project",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__create_project",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__delete_branch",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__confirm_cost",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__get_publishable_keys",
+
+      "mcp__a14268fb-eea8-4ec3-b4b3-8396dae4609a__facebook_publish_post",
+      "mcp__a14268fb-eea8-4ec3-b4b3-8396dae4609a__facebook_publish_photo",
+      "mcp__a14268fb-eea8-4ec3-b4b3-8396dae4609a__facebook_publish_video",
+      "mcp__a14268fb-eea8-4ec3-b4b3-8396dae4609a__facebook_delete_post",
+      "mcp__a14268fb-eea8-4ec3-b4b3-8396dae4609a__facebook_send_message",
+      "mcp__a14268fb-eea8-4ec3-b4b3-8396dae4609a__facebook_reply_comment",
+
+      "mcp__12323cb8-78a1-4530-b566-9377d70e635a",
+
+      "mcp__supabase-lecture__pause_project",
+      "mcp__supabase-lecture__restore_project",
+      "mcp__supabase-lecture__create_project",
+      "mcp__supabase-lecture__delete_branch",
+      "mcp__supabase-lecture__confirm_cost",
+      "mcp__supabase-lecture__get_publishable_keys",
+      "mcp__supabase-lecture__execute_sql",
+      "mcp__supabase-lecture__apply_migration",
+      "mcp__supabase-lecture__deploy_edge_function",
+      "mcp__supabase-lecture__create_branch",
+      "mcp__supabase-lecture__merge_branch",
+      "mcp__supabase-lecture__rebase_branch",
+      "mcp__supabase-lecture__reset_branch"
+    ],
+
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(git merge:*)",
+      "Bash(git rebase:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh release:*)",
+
+      "Bash(supabase db push:*)",
+      "Bash(supabase functions deploy:*)",
+      "Bash(supabase migration up:*)",
+      "Bash(supabase link:*)",
+
+      "Bash(scp:*)",
+      "Bash(rsync:*)",
+      "Bash(ssh lws-nexiom \"systemctl restart:*)",
+      "Bash(ssh lws-nexiom \"systemctl stop:*)",
+
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__execute_sql",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__apply_migration",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__deploy_edge_function",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__create_branch",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__merge_branch",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__rebase_branch",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__reset_branch"
+    ],
+
+    "allow": [
+      "Bash(flutter analyze:*)",
+      "Bash(flutter test:*)",
+      "Bash(flutter pub get:*)",
+      "Bash(flutter pub outdated:*)",
+      "Bash(dart format:*)",
+      "Bash(dart analyze:*)",
+      "Bash(deno test:*)",
+      "Bash(deno check:*)",
+      "Bash(deno fmt --check:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(python3 -m pytest:*)",
+      "Bash(python -m py_compile:*)",
+
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git blame:*)",
+      "Bash(git branch:*)",
+      "Bash(git stash list:*)",
+      "Bash(git ls-files:*)",
+
+      "Bash(rg:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__list_tables",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__list_migrations",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__list_edge_functions",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__list_extensions",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__get_logs",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__get_advisors",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__search_docs",
+      "mcp__960c32dc-a8a7-41de-a2d2-7490c8e2c7a7__get_edge_function"
+    ]
+  },
+
+  "hooks": {
+    "//": [
+      "Trois hooks, tous ecrits pour NE JAMAIS bloquer par accident : ils sortent",
+      "en code 0 sur toute erreur interne. Un garde-fou qui casse la session est",
+      "un garde-fou qu'on finit par desactiver.",
+      "Les tester a la main : echo '{}' | python .claude/hooks/<fichier>.py"
+    ],
+
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/garde_secrets.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/anti_boucle.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/etat_projet.py\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  },
+
+  "env": {
+    "//": "L'IP du VPS de rendu, injectable au build Flutter. Aucun secret ici.",
+    "VPS_HOST": "31.207.38.60"
+  }
+}
