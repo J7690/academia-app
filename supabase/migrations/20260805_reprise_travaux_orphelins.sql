@@ -1,0 +1,28 @@
+-- 05/08/2026 — Un travail dont la machine meurt retourne a la file.
+--
+-- Trace de la migration `studio_reprendre_travaux_orphelins` :
+--   app.studio_jobs : colonne `tentatives`
+--   public.studio_reprendre_orphelins()
+-- Plus : tache pg_cron `studio-reprise-orphelins`, toutes les deux minutes.
+--
+-- LE DEFAUT. Une capsule est restee en `rendering` alors qu'AUCUNE machine ne
+-- tournait : la session avait ete coupee, le veilleur avait supprime la
+-- machine, et personne ne reprenait le travail. L'orchestrateur ne voyait plus
+-- rien « en attente » -- il ne relouait donc pas de machine. Le travail etait
+-- perdu en silence, dans l'etat le plus trompeur qui soit : celui qui dit
+-- « ca avance ».
+--
+-- C'est le meme motif que les six autres defauts de cette semaine : un systeme
+-- qui conclut a partir d'une absence. Ici, l'absence de nouvelles d'un pod
+-- etait interpretee comme « il travaille encore ».
+--
+-- DEUX BORNES VOLONTAIRES.
+--   * Cinq minutes avant de reprendre : un pod tout juste cree peut avoir pris
+--     un travail sans etre encore inscrit `running`. Sans ce delai, on rendrait
+--     a la file un travail qui vient de commencer.
+--   * Trois tentatives au maximum : sans cette borne, une capsule qui fait
+--     planter le rendu relancerait des machines indefiniment -- exactement le
+--     scenario que le plafond de depense doit empecher, mais par une autre
+--     porte. Au-dela, le defaut est dans la capsule, pas dans l'infrastructure.
+--
+-- Verifie : la capsule bloquee a ete rendue a la file du premier passage.
