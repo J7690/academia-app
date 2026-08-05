@@ -38,6 +38,15 @@ class _StudentLiveSessionsTabState extends State<StudentLiveSessionsTab> {
 
   String? _typeFilter;
 
+  /// Les filtres doivent couvrir TOUT ce qui peut être créé, sinon une séance
+  /// existe, est publiée, et se dérobe dès que l'étudiant touche un filtre.
+  /// `revision_collective` manquait : l'enseignant pouvait la créer
+  /// (`teacher_live_sessions_screen._types`) sans qu'elle soit jamais
+  /// filtrable ici.
+  ///
+  /// VALEUR COUPLÉE — à modifier des DEUX côtés :
+  /// `teacher_live_sessions_screen._types` (+ `orientation`, créée par le
+  /// conseiller depuis son propre parcours).
   static const _filters = <String?, String>{
     null: 'Tout',
     'course': 'Cours',
@@ -45,6 +54,7 @@ class _StudentLiveSessionsTabState extends State<StudentLiveSessionsTab> {
     'prep_concours': 'Prépa',
     'orientation': 'Orientation',
     'masterclass': 'Masterclass',
+    'revision_collective': 'Révision',
   };
 
   @override

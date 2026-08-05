@@ -5,6 +5,7 @@ import '../../models/academia_session.dart';
 import '../../providers/academia_session_provider.dart';
 import '../../providers/instructor_online_courses_provider.dart';
 import '../live/academia_classroom_screen.dart';
+import '../live/session_summary_screen.dart';
 
 /// Écran enseignant — création et pilotage des séances en direct du moteur
 /// unifié (`app.academia_sessions`).
@@ -103,6 +104,18 @@ class _TeacherLiveSessionsScreenState extends State<TeacherLiveSessionsScreen> {
       ),
     );
     await _reload();
+  }
+
+  Future<void> _openSummary(AcademiaSession s) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SessionSummaryScreen(
+          sessionId: s.id,
+          sessionTitle: s.title,
+          isHost: true,
+        ),
+      ),
+    );
   }
 
   Future<void> _end(AcademiaSession s) async {
@@ -329,6 +342,15 @@ class _TeacherLiveSessionsScreenState extends State<TeacherLiveSessionsScreen> {
                   child: const Text('Terminer'),
                 ),
               ],
+              // Une séance terminée garde une valeur : sa fiche. C'est la
+              // seule porte d'entrée de l'enseignant vers la synthèse quand
+              // il a quitté la salle sans passer par « Terminer ».
+              if (s.status == SessionStatus.ended)
+                OutlinedButton.icon(
+                  onPressed: () => _openSummary(s),
+                  icon: const Icon(Icons.description_outlined, size: 17),
+                  label: const Text('Fiche de séance'),
+                ),
             ],
           ),
         ],
@@ -391,6 +413,9 @@ class _SessionFormState extends State<_SessionForm> {
   // formulaire produisait un écran dont les trois quarts des champs restaient
   // vides. Elle dispose désormais de son propre parcours — conseillers,
   // créneaux, réservation — et de son mode de studio.
+  /// VALEUR COUPLÉE — à modifier des DEUX côtés :
+  /// `student_live_sessions_tab._filters`. Un type créable ici mais absent
+  /// là-bas produit une séance publiée que le filtre étudiant escamote.
   static const _types = <String, String>{
     'course': 'Cours',
     'td': 'TD',

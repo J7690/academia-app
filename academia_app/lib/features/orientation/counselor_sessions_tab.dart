@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../providers/academia_session_provider.dart';
 import '../../providers/orientation_provider.dart';
 import '../live/academia_classroom_screen.dart';
+import '../live/session_summary_screen.dart';
 import 'orientation_theme.dart';
 
 /// Les séances que le conseiller ouvre lui-même.
@@ -97,6 +98,16 @@ class _CounselorSessionsTabState extends State<CounselorSessionsTab> {
     await context.read<OrientationProvider>().loadMySessions();
   }
 
+  Future<void> _compteRendu(Map<String, dynamic> s) async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => SessionSummaryScreen(
+        sessionId: s['id'].toString(),
+        sessionTitle: s['title']?.toString() ?? 'Entretien d\'orientation',
+        isHost: true,
+      ),
+    ));
+  }
+
   Future<void> _terminer(Map<String, dynamic> s) async {
     final confirme = await showDialog<bool>(
       context: context,
@@ -165,6 +176,7 @@ class _CounselorSessionsTabState extends State<CounselorSessionsTab> {
                         onAnnuler: () => _changerStatut(s, 'cancelled'),
                         onDemarrer: () => _demarrer(s),
                         onTerminer: () => _terminer(s),
+                        onCompteRendu: () => _compteRendu(s),
                       )),
               ],
             ),
@@ -253,6 +265,12 @@ class _CarteSeance extends StatelessWidget {
   final VoidCallback onDemarrer;
   final VoidCallback onTerminer;
 
+  /// Compte rendu de l'entretien. Une séance close n'était qu'une impasse :
+  /// « Séance close », et rien d'autre. C'est pourtant le moment où le
+  /// conseiller a le plus besoin de la fiche — pour la relire et la partager
+  /// avec l'élève.
+  final VoidCallback onCompteRendu;
+
   const _CarteSeance({
     required this.seance,
     required this.onModifier,
@@ -260,6 +278,7 @@ class _CarteSeance extends StatelessWidget {
     required this.onAnnuler,
     required this.onDemarrer,
     required this.onTerminer,
+    required this.onCompteRendu,
   });
 
   static const _statuts = <String, (String, Color)>{
@@ -376,6 +395,10 @@ class _CarteSeance extends StatelessWidget {
           _Action('Terminer', Icons.stop_circle_outlined, onTerminer,
               danger: true),
           _Action('Rejoindre', Icons.login, onDemarrer, principal: true),
+        ],
+      'ended' => [
+          _Action('Compte rendu', Icons.description_outlined, onCompteRendu,
+              principal: true),
         ],
       _ => const [
           Text(

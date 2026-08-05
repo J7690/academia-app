@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../../providers/admin_live_sessions_provider.dart';
 import '../../models/academia_session.dart';
 import '../live/academia_classroom_screen.dart';
@@ -344,16 +342,33 @@ class _AdminLiveSessionsScreenState extends State<AdminLiveSessionsScreen> {
     } else if (status == 'running') {
       actions.addAll([
         TextButton(
+          // SUPERVISION, PAS ANIMATION.
+          //
+          // Cet écran liste les séances HISTORIQUES
+          // (`app.online_course_live_sessions`), dont l'hôte est l'instructeur
+          // du cours — jamais l'administrateur qui regarde.
+          //
+          // Le code posait `hostId: currentUser.id` et `isHost: true`. Trois
+          // conséquences, toutes silencieuses :
+          //   · la salle appelait `startSession()` sur une RPC unifiée qui
+          //     ignore les identifiants historiques ;
+          //   · elle affichait la barre hôte, dont « Terminer la séance » ;
+          //   · `_cleanup()` appelait `endSession()` à la simple fermeture de
+          //     l'écran — tentative d'arrêter la séance d'autrui, refusée par
+          //     `app_learning_end_session` sans que personne n'en soit averti.
+          //
+          // L'administrateur garde ses pouvoirs : le jeton lui accorde
+          // `can_publish` et `is_moderator`, et la modération réelle passe par
+          // `livekit-moderate`, qui revérifie le rôle côté serveur.
           onPressed: () {
-            final desc = '';
             final academiaSession = AcademiaSession(
               id: sessionId,
               type: SessionType.course,
               status: SessionStatus.running,
               provider: SessionProvider.livekit,
               title: title,
-              description: desc.isNotEmpty ? desc : null,
-              hostId: Supabase.instance.client.auth.currentUser?.id ?? '',
+              // L'hôte est inconnu de cette liste : on ne l'invente pas.
+              hostId: '',
               createdAt: DateTime.now(),
               updatedAt: DateTime.now(),
             );
@@ -361,12 +376,12 @@ class _AdminLiveSessionsScreenState extends State<AdminLiveSessionsScreen> {
               MaterialPageRoute(
                 builder: (_) => AcademiaClassroomScreen(
                   session: academiaSession,
-                  isHost: true,
+                  isHost: false,
                 ),
               ),
             );
           },
-          child: const Text('Rejoindre'),
+          child: const Text('Superviser'),
         ),
         TextButton(
           onPressed: provider.isSaving

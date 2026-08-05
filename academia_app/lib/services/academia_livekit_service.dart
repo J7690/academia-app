@@ -150,13 +150,24 @@ class AcademiaLivekitService {
 
   /// Enregistre l'entrée en session (côté base de données).
   /// À appeler AVANT d'obtenir le token.
+  /// Inscrit le participant à la séance.
+  ///
+  /// Renvoie la réponse COMPLÈTE, refus compris. La version précédente rendait
+  /// `null` dans tous les cas d'échec et se contentait d'un `debugPrint` :
+  /// l'appelant ne pouvait pas distinguer « séance complète » d'une panne
+  /// réseau, et n'avait aucun motif à afficher. Comme il ignorait aussi le
+  /// résultat, un refus n'empêchait rien — le participant obtenait son jeton
+  /// et entrait quand même.
   Future<Map<String, dynamic>?> joinSession(String sessionId) async {
     try {
       final response = await _client.rpc(
         'app_learning_join_session',
         params: {'p_session_id': sessionId},
       );
-      if (response is Map<String, dynamic> && response['success'] == true) {
+      if (response is Map<String, dynamic>) {
+        if (response['success'] != true) {
+          debugPrint('[AcademiaLivekit] Join refusé: ${response['error']}');
+        }
         return response;
       }
       debugPrint('[AcademiaLivekit] Join failed: $response');
