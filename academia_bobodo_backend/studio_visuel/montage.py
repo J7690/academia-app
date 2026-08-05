@@ -267,6 +267,90 @@ def luminosite_moyenne(chemin: str, echantillons: int = 8) -> float:
     return round(sum(valeurs) / len(valeurs), 2) if valeurs else -1.0
 
 
+def _luminosite_a(chemin: str, instant: float) -> float:
+    """Luminosite d'une image unique, prise a un instant donne. -1 si illisible."""
+    try:
+        brut = subprocess.run(
+            ["ffmpeg", "-v", "error", "-ss", f"{instant:.2f}", "-i", chemin,
+             "-frames:v", "1", "-vf", "scale=64:114,format=gray",
+             "-f", "rawvideo", "-"],
+            capture_output=True, timeout=120).stdout
+        return round(sum(brut) / len(brut), 2) if brut else -1.0
+    except Exception:  # noqa: BLE001
+        return -1.0
+
+
+def scenes_sombres(chemin: str, capsule: dict, seuil: float = 6.0,
+                   par_scene: int = 3) -> list[dict]:
+    """Repere les scenes noires UNE PAR UNE. Renvoie celles qui sont sous le seuil.
+
+    POURQUOI LA MOYENNE NE SUFFIT PAS, ET C'EST MESURE.
+    `luminosite_moyenne` prend huit echantillons sur toute la capsule et les
+    moyenne. Sur une capsule de quatre scenes dont deux sont noires, la mesure
+    du 05/08 donne : luminosite moyenne 64,74/255, `image_visible` = True --
+    alors que 11,0 secondes sur 22,6 sont reellement noires, soit 49 %.
+
+    C'est exactement le mecanisme de la capsule livree noire a un etudiant. Le
+    controle global etait necessaire ; il n'a jamais ete suffisant. Une scene
+    noire se cache derriere les scenes lumineuses qui l'entourent, et plus la
+    capsule est longue, mieux elle se cache.
+
+    On decoupe donc la video selon les durees du storyboard et on mesure
+    chaque scene separement.
+    """
+    scenes = capsule.get("scenes") or []
+    if not scenes:
+        return []
+
+    try:
+        reelle = float(subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "default=nw=1:nk=1", chemin],
+            capture_output=True, text=True, timeout=60).stdout.strip() or 0)
+    except Exception:  # noqa: BLE001
+        return []
+    if reelle <= 0:
+        return []
+
+    nominale = sum(float(s.get("duree_s") or 0) for s in scenes)
+    if nominale <= 0:
+        return []
+    # La duree reelle differe toujours un peu de la somme des durees prevues
+    # (arrondis d'images, image finale repetee). On projette plutot que de
+    # supposer les deux egales : sans cela le decoupage derive scene apres
+    # scene et l'on finit par mesurer la mauvaise.
+    facteur = reelle / nominale
+
+    sombres: list[dict] = []
+    debut = 0.0
+    for scene in scenes:
+        duree = float(scene.get("duree_s") or 0) * facteur
+        if duree <= 0:
+            continue
+        fin = debut + duree
+        # On evite les bords : une transition ou une image de garde ne doit pas
+        # faire condamner une scene par ailleurs correcte.
+        marge = min(0.25, duree / 6)
+        mesures = []
+        for i in range(par_scene):
+            t = debut + marge + (duree - 2 * marge) * (i + 0.5) / par_scene
+            v = _luminosite_a(chemin, min(t, reelle - 0.05))
+            if v >= 0:
+                mesures.append(v)
+        if mesures:
+            moyenne = round(sum(mesures) / len(mesures), 2)
+            if moyenne < seuil:
+                sombres.append({
+                    "id": scene.get("id"),
+                    "archetype": scene.get("archetype"),
+                    "debut_s": round(debut, 2),
+                    "duree_s": round(duree, 2),
+                    "luminosite": moyenne,
+                })
+        debut = fin
+    return sombres
+
+
 def verifier(chemin: str) -> dict:
     """Controle automatique, comme le prevoit l'etape 10 du cahier des charges.
 

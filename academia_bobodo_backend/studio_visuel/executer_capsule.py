@@ -237,6 +237,21 @@ def executer(capsule: dict, travail: str | None = None) -> tuple[bool, str]:
         journal(f"ECHEC image absente — luminosite {infos.get('luminosite')}/255")
         return False, f"image_noire:{infos.get('luminosite')}"
 
+    # LA MOYENNE NE SUFFIT PAS, ET C'EST MESURE.
+    # Sur une capsule de quatre scenes dont deux noires : luminosite moyenne
+    # 64,74/255, `image_visible` = True -- alors que 11,0 s sur 22,6 sont
+    # noires. Le controle global laissait donc passer exactement le defaut
+    # qu'il etait cense attraper. On regarde chaque scene.
+    sombres = montage.scenes_sombres(video, capsule)
+    if sombres:
+        detail = " ".join(
+            f"{s['id']}({s['archetype']},{s['debut_s']}s,{s['luminosite']})"
+            for s in sombres)
+        perdu = sum(s["duree_s"] for s in sombres)
+        journal(f"ECHEC {len(sombres)} scene(s) noire(s) — {perdu:.1f}s sur "
+                f"{capsule['duree_totale_s']}s : {detail}")
+        return False, f"scenes_noires:{len(sombres)}"
+
     # Le son manquant ne bloque pas : une capsule muette reste regardable, et
     # le repli est parfois voulu. Mais il ne doit plus passer INAPERCU.
     if infos.get("a_du_son") != "True":

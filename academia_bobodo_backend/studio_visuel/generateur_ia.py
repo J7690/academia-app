@@ -65,7 +65,37 @@ def _charger_image():
     return _pipe_image
 
 
+# En dessous de cette luminosite moyenne (sur 255), l'image est consideree
+# comme vide. Le style impose un fond « dark navy » : le seuil doit donc rester
+# bas pour ne pas rejeter une image legitimement sombre. Une image reellement
+# produite mesure ~40 a 130 ; une image noire mesure 0 a 2.
+LUMINOSITE_MINIMALE = 6.0
+
+
+def _luminosite(image) -> float:
+    """Luminosite moyenne d'une image PIL, sur 255. -1 si non mesurable."""
+    try:
+        from PIL import ImageStat
+        return round(ImageStat.Stat(image.convert("L")).mean[0], 2)
+    except Exception:  # noqa: BLE001
+        return -1.0
+
+
 def produire_image(sujet: str, chemin: str, largeur: int, hauteur: int, graine: int = 7) -> bool:
+    """Genere une image et VERIFIE qu'elle contient quelque chose.
+
+    POURQUOI CETTE VERIFICATION EXISTE. Une capsule a ete livree a un etudiant
+    en etant noire la moitie de sa duree. La chaine n'avait leve aucune erreur,
+    et pour cause : un modele de diffusion qui rend du noir ne leve pas
+    d'exception. Il rend une image parfaitement valide, dont tous les pixels
+    valent zero -- c'est le symptome connu d'un debordement numerique dans le
+    VAE en demi-precision. `image.save()` reussit, la fonction renvoyait True,
+    et le mouvement de camera fabriquait consciencieusement 120 images noires.
+    La degradation gracieuse vers un archetype procedural ne se declenchait
+    jamais, puisque rien n'avait echoue.
+
+    L'absence d'exception n'est pas une preuve de succes. On mesure.
+    """
     try:
         import torch
         pipe = _charger_image()
@@ -74,8 +104,18 @@ def produire_image(sujet: str, chemin: str, largeur: int, hauteur: int, graine: 
                      num_inference_steps=4, guidance_scale=3.5,
                      height=hauteur, width=largeur,
                      generator=torch.Generator("cpu").manual_seed(graine)).images[0]
+
+        lum = _luminosite(image)
+        if 0 <= lum < LUMINOSITE_MINIMALE:
+            # On NE sauvegarde pas : une source noire ne doit pas pouvoir etre
+            # reprise par le mouvement de camera ni finir dans le montage.
+            journal(f"image NOIRE rejetee — luminosite {lum}/255 "
+                    f"(seuil {LUMINOSITE_MINIMALE}) — repli sur un archetype procedural")
+            return False
+
         image.save(chemin)
-        journal(f"image produite en {time.time()-t:.0f}s — {os.path.basename(chemin)}")
+        journal(f"image produite en {time.time()-t:.0f}s — "
+                f"{os.path.basename(chemin)} — luminosite {lum}/255")
         return True
     except Exception as e:  # noqa: BLE001
         journal(f"image impossible : {e}")
@@ -195,7 +235,16 @@ def rendre_scene(scene: dict, format_capsule: dict, dossier: str) -> int:
     lg_gen = (largeur // 32) * 16
     ht_gen = (hauteur // 32) * 16
 
-    fixe = os.path.join(dossier, f"{scene['id']}_source.png")
+    # L'IMAGE SOURCE NE VA PAS DANS LE DOSSIER DES IMAGES DE MONTAGE.
+    # Elle y etait, et `montage.assembler` ramasse les fichiers par prefixe
+    # `{id}_` : `s1_source.png` correspondait donc au meme filtre que
+    # `s1_0001.png`. Trie en dernier ('s' > '0'), il devenait la DERNIERE image
+    # de la scene -- une image de 528x960 etiree dans une video 1080x1920, et
+    # comptee en trop. Mesure : 121 images annoncees pour 120 demandees.
+    # Un sous-dossier suffit : `assembler` ne garde que ce qui finit par .png.
+    sources = os.path.join(dossier, "_sources")
+    os.makedirs(sources, exist_ok=True)
+    fixe = os.path.join(sources, f"{scene['id']}_source.png")
     if not produire_image(sujet, fixe, lg_gen, ht_gen):
         return 0
 
