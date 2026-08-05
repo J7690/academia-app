@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/notification_sound_service.dart';
+import '../../services/push_notification_service.dart';
 import 'student_delete_account_screen.dart';
 import 'student_profile_screen.dart';
 import '../../widgets/report_content_sheet.dart';
@@ -127,6 +128,9 @@ class _StudentSettingsScreenState extends State<StudentSettingsScreen> {
       ),
     );
     if (confirmed == true && mounted) {
+      // AVANT la déconnexion : retirer l'appareil du compte, sinon il continue
+      // d'en recevoir les notifications indéfiniment.
+      await PushNotificationService.instance.unregisterTokenBeforeLogout();
       await Supabase.instance.client.auth.signOut();
       if (!mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);

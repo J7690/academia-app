@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../services/push_notification_service.dart';
+
 class StudentDeleteAccountScreen extends StatefulWidget {
   const StudentDeleteAccountScreen({super.key});
 
@@ -106,7 +108,9 @@ class _StudentDeleteAccountScreenState
       final result = await client.rpc('app_student_request_account_deletion');
 
       if (result is Map && result['success'] == true) {
-        // Step 3: Sign out
+        // Step 3: Sign out — l'appareil est d'abord retiré du compte, sans quoi
+        // il continuerait de recevoir ses notifications après la suppression.
+        await PushNotificationService.instance.unregisterTokenBeforeLogout();
         await client.auth.signOut();
 
         if (!mounted) return;

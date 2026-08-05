@@ -227,6 +227,32 @@ class PushNotificationService {
     }
   }
 
+  /// Retire cet appareil du compte courant. **À appeler AVANT `signOut()`.**
+  ///
+  /// Firebase livre au JETON, pas au compte : sans ce geste, le téléphone
+  /// continue de recevoir les notifications du compte quitté, indéfiniment.
+  /// C'est ainsi qu'un commercial a reçu les notifications d'administration —
+  /// candidatures, comptes créés, extraits de messages de support.
+  ///
+  /// La RPC existait depuis toujours et n'était appelée nulle part.
+  ///
+  /// N'échoue jamais bruyamment : une déconnexion ne doit pas être empêchée
+  /// parce que le réseau a lâché.
+  Future<void> unregisterTokenBeforeLogout() async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null || token.isEmpty) return;
+      await Supabase.instance.client.rpc(
+        'app_unregister_device_token',
+        params: {'p_fcm_token': token},
+      );
+      _lastRegisteredToken = null;
+      debugPrint('[PUSH] Appareil retiré du compte avant déconnexion.');
+    } catch (e) {
+      debugPrint('[PUSH] unregisterTokenBeforeLogout ignoré : $e');
+    }
+  }
+
   /// Affiche une notification locale quand un message FCM arrive en foreground.
   void _handleForegroundMessage(RemoteMessage message) {
     debugPrint(

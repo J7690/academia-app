@@ -303,6 +303,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
       final result = await _client.rpc('app_check_account_status');
       if (result is Map && result['active'] == false) {
         _accountBlocked = true;
+        // Un compte bloqué ne doit plus rien recevoir sur cet appareil.
+        await PushNotificationService.instance.unregisterTokenBeforeLogout();
         await _client.auth.signOut();
         debugPrint('AuthWrapper: account blocked (${result['reason']}), signed out.');
       }
