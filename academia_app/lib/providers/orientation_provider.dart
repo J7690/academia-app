@@ -29,6 +29,7 @@ class OrientationProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _bookings = const [];
   Map<String, dynamic>? _studentFile;
   Map<String, dynamic>? _record;
+  String? _recordStatus;
   Map<String, dynamic>? _myProfile;
   List<Map<String, dynamic>> _myAvailability = const [];
 
@@ -42,6 +43,13 @@ class OrientationProvider extends ChangeNotifier {
   List<Map<String, dynamic>> get bookings => List.unmodifiable(_bookings);
   Map<String, dynamic>? get studentFile => _studentFile;
   Map<String, dynamic>? get record => _record;
+
+  /// Pourquoi `record` est nul, quand il l'est : `'absente'` (jamais écrite),
+  /// `'en_redaction'` (écrite mais pas encore partagée par le conseiller),
+  /// `'erreur'` (appel échoué), `'disponible'` (la fiche est là), ou `null`
+  /// tant que rien n'a été chargé. Sans cette distinction, l'écran ne peut que
+  /// mentir — voir `loadRecord`.
+  String? get recordStatus => _recordStatus;
   Map<String, dynamic>? get myProfile => _myProfile;
   List<Map<String, dynamic>> get myAvailability =>
       List.unmodifiable(_myAvailability);
@@ -384,17 +392,38 @@ class OrientationProvider extends ChangeNotifier {
 
   // ─── Fiche d'orientation ────────────────────────────────────────────
 
+  /// Charge la fiche d'un rendez-vous et CONSERVE la raison d'une absence.
+  ///
+  /// `app_orientation_get_record` distingue trois absences très différentes :
+  /// aucune fiche écrite, une fiche que le conseiller n'a pas encore partagée
+  /// (`status: 'en_redaction'`), et un refus d'accès. La version précédente ne
+  /// gardait que `res['record']` : les trois devenaient un même `null`, et
+  /// l'élève n'avait aucun moyen de savoir laquelle. C'est le défaut de famille
+  /// du projet — déduire un état d'une absence.
   Future<void> loadRecord(String bookingId) async {
+    // Remis à zéro AVANT l'appel : sans cela, ouvrir une fiche puis une autre
+    // dont le chargement échoue affichait le contenu de la première.
+    _record = null;
+    _recordStatus = null;
+    notifyListeners();
     try {
       final res = await _client.rpc('app_orientation_get_record',
           params: {'p_booking_id': bookingId});
-      _record = res is Map<String, dynamic> && res['success'] == true
-          ? (res['record'] as Map<String, dynamic>?)
-          : null;
-      notifyListeners();
+      if (res is! Map<String, dynamic> || res['success'] != true) {
+        _recordStatus = 'erreur';
+      } else if (res['record'] is Map) {
+        _record = (res['record'] as Map).cast<String, dynamic>();
+        _recordStatus = 'disponible';
+      } else {
+        // `en_redaction` quand le conseiller n'a pas partagé, sinon la fiche
+        // n'a simplement jamais été commencée.
+        _recordStatus = res['status']?.toString() ?? 'absente';
+      }
     } catch (e) {
       debugPrint('[Orientation] loadRecord: $e');
+      _recordStatus = 'erreur';
     }
+    notifyListeners();
   }
 
   /// Enregistre la fiche. `share` la rend visible à l'élève.

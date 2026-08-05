@@ -8,10 +8,10 @@ import '../../../theme/academia_palette.dart';
 import '../../../widgets/academia_motion.dart';
 import '../../../widgets/academia_ui.dart';
 import '../../live/academia_classroom_screen.dart';
-import '../../live/session_summary_screen.dart';
 import '../../orientation/orientation_booking_sheet.dart';
 import '../../orientation/orientation_quiz_screen.dart';
 import '../../orientation/orientation_theme.dart' show OrientationLabels;
+import '../../orientation/student_record_sheet.dart';
 
 /// Onglet Orientation étudiant — « Ciel Academia », accent teal.
 ///
@@ -829,27 +829,33 @@ class _StudentOrientationTabState extends State<StudentOrientationTab> {
 
   // 5 ─ Fiches -----------------------------------------------------------
 
-  /// Ouvre le compte rendu de l'entretien, version élève.
+  /// Ouvre la fiche d'orientation rédigée par le conseiller.
   ///
-  /// La carte portait un chevron mais aucun geste : elle annonçait une fiche
-  /// consultable et ne menait nulle part. L'élève ne voit que la version
-  /// publiée — tant que le conseiller n'a pas relu, l'écran le dit.
+  /// LE DÉFAUT CORRIGÉ ICI. La carte s'affiche sur `fiche_existe`, que
+  /// `app_orientation_my_bookings` calcule sur `app.orientation_records` — la
+  /// fiche du conseiller. Mais le geste ouvrait `SessionSummaryScreen`, qui lit
+  /// `app_learning_get_summary` : le **compte rendu de séance** produit par
+  /// l'IA, un document distinct que seul l'hôte peut faire générer. La carte
+  /// apparaissait donc pour une raison et en montrait une autre — le plus
+  /// souvent vide, puisque personne n'avait lancé la génération.
+  ///
+  /// On ouvre désormais ce que la carte annonce. Les cas « pas encore
+  /// rédigée » et « pas encore partagée » sont dits explicitement par la
+  /// feuille plutôt que rendus par une page blanche.
   Future<void> _ouvrirFiche(Map<String, dynamic> booking) async {
-    final sessionId = booking['session_id']?.toString();
-    if (sessionId == null || sessionId.isEmpty) {
-      _toast("Cette consultation n'a pas de compte rendu.", error: true);
+    final bookingId = booking['id']?.toString();
+    if (bookingId == null || bookingId.isEmpty) {
+      _toast("Ce rendez-vous n'a pas de fiche.", error: true);
       return;
     }
-    final when = DateTime.tryParse('${booking['scheduled_at']}');
-    await Navigator.of(context).push(
-      AcademiaPageRoute(
-        builder: (_) => SessionSummaryScreen(
-          sessionId: sessionId,
-          sessionTitle: when == null
-              ? 'Entretien d\'orientation'
-              : 'Entretien du ${when.toLocal().day}/${when.toLocal().month}',
-          isHost: false,
-        ),
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => StudentRecordSheet(
+        bookingId: bookingId,
+        conseiller: booking['counselor_name']?.toString(),
+        quand: DateTime.tryParse('${booking['scheduled_at']}'),
       ),
     );
   }
