@@ -8,8 +8,9 @@ import '../../../theme/academia_palette.dart';
 import '../../../widgets/academia_motion.dart';
 import '../../../widgets/academia_ui.dart';
 import '../../live/academia_classroom_screen.dart';
+import '../../live/session_summary_screen.dart';
+import '../../orientation/orientation_booking_sheet.dart';
 import '../../orientation/orientation_quiz_screen.dart';
-import '../../orientation/orientation_screen.dart';
 import '../../orientation/orientation_theme.dart' show OrientationLabels;
 
 /// Onglet Orientation étudiant — « Ciel Academia », accent teal.
@@ -140,10 +141,11 @@ class _StudentOrientationTabState extends State<StudentOrientationTab> {
   Widget build(BuildContext context) {
     return Consumer2<OrientationProvider, OrientationQuizProvider>(
       builder: (context, orientation, quiz, _) {
-        // L'espace conseiller reste inchangé : cette refonte ne concerne que
-        // le point de vue étudiant.
-        if (orientation.isCounselor) return const OrientationScreen();
-
+        // Cet onglet ne sert QUE l'étudiant. Le conseiller n'arrive jamais
+        // jusqu'ici : `auth_wrapper` route `orientation_counselor` vers
+        // `CounselorDashboardScreen`. La branche qui renvoyait vers
+        // `OrientationScreen` était donc morte, et maintenait en vie un écran
+        // de 1 600 lignes que plus rien n'atteignait.
         final bookings = orientation.bookings;
         final aVenir = bookings
             .where((b) => b['status'] == 'confirmed' || b['status'] == 'pending')
@@ -827,11 +829,38 @@ class _StudentOrientationTabState extends State<StudentOrientationTab> {
 
   // 5 ─ Fiches -----------------------------------------------------------
 
+  /// Ouvre le compte rendu de l'entretien, version élève.
+  ///
+  /// La carte portait un chevron mais aucun geste : elle annonçait une fiche
+  /// consultable et ne menait nulle part. L'élève ne voit que la version
+  /// publiée — tant que le conseiller n'a pas relu, l'écran le dit.
+  Future<void> _ouvrirFiche(Map<String, dynamic> booking) async {
+    final sessionId = booking['session_id']?.toString();
+    if (sessionId == null || sessionId.isEmpty) {
+      _toast("Cette consultation n'a pas de compte rendu.", error: true);
+      return;
+    }
+    final when = DateTime.tryParse('${booking['scheduled_at']}');
+    await Navigator.of(context).push(
+      AcademiaPageRoute(
+        builder: (_) => SessionSummaryScreen(
+          sessionId: sessionId,
+          sessionTitle: when == null
+              ? 'Entretien d\'orientation'
+              : 'Entretien du ${when.toLocal().day}/${when.toLocal().month}',
+          isHost: false,
+        ),
+      ),
+    );
+  }
+
   Widget _ficheCard(Map<String, dynamic> booking) {
     final when = DateTime.tryParse('${booking['scheduled_at']}');
     final counselor = '${booking['counselor_name'] ?? ''}';
 
-    return Container(
+    return AcademiaTapScale(
+      onTap: () => _ouvrirFiche(booking),
+      child: Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
@@ -886,6 +915,7 @@ class _StudentOrientationTabState extends State<StudentOrientationTab> {
           const Icon(Icons.chevron_right,
               size: 20, color: AcademiaPalette.faint),
         ],
+      ),
       ),
     );
   }
