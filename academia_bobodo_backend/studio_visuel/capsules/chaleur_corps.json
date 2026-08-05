@@ -1,0 +1,45 @@
+{
+  "capsule_id": "chaleur_corps",
+  "titre": "Ton corps est un four allume en permanence",
+  "format": { "largeur": 1080, "hauteur": 1920, "fps": 25 },
+  "scenes": [
+    {
+      "id": "accroche",
+      "archetype": "genere",
+      "narration": "Ton corps produit de la chaleur en permanence. Il faut qu'elle sorte.",
+      "accent": "rouge",
+      "parametres": {
+        "sujet": "holographic wireframe human body seen from the side, glowing red hot core inside the chest, blue wireframe skin",
+        "mode": "mouvement",
+        "sens": "zoom"
+      }
+    },
+    {
+      "id": "sueur",
+      "archetype": "genere",
+      "narration": "La sueur s'evapore, et c'est cette evaporation qui te refroidit.",
+      "accent": "orange",
+      "parametres": {
+        "sujet": "close up of glowing blue wireframe skin surface covered with luminous droplets, red heat glowing underneath",
+        "mode": "mouvement",
+        "sens": "pano"
+      }
+    },
+    {
+      "id": "seuil",
+      "archetype": "comparaison",
+      "narration": "Air sec, la sueur part. Air humide, elle reste collee et ne refroidit rien.",
+      "accent": "or",
+      "camera": "recul",
+      "parametres": { "noeuds_par_groupe": 20 }
+    },
+    {
+      "id": "sortie",
+      "archetype": "flux",
+      "narration": "Boire regulierement, chercher l'ombre, laisser l'air circuler.",
+      "accent": "vert",
+      "camera": "avance",
+      "parametres": { "particules": 55, "tours": 1.5 }
+    }
+  ]
+}

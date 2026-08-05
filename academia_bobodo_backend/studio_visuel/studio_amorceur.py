@@ -123,6 +123,23 @@ def amorcer(pod: dict) -> bool:
              f"root@{hote}:/workspace/contours/"],
             capture_output=True, text=True, timeout=300)
 
+    # NORMALISATION DES FINS DE LIGNE, A LA DESTINATION.
+    #
+    # Ce defaut a coute deux machines. Un script copie depuis un poste Windows
+    # arrive avec des CRLF ; bash repond « syntax error near unexpected token
+    # inattendu » suivi d'un retour chariot, et l'agent meurt a sa premiere
+    # boucle -- AVANT son premier
+    # battement de coeur. Le veilleur constate alors le silence et supprime une
+    # machine parfaitement saine.
+    #
+    # J'avais d'abord corrige a la source, par un `.gitattributes`. Insuffisant :
+    # il ne regit que ce que git STOCKE, pas l'arbre de travail ni ce qu'on
+    # copie a la main. On ne fait donc plus confiance a la provenance -- on
+    # normalise ici, ou l'on sait ce qui compte.
+    _ssh(hote, port,
+         "sed -i 's/\r$//' /workspace/*.sh /workspace/*.py 2>/dev/null; "
+         "bash -n /workspace/agent_pod.sh", 120)
+
     # 3. Environnement de l'agent. Le pod ne recoit QUE son jeton : ni la cle
     #    de service, ni la cle RunPod.
     env = (f"export POD_ID={pod_id}\n"
