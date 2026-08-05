@@ -226,6 +226,9 @@ def normaliser(capsule: dict) -> dict:
         "avertissements": avertissements,
         # Conservee telle quelle : c'est par elle que le pod retrouve la voix.
         "narration_cle": capsule.get("narration_cle"),
+        # URL signee : c'est par elle que le pod obtient la voix, faute
+        # de droit de lecture sur le bucket.
+        "narration_url": capsule.get("narration_url"),
     }
 
 

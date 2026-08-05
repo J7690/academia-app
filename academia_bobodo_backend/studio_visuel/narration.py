@@ -215,6 +215,26 @@ def _coller(clips: list[str], capsule: dict, sortie: str) -> bool:
     return resultat.returncode == 0 and os.path.isfile(sortie)
 
 
+def signer(cle: str, heures: int = 48) -> str | None:
+    """Cree une URL signee pour que le pod puisse telecharger sans droit de
+    lecture sur le bucket. Quarante-huit heures : largement au-dela de la duree
+    d'un rendu, bien en deca d'une fuite durable."""
+    try:
+        requete = urllib.request.Request(
+            f"{SUPABASE_URL}/storage/v1/object/sign/studio-visuel/{cle}",
+            data=json.dumps({"expiresIn": heures * 3600}).encode("utf-8"),
+            method="POST",
+            headers={"Authorization": f"Bearer {SERVICE_KEY}",
+                     "Content-Type": "application/json"})
+        with urllib.request.urlopen(requete, timeout=60) as reponse:
+            d = json.loads(reponse.read())
+        chemin_signe = d.get("signedURL") or d.get("signedUrl") or ""
+        return f"{SUPABASE_URL}/storage/v1{chemin_signe}" if chemin_signe else None
+    except Exception as e:  # noqa: BLE001
+        journal(f"signature impossible : {e}")
+        return None
+
+
 def deposer_bande(chemin: str, capsule_id: str) -> str | None:
     """Depose la narration dans Storage pour que le pod la recupere.
 
@@ -292,6 +312,14 @@ def main() -> int:
         cle = deposer_bande(bande, capsule["capsule_id"])
         if cle:
             capsule["narration_cle"] = cle
+            # URL SIGNEE, et non simple chemin. Le pod ne peut pas LIRE dans le
+            # bucket : seule l'ecriture lui est ouverte, et c'est voulu -- les
+            # capsules ne doivent sortir que par URL signee. Le telechargement
+            # de la narration echouait donc en silence, et la degradation
+            # gracieuse livrait une capsule MUETTE sans que rien ne l'annonce.
+            # LWS, qui detient la cle de service, signe l'acces pour lui.
+            capsule["narration_url"] = signer(cle) or ""
+
             journal(f"BANDE deposee — {cle}")
         else:
             journal("BANDE non deposee — le pod produira une capsule muette")

@@ -90,6 +90,24 @@ def recuperer_narration(capsule: dict) -> str | None:
     capsule silencieuse par accident et une capsule silencieuse par choix ne
     doivent pas se ressembler.
     """
+    # URL SIGNEE D'ABORD. Le pod n'a pas le droit de LIRE dans le bucket --
+    # seule l'ecriture lui est ouverte, et c'est voulu. Sans URL signee, le
+    # telechargement echouait en 403, la degradation gracieuse prenait le
+    # relais, et la capsule sortait MUETTE sans que rien ne l'annonce.
+    url = capsule.get("narration_url")
+    if url:
+        try:
+            import urllib.request
+            with urllib.request.urlopen(url, timeout=300) as reponse:
+                donnees = reponse.read()
+            chemin = os.path.join(TRAVAIL, "narration.wav")
+            with open(chemin, "wb") as f:
+                f.write(donnees)
+            journal(f"NARRATION recuperee par URL signee — {len(donnees)//1024} Ko")
+            return chemin
+        except Exception as e:  # noqa: BLE001
+            journal(f"NARRATION url signee inutilisable ({e}) — essai par cle")
+
     cle = capsule.get("narration_cle")
     if not cle:
         journal("NARRATION aucune bande annoncee — capsule muette")
@@ -209,6 +227,20 @@ def executer(capsule: dict, travail: str | None = None) -> tuple[bool, str]:
     if infos.get("lisible") != "True":
         journal("ECHEC video illisible — on ne depose pas un fichier corrompu")
         return False, "video_illisible"
+
+    # UNE VIDEO NOIRE EST UN ECHEC, PAS UNE LIVRAISON.
+    # Une capsule a ete remise a l'utilisateur en etant noire quinze secondes
+    # durant : deux scenes generees avaient echoue, le fichier restait
+    # parfaitement valide, et le controle ne regardait que sa validite. Il faut
+    # refuser ici, ou personne d'autre ne le fera.
+    if infos.get("image_visible") != "True":
+        journal(f"ECHEC image absente — luminosite {infos.get('luminosite')}/255")
+        return False, f"image_noire:{infos.get('luminosite')}"
+
+    # Le son manquant ne bloque pas : une capsule muette reste regardable, et
+    # le repli est parfois voulu. Mais il ne doit plus passer INAPERCU.
+    if infos.get("a_du_son") != "True":
+        journal("ATTENTION capsule sans piste audio — la narration n'a pas ete jointe")
 
     # ── 5. Depot ──────────────────────────────────────────────────────────
     # Horodate : chaque rendu garde sa trace, et aucun ecrasement n'est

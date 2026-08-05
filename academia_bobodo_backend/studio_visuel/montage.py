@@ -229,6 +229,44 @@ def assembler(dossier_images: str, capsule: dict, sortie: str,
     return True, ""
 
 
+def luminosite_moyenne(chemin: str, echantillons: int = 8) -> float:
+    """Luminosite moyenne de la video, sur 255.
+
+    LE CONTROLE QUI MANQUAIT. Une capsule a ete livree comme « prete » alors
+    qu'elle etait NOIRE pendant quinze secondes : deux scenes generees avaient
+    echoue et rendu du vide. Le fichier etait parfaitement valide -- bonne
+    duree, bon codec, bonnes dimensions -- et mon controle ne regardait que
+    cela. Il declarait donc un succes sur une video sans image.
+
+    Verifier qu'un fichier est lisible ne dit RIEN de ce qu'il contient.
+    """
+    valeurs = []
+    duree = 0.0
+    try:
+        duree = float(subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "default=nw=1:nk=1", chemin],
+            capture_output=True, text=True, timeout=60).stdout.strip() or 0)
+    except Exception:  # noqa: BLE001
+        return -1.0
+    if duree <= 0:
+        return -1.0
+
+    for i in range(echantillons):
+        instant = duree * (i + 0.5) / echantillons
+        try:
+            brut = subprocess.run(
+                ["ffmpeg", "-v", "error", "-ss", f"{instant:.2f}", "-i", chemin,
+                 "-frames:v", "1", "-vf", "scale=64:114,format=gray",
+                 "-f", "rawvideo", "-"],
+                capture_output=True, timeout=120).stdout
+            if brut:
+                valeurs.append(sum(brut) / len(brut))
+        except Exception:  # noqa: BLE001
+            continue
+    return round(sum(valeurs) / len(valeurs), 2) if valeurs else -1.0
+
+
 def verifier(chemin: str) -> dict:
     """Controle automatique, comme le prevoit l'etape 10 du cahier des charges.
 
@@ -246,4 +284,20 @@ def verifier(chemin: str) -> dict:
             cle, valeur = ligne.split("=", 1)
             infos[cle.strip()] = valeur.strip()
     infos["lisible"] = str(sortie.returncode == 0 and bool(infos.get("duration")))
+
+    # Ce que le fichier CONTIENT, pas seulement ce qu'il declare.
+    infos["luminosite"] = str(luminosite_moyenne(chemin))
+    infos["a_du_son"] = str(bool(subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries",
+         "stream=codec_type", "-of", "csv=p=0", chemin],
+        capture_output=True, text=True, timeout=60).stdout.strip()))
+
+    # Seuil a 6/255. Le style du studio est volontairement sombre -- la capsule
+    # de reference mesure 10 a 12 -- mais en dessous de 6 il n'y a plus d'image,
+    # seulement des sous-titres sur du noir. Mesure sur la capsule ratee :
+    # 1,8 a 3,8 sur les scenes vides, 12,3 sur la seule qui fonctionnait.
+    try:
+        infos["image_visible"] = str(float(infos["luminosite"]) >= 6.0)
+    except ValueError:
+        infos["image_visible"] = "False"
     return infos
