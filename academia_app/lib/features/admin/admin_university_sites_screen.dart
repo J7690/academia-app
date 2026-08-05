@@ -95,6 +95,8 @@ class _AdminUniversitySitesScreenState extends State<AdminUniversitySitesScreen>
             final id = uni['id']?.toString();
             final name = uni['name']?.toString() ?? '';
             final selected = id != null && id == _selectedUniversityId;
+            final isAutoEcole =
+                (uni['partner_type'] ?? '').toString() == 'auto_ecole';
 
             return Card(
               elevation: 0,
@@ -104,13 +106,79 @@ class _AdminUniversitySitesScreenState extends State<AdminUniversitySitesScreen>
               ),
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
-                title: Text(name),
+                title: Row(
+                  children: [
+                    Flexible(child: Text(name)),
+                    if (isAutoEcole) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: const Text(
+                          '🚗 Auto-école',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFFB45309),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
                 subtitle: Text(
                   '${uni['city'] ?? ''}, ${uni['country'] ?? ''}',
                 ),
-                trailing: (context.isMobile || context.isTablet)
-                    ? const Icon(Icons.chevron_right)
-                    : null,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    PopupMenuButton<String>(
+                      tooltip: 'Type de partenaire',
+                      icon: const Icon(Icons.more_vert, size: 20),
+                      onSelected: (value) async {
+                        if (id == null) return;
+                        final provider =
+                            context.read<AdminUniversitiesProvider>();
+                        final ok = await provider.setPartnerType(
+                          universityId: id,
+                          partnerType: value,
+                        );
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              ok
+                                  ? (value == 'auto_ecole'
+                                      ? '$name est maintenant marqué comme auto-école (permis de conduire).'
+                                      : '$name est maintenant marqué comme université.')
+                                  : provider.error ??
+                                      'Erreur lors du changement de type.',
+                            ),
+                          ),
+                        );
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'university',
+                          enabled: isAutoEcole,
+                          child: const Text('🎓 Marquer comme université'),
+                        ),
+                        PopupMenuItem(
+                          value: 'auto_ecole',
+                          enabled: !isAutoEcole,
+                          child: const Text(
+                              '🚗 Marquer comme auto-école (permis)'),
+                        ),
+                      ],
+                    ),
+                    if (context.isMobile || context.isTablet)
+                      const Icon(Icons.chevron_right),
+                  ],
+                ),
                 onTap: id == null ? null : () => _openUniversity(context, id, name),
               ),
             );

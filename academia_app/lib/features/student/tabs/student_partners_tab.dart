@@ -20,6 +20,15 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
   String _searchProgramQuery = '';
   String? _selectedDegreeLevel;
 
+  /// Type de partenaire affiché : 'university' (par défaut) ou 'auto_ecole'
+  /// (permis de conduire / sécurité routière).
+  String _selectedPartnerType = 'university';
+
+  static String _partnerTypeOf(Map<String, dynamic> item) {
+    final value = (item['partner_type'] ?? '').toString().trim();
+    return value.isEmpty ? 'university' : value;
+  }
+
   final TextEditingController _universitySearchController = TextEditingController();
   final TextEditingController _programSearchController = TextEditingController();
 
@@ -59,14 +68,26 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
           );
         }
 
-        final universities = provider.universities;
-        final offers = provider.homeOffers;
+        final allUniversities = provider.universities;
+        final allOffers = provider.homeOffers;
 
-        if (universities.isEmpty) {
+        if (allUniversities.isEmpty) {
           return const Center(
-            child: Text('Aucune université partenaire disponible.'),
+            child: Text('Aucun partenaire disponible.'),
           );
         }
+
+        final isAutoEcole = _selectedPartnerType == 'auto_ecole';
+        final autoEcoleCount = allUniversities
+            .where((u) => _partnerTypeOf(u) == 'auto_ecole')
+            .length;
+
+        final universities = allUniversities
+            .where((u) => _partnerTypeOf(u) == _selectedPartnerType)
+            .toList(growable: false);
+        final offers = allOffers
+            .where((o) => _partnerTypeOf(o) == _selectedPartnerType)
+            .toList(growable: false);
 
         final allDegreeLevels = <String>{};
         for (final offer in offers) {
@@ -135,27 +156,88 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
                     // Accueil / TD / Concours. Le `Wrap` interne empêche tout
                     // overflow horizontal (fix du 1.6px sur petits écrans).
                     StudentTabHero(
-                      icon: Icons.school_outlined,
-                      accentColor: const Color(0xFF8B5CF6),
-                      title: 'Universités partenaires',
-                      subtitle:
-                          'Recherchez par université, filière et niveau pour trouver la formation qui vous correspond.',
+                      icon: isAutoEcole
+                          ? Icons.directions_car_outlined
+                          : Icons.school_outlined,
+                      accentColor: isAutoEcole
+                          ? const Color(0xFFF59E0B)
+                          : const Color(0xFF8B5CF6),
+                      title: isAutoEcole
+                          ? 'Auto-écoles partenaires'
+                          : 'Universités partenaires',
+                      subtitle: isAutoEcole
+                          ? 'Préparez votre permis de conduire : choisissez une auto-école partenaire, candidatez et demandez une réduction directement dans l\'application.'
+                          : 'Recherchez par université, filière et niveau pour trouver la formation qui vous correspond.',
                       stats: [
                         StudentTabHeroStat(
-                          icon: Icons.account_balance_outlined,
-                          label:
-                              '${universities.length} université${universities.length > 1 ? 's' : ''} partenaire${universities.length > 1 ? 's' : ''}',
+                          icon: isAutoEcole
+                              ? Icons.directions_car_outlined
+                              : Icons.account_balance_outlined,
+                          label: isAutoEcole
+                              ? '${universities.length} auto-école${universities.length > 1 ? 's' : ''} partenaire${universities.length > 1 ? 's' : ''}'
+                              : '${universities.length} université${universities.length > 1 ? 's' : ''} partenaire${universities.length > 1 ? 's' : ''}',
                           color: const Color(0xFF0EA5E9),
                         ),
                         if (totalPrograms > 0)
                           StudentTabHeroStat(
                             icon: Icons.menu_book_outlined,
-                            label:
-                                '$totalPrograms programme${totalPrograms > 1 ? 's' : ''}',
+                            label: isAutoEcole
+                                ? '$totalPrograms formation${totalPrograms > 1 ? 's' : ''} permis'
+                                : '$totalPrograms programme${totalPrograms > 1 ? 's' : ''}',
                             color: const Color(0xFF4F46E5),
                           ),
                       ],
                     ),
+                    if (autoEcoleCount > 0)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            ChoiceChip(
+                              avatar: Icon(
+                                Icons.school_outlined,
+                                size: 18,
+                                color: !isAutoEcole
+                                    ? const Color(0xFF4F46E5)
+                                    : const Color(0xFF6B7280),
+                              ),
+                              label: const Text('Universités'),
+                              selected: !isAutoEcole,
+                              onSelected: (_) {
+                                setState(() {
+                                  _selectedPartnerType = 'university';
+                                  _selectedDegreeLevel = null;
+                                });
+                              },
+                              selectedColor: const Color(0xFFEEF2FF),
+                              backgroundColor: Colors.white,
+                              shape: const StadiumBorder(),
+                            ),
+                            ChoiceChip(
+                              avatar: Icon(
+                                Icons.directions_car_outlined,
+                                size: 18,
+                                color: isAutoEcole
+                                    ? const Color(0xFFB45309)
+                                    : const Color(0xFF6B7280),
+                              ),
+                              label: const Text('Permis de conduire'),
+                              selected: isAutoEcole,
+                              onSelected: (_) {
+                                setState(() {
+                                  _selectedPartnerType = 'auto_ecole';
+                                  _selectedDegreeLevel = null;
+                                });
+                              },
+                              selectedColor: const Color(0xFFFEF3C7),
+                              backgroundColor: Colors.white,
+                              shape: const StadiumBorder(),
+                            ),
+                          ],
+                        ),
+                      ),
                     Padding(
                       padding:
                           const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -164,13 +246,14 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
                         children: [
                       TextField(
                         controller: _universitySearchController,
-                        decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons.search),
-                          hintText:
-                              'Rechercher une université (nom, ville, pays)...',
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.search),
+                          hintText: isAutoEcole
+                              ? 'Rechercher une auto-école (nom, ville, pays)...'
+                              : 'Rechercher une université (nom, ville, pays)...',
                           filled: true,
                           fillColor: Colors.white,
-                          border: OutlineInputBorder(
+                          border: const OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(24)),
                             borderSide: BorderSide.none,
                           ),
@@ -184,13 +267,16 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
                       const SizedBox(height: 12),
                       TextField(
                         controller: _programSearchController,
-                        decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons.school_outlined),
-                          hintText:
-                              'Rechercher une filière ou un programme (ex: Informatique, Gestion...)',
+                        decoration: InputDecoration(
+                          prefixIcon: Icon(isAutoEcole
+                              ? Icons.directions_car_outlined
+                              : Icons.school_outlined),
+                          hintText: isAutoEcole
+                              ? 'Rechercher une formation (ex: Permis B, Permis C...)'
+                              : 'Rechercher une filière ou un programme (ex: Informatique, Gestion...)',
                           filled: true,
                           fillColor: Colors.white,
-                          border: OutlineInputBorder(
+                          border: const OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(24)),
                             borderSide: BorderSide.none,
                           ),
@@ -290,12 +376,14 @@ class _StudentPartnersTabState extends State<StudentPartnersTab> {
                       ),
                       const SizedBox(height: 16),
                       if (filteredUniversities.isEmpty)
-                        const Center(
+                        Center(
                           child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 32.0),
+                            padding: const EdgeInsets.symmetric(vertical: 32.0),
                             child: Text(
-                              'Aucune université ne correspond à vos critères.',
-                              style: TextStyle(
+                              isAutoEcole
+                                  ? 'Aucune auto-école ne correspond à vos critères.'
+                                  : 'Aucune université ne correspond à vos critères.',
+                              style: const TextStyle(
                                 fontSize: 14,
                                 color: Color(0xFF6B7280),
                               ),
