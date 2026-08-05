@@ -33,7 +33,12 @@ const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 const CORS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization,apikey,content-type,accept',
+  // 05/08/2026 — CORRECTIF WEB : `x-client-info` manquait. Le client Supabase
+  // l'envoie systematiquement ; sans lui dans le preambule CORS, le navigateur
+  // BLOQUE le POST (trace : uniquement des OPTIONS 200, aucun POST). En natif
+  // CORS n'est pas applique — d'ou un defaut invisible sur mobile.
+  'Access-Control-Allow-Headers':
+    'authorization,apikey,content-type,accept,x-client-info,x-supabase-api-version',
   'Access-Control-Allow-Methods': 'POST,OPTIONS',
 };
 

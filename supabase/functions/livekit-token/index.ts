@@ -65,9 +65,21 @@ const BIDIRECTIONAL_GAME_MODES = ['duo', 'versus', 'multi'];
 
 const ADMIN_ROLES = ['admin', 'super_admin'];
 
+// 05/08/2026 — CORRECTIF WEB.
+//   `x-client-info` manquait dans la liste autorisee. Le client Supabase
+//   l'envoie systematiquement : le navigateur recevait donc un preambule CORS
+//   qui ne couvrait pas sa requete, et BLOQUAIT le POST. Trace observee cote
+//   serveur : uniquement des OPTIONS 200, pas un seul POST.
+//
+//   En natif (Android/iOS) CORS n'est pas applique — d'ou un defaut invisible
+//   sur l'application mobile et bloquant sur academiea.com.
+//
+//   `x-supabase-api-version` est ajoute pour la meme raison : les versions
+//   recentes de supabase-js l'emettent.
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization,apikey,content-type,accept',
+  'Access-Control-Allow-Headers':
+    'authorization,apikey,content-type,accept,x-client-info,x-supabase-api-version',
   'Access-Control-Allow-Methods': 'POST,OPTIONS',
 };
 
