@@ -1,16 +1,22 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../models/academia_session.dart' as session_model;
 import '../../services/academia_camera_service.dart';
 import '../../services/academia_livekit_service.dart' hide AcademiaSessionFeatures;
+import '../../services/academia_moderation_service.dart';
 import '../../services/academia_presence_service.dart';
+import '../../services/app_window_service.dart';
 import '../../services/academia_room_options.dart';
 import '../../services/screen_share_service.dart';
+import '../../services/session_summary_service.dart';
 import 'academia_classroom_controls.dart';
+import 'session_summary_screen.dart';
 import 'widgets/academia_participant_tile.dart';
 import 'widgets/academia_participants_panel.dart';
 import 'widgets/academia_persistent_chat_panel.dart';
@@ -55,6 +61,30 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
   String? _error;
   bool _micEnabled = true;
   bool _cameraEnabled = true;
+  /// Droit de publier accordé par le token (`can_publish`). Un spectateur de
+  /// cours magistral ne publie pas ; un participant d'entretien, si.
+  bool _canPublish = true;
+
+  /// Statut d'hôte — celui que le SERVEUR a calculé, pas celui que l'appelant
+  /// a déclaré.
+  ///
+  /// `widget.isHost` n'est qu'une intention : quinze des seize points d'entrée
+  /// le passent en dur, et l'un d'eux se trompait — l'écran admin annonçait
+  /// `true` pour une séance dont l'administrateur n'est pas l'hôte, ce qui
+  /// faisait appeler `endSession()` à la simple fermeture de l'écran.
+  ///
+  /// Le jeton, lui, recalcule `is_host` à partir de `host_id`. Tant qu'il n'est
+  /// pas arrivé on suit l'intention ; dès qu'il arrive, le serveur tranche.
+  bool _isHost = false;
+
+  /// Droit de modérer accordé par le token (`is_moderator`) : l'hôte sur sa
+  /// séance, l'administrateur sur toutes. Commande les actions couper /
+  /// retirer / arrêter, exécutées par l'Edge Function `livekit-moderate`.
+  bool _isModerator = false;
+
+  /// Administrateur en supervision : présent dans une séance dont il n'est pas
+  /// l'hôte. Sert à afficher clairement ce statut particulier.
+  bool _isAdminSupervisor = false;
   bool _screenShareEnabled = false;
   bool _isRecording = false;
   bool _showChat = false;
@@ -89,6 +119,20 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
   final _livekit = AcademiaLivekitService.instance;
   final _presence = AcademiaPresenceService.instance;
 
+  /// Journal de séance — la matière première de la fiche.
+  ///
+  /// `learning-session-summary` refuse de résumer une séance sans message ni
+  /// événement. Rien n'alimentait ce journal : sept séances terminées, zéro
+  /// événement, zéro fiche.
+  ///
+  /// Le service `AcademiaObservability` semblait fait pour ça, mais il visait
+  /// `public.academia_session_events` — table qui n'existe que dans le schéma
+  /// `app` — avec des colonnes qui ne sont pas les siennes (`event_type`,
+  /// `metadata`). Chaque insertion aurait échoué en silence. Il a été supprimé
+  /// au profit de la RPC `app_learning_log_event`, qui écrit les bonnes
+  /// colonnes et calcule l'`offset_ms` depuis le début de la séance.
+  final _journal = SessionSummaryService.instance;
+
   // ─── Features ───────────────────────────────────────────────────────
   late AcademiaSessionFeatures _features;
 
@@ -105,6 +149,7 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _isHost = widget.isHost;
     _features = AcademiaSessionFeatures(
       isRecordingEnabled: widget.session.isRecordingEnabled,
       isWhiteboardEnabled: widget.session.isWhiteboardEnabled,
@@ -141,14 +186,26 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
 
   Future<void> _connectToRoom() async {
     try {
-      // 1. Host démarre la session, étudiant rejoint
+      // 1. Host démarre la session, étudiant rejoint.
+      //    Ici le jeton n'est pas encore arrivé : on ne dispose que de
+      //    l'intention de l'appelant. Les deux RPC revérifient l'hôte de leur
+      //    côté, une intention erronée ne peut donc rien casser.
       _step(widget.isHost
           ? 'Ouverture de la salle…'
           : 'Inscription à la séance…');
       if (widget.isHost) {
         await _livekit.startSession(widget.session.id);
       } else {
-        await _livekit.joinSession(widget.session.id);
+        // Un refus d'inscription doit ARRÊTER l'entrée. Le résultat était
+        // ignoré : une séance complète ou close laissait quand même passer,
+        // puisque le jeton, lui, ne vérifie pas la capacité.
+        final inscription = await _livekit.joinSession(widget.session.id);
+        if (inscription != null && inscription['success'] != true) {
+          throw Exception(
+            inscription['error']?.toString() ??
+                'Impossible de rejoindre la séance.',
+          );
+        }
       }
 
       // 2. Obtenir le token LiveKit
@@ -163,6 +220,16 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
       if (token.isEmpty || url.isEmpty) {
         throw Exception('Token ou URL LiveKit invalide.');
       }
+      // Le serveur décide qui a le droit de parole. Tenter de publier sans ce
+      // droit fait échouer la publication et bloquait l'ouverture de la salle.
+      // (Absent des anciens tokens : on suppose alors l'hôte seul publieur.)
+      _canPublish = tokenData['can_publish'] as bool? ?? widget.isHost;
+      final estAdmin = tokenData['is_admin'] as bool? ?? false;
+      _isModerator = tokenData['is_moderator'] as bool? ?? widget.isHost;
+      // À partir d'ici, c'est le serveur qui dit qui anime. Toute l'interface
+      // et, surtout, la fin de séance en découlent.
+      _isHost = tokenData['is_host'] as bool? ?? widget.isHost;
+      _isAdminSupervisor = estAdmin && !_isHost;
 
       // 3. Connecter la room
       _step('Connexion au serveur vidéo…');
@@ -179,7 +246,6 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
       _bindConnectionEvents();
 
       await room.connect(url, token);
-      _step('Activation du micro et de la caméra…');
 
       if (!mounted) {
         _roomListener?.dispose();
@@ -188,11 +254,19 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
         return;
       }
 
-      // Active micro + caméra après connexion
-      await room.localParticipant?.setMicrophoneEnabled(_micEnabled);
-      await room.localParticipant?.setCameraEnabled(_cameraEnabled);
-
-      // Démarrer le tracking de présence
+      // ─────────────────────────────────────────────────────────────────────
+      // La salle est OUVERTE dès que la connexion est établie.
+      //
+      // Correctif 30/07/2026 : le micro et la caméra étaient activés AVANT
+      // d'afficher la salle. Pour un étudiant dont le token interdisait la
+      // publication, `setMicrophoneEnabled` restait en attente d'une
+      // confirmation que le serveur n'envoyait jamais : l'écran restait figé
+      // sur « Activation du micro et de la caméra… » alors que la voix du
+      // conseiller passait déjà (l'audio distant ne dépend pas de l'interface).
+      //
+      // Désormais l'affichage ne dépend plus de la publication : le média est
+      // un CONFORT, la présence en salle est l'ESSENTIEL.
+      // ─────────────────────────────────────────────────────────────────────
       _presence.startTracking(widget.session.id);
 
       setState(() {
@@ -202,6 +276,16 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
         _remoteParticipants =
             room.remoteParticipants.values.toList(growable: false);
       });
+
+      // Publication en arrière-plan : n'immobilise jamais l'écran.
+      unawaited(_activerMediaLocal(room));
+
+      // Un seul repère d'ouverture, posé par l'animateur. Les entrées et
+      // sorties des participants sont déjà dans `academia_session_participants`
+      // — les redoubler ici noierait le déroulé sous du bruit.
+      if (_isHost) {
+        unawaited(_journal.logEvent(widget.session.id, 'seance_demarree'));
+      }
     } catch (e) {
       if (!mounted) return;
       debugPrint('[AcademiaClassroom] Connexion error: $e');
@@ -212,12 +296,256 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
     }
   }
 
+  /// Active micro et caméra APRÈS l'ouverture de la salle, sans jamais la
+  /// bloquer. Trois raisons peuvent empêcher la publication ; aucune ne doit
+  /// priver le participant de voir et d'entendre la séance :
+  ///   1. le token ne l'autorise pas (spectateur d'un cours magistral) ;
+  ///   2. l'utilisateur refuse la permission Android/iOS ;
+  ///   3. le matériel échoue (caméra déjà prise par une autre application).
+  Future<void> _activerMediaLocal(Room room) async {
+    if (!_canPublish) {
+      if (!mounted) return;
+      setState(() {
+        _micEnabled = false;
+        _cameraEnabled = false;
+      });
+      _notify('Vous suivez la séance en spectateur.');
+      return;
+    }
+
+    // Les permissions sont demandées ICI, pas au démarrage de l'application :
+    // c'est le moment où l'utilisateur comprend pourquoi on les demande.
+    // Sans cet appel, `setMicrophoneEnabled` déclenche une capture native qui
+    // peut rester en attente indéfiniment sur certains appareils Android.
+    final statuses = await [Permission.microphone, Permission.camera].request();
+    final micOk = statuses[Permission.microphone]?.isGranted ?? false;
+    final camOk = statuses[Permission.camera]?.isGranted ?? false;
+
+    if (!mounted) return;
+
+    if (micOk) {
+      try {
+        await room.localParticipant?.setMicrophoneEnabled(_micEnabled);
+      } catch (e) {
+        debugPrint('[AcademiaClassroom] Micro indisponible: $e');
+        if (mounted) setState(() => _micEnabled = false);
+      }
+    } else {
+      if (mounted) setState(() => _micEnabled = false);
+    }
+
+    if (camOk) {
+      try {
+        await room.localParticipant?.setCameraEnabled(_cameraEnabled);
+      } catch (e) {
+        debugPrint('[AcademiaClassroom] Caméra indisponible: $e');
+        if (mounted) setState(() => _cameraEnabled = false);
+      }
+    } else {
+      if (mounted) setState(() => _cameraEnabled = false);
+    }
+
+    if (!mounted) return;
+    if (!micOk || !camOk) {
+      _notify(
+        !micOk && !camOk
+            ? 'Micro et caméra refusés. Autorisez-les dans les réglages pour participer.'
+            : !micOk
+                ? 'Micro refusé : vous entendez la séance mais ne pouvez pas parler.'
+                : 'Caméra refusée : vous participez en audio seulement.',
+      );
+    }
+  }
+
+  /// Panneau de modération : couper la parole, la suspendre, retirer un
+  /// participant, ou arrêter la séance.
+  ///
+  /// Les actions ne sont jamais exécutées par l'application : elles sont
+  /// demandées à l'Edge Function `livekit-moderate`, qui revérifie le droit et
+  /// utilise la clé secrète LiveKit côté serveur.
+  Future<void> _ouvrirModeration() async {
+    final participants = _remoteParticipants;
+    if (participants.isEmpty) {
+      _notify('Aucun autre participant à modérer pour l\'instant.');
+      return;
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetCtx) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Icon(Icons.shield_outlined, size: 18, color: Color(0xFF7C3AED)),
+                    SizedBox(width: 8),
+                    Text('Modération',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: participants.length,
+                  itemBuilder: (ctx, i) {
+                    final p = participants[i];
+                    final nom = p.name.isNotEmpty ? p.name : p.identity;
+                    return ListTile(
+                      dense: true,
+                      leading: CircleAvatar(
+                        radius: 14,
+                        backgroundColor: const Color(0xFF6B7280),
+                        child: Text(
+                          nom.isNotEmpty ? nom[0].toUpperCase() : '?',
+                          style: const TextStyle(color: Colors.white, fontSize: 11),
+                        ),
+                      ),
+                      title: Text(nom,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 13)),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            tooltip: 'Couper le micro',
+                            icon: const Icon(Icons.mic_off, size: 18),
+                            onPressed: () => _actionModeration(
+                              () => AcademiaModerationService.mute(
+                                  widget.session.id, p.identity),
+                              'Micro coupé.',
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Suspendre la parole',
+                            icon: const Icon(Icons.voice_over_off, size: 18),
+                            onPressed: () => _actionModeration(
+                              () => AcademiaModerationService.revokePublish(
+                                  widget.session.id, p.identity),
+                              'Parole suspendue.',
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Rendre la parole',
+                            icon: const Icon(Icons.record_voice_over, size: 18),
+                            onPressed: () => _actionModeration(
+                              () => AcademiaModerationService.grantPublish(
+                                  widget.session.id, p.identity),
+                              'Parole rendue.',
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Retirer de la séance',
+                            icon: const Icon(Icons.person_remove,
+                                size: 18, color: Color(0xFFEF4444)),
+                            onPressed: () => _actionModeration(
+                              () => AcademiaModerationService.remove(
+                                  widget.session.id, p.identity),
+                              'Participant retiré.',
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const Divider(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFEF4444),
+                      foregroundColor: Colors.white,
+                    ),
+                    icon: const Icon(Icons.stop_circle, size: 18),
+                    label: const Text('Arrêter la séance pour tous'),
+                    onPressed: () async {
+                      Navigator.of(sheetCtx).pop();
+                      final ok = await showDialog<bool>(
+                        context: context,
+                        builder: (dCtx) => AdaptiveDialog(
+                          maxWidth: 420,
+                          title: const Text('Arrêter la séance ?'),
+                          child: const Text(
+                              'Tous les participants seront déconnectés et la séance sera marquée terminée.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(dCtx).pop(false),
+                              child: const Text('Annuler'),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFEF4444)),
+                              onPressed: () => Navigator.of(dCtx).pop(true),
+                              child: const Text('Arrêter'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (ok == true) {
+                        await _actionModeration(
+                          () => AcademiaModerationService.endSession(
+                              widget.session.id),
+                          'Séance arrêtée.',
+                        );
+                        if (mounted) Navigator.of(context).pop();
+                      }
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Exécute une action de modération en rapportant le résultat, succès comme
+  /// échec. Une action silencieuse laisserait le modérateur dans le doute.
+  Future<void> _actionModeration(
+    Future<void> Function() action,
+    String messageSucces,
+  ) async {
+    try {
+      await action();
+      _notify(messageSucces);
+    } catch (e) {
+      _notify(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
   /// Traduit une exception technique en phrase actionnable.
   ///
   /// Un « Exception: PlatformException(...) » affiché en plein écran à un
   /// étudiant ne lui apprend rien et ne lui dit pas quoi faire.
   String _humanReadableError(Object e) {
     final raw = e.toString().toLowerCase();
+    // Les refus d'inscription portent déjà un motif écrit pour l'utilisateur
+    // (« Séance complète », « Séance terminée »…). Le reformuler le rendrait
+    // plus vague, pas plus clair : on le laisse passer tel quel.
+    if (raw.contains('complète') ||
+        raw.contains('terminée') ||
+        raw.contains('annulée') ||
+        raw.contains('pas encore ouverte')) {
+      return e.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
+    }
     if (raw.contains('introuvable') || raw.contains('404')) {
       return 'Cette séance n\'existe plus ou a été annulée.';
     }
@@ -288,9 +616,9 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
           _chatMessages.add(msg);
           if (!_showChat) _unreadChat++;
         });
-      } else if (type == 'quiz' && !widget.isHost) {
+      } else if (type == 'quiz' && !_isHost) {
         setState(() => _incomingQuiz = msg);
-      } else if (type == 'td_exercise' && !widget.isHost) {
+      } else if (type == 'td_exercise' && !_isHost) {
         setState(() => _incomingTdExercise = msg);
       } else if (type == 'hand_raise') {
         setState(() {});
@@ -392,11 +720,33 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
     final participant = _room?.localParticipant;
 
     if (_screenShareEnabled) {
-      await ScreenShareService.stop(participant);
-      if (!mounted) return;
+      // L'interface se met à jour AVANT le nettoyage : arrêter une capture peut
+      // prendre un instant, et un bouton qui ne réagit pas donne l'impression
+      // d'être cassé. On rend la main tout de suite, on nettoie ensuite.
       setState(() => _screenShareEnabled = false);
+      _notify('Partage d\'écran arrêté.');
+      await ScreenShareService.stop(participant);
       return;
     }
+
+    // Un participant sans droit de publication ne peut pas diffuser son écran :
+    // le dire tout de suite vaut mieux qu'un échec technique incompréhensible.
+    if (!_canPublish) {
+      _notify(
+        'Le partage d\'écran est réservé aux participants autorisés à '
+        'prendre la parole. Demandez la parole à l\'animateur.',
+      );
+      return;
+    }
+
+    // ── DIVULGATION PRÉALABLE (règle Google Play) ────────────────────────
+    // Google Play exige une divulgation DANS l'application, juste avant la
+    // demande système, expliquant quelle donnée sensible est captée et à
+    // quelle fin. La boîte de dialogue Android ne suffit pas : elle dit
+    // « enregistrer l'écran », pas « et le diffuser à ces personnes ».
+    // Le refus est le choix par défaut ; aucune case n'est pré-cochée.
+    final consentement = await _demanderConsentementPartage();
+    if (consentement != true || !mounted) return;
 
     final error = await ScreenShareService.start(participant);
     if (!mounted) return;
@@ -405,6 +755,114 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
       return;
     }
     setState(() => _screenShareEnabled = true);
+    unawaited(_journal.logEvent(widget.session.id, 'partage_ecran_demarre'));
+
+    // Le partage n'a d'intérêt que si l'utilisateur peut montrer AUTRE CHOSE.
+    // On le renvoie donc à son écran d'accueil : la capture continue (service
+    // de premier plan), et il ouvre le document qu'il veut présenter. Sans ce
+    // geste, l'application se diffuse elle-même.
+    if (AppWindowService.isSupported) {
+      _notify('Partage lancé. Ouvrez le document à montrer ; '
+          'revenez par la notification pour arrêter.');
+      // Laisser le message s'afficher avant de passer en arrière-plan.
+      await Future<void>.delayed(const Duration(milliseconds: 900));
+      await AppWindowService.minimize();
+    } else {
+      _notify('Votre écran est partagé. Vous pouvez l\'arrêter à tout moment.');
+    }
+  }
+
+  /// Divulgation préalable au partage d'écran.
+  ///
+  /// Trois informations sont obligatoires pour être conforme : **ce qui** est
+  /// capté (tout l'écran, notifications comprises), **qui** le voit (les
+  /// participants de cette séance), et **comment l'arrêter**. On nomme aussi
+  /// ce qui n'est PAS fait — aucun enregistrement à l'insu — car c'est la
+  /// crainte réelle de l'utilisateur.
+  Future<bool?> _demanderConsentementPartage() {
+    final nbAutres = _remoteParticipants.length;
+    final qui = nbAutres == 0
+        ? 'aux participants de cette séance'
+        : nbAutres == 1
+            ? 'à l\'autre participant de cette séance'
+            : 'aux $nbAutres autres participants de cette séance';
+
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AdaptiveDialog(
+        maxWidth: 460,
+        title: const Row(
+          children: [
+            Icon(Icons.screen_share_outlined, size: 20, color: Color(0xFF2563EB)),
+            SizedBox(width: 8),
+            Expanded(child: Text('Partager votre écran ?')),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Tout ce qui s\'affiche sur votre écran sera visible en direct $qui, '
+              'y compris vos notifications et le contenu de vos autres applications.',
+              style: const TextStyle(fontSize: 13, height: 1.45),
+            ),
+            const SizedBox(height: 12),
+            _pointConsentement(
+              Icons.visibility_off_outlined,
+              'Fermez d\'abord vos messages et documents personnels.',
+            ),
+            _pointConsentement(
+              Icons.stop_circle_outlined,
+              'Vous pouvez arrêter le partage à tout moment, depuis le même bouton.',
+            ),
+            _pointConsentement(
+              Icons.lock_outline,
+              'Rien n\'est enregistré à votre insu : un enregistrement éventuel '
+              'est signalé séparément par un bandeau rouge.',
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Votre téléphone vous demandera ensuite de confirmer la capture.',
+              style: TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            icon: const Icon(Icons.screen_share, size: 16),
+            label: const Text('Partager mon écran'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _pointConsentement(IconData icone, String texte) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icone, size: 15, color: const Color(0xFF6B7280)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(texte,
+                style: const TextStyle(fontSize: 12, height: 1.4)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _notify(String message) {
@@ -441,6 +899,8 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
           _isRecording = true;
           _egressId = egress;
         });
+        unawaited(
+            _journal.logEvent(widget.session.id, 'enregistrement_demarre'));
       }
     }
   }
@@ -453,6 +913,11 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
       'user_id': _room?.localParticipant?.identity ?? '',
       'raised': raised,
     });
+    // Seule la main levée est journalisée, pas la main baissée : ce qui
+    // intéresse la fiche, c'est qu'une question ait été demandée.
+    if (raised) {
+      unawaited(_journal.logEvent(widget.session.id, 'main_levee'));
+    }
   }
 
   void _sendReaction(String emoji) {
@@ -496,8 +961,28 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
         egressId: _egressId!,
       );
     }
+    // Journalisé AVANT le nettoyage : l'`offset_ms` se calcule sur l'horloge
+    // du serveur, il doit refléter la fin réelle.
+    await _journal.logEvent(widget.session.id, 'seance_terminee');
     await _cleanup();
-    if (mounted) Navigator.of(context).pop();
+    if (!mounted) return;
+
+    // La séance se termine SUR la fiche, pas sur un retour en arrière.
+    //
+    // C'était le maillon manquant : sept séances terminées, zéro fiche — non
+    // par manque de code, mais parce qu'aucun chemin n'y menait. L'animateur
+    // arrive sur l'écran, relit, publie. Rien n'est généré à son insu : une
+    // synthèse coûte un appel au modèle, et une séance sans matière n'a rien
+    // à résumer.
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => SessionSummaryScreen(
+          sessionId: widget.session.id,
+          sessionTitle: widget.session.title,
+          isHost: true,
+        ),
+      ),
+    );
   }
 
   Future<void> _leaveSession() async {
@@ -511,7 +996,10 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
     _room?.removeListener(_onRoomChanged);
     await _room?.disconnect();
     _room?.dispose();
-    if (widget.isHost) {
+    // Le statut du serveur, pas celui de l'appelant : fermer l'écran ne doit terminer la
+    // séance que si le SERVEUR reconnaît celui qui part comme son hôte. Un
+    // superviseur qui s'en va se contente de quitter.
+    if (_isHost) {
       await _livekit.endSession(widget.session.id);
     } else {
       await _livekit.leaveSession(widget.session.id);
@@ -661,7 +1149,7 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
                 if (_estOrientation)
                   OrientationRecordingBanner(
                     sessionId: widget.session.id,
-                    isHost: widget.isHost,
+                    isHost: _isHost,
                   ),
                 // Le SDK retente la connexion tout seul. Sans ce bandeau,
                 // l'utilisateur voit une image figée et croit à un plantage.
@@ -711,7 +1199,7 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
               right: _showChat ? _chatPanelWidth(context) + 4 : 4,
               child: AcademiaWhiteboardPanel(
                 room: _room,
-                isHost: widget.isHost,
+                isHost: _isHost,
               ),
             ),
 
@@ -736,7 +1224,7 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
           // ── Panneau contexte d'orientation ─────────────────────────
           // Largeur adaptative : sur un téléphone étroit il prend presque
           // tout l'écran, sur une tablette il reste une colonne latérale.
-          if (_showContexte && _estOrientation && widget.isHost)
+          if (_showContexte && _estOrientation && _isHost)
             LayoutBuilder(
               builder: (context, contraintes) {
                 final largeur = contraintes.maxWidth < 420
@@ -756,7 +1244,7 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
             ),
 
           // ── Quiz overlay (host uniquement) ────────────────────────
-          if (_showQuiz && widget.isHost && _features.isQuizEnabled)
+          if (_showQuiz && _isHost && _features.isQuizEnabled)
             AcademiaQuizOverlay(
               onClose: () => setState(() => _showQuiz = false),
               onSendQuestion: (q) {
@@ -767,12 +1255,19 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
                   'correct_index': q['correct_index'],
                   'duration_seconds': q['duration_seconds'],
                 });
+                // L'énoncé part au journal : c'est la trace la plus dense de
+                // ce qui a été travaillé pendant la séance.
+                unawaited(_journal.logEvent(
+                  widget.session.id,
+                  'quiz_envoye',
+                  payload: {'question': q['question']?.toString() ?? ''},
+                ));
                 setState(() => _showQuiz = false);
               },
             ),
 
           // ── Quiz overlay (étudiant) ───────────────────────────────
-          if (_incomingQuiz != null && !widget.isHost)
+          if (_incomingQuiz != null && !_isHost)
             AcademiaQuizStudentOverlay(
               questionId: _incomingQuiz!['question_id']?.toString(),
               question: (_incomingQuiz!['question'] ?? '').toString(),
@@ -787,7 +1282,7 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
             ),
 
           // ── TD exercice overlay (étudiant) ──────────────────────────
-          if (_incomingTdExercise != null && !widget.isHost)
+          if (_incomingTdExercise != null && !_isHost)
             AcademiaTdExerciseOverlay(
               exercise: _incomingTdExercise!,
               sessionId: widget.session.id,
@@ -802,7 +1297,7 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
               bottom: 0,
               child: AcademiaParticipantsPanel(
                 sessionId: widget.session.id,
-                isHost: widget.isHost,
+                isHost: _isHost,
                 localParticipant: local,
                 remoteParticipants: _remoteParticipants,
                 onClose: () => setState(() => _showParticipants = false),
@@ -814,7 +1309,7 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
             left: 0,
             right: 0,
             bottom: 0,
-            child: widget.isHost
+            child: _isHost
                 ? AcademiaHostControls(
                     micEnabled: _micEnabled,
                     cameraEnabled: _cameraEnabled,
@@ -848,6 +1343,11 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
                     isHandRaised: _isHandRaised,
                     unreadChat: _unreadChat,
                     connectionQuality: _connectionQuality,
+                    screenShareEnabled: _screenShareEnabled,
+                    // Un participant ne partage son écran que s'il a le droit
+                    // de publier : entretien, TD, atelier. Pas un spectateur.
+                    canShareScreen: _canPublish,
+                    onToggleScreenShare: _toggleScreenShare,
                     onToggleMic: _toggleMic,
                     onToggleCamera: _toggleCamera,
                     onToggleHandRaise: _toggleHandRaise,
@@ -896,7 +1396,7 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
                     builder: (ctx) => AdaptiveDialog(
                       maxWidth: 420,
                       title: const Text('Quitter la session ?'),
-                      child: Text(widget.isHost
+                      child: Text(_isHost
                           ? 'Vous êtes l\'hôte. La session restera active pour les participants.'
                           : 'Vous allez quitter la salle de classe.'),
                       actions: [
@@ -965,7 +1465,7 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
               ),
               // Panneau contexte : dossier de l'élève et fiche d'orientation,
               // sans quitter la salle. Réservé au conseiller qui anime.
-              if (_estOrientation && widget.isHost)
+              if (_estOrientation && _isHost)
                 InkWell(
                   borderRadius: BorderRadius.circular(6),
                   // Les deux panneaux occupent la même colonne : ouvrir
@@ -984,6 +1484,38 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
                           ? const Color(0xFF6C5CE7)
                           : Colors.white70,
                     ),
+                  ),
+                ),
+              // Un administrateur qui supervise n'est pas un participant comme
+              // les autres : le dire franchement évite qu'on le prenne pour un
+              // élève silencieux.
+              if (_isAdminSupervisor)
+                Container(
+                  margin: const EdgeInsets.only(right: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF7C3AED),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'SUPERVISION',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              // Commandes de modération : hôte sur sa séance, administrateur
+              // sur toutes.
+              if (_isModerator)
+                InkWell(
+                  borderRadius: BorderRadius.circular(6),
+                  onTap: _ouvrirModeration,
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    child: Icon(Icons.shield_outlined,
+                        color: Colors.white70, size: 18),
                   ),
                 ),
               InkWell(
@@ -1031,6 +1563,9 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
     final screenShareView = AcademiaScreenShareView(
       room: _room,
       remoteParticipants: _remoteParticipants,
+      // Celui qui partage voit un bandeau, pas son propre flux : il doit
+      // pouvoir arrêter directement depuis ce bandeau.
+      onStopSharing: _screenShareEnabled ? _toggleScreenShare : null,
     );
 
     final all = <Widget>[
@@ -1038,7 +1573,7 @@ class _AcademiaClassroomScreenState extends State<AcademiaClassroomScreen>
         AcademiaParticipantTile(
           participant: local,
           isLocal: true,
-          isHost: widget.isHost,
+          isHost: _isHost,
           isHandRaised: _isHandRaised,
         ),
       ..._remoteParticipants.map(

@@ -43,6 +43,7 @@ class MainActivity : FlutterActivity() {
 
     private val BADGE_CHANNEL = "com.academia.app/badge"
     private val DEEP_LINK_CHANNEL = "com.academia.app/deeplink"
+    private val APP_CHANNEL = "com.academia.app/app"
     private var initialDeepLink: String? = null
     private var deepLinkChannel: MethodChannel? = null
 
@@ -91,6 +92,29 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
+
+        // Réduction de l'application, sans la fermer.
+        //
+        // Indispensable au partage d'écran : sur un téléphone, partager sert
+        // précisément à MONTRER autre chose — un document, une application,
+        // l'écran d'accueil. Tant que l'application reste au premier plan, elle
+        // se partage elle-même et l'exercice n'a aucun intérêt.
+        //
+        // `moveTaskToBack(true)` renvoie l'utilisateur à son écran d'accueil en
+        // laissant l'activité vivante : la capture continue (elle est portée par
+        // le service de premier plan) et la séance n'est pas quittée. Revenir se
+        // fait par la notification persistante ou l'icône de l'application.
+        // `finish()` ou `SystemNavigator.pop()` fermeraient la séance : à éviter.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, APP_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "moveToBackground" -> {
+                        moveTaskToBack(true)
+                        result.success(true)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, BADGE_CHANNEL)
             .setMethodCallHandler { call, result ->

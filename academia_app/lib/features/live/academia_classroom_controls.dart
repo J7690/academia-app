@@ -161,6 +161,17 @@ class AcademiaStudentControls extends StatelessWidget {
   final VoidCallback onLeave;
   final AcademiaSessionFeatures features;
 
+  /// Partage d'écran côté participant.
+  ///
+  /// Dans un entretien d'orientation ou une aide TD, l'élève a autant besoin de
+  /// montrer son écran que l'animateur — un exercice, une copie, un message
+  /// d'erreur. Le bouton n'apparaît que si la séance l'autorise ET si le
+  /// participant a le droit de publier (un spectateur de cours magistral ne
+  /// diffuse pas).
+  final bool screenShareEnabled;
+  final bool canShareScreen;
+  final VoidCallback onToggleScreenShare;
+
   const AcademiaStudentControls({
     super.key,
     required this.micEnabled,
@@ -175,6 +186,9 @@ class AcademiaStudentControls extends StatelessWidget {
     required this.onOpenReactions,
     required this.onLeave,
     required this.features,
+    this.screenShareEnabled = false,
+    this.canShareScreen = false,
+    required this.onToggleScreenShare,
   });
 
   @override
@@ -207,6 +221,17 @@ class AcademiaStudentControls extends StatelessWidget {
                     ? const Color(0xFFFBBF24)
                     : Colors.white54,
                 onTap: onToggleHandRaise,
+              ),
+            if (features.isScreenShareEnabled && canShareScreen)
+              _Btn(
+                icon: screenShareEnabled
+                    ? Icons.stop_screen_share
+                    : Icons.screen_share,
+                label: screenShareEnabled ? 'Arrêter' : 'Écran',
+                color: screenShareEnabled
+                    ? const Color(0xFF10B981)
+                    : Colors.white54,
+                onTap: onToggleScreenShare,
               ),
             if (features.isChatEnabled)
               Stack(

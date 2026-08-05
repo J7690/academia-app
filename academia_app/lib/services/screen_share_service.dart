@@ -2,29 +2,37 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_background/flutter_background.dart';
+// `Helper.requestCapturePermission()` : demande l'autorisation de capture et
+// renvoie le jeton MediaProjection. Doit précéder le service de premier plan.
+import 'package:flutter_webrtc/flutter_webrtc.dart' show Helper;
 import 'package:livekit_client/livekit_client.dart';
 
 /// Démarrage et arrêt du partage d'écran, avec la mécanique Android
 /// qu'aucune plateforme ne peut contourner depuis Android 14.
 ///
-/// **Pourquoi ce service existe**
+/// **L'ORDRE EST LA SEULE CHOSE QUI COMPTE** (correctif du 31/07/2026)
 ///
-/// Appeler directement `setScreenShareEnabled(true)` sur Android 14 et
-/// au-delà lève une `SecurityException` :
+/// Android 14 traite la capture d'écran comme une surveillance à haut risque
+/// et impose un enchaînement strict :
 ///
-/// > Media projections require a foreground service of type
-/// > ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+/// > L'autorisation MediaProjection doit être accordée **AVANT** le démarrage
+/// > d'un service de premier plan de type `mediaProjection`.
 ///
-/// Le système exige qu'un service de premier plan de type `mediaProjection`
-/// soit **déjà en cours** avant que la capture ne démarre. La cible du projet
-/// est `targetSdk 35`, la contrainte s'applique donc pleinement.
+/// En cas de violation, le système lève une `SecurityException` et **ferme
+/// l'application**. Pas de reprise, pas de repli — c'est exactement le
+/// symptôme observé : « l'application s'est fermée automatiquement ».
 ///
-/// L'ordre est impératif :
+/// La version précédente de ce fichier faisait l'inverse : elle démarrait le
+/// service **puis** demandait la capture. Cet ordre fonctionnait jusqu'à
+/// Android 13 ; depuis Android 14 il est fatal. Le projet cible `targetSdk 35`.
 ///
-/// 1. initialiser le service de premier plan
-/// 2. le démarrer, et vérifier qu'il tourne
-/// 3. seulement ensuite, activer la capture
-/// 4. à l'arrêt, couper la capture **avant** le service
+/// Ordre correct, désormais appliqué :
+///
+/// 1. demander l'autorisation de capture — boîte système, renvoie le jeton
+/// 2. seulement ensuite, démarrer le service de premier plan
+/// 3. laisser au service le temps de devenir actif
+/// 4. activer la capture
+/// 5. à l'arrêt, couper la capture **avant** le service
 ///
 /// Sur iOS, le partage d'écran passe par une extension de diffusion système :
 /// le service Android n'a pas lieu d'être. Sur le web, `getDisplayMedia` gère
@@ -53,11 +61,32 @@ class ScreenShareService {
     if (participant == null) return 'Vous n\'êtes pas connecté à la salle.';
 
     if (_needsForegroundService) {
+      // ÉTAPE 1 — l'autorisation D'ABORD. C'est cet appel qui ouvre la boîte
+      // système « Academia va commencer à capturer… » et produit le jeton de
+      // projection. Sans ce jeton, l'étape 2 fait fermer l'application.
+      try {
+        final granted = await Helper.requestCapturePermission();
+        if (!granted) {
+          return 'Partage annulé : la capture d\'écran n\'a pas été autorisée.';
+        }
+      } catch (e) {
+        debugPrint('[ScreenShare] demande d\'autorisation impossible : $e');
+        return 'Le partage d\'écran n\'est pas disponible sur cet appareil.';
+      }
+
+      // ÉTAPE 2 — le service de premier plan, maintenant que le jeton existe.
       final ready = await _startForegroundService();
       if (ready != null) return ready;
+
+      // ÉTAPE 3 — laisser le service passer réellement au premier plan.
+      // Android exige `startForeground()` dans les 5 secondes ; enchaîner la
+      // capture immédiatement peut la déclencher avant que le service ne soit
+      // actif, ce qui rejoue l'erreur qu'on vient d'éliminer.
+      await Future<void>.delayed(const Duration(milliseconds: 300));
     }
 
     try {
+      // ÉTAPE 4 — la capture elle-même.
       await participant.setScreenShareEnabled(true);
       return null;
     } catch (e) {
@@ -78,9 +107,16 @@ class ScreenShareService {
   }
 
   /// Arrête le partage d'écran puis le service de premier plan, dans cet ordre.
+  ///
+  /// Chaque étape est bornée dans le temps. Un arrêt qui reste en attente
+  /// donnerait un bouton « Arrêter le partage » sans effet visible — le
+  /// symptôme observé le 31/07/2026. Mieux vaut un nettoyage imparfait qu'une
+  /// interface figée : l'utilisateur doit toujours reprendre la main.
   static Future<void> stop(LocalParticipant? participant) async {
     try {
-      await participant?.setScreenShareEnabled(false);
+      await participant
+          ?.setScreenShareEnabled(false)
+          .timeout(const Duration(seconds: 5));
     } catch (e) {
       debugPrint('[ScreenShare] échec de l\'arrêt de la capture : $e');
     }
@@ -124,10 +160,13 @@ class ScreenShareService {
   static Future<void> _stopForegroundService() async {
     if (!_serviceRunning) return;
     try {
-      await FlutterBackground.disableBackgroundExecution();
+      await FlutterBackground.disableBackgroundExecution()
+          .timeout(const Duration(seconds: 5));
     } catch (e) {
       debugPrint('[ScreenShare] échec de l\'arrêt du service : $e');
     } finally {
+      // Remis à faux quoi qu'il arrive : sinon un échec unique empêcherait
+      // définitivement de relancer un partage dans la même session.
       _serviceRunning = false;
     }
   }

@@ -2,7 +2,7 @@ name: academia_app
 description: Projet Flutter avec intégration Supabase automatisée
 publish_to: 'none'
 
-version: 1.0.0+20
+version: 1.0.0+23
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -56,6 +56,13 @@ dependencies:
   video_player: ^2.10.1
 
   livekit_client: ^2.6.0
+
+  # Deja present comme dependance transitive de livekit_client, declare ici
+  # explicitement pour utiliser `Helper.requestCapturePermission()`.
+  # Sur Android 14+, l'autorisation de capture doit etre obtenue AVANT de
+  # demarrer le service de premier plan : l'ordre inverse fait fermer
+  # l'application (SecurityException). Voir screen_share_service.dart.
+  flutter_webrtc: ^1.3.0
 
   # Service de premier plan Android hebergeant la capture d'ecran.
   # Obligatoire depuis Android 14 : sans service de type mediaProjection,

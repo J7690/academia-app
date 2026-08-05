@@ -30,7 +30,28 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="remove"/>
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
+    <!--
+      Identifiant publicitaire — RETIRÉ le 31 juillet 2026.
+
+      Academia n'affiche aucune publicité et n'utilise aucune mesure
+      d'audience : ni SDK publicitaire, ni firebase_analytics (le manifeste
+      désactive d'ailleurs explicitement la collecte analytics plus bas).
+      La permission n'était donc justifiée par aucun usage réel.
+
+      Elle apparaissait pour deux raisons :
+        1. elle était déclarée ici explicitement ;
+        2. `firebase_messaging` embarque `play-services-ads-identifier`, qui
+           la fait entrer par fusion de manifeste, même sans publicité.
+
+      D'où l'erreur en Play Console : la déclaration « l'appli utilise un
+      identifiant publicitaire » ne correspondait pas aux artefacts.
+
+      `tools:node="remove"` supprime aussi la permission héritée de la
+      dépendance. La déclaration Play Console doit indiquer « NON, cette
+      application n'utilise pas d'identifiant publicitaire » — les deux
+      doivent rester cohérents.
+    -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove"/>
     <application
         android:label="Academia"
         android:name="${applicationName}"
