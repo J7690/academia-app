@@ -97,8 +97,30 @@ serve(async (req: Request) => {
     let ligdicashToken = '';
     let ligdicashTransactionId = '';
     let ligdicashOperator = '';
+    let montantEncaisse: number | null = null;
 
-    if (LIGDICASH_MODE !== 'mock' && LIGDICASH_API_KEY && LIGDICASH_BEARER_TOKEN) {
+    // ── REFUSER PLUTÔT QUE SIMULER ───────────────────────────────────────
+    // Le test d'origine était `LIGDICASH_MODE !== 'mock' && CLÉS`. Si une clé
+    // expirait, était mal orthographiée ou effacée, la fonction ne signalait
+    // rien : elle basculait silencieusement dans la branche `else`, c'est-à-dire
+    // en mode simulation, où le code « 123456 » confirme n'importe quel
+    // paiement. Une panne de configuration devenait une faille de sécurité.
+    //
+    // `ligdicash-initiate` refusait déjà ce cas (`ligdicash_not_configured`) ;
+    // `ligdicash-confirm` ne le faisait pas. Les deux sont désormais alignées.
+    if (LIGDICASH_MODE !== 'mock' && (!LIGDICASH_API_KEY || !LIGDICASH_BEARER_TOKEN)) {
+      console.error('[ligdicash-confirm] Mode live mais clés absentes — refus (fail-closed).');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'ligdicash_not_configured',
+          message: 'Le service de paiement est indisponible. Aucun montant n\'a été débité.',
+        }),
+        { status: 503, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (LIGDICASH_MODE !== 'mock') {
       // ============ LIVE MODE ============
       // Flux LigdiCash "Payin sans redirection" pour Orange Money / Moov / Telecel :
       //   Étape 1 (déjà faite par l'utilisateur) : composer USSD (*144*4*6*montant# pour Orange)
@@ -178,16 +200,26 @@ serve(async (req: Request) => {
             const verifyData = await verifyResp.json();
             console.log(`[ligdicash-confirm] Verify response (${attempt}):`, JSON.stringify(verifyData));
 
-            if (verifyData.response_code === '00' && verifyData.status === 'completed') {
+            const statut = String(verifyData.status ?? '').toLowerCase();
+
+            if (verifyData.response_code === '00' && statut === 'completed') {
               ligdicashTransactionId = verifyData.transaction_id || '';
               ligdicashOperator = verifyData.operator_name || '';
+              // Le montant que LigdiCash confirme, et lui seul. Il alimente
+              // `amount_paid`, sans lequel aucune commission ne peut naître.
+              const m = Number(verifyData.amount ?? verifyData.montant ?? 0);
+              montantEncaisse = Number.isFinite(m) && m > 0 ? m : null;
               verified = true;
               break;
             }
 
-            // Si statut final d'échec (pas juste "en cours"), arrêter immédiatement
-            if (verifyData.status === 'failed' || verifyData.status === 'cancelled' || verifyData.status === 'rejected') {
-              console.log(`[ligdicash-confirm] Payment definitively failed: ${verifyData.status}`);
+            // Statuts réels de l'API LigdiCash : pending | completed |
+            // notcompleted. Le code guettait `failed`, `cancelled`, `rejected` —
+            // trois valeurs qui n'existent pas. Un échec définitif n'était donc
+            // jamais reconnu : on attendait les dix scrutations avant de rendre
+            // un « délai dépassé » au lieu d'un refus franc.
+            if (statut === 'notcompleted') {
+              console.log(`[ligdicash-confirm] Paiement refusé par l'opérateur : ${statut}`);
               return new Response(
                 JSON.stringify({
                   success: false,
@@ -231,6 +263,7 @@ serve(async (req: Request) => {
       ligdicashToken = `mock_token_${Date.now()}`;
       ligdicashTransactionId = `MOCK_TXN_${Date.now()}`;
       ligdicashOperator = 'MOCK_OPERATOR';
+      montantEncaisse = amount;
     }
 
     // ============ CONFIRM IN DB via RPC ============
@@ -241,6 +274,9 @@ serve(async (req: Request) => {
           p_ligdicash_token: ligdicashToken,
           p_ligdicash_transaction_id: ligdicashTransactionId,
           p_ligdicash_operator: ligdicashOperator,
+          // Rapproché du PRIX DU PACK côté base : aucun crédit n'est accordé
+          // sur un montant qui ne correspond pas au tarif.
+          p_amount_paid: montantEncaisse,
         })
       : await supabase.rpc('app_confirm_ligdicash_payment', {
           p_payment_id: payment_id,
@@ -248,6 +284,10 @@ serve(async (req: Request) => {
           p_ligdicash_transaction_id: ligdicashTransactionId,
           p_ligdicash_operator: ligdicashOperator,
           p_payment_type: payment_type,
+          // Le montant encaissé, vérifié auprès de LigdiCash. Sans lui,
+          // `amount_paid` restait NULL et les générateurs de commission
+          // abandonnaient en silence sur « no_amount_paid ».
+          p_amount_paid: montantEncaisse,
         });
 
     if (confirmError) {

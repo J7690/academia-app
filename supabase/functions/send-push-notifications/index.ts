@@ -436,7 +436,26 @@ function buildFcmMessage(event: any) {
     const status = payload.status || "";
     const reasonLabel = payload.reason_label || "";
     const programName = payload.program_name || "";
-    const statusLabel = status === "declared_by_student" ? "déclaré" : status === "confirmed" ? "confirmé" : status === "rejected" ? "rejeté" : status === "under_verification" ? "en vérification" : status;
+    // Aucun statut technique anglais ne doit atteindre un humain. Le cas
+    // générique affichait « Jean Dupont — processing » : le libellé brut de la
+    // base, servi tel quel dans une notification.
+    const statusLabel = status === "declared_by_student"
+      ? "déclaré"
+      : status === "confirmed"
+        ? "confirmé"
+        : status === "rejected"
+          ? "rejeté"
+          : status === "under_verification"
+            ? "en vérification"
+            : status === "processing"
+              ? "en cours de paiement"
+              : status === "pending"
+                ? "en attente"
+                : status === "failed"
+                  ? "échoué"
+                  : status === "cancelled"
+                    ? "annulé"
+                    : "mis à jour";
     if (status === "declared_by_student") {
       title = "💰 Paiement déclaré";
       body = studentName ? `${studentName} a déclaré un paiement` + (reasonLabel ? ` (${reasonLabel})` : "") : "Un étudiant a déclaré un paiement";
@@ -601,6 +620,33 @@ function buildFcmMessage(event: any) {
     const currency = payload.currency || "XOF";
     title = "💵 Nouvelle commission";
     body = amount ? `Commission de ${amount} ${currency} générée` : "Vous avez reçu une nouvelle commission";
+
+  // --- Manager : l'activité de son équipe ---
+  // Le manager suit la prospection et les gains de ses commerciaux. Rien ne
+  // l'en informait : les trois déclencheurs ne visaient que le commercial.
+  } else if (domain === "manager_equipe") {
+    const studentName = payload.student_name || "";
+    const amount = payload.commission_amount || payload.amount_paid || "";
+    const currency = payload.currency || "XOF";
+    if (type === "commission_equipe") {
+      title = "💵 Commission — votre équipe";
+      body = amount
+        ? `Un commercial de votre équipe a généré ${amount} ${currency}`
+        : "Une commission vient d'être générée dans votre équipe";
+    } else if (type === "paiement_equipe") {
+      title = "✅ Paiement encaissé — votre équipe";
+      body = studentName
+        ? `${studentName} a réglé${amount ? ` ${amount} ${currency}` : ""}`
+        : "Un prospect de votre équipe a réglé son paiement";
+    } else if (type === "declaration_equipe") {
+      title = "💰 Paiement déclaré — votre équipe";
+      body = studentName
+        ? `${studentName} déclare avoir payé — à vérifier`
+        : "Un prospect de votre équipe déclare avoir payé";
+    } else {
+      title = "👥 Votre équipe";
+      body = "Nouvelle activité commerciale dans votre équipe";
+    }
 
   // --- Commercial : diffusion du manager / admin ---
   } else if (domain === "commercial_broadcast") {

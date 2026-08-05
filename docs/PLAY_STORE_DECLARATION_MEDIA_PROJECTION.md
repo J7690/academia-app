@@ -1,8 +1,19 @@
 # Déclaration Play Console — service de premier plan `mediaProjection`
 
-**Date** : 26 juillet 2026
+**Date** : 26 juillet 2026 — **mis à jour le 30 juillet 2026**
 **Application** : `com.academia.nexiomgroup.app`
 **À faire avant** : la prochaine publication sur la piste de production
+
+> **Mise à jour du 30/07/2026** — deux manques ont été corrigés :
+> 1. le partage d'écran n'était accessible qu'à l'**hôte** (les contrôles élève
+>    n'avaient aucun bouton), ce qui rendait la fonctionnalité indémontrable pour
+>    un entretien d'orientation ;
+> 2. il n'existait **aucune divulgation préalable dans l'application** avant la
+>    boîte de dialogue système — c'est une exigence explicite de Google Play
+>    (« Best practices for prominent disclosure and consent »), et une cause
+>    fréquente de rejet.
+>
+> Voir la nouvelle **section 3 bis**.
 
 ---
 
@@ -68,18 +79,75 @@ Réponse à « Décrivez l'utilisation principale du type de service de premier 
 
 ---
 
+## 3 bis. Divulgation préalable dans l'application (obligatoire)
+
+### La règle
+
+Google Play impose, **en plus** de la boîte de dialogue système, une divulgation
+**dans l'application**, présentée **juste avant** la demande d'autorisation. Motif :
+la boîte système dit « enregistrer l'écran », mais ne dit ni **à qui** le contenu sera
+diffusé, ni **pourquoi**. Une mention dans la description du Store ou dans la politique
+de confidentialité ne satisfait **pas** l'exigence : elle doit être dans le parcours.
+
+### Ce qui a été implémenté (30/07/2026)
+
+`_demanderConsentementPartage()` dans `academia_classroom_screen.dart`, appelée **avant**
+`ScreenShareService.start()`. Elle énonce les trois informations attendues :
+
+| Exigence | Formulation retenue |
+|---|---|
+| **Ce qui** est capté | « Tout ce qui s'affiche sur votre écran […] y compris vos notifications et le contenu de vos autres applications » |
+| **Qui** le voit | « visible en direct aux N autres participants de cette séance » (le nombre réel est affiché) |
+| **Comment l'arrêter** | « Vous pouvez arrêter le partage à tout moment, depuis le même bouton » |
+| Ce qui n'est **pas** fait | « Rien n'est enregistré à votre insu : un enregistrement éventuel est signalé par un bandeau rouge » |
+
+Points de conformité :
+- le refus est le **choix par défaut** (`barrierDismissible: false`, bouton « Annuler » à gauche) ;
+- aucune case n'est pré-cochée, l'action positive est explicite (« Partager mon écran ») ;
+- la boîte annonce l'étape suivante : « Votre téléphone vous demandera ensuite de confirmer ».
+
+### Portée : tous les rôles
+
+La divulgation est dans `_toggleScreenShare()`, **point de passage unique** de tout partage
+d'écran de la salle. Elle s'applique donc identiquement à l'enseignant, au conseiller
+d'orientation, à l'élève et à l'administrateur — aucun rôle ne peut la contourner.
+
+### Qui peut partager
+
+| Rôle | Format | Bouton visible | Motif |
+|---|---|---|---|
+| Enseignant (hôte) | tous | ✅ | Anime la séance |
+| Conseiller (hôte) | `orientation` | ✅ | Montre une fiche, un dossier |
+| Élève | `orientation`, `td` | ✅ | Montre son exercice, son erreur |
+| Élève | `course` | ❌ | Spectateur : n'a pas le droit de publier |
+
+Le bouton élève est conditionné par `features.isScreenShareEnabled && canShareScreen`,
+où `canShareScreen` reflète le `can_publish` du token. Un bouton qui échouerait
+systématiquement ne doit pas être montré.
+
+---
+
 ## 4. Vidéo de démonstration à fournir
 
 Google demande une vidéo courte montrant le parcours utilisateur. Deux séquences suffisent, 60 à 90 secondes au total.
 
 **Séquence 1 — partage d'écran en séance**
 
-1. Ouvrir l'application, se connecter en tant qu'enseignant
+1. Ouvrir l'application, se connecter en tant qu'enseignant (ou conseiller d'orientation)
 2. Ouvrir « Mes classes en direct » → « Studio unifié » → démarrer une séance
 3. Montrer la barre de contrôle en bas de l'écran
-4. **Appuyer sur le bouton « Écran »** — filmer la boîte de dialogue système « Academia va commencer à capturer tout ce qui s'affiche sur votre écran »
-5. Accepter, montrer la notification persistante « Partage d'écran en cours »
-6. Appuyer de nouveau sur « Écran » pour arrêter, montrer la disparition de la notification
+4. **Appuyer sur le bouton « Écran »**
+5. ⚠️ **Filmer la divulgation dans l'application** — la boîte « Partager votre écran ? »
+   qui explique ce qui est capté, qui le verra et comment l'arrêter. **C'est la séquence
+   que Google cherche en priorité** : elle prouve le consentement éclairé, en amont du
+   système. L'omettre est la première cause de rejet.
+6. Appuyer sur « Partager mon écran » — filmer ensuite la boîte de dialogue **système**
+   « Academia va commencer à capturer tout ce qui s'affiche sur votre écran »
+7. Accepter, montrer la notification persistante « Partage d'écran en cours »
+8. Appuyer de nouveau sur « Écran » pour arrêter, montrer la disparition de la notification
+
+> Filmer les **deux** boîtes, dans cet ordre : d'abord celle de l'application, puis celle
+> du système. C'est la démonstration littérale de la règle de divulgation préalable.
 
 **Séquence 2 — enregistrement de partie**
 
@@ -95,8 +163,10 @@ Hébergez la vidéo en non répertorié sur YouTube ou Google Drive avec accès 
 
 | Attente | Comment nous y répondons |
 |---|---|
+| **Divulgation préalable dans l'application** | Boîte « Partager votre écran ? » affichée **avant** la demande système : quoi, pour qui, comment arrêter (section 3 bis) |
 | Le service doit être visible de l'utilisateur | Notification persistante « Partage d'écran en cours » pendant toute la capture |
 | Déclenchement uniquement par l'utilisateur | Le service ne démarre que sur appui du bouton, jamais au lancement de l'application |
+| Consentement à **chaque** session | Aucun jeton de capture n'est réutilisé : la divulgation et la boîte système reviennent à chaque partage (imposé par Android 14+, et conforme à la règle) |
 | Durée limitée à la tâche | `ScreenShareService.stop()` coupe la capture puis le service ; l'arrêt est aussi déclenché à la sortie de la salle |
 | Pas d'alternative moins intrusive | La capture d'écran Android **impose** ce type de service depuis l'API 34 ; aucune API alternative n'existe |
 | Cohérence avec la description du Store | Ajouter « partage d'écran pendant les cours en direct » à la description de la fiche |
@@ -108,10 +178,15 @@ Hébergez la vidéo en non répertorié sur YouTube ou Google Drive avec accès 
 - [ ] `flutter pub get` passe et résout `flutter_background`
 - [ ] `flutter analyze` propre
 - [ ] Build release installé sur un appareil **Android 14 ou 15** — c'est là que la contrainte s'applique
+- [ ] **La divulgation « Partager votre écran ? » s'affiche AVANT la boîte système**
+- [ ] « Annuler » n'ouvre pas la boîte système et ne démarre aucune capture
 - [ ] Le partage d'écran démarre sans plantage et affiche la notification
 - [ ] L'arrêt du partage fait disparaître la notification
+- [ ] **Conseiller d'orientation** : le bouton « Écran » est présent et fonctionne
+- [ ] **Élève en entretien / TD** : le bouton « Écran » est présent et fonctionne
+- [ ] **Élève en cours magistral** : le bouton est absent (pas de droit de publication)
 - [ ] L'enregistrement de gameplay des Challenges fonctionne de nouveau
-- [ ] Vidéo de démonstration enregistrée et hébergée
+- [ ] Vidéo de démonstration enregistrée et hébergée (avec les **deux** boîtes)
 - [ ] Déclaration saisie en Play Console
 
 ---

@@ -1,11 +1,22 @@
 // Supabase Edge Function: livekit-token
 // Generates LiveKit JWT access tokens for authenticated users.
-// Called by Flutter via POST /functions/v1/livekit-token
 //
 // Required Supabase Secrets:
-//   LIVEKIT_API_KEY     — LiveKit server API key
-//   LIVEKIT_API_SECRET  — LiveKit server API secret
-//   LIVEKIT_URL         — LiveKit server WebSocket URL (wss://...)
+//   LIVEKIT_API_KEY / LIVEKIT_API_SECRET / LIVEKIT_URL
+//
+// 30/07/2026 — CORRECTIF CONSULTATION :
+//   `canPublish` valait `isHost`, donc l'etudiant d'un entretien d'orientation
+//   recevait un token en LECTURE SEULE et l'application restait bloquee sur
+//   « Activation du micro et de la camera… ». Un entretien est un ECHANGE.
+//
+// 30/07/2026 — SUPERVISION ADMINISTRATEUR :
+//   Un administrateur doit pouvoir entrer dans N'IMPORTE QUELLE seance, qu'il y
+//   soit invite ou non, y prendre la parole et la moderer. Il obtient donc
+//   toujours le droit de publier et contourne le controle de statut.
+//   Les actions de moderation (couper, retirer, arreter) ne passent PAS par ce
+//   token : elles sont executees cote serveur par la fonction `livekit-moderate`,
+//   qui reverifie le role. Un token client ne porte donc jamais `roomAdmin` :
+//   s'il fuitait, il ne donnerait aucun pouvoir d'administration.
 
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
@@ -24,6 +35,36 @@ const LIVEKIT_API_KEY = Deno.env.get('LIVEKIT_API_KEY') ?? '';
 const LIVEKIT_API_SECRET = Deno.env.get('LIVEKIT_API_SECRET') ?? '';
 const LIVEKIT_URL = Deno.env.get('LIVEKIT_URL') ?? '';
 
+// Formats d'echange BIDIRECTIONNEL : tout participant y prend la parole.
+// Un `course` (un intervenant, N spectateurs) reste reserve a l'hote.
+//
+// 02/08/2026 — ALIGNEMENT SUR LA CONTRAINTE REELLE.
+//   La liste du 30/07 portait quatre valeurs qui n'existent nulle part —
+//   'consultation', 'workshop', 'atelier', 'tutoring'. La contrainte
+//   app.academia_sessions_session_type_check n'accepte que :
+//     course | td | prep_concours | orientation | conference | masterclass |
+//     live_pedagogique | revision_collective | exam_blanc | game_challenge
+//   et livekit_lookup_session ne renvoie pour l'historique que prep|course|game.
+//   Ces quatre valeurs ne pouvaient donc jamais etre atteintes : elles
+//   donnaient l'illusion d'une couverture large.
+//
+//   Dans le meme mouvement, `revision_collective` MANQUAIT — personne ne revise
+//   collectivement en silence. Ses participants recevaient un token muet.
+//
+// Restent volontairement unidirectionnels, l'hote pouvant toujours accorder la
+// parole au cas par cas via `livekit-moderate` (action `grant_publish`) :
+//   course, conference, masterclass, live_pedagogique, prep_concours — un
+//   intervenant s'adresse a une salle ;
+//   exam_blanc — le silence fait partie de l'epreuve.
+const BIDIRECTIONAL_KINDS = ['orientation', 'td', 'revision_collective'];
+
+// Un defi en mode `duo` est un face-a-face : les deux joueurs se parlent. En
+// `solo` il n'y a personne a qui parler. Le mode est porte par la session de
+// jeu historique, pas par son type — d'ou ce test separe.
+const BIDIRECTIONAL_GAME_MODES = ['duo', 'versus', 'multi'];
+
+const ADMIN_ROLES = ['admin', 'super_admin'];
+
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization,apikey,content-type,accept',
@@ -37,7 +78,6 @@ function jsonResponse(body: Record<string, unknown>, status = 200): Response {
   });
 }
 
-// HMAC-SHA256 signing for JWT
 async function hmacSign(secret: string, data: string): Promise<string> {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
@@ -51,7 +91,6 @@ async function hmacSign(secret: string, data: string): Promise<string> {
   return base64url(new Uint8Array(signature));
 }
 
-// Generate a LiveKit-compatible JWT token
 async function generateLiveKitToken(params: {
   apiKey: string;
   apiSecret: string;
@@ -64,10 +103,7 @@ async function generateLiveKitToken(params: {
 }): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
 
-  const header = {
-    alg: 'HS256',
-    typ: 'JWT',
-  };
+  const header = { alg: 'HS256', typ: 'JWT' };
 
   const payload: Record<string, unknown> = {
     iss: params.apiKey,
@@ -95,7 +131,6 @@ async function generateLiveKitToken(params: {
 }
 
 serve(async (req: Request) => {
-  // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS_HEADERS });
   }
@@ -104,7 +139,6 @@ serve(async (req: Request) => {
     return jsonResponse({ success: false, error: 'Method not allowed' }, 405);
   }
 
-  // Check LiveKit config
   if (!LIVEKIT_API_KEY || !LIVEKIT_API_SECRET || !LIVEKIT_URL) {
     return jsonResponse({
       success: false,
@@ -112,7 +146,6 @@ serve(async (req: Request) => {
     }, 500);
   }
 
-  // Authenticate user via Supabase JWT
   const authHeader = req.headers.get('authorization') ?? '';
   const jwt = authHeader.replace('Bearer ', '');
 
@@ -122,13 +155,22 @@ serve(async (req: Request) => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  // Verify the user's JWT
   const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
   if (authError || !user) {
     return jsonResponse({ success: false, error: 'Token invalide.' }, 401);
   }
 
-  // Parse request body
+  // ── Role administrateur ───────────────────────────────────────
+  // Meme source de verite que public.app_is_admin_user() : les metadonnees
+  // auth.users. Lues ici directement depuis le jeton verifie — aucun aller-retour
+  // supplementaire vers la base.
+  const metaRole = (
+    (user.app_metadata as Record<string, unknown> | null)?.role ??
+    (user.user_metadata as Record<string, unknown> | null)?.role ??
+    ''
+  ).toString().toLowerCase();
+  const isAdmin = ADMIN_ROLES.includes(metaRole);
+
   let body: Record<string, unknown>;
   try {
     body = await req.json();
@@ -137,20 +179,18 @@ serve(async (req: Request) => {
   }
 
   const sessionId = body.session_id as string;
-  // Optional: caller specifies 'academia' to force unified table lookup
   const sessionSource = (body.session_source as string) ?? 'auto';
 
   if (!sessionId) {
     return jsonResponse({ success: false, error: 'session_id requis.' }, 400);
   }
 
-  // ── Lookup strategy: unified table first, then legacy tables ────────
+  // ── Lookup : table unifiee d'abord, puis tables historiques ────────────
   let sessionData: Record<string, unknown> | null = null;
   let sessionType = 'legacy';
   let isHost = false;
   let roomName = `session_${sessionId}`;
 
-  // 1. Try academia_sessions (unified Learning Engine)
   if (sessionSource !== 'legacy') {
     const { data: unifiedData } = await supabase.rpc(
       'livekit_lookup_academia_session',
@@ -162,7 +202,6 @@ serve(async (req: Request) => {
     }
   }
 
-  // 2. Fallback: legacy lookup for old tables
   if (!sessionData) {
     const { data: legacyData, error: lookupError } = await supabase.rpc(
       'livekit_lookup_session',
@@ -175,17 +214,20 @@ serve(async (req: Request) => {
     sessionType = (sessionData.session_type as string) ?? 'course';
   }
 
-  // ── Status check ─────────────────────────────────────────────────────
+  // ── Controle de statut ───────────────────────────────────────
+  // L'administrateur n'est pas soumis a ce controle : il doit pouvoir entrer
+  // dans une seance quel que soit son etat, precisement pour la superviser ou
+  // l'arreter.
   const status = sessionData.status as string;
   const allowedStatuses = ['live', 'scheduled', 'active', 'running', 'approved', 'draft'];
-  if (!allowedStatuses.includes(status)) {
+  if (!allowedStatuses.includes(status) && !isAdmin) {
     return jsonResponse({
       success: false,
       error: `Session non accessible (statut: ${status}).`,
     }, 403);
   }
 
-  // ── Determine host ────────────────────────────────────────────────────
+  // ── Hote ──────────────────────────────────────────────────
   if (sessionType === 'academia') {
     isHost = user.id === (sessionData.host_id as string);
   } else if (sessionType === 'prep') {
@@ -196,38 +238,55 @@ serve(async (req: Request) => {
     isHost = user.id === sessionData.instructor_id;
   }
 
-  // ── Room name ──────────────────────────────────────────────────────────
+  // ── Droit de publier ────────────────────────────────────────
+  // ATTENTION : quand la session vient de la table unifiee, `sessionType` vaut
+  // 'academia' — le vrai format est dans sessionData.session_type
+  // ('orientation' | 'td' | 'course'…). C'est LUI qui decide du droit de parole.
+  const academiaKind = ((sessionData.session_type as string) ?? '').toLowerCase();
+  const legacyKind = sessionType.toLowerCase();
+  const gameMode = ((sessionData.mode as string) ?? '').toLowerCase();
+  const isBidirectional =
+    BIDIRECTIONAL_KINDS.includes(academiaKind) ||
+    BIDIRECTIONAL_KINDS.includes(legacyKind) ||
+    (legacyKind === 'game' && BIDIRECTIONAL_GAME_MODES.includes(gameMode));
+  // L'administrateur doit pouvoir INTERVENIR, pas seulement observer.
+  const canPublish = isHost || isAdmin || isBidirectional;
+  // Qui a le droit de moderer (couper un micro, retirer quelqu'un, arreter) :
+  // l'hote pour SA seance, l'administrateur pour TOUTES.
+  const isModerator = isHost || isAdmin;
+
   if (sessionData.livekit_room_name) {
     roomName = sessionData.livekit_room_name as string;
   }
 
-  // ── Display name ──────────────────────────────────────────────────────
   const { data: displayNameResult } = await supabase.rpc(
     'livekit_get_user_display_name',
     { p_user_id: user.id },
   );
   const displayName = (displayNameResult as string) ?? user.email ?? user.id;
 
-  // ── Generate LiveKit JWT ───────────────────────────────────────────────
   const token = await generateLiveKitToken({
     apiKey: LIVEKIT_API_KEY,
     apiSecret: LIVEKIT_API_SECRET,
     roomName,
     participantIdentity: user.id,
     participantName: displayName,
-    canPublish: isHost,
+    canPublish,
     canSubscribe: true,
-    ttlSeconds: 3600 * 4, // 4 hours
+    ttlSeconds: 3600 * 4,
   });
 
-  // ── Register participant ───────────────────────────────────────────────
+  // ── Enregistrement du participant ──────────────────────────────
   // NB : supabase.rpc() renvoie un PostgrestFilterBuilder « thenable » qui
-  // n'expose pas .catch() — l'enchaîner lève un TypeError et fait échouer la
-  // fonction en 500 alors que le token est déjà généré. try/catch obligatoire.
+  // n'expose pas .catch() — l'enchainer leve un TypeError et fait echouer la
+  // fonction en 500 alors que le token est deja genere. try/catch obligatoire.
+  // Un administrateur en supervision n'est pas inscrit comme participant.
   try {
-    if (sessionType === 'academia') {
-      // Jointure unifiée — déjà faite côté Flutter via app_learning_join_session
-      // (AcademiaSessionProvider.joinSession, avant la demande de token).
+    if (isAdmin && !isHost) {
+      // Supervision : aucune inscription, la presence ne doit pas fausser les
+      // statistiques de frequentation de la seance.
+    } else if (sessionType === 'academia') {
+      // Jointure unifiee — deja faite cote Flutter via app_learning_join_session.
     } else if (sessionType === 'prep') {
       await supabase.rpc('app_prep_student_join_live_session', {
         p_session_id: sessionId,
@@ -239,7 +298,6 @@ serve(async (req: Request) => {
       });
     }
   } catch (e) {
-    // L'enregistrement du participant ne doit jamais empêcher l'entrée en salle.
     console.error('[livekit-token] participant registration failed', e);
   }
 
@@ -251,6 +309,12 @@ serve(async (req: Request) => {
     identity: user.id,
     display_name: displayName,
     is_host: isHost,
+    // Indique a l'application si elle a le droit d'activer micro/camera.
+    can_publish: canPublish,
+    // Affiche les commandes de moderation cote application.
+    is_admin: isAdmin,
+    is_moderator: isModerator,
     session_type: sessionType,
+    session_kind: academiaKind || legacyKind,
   });
 });
