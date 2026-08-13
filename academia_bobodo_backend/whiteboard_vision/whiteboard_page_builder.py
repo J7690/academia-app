@@ -255,11 +255,29 @@ def plan(storyboard: Dict[str, Any], narration: Optional[List[Dict[str, Any]]] =
                 block_durs = [float(x) for x in bd]
 
         if block_durs is not None:
+            # L'ANNOTATION SE JOUE PENDANT LA PAROLE, PLUS APRES.
+            #
+            # Le principe d'origine -- « ecrire, s'arreter, annoter, respirer »
+            # (voir l'en-tete du module) -- ajoutait ANNOT_TOTAL_SEC APRES la
+            # parole de chaque bloc annote. Mesure du 07/08 sur un cours reel :
+            #
+            #     parole        88,1 s
+            #     page a filmer 112,3 s
+            #     silence       24,2 s, dont 16,2 s pour 6 annotations muettes
+            #
+            # L'etudiant entendait donc son professeur se taire, puis regardait
+            # un cercle se dessiner sans un mot, six fois. Et la voix finissait
+            # vingt secondes avant l'image.
+            #
+            # Un professeur n'agit pas ainsi : il entoure le mot AU MOMENT ou
+            # il le prononce. L'annotation est donc desormais contenue dans la
+            # fenetre de parole du bloc, et peut deborder sur le bloc suivant
+            # -- ce qui est exactement ce que fait une main qui continue son
+            # geste pendant que la phrase suivante commence.
             for b, d in zip(blocks, block_durs):
-                a = ANNOT_TOTAL_SEC if _has_emphasis(b) else 0.0
                 h = _estimate_height(b)
-                planned.append(PlannedBlock(b, si, y, h, t, t + d, t + d + a))
-                t += d + a
+                planned.append(PlannedBlock(b, si, y, h, t, t + d, t + d))
+                t += d
                 y += h + BLOCK_GAP
             t = max(t, scene_start[si] + MIN_SCENE_SEC)
             continue
@@ -409,6 +427,49 @@ def _key_tokens(block: Dict[str, Any]) -> Optional[set]:
     return tokens or None
 
 
+def _instant_prononce(block: Dict[str, Any], cible: str) -> Optional[float]:
+    """A quelle fraction de sa narration le bloc PRONONCE-t-il le mot vise ?
+
+    POURQUOI CE CALCUL EXISTE. Le texte ECRIT au tableau et le texte DIT ne
+    sont pas la meme chaine. Exemple releve le 07/08 sur un cours reel :
+
+        ecrit : « Le Marketing : Identifier et satisfaire les besoins. »
+        dit   : « Le marketing, c'est l'art et la science d'identifier ce que
+                  les gens veulent et de leur offrir... »
+
+    « Identifier » se trouve a ~40 % du texte ecrit mais a ~55 % de la
+    narration. En declenchant le cercle a l'ecriture seule, il apparaissait
+    pendant que la voix disait encore autre chose -- pres d'une seconde de
+    decalage sur un bloc de six secondes, largement visible.
+
+    On repere donc le mot dans la narration, en mots et non en caracteres :
+    la parole avance a peu pres a mots constants, pas a caracteres constants.
+    Renvoie None si le mot n'apparait pas dans la narration.
+    """
+    narration = str(block.get("narration") or "").strip()
+    cible = (cible or "").strip().lower()
+    if not narration or not cible:
+        return None
+
+    def normaliser(m: str) -> str:
+        return m.strip(".,;:!?()«»\"'").lower()
+
+    mots = [normaliser(m) for m in narration.split()]
+    if not mots:
+        return None
+
+    premier = normaliser(cible.split()[0])
+    for rang, mot in enumerate(mots):
+        # `startswith` plutot qu'egalite : le francais elide et accorde
+        # (« d'identifier », « identifie », « besoins »). Une egalite stricte
+        # ratait la majorite des cibles.
+        if mot.startswith(premier[:max(4, len(premier) - 2)]):
+            # Fin du mot prononce, pas son debut : on entoure ce qui vient
+            # d'etre dit.
+            return min(1.0, (rang + 1) / len(mots))
+    return None
+
+
 def _annotation_svg(kind: str, start: float) -> str:
     """Cercle / souligné tracés à la main, puis effacés (transitoires)."""
     if kind == "underline":
@@ -452,6 +513,16 @@ def _block_html(pb: PlannedBlock, index: int, katex_renderer=None,
             ratio_b = len(before) / max(1, len(content))
             ratio_h = len(hit) / max(1, len(content))
             hit_end = pb.start + write_dur * (ratio_b + ratio_h)
+
+            # L'ANNOTATION ATTEND QUE LA VOIX PRONONCE LE MOT.
+            # `hit_end` dit quand le mot finit d'etre ECRIT. La voix, elle, le
+            # prononce ailleurs dans la phrase -- voir `_instant_prononce`. On
+            # prend le PLUS TARD des deux : on n'entoure jamais un mot qui
+            # n'est pas encore ecrit, et jamais avant que le professeur l'ait
+            # dit.
+            frac_dite = _instant_prononce(b, target)
+            if frac_dite is not None:
+                hit_end = max(hit_end, pb.start + write_dur * frac_dite)
             body = (
                 _words_html(before, pb.start, write_dur * ratio_b, ktoks)
                 + f'<span class="tgt {"hl" if kind == "highlight" else ""}">'
