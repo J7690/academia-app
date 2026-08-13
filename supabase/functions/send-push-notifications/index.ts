@@ -380,6 +380,18 @@ function buildFcmMessage(event: any) {
     body = "Du nouveau dans tes cours";
 
   // --- Lives ---
+  // Fiche de séance publiée : AVANT le cas générique, qui annoncerait à tort
+  // « live en direct » pour une séance déjà terminée.
+  // VALEUR COUPLÉE : domaine/type émis par `app_learning_publish_summary`
+  // (migration 20260812183000) et routés par `notification_router.dart`.
+  } else if (domain === "student_lives" && type === "fiche_publiee") {
+    const sessionTitle = payload.session_title || "";
+    title = payload.session_type === "orientation"
+      ? "📋 Ton compte rendu d'orientation est prêt"
+      : "📋 Ta fiche de séance est prête";
+    body = sessionTitle
+      ? `« ${sessionTitle} » — résumé, points clés et PDF disponibles`
+      : "Résumé, points clés et PDF disponibles";
   } else if (domain === "student_lives") {
     const courseTitle = payload.course_title || "";
     const sessionTitle = payload.session_title || "";

@@ -19,6 +19,8 @@ import { validateStoryboard } from './validate.ts';
 // Prompt et appel OpenRouter partages avec la fonction de diagnostic
 // whiteboard-storyboard-smoke : une seule source de verite.
 import { getSystemPrompt } from './prompt.ts';
+import { getCapsulePrompt } from './prompt_capsule.ts';
+import { validateCapsule } from './validate_capsule.ts';
 import { callWithCascade, stripCodeFences, type CascadeResult } from './llm.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
@@ -59,7 +61,20 @@ serve(async (req: Request) => {
     if (!res?.success) return jsonResponse({ error: 'insufficient_credits', balance: res?.balance ?? 0, cost: res?.cost ?? 0, message: `Credits insuffisants. Il vous faut ${res?.cost ?? 0} credits (solde: ${res?.balance ?? 0}).` }, 402);
     const reservationId = (res.reservation_id as string) || '';
 
-    const systemPrompt = getSystemPrompt(mode, renderer, theme, narrationMode);
+    // DEUX PRODUITS, DEUX ECRITURES.
+    //
+    // Un tableau ecrit des mots et en entoure certains ; une animation 3D ne
+    // peut RIEN ecrire : elle rend le propos en geometrie lumineuse. Faire
+    // generer un storyboard de tableau puis le TRADUIRE cote serveur revenait
+    // a faire deviner la forme a un adaptateur, a partir du type de bloc. La
+    // capsule sortait coherente, mais aucune intention n'avait ete exprimee.
+    //
+    // Ce qui reste commun, et c'est l'essentiel : la NARRATION. Meme cours,
+    // meme voix, meme cout en credits -- seule la mise en forme change.
+    const pourAnimation = engine === 'studio';
+    const systemPrompt = pourAnimation
+      ? getCapsulePrompt(mode, renderer)
+      : getSystemPrompt(mode, renderer, theme, narrationMode);
     let userPrompt = '';
     switch (mode) {
       case 'simple_subject': userPrompt = `Sujet : "${subject}"`; break;
@@ -79,10 +94,20 @@ serve(async (req: Request) => {
     try { parsed = JSON.parse(jsonToParse); }
     catch (e) { await supabase.rpc('app_student_refund_credits', { p_reservation_id: reservationId }); return jsonResponse({ error: 'invalid_json', detail: (e as Error).message?.slice(0, 300), raw: cascadeResult.content.slice(0, 500) }, 500); }
 
-    const validation = validateStoryboard(parsed);
-    if (!validation.valid) { await supabase.rpc('app_student_refund_credits', { p_reservation_id: reservationId }); return jsonResponse({ error: 'invalid_storyboard', detail: validation.error, raw: cascadeResult.content.slice(0, 500) }, 500); }
-
-    const sb = parsed as Record<string, unknown>;
+    // ON NETTOIE, ON NE REJETTE PAS -- des deux cotes. Un refus fait perdre
+    // a l'etudiant ses credits ET sa video ; on ne refuse donc que
+    // l'irrecuperable, et ce refus declenche un remboursement.
+    let sb: Record<string, unknown>;
+    if (pourAnimation) {
+      const vc = validateCapsule(parsed);
+      if (!vc.valid) { await supabase.rpc('app_student_refund_credits', { p_reservation_id: reservationId }); return jsonResponse({ error: 'invalid_capsule', detail: vc.error, raw: cascadeResult.content.slice(0, 500) }, 500); }
+      sb = vc.capsule as Record<string, unknown>;
+      sb.corrections = vc.corrections;
+    } else {
+      const validation = validateStoryboard(parsed);
+      if (!validation.valid) { await supabase.rpc('app_student_refund_credits', { p_reservation_id: reservationId }); return jsonResponse({ error: 'invalid_storyboard', detail: validation.error, raw: cascadeResult.content.slice(0, 500) }, 500); }
+      sb = parsed as Record<string, unknown>;
+    }
     sb.created_at = new Date().toISOString();
     sb.created_by = userId; sb.subject = subject; sb.renderer = renderer; sb.theme = theme; sb.narration_mode = narrationMode; sb.engine = engine;
     sb.writing_style = writingStyle;
