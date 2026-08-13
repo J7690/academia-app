@@ -111,11 +111,12 @@ sur le poste de Jocelyn**.
 
 ## 8. Dettes ouvertes
 
-| Dette | Depuis | Conséquence |
+| Dette | Depuis | État |
 |---|---|---|
-| **63 fichiers non commités**, rien depuis `a8a0b2f` | 07/08 | l'histoire ne garde **rien** de ce chantier ; une régression serait indiscernable |
-| Deux jetons Docker Hub collés en conversation | 12/08 | **à révoquer** |
-| `CLAUDE.md` annonce un chantier abandonné | 28/07 | corrigé le 13/08 : il pointe désormais ici |
+| ~~65 fichiers non commités~~ | 07/08 | **soldée le 13/08** — 5 commits (`b2052b5` → `8f52c2a`), dépôt propre, **non poussé** |
+| Deux jetons Docker Hub collés en conversation | 12/08 | **ouverte — à révoquer par Jocelyn** |
+| ~~`CLAUDE.md` annonce un chantier abandonné~~ | 28/07 | **soldée le 13/08** — en-tête réécrit, §7 archivé, pointe vers ce fichier |
+| 4 verbes sur 6 non conclus par l'audit croisé | 13/08 | **ouverte** — cf. §4.3 |
 
 ---
 
