@@ -1,8 +1,28 @@
 # CLAUDE.md — Academia
 
-> Point d'entrée pour tout agent (Claude Code, Windsurf, Cowork) reprenant ce projet.
-> Dernière mise à jour : **28/07/2026**.
-> Chantier en cours : **Smart Whiteboard — réduction de la latence (P1/P2)**.
+> ## ⚠️ L'ÉTAT DU CHANTIER N'EST PAS DANS CE FICHIER. Il est dans **`ETAT.md`** (racine).
+>
+> **Lire `ETAT.md` avant toute action.** Il est relevé et daté à chaque
+> intervention ; ce fichier-ci décrit ce qui **ne bouge pas** — la structure du
+> dépôt, les pièges permanents, les interdits.
+>
+> **Pourquoi cette séparation.** Ce fichier a annoncé « chantier en cours :
+> Smart Whiteboard — latence » du 28/07 au 13/08, seize jours après qu'on ait
+> changé de chantier. Un document qui mêle le durable et le courant vieillit
+> à la vitesse du courant, et oriente alors chaque séance sur une fausse piste.
+> Mesure du 13/08 : `docs/` contenait **219 fichiers**, dont dix s'annonçant
+> comme « état » ou « plan », et aucun ne disait lequel faisait foi.
+>
+> | Où | Quoi | Qui le tient |
+> |---|---|---|
+> | **`ETAT.md`** | où on en est, ce qui marche (mesuré), ce qui est cassé, quoi ensuite | mis à jour à chaque intervention |
+> | **`docs/JOURNAL_INTERVENTIONS.md`** | append-only, un acte par ligne — comment on y est arrivé | on n'y efface jamais rien |
+> | **ce fichier** | structure, pièges permanents, commandes, interdits | rarement |
+> | `docs/*.md` (219) | archives datées — pour comprendre *pourquoi*, jamais *où on en est* | figées |
+>
+> Deux hooks rendent cela exécutoire : `etat_projet.py` (SessionStart) injecte
+> `ETAT.md` et les derniers actes ; `fin_intervention.py` (Stop) signale quand
+> l'état a pris du retard sur les fichiers modifiés.
 
 ---
 
@@ -105,9 +125,13 @@ flutter build apk --dart-define=VPS_HOST=31.207.38.60
 ### Tests de la validation du storyboard (Deno)
 ```bash
 deno test supabase/functions/whiteboard-generate-storyboard/validate_test.ts
+deno test supabase/functions/whiteboard-generate-storyboard/validate_capsule_test.ts
 ```
-> ⚠️ **À exécuter en priorité** : des tests ont été ajoutés le 28/07 sans avoir pu être lancés
-> (pas de Deno dans l'environnement Cowork). C'est la **première chose à faire**.
+> ✅ **Exécutés le 11/08/2026 : 21 + 10 tests, 0 échec.** L'alerte précédente disait
+> « pas de Deno dans l'environnement » ; c'était faux pour le **poste Windows**, qui
+> dispose de Deno 2.9.4. La tâche est restée bloquée deux semaines sur une prémisse
+> jamais vérifiée. **Deno est en revanche réellement absent de LWS** — d'où la
+> confusion, et d'où la compétence `etat-des-moyens`.
 
 ### VPS
 ```bash
@@ -134,7 +158,14 @@ where bucket_id='whiteboard-renders' and name like '%preview%';
 
 ---
 
-## 7. État au 28/07/2026 et travail à reprendre
+## 7. ~~État au 28/07/2026~~ — **ARCHIVE, NE PLUS S'Y FIER**
+
+> Cette section a été le « chantier en cours » jusqu'au 13/08/2026. Elle est
+> conservée comme **trace du chantier Smart Whiteboard**, et n'a plus valeur
+> d'état : voir `ETAT.md`. Ne pas la mettre à jour — la remplacer serait
+> recréer le défaut qu'on vient de corriger.
+
+### (archive) État au 28/07/2026 et travail à reprendre
 
 ### Contexte : le problème de latence
 Mesuré : un cours de **201 s** rendu en **401 s** (ratio 2,0×) → l'étudiant attend **6 min 41**.
@@ -221,7 +252,7 @@ ils doivent être lisibles et critiquables, pas subis.
 | `.claude/settings.json` | garde-fous : `deny` / `ask` / `allow`, et les hooks |
 | `.claude/settings.local.json` | autorisations **personnelles**, non versionné |
 | `.mcp.json` | serveur MCP Supabase **en lecture seule**, aucun secret |
-| `.claude/skills/` | 7 compétences : orientation, vérification, débogage, recherche, revues |
+| `.claude/skills/` | 11 compétences : orientation, vérification, débogage, recherche, revues, **+ les 4 procédures obligatoires ci-dessous** |
 | `.claude/agents/` | 4 sous-agents en lecture seule |
 | `.claude/hooks/` | 3 hooks Python |
 
@@ -234,7 +265,23 @@ ils doivent être lisibles et critiquables, pas subis.
   (`flutter analyze`, `deno test`, `pytest`…) remet le compteur à zéro.
 - **`etat_projet.py`** (SessionStart) — annonce l'état **mesuré** du dépôt
   (branche, avance sur `origin`, fichiers non commités) plutôt que l'état
-  supposé. Ce fichier-ci vieillit ; ce hook, non.
+  supposé. Ce fichier-ci vieillit ; ce hook, non. Depuis le 11/08 il annonce
+  aussi les **accès manquants** (jeton Supabase, Deno, Flutter) et rappelle les
+  **procédures obligatoires**.
+
+### Les quatre procédures obligatoires (11/08/2026)
+
+Chacune répare une faute réellement commise, le 11/08, en une seule séance.
+
+| Compétence | À charger avant | Faute qu'elle répare |
+|---|---|---|
+| **`etat-des-moyens`** | tout chiffrage de latence/coût/capacité, tout « on ne peut pas » | un coût fixe de machine annoncé à 3 min 25 alors qu'il approche la demi-heure — le chiffre était dans `install_pod.sh:17` |
+| **`continuite-du-chantier`** | toute proposition touchant une couche non écrite dans la séance | une banque d'objets recommandée alors que `fabriquer_contours.py` tranchait la question dans l'autre sens, avec motif |
+| **`veille-externe`** | toute décision d'architecture ou de composant | une conception rendue sans **aucune** étude des plateformes, et une licence lue dans un résumé au lieu du fichier `LICENSE` |
+| **`studio-visuel-3d`** | toute tâche touchant `studio_visuel/` | la grammaire visuelle, les pièges déjà payés, et ce qui est **déjà tranché** |
+
+**La règle commune** : ne jamais déduire un état de ce qu'on ne voit pas. Un accès
+manquant se signale à la première seconde, pas à la centième.
 
 Tous **échouent en laissant passer** : un garde-fou qui casse la session est un
 garde-fou qu'on désactive.

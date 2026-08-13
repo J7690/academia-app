@@ -90,7 +90,19 @@ def main() -> int:
                 "decide avec Jocelyn, pas dans une commande."
             )
 
-        if CLES_PRIVEES.search(commande) and LECTURE.search(commande):
+        # UTILISER une cle n'est pas la LIRE. `ssh -i cle`, `scp -i cle`,
+        # `git -c core.sshCommand=...` designent la cle comme identite : c'est
+        # l'usage prevu, et le seul moyen d'atteindre un pod RunPod.
+        #
+        # Sans cette exception, le garde-fou se declenchait sur une commande
+        # parfaitement legitime des qu'un verbe de lecture apparaissait
+        # AILLEURS dans la meme ligne -- par exemple `ssh -i cle 'tail -20
+        # /workspace/worker.log'`. Il a bloque un diagnostic en pleine
+        # production. Un garde-fou qui mord sur du travail normal finit
+        # desactive, donc inutile.
+        sans_identite = re.sub(r"-i\s+\S*(id_ed25519|id_rsa|id_ecdsa)\S*", " ", commande)
+
+        if CLES_PRIVEES.search(sans_identite) and LECTURE.search(sans_identite):
             refuser(
                 "Regle du projet (CLAUDE.md §3) : ne jamais lire la cle privee SSH. "
                 "Pour verifier qu'une cle existe ou ses droits, utiliser `ls -l` ou "

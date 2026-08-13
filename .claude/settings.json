@@ -185,6 +185,18 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "//": "Rappelle de mettre a jour ETAT.md et le journal quand le depot a bouge. N'arrete jamais rien : il informe.",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/fin_intervention.py\"",
+            "timeout": 15
+          }
+        ]
+      }
     ]
   },
 
