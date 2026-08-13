@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -69,6 +70,52 @@ class SmartWhiteboardRenderService {
     print("DEBUG-D19-41: renderService.createRenderJob response=$response runtimeType=${response.runtimeType} isNull=${response == null}");
 
     return response as Map<String, dynamic>;
+  }
+
+  /// Commande une capsule ANIMÉE 3D pour ce projet.
+  ///
+  /// Le storyboard est le même que celui du tableau manuscrit : c'est la même
+  /// génération par IA, donc le même coût en crédits. Seule la fabrication
+  /// change. Le serveur du projet traduit puis enregistre la voix avant qu'une
+  /// machine soit louée — d'où un travail qui naît `a_preparer` et non `queued`.
+  Future<Map<String, dynamic>> createStudioJob(String projectId) async {
+    final response = await _supabase.rpc(
+      'studio_creer_travail_etudiant',
+      params: {'p_project_id': projectId},
+    );
+    return Map<String, dynamic>.from(response as Map);
+  }
+
+  /// État d'une capsule 3D, avec une étape LISIBLE par l'étudiant.
+  ///
+  /// La RPC renvoie `etape` en clair (« Enregistrement de la voix »,
+  /// « Fabrication des images ») : un écran d'attente qui n'affiche qu'une roue
+  /// laisse l'étudiant sans repère, et c'est exactement le défaut relevé le
+  /// 07/08 sur la chaîne du tableau.
+  Future<Map<String, dynamic>> getStudioStatus(String jobId) async {
+    final response = await _supabase.rpc(
+      'studio_etat_travail',
+      params: {'p_job_id': jobId},
+    );
+    if (response == null) return {'success': false, 'error': 'introuvable'};
+    return Map<String, dynamic>.from(response as Map);
+  }
+
+  /// URL lisible d'une capsule 3D, signée avec le jeton de l'étudiant.
+  ///
+  /// Le bucket `studio-visuel` est privé — les capsules n'en sortent que par
+  /// URL signée. Une politique de lecture autorise l'étudiant sur le seul
+  /// objet du travail qu'il a commandé : il signe donc lui-même, et aucune clé
+  /// de service ne descend dans l'application.
+  Future<String?> urlCapsuleStudio(String cheminVideo) async {
+    try {
+      return await _supabase.storage
+          .from('studio-visuel')
+          .createSignedUrl(cheminVideo, 60 * 60 * 6);
+    } catch (e) {
+      debugPrint('[STUDIO] signature impossible pour $cheminVideo : $e');
+      return null;
+    }
   }
 
   /// Récupère le statut d'un job de rendu

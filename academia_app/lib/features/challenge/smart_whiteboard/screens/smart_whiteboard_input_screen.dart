@@ -20,6 +20,7 @@ class SmartWhiteboardInputScreen extends StatefulWidget {
 class _SmartWhiteboardInputScreenState extends State<SmartWhiteboardInputScreen> {
   // Mode selection
   InputMode _selectedMode = InputMode.simpleSubject;
+  ProductionType _selectedProduction = ProductionType.tableau;
 
   // Form controllers
   final TextEditingController _subjectController = TextEditingController();
@@ -48,6 +49,8 @@ class _SmartWhiteboardInputScreenState extends State<SmartWhiteboardInputScreen>
     }
 
     final provider = context.read<SmartWhiteboardProvider>();
+    // Le choix de l'etudiant decide de la file de fabrication.
+    provider.choisirTypeProduction(_selectedProduction.apiValue);
 
     // Create project
     await provider.createProject(
@@ -93,6 +96,27 @@ class _SmartWhiteboardInputScreenState extends State<SmartWhiteboardInputScreen>
       appBar: AppBar(
         title: const Text('Smart Whiteboard'),
         backgroundColor: const Color(0xFF1EA75C),
+        actions: [
+          // LE CHEMIN DE RETOUR VERS SES COURS.
+          //
+          // L'écran « Mes cours » était déclaré dans les routes mais poussé
+          // depuis NULLE PART : la seule entrée créait toujours un projet
+          // neuf. Mesuré le 07/08 : 125 storyboards générés — donc payés —
+          // dont le rendu n'a jamais été lancé, et 7 cours dont le rendu a
+          // échoué sans que l'étudiant puisse le relancer.
+          //
+          // Relancer un rendu ne coûte aucun crédit : il suffisait de pouvoir
+          // y revenir. Le libellé est écrit en toutes lettres, pas en icône
+          // seule — quelqu'un qui découvre l'application doit comprendre sans
+          // deviner.
+          TextButton.icon(
+            onPressed: () =>
+                Navigator.pushNamed(context, '/smart-whiteboard-projects'),
+            icon: const Icon(Icons.folder_open, color: Colors.white, size: 19),
+            label: const Text('Mes cours',
+                style: TextStyle(color: Colors.white, fontSize: 13.5)),
+          ),
+        ],
       ),
       body: Consumer<SmartWhiteboardProvider>(
         builder: (context, provider, child) {
@@ -108,6 +132,19 @@ class _SmartWhiteboardInputScreenState extends State<SmartWhiteboardInputScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Type de production — le choix qui décide de la NATURE de la
+                // vidéo, donc posé avant tout le reste.
+                const Text(
+                  'Type de vidéo',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildProductionSelector(),
+                const SizedBox(height: 24),
+
                 // Mode selection
                 const Text(
                   'Mode de saisie',
@@ -215,6 +252,46 @@ class _SmartWhiteboardInputScreenState extends State<SmartWhiteboardInputScreen>
           );
         },
       ),
+    );
+  }
+
+  /// Le choix le plus structurant de l'écran : quel genre de vidéo.
+  ///
+  /// Il est posé EN PREMIER, avant même le mode de saisie, parce qu'il ne
+  /// change pas la mise en forme mais la nature du produit — un tableau qu'on
+  /// écrit, ou une animation qu'on regarde. Le sujet et la narration, eux,
+  /// sont identiques : c'est la même IA qui les écrit, et l'étudiant paie une
+  /// seule fois.
+  Widget _buildProductionSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SegmentedButton<ProductionType>(
+          segments: const [
+            ButtonSegment(
+              value: ProductionType.tableau,
+              icon: Icon(Icons.edit_outlined),
+              label: Text('Tableau'),
+            ),
+            ButtonSegment(
+              value: ProductionType.animation,
+              icon: Icon(Icons.auto_awesome_outlined),
+              label: Text('Animation 3D'),
+            ),
+          ],
+          selected: {_selectedProduction},
+          onSelectionChanged: (Set<ProductionType> newSelection) {
+            setState(() {
+              _selectedProduction = newSelection.first;
+            });
+          },
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _selectedProduction.description,
+          style: const TextStyle(fontSize: 12.5, color: Color(0xFF6B7280), height: 1.4),
+        ),
+      ],
     );
   }
 
@@ -326,6 +403,34 @@ class _SmartWhiteboardInputScreenState extends State<SmartWhiteboardInputScreen>
         return 'Collez le contenu de votre cours ici...';
     }
   }
+}
+
+/// Les deux façons de fabriquer la vidéo d'un même cours.
+///
+/// Le sujet, le storyboard et la narration sont IDENTIQUES : c'est la même
+/// génération par IA, donc le même coût en crédits. Seul le moteur de rendu
+/// change, et avec lui la nature du résultat.
+///
+/// La valeur `apiValue` est celle que le champ `engine` porte jusqu'au worker.
+/// `vision2` était jusqu'ici imposée à la compilation
+/// (`BackendHosts.whiteboardEngine`) ; elle devient un choix de l'étudiant,
+/// comme le prévoyait déjà le commentaire de ce réglage.
+enum ProductionType {
+  /// Tableau manuscrit : l'écriture se trace au fil de la parole, avec
+  /// annotations. Rendu sur le serveur du projet, sans GPU.
+  tableau,
+
+  /// Animation 3D : géométrie lumineuse, caméra mobile, sound design. Rendu
+  /// sur une machine à carte graphique, louée à la seconde.
+  animation;
+
+  String get apiValue => this == ProductionType.tableau ? 'vision2' : 'studio';
+
+  String get description => this == ProductionType.tableau
+      ? "Le cours s'écrit au tableau pendant que la voix l'explique, avec les "
+          "mots-clés entourés. Prêt en deux à trois minutes."
+      : "Le cours devient une animation en volume — formes lumineuses, caméra "
+          "qui se déplace, ambiance sonore. Rendu plus long.";
 }
 
 enum InputMode {

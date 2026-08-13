@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../config/backend_hosts.dart';
 import '../models/storyboard_models.dart';
+import '../models/storyboard_fusion.dart';
 import '../services/smart_whiteboard_service.dart';
 import '../services/smart_whiteboard_render_service.dart';
 import '../services/smart_whiteboard_narration_service.dart';
@@ -38,6 +39,42 @@ class SmartWhiteboardProvider extends ChangeNotifier {
 
   // Render data
   String? _currentRenderJobId;
+
+  /// Le JSON du storyboard TEL QUE L'IA l'a produit.
+  ///
+  /// Il porte des champs que le modele Dart ignore -- `engine`, la narration
+  /// par bloc, `emphasis`, `key_words`. Les reecrire avec `toJson()` seul les
+  /// effacait, et le serveur retombait alors sur le moteur degrade. On le garde
+  /// donc, et toute sauvegarde passe par `fusionnerStoryboard`.
+  Map<String, dynamic>? _storyboardOrigine;
+
+  /// `vision2` (tableau manuscrit) ou `studio` (animation 3D).
+  ///
+  /// Initialisé depuis `BackendHosts.whiteboardEngine` — et non écrit en dur —
+  /// pour que `--dart-define=WHITEBOARD_ENGINE` reste le défaut de l'application
+  /// tant que l'étudiant n'a rien choisi. Le choix de l'écran de saisie l'écrase
+  /// ensuite, et c'est LUI qui part au serveur.
+  String _typeProduction = BackendHosts.whiteboardEngine;
+
+  /// Ce que l'étudiant a choisi dans l'écran de saisie.
+  String get typeProduction => _typeProduction;
+  bool get estAnimation3d => _typeProduction == 'studio';
+
+  void choisirTypeProduction(String type) {
+    if (type != _typeProduction) {
+      _typeProduction = type;
+      notifyListeners();
+    }
+  }
+
+  /// Où en est la fabrication, en une phrase lisible par l'étudiant.
+  ///
+  /// Alimenté par `studio_etat_travail` pour l'animation 3D. Un écran d'attente
+  /// qui n'affiche qu'une roue ne dit ni ce qui se passe, ni si c'est tombé en
+  /// panne : c'est le défaut relevé le 07/08 sur la chaîne du tableau, et il ne
+  /// sera pas reproduit ici.
+  String? _etapeEnCours;
+  String? get etapeEnCours => _etapeEnCours;
   RenderJob? _currentRenderJob;
   String? _renderVideoUrl;
 
@@ -205,10 +242,23 @@ class SmartWhiteboardProvider extends ChangeNotifier {
           'renderer': _payloadRenderer,
           'theme': _payloadTheme,
           'narration_mode': _payloadNarration,
-          // Moteur de rendu et style d'écriture : point de configuration unique
-          // (lib/config/backend_hosts.dart), surchargeable au build sans toucher
-          // au code — voir la documentation de `whiteboardEngine` pour le repli.
-          'engine': BackendHosts.whiteboardEngine,
+          // LE CHOIX DE L'ÉTUDIANT, PAS LA CONSTANTE DE COMPILATION.
+          //
+          // Défaut mesuré le 12/08/2026 : cette ligne envoyait
+          // `BackendHosts.whiteboardEngine`, figé à `vision2` au build. Le
+          // sélecteur « tableau manuscrit / animation 3D » de l'écran de saisie
+          // remplissait bien `_typeProduction` (voir `choisirTypeProduction`),
+          // mais cette valeur n'atteignait JAMAIS le serveur.
+          //
+          // Conséquence : un étudiant qui choisissait l'animation 3D recevait
+          // un storyboard de TABLEAU. Le choix existait à l'écran et nulle part
+          // ailleurs — c'est le symptôme exact qu'on cherchait à corriger côté
+          // serveur, et il avait aussi sa cause ici.
+          //
+          // `BackendHosts.whiteboardEngine` reste le DÉFAUT : `_typeProduction`
+          // est initialisé avec, et `--dart-define=WHITEBOARD_ENGINE` continue
+          // donc de fonctionner tant que l'étudiant ne choisit rien.
+          'engine': _typeProduction,
           'writing_style': BackendHosts.whiteboardWritingStyle,
         },
       );
@@ -239,9 +289,44 @@ class SmartWhiteboardProvider extends ChangeNotifier {
 
       print(
           "DEBUG-D19-13: generateStoryboard storyboardJson=$storyboardJson runtimeType=${storyboardJson.runtimeType}");
+      // On garde le JSON DE L'IA avant de le parser : le modèle Dart ignore
+      // `engine`, la narration par bloc, `emphasis` et `key_words`, et une
+      // sauvegarde ultérieure les effacerait — c'est ce qui faisait retomber
+      // le serveur sur le moteur dégradé.
+      _storyboardOrigine = storyboardJson;
+
+      // UNE CAPSULE 3D N'EST PAS UN STORYBOARD DE TABLEAU.
+      //
+      // Ses scènes portent des `gestes` — des verbes et des coordonnées — et
+      // n'ont ni `blocks`, ni `export_settings`, ni `video_codec`. Or
+      // `Storyboard.fromJson` transtype ces champs en NON-NULLABLE.
+      //
+      // Défaut mesuré sur le téléphone le 12/08/2026 : la génération
+      // réussissait côté serveur — capsule valide, cinq scènes, aucune
+      // correction — et l'application plantait à l'analyse avec
+      // « type 'Null' is not a subtype of type 'String' in type cast ».
+      // L'étudiant voyait un échec là où tout avait marché.
+      //
+      // On ne rend donc PAS le modèle tolérant à coups de casts nullables : on
+      // n'analyse pas ce qui n'est pas fait pour l'être. `_storyboardOrigine`
+      // garde le JSON complet, et `createRenderJob` sait déjà se passer de
+      // `_currentStoryboard` (il ne met à jour le projet que s'il existe).
+      final scenes = storyboardJson['scenes'];
+      final estCapsule = scenes is List &&
+          scenes.isNotEmpty &&
+          scenes.first is Map &&
+          (scenes.first as Map).containsKey('gestes');
+
+      if (estCapsule) {
+        _currentStoryboard = null;
+        // On n'envoie PAS l'étudiant dans un éditeur qui n'aurait rien à
+        // éditer : une capsule n'a pas de blocs de texte. On enchaîne
+        // directement sur la fabrication, qui affiche l'attente.
+        await createRenderJob();
+        return;
+      }
+
       _currentStoryboard = Storyboard.fromJson(storyboardJson);
-      print(
-          "DEBUG-D19-14: generateStoryboard _currentStoryboard=$_currentStoryboard runtimeType=${_currentStoryboard.runtimeType}");
       _setState(SmartWhiteboardState.editing);
     } on FunctionException catch (e) {
       print(
@@ -353,7 +438,8 @@ class SmartWhiteboardProvider extends ChangeNotifier {
           "DEBUG-D19-15: updateStoryboard START projectId=$_currentProjectId");
       final result = await _projectService.updateProject(
         projectId: _currentProjectId!,
-        storyboardJson: storyboard.toJson(),
+        storyboardJson:
+            fusionnerStoryboard(_storyboardOrigine, storyboard.toJson()),
       );
       print(
           "DEBUG-D19-16: updateStoryboard result=$result runtimeType=${result.runtimeType} isNull=${result == null}");
@@ -566,24 +652,108 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       if (_currentStoryboard != null) {
         await _projectService.updateProject(
           projectId: _currentProjectId!,
-          storyboardJson: _currentStoryboard!.toJson(),
+          storyboardJson: fusionnerStoryboard(
+              _storyboardOrigine, _currentStoryboard!.toJson()),
         );
       }
 
-      final result = await _renderService.createRenderJob(_currentProjectId!);
+      // LE BRANCHEMENT DES DEUX CHAINES.
+      // Même projet, même storyboard, même narration : seule la fabrication
+      // diffère. L'animation 3D passe par une file distincte, car elle exige
+      // une machine à carte graphique — que le serveur ne loue qu'APRÈS avoir
+      // traduit la capsule et enregistré la voix.
+      final result = estAnimation3d
+          ? await _renderService.createStudioJob(_currentProjectId!)
+          : await _renderService.createRenderJob(_currentProjectId!);
       print(
           "DEBUG-D19-18: createRenderJob result=$result runtimeType=${result.runtimeType} isNull=${result == null}");
       print(
           "DEBUG-D19-19: result['render_id']=${result['render_id']} runtimeType=${result['render_id']?.runtimeType} isNull=${result['render_id'] == null}");
 
       if (result['success'] == true) {
-        _currentRenderJobId = result['render_id'] as String;
+        // LES DEUX FILES NE NOMMENT PAS LEUR IDENTIFIANT PAREIL :
+        // `render_id` côté tableau, `job_id` côté animation. Un transtypage
+        // direct sur l'un des deux plantait sur l'autre.
+        final identifiant =
+            (result['render_id'] ?? result['job_id'])?.toString();
+        if (identifiant == null || identifiant.isEmpty) {
+          _setError('La fabrication n\'a pas démarré : identifiant manquant.');
+          return;
+        }
+        _currentRenderJobId = identifiant;
+        _etapeEnCours =
+            estAnimation3d ? 'Préparation du cours' : 'Écriture du tableau';
         _setState(SmartWhiteboardState.rendering);
       } else {
         _setError(result['error'] as String? ?? 'Failed to create render job');
       }
     } catch (e) {
       _setError(e.toString());
+    }
+  }
+
+  /// Suit une capsule 3D jusqu'à sa mise à disposition, ou jusqu'à l'échec.
+  ///
+  /// Renvoie `true` si la vidéo est prête. À chaque tour, `etapeEnCours` porte
+  /// une phrase lisible — « Enregistrement de la voix », « Fabrication des
+  /// images » — et un échec remplit `errorMessage` au lieu de laisser tourner
+  /// une roue. C'est le défaut relevé le 07/08 sur l'autre chaîne, et il ne
+  /// sera pas reproduit ici.
+  ///
+  /// Le délai est large à dessein : l'animation demande la location d'une
+  /// machine, dont l'amorçage seul prend quelques minutes. Un délai trop court
+  /// ferait abandonner l'étudiant AVANT que sa vidéo n'arrive — l'autre défaut
+  /// mesuré le même jour.
+  Future<bool> suivreCapsule3d({
+    Duration limite = const Duration(minutes: 45),
+    Duration intervalle = const Duration(seconds: 5),
+  }) async {
+    if (_currentRenderJobId == null) {
+      _setError('Aucune capsule en cours.');
+      return false;
+    }
+    final depart = DateTime.now();
+
+    while (true) {
+      if (DateTime.now().difference(depart) > limite) {
+        _setError('La fabrication dépasse le temps prévu. '
+            'Ton cours reste enregistré : rouvre-le plus tard.');
+        return false;
+      }
+
+      final etat = await _renderService.getStudioStatus(_currentRenderJobId!);
+      final statut = etat['statut']?.toString();
+
+      final etape = etat['etape']?.toString();
+      if (etape != null && etape != _etapeEnCours) {
+        _etapeEnCours = etape;
+        notifyListeners();
+      }
+
+      if (statut == 'failed') {
+        _setError(etat['erreur']?.toString() ??
+            'La fabrication a échoué. Ton cours reste enregistré.');
+        return false;
+      }
+
+      if (statut == 'preview_ready' || statut == 'approved') {
+        final chemin = etat['chemin_video']?.toString();
+        if (chemin == null || chemin.isEmpty) {
+          _setError('La vidéo est annoncée prête mais introuvable.');
+          return false;
+        }
+        final url = await _renderService.urlCapsuleStudio(chemin);
+        if (url == null) {
+          _setError('La vidéo est prête mais son accès a été refusé.');
+          return false;
+        }
+        _renderVideoUrl = url;
+        _etapeEnCours = null;
+        _setState(SmartWhiteboardState.done);
+        return true;
+      }
+
+      await Future.delayed(intervalle);
     }
   }
 
@@ -685,6 +855,14 @@ class SmartWhiteboardProvider extends ChangeNotifier {
         return;
       }
 
+      // MÊME PRÉCAUTION QU'À LA GÉNÉRATION, et elle est indispensable ici.
+      // Quand l'étudiant ROUVRE un cours, le JSON vient de la base et porte
+      // encore `engine`, la narration par bloc, `emphasis` et `key_words`.
+      // Sans cette ligne, `_storyboardOrigine` resterait nul, la fusion
+      // n'aurait rien à préserver, et le premier enregistrement effacerait le
+      // moteur — exactement le défaut qu'on vient de corriger, revenu par la
+      // porte de derrière.
+      _storyboardOrigine = storyboardJson;
       _currentStoryboard = Storyboard.fromJson(storyboardJson);
       _currentProject = WhiteboardProject.fromJson({
         ...projectJson,

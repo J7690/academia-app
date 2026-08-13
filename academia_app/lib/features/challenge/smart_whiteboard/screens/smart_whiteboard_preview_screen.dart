@@ -28,6 +28,9 @@ class _SmartWhiteboardPreviewScreenState extends State<SmartWhiteboardPreviewScr
   bool _isPolling = false;
   String? _resolvedVideoUrl;
 
+  /// Ce qui a échoué, en clair. Tant qu'il est nul, on fabrique encore.
+  String? _erreur;
+
   @override
   void initState() {
     super.initState();
@@ -47,23 +50,62 @@ class _SmartWhiteboardPreviewScreenState extends State<SmartWhiteboardPreviewScr
       return;
     }
 
-    // 2. Sinon, lancer le polling si on a un render job
+    // 2. Sinon, lancer le suivi si on a un travail en cours
     if (provider.currentRenderJobId != null && !_isPolling) {
       debugPrint('[WB-PREVIEW] Starting poll for renderJobId=${provider.currentRenderJobId}');
-      setState(() => _isPolling = true);
-      await provider.pollRenderJob();
+      setState(() {
+        _isPolling = true;
+        _erreur = null;
+      });
+
+      // Les deux fabrications ne se suivent pas de la même façon : le tableau
+      // interroge `whiteboard_renders`, l'animation `studio_etat_travail`.
+      if (provider.estAnimation3d) {
+        await provider.suivreCapsule3d();
+      } else {
+        await provider.pollRenderJob();
+      }
       if (!mounted) return;
+
       final polledUrl = provider.renderVideoUrl;
       debugPrint('[WB-PREVIEW] Poll done — polledUrl=$polledUrl state=${provider.state}');
       setState(() => _isPolling = false);
+
       if (polledUrl != null) {
         _setVideoUrl(polledUrl);
-      } else {
-        debugPrint('[WB-PREVIEW] ⚠️ Poll finished but NO video URL. error=${provider.errorMessage}');
+        return;
       }
+
+      // NE PLUS LAISSER TOURNER UNE ROUE SUR UN RENDU MORT.
+      // Le provider recevait bien le message d'erreur du serveur, mais cet
+      // écran ne le lisait jamais : l'étudiant restait devant un sablier
+      // éternel pour un rendu déjà échoué en base. C'est le défaut mesuré le
+      // 07/08, et c'est ici qu'il se corrige.
+      setState(() {
+        _erreur = provider.errorMessage ??
+            "La vidéo n'a pas pu être fabriquée. Ton cours reste enregistré.";
+      });
     } else {
       debugPrint('[WB-PREVIEW] ⚠️ No URL and no renderJobId — nothing to play');
+      setState(() {
+        _erreur = "Aucune fabrication en cours pour ce cours.";
+      });
     }
+  }
+
+  Future<void> _reessayer() async {
+    final provider = context.read<SmartWhiteboardProvider>();
+    setState(() {
+      _erreur = null;
+      _resolvedVideoUrl = null;
+    });
+    await provider.createRenderJob();
+    if (!mounted) return;
+    if (provider.state == SmartWhiteboardState.error) {
+      setState(() => _erreur = provider.errorMessage);
+      return;
+    }
+    await _start();
   }
 
   void _setVideoUrl(String url) {
@@ -141,19 +183,66 @@ class _SmartWhiteboardPreviewScreenState extends State<SmartWhiteboardPreviewScr
       );
     }
 
-    // Polling ou chargement
-    final label = _isPolling
-        ? 'Rendu en cours...'
-        : 'Chargement de la vidéo...';
+    // ÉCHEC : on le dit, et on propose de réessayer.
+    if (_erreur != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 46, color: Color(0xFFB45309)),
+              const SizedBox(height: 14),
+              const Text(
+                "La vidéo n'a pas pu être fabriquée",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _erreur!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 13, height: 1.45, color: Color(0xFF6B7280)),
+              ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: _reessayer,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Réessayer'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // EN COURS : on dit à quelle étape on en est, pas seulement qu'on attend.
+    final provider = context.watch<SmartWhiteboardProvider>();
+    final etape = provider.etapeEnCours ??
+        (_isPolling ? 'Fabrication en cours' : 'Chargement de la vidéo');
+    final attente = provider.estAnimation3d
+        ? "L'animation demande une machine dédiée : compte une dizaine de minutes."
+        : "Ton cours s'écrit au tableau : deux à trois minutes.";
 
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 16),
-          Text(label),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 28),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 18),
+            Text(etape,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Text(attente,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 12.5, height: 1.45, color: Color(0xFF6B7280))),
+          ],
+        ),
       ),
     );
   }

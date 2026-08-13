@@ -17,6 +17,7 @@ import '../features/admin/admin_payments_screen.dart';
 import '../features/admin/admin_support_screen.dart';
 import '../features/commercial/commercial_dashboard_screen.dart';
 import '../features/instructor/instructor_dashboard_screen.dart';
+import '../features/live/session_summary_screen.dart';
 import '../features/student/student_dashboard_screen.dart';
 import '../features/student/student_payments_screen.dart';
 import '../features/university/university_applications_screen.dart';
@@ -81,7 +82,7 @@ class NotificationRouter {
 
     _pending = null;
     final domain = data['domain'] ?? '';
-    final screen = _screenForDomain(domain);
+    final screen = _screenForData(data) ?? _screenForDomain(domain);
     if (screen == null) {
       debugPrint('[NotifRouter] domaine sans destination: $domain');
       return;

@@ -10,6 +10,7 @@ import '../../../theme/academia_palette.dart';
 import '../../../widgets/academia_motion.dart';
 import '../../../widgets/academia_ui.dart';
 import '../../live/academia_classroom_screen.dart';
+import '../../live/session_summary_screen.dart';
 
 /// Onglet Lives — refonte « Ciel Academia ».
 ///
@@ -105,6 +106,25 @@ class _StudentLiveSessionsTabState extends State<StudentLiveSessionsTab> {
       ),
     );
     if (mounted) await _load();
+  }
+
+  /// Ouvre la fiche de séance publiée par l'enseignant.
+  ///
+  /// C'était le maillon manquant côté étudiant : la fiche existait, se
+  /// publiait, et le toast promettait « vos étudiants y ont accès » — mais
+  /// `SessionSummaryScreen` n'était ouvert nulle part avec `isHost: false`.
+  /// L'écran gère lui-même tous les états (jamais générée, en relecture,
+  /// publiée) : on ne teste rien ici, on ouvre.
+  void _openSummary(AcademiaSession session) {
+    Navigator.of(context).push(
+      AcademiaPageRoute(
+        builder: (_) => SessionSummaryScreen(
+          sessionId: session.id,
+          sessionTitle: session.title,
+          isHost: false,
+        ),
+      ),
+    );
   }
 
   void _remind(String title) {
@@ -1010,18 +1030,41 @@ class _StudentLiveSessionsTabState extends State<StudentLiveSessionsTab> {
                       ),
                     ),
                     const Spacer(),
-                    Text(
-                      [
-                        _typeLabel(session.type),
-                        if ((session.hostDisplayName ?? '').isNotEmpty)
-                          session.hostDisplayName!,
-                      ].join(' · '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 10.3,
-                        color: AcademiaPalette.faint,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            [
+                              _typeLabel(session.type),
+                              if ((session.hostDisplayName ?? '').isNotEmpty)
+                                session.hostDisplayName!,
+                            ].join(' · '),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 10.3,
+                              color: AcademiaPalette.faint,
+                            ),
+                          ),
+                        ),
+                        // Le geste intérieur gagne l'arène : toucher l'icône
+                        // ouvre la fiche, pas le replay.
+                        Tooltip(
+                          message: 'Fiche de séance',
+                          child: AcademiaTapScale(
+                            onTap: () => _openSummary(session),
+                            scale: 0.9,
+                            child: const Padding(
+                              padding: EdgeInsets.only(left: 6),
+                              child: Icon(
+                                Icons.description_outlined,
+                                size: 16,
+                                color: AcademiaPalette.muted,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

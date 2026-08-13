@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/admin_programs_provider.dart';
+import '../../providers/admin_universities_provider.dart';
 
 class AdminProgramsScreen extends StatefulWidget {
   const AdminProgramsScreen({super.key});
@@ -18,6 +19,203 @@ class _AdminProgramsScreenState extends State<AdminProgramsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AdminProgramsProvider>().loadPrograms();
     });
+  }
+
+  /// Ouvre le formulaire de création/édition d'un programme.
+  ///
+  /// Permet à l'admin de gérer directement les formations d'un partenaire
+  /// sans compte dédié (ex: ANGE Auto École — permis de conduire).
+  Future<void> _showProgramDialog({Map<String, dynamic>? existing}) async {
+    final programsProvider = context.read<AdminProgramsProvider>();
+    final universitiesProvider = context.read<AdminUniversitiesProvider>();
+
+    if (universitiesProvider.universities.isEmpty) {
+      await universitiesProvider.loadUniversities();
+    }
+    if (!mounted) return;
+
+    final universities = universitiesProvider.universities;
+    if (universities.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Aucun établissement partenaire disponible.'),
+        ),
+      );
+      return;
+    }
+
+    final isEdit = existing != null;
+    String? selectedUniversityId =
+        existing?['university_id']?.toString() ??
+            (universities.length == 1
+                ? universities.first['id']?.toString()
+                : null);
+
+    final titleController =
+        TextEditingController(text: existing?['title']?.toString() ?? '');
+    final descriptionController = TextEditingController(
+        text: existing?['description']?.toString() ?? '');
+    final degreeController = TextEditingController(
+        text: existing?['degree_level']?.toString() ?? '');
+    final modeController =
+        TextEditingController(text: existing?['mode']?.toString() ?? '');
+    final durationController = TextEditingController(
+        text: existing?['duration_months']?.toString() ?? '');
+    final feesController = TextEditingController(
+        text: existing?['tuition_fees']?.toString() ?? '');
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setStateDialog) {
+            return AlertDialog(
+              title: Text(
+                isEdit ? 'Modifier le programme' : 'Nouveau programme',
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      value: selectedUniversityId,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Établissement partenaire',
+                      ),
+                      items: universities.map((u) {
+                        final id = u['id']?.toString() ?? '';
+                        final name = u['name']?.toString() ?? '';
+                        final isAutoEcole =
+                            (u['partner_type'] ?? '').toString() ==
+                                'auto_ecole';
+                        return DropdownMenuItem<String>(
+                          value: id,
+                          child: Text(
+                            isAutoEcole ? '🚗 $name' : name,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: isEdit
+                          ? null
+                          : (value) {
+                              setStateDialog(() {
+                                selectedUniversityId = value;
+                              });
+                            },
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Titre (ex: Permis B, Licence Informatique)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: descriptionController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Description (facultatif)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: degreeController,
+                      decoration: const InputDecoration(
+                        labelText:
+                            'Niveau (ex: Licence, Master, Permis B...)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: modeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Mode (ex: Présentiel, En ligne)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: durationController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Durée en mois (facultatif)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: feesController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Frais de formation (FCFA, facultatif)',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Annuler'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (titleController.text.trim().isEmpty ||
+                        selectedUniversityId == null) {
+                      ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Le titre et l\'établissement sont obligatoires.',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                    Navigator.of(dialogContext).pop(true);
+                  },
+                  child: const Text('Enregistrer'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (confirmed != true || selectedUniversityId == null) return;
+
+    final title = titleController.text.trim();
+    final description = descriptionController.text.trim();
+    final degree = degreeController.text.trim();
+    final mode = modeController.text.trim();
+    final duration = int.tryParse(durationController.text.trim());
+    final fees = num.tryParse(feesController.text.trim());
+
+    final success = await programsProvider.upsertProgram(
+      universityId: selectedUniversityId!,
+      programId: existing?['id']?.toString(),
+      title: title,
+      description: description.isEmpty ? null : description,
+      degreeLevel: degree.isEmpty ? null : degree,
+      mode: mode.isEmpty ? null : mode,
+      durationMonths: duration,
+      tuitionFees: fees,
+    );
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? (isEdit
+                  ? 'Programme mis à jour.'
+                  : 'Programme créé avec succès.')
+              : programsProvider.error ??
+                  'Erreur lors de l\'enregistrement du programme.',
+        ),
+      ),
+    );
   }
 
   Future<void> _openWebsite(String? url) async {
@@ -106,6 +304,13 @@ class _AdminProgramsScreenState extends State<AdminProgramsScreen> {
           ),
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showProgramDialog(),
+        backgroundColor: const Color(0xFF1EA75C),
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('Nouveau programme'),
+      ),
       body: Consumer<AdminProgramsProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading && provider.programs.isEmpty) {
@@ -131,7 +336,10 @@ class _AdminProgramsScreenState extends State<AdminProgramsScreen> {
           final programs = provider.programs;
           if (programs.isEmpty) {
             return const Center(
-              child: Text('Aucun programme disponible.'),
+              child: Text(
+                'Aucun programme disponible.\nUtilisez « Nouveau programme » pour en créer un.',
+                textAlign: TextAlign.center,
+              ),
             );
           }
 
@@ -224,6 +432,12 @@ class _AdminProgramsScreenState extends State<AdminProgramsScreen> {
                           ),
                           Column(
                             children: [
+                              IconButton(
+                                tooltip: 'Modifier ce programme',
+                                icon: const Icon(Icons.edit_outlined),
+                                onPressed: () =>
+                                    _showProgramDialog(existing: program),
+                              ),
                               Switch(
                                 value: isActive,
                                 onChanged: (value) async {
