@@ -51,15 +51,54 @@ def journal(message: str) -> None:
     print(f"{time.strftime('%H:%M:%S')} [ia] {message}", flush=True)
 
 
+# Ce que le depot contient et dont l'inference n'a AUCUN besoin : documentation
+# et images de demonstration. Les exclure n'est pas une optimisation, c'est ce
+# qui rend le chargement possible -- voir `_charger_image`.
+INUTILES = ("*.md", "*.png", "*.jpg", "*.jpeg", "*.webp", "*.gif",
+            ".gitattributes", "*.txt")
+
+
 def _charger_image():
     """Charge le modele UNE fois. Le rechargement coute 40 a 70 secondes, et
-    une capsule de six scenes le paierait six fois."""
+    une capsule de six scenes le paierait six fois.
+
+    POURQUOI ON NE PASSE PAS PAR `from_pretrained(nom_du_depot)`.
+    Mesure du 06/08 sur un pod A40, cache deja garni de 14 Go :
+
+        DiffusionPipeline.from_pretrained("shuttleai/shuttle-3-diffusion")
+        -> RuntimeError: Disk quota exceeded (os error 122)
+
+    Tous les poids etaient pourtant la -- transformeur 9,3 Go, encodeurs
+    4,5 Go, VAE, tokenizers. `diffusers` refusait de charger pour une autre
+    raison :
+
+        « le cliche en cache est incomplet : 11 fichier(s) manquant(s)
+          (.gitattributes, README.md, comparison.png, ...) »
+
+    Un controle de COMPLETUDE DU DEPOT, pas de disponibilite des poids. Le
+    chargeur tentait donc de completer le cliche -- en telechargeant les
+    images de demonstration du depot -- et heurtait le quota du volume.
+
+    On telecharge donc explicitement ce qui sert, puis on charge depuis un
+    CHEMIN LOCAL : le controle de completude ne s'applique plus, et le
+    telechargement est plus leger.
+    """
     global _pipe_image
     if _pipe_image is None:
         import torch
         from diffusers import DiffusionPipeline
         t = time.time()
-        _pipe_image = DiffusionPipeline.from_pretrained(MODELE_IMAGE, torch_dtype=torch.bfloat16)
+        chemin = MODELE_IMAGE
+        try:
+            from huggingface_hub import snapshot_download
+            chemin = snapshot_download(MODELE_IMAGE, ignore_patterns=list(INUTILES))
+            journal(f"poids obtenus en {time.time()-t:.0f}s — {chemin}")
+        except Exception as e:  # noqa: BLE001
+            # On n'abandonne pas : sur une machine ou le depot est deja
+            # complet, le chargement par nom fonctionne. Mais on le DIT.
+            journal(f"telechargement selectif impossible ({str(e)[:120]}) — "
+                    f"tentative par nom de depot")
+        _pipe_image = DiffusionPipeline.from_pretrained(chemin, torch_dtype=torch.bfloat16)
         _pipe_image.enable_model_cpu_offload()
         journal(f"modele d'images charge en {time.time()-t:.0f}s")
     return _pipe_image

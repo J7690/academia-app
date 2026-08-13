@@ -268,18 +268,21 @@ def deposer_bande(chemin: str, capsule_id: str) -> str | None:
     return None
 
 
-def main() -> int:
-    if len(sys.argv) < 3:
-        journal("usage: narration.py capsule.json dossier_sortie/")
-        return 1
-    if not (SUPABASE_URL and SERVICE_KEY):
-        journal("ERREUR SUPABASE_URL ou SUPABASE_SERVICE_KEY absent")
-        return 2
+def caler(capsule: dict, dossier: str) -> dict:
+    """Narre, mixe, depose, signe — et rend la capsule calee sur la voix reelle.
 
-    with open(sys.argv[1], encoding="utf-8") as f:
-        capsule = academia_scene.normaliser(json.load(f))
-    dossier = sys.argv[2]
+    POURQUOI C'EST UNE FONCTION ET NON LE CORPS DE `main`.
+    Deux appelants en ont besoin : la ligne de commande, et le preparateur qui
+    sert les commandes des etudiants (`studio_preparateur.py`). Ce depot a deja
+    paye deux fois le prix de deux chemins de code paralleles -- un worker qui
+    refaisait le montage avec son propre ffmpeg, et une chaine qui produisait
+    des capsules muettes quand l'autre les produisait sonores. Un seul chemin,
+    un seul correctif a appliquer.
 
+    La capsule renvoyee porte `narration_cle` et `narration_url` : c'est par
+    cette derniere, signee, que le pod obtient la voix -- il n'a pas le droit
+    de LIRE dans le bucket, seulement d'y ecrire.
+    """
     journal("CAPSULE " + academia_scene.resume(capsule))
     capsule, bande = preparer(capsule, dossier)
 
@@ -323,6 +326,23 @@ def main() -> int:
             journal(f"BANDE deposee — {cle}")
         else:
             journal("BANDE non deposee — le pod produira une capsule muette")
+
+    return capsule
+
+
+def main() -> int:
+    if len(sys.argv) < 3:
+        journal("usage: narration.py capsule.json dossier_sortie/")
+        return 1
+    if not (SUPABASE_URL and SERVICE_KEY):
+        journal("ERREUR SUPABASE_URL ou SUPABASE_SERVICE_KEY absent")
+        return 2
+
+    with open(sys.argv[1], encoding="utf-8") as f:
+        capsule = academia_scene.normaliser(json.load(f))
+    dossier = sys.argv[2]
+
+    capsule = caler(capsule, dossier)
 
     chemin_json = os.path.join(dossier, "capsule_calee.json")
     with open(chemin_json, "w", encoding="utf-8") as f:

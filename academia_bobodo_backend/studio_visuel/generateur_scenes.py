@@ -79,6 +79,39 @@ def _pulser(materiau, debut, duree_images, force_max, force_repos=0.5):
     force.keyframe_insert("default_value", frame=debut + montee + tenue)
 
 
+def _apparaitre(objet, debut, duree_images, depart=0.84):
+    """Fait ARRIVER un objet, au lieu de le laisser exister depuis toujours.
+
+    Le retour de Jocelyn sur la capsule du 06/08 : « ils traînent, ils ne sont
+    pas vraiment animés ». C'etait exact et litteral -- le texte principal
+    n'avait aucune image-cle, ni sur l'emission ni sur la transformation. Il
+    etait la, identique, du premier au dernier photogramme.
+
+    Une montee d'emission seule ne suffit pas : elle fait varier la lumiere,
+    pas la presence. Un leger grandissement donne l'arrivee. On reste discret
+    -- 0,84 a 1,0 -- parce qu'un effet qu'on remarque est un effet trop fort.
+
+    Sortie douce plutot que lineaire : l'objet SE POSE, il ne claque pas.
+    """
+    montee = max(2, int(duree_images * 0.08))
+    debut = max(1, int(debut))
+    plein = tuple(objet.scale)
+
+    objet.scale = tuple(c * depart for c in plein)
+    objet.keyframe_insert("scale", frame=debut)
+    objet.scale = plein
+    objet.keyframe_insert("scale", frame=debut + montee)
+
+    action = objet.animation_data.action if objet.animation_data else None
+    if action:
+        for courbe in action.fcurves:
+            if courbe.data_path != "scale":
+                continue
+            for point in courbe.keyframe_points:
+                point.interpolation = "BEZIER"
+                point.easing = "EASE_OUT"
+
+
 def _debut_accroche(images, rang, total, proportion_normale):
     """A quelle image un element doit-il s'allumer.
 
@@ -297,20 +330,55 @@ def _archetype_titre(scene_def, images, accent, alea):
     # premier rendu automatique. 90 deg le redressent, 45 deg l'orientent vers
     # l'azimut des cameras du studio.
     DEBOUT = (math.radians(90), 0, math.radians(45))
-    ecart = 3.1 if secondaire else 0.0
-    objet = style.texte_3d(principal, taille=taille, position=(-ecart, 0, 0.4),
-                           rotation=DEBOUT)
-    objet.data.materials.append(
-        style.matiere_hologramme("titre_principal", style.BLEU_FROID, 7.0))
+
+    # ON EMPILE, ON NE JUXTAPOSE PAS. Trois defauts signales sur la capsule du
+    # 06/08 -- « ils traînent », « pas vraiment animés », « superposition des
+    # écritures » -- venaient de la meme decision : deux textes poses cote a
+    # cote a un ecart FIXE de 3,1 unites, quelle que soit leur longueur.
+    #
+    # En cadre 9:16 la largeur est la dimension RARE. « 100 m » tenait ; « sans
+    # pompe », centre a la meme distance, mordait dessus. Empiler resout le
+    # chevauchement par construction et compose mieux dans un format vertical.
+    # L'AXE DE LA HAUTEUR EST Y, PAS Z. `objet.dimensions` rend la boite
+    # englobante en espace LOCAL, sans tenir compte de la rotation : pour un
+    # texte, x = largeur, y = hauteur des lettres, z = EXTRUSION. Un premier
+    # essai a pris z -- 0,12 au lieu de 1,2 -- et a donc calcule l'ecart
+    # vertical sur un dixieme de la vraie hauteur. Les deux textes se seraient
+    # touches, en remplacant un chevauchement par un autre.
+    # La rotation DEBOUT envoie le +Y local vers le +Z du monde : c'est bien y
+    # qu'il faut lire pour un ecartement vertical.
+    LARGEUR_UTILE = 7.2      # unites, mesure sur le cadrage a distance 15
+    objet = style.texte_3d(principal, taille=taille, rotation=DEBOUT)
+    style.tenir_dans(objet, LARGEUR_UTILE)
+    hp = style.mesurer(objet)[1]
 
     if secondaire:
-        second = style.texte_3d(secondaire, taille=taille, position=(ecart, 0, 0.4),
-                                rotation=DEBOUT)
-        mat = style.matiere_hologramme("titre_second", accent, 1.0)
+        second = style.texte_3d(secondaire, taille=taille * 0.72, rotation=DEBOUT)
+        style.tenir_dans(second, LARGEUR_UTILE)
+        hs = style.mesurer(second)[1]
+        # Ecart MESURE sur les hauteurs reelles, plus une respiration.
+        espace = (hp + hs) / 2 + max(hp, hs) * 0.55
+        objet.location = (0, 0, 0.4 + espace / 2)
+        second.location = (0, 0, 0.4 - espace / 2)
+    else:
+        objet.location = (0, 0, 0.4)
+
+    principal_mat = style.matiere_hologramme("titre_principal", style.BLEU_FROID, 0.6)
+    objet.data.materials.append(principal_mat)
+    # LE TEXTE PRINCIPAL N'ETAIT PAS ANIME DU TOUT. Il naissait a 7,0 et y
+    # restait du premier au dernier photogramme : d'ou l'impression qu'il
+    # « traîne ». Il entre maintenant comme tout le reste de la grammaire.
+    _pulser(principal_mat, _debut_accroche(images, 0, 2, 0.06), images, 9.0)
+    _apparaitre(objet, _debut_accroche(images, 0, 2, 0.06), images)
+
+    if secondaire:
+        mat = style.matiere_hologramme("titre_second", accent, 0.5)
         second.data.materials.append(mat)
         # Le second terme s'allume APRES : on pose la question avant de donner
         # la reponse, sinon il n'y a plus de question.
-        _pulser(mat, _debut_accroche(images, 1, 2, 0.35), images, 11.0)
+        debut_second = _debut_accroche(images, 1, 2, 0.35)
+        _pulser(mat, debut_second, images, 11.0)
+        _apparaitre(second, debut_second, images)
 
     return 15.0
 
@@ -619,9 +687,54 @@ def rendre_scene(scene_def, format_capsule, dossier, graine=0, accroche=False):
     accent = academia_scene.ACCENTS[scene_def["accent"]]
     alea = random.Random(graine)
 
+    # UNE SCENE DECRITE PASSE PAR LE COMPOSITEUR, pas par le catalogue.
+    #
+    # C'est le branchement qui ouvre la derniere couche. Les dix archetypes
+    # restent accessibles -- ils fonctionnent et sont eprouves -- mais ils
+    # deviennent des RACCOURCIS parmi d'autres au lieu d'etre la seule chose
+    # appelable. Mesure du 07/08 qui l'imposait : huit des dix n'acceptent que
+    # des nombres, et deux sujets sans rapport donnaient la meme suite d'images.
+    if scene_def.get("gestes"):
+        import composer_scene
+        # LE CADRE AVANT LA COMPOSITION, ET DANS CET ORDRE PRECIS.
+        # `cadrer_sur` lit `resolution_x/y` pour connaitre le champ reel : sur
+        # un cadre encore en 1920x1080 -- le defaut de Blender -- il calculerait
+        # un champ vertical faux et cadrerait de travers. La resolution etait
+        # posee APRES la composition ; elle l'est desormais avant.
+        scene = bpy.context.scene
+        scene.render.resolution_x = format_capsule["largeur"]
+        scene.render.resolution_y = format_capsule["hauteur"]
+        journal = composer_scene.composer({
+            "intention": scene_def.get("intention", "objet"),
+            "sujet": scene_def.get("sujet") or scene_def.get("titre") or "",
+            "gestes": scene_def["gestes"],
+        })
+        for degradation in journal.get("degradations", []):
+            # ON LE DIT. La couche precedente remplacait en silence ; celle-ci
+            # journalise, et le journal remonte avec le rendu.
+            print(f"DEGRADATION {scene_def['id']} {degradation}", flush=True)
+        print(f"COMPOSITION {scene_def['id']} gestes={journal.get('gestes')} "
+              f"degradations={len(journal.get('degradations', []))}", flush=True)
+        scene.render.fps = format_capsule["fps"]
+        scene.frame_start, scene.frame_end = 1, images
+        scene.render.image_settings.file_format = "PNG"
+        scene.render.filepath = os.path.join(dossier, f"{scene_def['id']}_")
+        style.cadre_cinema(scene)
+        style.moteur_eevee(scene)
+        debut = time.time()
+        bpy.ops.render.render(animation=True)
+        ecoule = time.time() - debut
+        print(f"SCENE {scene_def['id']} composition images={images} "
+              f"secondes={ecoule:.1f}", flush=True)
+        return images, ecoule
+
     _vider()
     constructeur = ARCHETYPES[scene_def["archetype"]]
     distance = constructeur(scene_def, images, accent, alea)
+    # La brume APRES l'archetype -- elle se dimensionne sur la distance qu'il
+    # rend -- et AVANT la camera, pour que celle-ci soit construite a
+    # l'interieur du volume. Voir `style.atmosphere`.
+    style.atmosphere(distance)
     _camera(scene_def["camera"], distance, images)
 
     scene = bpy.context.scene

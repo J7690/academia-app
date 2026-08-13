@@ -48,6 +48,11 @@ ARCHETYPES = ("reseau", "flux", "strates", "comparaison", "titre", "terrain",
 # mouvement de camera, 0,026 $ les trois secondes en animation reelle.
 ARCHETYPES_IA = ("genere",)
 
+# Les six intentions d'une scene DECRITE. Elles ne disent pas quelle forme
+# montrer, mais ce que la scene cherche a faire comprendre -- et c'est cela qui
+# doit varier avec le sujet. Le rendu s'en sert pour le cadrage et le rythme.
+INTENTIONS = ("objet", "processus", "comparaison", "structure", "echelle", "flux")
+
 # Quel archetype pour quelle discipline. Ce n'est pas un catalogue decoratif :
 # c'est la reponse a « peu importe le sujet ». Un theme n'est pas une forme,
 # c'est un CHOIX DE FORMES parmi les neuf.
@@ -107,10 +112,36 @@ def _nettoyer_scene(brut: dict, rang: int, alertes: list[str]) -> dict:
     """
     identifiant = str(brut.get("id") or f"s{rang + 1}")
 
+    # UNE SCENE PEUT ETRE DECRITE PLUTOT QUE CHOISIE — et c'est la voie neuve.
+    #
+    # Deux formats coexistent volontairement :
+    #   `gestes`     une COMPOSITION : suite de verbes et de coordonnees. La
+    #                forme n'existe pas avant que la description l'ecrive.
+    #   `archetype`  une des dix formes historiques. Elles marchent et restent
+    #                accessibles comme RACCOURCIS -- on ne jette pas ce qui
+    #                fonctionne.
+    #
+    # LE PIEGE QUI ETAIT ICI, ET C'ETAIT LE QUATRIEME DU MEME DEFAUT.
+    # Cette fonction remplacait tout archetype inconnu par `reseau`, en plus de
+    # `validate_capsule.ts:74`, du prompt et du dictionnaire de rendu. Une
+    # capsule DECRITE arrivant sur le pod perdait donc ses gestes et devenait un
+    # reseau -- silencieusement. Quatre couches fermees pour un seul defaut.
+    gestes = brut.get("gestes")
+    gestes = gestes if isinstance(gestes, list) and gestes else None
+
+    intention = str(brut.get("intention") or "").strip().lower()
+    if gestes and intention not in INTENTIONS:
+        if intention:
+            alertes.append(f"{identifiant}:intention_{intention}_inconnue_ramenee_a_objet")
+        intention = "objet"
+
     archetype = str(brut.get("archetype") or "").strip().lower()
-    if archetype not in ARCHETYPES:
-        # On ne rejette pas : le reseau est l'archetype le plus neutre, il
-        # illustre a peu pres n'importe quel propos sans mentir.
+    if gestes:
+        # La composition commande : l'archetype n'est plus consulte.
+        archetype = ""
+    elif archetype not in ARCHETYPES:
+        # Sans gestes NI archetype connu, le reseau reste le repli le plus
+        # neutre -- mais on le dit.
         alertes.append(f"{identifiant}:archetype_{archetype or 'absent'}_remplace_par_reseau")
         archetype = "reseau"
 
@@ -154,7 +185,7 @@ def _nettoyer_scene(brut: dict, rang: int, alertes: list[str]) -> dict:
     if not isinstance(parametres, dict):
         parametres = {}
 
-    return {
+    propre = {
         "id": identifiant,
         "archetype": archetype,
         "titre": str(brut.get("titre") or "").strip(),
@@ -165,6 +196,15 @@ def _nettoyer_scene(brut: dict, rang: int, alertes: list[str]) -> dict:
         "parametres": parametres,
         "mesuree": mesuree,
     }
+    if gestes:
+        # `normaliser` est idempotente : les gestes doivent survivre a chaque
+        # passage. Le pod re-normalise la capsule calee par LWS -- s'ils
+        # disparaissaient ici, la composition serait perdue entre les deux
+        # machines, sans le moindre message.
+        propre["gestes"] = gestes
+        propre["intention"] = intention
+        propre["sujet"] = str(brut.get("sujet") or "").strip()
+    return propre
 
 
 def normaliser(capsule: dict) -> dict:

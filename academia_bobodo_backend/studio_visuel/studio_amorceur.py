@@ -178,7 +178,7 @@ chmod +x /workspace/agent_pod.sh 2>/dev/null || true
 # -- ce qui suffit pour les modeles que nous utilisons aujourd'hui.
 source /workspace/agent.env
 REP=$(curl -s --max-time 30 -X POST "$SUPABASE_URL/functions/v1/studio-jeton-huggingface"   -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY"   -H 'Content-Type: application/json'   -d "{\"pod_id\":\"$POD_ID\",\"jeton\":\"$POD_JETON\"}")
-HF=$(echo "$REP" | sed -n 's/.*"jeton":"\([^"]*\)".*//p')
+HF=$(echo "$REP" | sed -n 's/.*"jeton":"\([^"]*\)".*/\1/p')
 if [ -n "$HF" ]; then
   echo "export HF_TOKEN=$HF" >> /workspace/agent.env
   echo "export HUGGING_FACE_HUB_TOKEN=$HF" >> /workspace/agent.env
@@ -186,11 +186,30 @@ if [ -n "$HF" ]; then
 else
   echo 'aucun jeton HuggingFace — depots ouverts seulement'
 fi
-# Le cache des modeles va sur le VOLUME, pas sur le disque conteneur : 40 Go
-# contre 60, et un modele d'images en pese 32. Le disque plein a coute un
-# cycle complet.
-echo 'export HF_HOME=/workspace/hf' >> /workspace/agent.env
-mkdir -p /workspace/hf
+# LE CACHE DES MODELES VA SUR LE DISQUE CONTENEUR, PAS SUR LE VOLUME.
+#
+# C'est l'inverse de ce qui etait fait, et le commentaire precedent -- « 40 Go
+# contre 60 » -- ne correspondait plus a la machine reellement demandee.
+# Mesure du 06/08 sur deux pods successifs :
+#
+#     /            (conteneur, containerDiskInGb: 30)   30 Go, 377 Mo utilises
+#     /workspace   (volume,    volumeInGb: 20)          20 Go, 14 Go de cache HF
+#
+# Le volume etait donc plein aux trois quarts par le cache lui-meme, et le
+# telechargement du modele echouait en « Disk quota exceeded » -- deux fois,
+# y compris apres avoir exclu la documentation du depot. Pendant ce temps le
+# disque conteneur etait vide a 98 %.
+#
+# C'est CE defaut qui empechait toute scene `genere` : le modele ne pouvait
+# pas finir de se telecharger, `produire_image` levait, et la scene basculait
+# sur un archetype procedural. Rien a voir avec le VAE.
+#
+# Contrepartie assumee : le disque conteneur est ephemere, le modele est donc
+# retelecharge a chaque nouvelle machine (~10 min). C'est le prix a payer tant
+# que `volumeInGb` vaut 20 dans `studio-orchestrateur` ; l'augmenter est un
+# deploiement d'Edge Function, et cela se decide avec Jocelyn.
+echo 'export HF_HOME=/root/hf' >> /workspace/agent.env
+mkdir -p /root/hf
 
 cat > /workspace/superviseur.sh <<'SUP'
 #!/bin/bash

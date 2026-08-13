@@ -27,6 +27,52 @@ import subprocess
 # bas est un sous-titre illisible.
 PROPORTION_CINEMA = 0.62
 
+# ── Zone de mesure de la luminosite ───────────────────────────────────────
+#
+# MESURER L'IMAGE ENTIERE, C'EST MESURER AUTRE CHOSE QUE L'IMAGE.
+# Deux elements occupent le cadre sans rien dire du rendu :
+#
+#   • les bandes noires du cadre cinema -- 38 % de la hauteur, noires PAR
+#     CONSTRUCTION (voir `cadre_cinema`), donc un lest constant ;
+#   • le sous-titre incruste, blanc vif sur fond noir, dont la contribution
+#     suit la LONGUEUR DE LA PHRASE et non le contenu de la scene.
+#
+# Mesure du 05/08 sur les deux capsules reellement livrees : une scene noire
+# portant deux lignes de sous-titre pese 4,18/255, la MEME noirceur avec trois
+# lignes pese 5,91. Le seuil de 6,0 tombait entre les deux -- il separait des
+# longueurs de phrase, pas des images. Il rejetait au passage quatre scenes
+# visuellement correctes (`titre`, `carte`, `chronologie`, `ondes`, mesurees
+# entre 5,05 et 5,99), c'est-a-dire une capsule entiere.
+#
+# On mesure donc la bande REELLEMENT RENDUE, sous-titre exclu. Sur les huit
+# scenes disponibles, la separation devient franche : 1,34 pour une scene sans
+# image, 4,18 pour la plus faible des scenes visibles.
+#
+# Limite assumee : la fenetre couvre le centre du cadre. La camera vise
+# toujours l'origine (`_camera` place une cible en 0,0,0), donc le sujet y est.
+# Un archetype qui composerait exclusivement dans le tiers bas y echapperait.
+_HAUT_BANDE = (1.0 - PROPORTION_CINEMA) / 2.0          # 0,19 -- haut de l'image rendue
+_BAS_SOUS_TITRE = _HAUT_BANDE + 0.09                   # 0,28 depuis le BAS, cf. `ecrire_sous_titres`
+_HAUTEUR_TEXTE = 3 * 0.030 * 1.25                      # trois lignes au plus, interligne compris
+_BAS_ZONE = 1.0 - _BAS_SOUS_TITRE - _HAUTEUR_TEXTE     # 0,6075
+_FILTRE_MESURE = (
+    f"crop=iw:ih*{_BAS_ZONE - _HAUT_BANDE:.4f}:0:ih*{_HAUT_BANDE:.4f},"
+    "scale=64:47,format=gray"
+)
+
+# Seuils recalibres le 05/08 sur les huit scenes reelles, avec la fenetre
+# ci-dessus. Plancher mesure sans image : 1,11 (le fond du style, seul). Plus
+# faible scene visible : 3,87 (`carte`, un unique motif au centre). Le seuil se
+# place au milieu GEOMETRIQUE des deux -- sqrt(1,11 x 3,87) = 2,07 -- et non au
+# milieu arithmetique : ces valeurs se comparent en rapports, pas en ecarts.
+#
+# LE COUT DES DEUX ERREURS N'EST PAS LE MEME, et c'est ce qui tranche.
+# Laisser passer une scene noire abime une capsule ; refuser a tort en fait
+# perdre la TOTALITE, puisque `executer_capsule` ne depose alors rien. La
+# contrainte « degradation gracieuse » du projet penche donc du cote qui livre.
+SEUIL_SCENE_NOIRE = 2.0
+SEUIL_CAPSULE_NOIRE = 2.0
+
 
 def _echapper(texte: str) -> str:
     return str(texte).replace("\\", "").replace("{", "").replace("}", "").strip()
@@ -188,6 +234,7 @@ def assembler(dossier_images: str, capsule: dict, sortie: str,
     # courant. Le defaut ne se manifeste que si l'appelant passe un chemin
     # relatif -- il a donc survecu a tous les essais, tous faits en absolu.
     racine = os.path.abspath(dossier_images)
+    entrees: list[str] = []
     with open(liste, "w", encoding="utf-8") as f:
         fichiers: list[str] = []
         for scene in scenes:
@@ -197,6 +244,7 @@ def assembler(dossier_images: str, capsule: dict, sortie: str,
             for nom in fichiers:
                 f.write(f"file '{os.path.join(racine, nom)}'\n")
                 f.write(f"duration {1.0 / fps}\n")
+                entrees.append(nom)
         # La derniere image est repetee : sans elle, ffmpeg ignore la duree du
         # dernier element et la video se termine une image trop tot.
         if fichiers:
@@ -226,7 +274,47 @@ def assembler(dossier_images: str, capsule: dict, sortie: str,
     resultat = subprocess.run(commande, capture_output=True, text=True, timeout=3600)
     if resultat.returncode != 0 or not os.path.isfile(sortie):
         return False, resultat.stderr[-400:]
+
+    # LE DEMULTIPLEXEUR `concat` S'ARRETE EN SILENCE, ET IL REND 0.
+    #
+    # Mesure du 06/08 : 1053 images rendues, 1053 entrees ecrites dans la
+    # liste, et une video de 51 images -- 2,04 s au lieu de 42. ffmpeg avait
+    # rencontre un PNG illisible (le volume du pod etait plein : le cache des
+    # modeles en occupait 14 Go sur 20) ; il a journalise l'erreur, cesse de
+    # lire la liste, ferme proprement le fichier et rendu le code 0.
+    #
+    # Le controle d'apres ne regardait que la luminosite et le son : il a
+    # trouve les deux corrects sur ces deux secondes, et la capsule a ete
+    # deposee. Huitieme occurrence du meme defaut -- un controle qui regarde
+    # a cote.
+    #
+    # On compare donc ce qu'on a DEMANDE a ce qu'on a OBTENU.
+    attendues = len(entrees)
+    obtenues = _images_du_flux(sortie)
+    if obtenues >= 0 and attendues > 0 and obtenues < attendues * 0.98:
+        return False, (f"montage tronque : {obtenues} images dans la video pour "
+                       f"{attendues} demandees. ffmpeg s'est arrete en silence — "
+                       f"le plus souvent un fichier illisible, disque plein. "
+                       f"Journal : {resultat.stderr[-200:]}")
     return True, ""
+
+
+def _images_du_flux(chemin: str) -> int:
+    """Nombre d'images du flux VIDEO. -1 si non mesurable.
+
+    On interroge explicitement `v:0` : `verifier` lit tous les flux et se fait
+    ecraser par l'audio quand il y en a un -- d'ou les `codec_name: aac` et
+    `r_frame_rate: 0/0` observes dans les journaux de production.
+    """
+    try:
+        r = subprocess.run(
+            ["ffprobe", "-v", "error", "-select_streams", "v:0",
+             "-count_frames", "-show_entries", "stream=nb_read_frames",
+             "-of", "default=nw=1:nk=1", chemin],
+            capture_output=True, text=True, timeout=600)
+        return int((r.stdout.strip() or "-1").splitlines()[0])
+    except Exception:  # noqa: BLE001
+        return -1
 
 
 def luminosite_moyenne(chemin: str, echantillons: int = 8) -> float:
@@ -257,7 +345,7 @@ def luminosite_moyenne(chemin: str, echantillons: int = 8) -> float:
         try:
             brut = subprocess.run(
                 ["ffmpeg", "-v", "error", "-ss", f"{instant:.2f}", "-i", chemin,
-                 "-frames:v", "1", "-vf", "scale=64:114,format=gray",
+                 "-frames:v", "1", "-vf", _FILTRE_MESURE,
                  "-f", "rawvideo", "-"],
                 capture_output=True, timeout=120).stdout
             if brut:
@@ -268,11 +356,14 @@ def luminosite_moyenne(chemin: str, echantillons: int = 8) -> float:
 
 
 def _luminosite_a(chemin: str, instant: float) -> float:
-    """Luminosite d'une image unique, prise a un instant donne. -1 si illisible."""
+    """Luminosite d'une image unique, prise a un instant donne. -1 si illisible.
+
+    Mesuree sur la zone utile seulement -- voir `_FILTRE_MESURE`.
+    """
     try:
         brut = subprocess.run(
             ["ffmpeg", "-v", "error", "-ss", f"{instant:.2f}", "-i", chemin,
-             "-frames:v", "1", "-vf", "scale=64:114,format=gray",
+             "-frames:v", "1", "-vf", _FILTRE_MESURE,
              "-f", "rawvideo", "-"],
             capture_output=True, timeout=120).stdout
         return round(sum(brut) / len(brut), 2) if brut else -1.0
@@ -280,9 +371,17 @@ def _luminosite_a(chemin: str, instant: float) -> float:
         return -1.0
 
 
-def scenes_sombres(chemin: str, capsule: dict, seuil: float = 6.0,
+def scenes_sombres(chemin: str, capsule: dict, seuil: float = SEUIL_SCENE_NOIRE,
                    par_scene: int = 3) -> list[dict]:
     """Repere les scenes noires UNE PAR UNE. Renvoie celles qui sont sous le seuil.
+
+    OU L'ON MESURE COMPTE AUTANT QUE CE QU'ON MESURE (correctif du 05/08).
+    La premiere version regardait l'image entiere avec un seuil de 6,0. Passee
+    sur les deux capsules reellement livrees, elle condamnait quatre scenes
+    visuellement correctes -- `titre`, `carte`, `chronologie` et `ondes`,
+    mesurees entre 5,05 et 5,99 -- soit une capsule entiere refusee a
+    l'etudiant. Elle ne mesurait ni le cadre cinema ni la scene, mais la
+    quantite de texte incruste. Voir `_FILTRE_MESURE`.
 
     POURQUOI LA MOYENNE NE SUFFIT PAS, ET C'EST MESURE.
     `luminosite_moyenne` prend huit echantillons sur toute la capsule et les
@@ -376,12 +475,260 @@ def verifier(chemin: str) -> dict:
          "stream=codec_type", "-of", "csv=p=0", chemin],
         capture_output=True, text=True, timeout=60).stdout.strip()))
 
-    # Seuil a 6/255. Le style du studio est volontairement sombre -- la capsule
-    # de reference mesure 10 a 12 -- mais en dessous de 6 il n'y a plus d'image,
-    # seulement des sous-titres sur du noir. Mesure sur la capsule ratee :
-    # 1,8 a 3,8 sur les scenes vides, 12,3 sur la seule qui fonctionnait.
+    # Le seuil suit la meme recalibration que les scenes (voir en tete de
+    # fichier). L'ancienne valeur de 6/255 etait mesuree sur l'image entiere :
+    # elle donnait 6,38 a une capsule dont les QUATRE scenes sont correctes --
+    # a 0,38 pres, tout etait refuse. Ce n'etait pas une marge, c'etait un
+    # hasard.
     try:
-        infos["image_visible"] = str(float(infos["luminosite"]) >= 6.0)
+        infos["image_visible"] = str(
+            float(infos["luminosite"]) >= SEUIL_CAPSULE_NOIRE)
     except ValueError:
         infos["image_visible"] = "False"
     return infos
+
+
+# ══ PORTE D'ACCEPTATION ═══════════════════════════════════════════════════
+#
+# POURQUOI ELLE EXISTE, ET CE QU'ELLE AJOUTE.
+# Le controle ci-dessus couvre le NOIR, et il le couvre bien -- il a ete
+# recalibre le 05/08 sur huit scenes reelles. Il ne couvre PAS trois defauts
+# qui se sont produits depuis, et qui passent tous pour des succes :
+#
+#   1. LE MUET. `verifier()` pose `a_du_son` en constatant qu'une PISTE audio
+#      existe. Une piste de silence numerique existe. Le defaut du 05/08 etait
+#      « noire ET MUETTE » : la moitie n'etait pas mesuree.
+#   2. L'INCOMPLET. Mesure du 07/08 dans `app.studio_jobs` : la capsule
+#      « l'univers » est sortie de la chaine avec 908 images sur 1924 -- 47 %.
+#      Rien dans le controle ne compare ce qui a ete produit a ce qui etait
+#      attendu, donc une capsule tronquee est indiscernable d'une capsule
+#      courte.
+#   3. LE FIGE. La camera recoit une cle a CHAQUE image (`_camera`). Une image
+#      qui ne bouge plus pendant plusieurs secondes n'est donc pas un choix de
+#      mise en scene : c'est un rendu qui s'est arrete.
+#
+# ON MESURE, ON NE DEMANDE PAS. « Noir », « vide », « fige », « muet » sont des
+# proprietes mesurables en millisecondes. Les soumettre a un modele couterait
+# des secondes et une incertitude -- et un juge qui se trompe finirait par
+# declarer prete une capsule qui ne l'est pas, c'est-a-dire par recreer le
+# defaut avec une couche d'IA en plus.
+#
+# LE COUT DES DEUX ERREURS RESTE ASYMETRIQUE (cf. SEUIL_SCENE_NOIRE) : refuser
+# a tort fait perdre la capsule ENTIERE a l'etudiant. D'ou deux niveaux :
+# `refus` n'est prononce que sur une preuve franche, `alertes` est journalise
+# et laisse passer.
+
+# Silence numerique : ffmpeg rend -91 dB, et « -inf » quand la piste est vide.
+# Une narration normale se situe entre -30 et -18 dB. Le plancher est place tres
+# bas exprès : il ne doit attraper que le silence REEL, jamais une voix douce.
+PLANCHER_RMS_DB = -60.0
+# Duree figee toleree. La camera bouge a chaque image ; au-dela de trois
+# secondes d'immobilite stricte, le rendu s'est arrete.
+GEL_MAX_S = 3.0
+# En deca de cette part de la duree attendue, la capsule est tronquee.
+# « l'univers » etait a 0,47.
+PART_DUREE_MINIMALE = 0.90
+
+
+def _sortie_ffmpeg(args: list[str], delai: int = 180) -> str:
+    """Lance ffmpeg et rend son journal. Les filtres de mesure ecrivent leur
+    resultat sur stderr, pas sur stdout."""
+    try:
+        r = subprocess.run(args, capture_output=True, text=True, timeout=delai,
+                           encoding="utf-8", errors="replace")
+        return (r.stderr or "") + (r.stdout or "")
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+def niveau_sonore_db(chemin: str) -> float:
+    """Niveau moyen reel de la piste audio, en dB.
+
+    Rend -99.0 quand il n'y a pas de piste, ou qu'elle est du silence pur.
+    C'est LA mesure qui manquait : `a_du_son` ne distingue pas une voix d'une
+    piste vide, et le defaut du 05/08 etait autant le silence que le noir.
+    """
+    journal = _sortie_ffmpeg(
+        ["ffmpeg", "-v", "info", "-i", chemin, "-af", "volumedetect",
+         "-vn", "-f", "null", "-"])
+    for ligne in journal.splitlines():
+        if "mean_volume:" in ligne:
+            try:
+                return round(float(ligne.split("mean_volume:")[1].split("dB")[0]), 2)
+            except (ValueError, IndexError):
+                return -99.0
+    return -99.0
+
+
+def duree_video_s(chemin: str) -> float:
+    """Duree reelle du conteneur. -1 si illisible."""
+    try:
+        return float(subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "default=nw=1:nk=1", chemin],
+            capture_output=True, text=True, timeout=60).stdout.strip() or 0) or -1.0
+    except Exception:  # noqa: BLE001
+        return -1.0
+
+
+def duree_figee_s(chemin: str, duree_minimale: float = GEL_MAX_S) -> float:
+    """Duree cumulee pendant laquelle l'image ne bouge plus du tout.
+
+    On mesure sur la ZONE UTILE, comme la luminosite : les bandes noires du
+    cadre cinema sont figees par construction et feraient repondre « fige » a
+    toute capsule correcte.
+
+    LE PIEGE, MESURE LE 11/08 ET IL ANNULAIT TOUTE LA MESURE.
+    `freezedetect` emet `freeze_start` a l'entree du gel et `freeze_duration`
+    a la SORTIE. Quand le gel se poursuit jusqu'a la derniere image, il n'y a
+    pas de sortie : le filtre n'emet donc JAMAIS de duree. Une premiere version
+    ne lisait que `freeze_duration` et rendait 0,0 s sur une video entierement
+    figee -- c'est-a-dire exactement le cas pour lequel elle avait ete ecrite.
+
+    Or un rendu qui s'arrete ne degele pas : il fige jusqu'a la fin. La forme
+    la plus probable du defaut etait la seule que la mesure ne voyait pas.
+
+    On lit donc les DEBUTS, et tout debut sans fin court jusqu'au bout.
+    """
+    journal = _sortie_ffmpeg(
+        ["ffmpeg", "-v", "info", "-i", chemin,
+         "-vf", f"{_FILTRE_MESURE},freezedetect=n=-55dB:d={duree_minimale:g}",
+         "-map", "0:v", "-f", "null", "-"])
+
+    debuts: list[float] = []
+    fins: list[float] = []
+    for ligne in journal.splitlines():
+        for cle, cible in (("freeze_start:", debuts), ("freeze_end:", fins)):
+            if cle in ligne:
+                try:
+                    cible.append(float(ligne.split(cle)[1].split()[0]))
+                except (ValueError, IndexError):
+                    continue
+
+    if not debuts:
+        return 0.0
+
+    fin_video = duree_video_s(chemin)
+    total = 0.0
+    for rang, debut in enumerate(debuts):
+        fin = fins[rang] if rang < len(fins) else fin_video
+        if fin > debut:
+            total += fin - debut
+    return round(total, 2)
+
+
+def contraste_luminosite(chemin: str, echantillons: int = 6) -> float:
+    """Ecart-type de la luminosite entre plusieurs instants.
+
+    POURQUOI LA MOYENNE NE SUFFIT PAS -- deuxieme fois. `scenes_sombres` a deja
+    montre qu'une moyenne cache une scene noire. Elle cache aussi l'inverse :
+    une image UNIFORMEMENT grise -- un volume qui remplit tout le cadre, un
+    brouillard trop dense -- passe le seuil de luminosite sans rien montrer.
+    Un ecart-type nul sur toute la capsule signale une image sans structure.
+    """
+    try:
+        reelle = float(subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "default=nw=1:nk=1", chemin],
+            capture_output=True, text=True, timeout=60).stdout.strip() or 0)
+    except Exception:  # noqa: BLE001
+        return -1.0
+    if reelle <= 0:
+        return -1.0
+
+    mesures = [v for v in (
+        _luminosite_a(chemin, min(reelle * (i + 0.5) / echantillons, reelle - 0.05))
+        for i in range(echantillons)) if v >= 0]
+    if len(mesures) < 2:
+        return -1.0
+    moyenne = sum(mesures) / len(mesures)
+    variance = sum((v - moyenne) ** 2 for v in mesures) / len(mesures)
+    return round(variance ** 0.5, 2)
+
+
+def porte_acceptation(chemin: str, capsule: dict | None = None) -> dict:
+    """Le seul point par lequel une capsule a le droit de sortir.
+
+    Rend TOUJOURS ses mesures, meme quand elle accepte : c'est ce qui permet de
+    dire plus tard pourquoi une capsule est passee. Une porte qui n'ecrit rien
+    quand tout va bien ne prouve rien le jour ou tout va mal.
+
+    `refus` : preuve franche d'une capsule inutilisable.
+    `alertes` : anomalie journalisee qui NE bloque PAS -- la contrainte de
+    degradation gracieuse veut qu'un doute livre plutot qu'il ne prive.
+    """
+    capsule = capsule or {}
+    mesures: dict = {}
+    refus: list[str] = []
+    alertes: list[str] = []
+
+    # 1. Le fichier est-il lisible, et que contient-il ?
+    infos = verifier(chemin)
+    mesures["lisible"] = infos.get("lisible") == "True"
+    mesures["duree_s"] = round(float(infos.get("duration") or 0), 2)
+    mesures["luminosite"] = float(infos.get("luminosite") or -1)
+    mesures["piste_audio"] = infos.get("a_du_son") == "True"
+    if not mesures["lisible"]:
+        return {"accepte": False, "refus": ["fichier illisible"],
+                "alertes": [], "mesures": mesures}
+
+    # 2. Le noir, capsule entiere puis scene par scene.
+    mesures["image_visible"] = infos.get("image_visible") == "True"
+    if not mesures["image_visible"]:
+        refus.append(f"capsule noire (luminosite {mesures['luminosite']} "
+                     f"< {SEUIL_CAPSULE_NOIRE})")
+    sombres = scenes_sombres(chemin, capsule) if capsule.get("scenes") else []
+    mesures["scenes_sombres"] = [s["id"] for s in sombres]
+    if sombres:
+        refus.append("scene(s) noire(s) : "
+                     + ", ".join(f"{s['id']}={s['luminosite']}" for s in sombres))
+
+    # 3. Le muet -- ce que `a_du_son` ne voyait pas.
+    #
+    # ALERTE ET NON REFUS, ET C'EST DELIBERE. `executer_capsule` a tranche que
+    # « le son manquant ne bloque pas : une capsule muette reste regardable ».
+    # Cette decision tient, et ce module la renforce meme : les sous-titres sont
+    # INCRUSTES, et 60 a 85 % des vidcapsules verticales sont regardees sans le
+    # son (cf. entete). Une capsule muette perd la voix, pas le cours ; la
+    # refuser ferait perdre les deux, contre la contrainte de degradation
+    # gracieuse.
+    #
+    # Ce qui change : le silence ne passe plus INAPERCU. `a_du_son` repondait
+    # True sur une piste de silence numerique -- la moitie du defaut du 05/08
+    # n'etait donc pas mesuree du tout. Elle l'est maintenant, et elle est
+    # ecrite dans la ligne de rendu.
+    mesures["niveau_db"] = niveau_sonore_db(chemin)
+    if not mesures["piste_audio"]:
+        alertes.append("aucune piste audio — la narration n'a pas ete jointe")
+    elif mesures["niveau_db"] < PLANCHER_RMS_DB:
+        alertes.append(f"capsule muette : piste presente mais silencieuse "
+                       f"({mesures['niveau_db']} dB < {PLANCHER_RMS_DB} dB)")
+
+    # 4. L'incomplet -- le defaut de « l'univers », 908 images sur 1924.
+    attendue = float(capsule.get("duree_totale_s") or 0)
+    if attendue <= 0:
+        attendue = sum(float(s.get("duree_s") or 0)
+                       for s in (capsule.get("scenes") or []))
+    mesures["duree_attendue_s"] = round(attendue, 2)
+    if attendue > 0:
+        part = mesures["duree_s"] / attendue
+        mesures["part_produite"] = round(part, 3)
+        if part < PART_DUREE_MINIMALE:
+            refus.append(f"capsule tronquee : {mesures['duree_s']} s produites "
+                         f"sur {mesures['duree_attendue_s']} s attendues "
+                         f"({part:.0%})")
+    else:
+        alertes.append("duree attendue inconnue — completude non verifiable")
+
+    # 5. Le fige.
+    mesures["duree_figee_s"] = duree_figee_s(chemin)
+    if mesures["duree_figee_s"] >= GEL_MAX_S:
+        refus.append(f"image figee {mesures['duree_figee_s']} s")
+
+    # 6. L'aplat -- une image uniforme passe le seuil de luminosite.
+    mesures["contraste"] = contraste_luminosite(chemin)
+    if 0 <= mesures["contraste"] < 0.5:
+        alertes.append(f"image quasi uniforme (ecart-type {mesures['contraste']})")
+
+    return {"accepte": not refus, "refus": refus, "alertes": alertes,
+            "mesures": mesures}

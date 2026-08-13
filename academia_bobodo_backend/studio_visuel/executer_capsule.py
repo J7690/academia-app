@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -35,8 +36,49 @@ sys.path.insert(0, "/workspace")
 import academia_scene  # noqa: E402
 import montage  # noqa: E402
 
-BLENDER = os.environ.get("BLENDER", "/workspace/blender/blender")
-GENERATEUR = os.environ.get("GENERATEUR", "/workspace/generateur_scenes.py")
+def _trouver(nom: str, variable: str, candidats: tuple[str, ...]) -> str:
+    """Trouve un executable ou un fichier LA OU IL EST, au lieu de le supposer.
+
+    POURQUOI CETTE FONCTION EXISTE.
+
+    Ces deux chemins pointaient en dur sur `/workspace/...`, l'emplacement de
+    l'ancienne installation A CHAUD : avant l'image, `install_pod.sh` deposait
+    Blender et le moteur dans le seul dossier qui survivait a un arret. L'image
+    du 12/08 les met ailleurs -- Blender dans `/opt/blender/`, le moteur dans
+    `/opt/moteur/` -- et `/workspace` est desormais VIDE au premier demarrage.
+
+    Mesure du 12/08 20h32, travail afd29a95 : la capsule « Poussee d'Archimede »
+    est arrivee sur la machine avec ses cinq scenes composees INTACTES, et le
+    rendu est mort sur
+        [Errno 2] No such file or directory: '/workspace/blender/blender'
+    La machine s'etait pourtant declaree PRETE : la sonde verifie Chromium et
+    WebGL, jamais Blender. Une readiness qui ne teste pas ce que la machine va
+    faire ne vaut rien -- voir `sonde_pret.js`.
+
+    L'ordre est deliberé : la variable d'environnement PRIME (elle permet de
+    depanner une machine sans reconstruire l'image), puis le PATH, puis les
+    emplacements connus. On garde `/workspace/...` en dernier recours pour les
+    machines encore amorcees a l'ancienne.
+    """
+    impose = os.environ.get(variable)
+    if impose:
+        return impose
+    trouve = shutil.which(nom)
+    if trouve:
+        return trouve
+    for chemin in candidats:
+        if os.path.exists(chemin):
+            return chemin
+    # On rend le nom nu plutot que rien : l'erreur d'execution nommera l'outil
+    # manquant, ce qui reste plus lisible qu'un chemin invente.
+    return nom
+
+
+BLENDER = _trouver("blender", "BLENDER",
+                   ("/opt/blender/blender", "/workspace/blender/blender"))
+GENERATEUR = _trouver("generateur_scenes.py", "GENERATEUR",
+                      ("/opt/moteur/generateur_scenes.py",
+                       "/workspace/generateur_scenes.py"))
 TRAVAIL = os.environ.get("TRAVAIL", "/workspace/capsule")
 BUCKET = "studio-visuel"
 
@@ -187,18 +229,45 @@ def executer(capsule: dict, travail: str | None = None) -> tuple[bool, str]:
              os.path.join(TRAVAIL, "capsule_normalisee.json"), images],
             capture_output=True, text=True, timeout=10800)
 
+        # COMPOSITION et DEGRADATION manquaient a cette liste, et ce sont les
+        # deux seules lignes qui disent ce que la scene DECRITE est devenue.
+        # Sans elles, une composition entierement degradee se lit exactement
+        # comme une composition reussie.
         for ligne in rendu.stdout.splitlines():
-            if ligne.startswith(("SCENE ", "GENERATEUR_", "CAPSULE ")):
+            if ligne.startswith(("SCENE ", "GENERATEUR_", "CAPSULE ",
+                                 "COMPOSITION ", "DEGRADATION ")):
                 journal("  " + ligne)
     else:
         rendu = None
 
     produites = [n for n in os.listdir(images) if n.endswith(".png")]
     if not produites:
+        # LA CAUSE DOIT REMONTER EN BASE, PAS MOURIR ICI.
+        #
+        # Le pod n'a ni sshd ni expedition de journaux : tout ce qui part sur la
+        # sortie standard est perdu des que la machine s'eteint. Le 13/08, le
+        # travail 962ddaf5 n'a laisse en base que « aucune_image_produite » --
+        # exact, inutile, et impossible a diagnostiquer sans relouer un GPU.
+        #
+        # `erreur` est le SEUL canal qui survit a la machine. On y met donc les
+        # lignes qui portent une cause, pas un resume rassurant.
         journal("ECHEC aucune image produite")
+        detail = ""
         if rendu is not None:
-            journal(rendu.stdout[-800:] or rendu.stderr[-800:])
-        return False, "aucune_image_produite"
+            flux = f"{rendu.stderr or ''}\n{rendu.stdout or ''}"
+            journal(flux[-1500:])
+            marqueurs = ("Traceback", "Error:", "error:", "ModuleNotFound",
+                         "ImportError", "Exception", "RuntimeError",
+                         "DEGRADATION", "GENERATEUR_ECHEC")
+            portantes = [l.strip() for l in flux.splitlines()
+                         if any(m in l for m in marqueurs)]
+            # Les DERNIERES lignes : sur une trace Python, la cause est en bas.
+            detail = " | ".join(portantes[-6:])[:900]
+            if not detail:
+                detail = f"code {rendu.returncode}, sortie muette: " + \
+                         " ".join(flux.split())[-300:]
+        return False, f"aucune_image_produite — {detail}" if detail \
+            else "aucune_image_produite — aucun rendu lance"
     journal(f"RENDU termine — {len(produites)} images en {int(time.time()-depart)}s")
 
     # ── 2. Sous-titres ────────────────────────────────────────────────────
@@ -221,41 +290,50 @@ def executer(capsule: dict, travail: str | None = None) -> tuple[bool, str]:
         return False, f"assemblage:{detail}"
     journal(f"ASSEMBLAGE termine — {os.path.getsize(video)//1024} Ko")
 
-    # ── 4. Controle automatique (etape 10 du cahier des charges) ──────────
-    infos = montage.verifier(video)
-    journal(f"CONTROLE {infos}")
-    if infos.get("lisible") != "True":
-        journal("ECHEC video illisible — on ne depose pas un fichier corrompu")
-        return False, "video_illisible"
+    # ── 4. Porte d'acceptation (etape 10 du cahier des charges) ───────────
+    #
+    # UN SEUL POINT DE PASSAGE, ET IL ECRIT TOUJOURS SES MESURES.
+    # Les controles etaient auparavant disperses ici, chacun ne journalisant
+    # que son propre echec. Une capsule ACCEPTEE ne laissait donc aucune trace
+    # de ce qui avait ete verifie -- impossible, ensuite, de dire pourquoi elle
+    # etait passee. `porte_acceptation` rend ses six mesures dans tous les cas.
+    #
+    # Ce qu'elle ajoute au controle precedent (mesure du 11/08) :
+    #   - le SILENCE. `a_du_son` repondait True sur une piste de silence
+    #     numerique : la moitie du defaut « noire et muette » du 05/08 n'etait
+    #     pas mesuree du tout.
+    #   - le FIGE. La camera recoit une cle a chaque image ; une image immobile
+    #     plusieurs secondes est un rendu qui s'est arrete.
+    #   - l'APLAT, une image uniforme qui passe le seuil de luminosite.
+    #
+    # Ce qu'elle NE change PAS : le son reste une ALERTE, jamais un refus. Les
+    # sous-titres sont incrustes et la majorite des vues se font sans le son ;
+    # refuser ferait perdre le cours entier pour la voix seule.
+    #
+    # Cout : trois passes ffmpeg supplementaires, quelques secondes -- a
+    # comparer aux dizaines de minutes de rendu qu'elles protegent.
+    verdict = montage.porte_acceptation(video, capsule)
+    journal(f"CONTROLE {verdict['mesures']}")
+    for avis in verdict["alertes"]:
+        journal(f"ATTENTION {avis}")
 
-    # UNE VIDEO NOIRE EST UN ECHEC, PAS UNE LIVRAISON.
-    # Une capsule a ete remise a l'utilisateur en etant noire quinze secondes
-    # durant : deux scenes generees avaient echoue, le fichier restait
-    # parfaitement valide, et le controle ne regardait que sa validite. Il faut
-    # refuser ici, ou personne d'autre ne le fera.
-    if infos.get("image_visible") != "True":
-        journal(f"ECHEC image absente — luminosite {infos.get('luminosite')}/255")
-        return False, f"image_noire:{infos.get('luminosite')}"
-
-    # LA MOYENNE NE SUFFIT PAS, ET C'EST MESURE.
-    # Sur une capsule de quatre scenes dont deux noires : luminosite moyenne
-    # 64,74/255, `image_visible` = True -- alors que 11,0 s sur 22,6 sont
-    # noires. Le controle global laissait donc passer exactement le defaut
-    # qu'il etait cense attraper. On regarde chaque scene.
-    sombres = montage.scenes_sombres(video, capsule)
-    if sombres:
-        detail = " ".join(
-            f"{s['id']}({s['archetype']},{s['debut_s']}s,{s['luminosite']})"
-            for s in sombres)
-        perdu = sum(s["duree_s"] for s in sombres)
-        journal(f"ECHEC {len(sombres)} scene(s) noire(s) — {perdu:.1f}s sur "
-                f"{capsule['duree_totale_s']}s : {detail}")
-        return False, f"scenes_noires:{len(sombres)}"
-
-    # Le son manquant ne bloque pas : une capsule muette reste regardable, et
-    # le repli est parfois voulu. Mais il ne doit plus passer INAPERCU.
-    if infos.get("a_du_son") != "True":
-        journal("ATTENTION capsule sans piste audio — la narration n'a pas ete jointe")
+    if not verdict["accepte"]:
+        for motif in verdict["refus"]:
+            journal(f"ECHEC {motif}")
+        # Code stable, pour que la cause reste lisible en base et dans les
+        # journaux. L'ordre suit la gravite : illisible d'abord, puis ce qui
+        # manque, puis ce qui est noir.
+        premier = " ; ".join(verdict["refus"])
+        for fragment, code in (
+            ("illisible", "video_illisible"),
+            ("tronquee", "duree_tronquee"),
+            ("figee", "image_figee"),
+            ("scene(s) noire(s)", "scenes_noires"),
+            ("noire", "image_noire"),
+        ):
+            if fragment in premier:
+                return False, f"{code}:{premier[:160]}"
+        return False, f"refus:{premier[:160]}"
 
     # ── 5. Depot ──────────────────────────────────────────────────────────
     # Horodate : chaque rendu garde sa trace, et aucun ecrasement n'est

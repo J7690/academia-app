@@ -53,15 +53,59 @@ def filaire(objet, epaisseur=0.012):
 
     La conversion en courbe avec un biseau est la seule methode fiable sur de
     la geometrie purement filaire.
+
+    LE SECOND PIEGE, ET IL ETAIT PLUS COUTEUX QUE LE PREMIER.
+    `bpy.ops.object.convert(target="CURVE")` fabrique une courbe NEUVE et la
+    substitue a la maille : la nouvelle donnee n'a AUCUN emplacement de
+    matiere. La matiere emissive posee juste avant sur la maille reste
+    attachee a une donnee que plus rien ne rend.
+
+    Mesure du 06/08, Blender 4.5.9, sur les deux geometries du studio :
+
+        geometrie              materiaux AVANT   APRES   points   rendu
+        chaine (degre max 2)          1            0       12    3,35/255
+        graphe dense (degre 11)       1            0       59    3,28/255
+
+    La geometrie survit parfaitement -- 59 points pour le graphe dense. Seule
+    la matiere disparait. L'objet est alors rendu avec la surface grise par
+    defaut de Blender ; or il n'existe AUCUNE lampe dans tout le studio (le
+    style veut que les objets s'eclairent eux-memes) et le monde est quasi
+    noir. Un tube gris sur fond noir, c'est du noir.
+
+    Un seul defaut expliquait donc quatre symptomes de plus : `comparaison` et
+    `strates` entierement noirs, les reseaux sans liens, le rail invisible.
+    Et il explique pourquoi le correctif « emission x3 » du 04/08 n'a rien
+    change : il augmentait une emission qui n'etait plus reliee a rien.
+
+    On repose donc les matieres apres la conversion, et on ECHOUE BRUYAMMENT
+    si elles n'ont pas pu l'etre -- c'est precisement le silence qui a coute
+    trois rendus.
     """
+    # Capturees AVANT : apres la conversion, `objet.data` est une autre donnee.
+    materiaux = [m for m in objet.data.materials]
+
     bpy.context.view_layer.objects.active = objet
     bpy.ops.object.select_all(action="DESELECT")
     objet.select_set(True)
     bpy.ops.object.convert(target="CURVE")
+
+    if objet.type != "CURVE":
+        raise RuntimeError(f"filaire: {objet.name} n'a pas ete converti en courbe")
+
     courbe = objet.data
     courbe.bevel_depth = epaisseur
     courbe.bevel_resolution = 1      # 1 suffit a cette echelle, et coute moitie moins
     courbe.fill_mode = "FULL"
+
+    if not [m for m in courbe.materials if m]:
+        for matiere in materiaux:
+            courbe.materials.append(matiere)
+
+    if materiaux and not [m for m in courbe.materials if m]:
+        raise RuntimeError(
+            f"filaire: {objet.name} a perdu sa matiere a la conversion — "
+            f"il rendrait en gris sur fond noir, donc invisible")
+
     return objet
 
 
@@ -165,6 +209,32 @@ def texte_3d(contenu, taille=1.0, extrusion=0.06, position=(0, 0, 0), rotation=(
             except Exception:  # noqa: BLE001
                 pass
     return objet
+
+
+def mesurer(objet):
+    """Dimensions REELLES d'un objet, apres evaluation du graphe.
+
+    `objet.dimensions` vaut zero tant que le graphe de dependances n'a pas ete
+    evalue : lu juste apres la creation, il ment. C'est ce qui a permis de
+    placer deux textes a un ecart FIXE sans jamais s'apercevoir qu'ils se
+    chevauchaient des que l'un d'eux etait long.
+    """
+    bpy.context.view_layer.update()
+    return tuple(objet.dimensions)
+
+
+def tenir_dans(objet, largeur_max):
+    """Reduit la taille d'un texte jusqu'a ce qu'il tienne dans la largeur.
+
+    C'est la condition de l'universalite promise : « 100 m » et « la
+    stratigraphie archeologique » doivent tous deux passer, sans qu'un
+    redacteur ait a compter ses caracteres.
+    """
+    largeur = mesurer(objet)[0]
+    if largeur > largeur_max > 0:
+        objet.data.size *= largeur_max / largeur
+        largeur = mesurer(objet)[0]
+    return largeur
 
 
 def sol_grille(cote=26.0, pas=52, amplitude=0.55, graine=3):
@@ -376,6 +446,69 @@ def matiere_brume(nom="brume", densite=0.006):
     return mat
 
 
+def atmosphere(distance, densite=None):
+    """Enveloppe la scene de brume volumetrique. Rend l'objet, ou None.
+
+    POURQUOI CETTE FONCTION EXISTE ALORS QUE `matiere_brume` EXISTAIT DEJA.
+    Relevé du 11/08 : `matiere_brume` et `matiere_feu` sont ecrites, abouties,
+    et appelees par AUCUN archetype de production -- seulement par
+    `essai_style.py`. Le brouillard volumetrique, qui est l'un des dix elements
+    de la grammaire de reference et l'un des trois qui font « cinema » plutot
+    que « schema », n'a donc jamais ete rendu dans une seule capsule livree.
+    Le moteur payait meme le reglage sans en tirer l'image : `moteur_eevee`
+    pose `volumetric_samples = 96` depuis toujours.
+
+    LA TAILLE EST CALCULEE, PAS FIXEE. Un volume ne se rend que si la camera
+    est DEDANS. `_camera` s'eloigne jusqu'a 1,25 x distance selon le mouvement,
+    et monte jusqu'a +8,5 en « montee ». Le cube doit donc envelopper la course
+    entiere de la camera, pas seulement le sujet : d'ou le facteur 3,4 (demi-
+    cote 1,7 x distance) et le decentrage vertical.
+
+    DESACTIVEE PAR DEFAUT DEPUIS LA MESURE DU 11/08. Elle ne s'allume qu'avec
+    `STUDIO_BRUME=1`, et voici pourquoi -- banc A40, `reseau`, 1080x1920,
+    64 echantillons, 60 images, deux passages dont seule cette variable change :
+
+        sans brume   2,185 s/image   (P95 2,413)   projection 2500 images :  91,0 min
+        avec brume   2,982 s/image   (P95 3,258)   projection 2500 images : 124,3 min
+
+    Soit **+36,5 % de temps de rendu, +33 minutes par capsule**. Et les deux
+    images temoins sont INDISCERNABLES a l'oeil.
+
+    POURQUOI ELLE NE SE VOIT PAS -- hypothese fondee sur le code, NON MESUREE.
+    `matiere_brume` est un `VolumeScatter` : il DIFFUSE de la lumiere, il n'en
+    emet pas. Or ce studio n'a aucune lampe -- « le style veut que les objets
+    s'eclairent eux-memes », voir `filaire` -- et le monde vaut (0.0015, 0.0045,
+    0.014), c'est-a-dire noir. Il n'y a donc quasiment rien a diffuser. Le
+    brouillard de la reference, lui, est ECLAIRE : ses bandes ont une structure
+    et une lueur.
+
+    La rendre visible ne consiste donc pas a monter la densite mais a AJOUTER
+    UNE SOURCE DE LUMIERE, ce qui change le parti pris du studio et couterait
+    davantage, pas moins. A trancher avec le choix de moteur : un moteur temps
+    reel rend ce brouillard pour presque rien.
+
+    Le code reste : le jour ou il y a une lumiere, la fonction est prete.
+    """
+    if os.environ.get("STUDIO_BRUME", "0") != "1":
+        return None
+
+    if densite is None:
+        try:
+            densite = float(os.environ.get("STUDIO_BRUME_DENSITE") or 0.006)
+        except ValueError:
+            densite = 0.006
+
+    cote = max(12.0, float(distance) * 3.4)
+    bpy.ops.mesh.primitive_cube_add(size=cote, location=(0, 0, cote * 0.12))
+    brume = bpy.context.object
+    brume.name = "atmosphere"
+    brume.data.materials.append(matiere_brume(densite=densite))
+    # Le volume ne doit jamais masquer ni recevoir d'ombre : il habille, il ne
+    # participe pas a la scene.
+    brume.visible_shadow = False
+    return brume
+
+
 def monde_nuit(scene):
     monde = bpy.data.worlds.new("nuit")
     monde.use_nodes = True
@@ -428,7 +561,25 @@ def cadre_cinema(scene, proportion=0.62):
 
 def moteur_eevee(scene, echantillons=64, echantillons_volume=96):
     """EEVEE Next. Mesure a 2,51 s/image contre 6,00 s pour Cycles sur ce style.
-    Exige libEGL pour rendre sans ecran -- voir install_pod.sh."""
+    Exige libEGL pour rendre sans ecran -- voir install_pod.sh.
+
+    STUDIO_ECHANTILLONS permet de baisser la qualite sans toucher au code.
+    Ce n'est pas un confort : mesure du 06/08 sur une machine a 1 Go de VRAM,
+    en 1080x1920,
+
+        64 echantillons  33,48 s/image
+        16 echantillons   1,66 s/image
+
+    soit un facteur VINGT pour un facteur quatre d'echantillons -- la memoire
+    decroche. Sur un GPU large le rapport reste lineaire, mais le reglage
+    permet de rendre une capsule de controle en quatorze minutes sur une
+    machine ordinaire, donc sans rien louer.
+    """
+    import os
+    try:
+        echantillons = int(os.environ.get("STUDIO_ECHANTILLONS") or echantillons)
+    except ValueError:
+        pass
     scene.render.engine = "BLENDER_EEVEE_NEXT"
     e = scene.eevee
     for attribut, valeur in (

@@ -25,6 +25,7 @@ import pathlib
 import shutil
 import subprocess
 import sys
+import threading
 import time
 
 import requests
@@ -34,7 +35,11 @@ POD_JETON = os.environ.get("POD_JETON", "")
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
 SUPABASE_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
 
-BLENDER = "/workspace/blender/blender"
+# PAS DE CONSTANTE `BLENDER` ICI. Il y en avait une, codee en dur sur
+# `/workspace/blender/blender`, et elle n'etait JAMAIS lue : c'est
+# `executer_capsule` qui lance Blender. Deux definitions du meme chemin dont
+# une morte, c'est la garantie qu'on corrigera un jour la mauvaise. Le chemin
+# est desormais DECOUVERT, une seule fois, dans `executer_capsule._trouver`.
 TRAVAIL = pathlib.Path("/workspace/travaux")
 BUCKET = "studio-visuel"
 INTERVALLE = int(os.environ.get("INTERVALLE_FILE", "20"))
@@ -116,6 +121,38 @@ def rendre(job: dict, dossier: pathlib.Path) -> tuple[str | None, str | None]:
     return (detail, None) if ok else (None, detail)
 
 
+def _rapporter_avancement(job_id: str, dossier: pathlib.Path, total: int,
+                          arret) -> None:
+    """Compte les images produites et le DIT a la base, toutes les 30 secondes.
+
+    POURQUOI CE FIL EXISTE. La RPC `studio_avancement` etait ecrite, deployee,
+    et appelee par PERSONNE. Mesure du 06/08 sur un rendu reel : au bout de
+    trente-trois minutes, `app.studio_jobs` affichait encore
+    `images_faites = 0, images_total = NULL` alors que le pod avait deja
+    produit 970 images sur 1214. Il a fallu se connecter a la machine pour le
+    savoir.
+
+    Consequence, et c'est la seule qui compte : depuis la base, un rendu qui
+    AVANCE et un rendu BLOQUE etaient rigoureusement indiscernables. C'est le
+    defaut de famille du projet -- conclure a partir d'une absence -- applique
+    a la supervision.
+
+    Le fil ne leve jamais : un rapport d'avancement qui tue un rendu d'une
+    heure serait pire que pas de rapport du tout.
+    """
+    frames = dossier / "frames"
+    while not arret.is_set():
+        try:
+            faites = len(list(frames.glob("*.png"))) if frames.is_dir() else 0
+            rpc("studio_avancement", {
+                "p_job_id": job_id, "p_pod_id": POD_ID, "p_jeton": POD_JETON,
+                "p_images_faites": faites, "p_images_total": total,
+            })
+        except Exception:  # noqa: BLE001
+            pass
+        arret.wait(30)
+
+
 def traiter(job: dict) -> None:
     journal(f"job {job['id']} — {job.get('titre')}")
     dossier = TRAVAIL / str(job["id"])
@@ -123,8 +160,18 @@ def traiter(job: dict) -> None:
         shutil.rmtree(dossier, ignore_errors=True)
     dossier.mkdir(parents=True, exist_ok=True)
 
+    total = int((job.get("manifeste") or {}).get("images_total") or 0)
+    arret = threading.Event()
+    veilleuse = threading.Thread(
+        target=_rapporter_avancement, args=(job["id"], dossier, total, arret),
+        daemon=True)
+    veilleuse.start()
+
     debut = time.time()
-    cle, erreur = rendre(job, dossier)
+    try:
+        cle, erreur = rendre(job, dossier)
+    finally:
+        arret.set()
 
     if erreur:
         journal(f"echec : {erreur}")

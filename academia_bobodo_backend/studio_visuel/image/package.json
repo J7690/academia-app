@@ -1,0 +1,10 @@
+{
+  "name": "academia-studio-rendu",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Moteur de rendu du Studio visuel Academia — Chromium/WebGL et sonde de readiness. Versions FIGEES : une image doit rendre la meme chose dans six mois.",
+  "dependencies": {
+    "playwright": "1.56.1",
+    "three": "0.182.0"
+  }
+}
