@@ -98,7 +98,16 @@ if [ -n "$SUPABASE_URL" ] && [ "${MOTEUR_DISTANT:-1}" = "1" ]; then
   if curl -fsS --max-time 120 -H "apikey: ${SUPABASE_ANON_KEY}" \
           "$CIBLE" -o /tmp/moteur.tar.gz 2>/dev/null; then
     rm -rf /tmp/moteur.neuf && mkdir -p /tmp/moteur.neuf
-    if tar -xzf /tmp/moteur.tar.gz -C /tmp/moteur.neuf 2>/dev/null \
+    # `--no-same-owner` N'EST PAS UN DETAIL. Une archive fabriquee sur un poste
+    # Windows porte un uid inconnu du conteneur (mesure : 197609) ; `tar`, lance
+    # en root, tente de le restituer, echoue sur CHAQUE entree et sort en code 2
+    # -- alors meme que tous les fichiers sont correctement extraits.
+    #
+    # Mesure du 14/08 : le moteur etait bien telecharge (81 766 octets), bien
+    # deplie, et l'amorcage annoncait « moteur_archive_incomplete » puis
+    # repliait sur le moteur embarque. Un echec parfaitement faux, et signale
+    # comme tel -- ce qui l'a rendu visible plutot que silencieux.
+    if tar -xzf /tmp/moteur.tar.gz -C /tmp/moteur.neuf --no-same-owner 2>/dev/null \
        && [ -f /tmp/moteur.neuf/worker_pod.py ] \
        && [ -f /tmp/moteur.neuf/executer_capsule.py ] \
        && [ -f /tmp/moteur.neuf/generateur_scenes.py ]; then

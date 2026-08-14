@@ -15,6 +15,135 @@
 
 ---
 
+## 2026-08-14
+
+- `10:1x` · **DÉFAUT (le mien)** · j'ai demandé à Jocelyn de faire `docker login`
+  sur LWS. **C'était déjà fait depuis le 12/08.** Je ne l'avais pas vérifié
+  avant de donner l'instruction — exactement la faute que `etat-des-moyens`
+  existe pour empêcher. Relevé : `docker info` → `Username: academia0`.
+- `10:1x` · **MESURE** · LWS · droit d'écriture Docker Hub **prouvé** par une
+  poussée d'essai (`essai-acces`), avant de lancer 20 min de construction.
+- `10:19` · **IMAGE** · LWS · `academia0/academia-studio:1.3.0` construite
+  **sur LWS**, 4,47 Go. Le poste de Jocelyn n'est plus dans la boucle.
+- `10:20` · **MESURE** · image · contenu vérifié **dans** le conteneur avant
+  publication : VERSION 1.3.0, 9 correctifs présents, Blender 4.5.12 répond,
+  `academia3d_style` importable. Pas déduit d'une construction réussie.
+- `10:21` · **IMAGE** · publiée, digest `sha256:2ed81f96…`.
+- `10:21` · **MIGRATION** · `app.studio_config` → `image_pod` et
+  `version_moteur` basculés sur 1.3.0.
+- `10:21` · **MESURE** · travail `9c1d62d0` relancé sur la capsule déjà en base
+  — **0 $ de génération**.
+- `12:22` · **MESURE** · LWS · `capsule native — 5 scenes, 90.0s, 2250 images`.
+  La reconnaissance corrigée le 12/08 **le dit désormais explicitement** dans le
+  journal, au lieu de traduire en silence.
+- `—` · **BLOQUÉ** · Storage · le tirage du moteur depuis Supabase est dans
+  l'image mais **inutilisable** : bucket `studio-moteur` inexistant, et la clé
+  de LWS n'a pas les droits (mesuré : `permission denied for table studio_jobs`).
+- `13:0x` · **DÉFAUT** · orchestration · **deux chaînes de production
+  concurrentes**. Le cron `studio-orchestrateur` (toutes les 3 min) créait une
+  machine avec `runpod/pytorch:…` — sans Blender ni moteur. Le 14/08 à 10:36:02
+  elle a créé la sienne, à 10:36:03 la nouvelle chaîne la sienne ; **la vieille
+  a pris le travail et l'a tué en 4 s**. Cron désactivé (jobid 15), service
+  `studio-amorceur` arrêté et désinstallé sur LWS.
+- `13:1x` · **DÉFAUT (le mien)** · j'avais « vérifié » l'image en comptant les
+  occurrences de `aucune_image_produite` — mot présent dans les DEUX versions.
+  Une vérification faible qui a masqué la vraie cause pendant une heure.
+- `—` · **CORRECTIF** · Storage · `moteur_archive_incomplete` était un **faux
+  échec** : archive portant un uid Windows (197609), `tar` en root échouait à le
+  restituer et sortait en code 2 **alors que l'extraction réussissait**. Archive
+  republiée avec propriétaire neutre (extraction revérifiée, code 0) ;
+  `entree.sh` extrait désormais avec `--no-same-owner`.
+- `14:0x` · **DÉFAUT** · veilleur · **trois machines tuées en plein rendu** pour
+  `agent_muet`, 12 min chacune, travail relancé à zéro (images vues **reculer
+  175 → 47**). `gpu_pods_a_eteindre()` juge sur `last_seen_at`, que seul
+  `gpu_pod_heartbeat` rafraîchit ; or le worker envoie `studio_avancement`.
+  Un rendu demande 20–120 min, le seuil est à 10 : **la chaîne ne pouvait
+  mathématiquement jamais aboutir.**
+- `—` · **MIGRATION** · `studio_avancement` rafraîchit désormais
+  `gpu_pods.last_seen_at` et `activite`. **L'avancement vaut signe de vie** —
+  on n'a PAS rallongé le délai, ce qui aurait déplacé le seuil sans corriger
+  l'aveuglement. Vérifié : `activite = "rendu 99/1154"`, machine non condamnée.
+- `—` · **MIGRATION** · `studio_supervision()` créée : une ligne, six alertes
+  (échec récent, machine condamnée en plein rendu, rendu figé, machines en
+  double, file sans machine, dépense). Guetteur `veille.sh` sur LWS, qui ne
+  parle que si ça cloche + point d'étape toutes les 10 min + alerte
+  `VEILLE AVEUGLE` si la supervision ne répond plus.
+- `—` · **MESURE** · travail `8b7c72d0` : **1 155/1 154 images rendues**, 50+ min
+  sans coupure. Puis **REFUSÉ** par la porte d'acceptation :
+  `scene(s) noire(s) s1=1.15 s2=0.84 s3=0.92 ; image figee 46.17 s`.
+- `—` · **DÉFAUT (le mien)** · le chemin composé **n'animait rien** : caméra
+  fixe, zéro image-clé, 1 154 images identiques. Le chemin des archétypes
+  animait pourtant depuis toujours.
+- `—` · **CORRECTIF** · `academia3d._orbiter()` — orbite lente, balayage par
+  intention (14° comparaison → 34° échelle), interpolation linéaire, grammaire
+  reprise de `generateur_scenes._camera`. **Non vérifié en image.**
+- `—` · **MESURE** · LWS, sans GPU, coût nul · **le cadrage mesuré fonctionne** :
+  `cadrage « objet » à 23,82 unités` (contre 9,0 fixes), bécher entier dans le
+  cadre, filaire bleu conforme. Point ouvert depuis deux jours, **clos**.
+- `—` · **DÉFAUT** · `sculpter` **ne se voit pas** sur l'image rendue, alors que
+  le compositeur le déclare fait et que `cadrer_sur` mesure sa boîte englobante
+  (11,65 unités seule). Cause non tranchée : arêtes sub-pixel, ou masquage par
+  la surface du bécher. Essai 270×480 en cours.
+- `—` · **DÉPENSE** · RunPod · 0,98 $ sur 24 h, zéro machine vivante.
+- `15:0x` · **MESURE** · LWS, coût nul · **le cadrage mesuré fonctionne en image**
+  (`cadrage « objet » à 23,82 unités`, bécher entier dans le cadre) et **la
+  caméra bouge** (début et fin de plan nettement différents).
+- `15:1x` · **DÉFAUT** · `_habiller` posait le verre **uniquement sur le rôle
+  « sujet »**. Or c'est la STRUCTURE qui entoure : le bécher gardait une surface
+  opaque et **masquait la sphère**. Rendue seule, la même sphère est nette et
+  lumineuse — le verbe n'a jamais été en cause. Défaut invisible à la lecture du
+  code et muet : le compositeur déclarait le geste fait, ce qu'il était.
+- `—` · **CORRECTIF** · règle posée : **toute surface conservée doit être
+  traversable**. `verre: false` reste possible, mais ce n'est plus le défaut.
+- `—` · **DÉCISION** · moteur **1.3.1** publié dans Storage, image laissée en
+  **1.3.0**. Première livraison d'un correctif **sans reconstruire d'image**.
+- `16:0x` · **DÉFAUT** · veilleur · deux machines tuées pour `agent_muet` **sans
+  avoir jamais parlé**. `silence_timeout` (10 min) courait depuis la CRÉATION,
+  pas depuis le démarrage du conteneur ; or le tirage de 4,47 Go dépend de
+  l'hôte — 35 s le matin, **10,4 min** l'après-midi.
+- `—` · **MESURE** · trois hypothèses écartées avant de conclure : image publiée
+  (digest comparé), dépôt **public** (`is_private: false`), `gpu_pod_journal`
+  répond `success: true` avec le jeton de la machine muette.
+- `—` · **MIGRATION** · `gpu_pods_a_eteindre()` distingue **amorçage** (jamais
+  parlé → 25 min) et **silence** (a parlé puis s'est tue → 10 min).
+- `—` · **DÉFAUT (le mien)** · mon appel de diagnostic a **écrit dans le journal
+  d'amorçage** de la machine, la faisant passer pour « ayant déjà parlé » — donc
+  justiciable du délai court que je venais d'assouplir. Entrée retirée. Une
+  écriture de test ne doit jamais modifier l'état que le système observe.
+- `—` · **CORRECTIF** · `studio_supervision()` : une chaîne littérale concaténée
+  à un `text[]` est de type `unknown` — Postgres tentait de la lire comme un
+  littéral de tableau. La veille remontait `22P02` au lieu de son alerte. Elle
+  détectait bien le problème, mais le disait dans une langue illisible.
+- `—` · **MESURE** · amorçage réel, machine `xh08r0ktpmpiqm` :
+  `demarre (1.3.0) > moteur_tirage (1.3.1) > moteur_installe (1.3.1) >
+  sonde_finie (code 0) > prete`. **Le tirage du moteur depuis Storage est
+  prouvé.** Rendu en cours, 473/1193.
+- `10:5x` · **CORRECTIF** · Storage · bucket `studio-moteur` créé (public),
+  `moteur-1.3.0.tar.gz` publié via `supabase storage cp` **depuis le poste,
+  sans manipuler de secret** (la CLI est déjà liée). Relu : 81 766 octets.
+- `12:4x` · **DÉFAUT MAJEUR** · orchestration · **deux chaînes de production
+  tournaient en parallèle.** Le cron `studio-orchestrateur` (toutes les 3 min)
+  créait une machine sur l'image générique `runpod/pytorch:…`, amorcée à chaud
+  par `studio-amorceur`. À 10:36:02 elle a créé la sienne, à 10:36:03 la
+  nouvelle chaîne la sienne : **la vieille a pris le travail et l'a tué en 4
+  secondes**. Ce n'était donc JAMAIS un problème de GPU.
+- `12:4x` · **DÉFAUT (le mien)** · j'avais « vérifié » l'image en comptant les
+  occurrences de `aucune_image_produite` — mot présent dans l'ancienne ET la
+  nouvelle version. Une vérification faible qui a masqué la vraie cause une
+  heure. Corriger la méthode : chercher la **forme exacte** du nouveau message.
+- `12:4x` · **CORRECTIF** · cron `studio-orchestrateur` désactivé (jobid 15) ;
+  service `studio-amorceur` arrêté et désinstallé sur LWS. `runpod-watchdog`
+  **conservé** : seul filet si une machine naissait par accident.
+- `12:5x` · **DÉFAUT** · Storage · `moteur_archive_incomplete` était un **faux
+  échec** : uid Windows (197609) dans l'archive → `tar` en root sort en code 2
+  alors que l'extraction a réussi. Archive republiée avec propriétaire neutre
+  (extraction revérifiée, code 0) ; `entree.sh` extrait désormais avec
+  `--no-same-owner` — **pas encore dans une image publiée**.
+- `12:53` · **MESURE** · pod · **119 images sur 1 154 produites sur GPU** —
+  premières images jamais sorties d'une machine RunPod pour une capsule
+  composée. Une seule machine, image 1.3.0.
+- `—` · **DÉPENSE** · RunPod · 0,363 $ sur les deux dernières heures.
+
 ## 2026-08-13
 
 - `18:0x` · **DÉFAUT** · pod · `[Errno 2] '/workspace/blender/blender'` — deux

@@ -78,7 +78,13 @@ fi
 
 echo "$VERSION" > "$ATELIER/VERSION"
 ARCHIVE="$ATELIER/moteur-$VERSION.tar.gz"
-tar -czf "$ARCHIVE" -C "$ATELIER" --exclude='moteur-*.tar.gz' .
+# `--owner=0 --group=0 --numeric-owner` : l'archive doit s'extraire chez
+# n'importe qui. Une archive fabriquee sur un poste Windows porte un uid que le
+# conteneur ne connait pas ; `tar` echoue alors sur chaque entree et sort en
+# code 2 — bien que l'extraction ait reussi. Mesure du 14/08 : le pod a annonce
+# « moteur_archive_incomplete » sur une archive parfaitement valide.
+tar --owner=0 --group=0 --numeric-owner \
+    -czf "$ARCHIVE" -C "$ATELIER" --exclude='moteur-*.tar.gz' .
 
 TAILLE=$(stat -c%s "$ARCHIVE")
 echo "archive : moteur-$VERSION.tar.gz — $((TAILLE / 1024)) Ko, ${#FICHIERS[@]} fichiers"

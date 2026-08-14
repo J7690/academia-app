@@ -626,7 +626,8 @@ def cadrer(vise=(0.0, 2.4, -6.0), depuis=(3.2, 5.4, 16.0), focale: float = 50.0,
 
 
 def cadrer_sur(objets, marge: float = 1.18, focale: float = 50.0,
-               ouverture: float = 2.2, direction=(0.18, -1.0, 0.34)):
+               ouverture: float = 2.2, direction=(0.18, -1.0, 0.34),
+               images: int = 1, balayage: float = 26.0, elevation: float = 0.30):
     """Cadre sur CE QUI A ETE CONSTRUIT, en le mesurant. Rend la camera.
 
     POURQUOI CETTE FONCTION REMPLACE UNE DISTANCE CHOISIE D'AVANCE.
@@ -712,8 +713,64 @@ def cadrer_sur(objets, marge: float = 1.18, focale: float = 50.0,
     distance = max(distance, 1.5)
 
     depuis = centre + vers_camera * distance
-    return cadrer(vise=tuple(centre), depuis=tuple(depuis),
-                  focale=focale, ouverture=ouverture, mise_au_point=distance)
+    cam = cadrer(vise=tuple(centre), depuis=tuple(depuis),
+                 focale=focale, ouverture=ouverture, mise_au_point=distance)
+
+    if images and images > 1:
+        _orbiter(cam, centre, vers_camera, distance, images,
+                 balayage=balayage, hauteur=max(demi_h, 0.5) * elevation)
+    return cam
+
+
+def _orbiter(cam, centre, vers_camera, distance: float, images: int,
+             balayage: float = 26.0, hauteur: float = 0.6) -> None:
+    """Fait tourner lentement la camera autour du sujet, sur toute la scene.
+
+    POURQUOI CETTE FONCTION EXISTE, ET C'EST UN OUBLI, PAS UNE REGRESSION.
+
+    Le chemin des dix archetypes animait sa camera depuis toujours
+    (`generateur_scenes._camera`). En ecrivant le compositeur, j'ai porte la
+    geometrie et le style, et j'ai oublie le MOUVEMENT : `cadrer_sur` posait une
+    camera fixe, sans la moindre image-cle.
+
+    Mesure du 14/08, travail 8b7c72d0 : les 1 154 images rendues etaient
+    IDENTIQUES. La porte d'acceptation a refuse la capsule -- « image figee
+    46,17 s » -- ce qui a evite de livrer un diaporama a un etudiant, mais
+    apres vingt-cinq minutes de GPU passees a rendre 1 154 fois la meme photo.
+
+    LA GRAMMAIRE EST CELLE DU DEPOT, pas une invention : « travellings lents et
+    rotations limitees, jamais de coupe » -- maintenir l'attention sans creer de
+    confusion. On garde donc un balayage court (26 degres par defaut) et une
+    interpolation LINEAIRE : une courbe d'acceleration donnerait un a-coup au
+    raccord entre deux scenes, qui se suivent sans transition.
+
+    La distance ne change pas pendant l'orbite : elle a ete calculee pour que
+    tout entre dans le cadre, et la faire varier romprait cette garantie.
+    """
+    from mathutils import Vector
+
+    # L'angle de depart est celui que `cadrer_sur` a choisi ; on tourne AUTOUR,
+    # de -moitie a +moitie, pour que le cadrage vise reste le milieu du plan.
+    plan = Vector((vers_camera.x, vers_camera.y, 0.0))
+    if plan.length < 1e-6:
+        plan = Vector((0.0, -1.0, 0.0))
+    rayon = plan.length * distance
+    depart = math.atan2(plan.y, plan.x)
+    hauteur_depart = vers_camera.z * distance
+
+    demi = math.radians(balayage) * 0.5
+    for image in range(1, images + 1):
+        t = (image - 1) / max(images - 1, 1)
+        angle = depart - demi + math.radians(balayage) * t
+        cam.location = (centre.x + rayon * math.cos(angle),
+                        centre.y + rayon * math.sin(angle),
+                        centre.z + hauteur_depart - hauteur * 0.5 + hauteur * t)
+        cam.keyframe_insert("location", frame=image)
+
+    if cam.animation_data and cam.animation_data.action:
+        for courbe in cam.animation_data.action.fcurves:
+            for point in courbe.keyframe_points:
+                point.interpolation = "LINEAR"
 
 
 def vider():

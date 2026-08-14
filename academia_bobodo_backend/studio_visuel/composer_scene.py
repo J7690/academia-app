@@ -69,14 +69,19 @@ INTENTIONS = ("objet", "processus", "comparaison", "structure", "echelle", "flux
 # Ne restent donc ici que des choix d'INTENTION -- d'ou l'on regarde, avec
 # quelle profondeur de champ, et combien d'air on laisse autour. La distance,
 # elle, est MESUREE sur la boite englobante par `academia3d.cadrer_sur`.
+#
+# `balayage` : de combien de degres la camera tourne PENDANT la scene. Court par
+# principe -- « travellings lents et rotations limitees, jamais de coupe ». Une
+# comparaison balaie moins, pour que l'oeil compare au lieu de suivre ; une
+# echelle balaie plus, parce que c'est le mouvement qui fait sentir l'etendue.
 _CADRAGE = {
     # marge : l'air autour du sujet. direction : d'ou l'on regarde.
-    "objet":       dict(marge=1.15, ouverture=2.2, direction=(0.18, -1.0, 0.30)),
-    "processus":   dict(marge=1.25, ouverture=2.8, direction=(0.30, -1.0, 0.34)),
-    "comparaison": dict(marge=1.22, ouverture=3.5, direction=(0.05, -1.0, 0.22)),
-    "structure":   dict(marge=1.20, ouverture=3.0, direction=(0.26, -1.0, 0.42)),
-    "echelle":     dict(marge=1.35, ouverture=4.0, direction=(0.22, -1.0, 0.50)),
-    "flux":        dict(marge=1.28, ouverture=2.6, direction=(0.34, -1.0, 0.30)),
+    "objet":       dict(marge=1.15, ouverture=2.2, direction=(0.18, -1.0, 0.30), balayage=26.0),
+    "processus":   dict(marge=1.25, ouverture=2.8, direction=(0.30, -1.0, 0.34), balayage=22.0),
+    "comparaison": dict(marge=1.22, ouverture=3.5, direction=(0.05, -1.0, 0.22), balayage=14.0),
+    "structure":   dict(marge=1.20, ouverture=3.0, direction=(0.26, -1.0, 0.42), balayage=24.0),
+    "echelle":     dict(marge=1.35, ouverture=4.0, direction=(0.22, -1.0, 0.50), balayage=34.0),
+    "flux":        dict(marge=1.28, ouverture=2.6, direction=(0.34, -1.0, 0.30), balayage=30.0),
 }
 
 
@@ -177,17 +182,38 @@ def _habiller(objet, geste: dict, j: Journal) -> None:
     role = geste.get("role", "structure")
     emission = st.EMISSION_SUJET if role == "sujet" else st.EMISSION_STRUCTURE
 
-    if geste.get("verre", role == "sujet"):
-        a3.vitrer(objet, force=st.VERRE_FORCE, densite_bord=st.VERRE_BORD)
-
     if geste.get("verbe") == "napper":
+        # Le terrain REMPLACE sa surface par ses aretes : il ne cache rien, et
+        # n'a donc pas besoin d'etre vitre.
         epaisseur = st.arete_grille(float(geste.get("parametres", {}).get("cote", 190.0)),
                                     int(geste.get("parametres", {}).get("pas", 46)))
         a3.filairer(objet, epaisseur=epaisseur, emission=emission)
-    else:
-        echelle = float(geste.get("parametres", {}).get("echelle", 1.0))
-        a3.filairer(objet, epaisseur=st.arete_objet(max(echelle, 1.0)),
-                    emission=emission, garder_surface=True)
+        return
+
+    # TOUTE SURFACE CONSERVEE DOIT ETRE TRAVERSABLE. C'EST LA REGLE.
+    #
+    # Le verre n'etait pose que sur le role « sujet ». Or c'est la STRUCTURE qui
+    # entoure : un becher, une cuve, une coque, une piece. Declaree `structure`,
+    # elle gardait une surface OPAQUE et cachait tout ce qu'elle contenait.
+    #
+    # Mesure du 14/08, scene s1 de « Poussee d'Archimede » : le becher
+    # (`revolutionner`, role structure) s'affichait, et la sphere posee a
+    # l'interieur (`sculpter`, role sujet) etait INTROUVABLE sur l'image --
+    # zoom et contraste force compris. Rendue seule, la meme sphere est nette,
+    # epaisse et lumineuse : le verbe n'a jamais ete en cause, c'est le
+    # recipient qui la masquait.
+    #
+    # Le defaut etait donc invisible a la lecture du code de `sculpter`, et
+    # muet : le compositeur declarait le geste FAIT, ce qu'il etait.
+    #
+    # `verre: false` reste possible dans la description pour une piece qu'on
+    # veut franchement opaque, mais ce n'est plus le defaut.
+    if geste.get("verre", True):
+        a3.vitrer(objet, force=st.VERRE_FORCE, densite_bord=st.VERRE_BORD)
+
+    echelle = float(geste.get("parametres", {}).get("echelle", 1.0))
+    a3.filairer(objet, epaisseur=st.arete_objet(max(echelle, 1.0)),
+                emission=emission, garder_surface=True)
 
 
 def composer(scene: dict) -> dict:
@@ -243,9 +269,15 @@ def composer(scene: dict) -> dict:
     cadre = _CADRAGE[intention]
     # ON CADRE SUR CE QUI EXISTE. `produits` porte les objets reellement crees ;
     # `cadrer_sur` mesure leur boite englobante et en deduit la distance.
+    #
+    # `images` COMMANDE LE MOUVEMENT, et son absence a coute une capsule
+    # entiere : sans lui la camera reste fixe, les images sont identiques, et la
+    # porte d'acceptation refuse « image figee » apres vingt-cinq minutes de GPU.
+    images = int(scene.get("images") or 1)
     camera = a3.cadrer_sur(produits, marge=cadre["marge"],
                            ouverture=cadre["ouverture"],
-                           direction=cadre["direction"])
+                           direction=cadre["direction"],
+                           images=images, balayage=cadre["balayage"])
     a3.haloter(taille=st.HALO_TAILLE, exposition=st.EXPOSITION)
 
     # La distance retenue est INSCRITE au journal. Un plan mal cadre doit se

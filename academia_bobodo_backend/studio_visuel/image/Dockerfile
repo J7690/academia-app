@@ -88,6 +88,11 @@ COPY style_reference.py academia_scene.py generateur_scenes.py generateur_ia.py 
      academia3d.py academia3d_style.py composer_scene.py \
      /opt/moteur/
 COPY contours/ /opt/moteur/contours/
+# La version EMBARQUEE, dans un fichier plutot que dans une variable. `entree.sh`
+# la remplace par celle de l'archive s'il en tire une depuis Storage : ce qui est
+# annonce est alors ce qui est REELLEMENT installe, et non l'etiquette de
+# l'image. Sans ce fichier, un moteur non tire passerait pour un moteur a jour.
+COPY VERSION /opt/moteur/VERSION
 COPY image/sonde_pret.js image/entree.sh /opt/rendu/
 RUN chmod +x /opt/rendu/entree.sh
 

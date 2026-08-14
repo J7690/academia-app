@@ -708,6 +708,10 @@ def rendre_scene(scene_def, format_capsule, dossier, graine=0, accroche=False):
             "intention": scene_def.get("intention", "objet"),
             "sujet": scene_def.get("sujet") or scene_def.get("titre") or "",
             "gestes": scene_def["gestes"],
+            # SANS CE CHAMP, LA CAMERA NE BOUGE PAS. Le compositeur ne peut pas
+            # deviner la duree de la scene : elle est calculee ici, a partir de
+            # la voix. Son absence a produit 1 154 images identiques le 14/08.
+            "images": images,
         })
         for degradation in journal.get("degradations", []):
             # ON LE DIT. La couche precedente remplacait en silence ; celle-ci
