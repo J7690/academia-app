@@ -450,8 +450,28 @@ def extruder(contour, epaisseur: float = 0.25, position=(0.0, 0.0, 0.0),
     mais pour une forme quelconque plutot que pour du texte.
 
     `contour` : liste de couples (x, y), dans l'ordre, fermee implicitement.
+    Le contour est DEBOUT, face a la camera : `x` va vers la droite, `y` vers
+    le HAUT, et l'epaisseur part vers la profondeur.
+
+    POURQUOI CETTE ORIENTATION, ET POURQUOI C'ETAIT UN DEFAUT.
+
+    Le contour etait construit dans le plan XY -- c'est-a-dire A PLAT SUR LE
+    SOL, puisque Z est la hauteur. Or l'invite enseigne au modele que « Z est la
+    HAUTEUR, Y la PROFONDEUR » et lui demande un contour en `[x, y]` sans dire
+    dans quel plan : il dessine donc naturellement `y` vers le haut.
+
+    Mesure du 14/08, capsule « Poussee d'Archimede » livree : le modele avait
+    ecrit une fleche parfaitement formee --
+        [[-0.3,0],[0.3,0],[0.3,1.5],[0.6,1.2],[0,2],[-0.6,1.2],[-0.3,1.5]]
+    une hampe et une pointe, montant a 2 unites. Le moteur l'a couchee sur le
+    sol, pointe vers le fond. A l'ecran : un bloc indistinct au bas du cadre.
+    La scene s'appelait « Force vers le haut ».
+
+    Le modele n'avait pas mal decrit. La machine lisait sa description dans un
+    autre plan que celui qu'elle lui avait enseigne. C'est le pire cas de ce
+    depot : deux couches qui se croient d'accord.
     """
-    points = [(float(x), float(y), 0.0) for x, y in contour]
+    points = [(float(x), 0.0, float(y)) for x, y in contour]
     if len(points) < 3:
         raise RuntimeError(
             f"extruder: {nom} demande au moins trois points, {len(points)} recu(s)")

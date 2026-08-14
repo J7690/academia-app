@@ -10,6 +10,17 @@
 
 ---
 
+> **PASSATION** — un rapport complet pour reprendre le chantier existe :
+> `docs/PASSATION_STUDIO_3D_2026-08-14.md`. Il contient l'architecture, les
+> chiffres mesurés, les huit couches du défaut, et cinq points de reprise
+> ordonnés. Le lire avant ce fichier si l'on découvre le projet.
+
+> **ATTENTION — un AUTRE chantier travaille sur ce dépôt.** Relevé le 14/08 :
+> 20 fichiers non commités qui ne relèvent pas du Studio 3D (écrans étudiants,
+> `main.dart`, `notification_router.dart`, quatre widgets neufs, et
+> `docs/CANDIDATURE_DIALOGUES_EXPLICITES_2026-08-14.md`). Ne pas les committer
+> avec du travail Studio : une régression deviendrait indiscernable.
+
 ## 1. Où on en est, en une phrase
 
 Le **Studio visuel 3D** fabrique des capsules dont la forme est **composée par

@@ -144,6 +144,30 @@
   composée. Une seule machine, image 1.3.0.
 - `—` · **DÉPENSE** · RunPod · 0,363 $ sur les deux dernières heures.
 
+- `18:0x` · **MESURE** · capsule livrée, six images réparties sur 47,6 s : le
+  style, la voix, les sous-titres et le mouvement sont conformes. **Mais s1, s2
+  et s3 se ressemblent**, et la scène qui parle de « bateaux, sous-marins,
+  montgolfières » montre trois blobs. La vidéo ne dit pas le sujet.
+- `—` · **DÉFAUT** · `academia3d.extruder` · le contour était construit dans le
+  plan **XY, soit à plat sur le sol**, alors que l'invite enseigne au modèle que
+  « Z est la hauteur ». La flèche de la scène « Force vers le haut » — hampe et
+  pointe, montant à 2 unités, parfaitement décrite — était **couchée par terre,
+  pointe vers le fond**. Le modèle n'avait pas mal décrit : la machine lisait sa
+  description dans un autre plan que celui qu'elle lui avait enseigné.
+- `—` · **CORRECTIF** · contours **debout** face à la caméra. `ecrire` aussi,
+  qui était couché — or c'est le secours universel. **Compilé, NON DÉPLOYÉ.**
+- `—` · **MESURE** · audit des capacités réelles : `silhouetter` est le seul
+  verbe à orientation libre (sous-marin, coque : là et nulle part ailleurs) ;
+  `sculpter` n'offre que 5 ellipsoïdes, allongement maximal **3,1** — une coque
+  8:1 lui est impossible. Le modèle a écrit `galet` faute de mieux **dans le
+  verbe qu'il avait choisi** ; l'invite ne lui a jamais dit lequel choisir.
+- `—` · **MESURE** · la validation traite chaque scène **isolément** : six
+  scènes identiques passent avec `corrections.length === 0`.
+- `—` · **DOCUMENT** · `docs/PASSATION_STUDIO_3D_2026-08-14.md` — rapport de
+  passation complet, à transmettre.
+- `—` · **CONSTAT** · un **autre chantier** modifie ce dépôt en parallèle
+  (20 fichiers, écrans étudiants + candidature). Ne pas mélanger les lots.
+
 ## 2026-08-13
 
 - `18:0x` · **DÉFAUT** · pod · `[Errno 2] '/workspace/blender/blender'` — deux

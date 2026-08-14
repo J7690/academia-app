@@ -37,6 +37,7 @@ inconnue. On journalise, et on retombe sur le TEXTE, qui dit au moins le sujet.
 
 from __future__ import annotations
 
+import math
 import os
 import sys
 import traceback
@@ -158,8 +159,13 @@ def _g_ecrire(p, j):
     texte = str(p.get("texte", "")).strip()
     if not texte:
         raise ValueError("ecrire sans texte")
+    # DEBOUT, FACE A LA CAMERA. Blender cree un texte a plat dans le plan XY,
+    # c'est-a-dire couche sur le sol : vu de la camera, un mot devenait une
+    # arete. Le secours universel doit etre le geste le plus lisible de tous,
+    # pas le moins -- c'est lui qu'on obtient quand tout le reste a echoue.
     objet = style.texte_3d(texte, taille=float(p.get("taille", 1.2)),
-                           position=tuple(p.get("position", (0, 0, 0))))
+                           position=tuple(p.get("position", (0, 0, 0))),
+                           rotation=(math.radians(90), 0.0, 0.0))
     style.tenir_dans(objet, float(p.get("largeur_max", 7.0)))
     return objet
 
