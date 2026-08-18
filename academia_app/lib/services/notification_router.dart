@@ -82,7 +82,10 @@ class NotificationRouter {
 
     _pending = null;
     final domain = data['domain'] ?? '';
-    final screen = _screenForData(data) ?? _screenForDomain(domain);
+    // 14/08/2026 : retour à la ligne d'avant 97bcfce. Ce commit appelait
+    // `_screenForData(data)` sans jamais committer la méthode — le build
+    // entier était cassé. La navigation fine par `data` reste à réécrire.
+    final screen = _screenForDomain(domain);
     if (screen == null) {
       debugPrint('[NotifRouter] domaine sans destination: $domain');
       return;

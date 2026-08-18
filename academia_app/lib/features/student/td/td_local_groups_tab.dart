@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../theme/td_theme.dart';
+import '../../../widgets/app_snack.dart';
 import '../../../widgets/adaptive_dialog.dart';
 
 /// Onglet Groupes Locaux — Matching par matière/quartier, inscription, création de groupes.
@@ -288,7 +289,7 @@ class _TdLocalGroupsTabState extends State<TdLocalGroupsTab> {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err == 'group_full' ? 'Groupe complet' : 'Erreur: $err')));
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+      if (mounted) AppSnack.error(context, e);
     }
   }
 

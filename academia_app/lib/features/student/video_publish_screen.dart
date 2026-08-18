@@ -10,6 +10,7 @@ import '../../providers/student_challenges_provider.dart';
 import '../../services/video_player_lifecycle_service.dart';
 import '../../services/videoasset_upload_service.dart';
 import '../../video/academia_playback_engine.dart';
+import '../../widgets/app_snack.dart';
 
 /// Écran de publication TikTok-style.
 ///
@@ -319,9 +320,7 @@ class _VideoPublishScreenState extends State<VideoPublishScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e')),
-      );
+      AppSnack.error(context, e);
     } finally {
       if (mounted) {
         setState(() => _isPublishing = false);

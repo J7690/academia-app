@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../providers/td_gamification_provider.dart';
+import '../../../services/td_service.dart';
 import '../../../theme/td_theme.dart';
+import '../../../widgets/app_snack.dart';
 import '../../../widgets/bobodo_state.dart';
 import '../../../widgets/bobodo_view.dart';
 
@@ -15,7 +16,15 @@ void _showRequestTeacherSheet(BuildContext context) {
   String? modality;
 
   const levels = ['L1', 'L2', 'L3', 'M1', 'M2', 'BTS', 'Terminale'];
-  const modalities = ['Présentiel', 'En ligne', 'Les deux'];
+  // Le libellé est pour l'écran ; la valeur est celle de l'enum PostgreSQL
+  // `td_modality` (online | onsite | hybrid). Envoyer le libellé brut fait
+  // répondre 22P02 au serveur, que l'UI ne peut afficher qu'en erreur
+  // générique. Les deux ne doivent jamais être confondus.
+  const modalities = <String, String>{
+    'Présentiel': 'onsite',
+    'En ligne': 'online',
+    'Les deux': 'hybrid',
+  };
 
   showModalBottomSheet<void>(
     context: context,
@@ -50,7 +59,7 @@ void _showRequestTeacherSheet(BuildContext context) {
             Expanded(child: DropdownButtonFormField<String>(
               value: modality, isExpanded: true,
               decoration: const InputDecoration(labelText: 'Modalité', border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
-              items: modalities.map((m) => DropdownMenuItem(value: m, child: Text(m, style: const TextStyle(fontSize: 13)))).toList(),
+              items: modalities.keys.map((m) => DropdownMenuItem(value: m, child: Text(m, style: const TextStyle(fontSize: 13)))).toList(),
               onChanged: (v) => setS(() => modality = v),
             )),
           ]),
@@ -66,12 +75,17 @@ void _showRequestTeacherSheet(BuildContext context) {
               if (subject.isEmpty) return;
               Navigator.of(ctx).pop();
               try {
-                await Supabase.instance.client.rpc('app_td_student_create_request', params: {
-                  'p_subject': subject,
-                  if (level != null) 'p_level': level,
-                  if (descCtrl.text.trim().isNotEmpty) 'p_description': descCtrl.text.trim(),
-                  if (modality != null) 'p_preferred_modality': modality,
-                });
+                // On passe par le service : il vérifie `success` dans la
+                // réponse, ce que l'appel direct ne faisait pas. Une réponse
+                // {success: false} affichait quand même « Demande envoyée ! ».
+                final desc = descCtrl.text.trim();
+                await TdService().studentCreateRequest(
+                  subject: subject,
+                  level: level,
+                  description: desc.isEmpty ? null : desc,
+                  preferredModality:
+                      modality == null ? null : modalities[modality],
+                );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                     content: Text('Demande envoyée ! Un enseignant sera bientôt assigné.'),
@@ -80,7 +94,7 @@ void _showRequestTeacherSheet(BuildContext context) {
                 }
               } catch (e) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur : $e'), backgroundColor: Colors.red));
+                  AppSnack.error(context, e);
                 }
               }
             },

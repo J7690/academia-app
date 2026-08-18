@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../config/supabase_config.dart';
 import '../../../theme/td_theme.dart';
+import '../../../widgets/app_snack.dart';
 
 /// Onglet Exercices TD — Exercices enseignant + devoirs/exercices IA générés.
 class TdExercisesTab extends StatefulWidget {
@@ -128,9 +129,7 @@ class _TdExercisesTabState extends State<TdExercisesTab> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur : $e'), backgroundColor: Colors.red),
-        );
+        AppSnack.error(context, e);
       }
     } finally {
       if (mounted) setState(() => _generating = false);
@@ -475,7 +474,7 @@ class _TdExercisesTabState extends State<TdExercisesTab> {
                     _loadAll();
                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Réponse soumise')));
                   } catch (e) {
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur : $e')));
+                    if (mounted) AppSnack.error(context, e);
                   }
                 },
                 icon: const Icon(Icons.send, size: 18),

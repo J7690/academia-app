@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../student_university_site_screen.dart';
+import '../apply_to_program.dart';
+import '../application_outcome_dialog.dart';
 import '../../../providers/student_offers_provider.dart';
 import '../../../providers/student_applications_provider.dart';
 import '../../../widgets/loading_widget.dart';
@@ -646,6 +648,11 @@ class _UniversityCard extends StatelessWidget {
                   onPressed: programs.isEmpty
                       ? null
                       : () {
+                          // Contexte de la carte : reste valide après la
+                          // fermeture de la feuille, contrairement à celui
+                          // du builder. C'est lui qui porte les providers
+                          // nécessaires au parcours « Candidater ».
+                          final cardContext = context;
                           showModalBottomSheet<void>(
                             context: context,
                             isScrollControlled: true,
@@ -711,38 +718,118 @@ class _UniversityCard extends StatelessWidget {
                                                 .where((e) =>
                                                     e.trim().isNotEmpty)
                                                 .join(' · ');
+                                            final programId =
+                                                p['program_id']?.toString();
                                             return Padding(
                                               padding: const EdgeInsets.only(
                                                 bottom: 8,
                                               ),
-                                              child: Column(
+                                              child: Row(
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
                                                 children: [
-                                                  Text(
-                                                    title,
-                                                    style: const TextStyle(
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.w600,
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          title,
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 14,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w600,
+                                                          ),
+                                                        ),
+                                                        if (meta.isNotEmpty)
+                                                          Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                              top: 2,
+                                                            ),
+                                                            child: Text(
+                                                              meta,
+                                                              style:
+                                                                  const TextStyle(
+                                                                fontSize: 12,
+                                                                color: Color(
+                                                                    0xFF6B7280),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                      ],
                                                     ),
                                                   ),
-                                                  if (meta.isNotEmpty)
-                                                    Padding(
+                                                  const SizedBox(width: 8),
+                                                  TextButton.icon(
+                                                    onPressed: () {
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                      if (programId == null ||
+                                                          programId.isEmpty) {
+                                                        showApplicationProblemDialog(
+                                                          cardContext,
+                                                          title:
+                                                              'Candidature indisponible',
+                                                          problem:
+                                                              'Cette formation n\'accepte pas encore de candidatures en ligne.',
+                                                          advice:
+                                                              'Contacte l\'université depuis son mini-site, ou réessaie plus tard.',
+                                                        );
+                                                        return;
+                                                      }
+                                                      applyToProgram(
+                                                        cardContext,
+                                                        programId: programId,
+                                                        programTitle: title,
+                                                        initialDegreeLevel:
+                                                            level.isNotEmpty
+                                                                ? level
+                                                                : null,
+                                                        initialStudyMode:
+                                                            mode.isNotEmpty
+                                                                ? mode
+                                                                : null,
+                                                      );
+                                                    },
+                                                    icon: const Icon(
+                                                        Icons.send,
+                                                        size: 16),
+                                                    label: const Text(
+                                                        'Candidater'),
+                                                    style:
+                                                        TextButton.styleFrom(
+                                                      foregroundColor:
+                                                          Colors.white,
+                                                      backgroundColor:
+                                                          const Color(
+                                                              0xFF3275D0),
                                                       padding:
-                                                          const EdgeInsets.only(
-                                                        top: 2,
+                                                          const EdgeInsets
+                                                              .symmetric(
+                                                        horizontal: 10,
+                                                        vertical: 6,
                                                       ),
-                                                      child: Text(
-                                                        meta,
-                                                        style:
-                                                            const TextStyle(
-                                                          fontSize: 12,
-                                                          color:
-                                                              Color(0xFF6B7280),
-                                                        ),
+                                                      minimumSize:
+                                                          const Size(0, 32),
+                                                      tapTargetSize:
+                                                          MaterialTapTargetSize
+                                                              .shrinkWrap,
+                                                      textStyle:
+                                                          const TextStyle(
+                                                              fontSize: 12),
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10),
                                                       ),
                                                     ),
+                                                  ),
                                                 ],
                                               ),
                                             );

@@ -24,6 +24,7 @@ import '../../video/academia_playback_engine.dart';
 import '../../video/audio_mix_service.dart';
 import '../../games/services/watermark_service.dart';
 // import '../../video/overlay_burn_in_service.dart'; // REMOVED - dead code
+import '../../widgets/app_snack.dart';
 import '../../widgets/audio_picker_sheet.dart';
 import '../../widgets/dj_mix_sheet.dart';
 import '../../widgets/equation_editor.dart';
@@ -381,12 +382,7 @@ class _StudentChallengeVideoEditorScreenState
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text('Erreur lors du chargement des pistes audio Studio: $e'),
-        ),
-      );
+      AppSnack.error(context, e);
       setState(() {
         _audioAssetsLoaded = true;
       });
@@ -2078,9 +2074,7 @@ class _StudentChallengeVideoEditorScreenState
     } catch (e) {
       debugPrint('[Draft] Error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur sauvegarde brouillon: $e')),
-        );
+        AppSnack.error(context, e);
       }
     }
   }
@@ -2873,12 +2867,7 @@ class _StudentChallengeVideoEditorScreenState
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur mixage : $e'),
-            backgroundColor: Colors.red.shade800,
-          ),
-        );
+        AppSnack.error(context, e);
       }
     } finally {
       if (mounted) {
@@ -3269,9 +3258,7 @@ class _StudentChallengeVideoEditorScreenState
     } catch (e) {
       debugPrint('[Studio] _runVideoRender error: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur de rendu : $e')),
-      );
+      AppSnack.error(context, e);
     } finally {
       if (mounted) {
         setState(() {
@@ -5238,9 +5225,7 @@ class _StudentChallengeVideoEditorScreenState
         setState(() {
           _isMerging = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors de la fusion: ${e.toString()}')),
-        );
+        AppSnack.error(context, e);
       }
     }
   }

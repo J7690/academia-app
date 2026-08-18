@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../providers/credit_provider.dart';
+import '../../widgets/app_snack.dart';
 import '../../widgets/ligdicash_payment_sheet.dart';
 
 /// Écran boutique de crédits Academia.
@@ -294,9 +295,7 @@ class _CreditStoreScreenState extends State<CreditStoreScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
-      );
+      AppSnack.error(context, e);
     }
   }
 

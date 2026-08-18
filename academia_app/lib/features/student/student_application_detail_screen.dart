@@ -16,6 +16,8 @@ import '../../widgets/ligdicash_payment_sheet.dart';
 import '../../widgets/bobodo_view.dart';
 import '../../services/analytics_tracking_service.dart';
 import '../../widgets/adaptive_dialog.dart';
+import '../../widgets/app_snack.dart';
+import '../../services/app_error_messages.dart';
 
 class StudentApplicationDetailScreen extends StatefulWidget {
   final Map<String, dynamic> application;
@@ -721,9 +723,7 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                             amountDue = brokerageFee;
                                           } catch (e) {
                                             if (!context.mounted) return;
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text('Erreur: $e')),
-                                            );
+                                            AppSnack.error(context, e);
                                             return;
                                           }
 
@@ -765,9 +765,7 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                               paymentId = data['payment_id']?.toString() ?? '';
                                             } catch (e) {
                                               if (!context.mounted) return;
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(content: Text('Erreur: $e')),
-                                              );
+                                              AppSnack.error(context, e);
                                               return;
                                             }
                                           }
@@ -837,7 +835,9 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                       if (provider.error != null) {
                         return Padding(
                           padding: const EdgeInsets.all(16),
-                          child: Center(child: Text('Erreur : ${provider.error}')),
+                          child: Center(
+                              child:
+                                  Text(AppError.messageFor(provider.error))),
                         );
                       }
 
@@ -1061,7 +1061,8 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                       }
 
                       if (provider.error != null) {
-                        return Center(child: Text('Erreur : ${provider.error}'));
+                        return Center(
+                            child: Text(AppError.messageFor(provider.error)));
                       }
 
                       final messages = provider.messages;

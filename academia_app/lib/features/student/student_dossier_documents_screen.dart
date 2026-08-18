@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/student_dossier_documents_provider.dart';
+import '../../services/app_error_messages.dart';
 
 class StudentDossierDocumentsScreen extends StatefulWidget {
   const StudentDossierDocumentsScreen({super.key});
@@ -145,7 +146,8 @@ class _StudentDossierDocumentsScreenState extends State<StudentDossierDocumentsS
                 }
 
                 if (provider.error != null) {
-                  return Center(child: Text('Erreur : ${provider.error}'));
+                  return Center(
+                      child: Text(AppError.messageFor(provider.error)));
                 }
 
                 final docs = provider.documents;

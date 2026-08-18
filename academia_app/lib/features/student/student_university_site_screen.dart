@@ -7,6 +7,7 @@ import '../../widgets/error_widget.dart';
 import '../../widgets/mini_site_hero_video.dart';
 import 'mini_site_media_viewer_screen.dart';
 import 'apply_to_program.dart';
+import 'application_outcome_dialog.dart';
 import '../share/share_service.dart';
 import '../share/share_mode_provider.dart';
 import '../share/widgets/share_signature.dart';
@@ -1400,16 +1401,28 @@ class _ProgramCard extends StatelessWidget {
                   ),
                 ),
                 TextButton.icon(
-                  onPressed: programId == null
-                      ? null
-                      : () => applyToProgram(
-                            context,
-                            programId: programId,
-                            programTitle: title,
-                            initialDegreeLevel:
-                                degree.isNotEmpty ? degree : null,
-                            initialStudyMode: mode.isNotEmpty ? mode : null,
-                          ),
+                  // Jamais grisé sans explication : un bouton muet laisse
+                  // l'étudiant croire que l'app est cassée.
+                  onPressed: () {
+                    if (programId == null) {
+                      showApplicationProblemDialog(
+                        context,
+                        title: 'Candidature indisponible',
+                        problem:
+                            'Cette formation n\'accepte pas encore de candidatures en ligne.',
+                        advice:
+                            'Contacte l\'université via ses coordonnées sur ce mini-site, ou réessaie plus tard.',
+                      );
+                      return;
+                    }
+                    applyToProgram(
+                      context,
+                      programId: programId,
+                      programTitle: title,
+                      initialDegreeLevel: degree.isNotEmpty ? degree : null,
+                      initialStudyMode: mode.isNotEmpty ? mode : null,
+                    );
+                  },
                   icon: const Icon(Icons.send),
                   label: const Text('Candidater'),
                   style: TextButton.styleFrom(

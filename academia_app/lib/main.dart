@@ -9,6 +9,8 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/date_symbol_data_local.dart';
+import 'services/app_error_messages.dart';
+import 'widgets/offline_banner.dart';
 import 'services/push_notification_service.dart';
 import 'services/app_navigator.dart';
 
@@ -212,7 +214,7 @@ void main() async {
     );
   } catch (e, st) {
     debugPrint('[BOOT] FAILED at step "$bootStep": $e\n$st');
-    runApp(_BootErrorApp(step: bootStep, error: '$e'));
+    runApp(_BootErrorApp(step: bootStep, rawError: e));
     return;
   }
 
@@ -232,48 +234,70 @@ void main() async {
 
 class _BootErrorApp extends StatelessWidget {
   final String step;
-  final String error;
-  const _BootErrorApp({required this.step, required this.error});
+  final Object rawError;
+  const _BootErrorApp({required this.step, required this.rawError});
 
   @override
   Widget build(BuildContext context) {
+    final appError = AppError.from(rawError);
+    final isNetwork = appError.type == AppErrorType.offline ||
+        appError.type == AppErrorType.timeout ||
+        appError.type == AppErrorType.serverDown;
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        backgroundColor: const Color(0xFFE8F5E9),
+        backgroundColor: const Color(0xFFF8FAFC),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline,
-                    color: Color(0xFFB71C1C), size: 48),
+                Icon(
+                  isNetwork ? Icons.wifi_off_rounded : Icons.error_outline,
+                  color: const Color(0xFFB45309),
+                  size: 56,
+                ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Erreur au démarrage',
-                  style: TextStyle(
+                Text(
+                  isNetwork
+                      ? 'Impossible de se connecter'
+                      : 'Erreur au démarrage',
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFFB71C1C),
+                    color: Color(0xFF0F172A),
                   ),
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Étape bloquée : $step',
+                  appError.message,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1B5E20),
+                    color: Color(0xFF475569),
                   ),
                 ),
-                const SizedBox(height: 8),
-                SelectableText(
-                  error,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () => main(),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Réessayer'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF1B5E20),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                  ),
                 ),
+                if (kDebugMode) ...[
+                  const SizedBox(height: 24),
+                  SelectableText(
+                    'Étape : $step\n$rawError',
+                    textAlign: TextAlign.center,
+                    style:
+                        const TextStyle(fontSize: 11, color: Colors.black45),
+                  ),
+                ],
               ],
             ),
           ),
@@ -425,6 +449,8 @@ class AcademiaApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           useMaterial3: true,
         ),
+        builder: (context, child) =>
+            OfflineBanner(child: child ?? const SizedBox.shrink()),
         home: const AuthWrapper(),
         routes: {
           '/auth/callback': (_) => const AuthCallbackScreen(),

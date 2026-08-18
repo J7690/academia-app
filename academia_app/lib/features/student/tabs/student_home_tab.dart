@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../student_profile_screen.dart';
 import '../student_university_site_screen.dart';
 import '../apply_to_program.dart';
+import '../application_outcome_dialog.dart';
 import '../student_payments_screen.dart';
 import '../student_home_mobile.dart' show StudentAssistantSection;
 import '../../../providers/student_profile_provider.dart';
@@ -1819,16 +1820,28 @@ class _OfferCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
-                  onPressed: programId == null
-                      ? null
-                      : () => applyToProgram(
-                            context,
-                            programId: programId,
-                            programTitle: title,
-                            initialDegreeLevel:
-                                degree.isNotEmpty ? degree : null,
-                            initialStudyMode: mode.isNotEmpty ? mode : null,
-                          ),
+                  // Jamais grisé sans explication : un bouton muet laisse
+                  // l'étudiant croire que l'app est cassée.
+                  onPressed: () {
+                    if (programId == null) {
+                      showApplicationProblemDialog(
+                        context,
+                        title: 'Candidature indisponible',
+                        problem:
+                            'Cette formation n\'accepte pas encore de candidatures en ligne.',
+                        advice:
+                            'Contacte l\'université depuis son mini-site, ou réessaie plus tard.',
+                      );
+                      return;
+                    }
+                    applyToProgram(
+                      context,
+                      programId: programId,
+                      programTitle: title,
+                      initialDegreeLevel: degree.isNotEmpty ? degree : null,
+                      initialStudyMode: mode.isNotEmpty ? mode : null,
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF3275D0),
                     foregroundColor: Colors.white,
