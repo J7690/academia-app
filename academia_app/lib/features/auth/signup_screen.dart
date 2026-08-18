@@ -19,7 +19,6 @@ class _SignupScreenState extends State<SignupScreen> {
   final _firstNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _invitationCodeController = TextEditingController();
   bool _isLoading = false;
   String? _error;
   bool _isPasswordVisible = false;
@@ -31,7 +30,6 @@ class _SignupScreenState extends State<SignupScreen> {
     _firstNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
-    _invitationCodeController.dispose();
     super.dispose();
   }
 
@@ -40,7 +38,6 @@ class _SignupScreenState extends State<SignupScreen> {
     final firstName = _firstNameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
-    final invitationCode = _invitationCodeController.text.trim();
 
     if (lastName.isEmpty || firstName.isEmpty || email.isEmpty || password.isEmpty) {
       setState(() {
@@ -87,29 +84,17 @@ class _SignupScreenState extends State<SignupScreen> {
         } catch (_) {}
       }
 
-      if (invitationCode.isNotEmpty) {
-        try {
-          final dynamic response = await client.rpc(
-            'app_accept_user_invitation',
-            params: {
-              'p_token': invitationCode,
-              'p_full_name': fullName,
-            },
-          );
-          if (response is Map && response['success'] != true) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    response['error']?.toString() ??
-                        'Erreur lors de la validation de l\'invitation.',
-                  ),
-                ),
-              );
-            }
-          }
-        } catch (_) {}
-      }
+      // PAS DE CODE D'INVITATION A L'INSCRIPTION PAR MAIL.
+      //
+      // Il etait facultatif, et il ne servait qu'a rattacher un compte a une
+      // invitation existante — un cas d'usage qui n'existe pas au moment ou
+      // quelqu'un cree son compte de lui-meme. Un champ de plus sur un
+      // formulaire d'inscription, c'est une raison de plus d'abandonner.
+      //
+      // Le meme retrait a deja ete fait cote telephone (commit db9236e).
+      // La RPC `app_accept_user_invitation` reste en place : elle sert aux
+      // invitations envoyees depuis l'administration, qui ont leur propre
+      // parcours.
       if (mounted) {
         Navigator.of(context).pop();
       }
@@ -215,13 +200,6 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                         ),
                         obscureText: !_isPasswordVisible,
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _invitationCodeController,
-                        decoration: const InputDecoration(
-                          labelText: 'Code d\'invitation (optionnel)',
-                        ),
                       ),
                       const SizedBox(height: 16),
                       Row(

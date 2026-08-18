@@ -295,6 +295,30 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       // le serveur sur le moteur dégradé.
       _storyboardOrigine = storyboardJson;
 
+      // LE PROJET QUI COMPTE EST CELUI QUE LE SERVEUR VIENT DE CRÉER.
+      //
+      // Deux projets naissent pour une seule génération : l'application en
+      // crée un VIDE avant d'appeler l'IA, et l'Edge Function en crée un
+      // SECOND qui porte le storyboard (index.ts:118, whiteboard_create_project).
+      // Elle le renvoie dans `project_data.project_id` — et personne ne le
+      // lisait. L'application continuait donc de désigner sa coquille vide.
+      //
+      // Mesure du 18/08 sur le téléphone, sujet « le pétrole » :
+      //   17:50:55  projet créé par l'app       → 0 scène
+      //   17:51:10  projet créé par le serveur  → 5 scènes, engine studio,
+      //                                           0 correction
+      // La génération était PARFAITE. Le rendu était demandé sur le premier,
+      // d'où « storyboard sans scène » — un échec affiché à l'étudiant pour un
+      // cours qui existait, à quinze secondes de là.
+      //
+      // Sans cet identifiant, rien de ce qui suit — rendu, aperçu, reprise —
+      // ne désigne le bon cours.
+      final projectData = data['project_data'];
+      final idServeur = projectData is Map ? projectData['project_id'] : null;
+      if (idServeur is String && idServeur.isNotEmpty) {
+        _currentProjectId = idServeur;
+      }
+
       // UNE CAPSULE 3D N'EST PAS UN STORYBOARD DE TABLEAU.
       //
       // Ses scènes portent des `gestes` — des verbes et des coordonnées — et
