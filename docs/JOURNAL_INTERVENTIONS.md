@@ -15,6 +15,36 @@
 
 ---
 
+## 2026-08-18 (soir)
+
+- `—` · **CORRECTIF** · storage · une règle du Studio (30/07, `de3055d`)
+  interrogeait `app.studio_jobs`, table que `authenticated` ne pouvait pas lire.
+  PostgreSQL évalue les règles de `storage.objects` à **chaque** lecture :
+  **tout dépôt de fichier était cassé dans toute l'application** depuis le 30/07.
+  Symptôme : `permission denied for table studio_jobs` en téléversant une image
+  d'auto-école. Droit accordé + règle `cree_par = auth.uid()`.
+- `—` · **DÉFAUT** · clonage des mini-sites · le modèle `universite-arbilo` est
+  **inactif** et la RPC exige `is_active = TRUE`. Elle renvoie `success: false`
+  **dans sa valeur de retour** ; l'Edge Function n'écoute que le canal d'erreur.
+  Aucune université créée depuis juillet n'a hérité. **Non corrigé.**
+- `—` · **DÉFAUT** · le cours « topologie » est sorti **sans aucune piste
+  audio**, marqué `done` : `narration_mode = none` par défaut, alors que l'IA
+  avait écrit la narration des 6 scènes sur 6. Mesure : 82 projets en `tts`,
+  **12 muets**.
+- `—` · **CORRECTIF** · étapes 0 et 1 : vidéo refusée **conservée** sous
+  `refuses/` ; `GEL_MAX_S` 3 → 6 s **et** fenêtre de détection séparée (le test
+  a attrapé que la confondre rendait le détecteur aveugle) ; narration par
+  défaut `tts`, forcée en 3D ; thème/renderer/style masqués en 3D ; exemple du
+  sujet changé.
+- `—` · **MESURE DÉCISIVE** · **le navigateur sans carte graphique rend 4,6 ×
+  plus vite que Blender sur RTX 4090** : **0,284 s/image** contre ~1,3.
+  60 images en 17,04 s, 660 pixels allumés au minimum, témoin de 106 Ko
+  regardé. Protocole et obstacles dans
+  `docs/MESURE_NAVIGATEUR_VS_BLENDER_2026-08-18.md`.
+- `—` · **DÉCISION** · on migre le rendu 3D vers le navigateur sur LWS.
+  Composition, invite, validation, style, porte d'acceptation : inchangés.
+- `—` · **DÉPENSE** · RunPod · 0,47 $ sur 24 h.
+
 ## 2026-08-18
 
 - `—` · **MESURE** · **le redressement des contours est PROUVÉ EN IMAGE.** Rendu
