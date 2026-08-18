@@ -37,10 +37,18 @@
 ## 1. Où on en est, en une phrase
 
 Le **Studio visuel 3D** fabrique des capsules dont la forme est **composée par
-l'IA** (verbes + coordonnées) et non plus choisie dans un catalogue. Depuis le
-14/08, **la chaîne rend réellement des images sur GPU** (mesuré : 119/1154 puis
-au-delà, travail `8b7c72d0`). Restent à vérifier : la vidéo livrée, et surtout
-le **cadrage**, jamais contrôlé sur une image réelle.
+l'IA** (verbes + coordonnées) et non plus choisie dans un catalogue.
+
+**L'infrastructure est finie et prouvée.** Deux vidéos complètes livrées
+(`01fe9e8c` et `dd8b7d49`, 47 s, 1080×1920, voix + sous-titres, acceptées par la
+porte qualité). Le cadrage, le mouvement de caméra, la transparence et
+l'orientation des contours sont vérifiés **en image**.
+
+**Il reste un seul chantier, et il est entièrement dans la couche IA** : les
+formes ne collent pas assez au propos — la voix dit « bateaux, sous-marins,
+montgolfières », l'image montre trois masses. L'invite et la validation ont été
+réécrites le 18/08 pour y répondre ; **la vérification attend une génération
+depuis l'app** (voir §6).
 
 ## 2. La chaîne, et qui exécute quoi
 

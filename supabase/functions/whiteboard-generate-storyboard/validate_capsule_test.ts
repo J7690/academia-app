@@ -164,3 +164,59 @@ Deno.test("plus de six scenes : troncature", () => {
   assert(r.valid);
   assertEquals((r.capsule!.scenes as any[]).length, 6);
 });
+
+// LA REPETITION EST UNE IMAGE, PAS UNE INTENTION.
+//
+// Mesure du 14/08 : la capsule « Poussee d'Archimede » livree portait en s1, s2
+// et s3 le MEME becher et la MEME sphere, aux memes coordonnees. Trois plans
+// interchangeables sur trois idees differentes -- et la validation les a laisses
+// passer avec zero correction, parce qu'elle n'a jamais compare deux scenes.
+Deno.test("deux scenes aux memes gestes sont NOMMEES, jamais rejetees", () => {
+  const gestes = [{
+    verbe: "revolutionner",
+    parametres: { profil: [[3, 0], [3, 4], [2.8, 4]], tours: 32 },
+  }];
+  const r = validateCapsule({
+    titre: "essai",
+    scenes: [
+      { id: "s1", intention: "objet", sujet: "un becher",
+        narration: "Premiere idee.", duree_s: 10, gestes },
+      { id: "s2", intention: "flux", sujet: "l eau deplacee",
+        narration: "Deuxieme idee, tout autre.", duree_s: 10, gestes },
+    ],
+  });
+  assert(r.valid, "on ne rejette pas : l etudiant perdrait credits et video");
+  assertEquals((r.capsule!.scenes as any[]).length, 2, "les deux scenes restent");
+  assert(r.corrections.some((c) => c.includes("s2") && c.includes("identique")),
+    `la repetition doit etre nommee, obtenu : ${JSON.stringify(r.corrections)}`);
+});
+
+Deno.test("renommer un objet ne masque pas la repetition", () => {
+  const p = { profil: [[1, 0], [1, 2]], tours: 32 };
+  const r = validateCapsule({
+    titre: "essai",
+    scenes: [
+      { id: "s1", intention: "objet", sujet: "a", narration: "Un.", duree_s: 9,
+        gestes: [{ verbe: "revolutionner", parametres: { ...p, nom: "becher" } }] },
+      { id: "s2", intention: "objet", sujet: "b", narration: "Deux.", duree_s: 9,
+        gestes: [{ verbe: "revolutionner", parametres: { ...p, nom: "cuve" } }] },
+    ],
+  });
+  assert(r.valid);
+  assert(r.corrections.some((c) => c.includes("s2") && c.includes("identique")),
+    "c est la geometrie qu on compare, pas les etiquettes");
+});
+
+Deno.test("deux scenes VRAIMENT differentes ne declenchent rien", () => {
+  const r = validateCapsule({
+    titre: "essai",
+    scenes: [
+      { id: "s1", intention: "objet", sujet: "a", narration: "Un.", duree_s: 9,
+        gestes: [{ verbe: "revolutionner", parametres: { profil: [[1, 0], [1, 2]] } }] },
+      { id: "s2", intention: "objet", sujet: "b", narration: "Deux.", duree_s: 9,
+        gestes: [{ verbe: "sculpter", parametres: { base: "galet", echelle: 2 } }] },
+    ],
+  });
+  assert(r.valid);
+  assertEquals(r.corrections.filter((c) => c.includes("identique")).length, 0);
+});

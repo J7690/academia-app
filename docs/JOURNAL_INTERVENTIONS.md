@@ -15,6 +15,37 @@
 
 ---
 
+## 2026-08-18
+
+- `—` · **MESURE** · **le redressement des contours est PROUVÉ EN IMAGE.** Rendu
+  `dd8b7d49` (moteur 1.3.2, image inchangée 1.3.0) : la flèche de la scène
+  « comparaison » est **debout, nette, pointant vers le bas** sous la sphère qui
+  coule. Quatre jours plus tôt c'était un bloc écrasé au sol. **Aucune couche
+  cachée en dessous** — première fois du chantier qu'un correctif tient du
+  premier coup.
+- `—` · **MESURE** · ce que ce rendu NE corrige pas, comme annoncé : s1 et s2
+  restent identiques, et « bateaux, sous-marins, montgolfières » reste trois
+  masses. La capsule rejouée venait de l'ancienne invite — variable isolée
+  volontairement.
+- `—` · **CORRECTIF** · `prompt_capsule.ts` · trois changements fondés sur
+  l'audit du moteur, pas sur une intuition :
+  1. chaque verbe dit ce qu'il **ne sait pas** faire — `sculpter` plafonne à un
+     allongement de 3,1 (mesuré), donc coque et sous-marin vont sur
+     `silhouetter`, seul verbe à orientation libre ;
+  2. **trois objets concrets en coordonnées** (montgolfière, sous-marin, flèche)
+     au lieu d'un seul gabarit — l'exemple unique invitait à le recopier ;
+  3. les gestes doivent représenter les mots de **leur propre narration**, pas
+     du sujet en général. L'ancienne formule rendait la scène 5 conforme tout
+     en étant fausse.
+- `—` · **CORRECTIF** · `validate_capsule.ts` · `signalerRepetitions()` compare
+  la **géométrie** entre scènes (nom exclu) et la **nomme** sans jamais
+  rejeter. Trois tests ajoutés, dont « renommer un objet ne masque pas la
+  répétition ». **37 tests passent.**
+- `—` · **DÉPLOIEMENT** · Supabase · `whiteboard-generate-storyboard`.
+- `—` · **BLOQUÉ** · la vérification exige une **génération depuis l'app**
+  (session étudiante requise, 0,002 $). Le JSON produit sera lu **avant** tout
+  rendu : on ne paie un GPU qu'une fois la description jugée bonne.
+
 ## 2026-08-14
 
 - `10:1x` · **DÉFAUT (le mien)** · j'ai demandé à Jocelyn de faire `docker login`

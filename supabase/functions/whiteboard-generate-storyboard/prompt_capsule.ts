@@ -48,8 +48,13 @@ Le moteur exécute ta description telle quelle.
 2. LES GESTES qui fabriquent la scène. Six verbes, tous décrits en NOMBRES :
 
    silhouetter  un squelette de segments, épaissi en volume.
+                LE VERBE LE PLUS PUISSANT : c'est le SEUL dont l'orientation est
+                libre, et le seul qui sache faire un objet ALLONGÉ ou articulé.
                 Pour tout ce qui a une ossature : corps, membre, plante, racine,
-                vaisseau, neurone, rivière, branche, chaîne de montagnes.
+                vaisseau, neurone, rivière, branche, chaîne de montagnes —
+                mais AUSSI : bateau, coque, sous-marin, avion, pont, fusée
+                couchée, ressort, molécule, circuit, tout objet plus long que
+                large. En cas de doute, c'est celui-ci qu'il faut prendre.
                 parametres: {
                   segments: [[[x,y,z],[x,y,z],…], [ …autre branche… ]],
                   rayons:   [r1, r2, …]  (une épaisseur par point, dans l'ordre),
@@ -58,6 +63,8 @@ Le moteur exécute ta description telle quelle.
                 }
                 Une branche qui repart d'un point DÉJÀ POSÉ doit reprendre ses
                 coordonnées EXACTES : c'est ainsi qu'elle se raccorde.
+                Un rayon qui grossit puis diminue le long d'une ligne donne un
+                fuseau : c'est ainsi qu'on obtient une coque ou un sous-marin.
 
    revolutionner  un profil tourné autour de l'axe vertical.
                 Pour tout ce qui est de révolution : vase, colonne, entonnoir,
@@ -69,19 +76,30 @@ Le moteur exécute ta description telle quelle.
                 côte à côte — une comparaison — il FAUT leur donner des
                 positions différentes en x, sinon elles se superposent.
 
-   extruder     un contour 2D poussé en épaisseur.
+   extruder     un contour 2D poussé en épaisseur. Le contour est DEBOUT, face
+                au spectateur : x va vers la droite, y vers le HAUT.
                 Pour une lettre, un symbole, un pays, une pièce, une section,
                 une flèche, un panneau.
-                parametres: { contour: [[x,y], …], epaisseur: 0.1 à 2.0 }
+                parametres: { contour: [[x,y], …], epaisseur: 0.1 à 2.0,
+                              position: [x,y,z] }
                 Au moins 3 points, dans l'ordre du tracé.
+                IL NE SAIT PAS faire un volume rond : c'est une plaque découpée.
 
-   sculpter     un volume facetté à partir d'une base.
+   sculpter     un volume facetté à partir d'une base. Pour une masse simple :
+                une bulle, un caillou, une graine, une planète, une goutte.
                 bases: ovoide, sphere, galet, goutte, lentille
                 parametres: { base, echelle, facettes: 1 à 3, position: [x,y,z],
                               deformation: 0 à 0.2 }
+                IL NE SAIT PAS faire un objet ALLONGÉ. Ces cinq bases sont des
+                ballons plus ou moins aplatis, toujours sur l'axe vertical, et
+                le plus étiré ne dépasse pas 3 fois sa largeur. Une coque de
+                bateau, un sous-marin, un bras, une fusée : PAS avec ce verbe —
+                utilise silhouetter. Un galet nommé "bateau" reste un galet.
 
    napper       un terrain quadrillé jusqu'à l'horizon. Donne l'échelle.
                 parametres: { cote: 60 à 220, pas: 24 à 60, amplitude: 0.5 à 3 }
+                IL NE SAIT PAS être déplacé ni incliné : il est toujours au sol,
+                centré. Un seul par scène, et jamais comme sujet.
 
    ecrire       du texte en volume. LE SECOURS : quand aucune forme ne convient,
                 un mot, un chiffre ou une formule dit toujours le sujet.
@@ -130,12 +148,42 @@ UNIQUEMENT ce JSON, sans texte autour, sans balise Markdown :
   ]
 }
 
+════════ TROIS OBJETS CONCRETS, EN COORDONNÉES ════════
+
+Recopie la MÉTHODE, jamais les chiffres. Ils sont là pour montrer le niveau de
+détail attendu — un objet demande souvent PLUSIEURS gestes.
+
+MONTGOLFIÈRE — l'enveloppe tourne, la nacelle est une petite masse dessous :
+  { "verbe":"revolutionner", "role":"sujet", "parametres":{ "nom":"enveloppe",
+    "profil":[[0.35,0],[0.95,0.4],[1.5,1.0],[1.82,1.8],[1.9,2.6],[1.6,3.4],
+              [1.05,4.1],[0.4,4.5],[0,4.7]], "tours":40 } }
+  { "verbe":"sculpter", "role":"sujet", "parametres":{ "base":"lentille",
+    "echelle":0.45, "facettes":1, "position":[0,0,-0.5] } }
+
+SOUS-MARIN — un fuseau : le rayon grossit au milieu, s'affine aux extrémités.
+  { "verbe":"silhouetter", "role":"sujet", "parametres":{ "nom":"coque",
+    "segments":[[[-3,0,0],[-1.5,0,0],[0,0,0],[1.5,0,0],[2.7,0,0]],
+                [[0,0,0],[0,0,0.75],[0,0,1.25]]],
+    "rayons":[0.12,0.52,0.7,0.5,0.1,0.7,0.28,0.2], "lisser":2 } }
+
+FLÈCHE VERS LE HAUT — un contour debout, hampe puis pointe :
+  { "verbe":"extruder", "role":"sujet", "parametres":{ "nom":"poussee",
+    "contour":[[-0.3,0],[0.3,0],[0.3,1.5],[0.65,1.5],[0,2.3],[-0.65,1.5],
+               [-0.3,1.5]], "epaisseur":0.2, "position":[0,0,0] } }
+
 ════════ CE QUI FAIT UNE BONNE CAPSULE ════════
 
-• Chaque scène montre QUELQUE CHOSE DU SUJET. Une forme qui conviendrait à
-  n'importe quel cours est une forme ratée.
-• Les scènes se suivent : on ne remontre pas la même chose deux fois.
+• MONTRE CE QUE TU DIS. Les gestes d'une scène doivent représenter les mots
+  DE SA PROPRE NARRATION, pas le thème général. Relis ta phrase, prends-en les
+  noms concrets, et fabrique-les. Si la voix dit « bateau », un bateau doit
+  être à l'écran — pas une masse qui pourrait être n'importe quoi.
+• UNE SCÈNE, UNE IMAGE NOUVELLE. Deux scènes ne doivent JAMAIS porter les mêmes
+  gestes aux mêmes coordonnées. Change l'objet, ou change franchement le point
+  de vue, l'échelle, le nombre d'éléments. Recopier la scène précédente en ne
+  changeant que la narration est la faute la plus grave de cette tâche.
+• Une forme qui conviendrait à n'importe quel cours est une forme ratée.
 • Budget de parole : 250 mots au total, répartis. La voix commande la durée.
+• 2 à 4 gestes par scène. Un seul geste donne presque toujours une image pauvre.
 • Si le sujet est abstrait et qu'aucune forme concrète ne s'impose, choisis une
   MÉTAPHORE VISUELLE et rends-la explicitement — ou écris le mot. Mieux vaut un
   mot juste qu'une forme décorative.`;

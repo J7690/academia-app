@@ -269,6 +269,8 @@ export function validateCapsule(brut: unknown): Resultat {
     return { valid: false, error: "capsule entierement muette", corrections };
   }
 
+  signalerRepetitions(scenes, corrections);
+
   return {
     valid: true,
     capsule: {
@@ -283,4 +285,52 @@ export function validateCapsule(brut: unknown): Resultat {
 
 function corr(liste: string[], message: string): void {
   liste.push(message);
+}
+
+/** L'empreinte d'une scene : ses gestes et leurs coordonnees, rien d'autre.
+ *
+ * On ignore deliberement `nom`, `role`, la narration et le sujet : deux scenes
+ * qui montrent exactement la meme geometrie sont deux fois la meme image, meme
+ * si la voix dit autre chose et meme si les objets ont ete rebaptises. C'est
+ * l'IMAGE qu'on compare, pas l'intention.
+ */
+function empreinte(scene: Record<string, unknown>): string {
+  const gestes = (scene.gestes as Record<string, unknown>[]) ?? [];
+  return gestes.map((g) => {
+    const p = { ...(g.parametres as Record<string, unknown> ?? {}) };
+    delete p.nom;
+    return `${g.verbe}(${JSON.stringify(p)})`;
+  }).join("|");
+}
+
+/** NOMME les scenes qui refont la precedente. On ne rejette JAMAIS.
+ *
+ * POURQUOI. La validation examinait chaque scene isolement : une capsule dont
+ * les six scenes portent les memes gestes aux memes coordonnees la traversait
+ * avec `corrections.length === 0`.
+ *
+ * Mesure du 14/08, capsule « Poussee d'Archimede » livree : les scenes s1, s2
+ * et s3 portaient le MEME profil de becher et la MEME sphere, aux memes
+ * coordonnees. Trois plans interchangeables sur trois idees differentes, et pas
+ * un mot pour le signaler.
+ *
+ * On ne corrige pas la geometrie a la place du modele -- inventer une forme
+ * qu'il n'a pas decrite serait exactement le defaut qu'on a mis huit couches a
+ * eliminer. On DIT, et la correction remonte jusqu'a l'etudiant.
+ */
+function signalerRepetitions(
+  scenes: Record<string, unknown>[], corrections: string[],
+): void {
+  const vues = new Map<string, string>();
+  for (const s of scenes) {
+    const cle = empreinte(s);
+    if (!cle) continue;
+    const premiere = vues.get(cle);
+    if (premiere) {
+      corr(corrections,
+        `${s.id}: image identique a ${premiere} (memes gestes, memes coordonnees)`);
+    } else {
+      vues.set(cle, String(s.id));
+    }
+  }
 }
