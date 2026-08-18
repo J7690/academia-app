@@ -31,6 +31,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import montage  # noqa: E402
 
 LARGEUR, HAUTEUR, FPS, DUREE = 216, 384, 25, 4
+# UN GEL DOIT DEPASSER LE SEUIL DE REFUS POUR ETRE REFUSE.
+# `montage.GEL_MAX_S` est passe de 3 a 6 s le 18/08 (une orbite lente sur un
+# objet symetrique produisait des images quasi identiques, et une capsule saine
+# a ete refusee pour 3,16 s). La donnee d'essai figee doit donc durer PLUS que
+# ce seuil, sans quoi le test verifierait seulement que 4 s ne suffisent pas.
+DUREE_FIGEE = 9
 # Le cadre cinema rend 62 % de la hauteur et laisse le reste noir : on le
 # reproduit, sinon on mesurerait autre chose que ce que mesure la production.
 UTILE = int(HAUTEUR * montage.PROPORTION_CINEMA)          # 238
@@ -101,7 +107,7 @@ CAS = [
     ("capsule correcte",         "anime", "voix",    DUREE, DUREE, True,  None,       None),
     ("capsule NOIRE",            "noire", "voix",    DUREE, DUREE, False, "noire",    None),
     ("capsule TRONQUEE",         "anime", "voix",    DUREE, 10.0,  False, "tronquee", None),
-    ("capsule FIGEE",            "figee", "voix",    DUREE, DUREE, False, "figee",    None),
+    ("capsule FIGEE",            "figee", "voix",    DUREE_FIGEE, DUREE_FIGEE, False, "figee",    None),
     ("capsule MUETTE",           "anime", "silence", DUREE, DUREE, True,  None,       "muette"),
     ("capsule SANS PISTE AUDIO", "anime", "aucun",   DUREE, DUREE, True,  None,       "aucune piste audio"),
 ]

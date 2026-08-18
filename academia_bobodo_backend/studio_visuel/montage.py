@@ -522,9 +522,40 @@ def verifier(chemin: str) -> dict:
 # Une narration normale se situe entre -30 et -18 dB. Le plancher est place tres
 # bas exprès : il ne doit attraper que le silence REEL, jamais une voix douce.
 PLANCHER_RMS_DB = -60.0
-# Duree figee toleree. La camera bouge a chaque image ; au-dela de trois
-# secondes d'immobilite stricte, le rendu s'est arrete.
-GEL_MAX_S = 3.0
+# Duree figee toleree.
+#
+# LE SEUIL A ETE ECRIT POUR UN AUTRE REGIME DE MOUVEMENT, ET IL A REFUSE A TORT.
+#
+# Il valait 3,0 s, justifie ainsi : « la camera bouge a chaque image ». C'etait
+# vrai du temps des dix archetypes, dont les cameras balayaient large. Depuis le
+# 14/08, le compositeur pose une orbite VOLONTAIREMENT LENTE -- 14 degres sur
+# toute une scene de comparaison, « travellings lents et rotations limitees ».
+# Sur un objet a symetrie de revolution, deux images consecutives sont alors
+# quasi identiques, et `freezedetect` a -55 dB les compte comme figees.
+#
+# Mesure du 18/08, travail 50b5236d « pluie » : 887 images rendues sur 886, un
+# rendu complet et sain, REFUSE pour « image figee 3.16 s ». Zero virgule seize
+# seconde au-dessus du seuil.
+#
+# On monte a 6 s : au-dela, meme une orbite lente aurait parcouru assez d'angle
+# pour changer l'image, et un rendu reellement arrete depasse largement. Ce
+# chiffre reste a confirmer sur des capsules acceptees -- il est choisi pour ne
+# plus refuser a tort, pas pour laisser passer un rendu mort.
+GEL_MAX_S = 6.0
+
+# DEUX CHOSES DIFFERENTES, ET LES CONFONDRE REND LE DETECTEUR AVEUGLE.
+#
+# `GEL_MAX_S` dit a partir de quand on REFUSE. Cette constante-ci dit a partir
+# de quand ffmpeg MESURE un gel. Elles etaient une seule et meme valeur : monter
+# le seuil de refus montait aussi la fenetre de detection, et un gel de quatre
+# secondes cessait d'etre vu -- `freezedetect` ne rapporte rien en dessous de
+# `d=`. Le test `test_porte_acceptation` l'a attrape immediatement : une capsule
+# entierement figee de 4 s ressortait avec `duree_figee_s = 0.0`.
+#
+# On mesure donc bas et on refuse haut. Entre les deux, le gel apparait dans les
+# mesures sans faire echouer la capsule -- exactement ce qu'on veut pour choisir
+# le bon seuil sur des chiffres plutot que sur une intuition.
+GEL_DETECTION_S = 2.0
 # En deca de cette part de la duree attendue, la capsule est tronquee.
 # « l'univers » etait a 0,47.
 PART_DUREE_MINIMALE = 0.90
@@ -571,7 +602,7 @@ def duree_video_s(chemin: str) -> float:
         return -1.0
 
 
-def duree_figee_s(chemin: str, duree_minimale: float = GEL_MAX_S) -> float:
+def duree_figee_s(chemin: str, duree_minimale: float = GEL_DETECTION_S) -> float:
     """Duree cumulee pendant laquelle l'image ne bouge plus du tout.
 
     On mesure sur la ZONE UTILE, comme la luminosite : les bandes noires du

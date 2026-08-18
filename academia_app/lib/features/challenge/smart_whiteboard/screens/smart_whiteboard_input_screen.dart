@@ -29,7 +29,22 @@ class _SmartWhiteboardInputScreenState extends State<SmartWhiteboardInputScreen>
   // Theme and renderer selection
   ThemeId _selectedTheme = ThemeId.scientific;
   RendererId _selectedRenderer = RendererId.scientific;
-  NarrationMode _selectedNarrationMode = NarrationMode.none;
+
+  // LA VOIX PAR DÉFAUT, ET C'EST UN CORRECTIF, PAS UNE PRÉFÉRENCE.
+  //
+  // Le défaut était `none`. Mesure du 18/08 : sur 94 projets récents, 82 en
+  // `tts` et 12 MUETS — parce que l'étudiant avait pensé à changer, ou non.
+  // Le cours « topologie » du 18/08 est sorti sans aucune piste audio, marqué
+  // `done` : l'IA avait écrit la narration des 6 scènes sur 6, et le mode
+  // disait de ne pas la prononcer. La chaîne a obéi ; les fichiers de capture
+  // s'appellent littéralement `cours_muet.partN.mp4`.
+  //
+  // Personne ne demande un cours muet. Qui n'en veut pas peut encore le dire.
+  NarrationMode _selectedNarrationMode = NarrationMode.tts;
+
+  /// Vrai quand l'étudiant a choisi l'animation 3D. Sert à n'afficher que les
+  /// réglages que cette chaîne-là lit réellement.
+  bool get _estAnimation3D => _selectedProduction == ProductionType.animation;
 
   @override
   void dispose() {
@@ -57,7 +72,9 @@ class _SmartWhiteboardInputScreenState extends State<SmartWhiteboardInputScreen>
       subject: subject,
       rendererId: _selectedRenderer.name,
       themeId: _selectedTheme.name,
-      narrationMode: _selectedNarrationMode.name,
+      narrationMode: _estAnimation3D
+          ? NarrationMode.tts.name
+          : _selectedNarrationMode.name,
     );
 
     if (!mounted) return;
@@ -169,7 +186,11 @@ class _SmartWhiteboardInputScreenState extends State<SmartWhiteboardInputScreen>
                 TextField(
                   controller: _subjectController,
                   decoration: const InputDecoration(
-                    hintText: 'Ex: Dérivée d\'une fonction',
+                    // L'EXEMPLE ORIENTE CE QUE L'ÉTUDIANT TAPE. « Dérivée d'une
+                    // fonction » est le pire cas pour une animation 3D : le
+                    // sujet n'a AUCUNE forme à montrer. On propose donc un
+                    // sujet qui en a une, et qui marche aussi au tableau.
+                    hintText: 'Ex: La poussée d\'Archimède',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -196,41 +217,77 @@ class _SmartWhiteboardInputScreenState extends State<SmartWhiteboardInputScreen>
                   const SizedBox(height: 24),
                 ],
 
-                // Theme selection
-                const Text(
-                  'Thème',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                // L'ÉCRAN NE MONTRE QUE CE QUE LA CHAÎNE CHOISIE LIT VRAIMENT.
+                //
+                // Thème, renderer et narration partent bien au serveur, mais la
+                // chaîne 3D ne les relit JAMAIS : `getCapsulePrompt(_mode,
+                // _renderer)` ignore ses deux arguments, et le préparateur
+                // exige une voix quoi qu'il arrive. Trois réglages affichés qui
+                // ne décident de rien — et un qui MENT, puisque « Narration :
+                // aucune » est impossible en 3D.
+                //
+                // Un champ affiché mais ignoré est un mensonge fait à
+                // l'étudiant : il croit régler quelque chose, et rien ne bouge.
+                if (!_estAnimation3D) ...[
+                  const Text(
+                    'Thème',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                _buildThemeSelector(),
-                const SizedBox(height: 24),
-
-                // Renderer selection
-                const Text(
-                  'Renderer',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                  const SizedBox(height: 8),
+                  _buildThemeSelector(),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Renderer',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                _buildRendererSelector(),
-                const SizedBox(height: 24),
-
-                // Narration mode selection
-                const Text(
-                  'Narration',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                  const SizedBox(height: 8),
+                  _buildRendererSelector(),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Narration',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                _buildNarrationModeSelector(),
-                const SizedBox(height: 32),
+                  const SizedBox(height: 8),
+                  _buildNarrationModeSelector(),
+                  const SizedBox(height: 32),
+                ] else ...[
+                  // En 3D la voix n'est pas une option : le préparateur REFUSE
+                  // une capsule muette plutôt que de louer une machine pour un
+                  // diaporama silencieux. On le dit, au lieu de proposer un
+                  // choix qui n'existe pas.
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F8F4),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.record_voice_over,
+                            size: 18, color: Color(0xFF1EA75C)),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'La voix est incluse : elle commande le rythme des '
+                            'images. Les formes sont composées à partir de ton '
+                            'sujet.',
+                            style: TextStyle(fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
 
                 // Generate button
                 ElevatedButton(

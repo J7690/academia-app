@@ -320,6 +320,30 @@ def executer(capsule: dict, travail: str | None = None) -> tuple[bool, str]:
     if not verdict["accepte"]:
         for motif in verdict["refus"]:
             journal(f"ECHEC {motif}")
+
+        # ON GARDE CE QU'ON REFUSE. C'EST LA SEULE FACON DE SAVOIR SI ON A EU
+        # RAISON DE REFUSER.
+        #
+        # Jusqu'ici la video refusee etait perdue avec la machine. Un refus
+        # JUSTE et un refus FAUX se ressemblaient donc exactement : une ligne
+        # d'erreur, et rien a regarder.
+        #
+        # Mesure du 18/08, travail 50b5236d « pluie » : 887 images rendues sur
+        # 886 -- un rendu complet et sain -- refuse pour « image figee 3.16 s »
+        # contre un seuil de 3,0. Faux refus tres probable, impossible a
+        # prouver : le fichier n'existait plus.
+        #
+        # Le depot ne bloque JAMAIS : si Storage refuse, on le dit et on rend
+        # quand meme le verdict. Perdre la preuve est un moindre mal ; perdre
+        # le verdict serait pire.
+        try:
+            cle_refus = (f"refuses/{capsule['capsule_id']}/{int(depart)}/"
+                         f"capsule.mp4")
+            garde, detail_garde = deposer(video, cle_refus)
+            journal(f"REFUS CONSERVE {'oui' if garde else 'non'} — "
+                    f"{cle_refus if garde else detail_garde}")
+        except Exception as e:  # noqa: BLE001
+            journal(f"REFUS NON CONSERVE : {e}")
         # Code stable, pour que la cause reste lisible en base et dans les
         # journaux. L'ordre suit la gravite : illisible d'abord, puis ce qui
         # manque, puis ce qui est noir.
