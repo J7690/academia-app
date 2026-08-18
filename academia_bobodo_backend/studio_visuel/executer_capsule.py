@@ -80,6 +80,27 @@ GENERATEUR = _trouver("generateur_scenes.py", "GENERATEUR",
                       ("/opt/moteur/generateur_scenes.py",
                        "/workspace/generateur_scenes.py"))
 TRAVAIL = os.environ.get("TRAVAIL", "/workspace/capsule")
+
+# Le moteur de rendu. `web` par defaut depuis le 18/08 ; `blender` reste
+# joignable sans redeploiement, par la variable d'environnement du pod
+# (`app.studio_config.env_pod`). On ne coupe pas un moteur eprouve le jour ou
+# l'on en branche un neuf.
+MOTEUR_RENDU = os.environ.get("MOTEUR_RENDU", "web").strip().lower()
+RENDU_WEB = _trouver("rendre_capsule_web.js", "RENDU_WEB",
+                     ("/opt/moteur/web/rendre_capsule_web.js",
+                      "/workspace/web/rendre_capsule_web.js"))
+
+
+def _env_rendu() -> dict:
+    """L'environnement du sous-processus de rendu.
+
+    `NODE_PATH` est indispensable : le script vit dans `/opt/moteur/web` et les
+    modules dans `/opt/rendu/node_modules`. Node resout depuis le dossier du
+    fichier vers le haut, il ne les trouverait donc jamais.
+    """
+    env = dict(os.environ)
+    env.setdefault("NODE_PATH", "/opt/rendu/node_modules")
+    return env
 BUCKET = "studio-visuel"
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
@@ -224,10 +245,31 @@ def executer(capsule: dict, travail: str | None = None) -> tuple[bool, str]:
         with open(os.path.join(TRAVAIL, "capsule_normalisee.json"), "w", encoding="utf-8") as f:
             json.dump(partielle, f, ensure_ascii=False)
 
-        rendu = subprocess.run(
-            [BLENDER, "-b", "--python", GENERATEUR, "--",
-             os.path.join(TRAVAIL, "capsule_normalisee.json"), images],
-            capture_output=True, text=True, timeout=10800)
+        # DEUX MOTEURS, UN SEUL CONTRAT.
+        #
+        # Les deux prennent un manifeste et un dossier, et y deposent des images
+        # numerotees par scene. Tout ce qui suit -- sous-titres, voix, montage,
+        # porte d'acceptation, depot -- ignore lequel a travaille.
+        #
+        # `web` est le defaut depuis le 18/08. Mesure sur la capsule « Poussee
+        # d'Archimede », 5 scenes, 0 degradation : 1,069 s par image dans un
+        # navigateur SANS carte graphique, contre ~1,3 s pour Blender sur une
+        # RTX 4090 louee. L'ecart de vitesse est modeste ; ce qui disparait ne
+        # l'est pas -- l'amorcage de 3 s a plus de 25 minutes selon l'hote, qui
+        # a fait echouer la moitie des rendus de la semaine, la facturation a
+        # l'heure, et les 4,47 Go a tirer avant chaque rendu.
+        #
+        # `MOTEUR_RENDU=blender` ramene l'ancien chemin sans rien redeployer :
+        # on ne coupe pas un moteur eprouve le jour ou l'on en branche un neuf.
+        if MOTEUR_RENDU == "blender":
+            commande = [BLENDER, "-b", "--python", GENERATEUR, "--",
+                        os.path.join(TRAVAIL, "capsule_normalisee.json"), images]
+        else:
+            commande = ["node", RENDU_WEB,
+                        os.path.join(TRAVAIL, "capsule_normalisee.json"), images]
+        journal(f"MOTEUR {MOTEUR_RENDU} — {commande[0]}")
+        rendu = subprocess.run(commande, capture_output=True, text=True,
+                               timeout=10800, env=_env_rendu())
 
         # COMPOSITION et DEGRADATION manquaient a cette liste, et ce sont les
         # deux seules lignes qui disent ce que la scene DECRITE est devenue.
@@ -240,7 +282,11 @@ def executer(capsule: dict, travail: str | None = None) -> tuple[bool, str]:
     else:
         rendu = None
 
-    produites = [n for n in os.listdir(images) if n.endswith(".png")]
+    # Blender depose des PNG, le navigateur des JPEG -- l'encodage PNG d'une
+    # image 1080x1920 coute plus cher que son rendu. On accepte les deux : c'est
+    # ffmpeg qui assemble, et il ne fait pas la difference.
+    produites = [n for n in os.listdir(images)
+                 if n.endswith(".png") or n.endswith(".jpg")]
     if not produites:
         # LA CAUSE DOIT REMONTER EN BASE, PAS MOURIR ICI.
         #

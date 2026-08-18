@@ -76,6 +76,16 @@ if [ -d "$SOURCE/contours" ]; then
   cp -a "$SOURCE/contours" "$ATELIER/contours"
 fi
 
+# LE MOTEUR NAVIGATEUR VOYAGE AVEC LE RESTE. Sans lui dans l'archive, corriger
+# un verbe Three.js obligerait a reconstruire 4,47 Go -- exactement ce que la
+# separation image/moteur a supprime.
+if [ -d "$SOURCE/web" ]; then
+  cp -a "$SOURCE/web" "$ATELIER/web"
+else
+  echo "REFUS : $SOURCE/web absent — le moteur navigateur est le moteur par defaut" >&2
+  exit 1
+fi
+
 echo "$VERSION" > "$ATELIER/VERSION"
 ARCHIVE="$ATELIER/moteur-$VERSION.tar.gz"
 # `--owner=0 --group=0 --numeric-owner` : l'archive doit s'extraire chez
