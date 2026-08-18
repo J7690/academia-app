@@ -15,11 +15,24 @@
 > chiffres mesurés, les huit couches du défaut, et cinq points de reprise
 > ordonnés. Le lire avant ce fichier si l'on découvre le projet.
 
-> **ATTENTION — un AUTRE chantier travaille sur ce dépôt.** Relevé le 14/08 :
-> 20 fichiers non commités qui ne relèvent pas du Studio 3D (écrans étudiants,
-> `main.dart`, `notification_router.dart`, quatre widgets neufs, et
-> `docs/CANDIDATURE_DIALOGUES_EXPLICITES_2026-08-14.md`). Ne pas les committer
-> avec du travail Studio : une régression deviendrait indiscernable.
+> **ATTENTION — un AUTRE chantier travaille sur ce dépôt.** Relevé le 18/08 :
+> 28 fichiers non commités qui ne relèvent pas du Studio 3D (écrans étudiants,
+> inscription/connexion par téléphone, `main.dart`, `notification_router.dart`,
+> quatre widgets neufs, deux fichiers supprimés, et
+> `docs/CANDIDATURE_DIALOGUES_EXPLICITES_2026-08-14.md`) — plus `capsule.mp4`
+> à la racine, origine non confirmée. Ne pas les committer avec du travail
+> Studio : une régression deviendrait indiscernable.
+>
+> **Ce chantier a été audité puis complété le 18/08**, à la demande de
+> Jocelyn : le parrainage est désormais retiré **entièrement côté client**
+> (et plus seulement l'écran) sur les deux parcours d'inscription, et le
+> passage de l'OTP au mot de passe pour le téléphone est fini (textes,
+> imports et fichier mort nettoyés). Détail complet dans
+> `docs/JOURNAL_INTERVENTIONS.md` (section 2026-08-18). Point ouvert le plus
+> sensible, inchangé : l'inscription par téléphone (`phone_signup_screen.dart`)
+> suppose « Confirm phone » désactivé côté Supabase pour ouvrir une session
+> sans SMS ; **non vérifié** — l'accès MCP Supabase en lecture seule manquait
+> de jeton cette session. Rien commité, rien poussé, rien touché côté serveur.
 
 ## 1. Où on en est, en une phrase
 
@@ -239,6 +252,7 @@ sur le poste de Jocelyn**.
 | Deux jetons Docker Hub collés en conversation | 12/08 | **ouverte — à révoquer par Jocelyn** |
 | ~~`CLAUDE.md` annonce un chantier abandonné~~ | 28/07 | **soldée le 13/08** — en-tête réécrit, §7 archivé, pointe vers ce fichier |
 | 4 verbes sur 6 non conclus par l'audit croisé | 13/08 | **ouverte** — cf. §4.3 |
+| Inscription téléphone : réglage Supabase « Confirm phone » non vérifié ; comptes de l'ancien parcours OTP potentiellement bloqués (plus de repli dans l'UI) | 18/08 | **ouverte** — cf. journal 18/08 ; demande un jeton MCP lecture seule ou une vérification par Jocelyn dans le tableau de bord |
 
 ---
 

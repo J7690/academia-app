@@ -8,8 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../config/supabase_config.dart';
 
 class SignupScreen extends StatefulWidget {
-  final String? initialRefCode;
-  const SignupScreen({super.key, this.initialRefCode});
+  const SignupScreen({super.key});
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
@@ -21,26 +20,10 @@ class _SignupScreenState extends State<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _invitationCodeController = TextEditingController();
-  late final TextEditingController _referralCodeController;
   bool _isLoading = false;
   String? _error;
   bool _isPasswordVisible = false;
   bool _acceptedTerms = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _referralCodeController = TextEditingController(text: widget.initialRefCode ?? '');
-    // Also try to load from SharedPreferences if no initial code provided
-    if (widget.initialRefCode == null || widget.initialRefCode!.isEmpty) {
-      SharedPreferences.getInstance().then((prefs) {
-        final saved = prefs.getString('pending_referral_code_v1');
-        if (saved != null && saved.isNotEmpty && _referralCodeController.text.isEmpty) {
-          _referralCodeController.text = saved;
-        }
-      }).catchError((_) {});
-    }
-  }
 
   @override
   void dispose() {
@@ -49,7 +32,6 @@ class _SignupScreenState extends State<SignupScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _invitationCodeController.dispose();
-    _referralCodeController.dispose();
     super.dispose();
   }
 
@@ -59,11 +41,10 @@ class _SignupScreenState extends State<SignupScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final invitationCode = _invitationCodeController.text.trim();
-    final referralCode = _referralCodeController.text.trim();
 
     if (lastName.isEmpty || firstName.isEmpty || email.isEmpty || password.isEmpty) {
       setState(() {
-        _error = 'Veuillez renseigner nom, prnoms, email et mot de passe.';
+        _error = 'Veuillez renseigner nom, prénoms, email et mot de passe.';
       });
       return;
     }
@@ -80,11 +61,6 @@ class _SignupScreenState extends State<SignupScreen> {
         'role': 'student',
         'full_name': fullName,
       };
-      // Inject ref_code into user_metadata so it's stored SERVER-SIDE
-      // This survives domain changes, app reinstalls, SharedPreferences loss
-      if (referralCode.isNotEmpty) {
-        signUpData['ref_code'] = referralCode;
-      }
       // Attribution marketing (campagnes Facebook/Claude), ISOLÉE du référencement
       // commercial. Lue depuis le paramètre URL ?src= (ex. src=fb-claude-vac2026-reel-a).
       // N'affecte ni user_referrals ni les commissions.
@@ -103,14 +79,6 @@ class _SignupScreenState extends State<SignupScreen> {
         data: signUpData,
       );
 
-      // Store referral code in SharedPreferences for auth_wrapper to attach after login
-      if (referralCode.isNotEmpty) {
-        try {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('pending_referral_code_v1', referralCode);
-          await prefs.setString('pending_referral_source_v1', 'manual');
-        } catch (_) {}
-      }
       // Persister l'attribution marketing pour rattachement après login (auth_wrapper).
       if (mktRef != null && mktRef.isNotEmpty) {
         try {
@@ -217,7 +185,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       TextField(
                         controller: _firstNameController,
                         decoration: const InputDecoration(
-                          labelText: 'Prnoms',
+                          labelText: 'Prénoms',
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -247,15 +215,6 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                         ),
                         obscureText: !_isPasswordVisible,
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _referralCodeController,
-                        decoration: const InputDecoration(
-                          labelText: 'Code de parrainage (optionnel)',
-                          hintText: 'Ex: COMM-xxxxxxxx',
-                          prefixIcon: Icon(Icons.people_outline, size: 20),
-                        ),
                       ),
                       const SizedBox(height: 16),
                       TextField(

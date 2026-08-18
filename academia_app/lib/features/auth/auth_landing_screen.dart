@@ -17,13 +17,13 @@ import '../../widgets/hero_media_carousel.dart';
 import '../debug/network_diagnostic_screen.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
-import 'phone_login_screen.dart';
+import 'phone_signup_screen.dart';
 import '../share/share_service.dart';
 import '../share/share_mode_provider.dart';
 import '../share/widgets/share_signature.dart';
 import '../../services/analytics_tracking_service.dart';
 
-void _showSignupChoice(BuildContext context, {String? refCode}) {
+void _showSignupChoice(BuildContext context) {
   showModalBottomSheet<void>(
     context: context,
     shape: const RoundedRectangleBorder(
@@ -51,7 +51,7 @@ void _showSignupChoice(BuildContext context, {String? refCode}) {
                 onTap: () {
                   Navigator.of(ctx).pop();
                   Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => SignupScreen(initialRefCode: refCode),
+                    builder: (_) => const SignupScreen(),
                   ));
                 },
               ),
@@ -60,11 +60,11 @@ void _showSignupChoice(BuildContext context, {String? refCode}) {
                 icon: Icons.phone_android,
                 color: const Color(0xFF1EA75C),
                 title: 'Par numéro de téléphone',
-                subtitle: 'Nom, prénom et code OTP par SMS',
+                subtitle: 'Nom, prénom, numéro et mot de passe',
                 onTap: () {
                   Navigator.of(ctx).pop();
                   Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const PhoneLoginScreen(isSignup: true),
+                    builder: (_) => const PhoneSignupScreen(),
                   ));
                 },
               ),
@@ -306,38 +306,6 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
   List<HeroMediaItem> _heroMediaItems = [];
 
   static const String _landingHeroCacheKey = 'landing_hero_playlist_v1';
-  static const String _pendingReferralCodeKey = 'pending_referral_code_v1';
-  static const String _pendingReferralSourceKey = 'pending_referral_source_v1';
-
-  String? _capturedRefCode;
-
-  Future<void> _captureReferralFromUrlIfPresent() async {
-    try {
-      final uri = Uri.base;
-      debugPrint('ReferralLanding: Uri.base=' + uri.toString());
-      final rawRef = uri.queryParameters['ref']?.trim();
-      debugPrint('ReferralLanding: rawRef=' + (rawRef ?? 'null'));
-      if (rawRef == null || rawRef.isEmpty) return;
-
-      if (mounted) {
-        setState(() {
-          _capturedRefCode = rawRef;
-        });
-      }
-
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_pendingReferralCodeKey, rawRef);
-      await prefs.setString(_pendingReferralSourceKey, 'link');
-      debugPrint(
-        'ReferralLanding: stored pending_referral_code_v1=' +
-            rawRef +
-            ' source=link',
-      );
-    } catch (e) {
-      debugPrint('ReferralLanding: error while capturing ref from URL: ' +
-          e.toString());
-    }
-  }
 
   Future<void> _loadHeroPlaylistFromCache() async {
     try {
@@ -575,7 +543,6 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
       _startTicker();
 
       await _refreshHeroPlaylistFromRemote();
-      await _captureReferralFromUrlIfPresent();
     });
   }
 
@@ -649,7 +616,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                _showSignupChoice(context, refCode: _capturedRefCode);
+                _showSignupChoice(context);
               },
               child: const Text('Créer un compte'),
             ),
@@ -1489,7 +1456,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                                         borderRadius: BorderRadius.circular(999),
                                       ),
                                     ),
-                                    onPressed: () => _showSignupChoice(context, refCode: _capturedRefCode),
+                                    onPressed: () => _showSignupChoice(context),
                                     child: const Text('Créer un compte'),
                                   ),
                                   OutlinedButton(
@@ -1906,7 +1873,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                             vertical: 12,
                           ),
                         ),
-                        onPressed: () => _showSignupChoice(context, refCode: _capturedRefCode),
+                        onPressed: () => _showSignupChoice(context),
                         child: const Text('Créer mon compte gratuitement'),
                       ),
                     ],

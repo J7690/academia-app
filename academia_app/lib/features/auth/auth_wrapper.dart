@@ -6,8 +6,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../services/push_notification_service.dart';
 import '../../services/share_tracking_service.dart';
-import '../../services/install_referrer_service.dart';
-import '../../services/deep_link_service.dart';
 import '../student/student_dashboard_screen.dart';
 import '../university/university_dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
@@ -29,7 +27,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
   late final SupabaseClient _client;
   StreamSubscription<AuthState>? _authSub;
   String? _pendingApplicationIdFromNotification;
-  bool _referralHandledForSession = false;
 
   @override
   void initState() {
@@ -39,7 +36,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
     _authSub = _client.auth.onAuthStateChange.listen((_) {
       if (mounted) {
         setState(() {
-          _referralHandledForSession = false;
           _marketingAttrHandledForSession = false;
         });
       }
@@ -53,13 +49,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
     // Brancher le handler de notifications push pour les candidatures étudiant.
     PushNotificationService.instance
         .setOnApplicationNotification(_handleApplicationNotification);
-
-    // Initialiser Install Referrer Service pour Play Store attribution
-    InstallReferrerService.instance.initialize();
-    DeepLinkService.instance.getInitialLink().then((link) {
-      if (link != null) _captureReferralFromDeepLink(link);
-    });
-    DeepLinkService.instance.listenForLinks(_captureReferralFromDeepLink);
   }
 
   @override
@@ -153,118 +142,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
     }
   }
 
-  Future<void> _captureReferralFromDeepLink(String link) async {
-    if (_client.auth.currentSession != null) return;
-
-    try {
-      final uri = Uri.parse(link);
-      // B2 : accepter le domaine canonique et sa variante www (les utilisateurs
-      // tapent souvent www.app.academiea.com).
-      const allowedHosts = {'app.academiea.com', 'www.app.academiea.com'};
-      if (uri.scheme != 'https' || !allowedHosts.contains(uri.host)) return;
-
-      final segments = uri.pathSegments;
-      if (segments.length < 2 || segments.first != 'ref') return;
-
-      final refCode = segments[1].trim();
-      if (refCode.isEmpty) return;
-
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('pending_referral_code_v1', refCode);
-      await prefs.setString('pending_referral_source_v1', 'link');
-    } catch (e) {
-      debugPrint('ReferralAppLink: error while capturing link: $e');
-    }
-  }
-
-  Future<void> _attachReferralIfNeeded() async {
-    if (_referralHandledForSession) {
-      debugPrint('ReferralAttach: already handled for this session, skipping.');
-      return;
-    }
-
-    final session = _client.auth.currentSession;
-    if (session == null) {
-      debugPrint('ReferralAttach: no current session, skipping.');
-      return;
-    }
-
-    try {
-      debugPrint('ReferralAttach: session userId=' + session.user.id);
-
-      String? refCode;
-      String source = 'link';
-
-      // Priority 1: Install Referrer Service (Play Store attribution).
-      // Aucune saisie requise : le token capté au clic est résolu en ref_code.
-      final referrerService = InstallReferrerService.instance;
-      await referrerService.initialize();
-      final installRefCode = referrerService.resolvedRefCode;
-      debugPrint('ReferralAttach: InstallReferrer ref_code=' + (installRefCode ?? 'null'));
-      if (installRefCode != null && installRefCode.trim().isNotEmpty) {
-        refCode = installRefCode.trim();
-        source = 'play_store_install';
-      }
-
-      // Priority 2: Use URL parameters (web deep linking, ?ref= capté avant inscription)
-      final prefs = await SharedPreferences.getInstance();
-      if (refCode == null || refCode.trim().isEmpty) {
-        final prefRefCode = prefs.getString('pending_referral_code_v1');
-        debugPrint('ReferralAttach: SharedPrefs refCode=' + (prefRefCode ?? 'null'));
-        if (prefRefCode != null && prefRefCode.trim().isNotEmpty) {
-          refCode = prefRefCode.trim();
-          source = prefs.getString('pending_referral_source_v1') ?? 'link';
-        }
-      }
-
-      // Priority 3 (filet de secours): user_metadata — ?ref= capté côté serveur au
-      // signUp, ou saisie manuelle du code de parrainage par l'utilisateur.
-      if (refCode == null || refCode.trim().isEmpty) {
-        final metadata = session.user.userMetadata;
-        final metaRef = metadata?['ref_code']?.toString();
-        debugPrint('ReferralAttach: user_metadata ref_code=' + (metaRef ?? 'null'));
-        if (metaRef != null && metaRef.trim().isNotEmpty) {
-          refCode = metaRef.trim();
-          source = 'metadata';
-        }
-      }
-
-      if (refCode == null || refCode.trim().isEmpty) {
-        _referralHandledForSession = true;
-        return;
-      }
-
-      debugPrint('ReferralAttach: calling app_register_referral_for_current_user '
-          'with refCode=' +
-          refCode +
-          ' source=' +
-          source);
-
-      final result = await _client
-          .rpc('app_register_referral_for_current_user', params: {
-        'p_ref_code': refCode,
-        'p_source': source,
-      });
-
-      debugPrint('ReferralAttach: RPC result=' + result.toString());
-
-      if (result is Map && result['success'] == true) {
-        await prefs.remove('pending_referral_code_v1');
-        await prefs.remove('pending_referral_source_v1');
-        debugPrint('ReferralAttach: cleared pending referral from preferences.');
-      } else {
-        debugPrint('ReferralAttach: RPC did not succeed, keeping pending referral in preferences.');
-      }
-    } catch (e) {
-      // On n'échoue pas la connexion si le rattachement échoue.
-      debugPrint('ReferralAttach: error while attaching referral: ' +
-          e.toString());
-    } finally {
-      _referralHandledForSession = true;
-      debugPrint('ReferralAttach: mark handledForSession=true');
-    }
-  }
-
   void _startActivityTracking() {
     _activityTimer?.cancel();
     final session = _client.auth.currentSession;
@@ -331,10 +208,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
       return const AuthLandingScreen();
     }
 
-    // Rattacher un éventuel parrainage capturé avant la création du compte.
-    // On le fait ici car on est certain que l'utilisateur est authentifié.
-    _attachReferralIfNeeded();
-    
     // Capturer les partages depuis les paramètres URL
     _captureShareIfNeeded();
 

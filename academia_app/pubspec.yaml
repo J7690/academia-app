@@ -174,6 +174,7 @@ dependencies:
   flutter_bloc: ^9.1.1
   equatable: ^2.0.7
   dio: ^5.9.2
+  phone_numbers_parser: ^9.0.25
 
 dependency_overrides:
   # ar_flutter_plugin retire temporairement (voir dependencies ci-dessus).

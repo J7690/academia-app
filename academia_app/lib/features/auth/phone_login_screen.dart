@@ -2,57 +2,54 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'otp_verify_screen.dart';
+import 'phone_rules.dart';
+import 'phone_signup_screen.dart';
 
+const Color _kGreen = Color(0xFF1EA75C);
+
+/// Connexion par téléphone, sans SMS.
+///
+/// Remplace l'ancien parcours OTP (`signInWithOtp` puis `OtpVerifyScreen`),
+/// inutilisable sans abonnement SMS : on authentifie désormais par
+/// `signInWithPassword(phone:, password:)`, exactement comme le parcours email.
 class PhoneLoginScreen extends StatefulWidget {
-  final bool isSignup;
-  const PhoneLoginScreen({super.key, this.isSignup = false});
+  const PhoneLoginScreen({super.key});
 
   @override
   State<PhoneLoginScreen> createState() => _PhoneLoginScreenState();
 }
 
 class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
-  final _phoneController = TextEditingController(text: '');
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  PhoneCountry _country = kSupportedPhoneCountries.first;
+  bool _isPasswordVisible = false;
   bool _isLoading = false;
   String? _error;
-
-  static const String _countryCode = '+226';
 
   @override
   void dispose() {
     _phoneController.dispose();
-    _firstNameController.dispose();
-    _lastNameController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
-  String get _fullPhone {
-    final digits = _phoneController.text.trim().replaceAll(RegExp(r'\D'), '');
-    if (digits.startsWith('226')) return '+$digits';
-    return '$_countryCode$digits';
+  bool get _canSubmit {
+    if (_isLoading) return false;
+    if (_passwordController.text.trim().isEmpty) return false;
+    return checkPhoneNumber(_phoneController.text, _country).isValid;
   }
 
-  bool get _isValid {
-    final digits = _phoneController.text.trim().replaceAll(RegExp(r'\D'), '');
-    return digits.length >= 8;
-  }
-
-  bool get _isSignupValid {
-    if (!widget.isSignup) return true;
-    return _firstNameController.text.trim().isNotEmpty &&
-        _lastNameController.text.trim().isNotEmpty;
-  }
-
-  Future<void> _sendOtp() async {
-    if (!_isValid) {
-      setState(() => _error = 'Veuillez saisir un numéro valide (8 chiffres minimum).');
+  Future<void> _submit() async {
+    final check = checkPhoneNumber(_phoneController.text, _country);
+    if (!check.isValid) {
+      setState(() => _error = check.error);
       return;
     }
-    if (widget.isSignup && !_isSignupValid) {
-      setState(() => _error = 'Veuillez renseigner votre nom et prénom.');
+    final password = _passwordController.text.trim();
+    if (password.isEmpty) {
+      setState(() => _error = 'Veuillez saisir votre mot de passe.');
       return;
     }
 
@@ -62,23 +59,15 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
     });
 
     try {
-      await Supabase.instance.client.auth.signInWithOtp(
-        phone: _fullPhone,
+      await Supabase.instance.client.auth.signInWithPassword(
+        phone: check.e164,
+        password: password,
       );
-
-      if (!mounted) return;
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => OtpVerifyScreen(
-            phone: _fullPhone,
-            firstName: widget.isSignup ? _firstNameController.text.trim() : null,
-            lastName: widget.isSignup ? _lastNameController.text.trim() : null,
-          ),
-        ),
-      );
+      // AuthWrapper prend le relais via onAuthStateChange.
+      if (mounted) Navigator.of(context).pop();
     } on AuthException catch (e) {
       setState(() => _error = _friendlyError(e.message));
-    } catch (e) {
+    } catch (_) {
       setState(() => _error = 'Erreur réseau. Vérifiez votre connexion.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -86,8 +75,19 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
   }
 
   String _friendlyError(String msg) {
-    if (msg.contains('rate')) return 'Trop de tentatives. Attendez quelques minutes.';
-    if (msg.contains('invalid') || msg.contains('phone')) return 'Numéro de téléphone invalide.';
+    final m = msg.toLowerCase();
+    if (m.contains('invalid login credentials')) {
+      return 'Numéro ou mot de passe incorrect.';
+    }
+    if (m.contains('not confirmed')) {
+      return 'Ce compte n\'est pas encore activé. Contactez le support.';
+    }
+    if (m.contains('rate') || m.contains('too many')) {
+      return 'Trop de tentatives. Réessayez dans quelques minutes.';
+    }
+    if (m.contains('phone')) {
+      return 'Numéro de téléphone invalide.';
+    }
     return msg;
   }
 
@@ -95,8 +95,8 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isSignup ? 'Inscription par téléphone' : 'Connexion par téléphone'),
-        backgroundColor: const Color(0xFF1EA75C),
+        title: const Text('Connexion par téléphone'),
+        backgroundColor: _kGreen,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -109,7 +109,10 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                 opacity: 0.08,
                 child: FractionallySizedBox(
                   widthFactor: 0.7,
-                  child: Image.asset('assets/Academia.0.png', fit: BoxFit.contain),
+                  child: Image.asset(
+                    'assets/Academia.0.png',
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
             ),
@@ -124,7 +127,11 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                     color: Colors.white.withOpacity(0.92),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: const [
-                      BoxShadow(color: Colors.black12, blurRadius: 16, offset: Offset(0, 8)),
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 16,
+                        offset: Offset(0, 8),
+                      ),
                     ],
                   ),
                   padding: const EdgeInsets.all(28),
@@ -132,58 +139,24 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Icon(Icons.phone_android, size: 48, color: Color(0xFF1EA75C)),
+                      const Icon(Icons.phone_android, size: 48, color: _kGreen),
                       const SizedBox(height: 16),
-                      Text(
-                        widget.isSignup ? 'Créer votre compte' : 'Entrez votre numéro',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
                       const Text(
-                        'Un code OTP vous sera envoyé par SMS.',
+                        'Entrez votre numéro',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 13, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 24),
-                      // Champs nom/prénom (mode inscription uniquement)
-                      if (widget.isSignup) ...[
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _lastNameController,
-                                textCapitalization: TextCapitalization.words,
-                                decoration: InputDecoration(
-                                  labelText: 'Nom',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                                ),
-                                onChanged: (_) => setState(() => _error = null),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: TextField(
-                                controller: _firstNameController,
-                                textCapitalization: TextCapitalization.words,
-                                decoration: InputDecoration(
-                                  labelText: 'Prénom',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                                ),
-                                onChanged: (_) => setState(() => _error = null),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                      // Champ numéro avec indicatif Burkina
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 16,
+                            ),
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.grey.shade300),
                               borderRadius: const BorderRadius.only(
@@ -192,10 +165,41 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                               ),
                               color: Colors.grey.shade50,
                             ),
-                            child: const Text(
-                              '🇧🇫 +226',
-                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                            ),
+                            child: kSupportedPhoneCountries.length == 1
+                                ? Text(
+                                    '${_country.flag} ${_country.dialPrefix}',
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  )
+                                : DropdownButtonHideUnderline(
+                                    child: DropdownButton<PhoneCountry>(
+                                      value: _country,
+                                      isDense: true,
+                                      onChanged: (c) {
+                                        if (c == null) return;
+                                        setState(() {
+                                          _country = c;
+                                          _error = null;
+                                        });
+                                      },
+                                      items: [
+                                        for (final c
+                                            in kSupportedPhoneCountries)
+                                          DropdownMenuItem<PhoneCountry>(
+                                            value: c,
+                                            child: Text(
+                                              '${c.flag} ${c.dialPrefix}',
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
                           ),
                           Expanded(
                             child: TextField(
@@ -203,31 +207,66 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                               keyboardType: TextInputType.phone,
                               inputFormatters: [
                                 FilteringTextInputFormatter.digitsOnly,
-                                LengthLimitingTextInputFormatter(8),
+                                LengthLimitingTextInputFormatter(
+                                  _country.nsnLength,
+                                ),
                               ],
                               decoration: InputDecoration(
-                                hintText: '7X XX XX XX',
+                                hintText: _country.hint,
                                 border: OutlineInputBorder(
                                   borderRadius: const BorderRadius.only(
                                     topRight: Radius.circular(8),
                                     bottomRight: Radius.circular(8),
                                   ),
-                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: const BorderRadius.only(
                                     topRight: Radius.circular(8),
                                     bottomRight: Radius.circular(8),
                                   ),
-                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
                                 ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 16,
+                                ),
                               ),
                               onChanged: (_) => setState(() => _error = null),
-                              onSubmitted: (_) => _sendOtp(),
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: !_isPasswordVisible,
+                        decoration: InputDecoration(
+                          labelText: 'Mot de passe',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 14,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isPasswordVisible
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            onPressed: () => setState(
+                              () => _isPasswordVisible = !_isPasswordVisible,
+                            ),
+                          ),
+                        ),
+                        onChanged: (_) => setState(() => _error = null),
+                        onSubmitted: (_) => _canSubmit ? _submit() : null,
                       ),
                       const SizedBox(height: 16),
                       if (_error != null) ...[
@@ -240,35 +279,54 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                           ),
                           child: Text(
                             _error!,
-                            style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+                            style: TextStyle(
+                              color: Colors.red.shade700,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 12),
                       ],
                       SizedBox(
                         height: 50,
-                        child: ElevatedButton.icon(
-                          onPressed: _isLoading ? null : _sendOtp,
-                          icon: _isLoading
+                        child: ElevatedButton(
+                          onPressed: _canSubmit ? _submit : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _kGreen,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: _isLoading
                               ? const SizedBox(
                                   width: 18,
                                   height: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
                                 )
-                              : const Icon(Icons.send),
-                          label: Text(_isLoading ? 'Envoi...' : 'Envoyer le code OTP'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1EA75C),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
+                              : const Text('Se connecter'),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Le code est valable 5 minutes.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 11, color: Colors.grey),
+                      const SizedBox(height: 12),
+                      Center(
+                        child: TextButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const PhoneSignupScreen(),
+                                    ),
+                                  );
+                                },
+                          style: TextButton.styleFrom(foregroundColor: _kGreen),
+                          child: const Text(
+                            'Pas encore de compte ? Créer un compte',
+                          ),
+                        ),
                       ),
                     ],
                   ),

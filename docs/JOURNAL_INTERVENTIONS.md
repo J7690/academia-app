@@ -253,3 +253,97 @@
 Non repris ligne à ligne — voir les rapports datés dans `docs/`, en particulier
 `STUDIO_VISUEL_ETAT_2026-08-05.md`, `AUDIT_STUDIO_CAPACITE_GENERALE_2026-08-12.md`
 et `PLAN_ACHEVEMENT_STUDIO_2026-08-12.md`.
+
+## 2026-08-18
+
+- `—` · **MESURE** · audit parrainage/téléphone (demande de Jocelyn, avant
+  toute intervention) · `git log` sur `signup_screen.dart` et
+  `phone_login_screen.dart` : **aucun commit** ne touche le parrainage ou le
+  téléphone — le dernier commit sur `signup_screen.dart` (64978a3) en
+  *ajoutait*. Tout le chantier décrit ci-dessous n'existe que dans l'arbre de
+  travail non commité de la branche `candidature-dossier-inline`, jamais
+  journalisé ici ni daté dans `docs/`.
+- `—` · **MESURE** · parrainage · le champ visible « Code de parrainage » est
+  retiré des deux écrans d'inscription (`signup_screen.dart`,
+  `phone_signup_screen.dart`), mais le dispositif reste actif en entier :
+  capture `?ref=`, Install Referrer Play Store, `SharedPreferences`,
+  métadonnées à l'inscription, RPC `app_register_referral_for_current_user`
+  dans `auth_wrapper.dart`. Rien n'a été coupé côté serveur.
+- `—` · **DÉFAUT non résolu** · `phone_signup_screen.dart` crée le compte par
+  `signUp(phone:, password:)` en supposant « Confirm phone » désactivé côté
+  Supabase (hypothèse écrite dans le commentaire du fichier lui-même).
+  **Non vérifiable cette session** : le serveur MCP `supabase-lecture` a
+  répondu *Unauthorized* (jeton absent). Si le réglage est resté actif,
+  chaque inscription crée un compte définitivement bloqué (pas d'abonnement
+  SMS pour confirmer) ; s'il est désactivé comme supposé, aucune preuve de
+  possession du numéro n'est jamais demandée.
+- `—` · **DÉFAUT** · `phone_login_screen.dart` remplace `signInWithOtp` par
+  `signInWithPassword` : un compte téléphone créé par l'ancien parcours OTP
+  (s'il en existe) n'a pas de mot de passe et n'a plus de repli dans l'UI
+  actuelle. Existence de tels comptes **non vérifiée** (hors de portée du MCP
+  en lecture seule tel qu'authentifié cette session).
+- `—` · **MESURE** · `flutter analyze lib/features/auth/` → 0 erreur, 40 avis
+  (dette préexistante, `withOpacity` déprécié surtout). Un avis direct :
+  `auth_landing_screen.dart:20` importe `phone_login_screen.dart` sans
+  l'utiliser, reliquat du remplacement par `PhoneSignupScreen`.
+  `otp_verify_screen.dart` n'est plus référencé nulle part — code mort.
+- `—` · **DÉFAUT** · le choix d'inscription (`auth_landing_screen.dart:64`)
+  annonce encore « code OTP par SMS » pour l'option téléphone, alors que
+  l'écran suivant affiche « Aucun code par SMS. Votre mot de passe suffit ».
+- `—` · **BLOQUÉ** · accès · MCP Supabase en lecture seule (`supabase-lecture`)
+  non authentifié cette session — jeton absent. Bloque la vérification du
+  réglage Auth « Confirm phone » et tout comptage de comptes à risque dans
+  `auth.users`.
+- `—` · **Aucune modification de code.** Session strictement d'audit, comme
+  demandé. Les 26 fichiers non commités concernés préexistaient à cette
+  session (déjà listés par `etat_projet.py` en tout début d'intervention).
+
+### Suite (même jour) — retrait du parrainage, finition de l'inscription téléphone
+
+Demande de Jocelyn, en suite directe de l'audit ci-dessus. Décision actée
+avec Jocelyn (question posée, réponse reçue) : le mot de passe **reste** sur
+l'inscription téléphone — nom, prénom, numéro, mot de passe, aucun SMS.
+Supabase n'offre pas de troisième facteur entre OTP et mot de passe ; le
+supprimer aussi aurait ouvert n'importe quel compte à qui tape le bon numéro.
+
+- `—` · **CORRECTIF** · retrait complet du parrainage côté client, sur les
+  deux parcours (email et téléphone) : capture `?ref=` (`auth_landing_screen.dart`),
+  capture deep link et Install Referrer Play Store (`auth_wrapper.dart`),
+  envoi `ref_code` dans les métadonnées (`signup_screen.dart`,
+  `phone_signup_screen.dart`), rattachement post-connexion via
+  `app_register_referral_for_current_user` (`auth_wrapper.dart`).
+  Explicitement **conservés**, mécanismes distincts confirmés par lecture du
+  code : le code d'invitation (`app_accept_user_invitation`, signup email),
+  l'attribution marketing `?src=`/`mkt_ref` (isolée par conception, commentée
+  comme telle), le partage de contenu (`ShareTrackingService`), et tout
+  l'outillage commercial côté admin (`admin_commercials_screen.dart`,
+  `commercial_dashboard_screen.dart`, etc. — non touchés, hors périmètre :
+  c'est l'interface étudiant qui devait perdre le parrainage, pas le
+  back-office qui gère les commissions déjà engagées).
+- `—` · **SUPPRIMÉ** · `install_referrer_service.dart` (devenu orphelin,
+  100 % parrainage, plus aucun appelant) et `otp_verify_screen.dart` (mort
+  depuis le remplacement de l'OTP par le mot de passe, cf. audit).
+- `—` · **CORRECTIF** · `auth_landing_screen.dart` : texte « Nom, prénom et
+  code OTP par SMS » corrigé en « Nom, prénom, numéro et mot de passe » ;
+  import mort de `phone_login_screen.dart` retiré.
+- `—` · **MESURE** · `flutter analyze lib/features/auth/`, relancé 3 fois
+  dont 2 après ces retraits, et `flutter analyze lib/` (arbre complet) une
+  fois : **0 ligne « error » ou « warning »** sur les 5 fichiers touchés à
+  chaque passage — uniquement des avis de style préexistants (`withOpacity`
+  déprécié en tête).
+- `—` · **ANOMALIE non expliquée** · le code de sortie de `flutter analyze
+  lib/features/auth/` est passé de 0 (avant retrait, sortie avec un
+  avertissement) à 1 (après retrait, sortie sans le moindre avertissement,
+  seulement des infos), reproduit identique sur 2 lancements successifs sans
+  changement de code entre eux. Traité comme un artefact d'outillage
+  (serveur d'analyse Dart sollicité une dizaine de fois dans la même
+  session) plutôt qu'un défaut de code, faute d'un autre levier que la
+  liste des problèmes elle-même — qui, elle, est restée constante et propre
+  à chaque lancement. **À surveiller si le doute revient.**
+- `—` · **NON TOUCHÉ, à dessein** · le réglage Supabase « Confirm phone »
+  (accès MCP manquant, cf. audit) ; l'existence de comptes téléphone OTP
+  orphelins (même raison) ; la table `user_referrals` et le RPC
+  `app_register_referral_for_current_user` côté base — le retrait est fait
+  **uniquement côté client** : rien coupé côté serveur, aucune migration,
+  aucune écriture en base.
+- `—` · Rien commité, rien poussé.
