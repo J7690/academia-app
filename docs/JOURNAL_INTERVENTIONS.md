@@ -435,3 +435,50 @@ supprimer aussi aurait ouvert n'importe quel compte à qui tape le bon numéro.
   **uniquement côté client** : rien coupé côté serveur, aucune migration,
   aucune écriture en base.
 - `—` · Rien commité, rien poussé.
+
+## 2026-08-19 — Le flux 3D bout en bout : 2 min 40, mesuré
+
+- `16:20` · **MESURE** · travail `be3b09ba` (« le pétrole ») rendu en 2 min 53.
+  Chaîne fonctionnelle, **vidéo mauvaise** : 4 plans sur 6 ne montraient que la
+  grille du sol. Cause trouvée en regardant les images, pas les codes retour.
+- `16:30` · **DIAGNOSTIC** · `napper` produit un terrain de 190 unités ; compté
+  dans la boîte englobante de `cadrer_sur`, il fait reculer la caméra jusqu'à
+  réduire un derrick de 3 unités à un point. C'est le défaut de la distance fixe
+  du 14/08 **retourné** : trop loin au lieu de trop près, mais toujours « ne pas
+  cadrer ce qu'on regarde ».
+- `16:35` · **CORRECTIF, DEUX MOTEURS** · exclusion des surfaces `napper` de la
+  mesure de cadrage, dans `composer_scene.py` **et** `academia3d_web.js`. Le
+  terrain reste dans la scène (échelle, profondeur), il ne commande plus le
+  cadrage ; l'exclusion est inscrite au journal de composition pour se voir.
+- `16:38` · **CONSTAT QUI COMPTE** · le même défaut existait côté Blender depuis
+  le 14/08 et ne s'était **jamais** déclenché : aucune capsule Blender n'avait
+  utilisé `napper`. Le moteur navigateur ne l'a pas créé, il l'a révélé. Avoir
+  déclaré la migration réussie sur *une* capsule était vrai pour ce qu'elle
+  testait, insuffisant pour conclure.
+- `16:40` · **MOTEUR 1.4.2** · construit et publié depuis LWS, puis **vérifié
+  après extraction** (`correctif web : 1 | correctif blender : 1`) — vérifier le
+  contenu, pas le code retour de l'archive.
+- `16:42` · **BASCULE + RELANCE** · `studio_config.version_moteur` → 1.4.2 après
+  avoir constaté **0 machine vivante et 0 travail actif** — c'est l'erreur de
+  séquencement du 18/08 (`31bcfefe` attrapé par une machine restée en 1.4.0) qui
+  impose cette vérification avant toute bascule.
+- `16:45` · **RÉSULTAT MESURÉ** · travail `ea601c81`, 977 images, **124 s de
+  rendu**, **2 min 40 de la commande à la vidéo disponible**. Amorçage ≈ 20 s.
+- `16:50` · **VÉRIFIÉ EN IMAGE** · 7 plans extraits et regardés un par un :
+  **6 sujets sur 6 visibles**, dont le derrick plein cadre. Son mesuré sur la
+  forme d'onde (moyenne −19,4 dB, pic −4,3 dB), pas déduit de la présence d'une
+  piste AAC.
+- `16:55` · **FLUX ÉTUDIANT PROUVÉ** · les trois maillons que touche l'app,
+  exercés en base sous l'`auth.uid()` de l'étudiant propriétaire :
+  `studio_creer_travail_etudiant` → `job_id` ; `studio_etat_travail` →
+  `preview_ready` + chemin + étape « Pret » ; objet `studio-visuel` visible sous
+  sa politique RLS, donc URL signable par lui-même.
+- `—` · **NON EXERCÉ, à dessein** · l'appui du bouton dans l'application : je
+  n'ouvre pas de session sur un compte utilisateur. Ce qui reste non prouvé est
+  le câblage écran → service, pas la chaîne serveur.
+- `—` · **RESTE MAUVAIS** · les silhouettes sont justes mais génériques (le
+  navire-citerne est un bloc). C'est l'invite, pas le moteur.
+- `—` · **COÛT** · ≈ 0,04 $ ; machine coupée seule après 11,5 min de vie, dont
+  8,8 min de veille facturée après la fin du travail (dette ouverte).
+- `—` · Commits `6748e76` (correctif de cadrage) puis mise à jour d'`ETAT.md`.
+  Rien poussé.
