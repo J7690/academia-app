@@ -280,7 +280,29 @@ def composer(scene: dict) -> dict:
     # entiere : sans lui la camera reste fixe, les images sont identiques, et la
     # porte d'acceptation refuse « image figee » apres vingt-cinq minutes de GPU.
     images = int(scene.get("images") or 1)
-    camera = a3.cadrer_sur(produits, marge=cadre["marge"],
+
+    # ON CADRE SUR LE SUJET, PAS SUR L'HORIZON.
+    #
+    # `napper` produit un terrain de 190 unites de cote. Compte dans la boite
+    # englobante, il l'ecrase : la camera recule assez pour contenir 190 unites,
+    # et un derrick de 3 unites devient un point.
+    #
+    # Mesure du 19/08 sur la capsule « le petrole » (moteur navigateur, meme
+    # calcul de cadrage) : quatre plans sur six ne montraient QUE la grille du
+    # sol ; le derrick, l'oleoduc et la coque du navire etaient invisibles. Le
+    # defaut existe a l'identique ici, il n'avait simplement jamais ete
+    # declenche -- aucune capsule rendue par Blender n'avait utilise `napper`.
+    #
+    # Le terrain reste dans la scene : il donne l'echelle. Il ne COMMANDE plus
+    # le cadrage.
+    verbes = [str(g.get("verbe") or "") for g in (scene.get("gestes") or [])]
+    cadrables = [o for o, v in zip(produits, verbes) if v != "napper"]
+    if len(cadrables) != len(produits):
+        j.fait(f"cadrage : {len(produits) - len(cadrables)} terrain(s) exclu(s) de la mesure")
+    if not cadrables:
+        cadrables = produits
+
+    camera = a3.cadrer_sur(cadrables, marge=cadre["marge"],
                            ouverture=cadre["ouverture"],
                            direction=cadre["direction"],
                            images=images, balayage=cadre["balayage"])

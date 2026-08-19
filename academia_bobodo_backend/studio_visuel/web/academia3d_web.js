@@ -222,9 +222,31 @@ export function composer(description, largeur, hauteur) {
   }
 
   const cam = new PerspectiveCamera(38, largeur / hauteur, 0.1, 1000);
+
+  // ON CADRE SUR LE SUJET, PAS SUR L'HORIZON.
+  //
+  // `napper` produit un terrain de 190 unites de cote. Compte dans la boite
+  // englobante, il l'ecrase : la camera recule assez pour contenir 190 unites,
+  // et un derrick de 3 unites devient un point.
+  //
+  // Mesure du 19/08, capsule « le petrole », travail be3b09ba : quatre plans sur
+  // six ne montraient QUE la grille du sol. Le derrick, l'oleoduc et la coque du
+  // navire -- que l'IA avait pourtant bien decrits, en fuseau -- etaient
+  // invisibles. C'est le defaut de la distance fixe retourne : on cadrait sur le
+  // decor au lieu du sujet.
+  //
+  // Le terrain reste dans la scene : il donne l'echelle et la profondeur. Il ne
+  // COMMANDE simplement plus le cadrage.
+  const cadrables = produits.filter((_, i) =>
+    (description.gestes || [])[i]?.verbe !== 'napper');
+  const aCadrer = cadrables.length ? cadrables : produits;
+  if (cadrables.length !== produits.length) {
+    journal.faits.push(`cadrage : ${produits.length - cadrables.length} terrain(s) exclu(s) de la mesure`);
+  }
+
   const boite = new Box3();
-  for (const o of produits) boite.expandByObject(o);
-  if (produits.length === 0) boite.setFromCenterAndSize(new Vector3(0, 1, 0), new Vector3(4, 4, 4));
+  for (const o of aCadrer) boite.expandByObject(o);
+  if (aCadrer.length === 0) boite.setFromCenterAndSize(new Vector3(0, 1, 0), new Vector3(4, 4, 4));
 
   const centre = boite.getCenter(new Vector3());
   const taille = boite.getSize(new Vector3());
