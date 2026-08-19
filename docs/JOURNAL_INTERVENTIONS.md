@@ -15,6 +15,33 @@
 
 ---
 
+## 2026-08-19
+
+- `—` · **MESURE DECISIVE** · **le moteur navigateur rend 10 × plus vite que
+  Blender sur la MEME carte.** Travail `df3da476` : 1 147 images, **154 s de
+  rendu** contre 1 615 s pour Blender, soit **0,062 s/image** contre ~1,3.
+  Bout en bout : **3 min 30** contre 27 min + amorçage. Coût ≈ **0,04 $**.
+  Capsule acceptée par la porte, voix et sous-titres compris, **regardée**.
+- `—` · **CORRECTION D'UN CHIFFRE QUE J'AVAIS DONNÉ, DEUX FOIS.** J'avais
+  annoncé 4,6 × (banc sur scène simple), puis rectifié à « ~20 % » (LWS sans
+  carte). Les deux mesuraient une machine qui n'est pas celle qui travaille.
+  Le chiffre de production est 10 ×.
+- `—` · **DÉFAUT** · **trois** endroits listaient les images, je n'en avais
+  corrigé qu'un. Blender dépose des PNG, le navigateur des JPEG :
+  `executer_capsule` (corrigé), `montage.py` (assemblage → « No files to
+  concat »), `worker_pod.py` (compteur bloqué à 0 — le plus grave, puisque
+  **l'avancement vaut signe de vie** depuis le 14/08 : une machine au travail
+  serait passée pour morte).
+- `—` · **DÉFAUT (le mien)** · j'ai basculé la version du moteur et inséré le
+  travail dans la même transaction ; la machine encore vivante, chargée en
+  1.4.0, l'a attrapé avant d'être coupée. Échec de séquencement, pas de code.
+- `—` · **DÉCISION** · `MOTEUR_RENDU` en base : `web` par défaut, `blender`
+  joignable sans redéploiement. On ne coupe pas un moteur éprouvé le jour où
+  l'on en branche un neuf.
+- `—` · **MESURE** · le moteur 1.4.0 puis 1.4.1 ont été publiés et pris en
+  production **sans reconstruire un seul des 4,47 Go de l'image**. C'est
+  l'acquis qui a permis de corriger trois défauts en une soirée.
+
 ## 2026-08-18 (soir)
 
 - `—` · **CORRECTIF** · storage · une règle du Studio (30/07, `de3055d`)

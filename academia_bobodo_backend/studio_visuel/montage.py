@@ -239,8 +239,20 @@ def assembler(dossier_images: str, capsule: dict, sortie: str,
         fichiers: list[str] = []
         for scene in scenes:
             prefixe = scene["id"] + "_"
+            # DEUX MOTEURS, DEUX EXTENSIONS. Blender depose des PNG, le moteur
+            # navigateur des JPEG -- encoder du PNG en 1080x1920 coute plus cher
+            # que rendre l'image. ffmpeg ne fait aucune difference entre les
+            # deux ; ce filtre, si.
+            #
+            # Mesure du 18/08, travail b8ecc6c1 : le rendu navigateur a produit
+            # ses images, et l'assemblage a repondu « No files to concat ».
+            # J'avais elargi la DETECTION des images dans `executer_capsule`
+            # sans elargir leur ASSEMBLAGE ici -- un seul des deux endroits qui
+            # listent des fichiers. Le defaut classique de ce depot : on corrige
+            # la couche qu'on regarde, pas celle qui suit.
             fichiers = sorted(n for n in os.listdir(dossier_images)
-                              if n.startswith(prefixe) and n.endswith(".png"))
+                              if n.startswith(prefixe)
+                              and n.lower().endswith((".png", ".jpg", ".jpeg")))
             for nom in fichiers:
                 f.write(f"file '{os.path.join(racine, nom)}'\n")
                 f.write(f"duration {1.0 / fps}\n")

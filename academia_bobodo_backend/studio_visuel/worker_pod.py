@@ -143,7 +143,14 @@ def _rapporter_avancement(job_id: str, dossier: pathlib.Path, total: int,
     frames = dossier / "frames"
     while not arret.is_set():
         try:
-            faites = len(list(frames.glob("*.png"))) if frames.is_dir() else 0
+            # LE COMPTEUR DOIT CONNAITRE LES DEUX MOTEURS. Blender depose des
+            # PNG, le moteur navigateur des JPEG. Ne compter que les PNG faisait
+            # afficher `images_faites = 0` pendant tout un rendu navigateur --
+            # et surtout, l'avancement vaut SIGNE DE VIE depuis le 14/08 : un
+            # compteur bloque a zero laisse le veilleur croire la machine morte
+            # et la coupe en plein travail.
+            faites = (len(list(frames.glob("*.png"))) + len(list(frames.glob("*.jpg")))
+                      if frames.is_dir() else 0)
             rpc("studio_avancement", {
                 "p_job_id": job_id, "p_pod_id": POD_ID, "p_jeton": POD_JETON,
                 "p_images_faites": faites, "p_images_total": total,

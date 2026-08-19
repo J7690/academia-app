@@ -37,18 +37,17 @@
 ## 1. Où on en est, en une phrase
 
 Le **Studio visuel 3D** fabrique des capsules dont la forme est **composée par
-l'IA** (verbes + coordonnées) et non plus choisie dans un catalogue.
+l'IA** (verbes + coordonnées), et **le rendu ne passe plus par Blender**.
 
-**L'infrastructure est finie et prouvée.** Deux vidéos complètes livrées
-(`01fe9e8c` et `dd8b7d49`, 47 s, 1080×1920, voix + sous-titres, acceptées par la
-porte qualité). Le cadrage, le mouvement de caméra, la transparence et
-l'orientation des contours sont vérifiés **en image**.
+**Le moteur navigateur est en production depuis le 19/08** (moteur 1.4.1,
+`MOTEUR_RENDU=web`). Capsule « Poussée d'Archimède » livrée et acceptée :
+45,8 s, voix, sous-titres, **154 s de rendu contre 1 615 s avec Blender** sur la
+même carte — **10 × plus rapide**, ≈ 0,04 $ au lieu de 0,30 $.
 
-**Il reste un seul chantier, et il est entièrement dans la couche IA** : les
-formes ne collent pas assez au propos — la voix dit « bateaux, sous-marins,
-montgolfières », l'image montre trois masses. L'invite et la validation ont été
-réécrites le 18/08 pour y répondre ; **la vérification attend une génération
-depuis l'app** (voir §6).
+Le temps de rendu n'est plus le goulot : **c'est l'amorçage de la machine**, qui
+va de 3 s à plus de 25 min selon l'hôte. C'est ce qui rend l'hypothèse « tout
+sur LWS, sans GPU » réellement intéressante (1,07 s/image mesurée, soit
+≈ 20 min, mais **zéro attente et zéro dollar**).
 
 ## 2. La chaîne, et qui exécute quoi
 
