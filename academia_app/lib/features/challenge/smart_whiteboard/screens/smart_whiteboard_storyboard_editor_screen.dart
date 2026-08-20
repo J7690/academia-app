@@ -353,14 +353,32 @@ class _SmartWhiteboardStoryboardEditorScreenState
           ? const Center(child: CircularProgressIndicator())
           : _loadError != null
               ? Center(child: Text(_loadError!))
-              : ListView.builder(
-                  controller: _scrollController,
-                  itemCount: _storyboard.scenes.length,
-                  itemBuilder: (context, sceneIndex) {
-                    final scene = _storyboard.scenes[sceneIndex];
-                    return _buildSceneCard(scene, sceneIndex);
-                  },
-                ),
+              // UN ÉCRAN VIDE NE DIT RIEN, ET C'EST BIEN LE PROBLÈME.
+              //
+              // Une liste de zéro scène s'affichait comme une page blanche sous
+              // le titre « Éditeur de Storyboard » : impossible de distinguer
+              // « ce cours n'a pas de scènes » de « le chargement a échoué en
+              // silence ». Le 19/08, le parcours 3D atterrissait précisément
+              // ici, à tort, et l'étudiant n'avait aucun moyen de le savoir.
+              : _storyboard.scenes.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text(
+                          "Ce cours n'a aucune scène à éditer.\n"
+                          "Reviens en arrière et relance la génération.",
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: _scrollController,
+                      itemCount: _storyboard.scenes.length,
+                      itemBuilder: (context, sceneIndex) {
+                        final scene = _storyboard.scenes[sceneIndex];
+                        return _buildSceneCard(scene, sceneIndex);
+                      },
+                    ),
       floatingActionButton: _isLoadingProject || _loadError != null
           ? null
           : FloatingActionButton(

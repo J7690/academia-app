@@ -482,3 +482,49 @@ supprimer aussi aurait ouvert n'importe quel compte à qui tape le bon numéro.
   8,8 min de veille facturée après la fin du travail (dette ouverte).
 - `—` · Commits `6748e76` (correctif de cadrage) puis mise à jour d'`ETAT.md`.
   Rien poussé.
+
+## 2026-08-19 (suite) — Le câblage de l'écran était cassé, et rien ne le disait
+
+- `17:05` · **POUSSÉ** · sur autorisation explicite de Jocelyn, 9 commits vers
+  `origin/candidature-dossier-inline` (`ff88872..747efa3`).
+- `17:11` · **AUDIT** · relecture du parcours Animation 3D côté Flutter, quatre
+  lecteurs indépendants (écran de saisie, commande, suivi, silences) puis
+  réfutation de chaque alerte. **Motif de l'audit** : `ETAT.md` §4.4 déclarait ce
+  maillon « non exercé » — une inconnue déclarée n'est pas une inconnue traitée.
+- `17:12` · **DÉFAUT CENTRAL, CASSÉ** · `generateStoryboard` reconnaît une
+  capsule, commande la fabrication et laisse l'état à `rendering` ; l'écran de
+  saisie ne testait que `error`, donc poussait `/smart-whiteboard-editor` **sans
+  `projectId`**. Page BLANCHE, pendant que la machine tournait et que les 15
+  crédits étaient débités. `suivreCapsule3d()` n'est appelé que depuis l'écran
+  d'aperçu, jamais atteint : **personne ne demandait l'état du travail ni l'URL
+  signée**. La vidéo existait et n'arrivait pas. Vérifié ligne à ligne par
+  moi-même avant correction, pas cru sur parole.
+- `17:15` · **CORRECTIF** · on route sur l'état RÉELLEMENT atteint
+  (`rendering` → aperçu). Le test ne nomme pas la 3D : il restera juste si la
+  chaîne du tableau enchaîne un jour de la même façon. `projectId` est aussi
+  passé à l'éditeur, et une liste de zéro scène affiche désormais une phrase au
+  lieu d'une page blanche.
+- `17:18` · **TROIS DÉFAUTS VOISINS** · `suivreCapsule3d` n'avait **aucun
+  `try/catch`** là où `pollRenderJob` en a un (une coupure réseau figeait la roue
+  définitivement — 5 incidents tolérés désormais, puis un message) ; un `statut`
+  **absent** ne déclenchait aucune branche (45 min d'attente sur un travail
+  inexistant) ; l'attente annoncée disait « une dizaine de minutes », chiffre de
+  l'ère Blender, **quatre fois** le rendu mesuré.
+- `17:20` · **ÉCHEC DE COMPILATION, CAUSE NON LOGICIELLE** ·
+  `Espace insuffisant sur le disque, errno = 112` — 1,82 Go libres. Dossier de
+  sortie du build supprimé (3,74 Go, régénérable) → 5,65 Go. Le cache Gradle
+  pèse 18,75 Go de plus, **non touché** : le vider coûterait un retéléchargement
+  complet, cher en connexion.
+- `12:19` · **COMPILÉ** · `flutter analyze` sur le parcours 3D : **0 erreur**
+  (9 avertissements, tous dans les `print` de débogage préexistants). APK debug
+  construit, 325 Mo.
+- `—` · **NON CORRIGÉ, INSCRIT EN DETTE** · capsule 3D injoignable après
+  fermeture de l'app (identifiant en RAM seule, « Mes cours » ne joint que
+  `whiteboard_renders`) ; `estAnimation3d` volatil qui fait interroger la
+  mauvaise file après relance ; `loadProject` qui plante sur un JSON de capsule ;
+  URL signée 6 h publiée dans le Challenge ; codes techniques affichés à
+  l'étudiant. Cf. `ETAT.md` §8.
+- `—` · **CE QUE CET ÉPISODE DIT** · j'ai déclaré la veille que « le flux est
+  fonctionnel de bout en bout », en ayant prouvé les trois RPC sous l'identité de
+  l'étudiant. C'était vrai de la chaîne serveur, et faux de ce que vit
+  l'étudiant. Une inconnue nommée dans `ETAT.md` ne se répare pas toute seule.

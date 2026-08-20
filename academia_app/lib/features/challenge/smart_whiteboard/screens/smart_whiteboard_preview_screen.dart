@@ -221,8 +221,14 @@ class _SmartWhiteboardPreviewScreenState extends State<SmartWhiteboardPreviewScr
     final provider = context.watch<SmartWhiteboardProvider>();
     final etape = provider.etapeEnCours ??
         (_isPolling ? 'Fabrication en cours' : 'Chargement de la vidéo');
+    // L'ATTENTE ANNONCÉE DOIT ÊTRE CELLE QU'ON A MESURÉE.
+    // « une dizaine de minutes » datait de la chaîne Blender. Le moteur
+    // navigateur rend dix fois plus vite : mesure du 19/08 sur capsule réelle,
+    // 2 min 40 de la commande à la vidéo. Annoncer quatre fois trop pousse
+    // l'étudiant à quitter l'écran — le geste qui, précisément, lui fait perdre
+    // le suivi de sa capsule.
     final attente = provider.estAnimation3d
-        ? "L'animation demande une machine dédiée : compte une dizaine de minutes."
+        ? "L'animation demande une machine dédiée : compte trois à quatre minutes."
         : "Ton cours s'écrit au tableau : deux à trois minutes.";
 
     return Center(

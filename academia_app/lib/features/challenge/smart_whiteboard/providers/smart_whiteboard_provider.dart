@@ -738,6 +738,14 @@ class SmartWhiteboardProvider extends ChangeNotifier {
     }
     final depart = DateTime.now();
 
+    // Une coupure de réseau n'est pas un échec de fabrication. Sur un rendu de
+    // 2 min 40 l'application interroge le serveur une trentaine de fois ; à
+    // Bobo-Dioulasso, qu'un de ces appels échoue est ordinaire. On tolère donc
+    // les incidents passagers — et on s'arrête quand ils cessent d'être
+    // passagers, au lieu de laisser l'exception remonter et figer la roue.
+    const echecsToleres = 5;
+    var echecs = 0;
+
     while (true) {
       if (DateTime.now().difference(depart) > limite) {
         _setError('La fabrication dépasse le temps prévu. '
@@ -745,8 +753,41 @@ class SmartWhiteboardProvider extends ChangeNotifier {
         return false;
       }
 
-      final etat = await _renderService.getStudioStatus(_currentRenderJobId!);
+      Map<String, dynamic> etat;
+      try {
+        etat = await _renderService.getStudioStatus(_currentRenderJobId!);
+        echecs = 0;
+      } catch (e) {
+        // AUCUN try/catch N'EXISTAIT ICI, alors que `pollRenderJob` en a un.
+        // Une seule PostgrestException figeait l'écran d'attente pour de bon :
+        // l'exception sortait de la boucle, sortait de `_start()`, et l'étudiant
+        // gardait un sablier devant une vidéo qui, elle, se fabriquait très bien.
+        echecs++;
+        debugPrint('[STUDIO] suivi interrompu ($echecs/$echecsToleres) : $e');
+        if (echecs >= echecsToleres) {
+          _setError('La connexion ne répond plus. '
+              'Ton cours continue de se fabriquer : rouvre-le dans un moment.');
+          return false;
+        }
+        await Future.delayed(intervalle);
+        continue;
+      }
+
       final statut = etat['statut']?.toString();
+
+      // UN STATUT ABSENT N'EST PAS UN STATUT « EN COURS ».
+      // `getStudioStatus` fabrique {success:false, error:'introuvable'} quand la
+      // RPC ne renvoie aucune ligne — travail purgé, identifiant inconnu, ou
+      // session rattachée à un autre compte. Sans ce test, `statut` valait null,
+      // aucune branche ne se déclenchait, et l'étudiant attendait les 45 minutes
+      // entières devant un travail qui n'existait pas. C'est exactement la forme
+      // que ce dépôt traque : déduire « ça avance » d'une absence de nouvelle.
+      if (statut == null || statut.isEmpty) {
+        _setError(etat['error']?.toString() == 'introuvable'
+            ? 'Ce cours est introuvable. Il a peut-être été supprimé.'
+            : "La fabrication ne répond pas. Ton cours reste enregistré.");
+        return false;
+      }
 
       final etape = etat['etape']?.toString();
       if (etape != null && etape != _etapeEnCours) {

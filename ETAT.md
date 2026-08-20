@@ -126,11 +126,38 @@ Audit des 6 verbes coupé par une limite de session : `revolutionner` et
 cadrage ; **`silhouetter`, `extruder`, `ecrire` analysés mais non réfutés** —
 donc *non conclus*, pas *sains*.
 
-### 4.4 Le maillon que je n'ai PAS exercé
-Le bouton lui-même. Les trois RPC que l'écran appelle ont été exercées sous
-l'identité de l'étudiant propriétaire, mais **l'appui dans l'application n'a pas
-été rejoué** : je n'ouvre pas de session sur un compte utilisateur. Ce qui reste
-non prouvé est donc le câblage écran → service, pas la chaîne serveur.
+### 4.4 Le câblage de l'écran était CASSÉ — corrigé le 19/08, non encore essayé sur téléphone
+J'avais écrit ici que le bouton n'avait pas été exercé. Une relecture du parcours
+Flutter, le 19/08 au soir, a montré qu'il ne s'agissait pas d'une inconnue mais
+d'un **défaut** :
+
+`generateStoryboard` reconnaît une capsule, commande la fabrication et laisse
+l'état à `rendering`. L'écran de saisie, lui, ne testait que `error` — donc il
+poussait `/smart-whiteboard-editor`, **sans `projectId`**. L'étudiant tombait sur
+une **page blanche** titrée « Éditeur de Storyboard » pendant que sa machine
+tournait et que ses 15 crédits étaient débités. `suivreCapsule3d()` n'est appelé
+que depuis l'écran d'aperçu : **personne ne demandait jamais l'état du travail,
+ni l'URL signée.** La vidéo existait et n'arrivait pas.
+
+Rien ne le signalait : aucune exception, aucun message. C'est la forme exacte que
+ce dépôt traque — déduire une destination de l'absence d'erreur.
+
+**Corrigé** (`smart_whiteboard_input_screen.dart`) : on route sur l'état
+réellement atteint, `rendering` → écran d'aperçu. Le test ne nomme pas la 3D, il
+restera juste si la chaîne du tableau enchaîne un jour de la même façon.
+
+Trois défauts voisins corrigés dans la foulée :
+- `suivreCapsule3d` n'avait **aucun `try/catch`** là où `pollRenderJob` en a un :
+  une coupure réseau sur l'un des ~30 appels figeait la roue définitivement.
+  Désormais 5 incidents tolérés, puis un message qui dit quoi faire.
+- un `statut` **absent** (RPC sans ligne → `{success:false, error:'introuvable'}`)
+  ne déclenchait aucune branche : 45 min d'attente pour un travail inexistant.
+- l'attente annoncée disait « une dizaine de minutes », chiffre de l'ère Blender,
+  soit **quatre fois** le rendu mesuré — et pousser l'étudiant à quitter l'écran
+  est précisément ce qui lui fait perdre le suivi.
+
+**Reste vrai** : l'appui dans l'application n'a pas encore été rejoué sur le
+téléphone. C'est le prochain pas n°1.
 
 ### 4.5 Résolus, conservés pour la leçon
 - **Le rendu GPU (14/08)** — ce n'était pas le GPU : **deux chaînes tournaient
@@ -191,6 +218,11 @@ reconstruits. Depuis le 14/08 : l'**image** change quelques fois par an, le
 | Gabarit `universite-arbilo` inactif → clonage des mini-sites sans effet | 18/08 | **ouverte** — 4 universités créées depuis juillet à rattraper |
 | Inscription téléphone : réglage Supabase « Confirm phone » non vérifié | 18/08 | **ouverte** — cf. journal 18/08 |
 | Silhouettes génériques pour les objets techniques | 19/08 | **ouverte** — cf. §4.2 |
+| **Une capsule 3D terminée est injoignable après fermeture de l'app** | 19/08 | **ouverte, la plus grave des dettes clientes** — `_currentRenderJobId` ne vit qu'en mémoire, aucune RPC ne liste les `studio_jobs` d'un étudiant, et « Mes cours » ne joint que `whiteboard_renders`. Une capsule payée disparaît de la vue si l'application est fermée pendant les 2 min 40 |
+| `estAnimation3d` n'est qu'un drapeau client, jamais relu depuis le projet | 19/08 | **ouverte** — après relance de l'app, `_typeProduction` retombe à `vision2` et l'écran d'aperçu interroge la **mauvaise file** (`whiteboard_renders` au lieu de `studio_etat_travail`), alors que le JSON en base porte `engine:studio` |
+| Rouvrir un cours 3D depuis « Mes cours » plante | 19/08 | **ouverte** — `loadProject` appelle `Storyboard.fromJson` sur un JSON de capsule ; `generateStoryboard` sait déjà que c'est impossible (commentaire provider:322-337), `loadProject` l'ignore. L'étudiant lit une erreur de transtypage Dart |
+| L'URL signée 6 h est publiée telle quelle dans le Challenge | 19/08 | **ouverte** — le bucket est privé et la politique n'autorise que le propriétaire : la vidéo publiée meurt pour les spectateurs au bout de 6 h |
+| Codes techniques affichés à l'étudiant (`invalid_capsule`, `storyboard_sans_scenes`…) | 19/08 | **ouverte** — `_messageForError` traduit six codes ; ceux de la chaîne 3D n'y sont pas |
 
 ---
 

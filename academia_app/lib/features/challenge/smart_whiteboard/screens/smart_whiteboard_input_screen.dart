@@ -103,8 +103,37 @@ class _SmartWhiteboardInputScreenState extends State<SmartWhiteboardInputScreen>
       return;
     }
 
+    // ON NE DÉDUIT PAS LA DESTINATION DE L'ABSENCE D'ERREUR.
+    //
+    // Une capsule 3D n'a pas d'éditeur : `generateStoryboard` a déjà commandé
+    // la fabrication et laissé l'état à `rendering` (provider, branche
+    // `estCapsule`). En ne testant que `error`, cet écran envoyait alors
+    // l'étudiant dans l'éditeur de storyboard — sans `projectId`, donc devant
+    // une page BLANCHE — pendant que sa machine tournait et que ses crédits
+    // étaient débités. `suivreCapsule3d()` n'est appelé que depuis l'écran
+    // d'aperçu : personne ne demandait jamais l'état du travail, ni l'URL
+    // signée. La vidéo existait et n'arrivait pas.
+    //
+    // Défaut trouvé le 19/08/2026 par relecture, jamais par un message
+    // d'erreur : c'est la forme même que ce dépôt traque — déduire un état de
+    // ce qu'on ne voit pas.
+    //
+    // On teste donc l'état RÉELLEMENT atteint. Le test ne mentionne pas la 3D :
+    // si un jour la chaîne du tableau enchaîne elle aussi directement sur la
+    // fabrication, il restera juste.
+    if (provider.state == SmartWhiteboardState.rendering) {
+      Navigator.of(context).pushNamed(
+        '/smart-whiteboard-preview',
+        arguments: {'projectId': provider.currentProjectId},
+      );
+      return;
+    }
+
     // Navigate to storyboard editor
-    Navigator.of(context).pushNamed('/smart-whiteboard-editor');
+    Navigator.of(context).pushNamed(
+      '/smart-whiteboard-editor',
+      arguments: {'projectId': provider.currentProjectId},
+    );
   }
 
   @override
