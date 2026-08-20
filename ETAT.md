@@ -18,11 +18,17 @@
 
 ## 1. Où on en est, en une phrase
 
-**Le flux 3D est fonctionnel de bout en bout, mesuré le 19/08 : 2 min 40 entre
-la commande et la vidéo disponible pour l'étudiant** — voix, sous-titres, et
-**six plans sur six montrant leur sujet**.
+**Le flux 3D produit la vidéo d'un sujet saisi sur le téléphone.** Mesure du
+20/08, sujet « les nuages » commandé depuis l'application par Jocelyn, travail
+`ed0ce97a` : **3 min 43** de la commande au dépôt, 38,8 s de vidéo, voix,
+sous-titres, **9,5 Mo**, cinq plans sur cinq montrant leur sujet.
 
-Détail de ces 2 min 40 (travail `ea601c81`, sujet « le pétrole ») :
+Il a fallu trois essais pour y arriver, et les deux échecs sont instructifs :
+la chaîne rendait parfaitement (945 puis 968 images) et **perdait la capsule au
+dépôt**, faute d'un encodage borné (§4.1 bis). Le câblage de l'écran, lui, était
+cassé et a été corrigé le même jour (§4.4).
+
+Détail d'un rendu nominal (travail `ea601c81`, sujet « le pétrole », 19/08) :
 
 | Étape | Durée | Où |
 |---|---|---|
@@ -113,6 +119,36 @@ testait, et insuffisant pour conclure.
 
 Corrigé dans les deux moteurs (`composer_scene.py`, `academia3d_web.js`), publié
 en 1.4.2, **vérifié en image**.
+
+### 4.1 bis La capsule pesait 75 Mo et était refusée au dépôt — CORRIGÉ le 20/08
+Premier essai réel depuis le téléphone, sujet « les nuages » : **deux échecs de
+suite à la DERNIÈRE étape**. 945 puis 968 images rendues, montage fait, contrôle
+qualité passé — et le dépôt refusé. Quatre minutes de rendu jetées, deux fois.
+
+Le message ne disait rien : `depot:HTTP Error 400: Bad Request`. Un code sans
+cause. `str(HTTPError)` ne rend que cela, alors que Storage explique **toujours**
+son refus dans le corps de la réponse — que nous jetions.
+
+Moteur 1.4.3, qui lit ce corps. **Une itération a suffi** :
+```
+HTTP 400 {"statusCode":"413","error":"Payload too large",
+          "code":"EntityTooLarge"} [cle=… octets=74688007]
+```
+**74,7 Mo pour 39 s, soit 15,4 Mbit/s.** `crf 20` sans plafond, sur des milliers
+d'arêtes fines et mouvantes sur fond noir — le pire cas pour x264. « Le pétrole »
+passait la veille à 46 Mo : **sous la limite par chance, pas par conception**.
+
+Et même accepté par Storage, ce fichier serait inutilisable : 75 Mo pour 39 s de
+cours, pour un étudiant qui paie ses données. Le commentaire du code visait juste
+(« la qualité tient à débit contenu ») ; le réglage ne le servait pas.
+
+Moteur 1.4.4 : `crf 24` + `maxrate 2500k`. **Mesuré : 9,5 Mo** au lieu de 74,7 —
+sept fois plus léger, voix et sous-titres intacts, cinq plans sur cinq lisibles.
+Le plafond **borne** la taille par construction (150 s restent sous 50 Mo).
+
+**Non fait, délibérément** : relever la limite du bucket. C'était le geste le plus
+rapide. Une limite basse est précisément ce qui protège l'étudiant d'une vidéo
+qu'il ne peut pas télécharger — la contrainte avait raison, l'encodage avait tort.
 
 ### 4.2 Reste de qualité, non bloquant mais visible
 Les formes sont justes mais **génériques** : le navire-citerne du plan 5 est un

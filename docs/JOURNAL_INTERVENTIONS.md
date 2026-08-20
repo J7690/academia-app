@@ -528,3 +528,53 @@ supprimer aussi aurait ouvert n'importe quel compte à qui tape le bon numéro.
   fonctionnel de bout en bout », en ayant prouvé les trois RPC sous l'identité de
   l'étudiant. C'était vrai de la chaîne serveur, et faux de ce que vit
   l'étudiant. Une inconnue nommée dans `ETAT.md` ne se répare pas toute seule.
+
+## 2026-08-20 — Premier essai réel depuis le téléphone : trois tentatives, une vidéo
+
+- `12:24` · **INSTALLÉ** · APK debug sur le TECNO LD7. L'installation a exigé une
+  désinstallation préalable (`signatures do not match` — la version du 18/08
+  était signée d'une autre clé) : accord de Jocelyn demandé et obtenu avant, les
+  données locales de l'app étant effacées.
+- `12:30` · **LE CÂBLAGE CORRIGÉ TIENT** · traces du téléphone :
+  `[WB-PREVIEW] initState` puis `Starting poll`. Ces deux lignes n'existaient pas
+  avant le correctif : l'étudiant arrive bien sur l'écran d'attente.
+- `12:34` · **ÉCHEC 1** · travail `1883ac6e`, sujet « les nuages ». **945 images
+  sur 945**, montage fait, contrôle passé — dépôt refusé :
+  `depot:HTTP Error 400: Bad Request`. Quatre minutes de rendu perdues.
+- `12:40` · **ÉCARTÉ PAR LA MESURE, avant de toucher au code** : le nom de fichier
+  (`capsule_id` = `capsule`, identique à la capsule qui avait réussi la veille) ;
+  la taille (bucket sans limite déclarée) ; les droits (politique INSERT ouverte à
+  `anon` sur `capsules/**`, et un refus RLS donnerait 403) ; l'environnement du
+  pod (`env_pod` inchangé depuis le 18/08).
+- `12:43` · **MOTEUR 1.4.3 — RÉPARER L'OBSERVABILITÉ D'ABORD** · `deposer()` lit
+  désormais le corps de la réponse, et rend la clé et la taille. `urllib` remonté
+  au module pour qu'un `NameError` dans le gestionnaire ne masque pas la cause
+  qu'on va chercher. **Vérifié par un test simulant un vrai 400**, pas par
+  relecture.
+- `12:51` · **ÉCHEC 2, MAIS QUI DIT POURQUOI** · travail `0f485f2a` :
+  `HTTP 400 {"statusCode":"413","error":"Payload too large","code":"EntityTooLarge"}
+  [cle=… octets=74688007]`. **74,7 Mo pour 39 s = 15,4 Mbit/s.** Une itération a
+  suffi entre « code sans cause » et cause chiffrée.
+- `12:53` · **DIAGNOSTIC** · `crf 20` sans plafond, sur des milliers d'arêtes
+  fines et mouvantes sur fond noir — le pire cas pour x264. « Le pétrole » passait
+  la veille à 46 Mo : **sous la limite par chance, pas par conception**. Et même
+  accepté, 75 Mo pour 39 s est inregardable pour qui paie ses données mobiles.
+- `12:55` · **MOTEUR 1.4.4** · `crf 24` + `maxrate 2500k` + `bufsize 5000k`.
+  Réglage vérifié dans la commande ffmpeg avant publication, et bornes calculées :
+  39 s → 13 Mo, 150 s → 49,9 Mo au maximum.
+- `12:55` · **NON FAIT, DÉLIBÉRÉMENT** · relever `file_size_limit` du bucket.
+  C'était le geste le plus rapide. Une limite basse est ce qui protège l'étudiant
+  d'une vidéo qu'il ne peut pas télécharger : la contrainte avait raison, c'est
+  l'encodage qui avait tort.
+- `12:57` · **SÉQUENCEMENT** · bascule en 1.4.4 faite pendant qu'une machine
+  vivait encore, mais travail inséré SEULEMENT après confirmation de sa mort —
+  la machine vivante l'aurait pris avec l'ancien moteur (défaut du 18/08).
+- `13:01` · **RÉUSSI** · travail `ed0ce97a` : 970 images, **223 s**, déposé.
+  **9,5 Mo** au lieu de 74,7 (÷ 7,8), 38,8 s, 1,97 Mbit/s, voix mesurée
+  (moyenne −19,5 dB), cinq plans sur cinq regardés un par un : la masse de
+  gouttelettes, le cycle de l'eau, l'observation du ciel. Vidéo remise à Jocelyn.
+- `—` · **CE QUE CETTE SÉANCE CONFIRME** · les deux défauts du jour étaient
+  MUETS et tous deux à la dernière étape : un écran qui navigue au mauvais
+  endroit sans lever d'erreur, un dépôt qui refuse sans dire pourquoi. Aucun n'a
+  été trouvé par un message ; l'un par relecture, l'autre en réparant
+  l'observabilité avant de deviner.
