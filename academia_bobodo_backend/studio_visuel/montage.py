@@ -219,8 +219,27 @@ def assembler(dossier_images: str, capsule: dict, sortie: str,
         simplement la video ;
       * `+faststart` : sans lui la lecture ne demarre qu'apres telechargement
         complet -- fatal sur une connexion lente, c'est-a-dire notre public ;
-      * `crf 20` avec `preset slow` : la qualite tient a debit contenu, ce qui
-        compte quand l'abonne paie ses donnees mobiles.
+      * `crf 24` AVEC UN PLAFOND DE DEBIT : la qualite tient a debit contenu,
+        ce qui compte quand l'abonne paie ses donnees mobiles.
+
+    LE PLAFOND N'EST PAS UN DETAIL, IL VIENT D'UNE MESURE.
+    `crf 20` sans plafond a produit, le 20/08, une capsule de 39 s pesant
+    75 Mo — soit 15,4 Mbit/s. Storage l'a refusee (`EntityTooLarge`) et QUATRE
+    MINUTES DE RENDU ONT ETE PERDUES, deux fois de suite, sur le sujet
+    « les nuages ».
+
+    Le contenu explique le poids : des milliers d'aretes fines et mouvantes sur
+    fond noir sont le pire cas pour x264. Une capsule au sujet plus calme
+    (« le petrole », 46 Mo) passait de justesse ; la limite n'etait pas atteinte
+    par chance, pas par conception.
+
+    Et meme si Storage avait accepte : 75 Mo pour 39 s de cours est
+    inutilisable pour un etudiant a Bobo-Dioulasso qui paie ses donnees. Le
+    commentaire d'origine visait juste ; le reglage ne le servait pas.
+
+    A 2500 kbit/s, 39 s pesent ~12 Mo, et meme une capsule de 150 s reste sous
+    la limite. La nettete du texte incruste est preservee : le plafond mord sur
+    le fourmillement des traits, pas sur les aplats.
     """
     fps = capsule["format"]["fps"]
     scenes = capsule["scenes"]
@@ -276,7 +295,8 @@ def assembler(dossier_images: str, capsule: dict, sortie: str,
         commande += ["-vf", ",".join(filtres)]
     commande += [
         "-r", str(fps),
-        "-c:v", "libx264", "-preset", "slow", "-crf", "20",
+        "-c:v", "libx264", "-preset", "slow", "-crf", "24",
+        "-maxrate", "2500k", "-bufsize", "5000k",
         "-pix_fmt", "yuv420p", "-movflags", "+faststart",
     ]
     if audio and os.path.isfile(audio):

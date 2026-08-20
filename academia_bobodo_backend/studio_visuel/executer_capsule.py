@@ -29,6 +29,12 @@ import shutil
 import subprocess
 import sys
 import time
+# Importes AU NIVEAU DU MODULE, et pas dans `deposer` : la clause
+# `except urllib.error.HTTPError` doit pouvoir s'evaluer meme si l'import local
+# n'a pas eu lieu. Un NameError dans un gestionnaire d'erreur masquerait la
+# cause exacte qu'on vient d'aller chercher.
+import urllib.error
+import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, "/workspace")
@@ -128,7 +134,6 @@ def deposer(chemin: str, cle: str) -> tuple[bool, str]:
     if not (SUPABASE_URL and SUPABASE_KEY):
         return False, "configuration_supabase_absente"
     try:
-        import urllib.request
         with open(chemin, "rb") as f:
             donnees = f.read()
         requete = urllib.request.Request(
@@ -141,8 +146,27 @@ def deposer(chemin: str, cle: str) -> tuple[bool, str]:
             })
         with urllib.request.urlopen(requete, timeout=600) as reponse:
             return reponse.status < 300, str(reponse.status)
+    except urllib.error.HTTPError as e:
+        # LE CORPS DE LA REPONSE EST LA SEULE CHOSE QUI DIT POURQUOI.
+        #
+        # `str(HTTPError)` ne rend que « HTTP Error 400: Bad Request » -- un
+        # code sans cause. Mesure du 20/08, travail 1883ac6e « les nuages » :
+        # 945 images sur 945 rendues, capsule montee, verdict passe, et la
+        # video PERDUE au depot sur ce seul message. Storage explique toujours
+        # son refus dans le corps ({"statusCode":..,"error":..,"message":..}) ;
+        # nous le jetions.
+        #
+        # C'est la faute de famille du depot, appliquee a la derniere etape :
+        # deduire une cause d'un code qu'on n'a pas lu.
+        try:
+            corps = e.read().decode("utf-8", "replace")[:400]
+        except Exception:  # noqa: BLE001
+            corps = "(corps illisible)"
+        taille = os.path.getsize(chemin) if os.path.exists(chemin) else -1
+        return False, f"HTTP {e.code} {corps} [cle={cle} octets={taille}]"
     except Exception as e:  # noqa: BLE001
-        return False, str(e)[:200]
+        taille = os.path.getsize(chemin) if os.path.exists(chemin) else -1
+        return False, f"{type(e).__name__}: {str(e)[:200]} [cle={cle} octets={taille}]"
 
 
 def recuperer_narration(capsule: dict) -> str | None:
