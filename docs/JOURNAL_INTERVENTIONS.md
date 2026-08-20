@@ -578,3 +578,43 @@ supprimer aussi aurait ouvert n'importe quel compte à qui tape le bon numéro.
   endroit sans lever d'erreur, un dépôt qui refuse sans dire pourquoi. Aucun n'a
   été trouvé par un message ; l'un par relecture, l'autre en réparant
   l'observabilité avant de deviner.
+
+## 2026-08-20 (suite) — Le flux validé depuis l'application, et les dettes de relecture soldées
+
+- `13:07` · **VALIDÉ DEPUIS L'ÉCRAN** · Jocelyn saisit « géomètre » sur son
+  TECNO. Traces de l'appareil, chaîne complète :
+  `createStudioJob → job_id` → `[WB-PREVIEW] Starting poll` →
+  `Poll done — polledUrl=https://…` → `_setVideoUrl` →
+  **`Building AcademiaPlaybackView`**. Il regarde sa vidéo dans l'application.
+  C'est le maillon que la base seule ne pouvait pas prouver.
+- `13:11` · **MESURE** · travail `c1943193` : 1 054 images, **204 s**,
+  **42,1 s de vidéo, 7,9 Mo**, voix à −19,7 dB. Deuxième sujet d'affilée sans
+  échec avec le moteur 1.4.4 (contre 74,7 Mo et deux capsules perdues à 12:51).
+- `13:12` · **`silhouetter` CONCLU** · le théodolite sur trépied est
+  reconnaissable à l'image. C'était l'un des trois verbes « analysés mais non
+  réfutés » de l'audit croisé du 13/08. Restent `extruder` et `ecrire`.
+- `13:06` · **DÉFAUT OBSERVÉ EN DIRECT** · Jocelyn ouvre « Mes cours » sur une
+  application relancée. La liste montre `video_url: null` pour le cours 3D — la
+  capsule vit dans `app.studio_jobs`, que cette vue ne joint pas. Taper dessus
+  aurait affiché une erreur de transtypage Dart.
+- `13:10` · **TROIS CORRECTIFS DE RELECTURE** ·
+  (a) `loadProject` reconnaît une capsule (présence de `gestes`) et cesse
+  d'appeler `Storyboard.fromJson` — la correction existait à la GÉNÉRATION
+  depuis le 12/08 et n'avait jamais été portée à la RELECTURE, la couche qu'on
+  regarde et pas celle qui suit ;
+  (b) `_typeProduction` est restauré depuis le storyboard au lieu d'un drapeau
+  qui mourait avec l'application — sans quoi l'aperçu interrogeait la mauvaise
+  file après relance ;
+  (c) l'écran d'aperçu rattrape un travail dont l'identifiant est perdu via
+  `studio_creer_travail_etudiant`, **idempotente** : elle rend la capsule déjà
+  prête plutôt que d'en refabriquer une. Pas de nouvelle table, pas de dépense.
+- `13:14` · **COMPILÉ ET INSTALLÉ** · 0 erreur sur le parcours 3D. APK posé avec
+  `install -r` : même signature, session conservée. **Les trois correctifs ne
+  sont PAS encore exercés sur le téléphone** — dit ici pour que la prochaine
+  séance ne les croie pas validés.
+- `—` · **DETTE NOUVELLE, MESURÉE** · un projet coquille est créé à chaque
+  génération : `createProject` crée `67ce1bc4` (0 scène), puis le serveur crée le
+  sien (`518ca1e4`) que le client adopte. Le premier reste en base et apparaît
+  dans « Mes cours » comme un cours vide.
+- `—` · **DÉPENSE** · quatre machines sur la séance (deux échecs, deux réussites),
+  ≈ 0,16 $.

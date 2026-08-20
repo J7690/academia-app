@@ -85,6 +85,35 @@ class _SmartWhiteboardPreviewScreenState extends State<SmartWhiteboardPreviewScr
         _erreur = provider.errorMessage ??
             "La vidéo n'a pas pu être fabriquée. Ton cours reste enregistré.";
       });
+    } else if (widget.projectId != null) {
+      // RATTRAPER UNE CAPSULE DONT ON A PERDU L'IDENTIFIANT.
+      //
+      // `currentRenderJobId` ne vit qu'en mémoire : l'application relancée, il
+      // est nul, et une capsule PAYÉE devenait injoignable — « Mes cours » ne
+      // joint que `whiteboard_renders`, où la chaîne 3D n'écrit jamais.
+      //
+      // La RPC `studio_creer_travail_etudiant` est idempotente et le sait : elle
+      // rend le travail déjà en cours, ou la capsule déjà prête, plutôt que d'en
+      // refabriquer une. C'est donc elle, et pas une nouvelle table, qui répare
+      // la perte de fil.
+      debugPrint('[WB-PREVIEW] pas de travail en memoire — on rattache le projet');
+      setState(() {
+        _isPolling = true;
+        _erreur = null;
+      });
+      final provider = context.read<SmartWhiteboardProvider>();
+      await provider.createRenderJob();
+      if (!mounted) return;
+      if (provider.currentRenderJobId == null) {
+        setState(() {
+          _isPolling = false;
+          _erreur = provider.errorMessage ??
+              "Ce cours n'a pas encore de vidéo.";
+        });
+        return;
+      }
+      setState(() => _isPolling = false);
+      await _start();
     } else {
       debugPrint('[WB-PREVIEW] ⚠️ No URL and no renderJobId — nothing to play');
       setState(() {

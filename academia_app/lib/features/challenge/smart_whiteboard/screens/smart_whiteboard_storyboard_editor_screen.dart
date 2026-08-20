@@ -59,6 +59,21 @@ class _SmartWhiteboardStoryboardEditorScreenState
         });
         return;
       }
+
+      // UNE CAPSULE 3D N'A RIEN À ÉDITER : ON N'EST PAS AU BON ENDROIT.
+      //
+      // « Mes cours » route sur `status == 'completed'`, or la chaîne 3D
+      // n'écrit jamais ce statut : elle vit dans `app.studio_jobs`, pas dans
+      // `whiteboard_renders`. Tout cours 3D atterrissait donc dans l'éditeur.
+      // `loadProject` reconnaît maintenant la capsule et laisse l'état à
+      // `rendering` ; il reste à emmener l'étudiant là où sa vidéo l'attend.
+      if (provider.state == SmartWhiteboardState.rendering && mounted) {
+        Navigator.of(context).pushReplacementNamed(
+          '/smart-whiteboard-preview',
+          arguments: {'projectId': widget.projectId},
+        );
+        return;
+      }
     }
 
     final providerStoryboard = provider.currentStoryboard;

@@ -928,6 +928,40 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       // moteur — exactement le défaut qu'on vient de corriger, revenu par la
       // porte de derrière.
       _storyboardOrigine = storyboardJson;
+
+      // UNE CAPSULE 3D N'EST PAS ANALYSABLE, ET CE CHEMIN L'IGNORAIT.
+      //
+      // `generateStoryboard` sait depuis le 12/08 qu'une capsule n'a ni
+      // `blocks` ni `export_settings`, et que `Storyboard.fromJson` transtype
+      // ces champs en non-nullable (cf. le commentaire de cette méthode).
+      // `loadProject` appelait pourtant le même `fromJson` : rouvrir un cours
+      // 3D depuis « Mes cours » affichait à l'étudiant une erreur Dart brute,
+      // « type 'Null' is not a subtype of type 'String' in type cast ».
+      //
+      // La correction a été portée à la génération et pas à la relecture — la
+      // couche qu'on regarde, pas celle qui suit. C'est le défaut de famille de
+      // ce dépôt, et il valait ici pour TOUTE capsule déjà fabriquée.
+      final scenes = storyboardJson['scenes'];
+      final estCapsule = scenes is List &&
+          scenes.isNotEmpty &&
+          scenes.first is Map &&
+          (scenes.first as Map).containsKey('gestes');
+
+      if (estCapsule) {
+        // ON RESTAURE AUSSI LE TYPE DE PRODUCTION.
+        // `_typeProduction` ne vivait qu'en mémoire, écrit par l'écran de
+        // saisie. Après une relance de l'application il retombait à `vision2`,
+        // et l'écran d'aperçu interrogeait alors la MAUVAISE file
+        // (`whiteboard_renders` au lieu de `studio_etat_travail`) pour un cours
+        // dont le JSON en base porte pourtant `engine: studio`.
+        // La vérité est dans le storyboard, pas dans un drapeau volatil.
+        _typeProduction = 'studio';
+        _currentStoryboard = null;
+        _currentProject = null;
+        _setState(SmartWhiteboardState.rendering);
+        return;
+      }
+
       _currentStoryboard = Storyboard.fromJson(storyboardJson);
       _currentProject = WhiteboardProject.fromJson({
         ...projectJson,

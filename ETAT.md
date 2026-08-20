@@ -18,15 +18,28 @@
 
 ## 1. Où on en est, en une phrase
 
-**Le flux 3D produit la vidéo d'un sujet saisi sur le téléphone.** Mesure du
-20/08, sujet « les nuages » commandé depuis l'application par Jocelyn, travail
-`ed0ce97a` : **3 min 43** de la commande au dépôt, 38,8 s de vidéo, voix,
-sous-titres, **9,5 Mo**, cinq plans sur cinq montrant leur sujet.
+**Le flux 3D est validé DEPUIS L'APPLICATION, sur téléphone.** Le 20/08 à 13:11,
+Jocelyn a saisi « géomètre » sur son TECNO ; les traces de l'appareil montrent la
+chaîne complète : commande → suivi → URL signée → `Building AcademiaPlaybackView`.
+**Il a regardé sa vidéo dans l'application.** C'est le maillon que la base seule
+ne pouvait pas prouver.
+
+Deux sujets d'affilée, sans échec :
+
+| | « les nuages » | « géomètre » |
+|---|---|---|
+| durée | 38,8 s | 42,1 s |
+| commande → dépôt | 3 min 43 | **3 min 24** |
+| poids | 9,5 Mo | **7,9 Mo** |
+| voix (moyenne) | −19,5 dB | −19,7 dB |
 
 Il a fallu trois essais pour y arriver, et les deux échecs sont instructifs :
 la chaîne rendait parfaitement (945 puis 968 images) et **perdait la capsule au
 dépôt**, faute d'un encodage borné (§4.1 bis). Le câblage de l'écran, lui, était
 cassé et a été corrigé le même jour (§4.4).
+
+Le théodolite sur trépied de « géomètre » est reconnaissable : **`silhouetter`,
+l'un des trois verbes non conclus par l'audit croisé, se voit correctement**.
 
 Détail d'un rendu nominal (travail `ea601c81`, sujet « le pétrole », 19/08) :
 
@@ -220,15 +233,19 @@ reconstruits. Depuis le 14/08 : l'**image** change quelques fois par an, le
 
 ## 6. Prochain pas, dans l'ordre
 
-1. **Rejouer le flux depuis l'écran**, sur le téléphone de Jocelyn — c'est le
-   seul maillon non exercé (§4.4).
-2. **Vérifier l'invite sur un troisième sujet** non technique, pour savoir si la
-   qualité tient hors physique/industrie.
-3. **Silhouettes reconnaissables** (§4.2) — travailler l'invite, pas le moteur.
-4. **Conclure `silhouetter`, `extruder`, `ecrire`** (§4.3).
-5. **Reprise automatique** quand un travail attend sans machine : mesuré le
+1. ~~Rejouer le flux depuis l'écran~~ — **fait le 20/08**, deux sujets, lecture
+   confirmée dans l'application (§1).
+2. **Essayer la RELECTURE sur téléphone** : rouvrir un cours 3D depuis
+   « Mes cours », et le rouvrir après avoir fermé l'application. Les trois
+   correctifs sont dans l'APK installé à 13:14 mais **n'ont pas encore été
+   exercés** — c'est exactement la situation qui a produit le défaut du 19/08.
+3. **Le projet coquille** (§8) : un cours vide créé à chaque génération.
+4. **Silhouettes reconnaissables** (§4.2) — travailler l'invite, pas le moteur.
+5. **Conclure `extruder` et `ecrire`** (§4.3) — `silhouetter` est conclu par
+   l'image du théodolite.
+6. **Reprise automatique** quand un travail attend sans machine : mesuré le
    18/08, « pluie » a attendu **81 min** sans que personne ne le sache.
-6. **Alléger l'image** (4,47 Go pour un moteur de 82 Ko) maintenant que
+7. **Alléger l'image** (4,47 Go pour un moteur de 82 Ko) maintenant que
    l'amorçage est le poste de temps dominant.
 
 ## 7. Les règles qui ne se négocient pas
@@ -254,9 +271,10 @@ reconstruits. Depuis le 14/08 : l'**image** change quelques fois par an, le
 | Gabarit `universite-arbilo` inactif → clonage des mini-sites sans effet | 18/08 | **ouverte** — 4 universités créées depuis juillet à rattraper |
 | Inscription téléphone : réglage Supabase « Confirm phone » non vérifié | 18/08 | **ouverte** — cf. journal 18/08 |
 | Silhouettes génériques pour les objets techniques | 19/08 | **ouverte** — cf. §4.2 |
-| **Une capsule 3D terminée est injoignable après fermeture de l'app** | 19/08 | **ouverte, la plus grave des dettes clientes** — `_currentRenderJobId` ne vit qu'en mémoire, aucune RPC ne liste les `studio_jobs` d'un étudiant, et « Mes cours » ne joint que `whiteboard_renders`. Une capsule payée disparaît de la vue si l'application est fermée pendant les 2 min 40 |
-| `estAnimation3d` n'est qu'un drapeau client, jamais relu depuis le projet | 19/08 | **ouverte** — après relance de l'app, `_typeProduction` retombe à `vision2` et l'écran d'aperçu interroge la **mauvaise file** (`whiteboard_renders` au lieu de `studio_etat_travail`), alors que le JSON en base porte `engine:studio` |
-| Rouvrir un cours 3D depuis « Mes cours » plante | 19/08 | **ouverte** — `loadProject` appelle `Storyboard.fromJson` sur un JSON de capsule ; `generateStoryboard` sait déjà que c'est impossible (commentaire provider:322-337), `loadProject` l'ignore. L'étudiant lit une erreur de transtypage Dart |
+| ~~Capsule 3D injoignable après fermeture de l'app~~ | 19/08 | **corrigée le 20/08** — l'écran d'aperçu rattrape le travail via `studio_creer_travail_etudiant`, idempotente : elle rend la capsule déjà prête au lieu d'en refabriquer une. **Non essayé sur téléphone** |
+| ~~`estAnimation3d` n'est qu'un drapeau client~~ | 19/08 | **corrigée le 20/08** — `loadProject` restaure `_typeProduction` depuis le storyboard (présence de `gestes`), au lieu d'un drapeau qui mourait avec l'application. **Non essayé sur téléphone** |
+| ~~Rouvrir un cours 3D depuis « Mes cours » plante~~ | 19/08 | **corrigée le 20/08** — `loadProject` reconnaît une capsule et cesse de l'analyser comme un storyboard de tableau ; l'éditeur redirige vers l'aperçu. **Non essayé sur téléphone** |
+| Un projet coquille est créé à chaque génération | 20/08 | **ouverte** — mesuré : `createProject` crée `67ce1bc4` (0 scène), puis le serveur crée le sien (`518ca1e4`) que le client adopte. Le premier reste en base, visible dans « Mes cours » comme un cours vide |
 | L'URL signée 6 h est publiée telle quelle dans le Challenge | 19/08 | **ouverte** — le bucket est privé et la politique n'autorise que le propriétaire : la vidéo publiée meurt pour les spectateurs au bout de 6 h |
 | Codes techniques affichés à l'étudiant (`invalid_capsule`, `storyboard_sans_scenes`…) | 19/08 | **ouverte** — `_messageForError` traduit six codes ; ceux de la chaîne 3D n'y sont pas |
 
