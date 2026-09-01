@@ -895,6 +895,20 @@ class SmartWhiteboardProvider extends ChangeNotifier {
   /// Recharge un projet et son storyboard depuis son ID.
   /// Utilisé quand l'utilisateur ouvre un projet depuis la liste.
   Future<void> loadProject(String projectId) async {
+    // CHANGER DE COURS, C'EST OUBLIER LE PRÉCÉDENT.
+    //
+    // `_renderVideoUrl` et `_currentRenderJobId` sont des champs UNIQUES,
+    // partagés par tous les cours. Sans cette purge, ouvrir un cours après en
+    // avoir regardé un autre montrait la vidéo du précédent — mesuré le 20/08
+    // à 14:04 sur le téléphone : « les nuages » ouvert, capsule de « la date »
+    // affichée. Aucune erreur, aucune trace : simplement le mauvais cours.
+    if (projectId != _currentProjectId) {
+      _renderVideoUrl = null;
+      _previewVideoUrl = null;
+      _currentRenderJobId = null;
+      _etapeEnCours = null;
+    }
+
     _setState(SmartWhiteboardState.loading);
     _errorMessage = null;
 

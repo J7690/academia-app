@@ -947,7 +947,7 @@ class _GamePlayScreenState extends State<GamePlayScreen> {
       score: _scoringSystem.currentScore,
       correctAnswers: _scoringSystem.totalCorrectAnswers,
       wrongAnswers: _scoringSystem.totalWrongAnswers,
-      bestStreak: _scoringSystem.streakCount,
+      bestStreak: _scoringSystem.meilleureSerie,
       durationSec: GameConstants.defaultGameDuration - _timeRemaining,
     );
 
@@ -983,7 +983,11 @@ class _GamePlayScreenState extends State<GamePlayScreen> {
             const Text('Statistiques :'),
             Text('Bonnes réponses : ${_scoringSystem.totalCorrectAnswers}'),
             Text('Mauvaises réponses : ${_scoringSystem.totalWrongAnswers}'),
-            Text('Score moyen : ${_scoringSystem.averageScore.toStringAsFixed(1)}'),
+            // « Score moyen » affichait invariablement 0.0 : la moyenne n'est
+            // calculée que par `endGame()`, que personne n'appelait. On montre
+            // la meilleure série, qui est vraie et qui veut dire quelque chose
+            // pour l'étudiant — plutôt qu'une statistique fausse mais stable.
+            Text('Meilleure série : ${_scoringSystem.meilleureSerie}'),
           ],
         ),
         actions: [

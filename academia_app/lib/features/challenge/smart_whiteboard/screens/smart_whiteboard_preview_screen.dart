@@ -42,8 +42,26 @@ class _SmartWhiteboardPreviewScreenState extends State<SmartWhiteboardPreviewScr
     final provider = context.read<SmartWhiteboardProvider>();
     debugPrint('[WB-PREVIEW] _start — provider.renderVideoUrl=${provider.renderVideoUrl} provider.currentRenderJobId=${provider.currentRenderJobId}');
 
-    // 1. Prendre l'URL déjà connue (widget ou provider)
-    final url = widget.videoUrl ?? provider.renderVideoUrl;
+    // 1. Prendre l'URL déjà connue — MAIS SEULEMENT SI ELLE EST BIEN CELLE DE
+    //    CE COURS-LÀ.
+    //
+    // `provider.renderVideoUrl` est un champ unique, partagé par tous les cours.
+    // L'écran le lisait sans vérifier à quel projet il appartenait : après avoir
+    // regardé un cours, en ouvrir un AUTRE affichait le PRÉCÉDENT.
+    //
+    // Mesuré sur le téléphone de Jocelyn le 20/08 à 14:04:22 : ouverture de
+    // « les nuages » (projet 518ca1e4), et l'application a monté le lecteur sur
+    // `capsules/capsule/1787233422/capsule.mp4` — la capsule de « la date ».
+    // Rien ne le signalait : une vidéo s'affichait, simplement pas la bonne.
+    //
+    // On ne se fie donc à la mémoire que si le provider parle du MÊME projet.
+    final memoireUtilisable = provider.currentProjectId != null &&
+        widget.projectId != null &&
+        provider.currentProjectId == widget.projectId;
+    final url = widget.videoUrl ??
+        (memoireUtilisable || widget.projectId == null
+            ? provider.renderVideoUrl
+            : null);
     if (url != null) {
       debugPrint('[WB-PREVIEW] URL already known, skipping poll → $url');
       _setVideoUrl(url);

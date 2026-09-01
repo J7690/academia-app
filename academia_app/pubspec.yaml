@@ -2,7 +2,7 @@ name: academia_app
 description: Projet Flutter avec intégration Supabase automatisée
 publish_to: 'none'
 
-version: 1.0.0+24
+version: 1.0.1+25
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -135,7 +135,6 @@ dependencies:
   tiktoklikescroller: ^0.2.8
 
   # Gaming Engine - Latest stable
-  flame: ^1.35.1
   
   # Live Streaming & Recording
   web_socket_channel: ^2.4.0

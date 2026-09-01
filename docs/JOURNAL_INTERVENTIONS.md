@@ -618,3 +618,35 @@ supprimer aussi aurait ouvert n'importe quel compte à qui tape le bon numéro.
   dans « Mes cours » comme un cours vide.
 - `—` · **DÉPENSE** · quatre machines sur la séance (deux échecs, deux réussites),
   ≈ 0,16 $.
+
+## 2026-08-28 — Carte de conduite (auto-écoles) : recherche externe, proposition
+
+- `—` · **NOUVEAU CHANTIER, SANS RAPPORT AVEC LE STUDIO 3D** · demande orale de
+  Jocelyn : une « carte de conduite » pour noter les séances d'entraînement
+  des candidats d'une auto-école partenaire, précédée d'une recherche sur les
+  pratiques concurrentes. Recherche menée (4 angles, `veille-externe`),
+  proposition rédigée. **Rien codé, rien migré, rien committé.**
+- `—` · **EXISTANT VÉRIFIÉ** · `partner_type` (`university`/`auto_ecole`,
+  depuis `a3875b3` le 05/08) et tout le flux de candidature générique
+  s'appliquent déjà aux auto-écoles sans code spécifique. Aucune trace de
+  séance/carnet/moniteur dans le dépôt — territoire neuf, aucune décision
+  passée contredite.
+- `—` · **ACCÈS MANQUANT, MESURÉ** · le domaine `dgttm.bf` (programme officiel
+  burkinabè du permis de conduire) échoue en DNS depuis cet environnement, à
+  deux tentatives. Le PDF de fiche de suivi française récupéré en
+  comparaison (`azur-auto-ecole.com`) s'est révélé être un scan image,
+  illisible par l'outil d'extraction. Les heures (35 h) et le référentiel de
+  compétences proposés viennent donc de sources indirectes, pas d'une lecture
+  directe du texte réglementaire — marqué non vérifié dans la proposition.
+- `—` · **CONSTAT CROISÉ** · aucune offre numérique burkinabè trouvée
+  (burkinapermis.com, appli BF Auto École, sites d'auto-écoles) ne fait de
+  suivi de séances pratiques — toutes s'arrêtent au code de la route et à
+  l'administratif. Le marché mûr (France, obligatoire depuis 01/2024 :
+  Codes Rousseau, Klaxo, Mounki) converge sur un même socle : séance →
+  heures + compétences (barème Acquis/En cours/Non acquis) + commentaire,
+  visible par l'élève.
+- `—` · **RENDU** · `docs/CARTE_CONDUITE_RECHERCHE_ET_PROPOSITION_2026-08-28.md`
+  — sources datées, modèle de données proposé (`app.driving_cards`,
+  `app.driving_sessions`, `app.driving_skills`), limites explicites,
+  4 décisions ouvertes pour Jocelyn (nom carte/carnet, compte moniteur,
+  référentiel figé ou libre en phase 1, qui obtient le PDF DGTTM).

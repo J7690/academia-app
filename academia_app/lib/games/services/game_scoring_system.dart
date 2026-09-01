@@ -22,6 +22,16 @@ class GameScoringSystem extends ChangeNotifier {
   int get highScore => _highScore;
   int get comboMultiplier => _comboMultiplier;
   int get streakCount => _streakCount;
+
+  /// La PLUS LONGUE série de la partie, et non la série en cours.
+  ///
+  /// `bestStreak` était renseigné avec `streakCount` (games_hub_screen:950),
+  /// qui retombe à zéro à la première erreur : un étudiant enchaînant douze
+  /// bonnes réponses puis se trompant une fois enregistrait `best_streak = 0`.
+  /// La colonne existe depuis le 29/07 et n'a encore rien pollué — `game_results`
+  /// est vide — mais elle l'aurait fait dès la première partie jouée en ligne.
+  int get meilleureSerie => _meilleureSerie;
+  int _meilleureSerie = 0;
   List<ScoreEvent> get scoreHistory => List.unmodifiable(_scoreHistory);
   
   int get totalCorrectAnswers => _totalCorrectAnswers;
@@ -33,7 +43,8 @@ class GameScoringSystem extends ChangeNotifier {
   void addCorrectAnswer({int bonusPoints = 0}) {
     _totalCorrectAnswers++;
     _streakCount++;
-    
+    if (_streakCount > _meilleureSerie) _meilleureSerie = _streakCount;
+
     // Calcul du combo multiplier
     _updateComboMultiplier();
     
@@ -115,6 +126,7 @@ class GameScoringSystem extends ChangeNotifier {
     _currentScore = 0;
     _comboMultiplier = 1;
     _streakCount = 0;
+    _meilleureSerie = 0;
     _totalGamesPlayed++;
     
     _addScoreEvent(ScoreEvent.gameStart());

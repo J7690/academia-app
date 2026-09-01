@@ -254,12 +254,38 @@ class _FlutterConsumerChoiceViewState extends State<FlutterConsumerChoiceView> {
     _remaining = _budget;
     _qty.updateAll((_, __) => 0);
     _utility = 0;
-    int maxU = 0;
-    for (final p in _products) {
-      maxU += (_budget / p.price).floor() * p.utility;
-    }
-    _target = (maxU * 0.35).round();
+    _target = (_meilleurPanier() * 0.85).round();
     setState(() {});
+  }
+
+  /// La meilleure utilité RÉELLEMENT atteignable avec le budget de la manche.
+  ///
+  /// L'ancien calcul additionnait, pour CHAQUE produit, ce qu'on pourrait
+  /// acheter avec la TOTALITÉ du budget — comme si le budget était dépensé six
+  /// fois. Il donnait un objectif de 676 là où le maximum atteignable est 400.
+  ///
+  /// Mesuré le 20/08/2026 sur les 40 budgets possibles (80 à 119) : le meilleur
+  /// panier ne dépassait jamais 60,2 % de l'objectif, et le seuil de repêchage
+  /// à 70 % n'était franchissable dans AUCUN cas. Le jeu était mathématiquement
+  /// ingagnable — et il annonçait à l'étudiant « Sous l'objectif », c'est-à-dire
+  /// qu'il avait mal optimisé.
+  ///
+  /// On calcule désormais ce que ferait un étudiant qui raisonne juste : acheter
+  /// d'abord le meilleur rapport utilité/prix, puis le suivant avec la monnaie.
+  /// Écart mesuré avec l'optimum exact (sac à dos) : 2 points d'utilité au pire
+  /// sur les 40 budgets. L'objectif est fixé à 85 % de ce panier — exigeant,
+  /// atteignable, et laissant place à l'erreur.
+  int _meilleurPanier() {
+    final ordre = [..._products]
+      ..sort((a, b) => (b.utility / b.price).compareTo(a.utility / a.price));
+    var reste = _budget;
+    var total = 0;
+    for (final p in ordre) {
+      final n = (reste / p.price).floor();
+      total += n * p.utility;
+      reste -= n * p.price;
+    }
+    return total;
   }
 
   void _changeQty(String name, int delta) {
@@ -416,18 +442,58 @@ class _FlutterFirmTycoonViewState extends State<FlutterFirmTycoonView> {
   final int _maxRounds = 6;
   double _production = 50, _price = 50, _marketing = 50, _quality = 50;
 
+  /// Le meilleur profit atteignable par trimestre, mesuré au démarrage.
+  ///
+  /// C'est la référence qui rend le score SENSIBLE AUX DÉCISIONS. L'ancien
+  /// barème valait `(profit / 50).clamp(1, 10)` : il saturait dès 500 de profit,
+  /// or le profit obtenu SANS TOUCHER À RIEN est de 8 712. Mesuré le 20/08/2026
+  /// en balayant les 194 481 réglages possibles : ne rien faire donnait 650
+  /// points — et jouer parfaitement donnait 650 aussi. Le jeu ne distinguait
+  /// aucune décision, tout en promettant « Ajustez production, prix, marketing
+  /// et qualité ».
+  double _profitOptimal = 1;
+
   @override
   void initState() {
     super.initState();
+    _profitOptimal = _mesurerOptimum();
     _calc();
   }
 
+  /// Balaye les réglages au pas de 10 (14 641 combinaisons, quelques
+  /// millisecondes) plutôt que de coder l'optimum en dur : si le modèle
+  /// économique change un jour, le barème suit au lieu de mentir.
+  double _mesurerOptimum() {
+    var meilleur = 1.0;
+    for (var p = 0; p <= 100; p += 10) {
+      for (var pr = 0; pr <= 100; pr += 10) {
+        for (var m = 0; m <= 100; m += 10) {
+          for (var q = 0; q <= 100; q += 10) {
+            final v = _profitPour(p.toDouble(), pr.toDouble(), m.toDouble(), q.toDouble());
+            if (v > meilleur) meilleur = v;
+          }
+        }
+      }
+    }
+    return meilleur;
+  }
+
+  /// Le modèle économique, isolé pour être mesurable — c'est ce qui a permis de
+  /// prouver que le barème, et non le modèle, était en cause.
+  double _profitPour(double production, double price, double marketing, double quality) {
+    final priceEff = (100 - price) / 100;
+    final mktEff = marketing / 100;
+    final qEff = quality / 100;
+    final demand = 1000.0 * priceEff * (1 + mktEff * 0.5) * (1 + qEff * 0.3);
+    final prod = demand * (production / 100);
+    return prod * (price * 0.5 + 5) - (prod * 2 + marketing * 10 + quality * 15 + 100);
+  }
+
   void _calc() {
-    final baseDemand = 1000.0;
     final priceEff = (100 - _price) / 100;
     final mktEff = _marketing / 100;
     final qEff = _quality / 100;
-    final demand = baseDemand * priceEff * (1 + mktEff * 0.5) * (1 + qEff * 0.3);
+    final demand = 1000.0 * priceEff * (1 + mktEff * 0.5) * (1 + qEff * 0.3);
     final prod = demand * (_production / 100);
     _revenue = prod * (_price * 0.5 + 5);
     _costs = prod * 2 + _marketing * 10 + _quality * 15 + 100;
@@ -438,7 +504,11 @@ class _FlutterFirmTycoonViewState extends State<FlutterFirmTycoonView> {
   void _simulate() {
     _capital += _profit;
     if (_profit > 0) {
-      final pts = (GameConstants.correctAnswerPoints * (_profit / 50).clamp(1, 10)).round();
+      // Note la performance RELATIVE au meilleur trimestre possible : 20 points
+      // pour un trimestre optimal, 7 pour un réglage laissé par défaut.
+      // Mesuré : ne rien faire donne 92 sur la partie, jouer juste 170, un prix
+      // trop haut 27. La décision compte enfin.
+      final pts = (20 * _profit / _profitOptimal).round().clamp(0, 20);
       widget.onAddScore(pts);
       widget.onGameEvent('Profit \$${_profit.toStringAsFixed(0)} ! +$pts pts');
     } else {
@@ -452,9 +522,11 @@ class _FlutterFirmTycoonViewState extends State<FlutterFirmTycoonView> {
     }
     _round++;
     if (_round > _maxRounds) {
-      if (_capital > 2000) widget.onAddScore(50);
-      else if (_capital > 1500) widget.onAddScore(30);
-      else if (_capital > 1000) widget.onAddScore(15);
+      // Paliers relevés en conséquence : l'ancien seuil de 2 000 était franchi
+      // dès le premier trimestre sans rien faire, donc toujours acquis.
+      if (_capital > 50000) widget.onAddScore(50);
+      else if (_capital > 20000) widget.onAddScore(30);
+      else if (_capital > 2000) widget.onAddScore(15);
       widget.onGameEnd();
     } else {
       setState(() {

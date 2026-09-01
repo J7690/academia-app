@@ -271,12 +271,24 @@ reconstruits. Depuis le 14/08 : l'**image** change quelques fois par an, le
 | Gabarit `universite-arbilo` inactif → clonage des mini-sites sans effet | 18/08 | **ouverte** — 4 universités créées depuis juillet à rattraper |
 | Inscription téléphone : réglage Supabase « Confirm phone » non vérifié | 18/08 | **ouverte** — cf. journal 18/08 |
 | Silhouettes génériques pour les objets techniques | 19/08 | **ouverte** — cf. §4.2 |
-| ~~Capsule 3D injoignable après fermeture de l'app~~ | 19/08 | **corrigée le 20/08** — l'écran d'aperçu rattrape le travail via `studio_creer_travail_etudiant`, idempotente : elle rend la capsule déjà prête au lieu d'en refabriquer une. **Non essayé sur téléphone** |
-| ~~`estAnimation3d` n'est qu'un drapeau client~~ | 19/08 | **corrigée le 20/08** — `loadProject` restaure `_typeProduction` depuis le storyboard (présence de `gestes`), au lieu d'un drapeau qui mourait avec l'application. **Non essayé sur téléphone** |
-| ~~Rouvrir un cours 3D depuis « Mes cours » plante~~ | 19/08 | **corrigée le 20/08** — `loadProject` reconnaît une capsule et cesse de l'analyser comme un storyboard de tableau ; l'éditeur redirige vers l'aperçu. **Non essayé sur téléphone** |
+| Capsule 3D injoignable après fermeture de l'app | 19/08 | **corrigée, TOUJOURS PAS EXERCÉE** — l'écran d'aperçu rattrape le travail via `studio_creer_travail_etudiant`, idempotente. L'essai du 20/08 14:04 n'a **pas** sollicité ce chemin : `URL already known, skipping poll` — l'URL vivait encore en mémoire. Il faut FERMER l'application (la sortir des récentes) avant de rouvrir le cours |
+| ~~`estAnimation3d` n'est qu'un drapeau client~~ | 19/08 | **corrigée et VÉRIFIÉE sur téléphone le 20/08 14:04** — `loadProject` restaure `_typeProduction` depuis le storyboard ; la redirection vers l'aperçu en dépend et a eu lieu |
+| ~~Rouvrir un cours 3D depuis « Mes cours » plante~~ | 19/08 | **corrigée et VÉRIFIÉE sur téléphone le 20/08 14:04** — « la date » ouverte depuis la liste : `loadProject` a lu la capsule sans planter, l'éditeur a redirigé, la vidéo s'est affichée |
 | Un projet coquille est créé à chaque génération | 20/08 | **ouverte** — mesuré : `createProject` crée `67ce1bc4` (0 scène), puis le serveur crée le sien (`518ca1e4`) que le client adopte. Le premier reste en base, visible dans « Mes cours » comme un cours vide |
 | L'URL signée 6 h est publiée telle quelle dans le Challenge | 19/08 | **ouverte** — le bucket est privé et la politique n'autorise que le propriétaire : la vidéo publiée meurt pour les spectateurs au bout de 6 h |
 | Codes techniques affichés à l'étudiant (`invalid_capsule`, `storyboard_sans_scenes`…) | 19/08 | **ouverte** — `_messageForError` traduit six codes ; ceux de la chaîne 3D n'y sont pas |
+
+## 9. Autre chantier ouvert, sans rapport avec le Studio 3D
+
+Tout ce qui précède (§1-8) concerne le Smart Whiteboard / Studio 3D — **ça
+reste l'état mesuré de ce chantier-là**, ne pas le lire comme périmé par la
+ligne suivante.
+
+**28/08/2026** — recherche + proposition pour une « carte de conduite »
+(suivi des séances d'entraînement des candidats auto-école, sur le pan
+`partner_type = 'auto_ecole'` du système de candidature). Rien codé, rien
+migré. Détail complet, sources datées, décisions ouvertes :
+`docs/CARTE_CONDUITE_RECHERCHE_ET_PROPOSITION_2026-08-28.md`.
 
 ---
 
