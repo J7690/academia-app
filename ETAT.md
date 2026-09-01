@@ -284,6 +284,48 @@ Tout ce qui précède (§1-8) concerne le Smart Whiteboard / Studio 3D — **ça
 reste l'état mesuré de ce chantier-là**, ne pas le lire comme périmé par la
 ligne suivante.
 
+### 9.1 Les JEUX de l'onglet Challenge — audité et partiellement corrigé le 20/08
+
+**Onze entrées** dans le hub (`/games` → `GamesDomainHubScreen`) : Duel de
+Concours, Mémoire éclair, Le comptoir, La consultation, Type de Cerveau, Défi
+10 Secondes, Quel Étudiant Es-Tu ?, quatre jeux d'Économie, Tournois — plus
+Mathématiques et Sciences annoncés « Bientôt disponible ». Tous les écrans ont
+un appelant, sauf `GameRecordController` (`auto_record_game_wrapper.dart`).
+
+**Corrigé (commit `d719db7`, version 1.0.1+25)** :
+- **Consumer Choice était mathématiquement ingagnable.** L'objectif additionnait,
+  pour chaque produit, ce qu'on pourrait acheter avec la totalité du budget.
+  Mesuré sur les 40 budgets : le meilleur panier ne dépassait jamais **60,2 %**
+  de l'objectif, et le seuil de repêchage à 70 % n'était franchissable dans
+  **aucun** cas. Objectif désormais à 85 % du meilleur panier réel : atteignable
+  40 fois sur 40.
+- **Firm Tycoon était impossible à perdre.** Balayage des 194 481 réglages : ne
+  rien faire donnait 650 points, jouer parfaitement 650 aussi. Ce n'était pas le
+  modèle (son optimum vaut 3 × le réglage par défaut) mais **la notation**, qui
+  saturait dès 500 de profit quand le profit ordinaire est de 8 712. Note
+  relative désormais : 92 sans rien faire, 170 en jouant juste, faillite possible.
+- « Score moyen : 0.0 » affiché en permanence (`endGame()` jamais appelé) →
+  remplacé par la meilleure série. `best_streak` enregistrait la série **en
+  cours**, remise à zéro par la dernière faute → enregistre la plus longue.
+- **`lib/games/core/` supprimé** — 2 583 lignes (moteur Flame + une seconde copie
+  des 4 jeux) qu'aucun écran n'instanciait, plus la dépendance `flame`. Le
+  dossier nommé « core » était l'archive : c'était le piège de lecture du module.
+
+**Ce que la base dit** : `game_results` est vide **non par défaut de code** — la
+RPC est saine et `record()` est appelé depuis 4 écrans — mais parce que personne
+n'a joué connecté ; dernière activité de jeu le **30/07**. Les 3 duels créés sont
+tous restés en statut `waiting`. Le contenu existe : 147 questions, 18 matières.
+Les tables `orientation_quiz_*` sans politique RLS ne sont **pas** un défaut :
+l'accès passe par 4 RPC `SECURITY DEFINER`, toutes appelées. Sur 27 RPC de jeu,
+24 sont utilisées.
+
+**NON VÉRIFIÉ, et c'est la moitié du sujet** : sept jeux sur onze (Mémoire
+éclair, Le comptoir, La consultation, Type de Cerveau, Défi 10 Secondes, Quel
+Étudiant Es-Tu ?) ainsi que le parcours tournoi et le classement. L'audit
+multi-agents a été coupé par une limite de session — **un lecteur sur six a
+abouti**, et ses conclusions ont été revérifiées à la main faute de phase de
+réfutation. Ne pas lire l'absence d'alerte sur ces sept jeux comme un satisfecit.
+
 **28/08/2026** — recherche + proposition pour une « carte de conduite »
 (suivi des séances d'entraînement des candidats auto-école, sur le pan
 `partner_type = 'auto_ecole'` du système de candidature). Rien codé, rien

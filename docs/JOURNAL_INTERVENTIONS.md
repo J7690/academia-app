@@ -650,3 +650,48 @@ supprimer aussi aurait ouvert n'importe quel compte à qui tape le bon numéro.
   `app.driving_sessions`, `app.driving_skills`), limites explicites,
   4 décisions ouvertes pour Jocelyn (nom carte/carnet, compte moniteur,
   référentiel figé ou libre en phase 1, qui obtient le PDF DGTTM).
+
+## 2026-08-20 (suite) — Audit des jeux du Challenge, corrections, AAB de publication
+
+- `14:10` · **AUDIT DEMANDÉ** · les jeux de l'onglet Challenge, Flutter ET
+  Supabase, sans rien modifier. Relevé : 36 fichiers, 14 308 lignes ; 17 tables
+  de jeu ; 27 RPC.
+- `14:25` · **AUDIT PARTIEL, ET C'EST DIT** · workflow à six lecteurs coupé par
+  la limite de session : **un lecteur sur six a abouti**, la phase de réfutation
+  et la synthèse ont échoué. Toutes les conclusions retenues ont donc été
+  **revérifiées à la main** avant d'être rapportées.
+- `14:20` · **HYPOTHÈSE À MOI, RÉFUTÉE PAR LA MESURE** · j'avais annoncé que les
+  12 questions et 48 options du quiz d'orientation « dormaient, illisibles »
+  (RLS active, 0 politique). Faux : l'accès passe par 4 RPC `SECURITY DEFINER`,
+  toutes appelées. Corrigé auprès de Jocelyn dans la minute.
+- `14:30` · **DÉFAUT PROUVÉ PAR LE CALCUL** · Consumer Choice **mathématiquement
+  ingagnable** : sur les 40 budgets possibles, le meilleur panier ne dépasse
+  jamais 60,2 % de l'objectif et le seuil de repêchage à 70 % n'est franchissable
+  dans **aucun** cas. Le jeu répondait « Sous l'objectif » — il accusait
+  l'étudiant d'avoir mal optimisé.
+- `14:35` · **DÉFAUT PROUVÉ PAR BALAYAGE** · Firm Tycoon **impossible à perdre** :
+  194 481 réglages testés, ne rien faire donne 650 points, jouer parfaitement 650
+  aussi. Cause : la notation saturait dès 500 de profit quand le profit ordinaire
+  est de 8 712. **Le modèle n'était pas en cause** — son optimum vaut 3 × le
+  réglage par défaut.
+- `14:40` · **CODE MORT CONFIRMÉ** · `lib/games/core/` (2 583 lignes) instancié
+  nulle part : aucune des 5 classes citée ailleurs dans `lib/`, zéro `GameWidget`,
+  zéro import de `flame` hors de `core/`. Supprimé avec la dépendance `flame`.
+- `14:45` · **CORRECTIFS** · objectif de Consumer Choice = 85 % du meilleur panier
+  réel (atteignable 40/40) ; notation relative pour Firm Tycoon (92 sans rien
+  faire, 170 en jouant juste) ; « Score moyen : 0.0 » remplacé par la meilleure
+  série ; `best_streak` enregistre enfin la plus longue série et non celle en
+  cours. **0 erreur** à `flutter analyze lib` après suppression.
+- `15:05` · **AAB DE PUBLICATION** · version **1.0.1+25**, `app-release.aab`
+  **142,5 Mo**, signé avec la clé **ACADEMIA** (vérifié : `META-INF/ACADEMIA.RSA`,
+  pas la clé debug). Décomposition mesurée : 30,5 Mo de métadonnées non livrées,
+  et surtout **ce que télécharge l'étudiant — 41,6 Mo (arm64), 48,4 Mo (arm32)**.
+  Marge faible sous le plafond de 150 Mo de la Play Console : le levier, si un
+  jour ça bloque, est de réduire les symboles natifs (30 Mo) sans toucher au
+  téléchargement de l'étudiant.
+- `—` · **CE QUE LA BASE DIT** · `game_results` vide **n'est pas un défaut de
+  code** : la RPC est saine, `record()` est appelé depuis 4 écrans — personne n'a
+  joué connecté. Dernière activité de jeu : **30/07**. Les 3 duels sont tous
+  restés en `waiting`. 147 questions et 18 matières existent bel et bien.
+- `—` · **NON VÉRIFIÉ, ET C'EST LA MOITIÉ DU SUJET** · sept jeux sur onze, plus
+  le tournoi et le classement. Ne pas lire l'absence d'alerte comme un satisfecit.
