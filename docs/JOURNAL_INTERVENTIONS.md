@@ -695,3 +695,33 @@ supprimer aussi aurait ouvert n'importe quel compte à qui tape le bon numéro.
   restés en `waiting`. 147 questions et 18 matières existent bel et bien.
 - `—` · **NON VÉRIFIÉ, ET C'EST LA MOITIÉ DU SUJET** · sept jeux sur onze, plus
   le tournoi et le classement. Ne pas lire l'absence d'alerte comme un satisfecit.
+
+## 2026-09-01 — Trois refus Google Play, deux corrections de code, une action console
+
+- `18:20` · **REFUS 1 — BILLING** · `in_app_purchase 3.2.3` tirait
+  `in_app_purchase_android 0.4.0+8`, qui embarque `billing:7.1.1`. Google
+  n'accepte plus Billing 7 depuis le 31/08/2026. **Vérifié à la source** avant
+  d'appliquer : le `build.gradle.kts` de `in_app_purchase_android 0.5.0` déclare
+  `billing:8.0.0`, et son changelog le dit mot pour mot. Puis vérifié DANS
+  L'ARTEFACT : le manifeste fusionné ne cite plus que `8.0.0`.
+- `18:25` · **REFUS 2 — AD_ID : RIEN À CORRIGER, ET C'EST LE POINT** · le conseil
+  reçu proposait d'AJOUTER la permission. Le manifeste porte déjà
+  `tools:node="remove"` dessus, avec un commentaire qui ANTICIPAIT ce refus.
+  Mesuré : permission absente de l'AAB, et **aucune bibliothèque publicitaire**
+  dans le projet (ni AdMob, ni AppLovin, ni Unity, ni AppsFlyer). L'ajouter aurait
+  défait une décision motivée. La correction est dans la Play Console.
+- `18:40` · **REFUS 3 — API 36** · `compileSdk` était déjà à 36 et la plateforme
+  installée ; seul `targetSdk` restait à 35. Un caractère — mais pas anodin.
+- `18:45` · **CE QUE CIBLER L'API 36 IMPOSE** · Android 16 rend l'affichage bord
+  à bord obligatoire et a supprimé l'option de refus. Mesuré : **153 fichiers
+  portent un Scaffold, 82 sont protégés par SafeArea, 93 ne le sont pas.** Inscrit
+  en dette plutôt que découvert par un étudiant. Le service de partage d'écran du
+  Studio est correctement déclaré (`foregroundServiceType="mediaProjection"`).
+- `18:50` · **AAB 1.0.1+27** · vérifié dans le paquet et non dans la config :
+  `targetSdkVersion 36`, `compileSdkVersion 36`, `versionCode 27`,
+  Billing `8.0.0`, `AD_ID` absent. 142,5 Mo — dont **41,6 Mo réellement
+  téléchargés** par un téléphone arm64.
+- `—` · **RELEVÉ EN PASSANT** · `in_app_purchase` n'est importé par AUCUN fichier
+  Dart. La bibliothèque Billing est embarquée, et sa contrainte de version vient
+  de coûter un refus, sans que rien ne s'en serve. Décision de monétisation :
+  laissée à Jocelyn.
