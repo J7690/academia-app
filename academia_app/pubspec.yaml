@@ -2,7 +2,7 @@ name: academia_app
 description: Projet Flutter avec intégration Supabase automatisée
 publish_to: 'none'
 
-version: 1.0.1+25
+version: 1.0.1+26
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -149,7 +149,7 @@ dependencies:
   # File Management
   
   # Monétisation
-  in_app_purchase: ^3.1.9
+  in_app_purchase: ^3.3.0
   
   # Mobile First - Updated versions
   hive: ^2.2.3
