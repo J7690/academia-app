@@ -786,3 +786,69 @@ l'écran affiche 25 000, et une tentative de payer 15 000 **enregistre 25 000**.
   il ne dit pas « ce candidat est présenté à votre établissement ».
 - **Quotas** : aucune table, aucune colonne, aucune RPC côté candidature. Les
   mentions de « quota » dans `docs/` concernent les jeux et le studio.
+
+## 2026-09-02 (suite) — Un montant absent n'est plus une confirmation
+
+### VEILLE EXTERNE — documentation officielle LigdiCash, consultée le 02/09
+- **Le montant est TOUJOURS renvoyé** par `confirm` sur un paiement `completed` :
+  `montant` ET `amount`, « les deux champs sont toujours présents et ont la même
+  valeur » (developers.ligdicash.com, « Vérifier le statut »).
+- **Le callback n'est PAS signé** — ni HMAC, ni jeton partagé. La seule défense
+  prescrite : « Ne jamais agir sur le payload reçu. Toujours re-vérifier » via
+  `confirm` avec le jeton stocké côté serveur.
+- **Deux POST par événement** → l'idempotence est obligatoire.
+
+### CONFRONTATION AU CODE — il était déjà conforme
+Le callback re-vérifie via `confirm/?invoiceToken=`, contrôle `response_code` et
+`status`, lit `amount ?? montant`, et la confirmation est idempotente
+(`already_confirmed`). `amount_override` est ignoré en mode live. Rien à corriger
+de ce côté : la mise en œuvre suit les prescriptions de l'éditeur.
+
+### CORRECTIF — le doute profite désormais à la caisse
+`app.rapprocher_montant` déclarait **conforme** un paiement au montant inconnu
+(`p_encaisse IS NULL` → `conforme: true`) : confirmé, reçu émis, commission
+versée, sans qu'aucun montant n'ait été comparé. Défendable tant qu'on ignorait
+si LigdiCash renvoyait toujours le montant ; la documentation ayant tranché, une
+absence n'est plus une inconnue mais **une anomalie**. Désormais :
+`montant_absent` → non conforme → mise en vérification.
+
+### DÉFAUT TROUVÉ EN VÉRIFIANT L'AVAL DU CORRECTIF
+La branche de blocage écrivait `amount_paid = LEAST(p_amount_paid, amount_due)`.
+**`LEAST` ignore les NULL en PostgreSQL** : `LEAST(NULL, 25000)` rend `25000`.
+Le paiement aurait donc été bloqué **tout en inscrivant 25 000 comme montant
+reçu** — un chiffre que personne n'a vérifié, et qu'un humain relisant la ligne
+aurait pris pour un versement complet. Corrigé : NULL reste NULL. Le message
+distingue aussi les trois cas (« écart de montant » était faux pour un silence).
+
+### VÉRIFIÉ SUR LA CHAÎNE RÉELLE (pas sur la fonction seule)
+| cas | réponse | statut | montant inscrit | reçu |
+|---|---|---|---|---|
+| LigdiCash ne dit pas le montant | `amount_mismatch` | `under_verification` | **NULL — rien inventé** | aucun |
+| il a composé 15 000 au lieu de 25 000 | `amount_mismatch` | `under_verification` | 15 000 | aucun |
+| il paie 25 000 | confirmé | `confirmed` | 25 000 | émis |
+
+### MESURE QUI NUANCE LE RISQUE, ET QUI CORRIGE CE QUE J'AVAIS DIT
+J'avais présenté « 10 paiements confirmés sans vérification » comme un risque
+courant. Les dates disent autre chose : le rapprochement date du **04/08**
+(migration `la_confirmation_recoupe_le_montant`), et les 10 paiements sans
+montant vont du **15/04 au 07/07** — tous antérieurs. Le dernier paiement
+LigdiCash (19/07) porte bien son montant. **Mais aucun paiement n'a encore été
+confirmé sous ce régime** : le mécanisme est en place, jamais exercé en réel.
+
+### DEUX PROTECTIONS EXISTANTES, DÉCOUVERTES EN TESTANT
+- `app_confirm_ligdicash_payment_guard()` **refuse tout appel utilisateur** :
+  la confirmation est réservée au serveur. Mon test a été rejeté, à raison.
+- Les reçus sont **immuables** : un déclencheur interdit leur suppression. Mon
+  nettoyage a échoué là-dessus, et le bloc entier a été annulé — donc rien
+  d'écrit. Deux garde-fous qui font leur travail.
+
+### PROPRETÉ
+Deux paiements d'essai s'étaient rattachés à une candidature PRÉEXISTANTE du
+compte de test (`app_create_application` rend le dossier existant au lieu d'en
+créer un second). Vérifié que c'était bien le compte de test et que le dossier
+n'avait aucun paiement avant : supprimés. Base revenue à l'identique — 31
+candidatures, 30 paiements, 18 reçus.
+
+### RESTE NON VÉRIFIÉ
+`LIGDICASH_MODE` : s'il n'est pas `live`, `amount_override` est accepté et
+réécrit `amount_due`, contournant le verrou du courtage. Non lisible depuis ici.
