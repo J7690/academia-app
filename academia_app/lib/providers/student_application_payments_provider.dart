@@ -119,11 +119,85 @@ class StudentApplicationPaymentsProvider extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      // NOTE: RPCs app_create_application_payment et app_student_declare_payment n'existent plus dans Supabase.
-      // Les paiements sont créés et déclarés automatiquement via Edge Functions LigdiCash.
-      // Cette fonction est conservée pour compatibilité mais ne fait rien.
-      debugPrint('[StudentApplicationPaymentsProvider] createAndDeclarePayment: RPCs app_create_application_payment et app_student_declare_payment n\'existent plus. Les paiements sont créés via Edge Functions LigdiCash.');
-      
+      // CE FORMULAIRE MENTAIT À L'ÉTUDIANT.
+      //
+      // Cette méthode ne faisait RIEN et rendait `true` : l'écran affichait
+      // « Paiement déclaré, en attente de vérification » alors qu'aucune ligne
+      // n'était écrite. Le commentaire qui justifiait ce débranchement — « les
+      // RPC n'existent plus dans Supabase » — était FAUX : `app_create_
+      // application_payment` et `app_student_declare_payment` existent toutes
+      // les deux, saines, avec contrôle de propriétaire et de statut. Vérifié
+      // en base le 02/09/2026.
+      //
+      // Un étudiant qui payait par Orange Money et venait le déclarer repartait
+      // donc avec une confirmation à l'écran et rien derrière.
+
+      // 1. LE MONTANT D'UN COURTAGE N'EST PAS NÉGOCIABLE, ET IL VIENT DU
+      //    SERVEUR. Pour une candidature, on ignore ce que l'écran propose et
+      //    on impose le tarif du programme. Le client ne fait qu'afficher un
+      //    montant qu'il n'a pas le droit de choisir — c'est la seule façon
+      //    d'empêcher qu'on déclare 15 000 pour un courtage à 25 000.
+      var montant = amount;
+      if (paymentReason == 'application_fee') {
+        final feeResp = await _client.rpc(
+          'app_get_program_brokerage_fee',
+          params: {'p_application_id': applicationId},
+        );
+        final fee = feeResp as Map<String, dynamic>?;
+        if (fee == null || fee['success'] != true) {
+          _setError(fee?['error']?.toString() ??
+              'Impossible de lire les frais de courtage.');
+          return false;
+        }
+        final tarif = (fee['brokerage_fee'] as num?)?.toDouble() ?? 0;
+        if (tarif <= 0) {
+          _setError('Les frais de courtage ne sont pas encore définis pour '
+              'ce programme. Contacte Academia.');
+          return false;
+        }
+        montant = tarif;
+      }
+
+      // 2. Créer la ligne de paiement.
+      final createResp = await _client.rpc(
+        'app_create_application_payment',
+        params: {
+          'p_application_id': applicationId,
+          'p_payment_reason': paymentReason,
+          'p_amount_due': montant,
+        },
+      );
+      final created = createResp as Map<String, dynamic>?;
+      if (created == null || created['success'] != true) {
+        _setError(created?['error']?.toString() ??
+            'La création du paiement a échoué.');
+        return false;
+      }
+      final paymentId = created['payment_id']?.toString();
+      if (paymentId == null || paymentId.isEmpty) {
+        _setError('Paiement créé sans identifiant : déclaration impossible.');
+        return false;
+      }
+
+      // 3. Déclarer le versement. Pour un courtage, on déclare le montant DÛ,
+      //    jamais celui saisi : l'écart éventuel se règle à la vérification.
+      final declareResp = await _client.rpc(
+        'app_student_declare_payment',
+        params: {
+          'p_payment_id': paymentId,
+          'p_channel': channel,
+          'p_amount_paid': montant,
+          'p_external_reference': externalReference,
+          'p_student_note': studentNote,
+        },
+      );
+      final declared = declareResp as Map<String, dynamic>?;
+      if (declared == null || declared['success'] != true) {
+        _setError(declared?['error']?.toString() ??
+            'La déclaration du paiement a échoué.');
+        return false;
+      }
+
       await loadPayments(applicationId);
       return true;
     } catch (e, st) {

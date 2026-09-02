@@ -164,15 +164,59 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
     }
   }
 
-  void _showDeclarePaymentSheet(BuildContext context) {
+  /// Déclaration d'un paiement de COURTAGE.
+  ///
+  /// LE MONTANT N'EST PLUS SAISI PAR L'ÉTUDIANT. Ce formulaire portait un champ
+  /// libre « Montant payé (XOF) » : rien n'empêchait de déclarer 15 000 pour un
+  /// courtage à 25 000, et c'est la plateforme qui aurait comblé l'écart. Le
+  /// tarif est désormais lu sur le serveur (`app_get_program_brokerage_fee`,
+  /// qui vérifie au passage que l'appelant est bien le propriétaire du dossier)
+  /// et affiché en lecture seule.
+  ///
+  /// Le provider impose le même montant lors de l'écriture : le figer à
+  /// l'écran ne protège que l'étudiant honnête, pas l'appel direct à l'API.
+  Future<void> _showDeclarePaymentSheet(BuildContext context) async {
     final appId = widget.application['id']?.toString();
     if (appId == null || appId.isEmpty) return;
 
+    // On lit le tarif AVANT d'ouvrir le formulaire : sans tarif, il n'y a rien
+    // à déclarer, et mieux vaut le dire que d'ouvrir un formulaire inutile.
+    double fraisCourtage = 0;
+    try {
+      final resp = await Supabase.instance.client.rpc(
+        'app_get_program_brokerage_fee',
+        params: {'p_application_id': appId},
+      );
+      final data = resp as Map<String, dynamic>?;
+      if (data == null || data['success'] != true) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(data?['error']?.toString() ??
+              'Impossible de lire les frais de courtage.'),
+        ));
+        return;
+      }
+      fraisCourtage = (data['brokerage_fee'] as num?)?.toDouble() ?? 0;
+    } catch (e) {
+      if (!context.mounted) return;
+      AppSnack.error(context, e);
+      return;
+    }
+
+    if (fraisCourtage <= 0) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Les frais de courtage ne sont pas encore définis pour '
+            'ce programme. Contacte Academia.'),
+      ));
+      return;
+    }
+
+    if (!context.mounted) return;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) {
-        final amountController = TextEditingController();
         final referenceController = TextEditingController();
         final noteController = TextEditingController();
         String? selectedChannel;
@@ -181,16 +225,8 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
         Future<void> submit() async {
           if (isSubmitting) return;
 
-          final rawAmount = amountController.text.trim().replaceAll(',', '.');
-          final amount = double.tryParse(rawAmount);
-          if (amount == null || amount <= 0) {
-            ScaffoldMessenger.of(ctx).showSnackBar(
-              const SnackBar(
-                content: Text('Veuillez saisir un montant valide.'),
-              ),
-            );
-            return;
-          }
+          // Le montant ne vient plus du champ : il vient du serveur.
+          final amount = fraisCourtage;
 
           if (selectedChannel == null || selectedChannel!.isEmpty) {
             ScaffoldMessenger.of(ctx).showSnackBar(
@@ -309,13 +345,21 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                       },
                     ),
                     const SizedBox(height: 8),
-                    TextField(
-                      controller: amountController,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                    // MONTANT FIGÉ, PAS UN CHAMP. Le tarif du courtage est fixé
+                    // par Academia et lu sur le serveur : l'étudiant le
+                    // constate, il ne le propose pas.
+                    InputDecorator(
                       decoration: const InputDecoration(
-                        labelText: 'Montant payé (XOF)',
+                        labelText: 'Montant à payer (XOF)',
                         border: OutlineInputBorder(),
+                        helperText: 'Frais de courtage fixés par Academia',
+                      ),
+                      child: Text(
+                        fraisCourtage.toStringAsFixed(0),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
