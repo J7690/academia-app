@@ -203,6 +203,12 @@ flutter:
     - assets/icons/
     - assets/audio/
     - assets/data/
+    # Les deux marques, detourees et sur fond transparent : Academia (vert et
+    # rouge) pour la plateforme, Nexiom Group pour l'entite qui emet. Elles
+    # servent aux documents PDF — recu de paiement, bon de courtage. Ne pas
+    # confondre avec assets/ACADEMIA_logo1.png, qui est la version BLANCHE,
+    # faite pour un fond sombre et invisible sur du papier.
+    - assets/marque/
 
 flutter_launcher_icons:
   image_path: "assets/Academia.0.png"

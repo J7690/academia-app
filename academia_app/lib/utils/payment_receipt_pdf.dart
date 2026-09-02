@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -43,6 +44,27 @@ Future<void> generateAndSharePaymentReceiptPdf({
   final trainingName = _string(receipt['training_name']);
   final creditPackName = _string(receipt['credit_pack_name']);
 
+  // LES DEUX MARQUES, SUR LEUR VERSION DÉTOURÉE.
+  //
+  // `assets/marque/` porte les logos à fond transparent : Academia en vert et
+  // rouge, Nexiom Group en gris et bleu. NE PAS prendre `assets/ACADEMIA_logo1.png`,
+  // qui est la version BLANCHE — faite pour un fond sombre, elle est invisible
+  // sur du papier et ne se voit pas à la relecture d'un PDF affiché sur blanc.
+  //
+  // Le chargement ne bloque jamais l'émission du reçu : un logo manquant vaut
+  // mieux qu'un reçu qui n'existe pas. C'est la règle du dépôt — on dégrade,
+  // on ne rejette pas.
+  pw.MemoryImage? logoNexiom;
+  pw.MemoryImage? logoAcademia;
+  try {
+    logoNexiom = pw.MemoryImage(
+        (await rootBundle.load('assets/marque/nexiom_logo.png')).buffer.asUint8List());
+    logoAcademia = pw.MemoryImage(
+        (await rootBundle.load('assets/marque/academia_logo.png')).buffer.asUint8List());
+  } catch (e) {
+    debugPrint('[Recu] logos indisponibles, reçu émis sans en-tête illustré : $e');
+  }
+
   doc.addPage(
     pw.Page(
       pageFormat: PdfPageFormat.a4,
@@ -51,6 +73,30 @@ Future<void> generateAndSharePaymentReceiptPdf({
         return pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
+            if (logoNexiom != null && logoAcademia != null) ...[
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  pw.Row(children: [
+                    pw.Image(logoNexiom, height: 44),
+                    pw.SizedBox(width: 10),
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('NEXIOM GROUP',
+                            style: pw.TextStyle(
+                                fontSize: 10, fontWeight: pw.FontWeight.bold)),
+                        pw.Text('Ouagadougou, Burkina Faso',
+                            style: const pw.TextStyle(fontSize: 8.5)),
+                      ],
+                    ),
+                  ]),
+                  pw.Image(logoAcademia, height: 48),
+                ],
+              ),
+              pw.SizedBox(height: 14),
+            ],
             pw.Text(
               'Reçu de paiement',
               style: pw.TextStyle(
