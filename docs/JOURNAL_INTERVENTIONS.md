@@ -725,3 +725,64 @@ supprimer aussi aurait ouvert n'importe quel compte à qui tape le bon numéro.
   Dart. La bibliothèque Billing est embarquée, et sa contrainte de version vient
   de coûter un refus, sans que rien ne s'en serve. Décision de monétisation :
   laissée à Jocelyn.
+
+## 2026-09-02 — Flux de candidature et paiement : audit, correctifs, tarif du courtage
+
+### Flux de candidature — EXERCÉ DE BOUT EN BOUT, il fonctionne
+- Chaque maillon joué sous l'identité RÉELLE de son rôle (`auth.uid()` posé en
+  base, jamais de session ouverte sur un compte) : étudiant dépose → la retrouve
+  → admin la voit (32) → marque vu → écrit → **transmet** → université la voit
+  (3) → ouvre le dossier complet → marque vu → répond → **accepte** → l'étudiant
+  lit le message → l'admin lit la réponse. **13 étapes, aucune en échec.**
+- Point de conception CONFIRMÉ VOLONTAIRE : l'université écrit en
+  `audience = admin_only`. Elle ne parle jamais directement à l'étudiant —
+  Academia reste l'intermédiaire. L'étudiant voit donc 1 message sur 2, et c'est
+  voulu.
+- **ERREUR DE MA PART, corrigée avant de la rapporter** : mon premier test
+  annonçait « l'étudiant ne voit pas sa candidature ». Faux — la RPC rend un
+  TABLEAU là où j'attendais un objet. Le défaut était dans le test.
+- Candidature de test supprimée (31 candidatures avant, 31 après).
+
+### DÉFAUT — le compte « Universite Review » ne voit rien
+Seul compte université sur 29 sans `university_id` : `app_list_university_applications`
+lui répond `university_not_configured`, 0 candidature. Nom et date (créé le 02/06,
+une seule connexion) désignent le compte de revue Google Play. **Non corrigé** :
+le rattacher à un établissement donne accès à de vrais dossiers — décision de
+Jocelyn.
+
+### Paiement — ce qui marchait déjà
+18 paiements confirmés dont 13 via LigdiCash ; **18 reçus pour 18 paiements**,
+avec numéro, empreinte et PDF téléchargeable. Le callback LigdiCash rappelle
+l'API pour vérifier la transaction et retient « le montant que LigdiCash
+confirme, jamais celui du client » — la vérification des fonds existe et est
+juste.
+
+### DÉFAUT — le montant du courtage était fabricable
+`app_create_application_payment` acceptait `p_amount_due` du client (seul
+contrôle : « > 0 ») et **ne vérifiait pas le propriétaire du dossier**. Clé
+publique dans l'APK → courtage à 1 FCFA par appel direct, payé pour de bon,
+reçu faux. Corrigé : `application_fee` impose le tarif du programme, les autres
+motifs restent libres ; contrôle `not_owner` ajouté. **Vérifié en tentant la
+fraude** : 1 FCFA → 100 enregistré ; aucun montant → 100 ; crédits 5 000 → 5 000 ;
+autre étudiant → `not_owner`.
+
+### DEUX DÉFAUTS MUETS dans le formulaire de déclaration
+1. `createAndDeclarePayment` **ne faisait rien** et rendait `true` : l'écran
+   affichait « Paiement déclaré, en attente de vérification » sans écrire une
+   ligne. Le commentaire justifiant le débranchement — « les RPC n'existent plus
+   dans Supabase » — était FAUX, les deux existent et sont saines. Rebranché.
+2. Ce formulaire **n'est référencé nulle part** : aucun bouton ne l'ouvre.
+   Vérifié sur l'arbre AVANT mes modifications, pour ne m'accuser ni me
+   disculper à tort. **Laissé tel quel** — le rebrancher est une décision produit.
+
+### TARIF — 25 000 appliqués, sur demande de Jocelyn
+154 programmes sur 155 avaient `brokerage_fee = 0`, sur 15 universités : le
+courtage était **impayable**. `brokerage_fee = 25000` appliqué aux 154 (le 155e,
+à 100, est le programme d'essai, laissé tel quel). Vérifié sur le parcours réel :
+l'écran affiche 25 000, et une tentative de payer 15 000 **enregistre 25 000**.
+
+### N'EXISTE PAS
+- **Bon de courtage** : seul le reçu de paiement existe. Il prouve le versement,
+  il ne dit pas « ce candidat est présenté à votre établissement ».
+- **Quotas** : aucune table, aucune colonne, aucune RPC côté candidature. Les
+  mentions de « quota » dans `docs/` concernent les jeux et le studio.
