@@ -852,3 +852,23 @@ candidatures, 30 paiements, 18 reçus.
 ### RESTE NON VÉRIFIÉ
 `LIGDICASH_MODE` : s'il n'est pas `live`, `amount_override` est accepté et
 réécrit `amount_due`, contournant le verrou du courtage. Non lisible depuis ici.
+
+### `LIGDICASH_MODE` — MESURÉ, et non plus déduit (02/09)
+Point resté en suspens toute la séance. Mesure directe via `ligdicash-diag`
+(action `info`, aucun effet de bord), appelée avec la clé **publiable** de
+l'application — celle qui est déjà dans l'APK distribué, donc aucun secret
+manipulé :
+```
+mode = live | api_key_set = True | bearer_token_set = True
+```
+**Conséquence** : en mode live, `ligdicash-initiate` ignore totalement
+`amount_override` (« le montant fait toujours foi côté serveur »). Le verrou du
+courtage posé le matin tient donc réellement, et le dernier point d'ombre de la
+chaîne de paiement est levé.
+
+Méthode à retenir : la réponse était accessible depuis le début par une fonction
+de diagnostic prévue pour ça. J'avais d'abord tenté LWS — machine qui n'a
+strictement aucun rôle dans le paiement — parce que la clé de service y est
+stockée. Jocelyn l'a relevé : « pourquoi est-ce que LWS vient dans cette
+histoire de paiement ? » Le bon chemin était plus court et ne demandait aucun
+secret.
