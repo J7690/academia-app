@@ -872,3 +872,73 @@ strictement aucun rôle dans le paiement — parce que la clé de service y est
 stockée. Jocelyn l'a relevé : « pourquoi est-ce que LWS vient dans cette
 histoire de paiement ? » Le bon chemin était plus court et ne demandait aucun
 secret.
+
+## 2026-09-02 (suite) — Le bon de courtage : conception, et trois erreurs de ma part
+
+### CE QUE LE DOCUMENT DIT, ET POURQUOI
+Le reçu prouve un paiement à l'étudiant ; le **bon de courtage** prouve à
+l'établissement que Nexiom Group a négocié. Deux documents, deux destinataires.
+Le vrai comparable métier n'est pas un reçu SaaS mais le **bon de visite
+immobilier** : il ne sert pas à l'acheteur, il prouve l'intervention de
+l'intermédiaire et **fonde son droit à commission même si l'affaire se conclut
+sans lui**. C'est la raison de fond du document.
+
+Ordre rétabli par Jocelyn, et il change tout : **l'étudiant ne paie qu'une fois
+la réduction obtenue**. La négociation n'est pas une étape administrative, c'est
+ce qu'il achète. La réduction passe donc au centre de la page.
+
+### DÉCISIONS DE JOCELYN, ET LEURS MOTIFS
+- **Aucun montant sur le bon**, seulement le taux : un établissement ajuste ses
+  frais quand il veut, et un montant écrit devient faux. « 15 % de 450 000 ou de
+  480 000 reste 15 %. » Effet de bord utile : le document ne révèle ni les droits
+  de courtage, ni le tarif négocié.
+- **Ni cachet ni signature.** Mon argument était l'acceptation au guichet ; le
+  sien est meilleur : un cachet et une signature apposés sur des centaines de
+  bons deviennent copiables et **servent alors à signer autre chose**. Seule
+  reste l'empreinte du document, qui ne vaut que pour lui.
+- **Quatorze jours**, et une obligation plutôt qu'une validité : « se présenter à
+  la scolarité au plus tard le … ». La date limite est calculée et imprimée — au
+  guichet, personne ne compte quatorze jours de tête.
+- **Vérification réservée à l'établissement destinataire.** Pas de page publique :
+  l'agent scanne depuis son espace Academia. Un établissement A ne peut pas
+  vérifier un bon de B, et le refus ne révèle rien — pas même le nom du
+  destinataire.
+- **Bon expiré : la vérification ne passe pas.** L'écran affiche l'identité et
+  les dates mais **PAS le taux** — il n'est plus garanti et ne doit pas pouvoir
+  être appliqué — et dicte la consigne : contacter Nexiom Group pour un nouveau
+  bon, sans repayer.
+
+### TROIS ERREURS DE MA PART, TOUTES TROUVÉES PAR JOCELYN OU PAR LA MESURE
+1. **« Vos logos ont tous un fond. »** Faux. Ils sont détourés (92 % et 84 % de
+   pixels transparents, coins à alpha 0). J'avais pris `ACADEMIA_logo1.png`, la
+   version BLANCHE faite pour fond sombre, et jugé sur son rendu composé sur le
+   gris de mon outil. La bonne version, vert et rouge, dormait à la racine sous
+   `academia.png`. Trouvée en analysant le canal alpha puis l'histogramme.
+2. **LWS convoqué dans une affaire de paiement.** J'ai voulu interroger
+   LigdiCash depuis LWS au seul motif que la clé de service y est stockée.
+   Jocelyn : « pourquoi est-ce que LWS vient dans cette histoire de paiement ? »
+   La réponse tenait en un appel à `ligdicash-diag` avec la clé publiable.
+3. **Le QR n'était pas un QR.** Un motif dessiné à la main pour figurer
+   l'emplacement. Jocelyn : « ça ressemble beaucoup plus à un dessin ». Exact.
+
+### LE QR, MAINTENANT RÉEL ET VÉRIFIÉ DEUX FOIS
+Généré par `segno`, il encode
+`https://www.app.academiea.com/v/BC-2026-000147/7K4M92XQ`.
+**Le premier vrai QR ne marchait pas davantage** : 41 modules dans 78 px, moins
+de deux pixels par module. Scanné sur la page rendue par un lecteur : échec.
+Ramené à 37 modules (correction M) et agrandi à 118 px : lu, URL exacte.
+Confirmé ensuite par Jocelyn sur son propre téléphone.
+
+Ce que le QR NE contient PAS : les données du bon. S'il les portait, on
+fabriquerait un faux QR cohérent avec un faux papier. Il ne porte qu'un numéro
+et **huit caractères tirés au hasard** ; tout le reste vient de la base.
+
+### CONSTAT EN PASSANT
+`payment_receipts.signature_hash` existe depuis l'origine et est **vide sur les
+18 reçus**. Le mécanisme d'empreinte était prévu, jamais branché.
+
+### LIVRÉ
+Maquette à quatre planches (le A4, et les trois réponses à la vérification),
+PDF A4 d'une page, logos installés dans `academia_app/assets/marque/` et posés
+sur le reçu existant. Sources dans `.design/`. **Rien du bon n'est codé** : ni
+table, ni RPC, ni écran de scan.

@@ -1,0 +1,10 @@
+# Fichiers reconstruits a chaque seance : la page du canvas (2 Mo d'editeur
+# embarque), la page d'impression et les apercus de controle. Les SOURCES sont
+# les .dc.html, canvas.json et les deux logos — eux sont versionnes.
+bon-de-courtage.html
+bon_impression.html
+rendu_pdf.png
+apercu_logos.png
+qr_apercu.png
+qr.svg
+qr.b64

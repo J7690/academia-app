@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #14663A; } a:hover { color: #0E4A29; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #F4F6F4; color: #14251D;
+            font-family: Archivo, system-ui, sans-serif; display: flex; flex-direction: column;
+            box-sizing: border-box; overflow: hidden;">
+
+  <div style="background: #14251D; color: #FFFFFF; padding: 54px 20px 16px;
+              display: flex; align-items: center; gap: 12px;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M15 18l-6-6 6-6"/>
+    </svg>
+    <div style="font-size: 16px; font-weight: 600;">Vérifier un bon</div>
+  </div>
+
+  <div style="padding: 20px; display: flex; flex-direction: column; gap: 16px; flex: 1;">
+
+    <div style="background: #FFFFFF; border: 2px solid #A3441B; border-radius: 14px; overflow: hidden;">
+      <div style="background: #A3441B; padding: 16px 18px; display: flex; align-items: center; gap: 12px;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF"
+             stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/>
+        </svg>
+        <div>
+          <div style="color: #FFFFFF; font-size: 17px; font-weight: 700; line-height: 1.2;">
+            Bon non vérifiable ici</div>
+          <div style="color: rgba(255,255,255,.9); font-size: 12px; margin-top: 2px;">
+            Ce bon ne concerne pas votre établissement</div>
+        </div>
+      </div>
+
+      <div style="padding: 17px 18px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="font-size: 13.5px; color: #3E4A44; line-height: 1.5;">
+          Ce bon a été émis pour <b style="color:#14251D;">un autre établissement</b>.
+          Seul l'établissement destinataire peut en vérifier le contenu.
+        </div>
+
+        <div style="background: #FBF3EF; border-radius: 10px; padding: 13px 15px;
+                    display: flex; flex-direction: column; gap: 7px;">
+          <div style="display: flex; justify-content: space-between; gap: 12px;">
+            <span style="font-size: 12.5px; color: #6B7873;">Référence lue</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 600;">BC-2026-000147</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; gap: 12px;">
+            <span style="font-size: 12.5px; color: #6B7873;">Votre établissement</span>
+            <span style="font-size: 12.5px; font-weight: 600;">COSERFA</span>
+          </div>
+        </div>
+
+        <div style="font-size: 12.5px; color: #6B7873; line-height: 1.45;">
+          Aucune information sur le candidat, la formation ou la réduction n'est
+          communiquée : elles appartiennent au dossier de l'établissement destinataire.
+        </div>
+      </div>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #E4E9E5; border-radius: 14px; padding: 15px 17px;">
+      <div style="font-size: 13.5px; color: #3E4A44; line-height: 1.5;">
+        <b style="color: #14251D;">Si le candidat se présente chez vous avec ce bon</b>,
+        c'est qu'il s'est trompé d'établissement, ou que le document ne lui appartient pas.
+        Contactez Academia au <b style="color:#14251D;">73 93 43 92</b>.
+      </div>
+    </div>
+
+    <div style="flex: 1;"></div>
+
+    <button style="width: 100%; height: 52px; border: 0; border-radius: 12px; background: #14251D;
+                   color: #FFFFFF; font-family: Archivo, sans-serif; font-size: 15.5px;
+                   font-weight: 600; cursor: pointer;">Scanner un autre bon</button>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

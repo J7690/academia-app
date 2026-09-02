@@ -1,0 +1,15 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 794, "h": 1123, "title": "Bon de courtage — A4 (PDF)", "print": "fixed" },
+    { "file": "Verification.dc.html", "x": 914, "y": 0, "w": 390, "h": 844, "title": "1 · Bon valable" },
+    { "file": "Expire.dc.html", "x": 1404, "y": 0, "w": 390, "h": 844, "title": "2 · Bon expiré (plus de 14 jours)" },
+    { "file": "Refus.dc.html", "x": 1894, "y": 0, "w": 390, "h": 844, "title": "3 · Autre établissement" }
+  ],
+  "annotations": [
+    { "id": "logos", "x": 0, "y": -170, "w": 460,
+      "text": "Vos vrais logos, non modifiés — ils étaient déjà dans le dépôt (academia.png et Nexiom_group.png), détourés. La version blanche du logo Academia est celle qui m'avait égaré : invisible sur papier." },
+    { "id": "trois-reponses", "x": 914, "y": -170, "w": 1370,
+      "text": "Les trois réponses possibles quand un établissement scanne. Valable : tout s'affiche. Expiré (plus de 14 jours) : le taux N'EST PAS affiché — il n'est plus garanti et ne doit pas pouvoir être appliqué — et l'écran dicte la consigne à donner au candidat. Autre établissement : aucune donnée du dossier, pas même le nom du destinataire." }
+  ],
+  "launch": { "view": "canvas" }
+}
