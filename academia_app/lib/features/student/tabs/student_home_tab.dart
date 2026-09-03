@@ -12,6 +12,7 @@ import '../student_profile_screen.dart';
 import '../student_university_site_screen.dart';
 import '../apply_to_program.dart';
 import '../application_outcome_dialog.dart';
+import '../student_documents_screen.dart';
 import '../student_payments_screen.dart';
 import '../student_home_mobile.dart' show StudentAssistantSection;
 import '../../../providers/student_profile_provider.dart';
@@ -1627,6 +1628,21 @@ class _ProfileHeader extends StatelessWidget {
                     },
                     icon: const Icon(Icons.payments_outlined),
                     label: const Text('Mes paiements'),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ChangeNotifierProvider(
+                            create: (_) => StudentApplicationPaymentsProvider(),
+                            child: const StudentDocumentsScreen(),
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.folder_outlined),
+                    label: const Text('Mes documents'),
                   ),
                   IconButton(
                     tooltip: 'Paramètres',

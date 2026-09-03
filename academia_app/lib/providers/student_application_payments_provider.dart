@@ -46,6 +46,95 @@ class StudentApplicationPaymentsProvider extends ChangeNotifier {
     }
   }
 
+  bool _documentsEnCours = false;
+  String? _erreurDocuments;
+  List<Map<String, dynamic>> _recus = [];
+
+  bool get documentsEnCours => _documentsEnCours;
+  String? get erreurDocuments => _erreurDocuments;
+
+  /// Les reçus de l'étudiant courant, du plus récent au plus ancien, chacun
+  /// accompagné du paiement qu'il atteste.
+  ///
+  /// La politique RLS `recu_lisible_par_son_proprietaire` fait le filtrage :
+  /// inutile de passer un `student_id`, et surtout on ne s'y fie pas.
+  List<Map<String, dynamic>> get recus => _recus;
+
+  Future<void> chargerMesDocuments() async {
+    _documentsEnCours = true;
+    _erreurDocuments = null;
+    notifyListeners();
+    try {
+      // Le paiement est ramené dans la même requête : le reçu seul ne dit pas
+      // son motif, et l'écran en a besoin pour la pastille de couleur.
+      final raw = await _client
+          .schema('app')
+          .from('payment_receipts')
+          .select('*, paiement:application_payments!inner(*)')
+          .order('issued_at', ascending: false);
+
+      final list = raw as List<dynamic>? ?? [];
+      _recus = list.cast<Map<String, dynamic>>();
+    } catch (e, st) {
+      // La jointure imbriquée dépend de la façon dont PostgREST expose la clé
+      // étrangère ; elle n'a pas pu être exercée depuis le poste de
+      // développement, faute de session étudiante. Si elle échoue, on refait
+      // le travail en deux requêtes plutôt que de rendre un écran vide.
+      debugPrint(
+        '[StudentApplicationPaymentsProvider] jointure reçus indisponible, '
+        'repli en deux requêtes : $e\n$st',
+      );
+      try {
+        _recus = await _recusEnDeuxRequetes();
+      } catch (e2, st2) {
+        debugPrint(
+          '[StudentApplicationPaymentsProvider] chargerMesDocuments error=$e2 stack=$st2',
+        );
+        _erreurDocuments = e2.toString();
+      }
+    } finally {
+      _documentsEnCours = false;
+      notifyListeners();
+    }
+  }
+
+  /// Repli : les reçus, puis les paiements correspondants, rapprochés ici.
+  /// Deux allers-retours au lieu d'un — acceptable pour une liste de documents
+  /// qui tient sur un écran.
+  Future<List<Map<String, dynamic>>> _recusEnDeuxRequetes() async {
+    final bruts = await _client
+        .schema('app')
+        .from('payment_receipts')
+        .select()
+        .order('issued_at', ascending: false);
+
+    final recus = (bruts as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
+    if (recus.isEmpty) return recus;
+
+    final ids = recus
+        .map((r) => r['payment_id']?.toString() ?? '')
+        .where((s) => s.isNotEmpty)
+        .toSet()
+        .toList();
+    if (ids.isEmpty) return recus;
+
+    final paiementsBruts = await _client
+        .schema('app')
+        .from('application_payments')
+        .select()
+        .inFilter('id', ids);
+
+    final parId = <String, Map<String, dynamic>>{
+      for (final p in (paiementsBruts as List<dynamic>? ?? []))
+        (p as Map)['id'].toString(): Map<String, dynamic>.from(p),
+    };
+
+    return [
+      for (final r in recus)
+        {...r, 'paiement': parId[r['payment_id']?.toString()] ?? const {}},
+    ];
+  }
+
   Future<bool> declareExistingPayment({
     required String paymentId,
     required String channel,
@@ -61,11 +150,38 @@ class StudentApplicationPaymentsProvider extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      // NOTE: RPC app_student_declare_payment n'existe plus dans Supabase.
-      // Les paiements sont déclarés automatiquement via Edge Function ligdicash-callback.
-      // Cette fonction est conservée pour compatibilité mais ne fait rien.
-      debugPrint('[StudentApplicationPaymentsProvider] declareExistingPayment: RPC app_student_declare_payment n\'existe plus. Les paiements sont déclarés via Edge Function ligdicash-callback.');
-      
+      // CETTE MÉTHODE NE FAISAIT RIEN, ET RENVOYAIT `true`.
+      //
+      // Le commentaire qui l'expliquait — « RPC app_student_declare_payment
+      // n'existe plus dans Supabase » — était FAUX. La fonction existe,
+      // vérifie l'appartenance du paiement et son statut, puis le passe à
+      // `declared_by_student`. Le même fichier l'appelle d'ailleurs déjà,
+      // avec succès, dans `createAndDeclareProfilePayment` (l.335).
+      //
+      // Conséquence du no-op : l'étudiant qui payait par Orange/Moov/Telecel
+      // saisissait sa référence SMS, lisait « Paiement déclaré, en attente de
+      // vérification », et rien n'était écrit — référence perdue, statut resté
+      // `pending`, admin jamais prévenu. Constat B7 de l'audit du 03/09/2026.
+      final resp = await _client.rpc(
+        'app_student_declare_payment',
+        params: {
+          'p_payment_id': paymentId,
+          'p_channel': channel,
+          'p_amount_paid': amount,
+          'p_external_reference': externalReference,
+          'p_student_note': studentNote,
+        },
+      );
+      final data = resp as Map<String, dynamic>?;
+      if (data == null || data['success'] != true) {
+        // On remonte l'erreur du serveur plutôt qu'un succès fabriqué.
+        _setError(
+          data?['error']?.toString() ??
+              'La déclaration du paiement n\'a pas abouti.',
+        );
+        return false;
+      }
+
       await loadMyPayments();
       return true;
     } catch (e, st) {

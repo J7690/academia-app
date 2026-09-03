@@ -942,3 +942,260 @@ Maquette à quatre planches (le A4, et les trois réponses à la vérification),
 PDF A4 d'une page, logos installés dans `academia_app/assets/marque/` et posés
 sur le reçu existant. Sources dans `.design/`. **Rien du bon n'est codé** : ni
 table, ni RPC, ni écran de scan.
+
+## 2026-09-02 (fin) — Le reçu, de bout en bout : une seule fonction, et une fuite refermée
+
+Jocelyn : « Organise-toi, l'ordre d'exécution t'incombe, mais tu fais la tâche
+complète. » Chantier mené base → PDF → écran.
+
+### CE QUI N'ALLAIT PAS, ET QUI NE SE VOYAIT PAS
+Trois fonctions écrivaient chacune leur reçu, avec leur propre numérotation
+(`REC-…`, `REC-CR-…`) et leur propre forme d'instantané. Elles remplissaient
+**quatre colonnes sur dix**. Nom, téléphone, courriel, formation, pack et
+empreinte restaient vides sur les 18 reçus.
+
+L'empreinte, surtout, avait **trois défauts dans une seule fonction** —
+`app.generate_receipt_signature()` — et ils étaient lisibles en trois lignes :
+1. appelée en `BEFORE INSERT` avec `NEW.id`, elle cherchait la ligne par cet
+   `id` : **la ligne n'existe pas encore**. `NOT FOUND` → `RETURN NULL`. Elle
+   n'a donc jamais produit une seule empreinte, depuis l'origine ;
+2. son « secret », `academia_receipt_secret_2026`, était **écrit en clair dans
+   le corps de la fonction** — lisible par quiconque lit `pg_proc`. Son propre
+   commentaire l'admettait : « Secret à configurer via env var » ;
+3. les arguments de `hmac()` étaient inversés (pgcrypto attend
+   `hmac(données, clé, type)`).
+
+Remplacée par `app.empreinte_recu()` : un SHA-256 **sans clé**, et nommé pour ce
+qu'il est. Une clé rangée dans la base est lue par les mêmes personnes que les
+reçus qu'elle protège ; prétendre à une signature aurait été un mensonge de
+plus. C'est une somme de contrôle, qui sert à confronter un papier à la base.
+
+### LA FUITE — TROUVÉE EN VÉRIFIANT MES PROPRES DROITS
+En préparant l'écran, j'ai regardé la politique RLS de `app.payment_receipts`.
+Une seule, `USING (true)`. **Mesuré** en endossant les rôles :
+
+| Qui | Reçus lus (sur 18) |
+|---|---|
+| `anon` — clé embarquée dans l'application mobile | **18** |
+| un étudiant tiers, connecté | **18** |
+
+Et `anon` comme `authenticated` détenaient `INSERT`, `UPDATE`, `DELETE`,
+`TRUNCATE` au niveau table — bloqués seulement par l'**absence** de politique,
+état qu'une migration distraite annule sans s'en apercevoir.
+
+Le trou préexistait, mais il était peu chargé : les colonnes nominatives étaient
+vides. **C'est mon travail de ce matin qui l'aurait rendu grave**, en y écrivant
+nom, téléphone et courriel. Refermé dans la même séance. Après correction :
+`anon` = refusé dès le droit de table, tiers = 0, propriétaire = ses 18, admin = 18.
+
+### CE QUI A ÉTÉ FAIT
+- **`app.emettre_recu(payment_id, issued_by, complement)`** — seule fonction
+  autorisée à écrire un reçu (vérifié : plus aucune autre ne contient
+  `INSERT INTO app.payment_receipts`). Idempotente. Remplit les dix colonnes.
+  Instantané normalisé, même forme quel que soit le motif. `complement` laisse
+  chaque appelant ajouter ce qu'il est seul à savoir — l'achat de crédits y met
+  les crédits **réellement** portés au compte, bonus compris.
+- **Numérotation continue** `REC-2026-000001` (art. 562 CGI), séquence dédiée.
+- **Un piège d'ordre corrigé** : `app_admin_confirm_payment` écrivait le reçu
+  **avant** de passer le paiement à `confirmed`. L'empreinte, calculée sans
+  `confirmed_at`, devenait fausse la ligne suivante. La confirmation passe
+  désormais devant.
+- **Deux vues** : `app.paiements_sans_recu` (doit rester vide) et
+  `app.recus_a_verifier`. Délibérément des vues, **pas un déclencheur** : un
+  déclencheur qui échoue à écrire le reçu ferait échouer le paiement, et
+  l'étudiant perdrait son argent *et* son reçu.
+- **PDF refait** sur la maquette validée (`payment_receipt_pdf.dart`), sans TVA
+  ni régime fiscal, montant en toutes lettres, repli sur les colonnes du
+  paiement pour les 18 reçus antérieurs.
+- **Écran « Mes documents »** (`student_documents_screen.dart`), deux volets.
+
+### DEUX ÉCARTS ASSUMÉS PAR RAPPORT À CE QUI ÉTAIT ANNONCÉ
+1. J'avais dit que « Mes paiements » **deviendrait** « Mes documents ». En
+   l'ouvrant, c'est un **atelier** : créer un paiement, choisir un canal,
+   déclarer un versement. Le renommer aurait enfoui ce parcours. Écran neuf,
+   les deux coexistent.
+2. J'avais conclu qu'**aucune table ne portait la date de naissance**. Faux :
+   `app.students.date_of_birth` existe (renseignée sur 11 étudiants / 277). Ma
+   requête d'alors était multi-instructions et le connecteur ne renvoie que le
+   **dernier** résultat — j'avais pris ce silence pour une absence. Utile pour
+   le bon de courtage, qui en a besoin.
+
+### MÉTHODE : ÉPROUVER SANS RIEN LAISSER
+Premiers essais d'émission faits sur de vrais paiements : deux faux reçus créés
+sur des paiements **non confirmés**, que le déclencheur d'immuabilité refusait
+ensuite de supprimer. Retirés en neutralisant le déclencheur le temps d'une
+transaction, puis remis (4 déclencheurs actifs, vérifié). Les essais suivants
+ont utilisé un bloc `DO` se terminant par `RAISE EXCEPTION` : le résultat
+remonte dans le message, tout le reste est annulé. Les trois chemins ont été
+éprouvés ainsi, sans une ligne laissée en base.
+
+Découvert au passage : `app.email_queue` contient **5 entrées, toutes
+`pending` depuis juillet**. Rien ne consomme cette file ; aucun reçu n'a jamais
+été envoyé par courriel.
+
+### DEUX DÉFAUTS SILENCIEUX TROUVÉS EN COMPOSANT LE PDF HORS ÉCRAN
+`construirePdfRecu()` a été séparée de l'aperçu système pour être appelable
+depuis `flutter test`. Le document est donc fabriqué **par le code de
+production**, sans installer l'application. Deux choses sont apparues aussitôt,
+qu'aucune relecture n'aurait vues :
+
+1. **Le tiret cadratin disparaissait du document.** Les polices intégrées du
+   paquet `pdf` sont des Type1 sans Unicode :
+   `Unable to find a font to draw "—" (U+2014)`. « Frais de courtage — candidature
+   universitaire » s'imprimait avec un trou. Pas d'exception, pas de trace dans
+   le PDF. Le même silence effacerait un caractère dans le **nom d'un étudiant** —
+   c'est ça le vrai risque, pas la typographie. **Roboto embarquée** (regular,
+   bold, italic + LICENSE, 505 Ko), Apache 2.0 vérifiée dans le fichier même,
+   copiée du cache du SDK. Après : **zéro glyphe manquant**, mesuré.
+2. **Un document mutilé a passé le test.** En corrigeant l'alignement des deux
+   encadrés, `CrossAxisAlignment.stretch` dans une Row placée sous un `Spacer`
+   a rendu la hauteur non bornée et **avalé tout le corps de la page** : il ne
+   restait que l'en-tête. Le test est passé — il ne regardait que le poids du
+   fichier et les cinq octets « %PDF- ». Poids correct, en-tête correct,
+   document détruit. C'est le §7 de `docs/STUDIO_VISUEL_ETAT_2026-08-05.md` qui
+   se rejoue : le défaut caché derrière un **succès**.
+
+D'où `outils/verifier_recu_pdf.py` : le test Dart déclare ce que chaque document
+doit contenir, le script extrait le texte **réellement rendu** (PyMuPDF — le
+texte d'un PDF `pdf` est en flux compressés, illisibles depuis Dart) et compare.
+**44 contrôles sur 12 documents.** Et le mécanisme a été éprouvé à l'envers :
+manifeste piégé avec une chaîne absente → 1 faute signalée, code de sortie 1.
+Un test qui ne peut pas échouer ne mesure rien.
+
+### MESURES
+`flutter analyze` : **0 erreur** (2 101 avertissements préexistants).
+`flutter test test/recu_pdf_test.dart` : **4 tests, 0 échec, 0 glyphe manquant**.
+`python outils/verifier_recu_pdf.py` : **44 contrôles satisfaits, 0 faute**.
+`flutter build appbundle --release` : **code 0, 144,2 Mo**.
+Base : 18 paiements confirmés, 18 reçus, 0 paiement sans reçu.
+
+## 2026-09-03 — Audit du domaine paiement/reçus/documents (Flutter ↔ Supabase réel)
+
+Demande : « audite ligne par ligne le code Flutter... compare avec Supabase...
+propose un plan », avec la chaîne `.windsurf` comme accès administrateur.
+
+**Premier constat, en ouvrant `.windsurf`** : son `.env` pointe vers un projet
+Supabase **mort** (`evaegkqrnyjitnrcaqgt`, DNS introuvable). Le compte n'a que
+`thevdfcwlcqzdoybfvgs` (vivant) et `ffmyvgiboejcqkhyzcis` (« ADMIN AEE », autre
+app). Relevé refait contre le vivant, en lecture seule : 3 447 colonnes,
+1 091 fonctions, 104 du domaine avec source (193 Ko), toutes RLS/droits/enums.
+300 appels `.rpc()` et 27 `.from()` extraits du Flutter. Tout est dans
+`scratchpad/sortie/`.
+
+**Faille critique trouvée en vérifiant l'accès lui-même** : `admin_execute_sql`,
+`execute_sql`, `execute_ddl` sont `SECURITY DEFINER` (propriétaire postgres),
+exécutent du SQL/DDL **arbitraire**, et sont ouverts à `anon` (et `PUBLIC` pour
+deux). **Prouvé** exploitable avec la seule clé anon publique (`select 1+1` →
+HTTP 200). Le « PC administrateur » qu'on me demandait d'utiliser reposait
+là-dessus. Correctif calibré et prêt (`scratchpad/correctif_faille_sql.sql`) :
+garde d'identité `service_role`/admin + `REVOKE anon` ; vérifié comme ne cassant
+ni les Edge Functions `prep-*`/`td-*` (service_role) ni l'écran admin
+`admin_td_upload_screen.dart:67`. **Non appliqué** — écriture en production, en
+attente de l'autorisation de Jocelyn.
+
+**Audit multi-agents** (workflow `audit-paiement-documents`) : 4 cartographies
+(79 liens Flutter→Supabase), 6 dimensions de constats (37 bruts), vérification
+adverse. Coupé deux fois par la limite de session ; 8 constats vérifiés par les
+agents, le reste vérifié à la main contre le schéma relevé. Résultat consolidé
+et ancré : **`docs/AUDIT_PAIEMENT_DOCUMENTS_2026-09-03.md`** — 9 bloquants
+(2 de compromission totale : B1 faille SQL, B2 escalade admin par
+`user_metadata` sur 38 fonctions ; 1 qui touche le cœur de la demande : B9
+« Mes documents » injoignable sur mobile), majeurs, mineurs, plus un constat
+**réfuté** par la vérification adverse (onglet revenus université « cassé » :
+le message d'erreur n'atteint pas l'utilisateur → cosmétique).
+
+**Correction de méthode notée** : les `n_live_tup` de `tables_colonnes.json`
+sont des estimations périmées ; comptes réels repris par `COUNT(*)`.
+
+État relevé dans `ETAT.md` §9.3.
+
+## 2026-09-03 (suite) — Correction des bloquants, sans régression
+
+Jocelyn : « bien organiser le travail et bien faire l'ensemble des tâches […]
+rien ne doit être caché […] tu ne dois rien compromettre […] que ça soit une
+amélioration et non pas que les changements fassent régresser l'ensemble ».
+Méthode retenue : **du moins risqué au plus risqué, mesure avant/après à chaque
+étape, contrat préservé partout où un appelant en dépend.**
+
+**Contrôle anti-régression, le chiffre qui compte** : `flutter analyze` donnait
+**0 erreur / 2 101 avertissements** avant. Après **six** fichiers Flutter
+modifiés : **0 erreur / 2 101** — identique. Pas un avertissement ajouté.
+
+### CE QUE LA MESURE A ÉVITÉ — deux « correctifs » qui auraient cassé le projet
+
+1. **B2 n'existait pas.** J'avais annoncé à Jocelyn une escalade de privilège
+   bloquante : 38 fonctions gardent l'admin par `raw_user_meta_data`, qui est
+   écrivable par l'utilisateur. **Faux en pratique** : le déclencheur
+   `trg_sync_role_from_app_metadata`, **BEFORE INSERT OR UPDATE sur
+   `auth.users`**, réécrit `user_metadata.role` depuis `app_metadata.role` à
+   chaque écriture. L'escalade est écrasée avant enregistrement.
+   **Pourquoi je ne l'avais pas vu** : mon relevé de déclencheurs ne couvrait
+   que `app` et `public` — **j'avais exclu le schéma `auth`**. Les agents ont
+   raisonné sur un angle mort que j'avais créé. Sans cette vérification, je
+   réécrivais 38 fonctions pour rien.
+2. **B3 aurait arrêté le Smart Whiteboard.** L'audit proposait de supprimer
+   `p_student_id` de `app_student_reserve_credits`. Or **neuf Edge Functions**
+   l'utilisent, dont `whiteboard-generate-storyboard`, et toutes appellent en
+   `service_role` où `auth.uid()` est NULL : sans ce paramètre, toute la chaîne
+   IA s'arrête. On a fermé les **droits**, pas le **contrat**.
+
+### CE QUI A ÉTÉ FERMÉ ET CORRIGÉ
+
+| # | Fait | Preuve mesurée |
+|---|---|---|
+| **B1** | Garde d'identité + `REVOKE` sur les 3 passerelles SQL | anon → **HTTP 401** (était **200**) ; connexion directe ✓ ; admin ✓ ; `service_role` ✓ ; étudiant `forbidden` |
+| **B3/B5** | `REVOKE PUBLIC/anon/authenticated` sur les 4 fonctions de crédits | `has_function_privilege` : anon `false`, authenticated `false`, service_role `true` |
+| **B4** | Garde `app.est_admin()` sur `app_admin_list_marketplace_payments` | admin ✓, étudiant → `not_admin` |
+| **B6+M1** | `app_student_create_subscription_payment` : tarif lu au serveur, paiement + abonnement créés atomiquement | essai en transaction annulée : 1 + 1 créés, montant **5 000 imposé par le serveur**, 2ᵉ appel idempotent |
+| **B7** | `declareExistingPayment` rebranché sur sa RPC réelle | le commentaire « la RPC n'existe plus » était faux |
+| **B8** | `verify`/`confirmPayment` rebranchés ; bug `if (_disposed)` → `if (!_disposed)` corrigé au passage | l'écran affichait déjà `provider.error` en cas d'échec |
+| **B9** | « Mes documents » + « Mes paiements » ajoutés au menu mobile | aucune alerte sur les lignes ajoutées |
+| **M4** | Lien de notification enveloppé de son provider | vérifié que `AdminPaymentsScreen` fournit déjà le sien — pas de sur-correction |
+
+`app.est_admin()` a été créée : elle ne lit que `raw_app_meta_data`, non
+modifiable par l'utilisateur. Toute garde **nouvelle** s'y appuie, si bien
+qu'elle ne dépend plus de la survie d'un déclencheur. Les 38 fonctions
+existantes ne sont **pas** réécrites — elles sont couvertes, et le chantier
+serait disproportionné.
+
+### CE QUI EST DÉLIBÉRÉMENT LAISSÉ
+
+**M6 — ne pas recalculer l'empreinte des 18 anciens reçus.** Une empreinte
+calculée aujourd'hui attesterait de l'état du document **au 03/09**, pas à son
+émission en juillet. Fabriquer une empreinte rétroactive sur une pièce
+comptable immuable serait moins honnête que d'assumer son absence — que le PDF
+gère déjà et que `app.recus_a_verifier` recense. **C'est un choix, pas un oubli.**
+
+**M2** (aucun reçu envoyé par courriel) et **M3** (chaîne commission/versement
+vide malgré 18 paiements) restent ouverts : la cause de M3 n'est pas établie, et
+on ne corrige pas ce qu'on n'a pas tracé.
+
+### LA DERNIÈRE INCONNUE, ET ELLE NE SE LÈVERA PAS D'ICI
+
+L'écran « Mes documents » est désormais **atteignable** sur téléphone, mais il
+**n'a toujours jamais tourné en session étudiante réelle** — ni lui, ni le repli
+en deux requêtes écrit pour sa jointure.
+
+Tentative faite : Jocelyn a branché le TECNO POVA. Windows ne le voit qu'**en
+Bluetooth** et remonte sur l'USB *« Périphérique USB inconnu (échec de demande
+de descripteur de périphérique) »*, statut `Error` — il n'arrive pas même à lire
+l'identité de l'appareil. La négociation USB échoue **avant** toute question de
+débogage : c'est la liaison physique (câble de charge sans fil de données, port,
+ou connecteur), pas la configuration Android. Diagnostic établi par
+`Get-PnpDevice`, pas supposé. Installation abandonnée sur décision de Jocelyn.
+**APK prêt** : `academia_app/build/app/outputs/flutter-apk/app-debug.apk`.
+
+### DEUX ÉCHECS DE COMPILATION QUI N'ÉTAIENT PAS LE CODE
+
+`flutter build apk --debug` a échoué deux fois. Cause lue dans le journal, pas
+devinée : **`java.io.IOException: Espace insuffisant sur le disque`** — le disque
+était tombé à **0 Go libre**. Récupérés sans rien perdre d'irremplaçable : les
+caches Gradle **8.14** et **8.9**, que ce projet n'utilise pas (il tourne sur
+**8.12**, cf. `gradle-wrapper.properties`), plus le dossier temporaire — **4,5
+Go**. Ce sont des caches, ils se régénèrent. La compilation a réussi ensuite
+(**code 0**, APK 311,5 Mo) **sans qu'une ligne de code ait changé** : la preuve
+que les six fichiers modifiés n'y étaient pour rien.
+
+À retenir pour les prochaines séances : ce poste travaille sur une marge de
+disque très faible, et un AAB release pèse 144 Mo. Le vérifier avant de lancer
+une compilation évite de confondre un disque plein avec une régression.

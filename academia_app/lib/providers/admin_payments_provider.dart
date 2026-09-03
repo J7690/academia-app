@@ -60,16 +60,37 @@ class AdminPaymentsProvider extends ChangeNotifier {
     if (_disposed) return false;
     _setError(null);
     try {
-      // NOTE: RPC app_admin_verify_payment n'existe plus dans Supabase.
-      // Les paiements sont vérifiés automatiquement via Edge Function ligdicash-callback.
-      // Cette fonction est conservée pour compatibilité mais ne fait rien.
-      debugPrint('[AdminPaymentsProvider] verifyPayment: RPC app_admin_verify_payment n\'existe plus. Les paiements sont vérifiés via Edge Function ligdicash-callback.');
-      
+      // CES DEUX MÉTHODES NE FAISAIENT RIEN, ET RENVOYAIENT `true`.
+      //
+      // Leurs commentaires — « la RPC n'existe plus dans Supabase » — étaient
+      // FAUX : `app_admin_verify_payment` et `app_admin_confirm_payment`
+      // existent, contrôlent le rôle admin, gardent les statuts, et la seconde
+      // émet le reçu via app.emettre_recu(). L'écran affichait pourtant
+      // « Paiement confirmé et reçu généré » sans qu'aucune ligne ne bouge.
+      // Constat B8 de l'audit du 03/09/2026.
+      final resp = await _client.rpc(
+        'app_admin_verify_payment',
+        params: {
+          'p_payment_id': paymentId,
+          'p_decision': isValid ? 'valid' : 'invalid',
+          'p_comment': comment,
+        },
+      );
+      final data = resp as Map<String, dynamic>?;
+      if (data == null || data['success'] != true) {
+        if (!_disposed) {
+          _setError(
+            data?['error']?.toString() ?? 'La vérification n\'a pas abouti.',
+          );
+        }
+        return false;
+      }
+
       await loadAllPayments();
       return true;
     } catch (e, st) {
       debugPrint('[AdminPaymentsProvider] verifyPayment error=$e stack=$st');
-      if (_disposed) _setError(e.toString());
+      if (!_disposed) _setError(e.toString());
       return false;
     }
   }
@@ -78,16 +99,28 @@ class AdminPaymentsProvider extends ChangeNotifier {
     if (_disposed) return false;
     _setError(null);
     try {
-      // NOTE: RPC app_admin_confirm_payment n'existe plus dans Supabase.
-      // Les paiements sont confirmés automatiquement via Edge Function ligdicash-callback.
-      // Cette fonction est conservée pour compatibilité mais ne fait rien.
-      debugPrint('[AdminPaymentsProvider] confirmPayment: RPC app_admin_confirm_payment n\'existe plus. Les paiements sont confirmés via Edge Function ligdicash-callback.');
-      
+      // Confirme réellement le paiement ET déclenche l'émission du reçu
+      // (app_admin_confirm_payment → app.emettre_recu). Voir le commentaire
+      // de verifyPayment ci-dessus.
+      final resp = await _client.rpc(
+        'app_admin_confirm_payment',
+        params: {'p_payment_id': paymentId},
+      );
+      final data = resp as Map<String, dynamic>?;
+      if (data == null || data['success'] != true) {
+        if (!_disposed) {
+          _setError(
+            data?['error']?.toString() ?? 'La confirmation n\'a pas abouti.',
+          );
+        }
+        return false;
+      }
+
       await loadAllPayments();
       return true;
     } catch (e, st) {
       debugPrint('[AdminPaymentsProvider] confirmPayment error=$e stack=$st');
-      if (_disposed) _setError(e.toString());
+      if (!_disposed) _setError(e.toString());
       return false;
     }
   }

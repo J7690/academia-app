@@ -138,46 +138,30 @@ class SubscriptionProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Trouver le plan
-      final plan = _plans.firstWhere(
-        (p) => p['code'] == planCode,
-        orElse: () => <String, dynamic>{},
+      // TOUT SE FAIT MAINTENANT CÔTÉ SERVEUR, EN UNE SEULE FOIS.
+      //
+      // Ce qu'il y avait avant, et pourquoi ça ne marchait pas (audit du
+      // 03/09/2026, constats B6 et M1) :
+      //
+      //  1. le montant était calculé ICI — prix du plan mis en cache, promo
+      //     appliquée côté client — puis transmis à
+      //     `app_student_create_profile_payment(p_amount_due)`, qui ne
+      //     vérifiait que « > 0 ». Un client modifié payait ce qu'il voulait ;
+      //  2. la ligne d'abonnement était insérée depuis le client
+      //     (`.schema('app').from('subscriptions').insert`). app.subscriptions
+      //     a RLS active et AUCUNE policy INSERT pour un étudiant : l'insertion
+      //     était refusée. `app_confirm_ligdicash_payment` cherchait ensuite une
+      //     ligne 'pending_payment' à activer et n'en trouvait jamais.
+      //     Mesuré le 03/09 : app.subscriptions = 0 ligne. Personne n'avait
+      //     jamais obtenu Premium, même après avoir payé.
+      //
+      // `app_student_create_subscription_payment` lit le tarif dans
+      // app.subscription_plans, applique la promo elle-même, et crée le
+      // paiement ET l'abonnement dans la même transaction.
+      final resp = await _client.rpc(
+        'app_student_create_subscription_payment',
+        params: {'p_plan_code': planCode},
       );
-      if (plan.isEmpty) {
-        _error = 'Plan introuvable.';
-        return {'success': false, 'error': 'plan_not_found'};
-      }
-
-      final price = plan['price'];
-      double amount = 0;
-      if (price is num) amount = price.toDouble();
-
-      // Calculer prix avec promo
-      final promoPercent = plan['promo_percent'];
-      if (promoPercent is int && promoPercent > 0) {
-        final promoExpires = plan['promo_expires_at']?.toString();
-        bool promoActive = true;
-        if (promoExpires != null) {
-          final dt = DateTime.tryParse(promoExpires);
-          if (dt != null && dt.isBefore(DateTime.now())) {
-            promoActive = false;
-          }
-        }
-        if (promoActive) {
-          amount = amount * (1 - promoPercent / 100);
-        }
-      }
-
-      if (amount <= 0) {
-        _error = 'Prix invalide pour ce plan.';
-        return {'success': false, 'error': 'invalid_price'};
-      }
-
-      // Créer le paiement via la RPC existante (subscription type)
-      final resp = await _client.rpc('app_student_create_profile_payment', params: {
-        'p_payment_reason': 'subscription',
-        'p_amount_due': amount,
-      });
 
       final data = resp as Map<String, dynamic>?;
       if (data == null || data['success'] != true) {
@@ -191,25 +175,16 @@ class SubscriptionProvider extends ChangeNotifier {
         return {'success': false, 'error': 'missing_payment_id'};
       }
 
-      // Créer la subscription en pending_payment
-      final planId = plan['id']?.toString();
-      final durationDays = plan['duration_days'] as int? ?? 30;
-      final expiresAt = DateTime.now().add(Duration(days: durationDays));
-
-      await _client.schema('app').from('subscriptions').insert({
-        'student_id': _client.auth.currentUser!.id,
-        'plan_id': planId,
-        'status': 'pending_payment',
-        'payment_id': paymentId,
-        'expires_at': expiresAt.toIso8601String(),
-      });
-
+      // Le montant affiché est désormais celui que le serveur a retenu,
+      // pas celui que l'application avait calculé.
+      final montant = data['amount_due'];
       return {
         'success': true,
         'payment_id': paymentId,
-        'amount': amount,
-        'plan_code': planCode,
-        'plan_name': plan['name'],
+        'amount': montant is num ? montant.toDouble() : 0.0,
+        'plan_code': data['plan_code']?.toString() ?? planCode,
+        'plan_name': data['plan_name'],
+        'subscription_id': data['subscription_id'],
       };
     } catch (e, st) {
       debugPrint('[SubscriptionProvider] createSubscriptionPayment error=$e\n$st');

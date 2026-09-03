@@ -1,15 +1,87 @@
 {
   "artboards": [
-    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 794, "h": 1123, "title": "Bon de courtage — A4 (PDF)", "print": "fixed" },
-    { "file": "Verification.dc.html", "x": 914, "y": 0, "w": 390, "h": 844, "title": "1 · Bon valable" },
-    { "file": "Expire.dc.html", "x": 1404, "y": 0, "w": 390, "h": 844, "title": "2 · Bon expiré (plus de 14 jours)" },
-    { "file": "Refus.dc.html", "x": 1894, "y": 0, "w": 390, "h": 844, "title": "3 · Autre établissement" }
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 794,
+      "h": 1123,
+      "title": "Bon de courtage — A4 (PDF)",
+      "print": "fixed"
+    },
+    {
+      "file": "Recu.dc.html",
+      "x": 0,
+      "y": 1290,
+      "w": 794,
+      "h": 1123,
+      "title": "Reçu de paiement — A4 (PDF)",
+      "print": "fixed"
+    },
+    {
+      "file": "Verification.dc.html",
+      "x": 914,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "1 · Bon valable"
+    },
+    {
+      "file": "Expire.dc.html",
+      "x": 1404,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "2 · Bon expiré (plus de 14 jours)"
+    },
+    {
+      "file": "Refus.dc.html",
+      "x": 1894,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "3 · Autre établissement"
+    },
+    {
+      "file": "Documents.dc.html",
+      "x": 2384,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Mes documents — côté étudiant"
+    }
   ],
   "annotations": [
-    { "id": "logos", "x": 0, "y": -170, "w": 460,
-      "text": "Vos vrais logos, non modifiés — ils étaient déjà dans le dépôt (academia.png et Nexiom_group.png), détourés. La version blanche du logo Academia est celle qui m'avait égaré : invisible sur papier." },
-    { "id": "trois-reponses", "x": 914, "y": -170, "w": 1370,
-      "text": "Les trois réponses possibles quand un établissement scanne. Valable : tout s'affiche. Expiré (plus de 14 jours) : le taux N'EST PAS affiché — il n'est plus garanti et ne doit pas pouvoir être appliqué — et l'écran dicte la consigne à donner au candidat. Autre établissement : aucune donnée du dossier, pas même le nom du destinataire." }
+    {
+      "id": "logos",
+      "x": 0,
+      "y": -170,
+      "w": 460,
+      "text": "Vos vrais logos, non modifiés — ils étaient déjà dans le dépôt (academia.png et Nexiom_group.png), détourés. La version blanche du logo Academia est celle qui m'avait égaré : invisible sur papier."
+    },
+    {
+      "id": "trois-reponses",
+      "x": 914,
+      "y": -170,
+      "w": 1370,
+      "text": "Les trois réponses possibles quand un établissement scanne. Valable : tout s'affiche. Expiré (plus de 14 jours) : le taux N'EST PAS affiché — il n'est plus garanti et ne doit pas pouvoir être appliqué — et l'écran dicte la consigne à donner au candidat. Autre établissement : aucune donnée du dossier, pas même le nom du destinataire."
+    },
+    {
+      "id": "documents",
+      "x": 2384,
+      "y": -170,
+      "w": 390,
+      "text": "LIVRÉ le 02/09/2026 — lib/features/student/student_documents_screen.dart. Écran NEUF, et non le renommage de « Mes paiements » comme prévu : cet écran-là est un atelier (créer un paiement, choisir un canal, déclarer un versement), pas une liste de documents ; le renommer aurait enfoui son parcours. Les deux coexistent, chacun avec son entrée. Le volet des bons est vide et l'écrit : la table des bons n'existe pas encore."
+    },
+    {
+      "id": "recu",
+      "x": 0,
+      "y": 1120,
+      "w": 794,
+      "text": "LIVRÉ le 02/09/2026 — lib/utils/payment_receipt_pdf.dart suit cette maquette. Trois sources : les mentions de l'article 562 du CGI burkinabè (identité, adresses, RCCM, IFU, numérotation continue, nature et date de l'opération), les mentions que Stripe impose pour conformité (raison sociale, adresse et courriel de support), et l'usage mobile money : la référence opérateur, celle du SMS, pour que l'étudiant recoupe. Régime fiscal et TVA retirés sur votre décision. Le montant en toutes lettres est calculé côté application. Le numéro suit désormais une série continue REC-2026-000001, et l'empreinte affichée est réelle : elle n'était JAMAIS calculée auparavant."
+    }
   ],
-  "launch": { "view": "canvas" }
+  "launch": {
+    "view": "canvas"
+  }
 }

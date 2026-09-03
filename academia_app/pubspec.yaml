@@ -210,6 +210,15 @@ flutter:
     # faite pour un fond sombre et invisible sur du papier.
     - assets/marque/
 
+    # Roboto, pour les PDF UNIQUEMENT (pas pour l'interface, qui utilise la
+    # police du systeme). Les polices integrees du paquet `pdf` sont des
+    # Type1 sans support Unicode : elles avaient fait DISPARAITRE le tiret
+    # cadratin du recu, sans erreur ni trace visible dans le document. Le
+    # meme silence effacerait un caractere dans le NOM d'un etudiant.
+    # Apache 2.0 (licence jointe dans le dossier), copiee depuis le cache du
+    # SDK Flutter. 505 Ko au total.
+    - assets/polices/
+
 flutter_launcher_icons:
   image_path: "assets/Academia.0.png"
   android: true

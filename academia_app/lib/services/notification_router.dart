@@ -13,6 +13,9 @@ import '../features/admin/admin_communities_screen.dart';
 import '../features/admin/admin_dashboard_screen.dart';
 import '../features/admin/admin_marketplace_control_tower_screen.dart';
 import '../features/admin/admin_opportunities_screen.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/student_application_payments_provider.dart';
 import '../features/admin/admin_payments_screen.dart';
 import '../features/admin/admin_support_screen.dart';
 import '../features/commercial/commercial_dashboard_screen.dart';
@@ -105,7 +108,18 @@ class NotificationRouter {
     switch (domain) {
       // --- Étudiant ---
       case 'student_payments':
-        return const StudentPaymentsScreen();
+        // StudentPaymentsScreen consomme StudentApplicationPaymentsProvider
+        // (Consumer2, non protégé) et ce provider n'est PAS global — seul
+        // StudentApplicationsProvider l'est (main.dart:338). Poussé nu, l'écran
+        // levait « Could not find the correct Provider » : le lien de
+        // notification vers « Mes paiements » plantait. Constat M4 de l'audit
+        // du 03/09/2026. Les autres écrans de cette table fournissent leur
+        // propre provider (AdminPaymentsScreen l.12), d'où la correction
+        // limitée à ce seul cas.
+        return ChangeNotifierProvider(
+          create: (_) => StudentApplicationPaymentsProvider(),
+          child: const StudentPaymentsScreen(),
+        );
 
       // --- Admin (écrans dédiés) ---
       case 'admin_payments':

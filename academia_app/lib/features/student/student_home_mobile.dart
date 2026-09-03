@@ -21,10 +21,13 @@ import '../../providers/student_weather_provider.dart';
 import '../../providers/student_announcements_provider.dart';
 import '../../providers/student_academic_calendar_provider.dart';
 import '../../providers/student_communities_provider.dart';
+import '../../providers/student_application_payments_provider.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart';
 import '../../widgets/bobodo_state.dart';
 import '../../widgets/bobodo_view.dart';
+import 'student_documents_screen.dart';
+import 'student_payments_screen.dart';
 import 'student_settings_screen.dart';
 import 'student_application_detail_screen.dart';
 import 'tabs/student_applications_tab.dart';
@@ -287,6 +290,49 @@ class _MobileTopNavBarState extends State<_MobileTopNavBar>
                   );
                 },
               ),
+              // MES DOCUMENTS / MES PAIEMENTS — LE SEUL ACCÈS SUR TÉLÉPHONE.
+              //
+              // Ces deux écrans n'étaient câblés que dans `student_home_tab`,
+              // la variante BUREAU. Or `student_dashboard_screen` rend
+              // `StudentHomeMobileTab` à l'onglet 0 quand `isMobile` : sur un
+              // téléphone, l'étudiant ne pouvait atteindre NI ses reçus NI ses
+              // paiements. Constat B9 de l'audit du 03/09/2026.
+              //
+              // Chaque écran est poussé avec son provider : le pousser nu
+              // lève « Could not find the correct Provider » (c'est le défaut
+              // M4 du même audit, sur le lien de notification).
+              ListTile(
+                leading: const Icon(Icons.folder_outlined),
+                title: const Text('Mes documents'),
+                subtitle: const Text('Reçus et bons de courtage'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ChangeNotifierProvider(
+                        create: (_) => StudentApplicationPaymentsProvider(),
+                        child: const StudentDocumentsScreen(),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.payments_outlined),
+                title: const Text('Mes paiements'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ChangeNotifierProvider(
+                        create: (_) => StudentApplicationPaymentsProvider(),
+                        child: const StudentPaymentsScreen(),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const Divider(height: 1),
               ListTile(
                 leading: const Icon(Icons.settings),
                 title: const Text('Paramètres'),

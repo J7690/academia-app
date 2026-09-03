@@ -339,6 +339,156 @@ réfutation. Ne pas lire l'absence d'alerte sur ces sept jeux comme un satisfeci
 migré. Détail complet, sources datées, décisions ouvertes :
 `docs/CARTE_CONDUITE_RECHERCHE_ET_PROPOSITION_2026-08-28.md`.
 
+### 9.2 Les DOCUMENTS de paiement — reçu livré le 02/09, bon de courtage conçu seulement
+
+**Le reçu est fait, de la base à l'écran.** Une seule fonction l'émet désormais :
+`app.emettre_recu(payment_id, issued_by, complement)`, appelée par les trois
+chemins de confirmation (admin, achat de crédits, LigdiCash). Vérifié : plus
+aucune autre fonction ne contient `INSERT INTO app.payment_receipts`.
+
+| Avant le 02/09 | Depuis |
+|---|---|
+| 3 fonctions écrivaient chacune leur reçu | 1 seule, idempotente |
+| 4 colonnes remplies sur 10 | 10 sur 10 |
+| 2 formats de numéro (`REC-…`, `REC-CR-…`) | série continue `REC-2026-000001` |
+| `signature_hash` **NULL sur les 18 reçus** | empreinte SHA-256 calculée et vérifiable |
+| aucune vue de contrôle | `app.paiements_sans_recu`, `app.recus_a_verifier` |
+
+**Deux défauts de sécurité corrigés dans la foulée, tous deux mesurés :**
+
+1. **N'importe qui lisait tous les reçus.** La politique RLS était `USING (true)`.
+   Mesuré en endossant les rôles : `anon` — dont la clé est embarquée dans
+   l'application — lisait les **18 reçus**, un étudiant tiers aussi. `anon` et
+   `authenticated` détenaient de surcroît `INSERT/UPDATE/DELETE/TRUNCATE` au
+   niveau table, bloqués seulement par l'*absence* de politique. Le trou
+   préexistait mais était peu chargé : les colonnes nominatives étaient vides.
+   **C'est le travail du 02/09 qui l'aurait rendu grave**, en y écrivant nom,
+   téléphone et courriel. Après correction : `anon` refusé dès le droit de
+   table, tiers = 0, propriétaire = ses reçus, admin = tout.
+2. **`app.generate_receipt_signature()` portait un secret en clair** dans son
+   corps (`academia_receipt_secret_2026`), **et n'a jamais rien produit** :
+   appelée en `BEFORE INSERT` avec `NEW.id`, elle cherchait une ligne qui
+   n'existe pas encore. Supprimée. Remplacée par `app.empreinte_recu()`, un
+   SHA-256 **sans clé** — nommé pour ce qu'il est : une somme de contrôle qui
+   permet de confronter un papier à la base, pas une signature.
+
+**Côté application** : `payment_receipt_pdf.dart` refait sur la maquette validée
+(sans TVA ni régime fiscal, retirés sur décision de Jocelyn ; montant en toutes
+lettres ; repli sur les colonnes du paiement pour les 18 reçus antérieurs), et
+un écran **« Mes documents »** neuf (`student_documents_screen.dart`), deux
+volets. Ce n'est **pas** le renommage de « Mes paiements » annoncé : cet
+écran-là est un atelier (créer, choisir un canal, déclarer), le renommer aurait
+enfoui son parcours. Les deux coexistent.
+
+**Le PDF se fabrique et se contrôle sans installer l'application** :
+```bash
+cd academia_app
+flutter test test/recu_pdf_test.dart     # produit les PDF, par le code de prod
+python ../outils/verifier_recu_pdf.py    # vérifie leur CONTENU réel
+```
+Les documents sortent dans `academia_app/build/apercus_recu/`. Deux défauts
+silencieux ont été trouvés par là, et par là seulement :
+- **le tiret cadratin disparaissait** du document (Type1 sans Unicode) — le même
+  silence effacerait un caractère dans le **nom d'un étudiant**. Roboto est
+  désormais embarquée (`assets/polices/`, Apache 2.0, 505 Ko) ;
+- **un document mutilé a passé le test** (il ne restait que l'en-tête) parce que
+  le test ne regardait que le poids et « %PDF- ». D'où le contrôle Python, qui
+  lit le texte rendu. Éprouvé à l'envers : manifeste piégé → faute signalée.
+
+Mesures : `flutter analyze` **0 erreur** · `flutter test` **4 tests, 0 échec,
+0 glyphe manquant** · contrôle du contenu **44/44** · `flutter build appbundle
+--release` **code 0, 144,2 Mo**. 18 paiements confirmés, 18 reçus, 0 sans reçu.
+
+**NON VÉRIFIÉ, et c'est le point à reprendre en premier** : l'écran « Mes
+documents » n'a **jamais tourné**. La liste se charge par une jointure
+imbriquée PostgREST qui ne peut s'exercer qu'avec une session étudiante — je
+n'en ouvre pas. Un repli en deux requêtes a été écrit pour ce cas, lui non plus
+jamais exécuté. **À essayer sur téléphone avant toute publication.**
+
+**PAS ENCORE CODÉ — le bon de courtage.** Maquette validée, QR réel et scanné
+(cf. journal du 02/09), mais **ni table, ni RPC, ni écran de scan, ni champs de
+négociation**. Le volet « Bons de courtage » de l'écran est vide et l'écrit.
+
+**Bon à savoir** : `app.students.date_of_birth` **existe** (renseignée sur
+11 étudiants sur 277) — j'avais conclu l'inverse le 02/09 au matin, à tort. Le
+bon de courtage en a besoin.
+
+**Découvert en passant** : `app.email_queue` contient 5 entrées, **toutes
+`pending` depuis juillet**. Rien ne consomme cette file — aucun reçu n'a jamais
+été envoyé par courriel. Le déclencheur qui l'alimente, lui, fonctionne.
+
+### 9.3 AUDIT du domaine paiement/reçus/documents — 03/09/2026
+
+Audit ligne par ligne (Flutter ↔ Supabase réel), conduit par workflow
+multi-agents avec vérification adverse. **Rapport complet et ancré :
+`docs/AUDIT_PAIEMENT_DOCUMENTS_2026-09-03.md`.**
+
+> **CORRIGÉ LE MÊME JOUR — 8 bloquants sur 9 fermés, le 9ᵉ rétrogradé.**
+> Contrôle anti-régression : `flutter analyze` donnait **0 erreur / 2 101
+> avertissements** avant ; après six fichiers modifiés, **0 erreur / 2 101** —
+> identique, aucun avertissement ajouté. Détail et preuves au §5 du rapport.
+>
+> Le tableau ci-dessous conserve le constat d'origine ; la colonne « état » dit
+> où on en est.
+
+| # | État | Bloquant | Vérification |
+|---|---|---|---|
+| B1 | ✅ **fermé** | `admin_execute_sql`/`execute_sql`/`execute_ddl` : SQL arbitraire ouvert à `anon` (clé publique de l'APK) | anon → **HTTP 401** (était 200). Connexion directe ✓, admin ✓, `service_role` ✓, étudiant `forbidden` |
+| B2 | ↓ **rétrogradé** | Rôle admin lu dans `raw_user_meta_data`. **NON EXPLOITABLE** : `trg_sync_role_from_app_metadata` (BEFORE, sur `auth.users`) écrase la valeur. Mon relevé excluait le schéma `auth` — c'est mon angle mort, pas une faille | `app.est_admin()` créée pour les gardes nouvelles |
+| B3 | ✅ **fermé** | `app_student_reserve_credits(3 args)` : IDOR, appelable `anon`. **Contrat conservé** — 9 Edge Functions en dépendent, dont le Smart Whiteboard | anon/authenticated `false`, service_role `true` |
+| B4 | ✅ **fermé** | `app_admin_list_marketplace_payments` : aucun contrôle d'identité | admin ✓, étudiant → `not_admin` |
+| B5 | ✅ **fermé** | `confirm_credits`/`refund_credits` : aucune vérif d'appartenance | idem B3 |
+| B6 | ✅ **corrigé** | Abonnement : INSERT refusé par RLS → Premium ne s'activait **jamais** (0 en base) | essai annulé : 1 abonnement + 1 paiement créés, 2ᵉ appel idempotent |
+| B7 | ✅ **corrigé** | Déclaration manuelle : **no-op** affichant un faux succès (le commentaire « la RPC n'existe plus » était faux) | rebranché sur `app_student_declare_payment` |
+| B8 | ✅ **corrigé** | Écran admin : `verify`/`confirm` étaient des **stubs vides** retournant `true` | rebranchés sur leurs RPC réelles |
+| B9 | ✅ **corrigé** | **« Mes documents » injoignable sur mobile** | ajouté au menu de `student_home_mobile.dart:269` |
+
+**B9 répond à la question laissée ouverte au §9.2** (« l'écran n'a jamais
+tourné ») : sur téléphone, il n'était même pas atteignable. Il l'est désormais —
+mais **il n'a toujours pas tourné en session étudiante réelle.**
+
+Tentative du 03/09 : le TECNO POVA branché n'est vu qu'**en Bluetooth**, et
+l'USB remonte *« Périphérique USB inconnu (échec de demande de descripteur »*.
+Windows ne lit même pas l'identité de l'appareil : la liaison physique est en
+cause (câble sans fil de données, port, connecteur), pas la configuration
+Android. **L'APK est prêt** :
+`academia_app/build/app/outputs/flutter-apk/app-debug.apk` (311,5 Mo, code 0).
+
+**Ce qui reste à vérifier sur l'appareil**, et qui ne peut pas l'être d'ici :
+menu « … » de l'accueil → « Mes documents » ; l'onglet Reçus se remplit (la
+jointure PostgREST sous RLS étudiante) ; « Télécharger le reçu » sort le PDF.
+
+**Preuve anti-régression du chantier** : `flutter analyze` **0 erreur / 2 101**
+(identique à avant), `flutter build apk --debug` **code 0**. Les deux échecs de
+compilation rencontrés venaient du **disque plein** (0 Go ; `IOException:
+Espace insuffisant`), pas du code : 4,5 Go récupérés sur les caches Gradle 8.14
+et 8.9, inutilisés par ce projet qui tourne sur 8.12.
+
+Majeurs corrigés : **M1** (sous-paiement d'abonnement — le tarif est désormais lu
+au serveur, comme le courtage figé le 02/09), **M4** (lien de notification qui
+plantait faute de provider), et **M5** (l'empreinte porte enfin sur le `snapshot`
+figé, ce qui **est** le reçu, et non sur la ligne de paiement mutable ; éprouvé
+dans les deux sens : reçu émis `intacte=true`, snapshot altéré `intacte=false`.
+Fait maintenant **parce qu'aucun reçu ne portait encore d'empreinte** — plus
+tard, il aurait fallu choisir entre casser des documents et garder une formule
+fausse).
+
+Majeurs restants : **M2** aucun reçu envoyé par courriel (file sans
+consommateur) ; **M3** chaîne commission/versement **vide** malgré 18 paiements
+(cause non établie — on ne corrige pas ce qu'on n'a pas tracé) ; **M6** les 18
+reçus antérieurs sans `signature_hash` — **délibérément non corrigé**, une
+empreinte calculée aujourd'hui attesterait du 03/09 et non de l'émission.
+
+**Correction de mesure** : les `n_live_tup` de `tables_colonnes.json` sont
+périmés. Comptes réels 03/09 : `credit_transactions` **279** (les crédits sont
+très utilisés), `student_credits` 18, `student_dossier_documents` 5,
+`subscriptions`/`referral_commissions`/`actor_balances`/`payout_queue`/
+`marketplace_payments` **0**.
+
+**Découverte de méthode** : la chaîne `.windsurf/` (le « PC administrateur »)
+pointe, dans son `.env`, vers un projet Supabase **mort** (`evaegkqrnyjitnrcaqgt`).
+Le relevé a été refait contre le projet vivant. Elle repose en outre sur B1.
+
 ---
 
 ## Comment on tient ce fichier à jour

@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #14663A; } a:hover { color: #0E4A29; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #F4F6F4; color: #14251D;
+            font-family: Archivo, system-ui, sans-serif; display: flex; flex-direction: column;
+            box-sizing: border-box; overflow: hidden;">
+
+  <div style="background: #14251D; color: #FFFFFF; padding: 54px 20px 0;">
+    <div style="display: flex; align-items: center; gap: 12px; padding-bottom: 14px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+      <div style="font-size: 16px; font-weight: 600;">Mes documents</div>
+    </div>
+    <div style="display: flex; gap: 22px;">
+      <div style="padding-bottom: 10px; border-bottom: 2.5px solid #1EA75C;
+                  font-size: 14px; font-weight: 600;">Reçus <span style="color: rgba(255,255,255,.55); font-weight: 500;">3</span></div>
+      <div style="padding-bottom: 10px; border-bottom: 2.5px solid transparent;
+                  font-size: 14px; color: rgba(255,255,255,.6);">Bons de courtage <span style="color: rgba(255,255,255,.4);">1</span></div>
+    </div>
+  </div>
+
+  <div style="padding: 16px; display: flex; flex-direction: column; gap: 11px; flex: 1; overflow: hidden;">
+
+    <!-- reçu courtage -->
+    <div style="background: #FFFFFF; border: 1px solid #E4E9E5; border-radius: 13px; padding: 14px 15px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+        <div style="min-width: 0;">
+          <div style="display: inline-block; background: #E8F5ED; color: #14663A; font-size: 10px;
+                      font-weight: 600; letter-spacing: .08em; padding: 3px 8px; border-radius: 99px;
+                      text-transform: uppercase;">Frais de courtage</div>
+          <div style="font-family: Spectral, Georgia, serif; font-size: 17px; font-weight: 600; margin-top: 8px;">
+            25 000 XOF</div>
+          <div style="font-size: 12.5px; color: #6B7873; margin-top: 3px; line-height: 1.4;">
+            Institut International de Management<br>02/09/2026 · Orange Money</div>
+        </div>
+        <div style="text-align: right; flex: none;">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; color: #7C8783;">REÇU</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 600;
+                      margin-top: 2px;">REC-…7A2F</div>
+        </div>
+      </div>
+      <button style="width: 100%; margin-top: 12px; height: 40px; border: 1px solid #14251D;
+                     background: #FFFFFF; border-radius: 9px; font-family: Archivo, sans-serif;
+                     font-size: 13.5px; font-weight: 600; color: #14251D; cursor: pointer;
+                     display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#14251D"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+        </svg>
+        Télécharger le reçu
+      </button>
+    </div>
+
+    <!-- reçu crédits -->
+    <div style="background: #FFFFFF; border: 1px solid #E4E9E5; border-radius: 13px; padding: 14px 15px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+        <div style="min-width: 0;">
+          <div style="display: inline-block; background: #EEF2FB; color: #2B4F84; font-size: 10px;
+                      font-weight: 600; letter-spacing: .08em; padding: 3px 8px; border-radius: 99px;
+                      text-transform: uppercase;">Crédits IA</div>
+          <div style="font-family: Spectral, Georgia, serif; font-size: 17px; font-weight: 600; margin-top: 8px;">
+            1 000 XOF</div>
+          <div style="font-size: 12.5px; color: #6B7873; margin-top: 3px; line-height: 1.4;">
+            Pack Mini · 100 crédits<br>28/08/2026 · Moov Money</div>
+        </div>
+        <div style="text-align: right; flex: none;">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; color: #7C8783;">REÇU</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 600;
+                      margin-top: 2px;">REC-CR-…9E14</div>
+        </div>
+      </div>
+      <button style="width: 100%; margin-top: 12px; height: 40px; border: 1px solid #14251D;
+                     background: #FFFFFF; border-radius: 9px; font-family: Archivo, sans-serif;
+                     font-size: 13.5px; font-weight: 600; color: #14251D; cursor: pointer;
+                     display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#14251D"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+        </svg>
+        Télécharger le reçu
+      </button>
+    </div>
+
+    <!-- reçu TD -->
+    <div style="background: #FFFFFF; border: 1px solid #E4E9E5; border-radius: 13px; padding: 14px 15px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+        <div style="min-width: 0;">
+          <div style="display: inline-block; background: #FBF3EF; color: #A3441B; font-size: 10px;
+                      font-weight: 600; letter-spacing: .08em; padding: 3px 8px; border-radius: 99px;
+                      text-transform: uppercase;">Accès TD</div>
+          <div style="font-family: Spectral, Georgia, serif; font-size: 17px; font-weight: 600; margin-top: 8px;">
+            2 000 XOF</div>
+          <div style="font-size: 12.5px; color: #6B7873; margin-top: 3px; line-height: 1.4;">
+            Mathématiques · Licence 1<br>15/08/2026 · Orange Money</div>
+        </div>
+        <div style="text-align: right; flex: none;">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; color: #7C8783;">REÇU</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 600;
+                      margin-top: 2px;">REC-…C806</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="flex: 1;"></div>
+
+    <div style="background: #FFFFFF; border: 1px solid #E4E9E5; border-radius: 13px;
+                padding: 13px 15px; font-size: 12.5px; color: #3E4A44; line-height: 1.5;">
+      <b style="color: #14251D;">Tout paiement donne un reçu.</b> Il prouve ce que tu as versé
+      à Nexiom Group. Le bon de courtage, lui, se présente à l'établissement.
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
