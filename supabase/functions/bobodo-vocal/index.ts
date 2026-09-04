@@ -62,26 +62,80 @@ function json(body: unknown, status = 200): Response {
 }
 
 /// Le jeton doit etre celui d'un utilisateur connecte. Sans ce controle,
-/// n'importe qui consommerait les credits OpenRouter du projet — c'est
-/// exactement le garde que porte deja `whiteboard-tts`.
-function estAuthentifie(req: Request): boolean {
+/// n'importe qui consommerait les credits OpenRouter du projet.
+///
+/// LA SIGNATURE EST VERIFIEE AUPRES DE SUPABASE, pas seulement decodee.
+/// Premiere version de cette fonction : elle faisait `atob()` sur la charge
+/// utile et lisait le champ `role`. C'etait contournable en trois lignes —
+/// fabriquer un base64 contenant {"role":"authenticated"} suffisait. Le
+/// deploiement avec `verify_jwt` actif la couvrait (essai reel : un jeton forge
+/// recoit 401), mais faire reposer la securite sur un reglage externe qu'un
+/// futur deploiement peut desactiver, c'est exactement ce que j'ai refuse le
+/// matin meme pour `app_append_bobodo_message`. Deux barrieres, pas une.
+async function estAuthentifie(req: Request): Promise<boolean> {
   const brut = req.headers.get('Authorization') ?? '';
   const jeton = brut.replace(/^Bearer\s+/i, '').trim();
   if (!jeton) return false;
-  try {
-    const charge = JSON.parse(atob(jeton.split('.')[1] ?? ''));
-    const role = String(charge.role ?? '');
-    // `anon` est un jeton public : il ne prouve rien.
-    return role === 'authenticated' || role === 'service_role';
-  } catch (_) {
+
+  const url = Deno.env.get('SUPABASE_URL') ?? '';
+  const cleAnon = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+  if (!url || !cleAnon) {
+    console.error('[bobodo-vocal] SUPABASE_URL ou SUPABASE_ANON_KEY absente');
     return false;
   }
+
+  try {
+    // Supabase valide la signature et l'expiration : on ne fait confiance a
+    // aucun champ du jeton avant sa reponse.
+    const reponse = await fetch(`${url}/auth/v1/user`, {
+      headers: { Authorization: `Bearer ${jeton}`, apikey: cleAnon },
+    });
+    if (reponse.ok) {
+      const utilisateur = await reponse.json();
+      return typeof utilisateur?.id === 'string' && utilisateur.id.length > 0;
+    }
+    return false;
+  } catch (e) {
+    // Une panne du service d'authentification REFUSE l'appel. Laisser passer
+    // « en cas de doute » reviendrait a ouvrir la porte le jour ou elle casse.
+    console.error('[bobodo-vocal] verification du jeton impossible', e);
+    return false;
+  }
+}
+
+/// Modeles autorises. Sans cette liste, un utilisateur authentifie pouvait
+/// demander N'IMPORTE QUEL modele d'OpenRouter — y compris le plus cher — et
+/// faire fondre les credits du projet depuis son telephone.
+const STT_AUTORISES = new Set<string>([
+  'openai/whisper-large-v3',
+  'openai/whisper-large-v3-turbo',
+  'openai/gpt-4o-mini-transcribe',
+  'microsoft/mai-transcribe-2',
+]);
+const TTS_AUTORISES = new Set<string>([
+  'mistralai/voxtral-mini-tts-2603',
+  'hexgrad/kokoro-82m',
+  'google/gemini-3.1-flash-tts-preview',
+]);
+
+/// Renvoie le modele demande s'il est autorise, `defaut` s'il n'est pas
+/// precise, et `null` s'il est refuse — l'appelant repond alors 400 plutot que
+/// de retomber silencieusement sur autre chose : un moteur substitue a l'insu
+/// de celui qui compare deux moteurs fausse la comparaison.
+function modeleAutorise(
+  demande: unknown,
+  autorises: Set<string>,
+  defaut: string,
+): string | null {
+  if (typeof demande !== 'string' || !demande.trim()) return defaut;
+  const propre = demande.trim();
+  return autorises.has(propre) ? propre : null;
 }
 
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
-  if (!estAuthentifie(req)) return json({ error: 'unauthenticated' }, 401);
+  if (!(await estAuthentifie(req))) return json({ error: 'unauthenticated' }, 401);
   if (!OPENROUTER_API_KEY) return json({ error: 'OPENROUTER_API_KEY absente' }, 500);
 
   let charge: Record<string, unknown>;
@@ -113,9 +167,13 @@ serve(async (req: Request) => {
       return json({ error: `audio trop volumineux (max ${MAX_AUDIO_BYTES} octets)` }, 400);
     }
 
-    const modele = typeof charge.model === 'string' && charge.model.trim()
-      ? charge.model.trim()
-      : STT_MODEL;
+    const modele = modeleAutorise(charge.model, STT_AUTORISES, STT_MODEL);
+    if (modele === null) {
+      return json({
+        error: 'modele de transcription non autorise',
+        autorises: [...STT_AUTORISES],
+      }, 400);
+    }
     const typeMime = typeof charge.mime === 'string' && charge.mime.trim()
       ? charge.mime.trim()
       : 'audio/webm';
@@ -163,11 +221,19 @@ serve(async (req: Request) => {
       return json({ error: `texte trop long (max ${MAX_TTS_CHARS} caracteres)` }, 400);
     }
 
-    const modele = typeof charge.model === 'string' && charge.model.trim()
-      ? charge.model.trim()
-      : TTS_MODEL;
-    const voix = typeof charge.voice === 'string' && charge.voice.trim()
-      ? charge.voice.trim()
+    const modele = modeleAutorise(charge.model, TTS_AUTORISES, TTS_MODEL);
+    if (modele === null) {
+      return json({
+        error: 'modele de voix non autorise',
+        autorises: [...TTS_AUTORISES],
+      }, 400);
+    }
+    // La voix n'est pas une liste blanche : elle ne change pas le coût, elle
+    // dépend du modèle choisi, et une voix inconnue est refusée par le moteur
+    // lui-même avec un message clair. On borne sa longueur, rien de plus.
+    const voixDemandee = typeof charge.voice === 'string' ? charge.voice.trim() : '';
+    const voix = voixDemandee.length > 0 && voixDemandee.length <= 64
+      ? voixDemandee
       : TTS_VOICE;
 
     try {
