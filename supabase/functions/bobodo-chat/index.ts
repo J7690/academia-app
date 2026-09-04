@@ -1447,11 +1447,26 @@ serve(async (req) => {
     }
 
     // 1) Enregistrer le message de l'étudiant (RPC, contexte utilisateur pour respecter RLS)
+    //
+    // `p_origine` dit si la question a été DICTÉE ou TAPÉE. Sans elle,
+    // l'administrateur voyait les questions sans pouvoir juger la
+    // transcription : une phrase mal comprise par le micro ressemblait à une
+    // question mal posée. Ajouté le 04/09/2026.
+    // Une valeur absente ou inattendue devient NULL plutôt que de faire
+    // échouer l'enregistrement — la base la refuserait (contrainte CHECK), et
+    // perdre la question de l'étudiant pour un champ de traçabilité serait
+    // un mauvais échange.
+    const origineRecue = typeof (body as { origine?: unknown }).origine === 'string'
+      ? (body as { origine: string }).origine.trim()
+      : '';
+    const origine = origineRecue === 'vocal' || origineRecue === 'texte' ? origineRecue : null;
+
     const { error: appendStudentError } = await supabaseForUser.rpc('app_append_bobodo_message', {
       p_session_id: sessionId,
       p_sender: 'student',
       p_content: message,
       p_safety_flag: null,
+      p_origine: origine,
     });
     if (appendStudentError) {
       console.error('app_append_bobodo_message (student) error', appendStudentError.message);

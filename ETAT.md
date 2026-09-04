@@ -443,9 +443,182 @@ multi-agents avec vérification adverse. **Rapport complet et ancré :
 | B8 | ✅ **corrigé** | Écran admin : `verify`/`confirm` étaient des **stubs vides** retournant `true` | rebranchés sur leurs RPC réelles |
 | B9 | ✅ **corrigé** | **« Mes documents » injoignable sur mobile** | ajouté au menu de `student_home_mobile.dart:269` |
 
+> ### ✅ 03/09 — « MES DOCUMENTS » A TOURNÉ EN SESSION RÉELLE
+>
+> Jocelyn l'a constaté sur **app.academiea.com** : l'écran s'ouvre et les reçus
+> s'affichent. **La dernière inconnue du chantier est levée.**
+>
+> **Poussé sur `main`** (`8d105f0` → `2a5c8ba`, mesuré avant/après) après une
+> erreur à retenir : la branche de travail avait été poussée et annoncée
+> « poussé », alors que GitHub et Netlify ne regardent que `main` — figée
+> depuis le 05/08, avec **37 commits** de retard. Procédure désormais écrite
+> dans `CLAUDE.md` §6. **Netlify a redéployé**, constaté par le changement
+> d'ETag de `main.dart.js` (`c3c40a55…` → `d8e2c719…`).
+>
+> ⚠️ Le lien « About » du dépôt GitHub pointe sur
+> `academia-app-henna.vercel.app`, **qui répond 404**. Vestige d'un hébergeur
+> abandonné, à corriger dans les paramètres du dépôt.
+>
+> ### 🔒 04/09 — VOCAL BOBODO : FAILLE FERMÉE, ORIGINE TRACÉE
+>
+> **Faille (fermée)** : `app_append_bobodo_message` était un INSERT nu ouvert à
+> `anon`. **Testé** : un visiteur anonyme insérait un message dans la
+> conversation de n'importe quel étudiant. Contrôle ajouté (service_role **ou**
+> propriétaire), PUBLIC et `anon` révoqués. Vérifié : anon refusé, étudiant A
+> chez B → `forbidden`, propriétaire → OK. Base intacte (916 messages).
+>
+> **Ce que fait vraiment le vocal** : `speech_to_text` **natif de l'appareil**
+> (fr_FR), pas OpenRouter, pas le VPS. L'étudiant valide le texte avant envoi.
+> Bobodo **répond déjà en vocal** via `flutter_tts`.
+> **Code mort** : `bobodo_vocal_service.dart` → `ws://VPS:8000` — port fermé,
+> aucun service, et `ws://` bloqué sur HTTPS de toute façon.
+>
+> **Ajouté** : colonne `origine` (`vocal`/`texte`) sur `bobodo_messages`, câblée
+> de l'écran jusqu'à la RPC. L'administrateur pourra enfin distinguer une
+> question dictée (donc faillible) d'une question tapée.
+>
+> ⚠️ **NON FAIT** : déployer `bobodo-chat` (autorisation requise), afficher
+> l'origine côté admin, retirer le code mort. **Défaut non corrigé** : le repli
+> TTS teste `sender == 'bobodo'` alors que la base écrit `'assistant'` — il ne
+> se déclenche jamais.
+>
+> 📚 `.windsurf/` contient **78 analyses Bobodo** dont un **NO GO** du 14/06
+> (1 utilisateur max, audios mélangés, « Bobodo » → « Bob au dos »). Toutes
+> antérieures à l'ouverture de la transcription OpenRouter (22/07).
+>
+> ### 🚨 04/09 — 76 COMPTES SANS IDENTITÉ RÉELLE
+>
+> Jocelyn avait raison : ce sont bien des profils fantômes. **Ma première
+> conclusion (« aucun n'est vide ») était fausse** — le déclencheur
+> `app_handle_new_auth_user` **fabrique** un nom quand il n'en reçoit pas
+> (`'Etudiant ' || 4 derniers chiffres`, ou le préfixe de l'e-mail), et ma
+> requête de contrôle (« des lettres + un espace ») validait « Etudiant 1234 ».
+>
+> | Origine du nom | Comptes |
+> |---|---|
+> | saisi à l'inscription | **201** |
+> | retrouvé dans la fiche | 2 |
+> | **fabriqué (téléphone)** | **57** |
+> | **fabriqué (e-mail)** | **19** |
+>
+> **203 identités réelles sur 279.**
+>
+> **Défaut ACTIF** : les inscriptions par téléphone perdent le `full_name` —
+> depuis la mise en place de l'écran le 18/08, **17 comptes, 17 noms fabriqués,
+> 0 vrai**. Écartés par la mesure : « Confirm phone » (déjà désactivé, vérifié
+> par Jocelyn), `sync_role_from_app_metadata` (fusionne, n'efface pas),
+> `send_sms_hook` (ne touche pas aux métadonnées). **Cause dans le service Auth
+> de Supabase, non élucidée.**
+>
+> **Corrigé** : (1) l'admin distingue le nom **saisi** du nom **fabriqué**
+> (`nom_source`) et n'affiche plus une identité inventée ; (2) l'application
+> **écrit le nom elle-même** après l'inscription téléphone, via
+> `app_student_update_full_profile` — elle ne dépend plus de `data:`.
+> **NON VÉRIFIÉ** : qu'une inscription réelle enregistre bien le nom.
+>
+> ⚠️ **Reste : 76 comptes sans identité récupérable.** Le nom n'a jamais été
+> stocké : aucun rattrapage automatique n'est possible. Il faudra le demander à
+> ces utilisateurs (écran de complétion à la prochaine connexion, par exemple).
+>
+> ### ✅ 04/09 — L'ONGLET ANALYTICS RÉPARÉ (il était mort depuis toujours)
+>
+> **La collecte n'a jamais été en panne** : 4 927 événements du 21/07 au 04/09,
+> 193 visiteurs, 3 779 anonymes, et **48,2 % de conversion visite → connexion**
+> (85 visiteurs sur 193 venus anonymes puis connectés).
+>
+> C'est l'**écran admin** qui était cassé, par trois défauts empilés :
+> RPC dans le schéma `app` (non exposé par PostgREST) → échec à chaque
+> ouverture ; erreur avalée par un `debugPrint` → « Aucune donnée » trompeur ;
+> lecture de `user_navigation_events` (**0 ligne**) au lieu de
+> `analytics_events`. Réparer une seule n'aurait rien changé.
+>
+> **Corrigé et vérifié par rôle** : étudiant → `forbidden` ; admin → 2 494
+> événements / 107 visiteurs / 95 anonymes sur 30 jours. Contrôle `is_admin()`
+> ajouté (l'ancienne n'en avait aucun), `anon` révoqué.
+>
+> **Ce que les données montraient sans qu'on les voie** — onglets étudiants :
+> Accueil 298 vues / 72 visiteurs, Bobodo 91/22, **Partenaires 85/49**,
+> Candidatures 75/33, Orientation 10/4 (dernier le 17/08). Partenaires — les
+> offres — touche le plus de personnes après l'accueil.
+>
+> ### ✅ 04/09 — LE COURTAGE EST ENFIN INSTRUMENTÉ
+>
+> Le trou signalé ci-dessus est comblé (écrit et compilé, **pas encore vérifié
+> en base**) :
+> - **tunnel de candidature** : `program_apply` avec sept étapes nommées —
+>   `click`, `deja_candidate`, `dossier_requis` (+ `champs_manquants`),
+>   **`abandon_dossier`**, `dossier_complete`, `abandon_formulaire`, `deposee`.
+>   Posé dans `applyToProgram()`, point de passage **unique** des trois boutons
+>   « Candidater » : on saura enfin **à quelle étape** les 97 % décrochent ;
+> - **mini-sites universités** : `university_site_view` par `slug` ;
+> - **recherches** : `trackSearch` branchée (temporisation 1,2 s, ≥ 3 lettres).
+>   Une demande répétée sans résultat = une formation à aller négocier.
+>
+> **Mesuré** : analyze 0 erreur / 2 100 (inchangé), build web réussi (45,1 Mo).
+> **NON VÉRIFIÉ** : qu'un événement arrive réellement en base depuis ces points.
+> À confirmer après déploiement :
+> `select event_type, count(*) from app.analytics_events where event_type in
+> ('program_apply','university_site_view','search') group by 1;`
+>
+> ### 🚨 03/09 — 2,5 % DES ÉTUDIANTS ARRIVENT À CANDIDATER
+>
+> **Le chiffre le plus important de cette séance.** Mesuré en production :
+> **279 étudiants, 9 dossiers complets, 7 candidats.** Le parcours exige jusqu'à
+> **18 champs** (12 obligatoires bloqués côté serveur + 6 au formulaire).
+>
+> Détail par champ : `full_name` **279/279** (rempli à l'inscription), **chacun
+> des onze autres 10 ou 11 sur 279**. Ce n'est pas un abandon progressif, c'est
+> **un mur** — le formulaire est refermé à la vue, pas quitté en cours de route.
+>
+> Verrou serveur : `app_is_student_dossier_complete()` exige les douze sans
+> nuance ; `app_create_application` refuse tant qu'ils manquent.
+>
+> **Proposition en attente d'accord** — trois paliers : candidater avec
+> **3 champs** (naissance, année et série du bac, les seuls qui conditionnent
+> l'admissibilité), le reste différé à l'examen du dossier, le BEPC seulement si
+> l'établissement l'exige. Veille à l'appui (Formstack 2025 : 67,8 % d'abandon
+> au-delà de 7 champs ; progressive profiling : +27 % de complétion **et** +34 %
+> de qualité de données). Détail et sources : `docs/JOURNAL_INTERVENTIONS.md`.
+>
+> ⚠️ **Défaut trouvé, non traité** : **deux versions de `app_create_application`**
+> coexistent en base (1 715 et 2 457 octets). Selon les paramètres envoyés, ce
+> n'est pas la même qui s'exécute.
+>
+> ### ✅ 03/09 — DÉCONNEXION VISIBLE DANS LES NEUF TABLEAUX DE BORD
+>
+> Elle existait partout (les neuf ouvrent `StudentSettingsScreen`) mais enfouie
+> derrière l'engrenage. Un composant partagé — `lib/widgets/bouton_deconnexion.dart`,
+> qui porte aussi le `unregisterTokenBeforeLogout` — est posé dans les neuf
+> barres du haut, et **reste dans les paramètres**. Barre mobile étudiant :
+> `[Avatar→profil] [Bonjour] [Documents] [Partager] [Déconnexion] [⋯]`.
+> **Mesuré** : analyze 0 erreur / 2 100 (inchangé), build web réussi.
+> **NON VÉRIFIÉ** : l'encombrement réel à 375 px.
+>
+> ### ⏳ 03/09 — LE TÉLÉCHARGEMENT DU REÇU, ÉCRIT MAIS NON PROUVÉ
+>
+> Défaut suivant relevé par Jocelyn : « Télécharger le reçu » appelait
+> `Printing.layoutPdf`, donc **l'aperçu d'impression** — aucun fichier n'était
+> enregistré nulle part.
+>
+> Écrit : MediaStore natif (4ᵉ MethodChannel `com.academia.app/fichiers`) pour
+> Android, `Printing.sharePdf` pour le web (code lu : `Blob` + `<a download>`).
+> Aucune dépendance ajoutée — les deux greffons MediaStore de pub.dev sont
+> figés depuis 20 et 23 mois et testés jusqu'à l'API 33, alors que le projet
+> cible **36**.
+>
+> **Mesuré** : `flutter analyze` **0 erreur / 2 100** (référence 2 101 — un
+> avertissement de moins). `flutter build apk --debug` **code 0**, APK produit :
+> le Kotlin compile, aucun `e:` ni `Unresolved reference`.
+>
+> **NON PROUVÉ, et la compilation ne le prouvera jamais** : que le fichier
+> atterrisse réellement dans « Téléchargements ». Le passage `Uint8List` →
+> `ByteArray` et l'écriture MediaStore ne se vérifient qu'à **l'exécution sur un
+> appareil**. **À essayer en premier** : le chemin web sur app.academiea.com —
+> il ne dépend pas du Kotlin et se constate immédiatement dans le navigateur.
+
 **B9 répond à la question laissée ouverte au §9.2** (« l'écran n'a jamais
 tourné ») : sur téléphone, il n'était même pas atteignable. Il l'est désormais —
-mais **il n'a toujours pas tourné en session étudiante réelle.**
+et **il a tourné en session réelle le 03/09** (voir l'encadré ci-dessus).
 
 Tentative du 03/09 : le TECNO POVA branché n'est vu qu'**en Bluetooth**, et
 l'USB remonte *« Périphérique USB inconnu (échec de demande de descripteur »*.

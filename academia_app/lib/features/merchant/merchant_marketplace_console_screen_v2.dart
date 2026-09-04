@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 
+import '../../widgets/bouton_deconnexion.dart';
+
 import '../../providers/merchant_marketplace_console_provider_v2.dart';
 import '../../widgets/support_fab.dart';
 import '../student/student_settings_screen.dart';
@@ -1438,6 +1440,7 @@ class _MerchantMarketplaceConsoleScreenV2State
                     icon: const Icon(Icons.settings),
                     tooltip: 'Paramètres',
                   ),
+                  const BoutonDeconnexion(),
                 ],
               ),
               floatingActionButton: Column(

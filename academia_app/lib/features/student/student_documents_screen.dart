@@ -269,7 +269,34 @@ class _CarteRecu extends StatelessWidget {
       Map<String, dynamic> recu) async {
     final messager = ScaffoldMessenger.of(context);
     try {
-      await generateAndSharePaymentReceiptPdf(payment: paiement, receipt: recu);
+      final resultat =
+          await genererEtEnregistrerRecuPdf(payment: paiement, receipt: recu);
+
+      if (!resultat.reussi) {
+        messager.showSnackBar(
+          SnackBar(
+            content: Text(
+              'Le reçu n\'a pas pu être enregistré : ${resultat.erreur}',
+            ),
+          ),
+        );
+        return;
+      }
+
+      // On ne dit « enregistré dans Téléchargements » que là où c'est vrai.
+      // Sur le web et sur iOS, le document part par le navigateur ou la
+      // feuille de partage : annoncer un dossier qui n'existe pas enverrait
+      // l'étudiant chercher son reçu au mauvais endroit.
+      messager.showSnackBar(
+        SnackBar(
+          content: Text(
+            resultat.enregistreSurLAppareil
+                ? 'Reçu enregistré dans Téléchargements '
+                    '(${resultat.nomFichier})'
+                : 'Reçu téléchargé',
+          ),
+        ),
+      );
     } catch (e) {
       // On dit ce qui a échoué. Un bouton qui ne fait rien, sans message, est
       // indiscernable d'un bouton mort.

@@ -137,6 +137,33 @@ class _PhoneSignupScreenState extends State<PhoneSignupScreen> {
         return;
       }
 
+      // LE NOM, ÉCRIT PAR NOUS — parce que `data:` ne survit pas.
+      //
+      // Mesure du 04/09/2026 : sur 58 inscriptions par téléphone, **57 ont un
+      // nom FABRIQUÉ** par le déclencheur (`'Etudiant ' || 4 derniers chiffres`),
+      // et une seule un vrai nom. Le défaut vaut aussi pour les comptes créés
+      // depuis que cet écran existe (18/08) : 17 sur 17. Le `full_name` envoyé
+      // dans `data` ci-dessus n'arrive donc jamais dans `raw_user_meta_data` —
+      // la cause est dans le service Auth, hors de portée du dépôt.
+      //
+      // On ne dépend plus de lui : la session est ouverte, on écrit le nom
+      // nous-mêmes. Si cette écriture échoue, le compte reste utilisable avec
+      // le nom fabriqué — on ne bloque pas une inscription réussie pour ça,
+      // mais on le trace pour ne pas répéter l'erreur du symptôme muet.
+      // On passe par la RPC que l'application utilise déjà pour le profil,
+      // plutôt qu'un accès direct à la table : elle porte les contrôles et les
+      // règles d'accès. Tous ses autres paramètres sont optionnels.
+      try {
+        await Supabase.instance.client.rpc(
+          'app_student_update_full_profile',
+          params: {'p_full_name': fullName},
+        );
+      } catch (e) {
+        debugPrint('PhoneSignup: nom non enregistré ($e) — compte créé malgré tout.');
+      }
+
+      if (!mounted) return;
+
       // AuthWrapper prend le relais via onAuthStateChange.
       Navigator.of(context).pop();
     } on AuthException catch (e) {

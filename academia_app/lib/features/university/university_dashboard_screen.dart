@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+
+import '../../widgets/bouton_deconnexion.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -112,6 +114,9 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                 ),
               ),
               actions: [
+                // Hors du menu « Options du compte » : la déconnexion se voit,
+                // elle ne se cherche pas. Elle reste aussi dans les paramètres.
+                const BoutonDeconnexion(),
                 PopupMenuButton<_UniversityDashboardMenuAction>(
                   icon: const Icon(Icons.more_vert),
                   tooltip: 'Options du compte',

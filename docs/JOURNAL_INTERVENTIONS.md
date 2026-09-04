@@ -1170,6 +1170,471 @@ gère déjà et que `app.recus_a_verifier` recense. **C'est un choix, pas un oub
 vide malgré 18 paiements) restent ouverts : la cause de M3 n'est pas établie, et
 on ne corrige pas ce qu'on n'a pas tracé.
 
+### 03/09 (suite) — « POUSSÉ » NE VOULAIT PAS DIRE POUSSÉ
+
+Acte manqué, puis réparé. `candidature-dossier-inline` a été poussée et
+annoncée « poussé » avec un lien de commit. Jocelyn n'a rien vu : **GitHub
+ouvre le dépôt sur `main`**, et la mesure a donné raison à son « rien n'a été
+poussé » :
+
+    main fige au 05/08/2026        branche de travail : +37 commits
+    fusion : avance rapide, 0 conflit (candidature..origin/main = 0)
+
+Un mois entier — studio 3D, logos, bon de courtage, QR, paiements, sécurité —
+n'était sur aucune branche que GitHub ou Netlify regardent. Corrigé avec accord
+explicite : `git push origin candidature-dossier-inline:main`, mesuré avant
+(`8d105f0`) et après (`2a5c8ba`).
+
+**Netlify a redéployé**, constaté et non supposé : l'ETag de
+`app.academiea.com/main.dart.js` est passé de `c3c40a55…` à `d8e2c719…`.
+L'hébergeur est bien Netlify (`Server: Netlify`, `X-Nf-Request-Id`) ; le lien
+« About » du dépôt pointe encore sur `academia-app-henna.vercel.app`, **qui
+répond 404** — vestige à corriger, et explication probable du « rien du tout ».
+
+Vérifié ensuite qu'aucun code ne manquait sur GitHub : `academia_app/lib`
+**541/541**, `docs` 240/240. Les seuls absents sont du bytecode `__pycache__`,
+des caches `supabase/.temp/`, et deux `.env` — c'est-à-dire exactement ce qui
+doit l'être.
+
+**Leçon consignée dans `CLAUDE.md` §6** : « pousser le projet » veut dire `main`,
+et la règle de `ou-tourne-le-code` vaut pour git comme pour LWS — on n'annonce
+pas « poussé » sans avoir établi ce que l'autre verra.
+
+### 03/09 (suite) — « TÉLÉCHARGER LE REÇU » NE TÉLÉCHARGEAIT RIEN
+
+Défaut relevé par Jocelyn après avoir constaté que « Mes documents » fonctionne
+en session réelle (**la dernière inconnue du chantier est donc levée**).
+
+Le bouton appelait `Printing.layoutPdf` : **l'aperçu d'impression**. L'étudiant
+devait deviner « Enregistrer au format PDF » puis choisir un dossier. Le nom de
+la fonction l'avouait — `generateAndShare…`, pas `save`.
+
+Veille faite avant de choisir un composant (procédure `veille-externe`) :
+
+| Candidat | Mesure | Retenu ? |
+|---|---|---|
+| `media_store_plus` | dernière publication **il y a 23 mois**, testé jusqu'à API 33 | non |
+| `flutter_media_store` | **20 mois**, 21 likes, « unverified uploader » | non |
+| `Printing.sharePdf` (déjà présent) | code lu : `Blob` + `<a download>` + `click()` | **oui, pour le web** |
+| MediaStore natif via MethodChannel | API stable depuis 29, ~90 lignes | **oui, pour Android** |
+
+Le projet cible `targetSdk = 36` : faire reposer les reçus sur un greffon gelé
+depuis deux ans, sur une API Android qui bouge à chaque version, était le pari
+inutile. `WRITE_EXTERNAL_STORAGE` est déclarée au manifeste mais **sans effet
+depuis Android 10** — MediaStore est la seule voie, et il ne demande aucune
+permission.
+
+Écrit : 4ᵉ MethodChannel `com.academia.app/fichiers` (les trois autres —
+badge, deeplink, app — existaient déjà), `IS_PENDING` pendant l'écriture,
+suppression de l'entrée en cas d'échec, **relecture du nom réellement retenu**
+(MediaStore ajoute « (1) » en cas d'homonyme). Repli < Android 10 avec scanner
+de médias. Côté Dart, `enregistrer_dans_telechargements.dart` et le renommage
+`generateAndSharePaymentReceiptPdf` → `genererEtEnregistrerRecuPdf` : un nom
+qui décrit un partage alors qu'on enregistre est le mensonge que ce dépôt
+traque. Les **trois** appelants (documents, paiements, détail admin) lisent
+désormais le résultat au lieu de l'ignorer.
+
+**Mesuré :** `flutter analyze` **0 erreur / 2 100** contre 2 101 en référence —
+un avertissement de MOINS (un `BuildContext` traversant un `await`, préexistant,
+corrigé au passage). Une vraie erreur a été trouvée et corrigée pendant la
+vérification : `MissingPluginException` n'était pas importé.
+
+`flutter build apk --debug` : **code 0**, APK produit (1 610 s). Le Kotlin
+compile — aucun `e:`, aucun `Unresolved reference`.
+
+**NON PROUVÉ, et aucune compilation ne le prouvera :** que le fichier atterrisse
+réellement dans « Téléchargements ». Le passage `Uint8List` → `ByteArray` et
+l'écriture MediaStore ne se vérifient qu'à **l'exécution sur un appareil**. Le
+chemin web, lui, ne dépend pas du Kotlin et se constate dans le navigateur.
+
+### 03/09 (suite) — LA DÉCONNEXION REMONTÉE DANS LES NEUF BARRES DU HAUT
+
+Demande de Jocelyn : la déconnexion existe mais elle est enfouie derrière
+l'engrenage. **Diagnostic d'abord faux de ma part**, corrigé par lui puis par la
+mesure : j'avais cherché `signOut` dossier par dossier et conclu que seul
+`manager` en avait une. En réalité **les neuf tableaux de bord ouvrent tous
+`StudentSettingsScreen`**, qui la porte — le commentaire du `manager` le disait
+noir sur blanc. Sans sa correction, je réécrivais une déconnexion pour sept
+rôles qui en avaient déjà une.
+
+Écrit : `lib/widgets/bouton_deconnexion.dart` — un composant partagé plutôt que
+neuf copies, parce que la déconnexion n'est pas qu'un `signOut` : il faut
+d'abord `unregisterTokenBeforeLogout`, sans quoi l'appareil continue de recevoir
+les notifications du compte quitté. Neuf copies, c'est la garantie qu'une
+l'oubliera.
+
+Posé dans : étudiant web et mobile, admin, enseignant, gestionnaire, marchand,
+conseiller — et **sorti du menu « Options »** chez commercial et université, où
+il était enfoui d'un cran de plus. **La déconnexion reste dans les paramètres**
+partout : ce bouton s'ajoute, il ne remplace rien.
+
+Barre mobile étudiant : `[Avatar→profil] [Bonjour] [Documents] [Partager]
+[Déconnexion] [⋯]`. « Mes documents » remonté plutôt que « Mes paiements » —
+l'avatar ouvrait déjà le profil, et c'est là que sont les reçus ; on ne va pas
+aux paiements pour consulter, on y va pour payer. « Mon profil » ajouté au menu.
+
+**Mesuré :** `flutter analyze` **0 erreur / 2 100** (inchangé),
+`flutter build web --release` **réussi** (45,1 Mo).
+**NON VÉRIFIÉ :** l'encombrement réel de la barre mobile à 375 px — quatre
+icônes plus l'avatar et la salutation. À juger à l'œil.
+
+### 03/09 (suite) — POURQUOI PERSONNE NE CANDIDATE : LA MESURE
+
+Analyse demandée par Jocelyn sur le parcours « Candidater » (offres de formation
+et mini-sites universités). **Le parcours exige jusqu'à 18 champs** : 12
+obligatoires (dossier) + 6 dans le formulaire de candidature.
+
+Le verrou est **serveur** : `app_is_student_dossier_complete()` exige les douze
+sans nuance, et `app_create_application` refuse tant qu'ils manquent.
+
+Mesure en production, 03/09/2026 :
+
+| | |
+|---|---|
+| étudiants | **279** |
+| dossiers complets (12/12) | **9** — 3,2 % |
+| dossiers incomplets | **270** — 96,8 % |
+| champs remplis en moyenne | **1,4 / 12** |
+| candidatures | 31, par **7 étudiants** (2,5 %) |
+
+Détail par champ, et c'est lui qui tranche : `full_name` **279/279** (rempli à
+l'inscription), **chacun des onze autres 10 ou 11 sur 279**. Aucune décroissance
+progressive : **un mur**. Les étudiants n'abandonnent pas au 7ᵉ champ — ils
+n'en remplissent aucun. Le formulaire est refermé à la vue.
+
+Veille externe (procédure `veille-externe`, quatre angles, objection cherchée) :
+Formstack 2025 — **67,8 % d'abandon au-delà de 7 champs** ; Forrester 2024 —
+optimum **3 à 5** ; HubSpot — listes déroulantes **−15,2 % d'abandons** vs texte
+libre ; progressive profiling — **+27 % de complétion ET +34 % de qualité de
+données**. Objection retenue et écartée avec motif : « Perspective AI » soutient
+que réduire les champs ne sauve pas un tunnel — vrai entre 4 et 5 champs, où la
+courbe est plate ; sans objet à 12 champs bloquants et 96,8 % d'échec.
+
+**Proposition (non implémentée, en attente d'accord) — trois paliers :**
+1. **candidater = 3 champs** : date de naissance, année du bac, série du bac —
+   les seuls qui conditionnent l'admissibilité ;
+2. **au moment où l'université examine** : établissement, pays, mention du bac,
+   projet d'études ;
+3. **le BEPC (4 champs)** seulement si l'établissement l'exige — quand on a le
+   bac, le brevet n'est presque jamais décisif, or il pèse pour un tiers du mur.
+
+Le courtage y gagne **plus** d'informations, pas moins : aujourd'hui 268
+étudiants sur 279 ne donnent **rien** — ni courtables, ni relançables. Trois
+champs obtenus de deux cents valent mieux que douze obtenus de onze.
+
+**DÉFAUT TROUVÉ AU PASSAGE, non traité :** il existe **deux versions de
+`app_create_application`** en base (1 715 et 2 457 octets). Deux surcharges du
+même nom : selon les paramètres envoyés, ce n'est pas la même qui s'exécute.
+
+### 04/09 — L'ONGLET ANALYTICS ÉTAIT MORT DEPUIS TOUJOURS : TROIS COUCHES
+
+Jocelyn : « le dispositif de collecte des visites ne semble pas fonctionnel ».
+**La collecte, elle, fonctionnait très bien.** Mesure du 04/09 sur
+`app.analytics_events` : **4 927 événements du 21/07 au 04/09**, 193 visiteurs
+distincts, **3 779 événements anonymes**, 62 comptes identifiés, 48 dans les
+dernières 24 h. Le rattachement d'identité marche aussi : **85 visiteurs sur 193
+sont venus anonymes puis se sont connectés — 48,2 % de conversion.**
+
+Ce qui était cassé, c'est l'**onglet Analytics de l'admin**, et pour trois
+raisons empilées dont chacune suffisait :
+
+1. **RPC injoignable.** `app_admin_get_navigation_stats` n'existait que dans le
+   schéma **`app`** ; PostgREST n'expose que **`public`**. L'appel `rpc()`
+   échouait à CHAQUE ouverture, depuis toujours.
+2. **Erreur avalée.** Le `catch` de `admin_analytics_screen.dart` ne faisait
+   qu'un `debugPrint` : `_stats` restait vide et l'écran affichait un paisible
+   « Aucune donnée ». C'est le défaut-type du dépôt : le symptôme le plus
+   trompeur est celui qui ressemble à un succès.
+3. **Mauvaise table.** Elle lisait `app.user_navigation_events` — **0 ligne** —
+   alors que la collecte écrit dans `app.analytics_events`.
+
+Réparer une seule des trois n'aurait rien changé : sans doute pourquoi le défaut
+a duré.
+
+**Corrigé.** Migrations `reparer_navigation_stats_sur_analytics_events` puis
+`fermer_navigation_stats_a_anon` : fonction recréée dans `public`, branchée sur
+`analytics_events`, comptant les **visiteurs** (`visitor_id`) et plus seulement
+les comptes — l'ancienne ignorait les 3 751 événements anonymes, c'est-à-dire
+l'essentiel du trafic. Contrôle **`app.is_admin()`** ajouté : l'ancienne n'en
+avait aucun, avec des droits au défaut (PUBLIC). `anon` explicitement révoqué —
+Supabase réattribue EXECUTE aux fonctions de `public`, et un garde applicatif ne
+doit pas être la seule barrière (leçon B1 du 03/09).
+
+**Vérifié, rôle par rôle :** étudiant non admin → `{"success":false,"error":
+"forbidden"}` ; admin → `success:true`, **2 494 événements / 107 visiteurs /
+95 anonymes / 47 comptes** sur 30 jours, 5 écrans, **5 onglets**, 28 jours.
+
+**Erreur de ma part, corrigée par la mesure :** j'avais affirmé que `trackTab`
+n'était « jamais appelée », sur la foi d'un grep. **Faux** : 11 onglets étudiants
+sont tracés depuis des semaines, et ces données étaient invisibles à cause du
+bug. Ce qu'elles disent :
+
+| Onglet | Vues | Visiteurs |
+|---|---|---|
+| Accueil | 298 | 72 |
+| Bobodo | 91 | 22 |
+| **Partenaires** | 85 | **49** |
+| Candidatures | 75 | 33 |
+| Communautés | 47 | 32 |
+| Orientation | 10 | 4 (dernier le 17/08) |
+
+**Partenaires** — là où sont les offres — est le 2ᵉ onglet le plus fréquenté et
+touche le plus de personnes différentes après l'accueil : signal fort pour le
+courtage. **Bobodo** concentre beaucoup de vues sur peu de gens. **Orientation**
+est quasi désert.
+
+**Côté Flutter** : « Aucune donnée » ne s'affiche plus que si la requête a RÉUSSI
+et n'a rien trouvé ; une panne affiche désormais sa cause et un bouton
+« Réessayer ». Une panne se distingue enfin d'un désert.
+
+**Mesuré** : `flutter analyze` **0 erreur / 2 100** (inchangé).
+
+**RESTE À FAIRE (non fait) :** l'instrumentation manquante — aucun `program_view`
+(les offres de formation ne sont pas mesurées), les mini-sites universités ne
+sont pas tracés, `trackAction` et `trackSearch` ne sont jamais appelées. Veille
+externe à l'appui : « suivre les actions, pas les pages », taxonomie
+d'événements stable, instrumenter d'abord les événements de croissance.
+
+### 04/09 — INSTRUMENTER LE COURTAGE : LE TUNNEL DE CANDIDATURE
+
+Suite du chantier analytics. La collecte marchait, l'écran est réparé — restait
+le vrai trou : **on ne mesurait rien de ce qui fait le courtage**.
+
+**1. Le tunnel de candidature** (`apply_to_program.dart`). `applyToProgram()`
+est le point de passage **unique** des trois boutons « Candidater » (accueil,
+mini-site, partenaires) : l'instrumenter là les couvre tous les trois. Étapes
+nommées, événement `program_apply` avec `entity_id = programId` :
+
+| Action | Ce qu'elle dit |
+|---|---|
+| `click` | l'intention — quelle offre, combien de fois |
+| `deja_candidate` | doublon évité, avec le statut |
+| `dossier_requis` | **+ `champs_manquants`** : la hauteur du mur, étudiant par étudiant |
+| `abandon_dossier` | **le point de fuite présumé** — il a vu le formulaire et l'a refermé |
+| `dossier_complete` | il l'a franchi, et combien de champs il a saisis |
+| `abandon_formulaire` | il a lâché au formulaire de candidature |
+| `deposee` | + `reduction_demandee` (signal de courtage direct) |
+
+Au 03/09 on savait que 97 % n'arrivaient pas au bout ; on saura désormais **à
+quelle étape**, et **avec combien de champs manquants**. C'est ce qui permettra
+de trancher les trois paliers sur mesure plutôt qu'au jugé.
+
+**2. Les mini-sites d'université** (`student_university_site_screen.dart`) :
+`trackScreen('university_site')` + `trackEntityView('university_site', slug)`.
+Ils n'étaient **pas tracés du tout** : on savait que l'onglet « Partenaires »
+attirait 49 personnes, sans savoir QUEL établissement elles allaient voir.
+
+**3. Les recherches** (`student_search_screen.dart`) : `trackSearch` existait
+depuis le début et n'était appelée **nulle part**. Branchée, avec temporisation
+de 1,2 s et minimum de 3 caractères — la recherche filtre à chaque frappe, et
+tracer chaque caractère produirait « i », « in », « inf »… Une demande répétée
+sans résultat désigne une formation à aller négocier : c'est du courtage direct.
+
+**Mesuré** : `flutter analyze` **0 erreur / 2 100** (inchangé),
+`flutter build web --release` **réussi** (45,1 Mo).
+
+**NON VÉRIFIÉ** : qu'un événement arrive réellement en base depuis ces trois
+points. La chaîne (enfilage → lot de 20 → vidage 30 s → `app_track_events_batch`)
+est celle qui produit déjà 4 927 lignes, mais ces appels-ci n'ont jamais tourné.
+À confirmer après déploiement, par `select event_type, count(*) from
+app.analytics_events where event_type in ('program_apply','university_site_view',
+'search') group by 1`.
+
+### 04/09 — AUDIT DU VOCAL BOBODO : CE QUI TOURNE N'EST PAS CE QU'ON CROYAIT
+
+Audit demandé par Jocelyn **avant** toute proposition : Supabase d'abord, puis
+Flutter, puis comparaison.
+
+**Ce que fait réellement le vocal.** Ni OpenRouter, ni le VPS : il utilise
+**`speech_to_text`**, la reconnaissance **native de l'appareil** (`localeId:
+'fr_FR'`, résultats partiels), en place depuis le **16/06**. L'étudiant voit le
+texte s'écrire et **valide manuellement** (« NE PAS traiter finalResult —
+l'envoi est TOUJOURS manuel »). Bobodo **répond déjà en vocal** via
+`flutter_tts` local.
+
+**Code mort mesuré.** `bobodo_vocal_service.dart` (162 lignes) pointe sur
+`ws://31.207.38.60:8000/ws` : **port fermé** (timeout 10 s), **aucun service**
+sur le VPS (3 services tournent : studio, vidéo, whiteboard ; rien sur 8000).
+De plus `ws://` non chiffré est bloqué par les navigateurs sur une page HTTPS —
+le vocal n'aurait de toute façon jamais marché sur app.academiea.com. Vestiges
+confirmés par l'analyseur : `_isVocalConnected`, `_audioLevels`, `_vadThreshold`,
+`_vadSilenceDuration`, `_isVoiceDetected` — tous inutilisés.
+
+**Défaut trouvé, non corrigé** : `_onAudioResponseReceived` (chemin principal de
+la réponse vocale) attend un audio base64 **du WebSocket mort** ; son repli
+teste `sender == 'bobodo'` alors que la base écrit **`'assistant'`** — ce repli
+ne se déclenche donc jamais. Seul le chemin du mode conversation (test
+`!= 'student'`) fonctionne.
+
+**Ma proposition de la veille était fausse.** Je proposais « stocker la
+transcription comme question » : **ce mécanisme existait déjà**
+(`bobodo-chat` ligne 1450, `p_sender: 'student'`, 466 questions en base). Le
+vrai manque était ailleurs : **rien ne distinguait une question dictée d'une
+question tapée**.
+
+**Usage effondré, et ce n'est pas le code** : aucun commit Bobodo entre le 10/08
+et le 04/09. Sessions : 38 en juin → 3 en août → 2 en septembre, **les 2 vides**.
+
+**FAILLE TROUVÉE ET FERMÉE.** `app_append_bobodo_message` était un **INSERT nu** :
+SECURITY DEFINER, aucun contrôle d'identité, EXECUTE accordé à `anon`. **Testé
+réellement** (transaction annulée) : un visiteur **anonyme** a inséré un message
+dans la conversation d'un étudiant et reçu l'identifiant du message créé.
+N'importe qui pouvait polluer les conversations que l'administrateur consulte.
+
+Corrigé en trois migrations, dont deux pour réparer mes propres erreurs :
+1. `bobodo_fermer_injection_et_tracer_origine_vocale` — contrôle d'identité
+   (service_role **ou** propriétaire de la session), validation de `sender` et
+   d'`origine`, + colonne `origine` (`vocal`/`texte`) sur `bobodo_messages` ;
+2. `bobodo_supprimer_surcharge_ambigue` — ma migration avait créé **deux
+   surcharges** (4 et 5 arguments avec DEFAULT) : « function is not unique »,
+   et `bobodo-chat` aurait échoué. C'est exactement le défaut que j'avais
+   moi-même relevé sur `app_create_application` ;
+3. `bobodo_append_revoquer_public` — le REVOKE nominatif sur `anon` ne suffisait
+   pas : un GRANT à **PUBLIC** subsistait (`=X/postgres`). Même leçon que B1.
+
+**Vérifié, rôle par rôle** : anon → droit retiré ; étudiant A dans la session de
+B → `forbidden` ; **propriétaire → message créé avec `origine='vocal'`, relu
+correctement**. Base intacte : **916 messages, 0 trace de test**.
+
+**Câblé côté Flutter** : `sendUserMessage(text, {origine})`, transmis dans le
+corps HTTP ; `_send(context, {origine})` — le champ de saisie sert aux deux
+entrées, la dictée y dépose sa transcription, d'où le besoin de le dire
+explicitement ; mode conversation marqué `'vocal'`. `bobodo-chat` relaie
+`p_origine`, une valeur inattendue devenant NULL plutôt que de faire échouer
+l'enregistrement (perdre la question pour un champ de traçabilité serait un
+mauvais échange).
+
+**Mesuré** : `flutter analyze` **0 erreur / 2 100** (inchangé) ;
+`deno check bobodo-chat` **17 erreurs avant, 17 après** — aucune ajoutée
+(elles préexistent : `ReadableStream`, `any` implicites).
+
+**LE DÉPÔT SAVAIT DÉJÀ** : `.windsurf/` contient **78 analyses Bobodo**, dont un
+**NO GO de production** daté du 14/06 — 1 utilisateur maximum, audios de
+5 utilisateurs mélangés dans un même tampon (`STTService` unique partagé),
+« Bobodo » transcrit **« Bob au dos »**, CPU 261–303 % sur 4 cœurs. Ces
+documents raisonnaient tous « sans GPU, 4 cœurs » : **OpenRouter n'a ouvert sa
+transcription que le 22/07**, cinq semaines plus tard. Rouvrir la décision est
+donc légitime — mais elle avait été tranchée, et on le dit.
+
+**NON FAIT, en attente** : déploiement de `bobodo-chat` (acte de production,
+autorisation requise) ; affichage de l'origine dans l'écran admin ; suppression
+du code mort du WebSocket ; choix du moteur (le STT natif est gratuit,
+instantané et s'adapte à l'accent, mais ne marche pas sur le web — la réponse
+est peut-être les deux).
+
+### 04/09 (rectification) — LES PROFILS FANTÔMES EN ÉTAIENT BIEN
+
+**La section suivante est FAUSSE dans sa conclusion. Conservée pour la leçon.**
+
+J'ai annoncé à Jocelyn que « les 78 comptes sans nom avaient bien leur nom dans
+`app.students` », correctif à l'appui. **C'était faux.** Le déclencheur
+`app_handle_new_auth_user` **fabrique** un nom quand il n'en reçoit pas :
+
+```sql
+CASE WHEN NEW.phone IS NOT NULL THEN 'Etudiant ' || right(NEW.phone, 4)
+     WHEN NEW.email IS NOT NULL THEN split_part(NEW.email, '@', 1) END, 'Utilisateur'
+```
+
+**Comment je m'y suis pris pour me tromper** : ma requête de contrôle cherchait
+« contient des lettres » et « contient un espace ». **« Etudiant 1234 » satisfait
+les deux.** J'ai donc compté 58/58 « noms complets plausibles » pour les comptes
+téléphone, et conclu l'inverse de la vérité. Une mesure mal conçue est pire
+qu'aucune mesure : elle donne l'assurance sans le fait.
+
+**Mesure refaite, par origine :**
+
+| Origine du nom | Comptes |
+|---|---|
+| saisi à l'inscription (auth) | **201** |
+| retrouvé dans la fiche | 2 |
+| **fabriqué « Etudiant XXXX »** | **57** |
+| **fabriqué depuis l'e-mail** | **19** |
+
+**203 identités réelles, 76 manquantes.** Jocelyn avait raison depuis le début.
+
+**Défaut de fond, mesuré :** les inscriptions par téléphone perdent le
+`full_name` envoyé dans `data`. **Et cela vaut pour le code actuel** : depuis
+la création de `phone_signup_screen.dart` le 18/08, **17 comptes créés, 17 noms
+fabriqués, 0 vrai**. Avant : 41 comptes, 40 fabriqués.
+
+Pistes écartées **par la mesure**, pas par raisonnement :
+- « Confirm phone » : Jocelyn a montré la page — **déjà désactivé**. Ce n'était
+  pas lui, contrairement à ce que j'avais avancé.
+- `sync_role_from_app_metadata` : fusionne avec `||`, n'efface rien. C'est lui
+  qui ajoute la clé `role` que portent ces comptes.
+- `send_sms_hook` : ne touche pas aux métadonnées.
+
+La cause reste **dans le service Auth de Supabase**, hors de portée du dépôt :
+je ne l'ai pas élucidée et je ne la suppose pas.
+
+**Corrigé, deux fois :**
+1. Migration `admin_comptes_distinguer_nom_reel_et_nom_fabrique` — l'admin
+   n'affiche plus un nom fabriqué comme une identité. `full_name` ne porte que
+   ce qui a été **saisi** ; `nom_en_base` garde la valeur brute (utile pour
+   retrouver un compte par ses 4 derniers chiffres) ; `nom_source` dit d'où il
+   vient (`saisi_auth`, `saisi_fiche`, `fabrique_telephone`, `fabrique_email`,
+   `fabrique_defaut`, `absent`). Le défaut est désormais **mesurable**.
+2. `phone_signup_screen.dart` — puisque `data:` ne survit pas, l'application
+   **écrit le nom elle-même** après ouverture de session, via la RPC
+   `app_student_update_full_profile` déjà utilisée pour le profil (et non un
+   accès direct : la convention du dépôt est `client.schema('app').from(...)`,
+   et la RPC porte les contrôles). L'échec est tracé, pas avalé, et ne bloque
+   pas une inscription réussie.
+
+**Mesuré** : admin → 201 `saisi_auth` + 2 `saisi_fiche` affichés, 76 fabriqués
+**non affichés comme des noms**. `flutter analyze` **0 erreur / 2 100**.
+
+**NON VÉRIFIÉ** : qu'une nouvelle inscription par téléphone enregistre bien le
+nom. Cela demande un compte de test réel après déploiement.
+
+**RESTE : 76 comptes existants sans identité.** Aucun rattrapage automatique
+n'est possible — le nom n'a jamais été stocké nulle part. Il faudra le demander
+à ces utilisateurs (par exemple un écran de complétion à la prochaine connexion).
+
+### 04/09 — LES « PROFILS FANTÔMES » N'EN ÉTAIENT PAS
+
+Jocelyn : « j'ai des comptes dont je ne vois ni le nom ni le prénom ».
+
+**Aucun profil n'était vide.** Mesure du 04/09 : 78 comptes sur 279 n'avaient pas
+de `full_name` dans `auth.users.raw_user_meta_data` — mais **les 78 avaient leur
+nom dans `app.students`**, dont 58 avec nom ET prénom. **Zéro réellement
+introuvable.** Pour les comptes téléphone : aucun nom n'était un numéro ni un
+email, les 58 portaient un vrai nom complet.
+
+**Cause n°1, corrigée.** `app_admin_list_users_overview` ne lisait que
+`auth.users`. Elle rendait invisibles 78 identités présentes à côté. Migration
+`admin_comptes_retrouver_les_noms_manquants` : repli `COALESCE(NULLIF(TRIM(auth
+.full_name),''), NULLIF(TRIM(students.full_name),''))`, plus un champ
+`nom_source` (`auth` / `fiche_etudiant` / `introuvable`) pour **mesurer** le
+défaut au lieu de le masquer. `phone` ajouté à la sortie.
+
+**Vérifié :** admin → 279 comptes, **279 avec un nom (contre 201), 0 sans nom**,
+dont **78 récupérés via la fiche étudiant**, 0 introuvable. Étudiant →
+`not_admin`. Aucun changement Flutter nécessaire : l'écran lisait déjà
+`user['full_name']` avec repli sur l'email.
+
+**Cause n°2, DIAGNOSTIQUÉE MAIS NON CORRIGÉE — défaut toujours actif.**
+L'écart vient des inscriptions **par téléphone** : **57 comptes sur 58** perdent
+`full_name` dans `auth.users`, et cela continue (septembre : 7 comptes, 0 avec
+nom). Par mode : email 18/218 sans nom (8 %), **phone 57/58 (98 %)**.
+
+Ce n'est **pas** un défaut de saisie : les deux écrans d'inscription exigent
+déjà nom et prénom (`signup_screen.dart:44`, `phone_signup_screen.dart:76`) et
+envoient bien `full_name` dans `data`.
+
+Le nom **est** transmis : mesuré, les 58 fiches étudiant sont écrites **à la
+création** (< 10 s, donc par le déclencheur `app_handle_new_auth_user`, qui lit
+`NEW.raw_user_meta_data`). Le `full_name` est donc présent à l'INSERT, puis
+**effacé après coup** par le flux de confirmation téléphone de Supabase — ce que
+le code signalait déjà : « Confirm phone est resté actif côté Supabase ».
+Indice confirmant : la clé `role` que portent ces comptes n'y est pas arrivée
+par le signUp, c'est le déclencheur `sync_role_from_app_metadata` qui l'ajoute.
+
+➡️ **Piste pour la suite** : désactiver « Confirm phone » (Authentication →
+Providers → Phone) dans le tableau de bord Supabase — action manuelle, hors
+code. Tant que ce n'est pas fait, `app.students` reste la seule copie fiable du
+nom, et le repli ci-dessus la lit.
+
 ### LA DERNIÈRE INCONNUE, ET ELLE NE SE LÈVERA PAS D'ICI
 
 L'écran « Mes documents » est désormais **atteignable** sur téléphone, mais il

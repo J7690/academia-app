@@ -133,7 +133,14 @@ class BobodoProvider extends ChangeNotifier {
   /// Envoi d'un message texte de l'étudiant.
   /// La génération de la réponse IA est gérée par le backend FastAPI Bobodo
   /// (Python), qui utilise Supabase + OpenRouter + éventuelle recherche web.
-  Future<void> sendUserMessage(String content) async {
+  /// Envoie une question à Bobodo.
+  ///
+  /// [origine] dit COMMENT la question est arrivée : `'vocal'` si elle a été
+  /// dictée puis transcrite, `'texte'` si elle a été tapée. Sans cette
+  /// distinction, l'administrateur voyait les questions sans pouvoir juger la
+  /// transcription — une question mal comprise par le micro ressemblait à une
+  /// question mal posée. Audit du 04/09/2026.
+  Future<void> sendUserMessage(String content, {String origine = 'texte'}) async {
     if (content.trim().isEmpty) return;
     _setError(null);
 
@@ -177,15 +184,16 @@ class BobodoProvider extends ChangeNotifier {
       'sender': 'student',
       'content': content,
       'safety_flag': null,
+      'origine': origine,
       'created_at': DateTime.now().toIso8601String(),
     });
     _lastFailedMessage = null;
     notifyListeners();
 
-    await _callEdgeFunction(content);
+    await _callEdgeFunction(content, origine: origine);
   }
 
-  Future<void> _callEdgeFunction(String content) async {
+  Future<void> _callEdgeFunction(String content, {String origine = 'texte'}) async {
     final sessionId = _currentSessionId;
     if (sessionId == null) return;
 
@@ -202,6 +210,11 @@ class BobodoProvider extends ChangeNotifier {
       final body = jsonEncode({
         'session_id': sessionId,
         'message': content,
+        // Transmise à l'Edge Function, qui la passera à
+        // `app_append_bobodo_message`. Une version de bobodo-chat qui ignore
+        // ce champ continue de fonctionner : la colonne restera simplement
+        // vide, comme pour les messages antérieurs.
+        'origine': origine,
       });
 
       final finalResponse = await http.post(

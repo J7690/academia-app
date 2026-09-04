@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import '../../widgets/bouton_deconnexion.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -341,6 +343,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   icon: const Icon(Icons.settings),
                   tooltip: 'Paramètres',
                 ),
+                const BoutonDeconnexion(),
               ],
               bottom: TabBar(
                 isScrollable: true,

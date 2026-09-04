@@ -1,7 +1,12 @@
 package com.academia.nexiomgroup.app
 
+import android.content.ContentValues
 import android.content.Intent
+import android.media.MediaScannerConnection
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -10,6 +15,8 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import me.leolin.shortcutbadger.ShortcutBadger
+import java.io.File
+import java.io.FileOutputStream
 
 /**
  * Global registry of active ExoPlayer instances so the Activity lifecycle
@@ -44,6 +51,7 @@ class MainActivity : FlutterActivity() {
     private val BADGE_CHANNEL = "com.academia.app/badge"
     private val DEEP_LINK_CHANNEL = "com.academia.app/deeplink"
     private val APP_CHANNEL = "com.academia.app/app"
+    private val FICHIERS_CHANNEL = "com.academia.app/fichiers"
     private var initialDeepLink: String? = null
     private var deepLinkChannel: MethodChannel? = null
 
@@ -152,5 +160,136 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+
+        // Enregistrer un document dans le dossier « Téléchargements » de
+        // l'appareil — celui que l'étudiant ouvre depuis son gestionnaire de
+        // fichiers, pas un dossier privé à l'application.
+        //
+        // Pourquoi du code natif plutôt qu'un paquet : les deux greffons
+        // MediaStore de pub.dev (media_store_plus, flutter_media_store) n'ont
+        // rien publié depuis 20 et 23 mois et sont testés jusqu'à l'API 33,
+        // alors que cette application cible l'API 36. MediaStore, lui, est
+        // stable depuis l'API 29 et tient en quarante lignes.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, FICHIERS_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "enregistrerDansTelechargements" -> {
+                        val octets = call.argument<ByteArray>("octets")
+                        val nom = call.argument<String>("nom")
+                        val type = call.argument<String>("type")
+                            ?: "application/octet-stream"
+                        if (octets == null || nom.isNullOrBlank()) {
+                            result.error(
+                                "ARGUMENTS",
+                                "octets et nom sont obligatoires",
+                                null
+                            )
+                        } else {
+                            try {
+                                result.success(ecrireDansTelechargements(octets, nom, type))
+                            } catch (e: Exception) {
+                                // On remonte la cause : un échec muet ferait
+                                // croire à l'étudiant que son reçu est enregistré.
+                                Log.e("Fichiers", "Enregistrement impossible", e)
+                                result.error(
+                                    "ECHEC",
+                                    e.message ?: e.javaClass.simpleName,
+                                    null
+                                )
+                            }
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+    }
+
+    /**
+     * Écrit [octets] dans le dossier public « Téléchargements » et renvoie le
+     * nom réellement retenu par le système.
+     *
+     * À partir d'Android 10 (API 29) on passe par MediaStore : **aucune
+     * permission n'est requise** pour écrire dans Downloads, et le fichier
+     * apparaît immédiatement dans le gestionnaire de fichiers. Le drapeau
+     * IS_PENDING masque l'entrée tant que l'écriture n'est pas terminée, pour
+     * qu'aucune application ne lise un PDF tronqué.
+     *
+     * En deçà d'Android 10, MediaStore.Downloads n'existe pas : on écrit dans
+     * le dossier public et on prévient le scanner de médias, faute de quoi le
+     * fichier reste invisible jusqu'au redémarrage. Ce chemin exige
+     * WRITE_EXTERNAL_STORAGE, demandée côté Dart avant l'appel.
+     */
+    private fun ecrireDansTelechargements(
+        octets: ByteArray,
+        nom: String,
+        type: String
+    ): String {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val resolveur = applicationContext.contentResolver
+            val valeurs = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, nom)
+                put(MediaStore.Downloads.MIME_TYPE, type)
+                put(MediaStore.Downloads.IS_PENDING, 1)
+            }
+            val uri = resolveur.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, valeurs)
+                ?: throw IllegalStateException(
+                    "MediaStore a refusé de créer l'entrée dans Téléchargements"
+                )
+            try {
+                resolveur.openOutputStream(uri)?.use { flux ->
+                    flux.write(octets)
+                    flux.flush()
+                } ?: throw IllegalStateException("Flux de sortie indisponible")
+            } catch (e: Exception) {
+                // Sans ce nettoyage, une entrée fantôme resterait « en attente »
+                // et le nom serait pris pour les tentatives suivantes.
+                resolveur.delete(uri, null, null)
+                throw e
+            }
+            valeurs.clear()
+            valeurs.put(MediaStore.Downloads.IS_PENDING, 0)
+            resolveur.update(uri, valeurs, null, null)
+
+            // MediaStore ajoute lui-même « (1) », « (2) »… en cas d'homonyme :
+            // on relit le nom retenu au lieu de le supposer.
+            resolveur.query(
+                uri,
+                arrayOf(MediaStore.Downloads.DISPLAY_NAME),
+                null, null, null
+            )?.use { curseur ->
+                if (curseur.moveToFirst()) {
+                    return curseur.getString(0) ?: nom
+                }
+            }
+            return nom
+        }
+
+        val dossier = Environment.getExternalStoragePublicDirectory(
+            Environment.DIRECTORY_DOWNLOADS
+        )
+        if (!dossier.exists() && !dossier.mkdirs()) {
+            throw IllegalStateException("Dossier Téléchargements introuvable")
+        }
+        var fichier = File(dossier, nom)
+        var suffixe = 1
+        val base = nom.substringBeforeLast('.', nom)
+        val extension = nom.substringAfterLast('.', "")
+        while (fichier.exists()) {
+            val candidat = if (extension.isEmpty()) "$base ($suffixe)"
+                           else "$base ($suffixe).$extension"
+            fichier = File(dossier, candidat)
+            suffixe++
+        }
+        FileOutputStream(fichier).use { flux ->
+            flux.write(octets)
+            flux.flush()
+        }
+        MediaScannerConnection.scanFile(
+            applicationContext,
+            arrayOf(fichier.absolutePath),
+            arrayOf(type),
+            null
+        )
+        return fichier.name
     }
 }

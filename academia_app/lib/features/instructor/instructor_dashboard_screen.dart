@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import '../../widgets/bouton_deconnexion.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../student/student_settings_screen.dart';
@@ -114,6 +116,7 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
               icon: const Icon(Icons.settings),
               tooltip: 'Paramètres',
             ),
+            const BoutonDeconnexion(),
           ],
           bottom: TabBar(
             isScrollable: true,

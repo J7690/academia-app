@@ -1273,19 +1273,24 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
     });
 
     if (text.isNotEmpty) {
-      // Placer dans le champ et envoyer
+      // Placer dans le champ et envoyer. L'origine est « vocal » : le texte
+      // vient du micro, même s'il transite par le champ de saisie.
       _controller.text = text;
-      _send(context);
+      _send(context, origine: 'vocal');
     }
   }
 
-  Future<void> _send(BuildContext context) async {
+  /// [origine] : « vocal » si le texte vient de la dictée, « texte » s'il a été
+  /// tapé. Le champ de saisie sert aux deux — la dictée y dépose sa
+  /// transcription avant l'envoi — d'où le besoin de le dire explicitement
+  /// plutôt que de le deviner ici.
+  Future<void> _send(BuildContext context, {String origine = 'texte'}) async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     _controller.clear();
     setState(() => _showEmojiPicker = false);
     final provider = context.read<BobodoProvider>();
-    await provider.sendUserMessage(text);
+    await provider.sendUserMessage(text, origine: origine);
   }
 
   /// Envoyer le message vocal en mode conversation.
@@ -1511,7 +1516,10 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
       _addToConversationMemory(text, '');
 
       final provider = context.read<BobodoProvider>();
-      await provider.sendUserMessage(text);
+      // Mode conversation : la question vient du micro, transcrite par le STT
+      // de l'appareil. C'est le cas où l'administrateur a le plus besoin de
+      // savoir que le texte a été dicté, donc qu'il peut avoir été mal compris.
+      await provider.sendUserMessage(text, origine: 'vocal');
 
       // Mode 2 : lecture vocale de la réponse Bobodo
       if (_isConversationMode && provider.messages.isNotEmpty) {
@@ -1600,7 +1608,13 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
         final messages = provider.messages;
         if (messages.isNotEmpty) {
           final lastMessage = messages.last;
-          if (lastMessage['sender'] == 'bobodo') {
+          // `!= 'student'` et non `== 'bobodo'` : la base n'écrit JAMAIS
+          // « bobodo », elle écrit « assistant ». Ce test comparait donc à une
+          // valeur qui n'existe pas, et ce repli vocal ne s'est jamais
+          // déclenché — un correctif muet, du genre que ce dépôt traque.
+          // La forme retenue est celle employée partout ailleurs dans ce
+          // fichier (ligne 1527) : elle ne dépend pas du libellé exact.
+          if (lastMessage['sender'] != 'student') {
             final text = lastMessage['content']?.toString() ?? '';
             await _speakWithLocalTts(text);
           }

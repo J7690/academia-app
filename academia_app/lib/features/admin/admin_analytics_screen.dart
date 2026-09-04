@@ -17,6 +17,16 @@ class _AdminAnalyticsScreenState extends State<AdminAnalyticsScreen> {
   int _periodDays = 7;
   Map<String, dynamic> _stats = {};
 
+  /// Ce qui a empêché le chargement, s'il a échoué. Null si tout va bien.
+  ///
+  /// Sans ce champ, cet écran a menti pendant des mois : la RPC échouait à
+  /// CHAQUE ouverture — elle n'existait que dans le schéma `app`, que PostgREST
+  /// n'expose pas — l'exception partait dans un `debugPrint` invisible, et
+  /// l'admin lisait un paisible « Aucune donnée ». Trois couches empilées
+  /// (RPC injoignable, erreur avalée, table vide) dont une seule se voyait :
+  /// la plus trompeuse. Corrigé le 04/09/2026.
+  String? _erreur;
+
   @override
   void initState() {
     super.initState();
@@ -24,27 +34,73 @@ class _AdminAnalyticsScreenState extends State<AdminAnalyticsScreen> {
   }
 
   Future<void> _loadStats() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _erreur = null;
+    });
     try {
       final result = await Supabase.instance.client.rpc(
         'app_admin_get_navigation_stats',
         params: {'p_days': _periodDays, 'p_limit': 20},
       );
-      if (result is Map<String, dynamic> && result['success'] == true) {
-        _stats = result;
+      if (result is Map<String, dynamic>) {
+        if (result['success'] == true) {
+          _stats = result;
+        } else {
+          // Le serveur a répondu, mais il refuse : le dire, plutôt que de
+          // laisser croire à une absence de trafic.
+          _stats = {};
+          _erreur = result['error'] == 'forbidden'
+              ? 'Accès refusé : cet écran demande un compte administrateur.'
+              : 'Le serveur a refusé la demande (${result['error']}).';
+        }
+      } else {
+        _stats = {};
+        _erreur = 'Réponse inattendue du serveur.';
       }
     } catch (e) {
+      _stats = {};
+      _erreur = 'Statistiques indisponibles : $e';
       debugPrint('[AdminAnalytics] Error: $e');
     }
     if (mounted) setState(() => _loading = false);
   }
 
-  /// Les 3 vues historiques dépendent de `_stats` (ancienne collecte) :
-  /// on affiche un état vide si aucune donnée, sans bloquer l'onglet Audience.
+  /// Affiche les données, ou dit pourquoi il n'y en a pas.
+  ///
+  /// « Aucune donnée » ne s'affiche plus que lorsque la requête a RÉUSSI et
+  /// n'a effectivement rien trouvé. Une panne se distingue désormais d'un
+  /// désert.
   Widget _legacyOrEmpty(Widget Function() builder) {
+    if (_erreur != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.redAccent),
+              const SizedBox(height: 8),
+              Text(
+                _erreur!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _loadStats,
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('Réessayer'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     if (_stats.isEmpty) {
       return const Center(
-        child: Text('Aucune donnée', style: TextStyle(color: Colors.grey)),
+        child: Text('Aucune donnée sur la période',
+            style: TextStyle(color: Colors.grey)),
       );
     }
     return builder();

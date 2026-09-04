@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import '../../../widgets/bouton_deconnexion.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -1655,6 +1657,10 @@ class _ProfileHeader extends StatelessWidget {
                       );
                     },
                   ),
+                  // Déconnexion à côté de l'engrenage, pas dedans : elle
+                  // restait joignable uniquement après avoir ouvert les
+                  // paramètres et fait défiler jusqu'en bas. Elle y demeure.
+                  const BoutonDeconnexion(),
                 ],
               ),
             ),

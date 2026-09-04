@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../widgets/bouton_deconnexion.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -129,6 +131,9 @@ class _CommercialDashboardScreenState extends State<CommercialDashboardScreen> {
               tooltip: 'Actualiser',
               onPressed: () => provider.loadDashboard(),
             ),
+            // Hors du menu « Options » : la déconnexion se voit, elle ne se
+            // cherche pas. Elle reste aussi dans les paramètres.
+            const BoutonDeconnexion(),
             PopupMenuButton<_CommercialDashboardMenuAction>(
               icon: const Icon(Icons.more_vert),
               tooltip: 'Options',

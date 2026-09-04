@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import '../../widgets/bouton_deconnexion.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:animate_do/animate_do.dart';
@@ -332,6 +334,18 @@ class _MobileTopNavBarState extends State<_MobileTopNavBar>
                   );
                 },
               ),
+              ListTile(
+                leading: const Icon(Icons.person_outline),
+                title: const Text('Mon profil'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const StudentProfileScreen(),
+                    ),
+                  );
+                },
+              ),
               const Divider(height: 1),
               ListTile(
                 leading: const Icon(Icons.settings),
@@ -432,6 +446,27 @@ class _MobileTopNavBarState extends State<_MobileTopNavBar>
                   ],
                 ),
               ),
+              // MES DOCUMENTS — remonté dans la barre le 03/09/2026.
+              //
+              // Sur le bureau, « Mon profil / Mes paiements / Mes documents »
+              // s'alignent en clair dans l'en-tête. Sur téléphone, tout était
+              // replié sous « ⋯ ». L'avatar ouvre déjà le profil ; c'est donc
+              // « Mes documents » — là où l'étudiant retrouve ses reçus — qui
+              // manquait le plus. Les paiements restent dans le menu : on
+              // n'y va pas pour consulter, on y va pour payer.
+              _TopNavIconButton(
+                icon: Icons.folder_outlined,
+                onTap: () => _onTapSimple(() {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ChangeNotifierProvider(
+                        create: (_) => StudentApplicationPaymentsProvider(),
+                        child: const StudentDocumentsScreen(),
+                      ),
+                    ),
+                  );
+                }),
+              ),
               // Share
               Consumer<ShareModeProvider>(
                 builder: (context, shareMode, _) {
@@ -451,6 +486,15 @@ class _MobileTopNavBarState extends State<_MobileTopNavBar>
                           },
                   );
                 },
+              ),
+              // DÉCONNEXION — dans la barre, pas sous deux niveaux de menu.
+              // Elle demande confirmation avant d'agir : à cette taille, sur
+              // un téléphone, un appui involontaire est vite arrivé.
+              _TopNavIconButton(
+                icon: Icons.logout,
+                onTap: () => _onTapSimple(() {
+                  confirmerEtSeDeconnecter(context);
+                }),
               ),
               // More
               _TopNavIconButton(

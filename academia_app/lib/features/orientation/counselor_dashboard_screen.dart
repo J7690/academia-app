@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../widgets/bouton_deconnexion.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/academia_session.dart';
@@ -93,6 +95,7 @@ class _CounselorDashboardScreenState extends State<CounselorDashboardScreen> {
                 ),
               ),
             ),
+            const BoutonDeconnexion(couleur: OrientationTheme.text),
           ],
           bottom: const TabBar(
             isScrollable: true,

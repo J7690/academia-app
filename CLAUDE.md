@@ -112,6 +112,49 @@ Issues de l'expérience ; toute évolution doit les respecter.
 
 ## 6. Commandes
 
+### Git — « pousser le projet » veut dire `main`, et rien d'autre
+
+**Le piège, payé le 03/09/2026.** Une branche de travail a été poussée, annoncée
+« poussé » avec un lien de commit — et Jocelyn n'a rien vu, parce que GitHub
+ouvre le dépôt sur **`main`**. Mesure faite ce jour-là :
+
+    main fige au 05/08/2026        branche de travail : +37 commits
+    un mois entier (studio 3D, logos, courtage, QR, paiements, securite)
+    ni visible sur GitHub, ni deploye sur app.academiea.com
+
+**Deux consommateurs ne regardent que `main`** : GitHub (branche par défaut,
+`git ls-remote --symref origin HEAD`) et **Netlify**, qui construit
+**app.academiea.com** depuis `netlify.toml` (racine) → `bash ./netlify/flutter.sh`
+→ publie `academia_app/build/web`. Pousser une branche latérale archive le code
+et **ne déploie rien**.
+
+```bash
+# 1. La fusion est-elle une avance rapide ? (sinon : conflits a traiter)
+git merge-base --is-ancestor origin/main <branche> && echo "avance rapide OK"
+
+# 2. Ou pointe main AVANT (a relever, pour pouvoir prouver l'effet)
+git ls-remote origin main
+
+# 3. Pousser vers main SANS changer de branche (atomique)
+git push origin <branche>:main
+
+# 4. Ou pointe main APRES — le SHA doit avoir change
+git ls-remote origin main
+```
+
+> **Interdit d'annoncer « poussé » sans l'étape 4.** Un `git push` réussi sur une
+> autre branche ne prouve rien de `main`. C'est la règle de la compétence
+> **`ou-tourne-le-code`** — elle vaut pour git exactement comme pour LWS et les
+> pods : *on ne dit pas « c'est déployé » sans avoir vu ce que l'autre verra.*
+>
+> Vérifier ensuite que Netlify a réellement reconstruit : l'`ETag` de
+> `https://app.academiea.com/main.dart.js` doit changer. S'il ne change pas au
+> bout de ~30 min, le build a échoué ou Netlify ne suit pas `main`.
+
+**Rappel** : `git commit` et `git push` restent soumis à l'autorisation explicite
+de Jocelyn (cf. §11). Pousser sur `main` **met en ligne pour les étudiants** :
+c'est un acte de production, pas un archivage.
+
 ### Flutter (depuis `academia_app/`)
 ```bash
 cd academia_app

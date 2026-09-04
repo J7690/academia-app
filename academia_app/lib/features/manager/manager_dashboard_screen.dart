@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../widgets/bouton_deconnexion.dart';
+
 import '../../services/analytics_tracking_service.dart';
 import '../student/student_settings_screen.dart';
 import 'manager_team_tab.dart';
@@ -52,6 +54,7 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> {
                 );
               },
             ),
+            const BoutonDeconnexion(),
           ],
           bottom: const TabBar(
             isScrollable: true,

@@ -256,10 +256,27 @@ class _AdminPaymentDetailBody extends StatelessWidget {
                                 trailing: IconButton(
                                   tooltip: 'Télécharger le reçu',
                                   icon: const Icon(Icons.picture_as_pdf),
-                                  onPressed: () {
-                                    generateAndSharePaymentReceiptPdf(
+                                  onPressed: () async {
+                                    final messager =
+                                        ScaffoldMessenger.of(context);
+                                    final resultat =
+                                        await genererEtEnregistrerRecuPdf(
                                       payment: payment,
                                       receipt: r,
+                                    );
+                                    messager.showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          !resultat.reussi
+                                              ? 'Reçu non enregistré : '
+                                                  '${resultat.erreur}'
+                                              : resultat.enregistreSurLAppareil
+                                                  ? 'Reçu enregistré dans '
+                                                      'Téléchargements '
+                                                      '(${resultat.nomFichier})'
+                                                  : 'Reçu téléchargé',
+                                        ),
+                                      ),
                                     );
                                   },
                                 ),

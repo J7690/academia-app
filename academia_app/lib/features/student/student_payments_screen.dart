@@ -1512,9 +1512,13 @@ class _PaymentsHistorySection extends StatelessWidget {
                             context,
                             listen: false,
                           );
+                          // Capturé AVANT le premier await : après, le contexte
+                          // peut avoir été démonté et l'analyseur le signale
+                          // (use_build_context_synchronously).
+                          final messager = ScaffoldMessenger.of(context);
                           final paymentId = p['id']?.toString() ?? '';
                           if (paymentId.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            messager.showSnackBar(
                               const SnackBar(
                                 content: Text(
                                   'Impossible de trouver l\'identifiant du paiement.',
@@ -1526,7 +1530,7 @@ class _PaymentsHistorySection extends StatelessWidget {
                           final receipts = await paymentsProvider
                               .getReceiptsForPayment(paymentId);
                           if (receipts.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            messager.showSnackBar(
                               const SnackBar(
                                 content: Text(
                                   'Aucun reçu n\'est encore disponible pour ce paiement.',
@@ -1535,9 +1539,22 @@ class _PaymentsHistorySection extends StatelessWidget {
                             );
                             return;
                           }
-                          await generateAndSharePaymentReceiptPdf(
+                          final resultat = await genererEtEnregistrerRecuPdf(
                             payment: p,
                             receipt: receipts.first,
+                          );
+                          messager.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                !resultat.reussi
+                                    ? 'Le reçu n\'a pas pu être enregistré : '
+                                        '${resultat.erreur}'
+                                    : resultat.enregistreSurLAppareil
+                                        ? 'Reçu enregistré dans Téléchargements '
+                                            '(${resultat.nomFichier})'
+                                        : 'Reçu téléchargé',
+                              ),
+                            ),
                           );
                         },
                         icon: const Icon(

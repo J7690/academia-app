@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../services/analytics_tracking_service.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/student_university_site_provider.dart';
@@ -37,6 +39,18 @@ class _StudentUniversitySiteScreenState extends State<StudentUniversitySiteScree
   @override
   void initState() {
     super.initState();
+    // Les mini-sites n'étaient pas tracés du tout : on savait que l'onglet
+    // « Partenaires » attirait 49 personnes, sans savoir QUEL établissement
+    // elles allaient voir. Le `slug` identifie l'université.
+    AnalyticsTrackingService.instance.trackScreen('university_site');
+    AnalyticsTrackingService.instance.trackEntityView(
+      'university_site',
+      widget.universitySlug,
+      screenName: 'university_site',
+      properties: {
+        if (widget.universityName != null) 'name': widget.universityName,
+      },
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<StudentUniversitySiteProvider>().loadUniversitySiteBySlug(widget.universitySlug);
     });

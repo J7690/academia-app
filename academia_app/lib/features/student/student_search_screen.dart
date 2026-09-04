@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../services/analytics_tracking_service.dart';
 import '../../providers/home_formations_provider.dart';
 import '../../providers/student_short_trainings_provider.dart';
 import '../../providers/online_courses_catalog_provider.dart';
@@ -21,16 +24,40 @@ class _StudentSearchScreenState extends State<StudentSearchScreen> {
   final FocusNode _focusNode = FocusNode();
   String _query = '';
 
+  /// Ce que les étudiants cherchent est un signal direct pour le courtage :
+  /// une demande répétée sans résultat désigne une formation à aller négocier.
+  /// Rien n'était enregistré jusqu'au 04/09/2026 — `trackSearch` existait
+  /// depuis le début et n'était appelée nulle part.
+  ///
+  /// Temporisé : la recherche filtre à chaque frappe. Enregistrer chaque
+  /// caractère produirait « i », « in », « inf », « info »… — du bruit qui
+  /// noierait la vraie requête. On n'enregistre que la saisie stabilisée.
+  Timer? _traceRecherche;
+  String? _derniereRechercheTracee;
+
   @override
   void initState() {
     super.initState();
+    AnalyticsTrackingService.instance.trackScreen('student_search');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
   }
 
+  void _programmerTraceRecherche(String requete) {
+    _traceRecherche?.cancel();
+    final q = requete.trim();
+    // Moins de 3 caractères : trop court pour dire quoi que ce soit.
+    if (q.length < 3 || q == _derniereRechercheTracee) return;
+    _traceRecherche = Timer(const Duration(milliseconds: 1200), () {
+      _derniereRechercheTracee = q;
+      AnalyticsTrackingService.instance.trackSearch(q, context: 'student_search');
+    });
+  }
+
   @override
   void dispose() {
+    _traceRecherche?.cancel();
     _searchController.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -66,6 +93,7 @@ class _StudentSearchScreenState extends State<StudentSearchScreen> {
                           setState(() {
                             _query = value.trim();
                           });
+                          _programmerTraceRecherche(value);
                         },
                         style: const TextStyle(fontSize: 14),
                         decoration: InputDecoration(

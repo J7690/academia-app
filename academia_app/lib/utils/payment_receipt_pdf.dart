@@ -5,7 +5,8 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
+
+import 'enregistrer_dans_telechargements.dart';
 
 /// Le reçu de paiement, dans la forme arrêtée avec Jocelyn le 02/09/2026.
 ///
@@ -24,16 +25,28 @@ import 'package:printing/printing.dart';
 ///     pas exposer sa signature sur un document qui circule ;
 ///   — la mention finale dit ce que ce document est ET ce qu'il n'est pas :
 ///     un reçu, pas une facture normalisée au sens de la loi N°037/2013/AN.
-Future<void> generateAndSharePaymentReceiptPdf({
+/// Fabrique le reçu et l'enregistre dans les téléchargements de l'appareil.
+///
+/// Renvoie le sort du document ; ne lance pas. L'appelant DOIT lire le
+/// résultat : c'est lui qui sait quoi dire à l'étudiant, et un retour ignoré
+/// redonnerait le faux succès que cette fonction vient de corriger.
+///
+/// Avant le 03/09/2026 cette fonction s'appelait `…SharePaymentReceiptPdf` et
+/// appelait `Printing.layoutPdf` : elle ouvrait **l'aperçu d'impression**.
+/// L'étudiant qui appuyait sur « Télécharger le reçu » n'obtenait aucun
+/// fichier — il devait deviner « Enregistrer au format PDF » dans une boîte de
+/// dialogue d'impression, puis choisir un dossier. Le nom mentait sur l'acte.
+Future<ResultatEnregistrement> genererEtEnregistrerRecuPdf({
   required Map<String, dynamic> payment,
   required Map<String, dynamic> receipt,
 }) async {
   final doc = pw.Document();
   final bytes = await construirePdfRecu(payment: payment, receipt: receipt, doc: doc);
 
-  await Printing.layoutPdf(
-    onLayout: (PdfPageFormat format) async => bytes,
-    name: 'recu_${_texte(receipt['receipt_number'])}.pdf',
+  final numero = _texte(receipt['receipt_number']);
+  return enregistrerDansTelechargements(
+    octets: bytes,
+    nom: 'recu_${numero.isEmpty ? 'academia' : numero}.pdf',
   );
 }
 

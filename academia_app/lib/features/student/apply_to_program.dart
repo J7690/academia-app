@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../providers/student_application_payments_provider.dart';
 import '../../providers/student_applications_provider.dart';
 import '../../providers/student_profile_provider.dart';
+import '../../services/analytics_tracking_service.dart';
 import 'application_outcome_dialog.dart';
 import 'application_request_dialog.dart';
 import 'dossier_completion_sheet.dart';
@@ -36,6 +37,29 @@ Future<void> applyToProgram(
   final profileProvider = context.read<StudentProfileProvider>();
   final applicationsProvider = context.read<StudentApplicationsProvider>();
 
+  // TUNNEL DE CANDIDATURE — instrumenté le 04/09/2026.
+  //
+  // Mesure du 03/09 : 279 étudiants, 9 dossiers complets, 7 candidats. On
+  // savait donc que 97 % n'arrivaient pas au bout, mais pas OÙ ils s'arrêtent.
+  // Ce parcours étant le point de passage unique des trois boutons
+  // « Candidater » (accueil, mini-site, partenaires), le mesurer ici les couvre
+  // tous les trois — et chaque étape abandonnée est nommée, pour qu'on sache
+  // quoi simplifier au lieu de le deviner.
+  void trace(String action, {Map<String, dynamic>? details}) {
+    AnalyticsTrackingService.instance.trackAction(
+      'program_apply',
+      action,
+      entityType: 'program',
+      entityId: programId,
+      properties: {
+        if (programTitle != null) 'program_title': programTitle,
+        ...?details,
+      },
+    );
+  }
+
+  trace('click');
+
   // 0. Garde « déjà candidaté ». L'app connaît les candidatures de
   //    l'étudiant : inutile de le laisser tout re-saisir pour un doublon.
   //    Si la liste ne peut pas être chargée (réseau), on laisse passer :
@@ -52,6 +76,7 @@ Future<void> applyToProgram(
   if (existing != null) {
     final status = existing['status']?.toString();
     final closed = status == 'rejected' || status == 'canceled';
+    trace('deja_candidate', details: {'statut': status});
     final reapply = await showAlreadyAppliedDialog(
       context,
       statusLabel: applicationStatusLabel(status),
@@ -74,13 +99,24 @@ Future<void> applyToProgram(
   if (!context.mounted) return;
 
   if (status != null && status.verified && !status.isComplete) {
+    // LE POINT DE FUITE PRÉSUMÉ. Le dossier exige 12 champs ; au 03/09, la
+    // moyenne remplie était de 1,4. On enregistre combien il en manque au
+    // moment où l'étudiant voit le formulaire, puis s'il le referme.
+    final manquants = status.missingFields.length;
+    trace('dossier_requis', details: {'champs_manquants': manquants});
+
     final ready = await showDossierCompletionSheet(
       context,
       profileProvider: profileProvider,
       missingFields: status.missingFields,
     );
     if (!context.mounted) return;
-    if (!ready) return; // l'étudiant a refermé le formulaire
+    if (!ready) {
+      // l'étudiant a refermé le formulaire
+      trace('abandon_dossier', details: {'champs_manquants': manquants});
+      return;
+    }
+    trace('dossier_complete', details: {'champs_saisis': manquants});
   }
 
   // 2. La candidature elle-même.
@@ -91,7 +127,10 @@ Future<void> applyToProgram(
     initialStudyMode: initialStudyMode,
   );
   if (!context.mounted) return;
-  if (request == null) return;
+  if (request == null) {
+    trace('abandon_formulaire');
+    return;
+  }
 
   // 3. Envoi.
   var success = await _sendWithProgress(
@@ -126,6 +165,9 @@ Future<void> applyToProgram(
 
   // 5. L'issue, annoncée en clair : ce qui s'est passé, pourquoi, quoi faire.
   if (success) {
+    trace('deposee', details: {
+      'reduction_demandee': request.discountRequested,
+    });
     final created = _applicationFor(applicationsProvider, programId);
     await showApplicationSuccessDialog(
       context,
