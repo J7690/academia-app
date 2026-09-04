@@ -1440,6 +1440,75 @@ est celle qui produit déjà 4 927 lignes, mais ces appels-ci n'ont jamais tourn
 app.analytics_events where event_type in ('program_apply','university_site_view',
 'search') group by 1`.
 
+### 04/09 — LE VOCAL SUR LE WEB : IL N'ÉTAIT PAS MUET, IL PARLAIT MAL
+
+Demande de Jocelyn : rendre le vocal fonctionnel sur le web, avec une très
+bonne qualité de voix et de transcription.
+
+**Mesure avant conclusion.** Essai réel dans le navigateur sur
+app.academiea.com : `SpeechRecognition` **et** `speechSynthesis` sont
+**disponibles**, avec **trois voix françaises** (Hortense, Julie, Paul —
+Microsoft). Le code Flutter ne contient **aucun `kIsWeb`** qui désactiverait le
+vocal. Il n'était donc pas bloqué : ces voix système sont simplement
+robotiques, et l'API n'existe **que dans Chrome et Edge** — jamais Firefox ni
+Brave (source : pub.dev/speech_to_text).
+
+**Écrit et déployé** : Edge Function **`bobodo-vocal`** (ACTIVE, version 2),
+deux actions — `transcrire` et `parler` — par OpenRouter, plus le service Dart
+`BobodoVocalCloudService` (ne lance jamais, renvoie `null` : une transcription
+ratée ne doit pas faire perdre sa question à l'étudiant).
+
+**Répartition assumée** : voix cloud **sur le web seulement** ; sur téléphone
+on garde le natif — bon, gratuit, immédiat. On ne paie pas des crédits pour
+faire moins bien. Repli sur la voix du navigateur si le cloud échoue : le
+silence serait pire que la voix robotique.
+
+**Deux choix techniques, et leur motif :**
+- `language=fr` **imposé**, jamais deviné : sur une question courte, la
+  détection automatique se trompe de langue et rend un charabia plausible ;
+- un **prompt de vocabulaire** (Academia, Bobodo, Ki-Zerbo, Nazi Boni, BEPC,
+  Ouagadougou…) envoyé au moteur. L'audit du 14/06 avait mesuré « Bobodo » →
+  **« Bob au dos »**, « Ki-Zerbo » → « Kisebo ». Levier le plus efficace sur
+  les noms propres, et gratuit.
+
+**DEUX FAILLES QUE J'AI ÉCRITES, signalées par la revue automatique** — et de
+la catégorie même que je venais de fermer ailleurs :
+1. **CRITIQUE** — `estAuthentifie` **décodait** le jeton (`atob`) sans vérifier
+   sa signature : forger `{"role":"authenticated"}` suffisait. Corrigé par une
+   validation auprès de `/auth/v1/user`. Nuance mesurée : **non exploitable**,
+   `verify_jwt` couvrait (essai réel : jeton forgé → 401). Mais faire reposer
+   la sécurité sur un réglage externe est ce que j'ai refusé le matin même pour
+   `app_append_bobodo_message` (un GRANT à PUBLIC y survivait au REVOKE).
+2. **MOYEN** — n'importe quel modèle OpenRouter pouvait être demandé, donc le
+   plus cher, depuis un téléphone. Listes blanches (4 STT, 3 TTS). Un modèle
+   refusé rend **400 avec la liste**, sans retomber silencieusement sur le
+   défaut : substituer un moteur à l'insu de qui en compare deux fausserait la
+   comparaison.
+
+**Veille (procédure `veille-externe`, objection cherchée).** OpenRouter :
+`whisper-large-v3` **10,3 % WER**, turbo 12 %, MAI-Transcribe 2 **#1 au banc
+FLEURS**, Gemini 3.1 Flash TTS le plus utilisé, Voxtral **16 $/M caractères**
+contre 0,62 $ pour Kokoro. Coût transcription : **0,05 FCFA** pour 10 s.
+⚠️ Ne pas confondre : `CLAUDE.md` dit « Kokoro-82M abandonné (RTF 3,25–4,5) » —
+c'était **en local sur le VPS**, la mesure ne vaut pas pour le service cloud.
+**Objection retenue** : les bancs publics mesurent de l'audio propre ; 21–30 %
+d'erreurs sont rapportés sur accents africains. « La seule façon de choisir est
+de tester avec ses propres données. »
+
+**NON TRANCHÉ, volontairement** : quel moteur est le meilleur sur de l'audio
+burkinabè. D'où modèle et voix **remplaçables par requête**, et la réponse qui
+indique toujours quel moteur a produit le texte — comparer de mémoire ne vaut
+rien.
+
+**Mesuré** : `deno check bobodo-vocal` **PASSE** (0 erreur, contre 17
+préexistantes dans `bobodo-chat`) ; `flutter analyze` **0 erreur / 2 100** ;
+build web release réussi (45,1 Mo) ; `bobodo-vocal` version 2 ; jeton forgé →
+401 ; sans jeton → 401. `main` : `7ecb360` → `87214ca` → **`ecc90b6`**.
+
+**NON ÉPROUVÉ** : aucune vraie voix n'a encore été transcrite, aucune réponse
+n'a encore été prononcée par le cloud. Cela demande une session étudiante sur
+le site.
+
 ### 04/09 — DÉPLOIEMENT COMPLET, ET UN REFUS MOTIVÉ SUR LWS
 
 Feu vert de Jocelyn pour déployer tout ce qui ne l'avait jamais été.

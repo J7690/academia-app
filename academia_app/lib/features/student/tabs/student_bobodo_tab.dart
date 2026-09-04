@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../../../services/bobodo_vocal_cloud_service.dart';
+import '../../../services/enregistreur_voix.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -63,6 +64,16 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
 
   // Mode vocal
   bool _isRecordingMode = false;
+
+  /// Dictée par le cloud, utilisée SUR LE WEB uniquement (cf.
+  /// `_demarrerDicteeCloud`). Sur téléphone, la reconnaissance native reste en
+  /// place : meilleure et gratuite.
+  final EnregistreurVoix _enregistreur = EnregistreurVoix();
+
+  /// Vrai pendant que le moteur travaille. Sans cet état, l'écran resterait
+  /// muet plusieurs secondes après l'arrêt du micro et l'étudiant croirait que
+  /// rien ne se passe.
+  bool _isTranscrivantCloud = false;
   bool _isRecording = false;
   bool _isTranscribing = false;
   bool _isSending = false;
@@ -151,6 +162,9 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
   @override
   void dispose() {
     // Vocal
+    // Libéré en premier : un micro laissé ouvert continue de capter après que
+    // l'étudiant a quitté l'écran.
+    _enregistreur.liberer();
     _recorder.closeRecorder();
     _vocalService.disconnect();
     _vocalService.dispose();
@@ -1058,19 +1072,59 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
                 });
               },
             ),
-            // Zone de saisie (texte ou vocal)
+            // Zone de saisie (texte, vocal, ou transcription en cours)
+            //
+            // Le troisième cas manquait : entre l'arrêt du micro et l'arrivée
+            // du texte, l'écran ne disait rien pendant plusieurs secondes et
+            // l'étudiant croyait que rien ne se passait.
             Expanded(
-              child: _isRecordingMode
-                  ? _buildVocalInputInterface()
-                  : _buildTextInputInterface(),
+              child: _isTranscrivantCloud
+                  ? _buildTranscriptionEnCours()
+                  : _isRecordingMode
+                      ? _buildVocalInputInterface()
+                      : _buildTextInputInterface(),
             ),
             const SizedBox(width: 6),
             // Bouton vocal ou envoi
-            _isRecordingMode
-                ? _buildVocalActionButtons()
-                : _buildTextActionButtons(provider),
+            if (!_isTranscrivantCloud)
+              _isRecordingMode
+                  ? _buildVocalActionButtons()
+                  : _buildTextActionButtons(provider),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Ce que voit l'étudiant pendant que le moteur transcrit sa phrase.
+  ///
+  /// Le cloud travaille sur l'enregistrement entier — c'est ce qui lui permet
+  /// d'entendre une phrase plutôt que des mots isolés — mais cela prend
+  /// quelques secondes pendant lesquelles il ne se passe rien à l'écran.
+  Widget _buildTranscriptionEnCours() {
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: PrepTheme.scaffoldBg,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: PrepTheme.primary.withValues(alpha: 0.4)),
+      ),
+      child: const Row(
+        children: [
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Je transcris ce que tu viens de dire…',
+              style: TextStyle(fontSize: 13, color: PrepTheme.textSecondary),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1260,6 +1314,14 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
 
   /// Force l'arrêt de l'enregistrement et envoie le texte transcrit (mode dictée)
   void _forceStopAndSend() {
+    // Sur le web, le texte n'existe pas encore quand on appuie : il faut
+    // d'abord arrêter l'enregistrement et attendre la transcription. Elle
+    // dépose le texte dans le champ, et l'étudiant l'envoie lui-même.
+    if (kIsWeb) {
+      _arreterDicteeCloud();
+      return;
+    }
+
     // IMPORTANT: Lire le texte AVANT d'arrêter le STT
     final text = _lastRecognizedWords.trim();
     debugPrint('[DICTEE_SEND] Texte à envoyer: "$text"');
@@ -1385,6 +1447,20 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
     final granted = await _requestPermission();
     if (!granted) return;
 
+    // SUR LE WEB : on enregistre et on fait transcrire par le cloud.
+    //
+    // La reconnaissance du navigateur existe (Chrome, Edge) mais sa qualité est
+    // faible sur les noms propres et les accents — c'est le constat de Jocelyn
+    // le 04/09 après essai réel : « la détection de la voix est très médiocre ».
+    // Elle n'accepte d'ailleurs aucun vocabulaire métier, là où le moteur cloud
+    // reçoit la liste des établissements et des filières d'Academia.
+    // Sur téléphone, la reconnaissance native reste meilleure ET gratuite : on
+    // ne la remplace pas.
+    if (kIsWeb) {
+      await _demarrerDicteeCloud();
+      return;
+    }
+
     if (!_speechAvailable) {
       debugPrint('[SPEECH] Speech-to-text not available');
       return;
@@ -1426,12 +1502,106 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
     }
   }
 
+  // ── DICTÉE PAR LE CLOUD (web) ──────────────────────────────────────────────
+  //
+  // Différence avec le téléphone : le texte n'apparaît PAS pendant qu'on parle.
+  // Le moteur travaille sur l'enregistrement complet — c'est ce qui lui permet
+  // d'entendre une phrase entière plutôt que des mots isolés, et donc de mieux
+  // reconnaître « Ki-Zerbo » ou « Nazi Boni ». L'écran doit donc dire clairement
+  // qu'il écoute, puis qu'il transcrit.
+
+  Future<void> _demarrerDicteeCloud() async {
+    final demarre = await _enregistreur.demarrer(
+      surDureeMax: () {
+        if (mounted && _isRecording) _arreterDicteeCloud();
+      },
+    );
+    if (!demarre) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Le micro n'est pas accessible. Autorise-le dans ton navigateur, "
+            "puis réessaie.",
+          ),
+        ),
+      );
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _isRecordingMode = true;
+      _isRecording = true;
+      _recordingDuration = Duration.zero;
+      _lastRecognizedWords = '';
+    });
+    _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {
+        _recordingDuration = Duration(seconds: _recordingDuration.inSeconds + 1);
+      });
+    });
+  }
+
+  /// Arrête l'enregistrement, transcrit, et DÉPOSE le texte dans le champ de
+  /// saisie sans l'envoyer.
+  ///
+  /// L'étudiant relit et corrige avant d'envoyer. C'est le garde-fou qui rend
+  /// une transcription imparfaite acceptable : les bancs d'essai annoncent
+  /// 21–30 % d'erreurs sur les accents d'Afrique de l'Ouest, et une question
+  /// partie de travers ferait perdre plus de temps qu'une relecture.
+  Future<void> _arreterDicteeCloud() async {
+    _recordingTimer?.cancel();
+    final audio = await _enregistreur.arreter();
+    if (!mounted) return;
+
+    setState(() {
+      _isRecording = false;
+      _isRecordingMode = false;
+      _recordingDuration = Duration.zero;
+    });
+
+    if (audio == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Rien n'a été enregistré. Reparle un peu plus longtemps.")),
+      );
+      return;
+    }
+
+    setState(() => _isTranscrivantCloud = true);
+    final texte = await BobodoVocalCloudService.instance.transcrire(audio, mime: 'audio/wav');
+    if (!mounted) return;
+    setState(() => _isTranscrivantCloud = false);
+
+    if (texte == null || texte.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("La transcription n'a pas abouti. Réessaie, ou écris ta question."),
+        ),
+      );
+      return;
+    }
+
+    // Déposé, pas envoyé : l'étudiant garde le dernier mot.
+    setState(() {
+      _controller.text = texte;
+      _lastRecognizedWords = texte;
+    });
+  }
+
   // _handleSpeechResult supprimé — l'envoi est TOUJOURS manuel via bouton ➤.
   // Le STT accumule le texte dans _lastRecognizedWords via le callback onResult.
   // L'utilisateur voit le texte en temps réel et appuie sur ➤ quand il est prêt.
 
   Future<void> _stopVocalRecording() async {
     if (!_isRecording) return;
+
+    // Sur le web, c'est notre enregistreur qui tourne, pas le STT du
+    // navigateur : l'arrêt déclenche la transcription par le cloud.
+    if (kIsWeb) {
+      await _arreterDicteeCloud();
+      return;
+    }
 
     await _speechToText.stop();
     _recordingTimer?.cancel();

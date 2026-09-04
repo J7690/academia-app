@@ -459,6 +459,31 @@ multi-agents avec vérification adverse. **Rapport complet et ancré :
 > `academia-app-henna.vercel.app`, **qui répond 404**. Vestige d'un hébergeur
 > abandonné, à corriger dans les paramètres du dépôt.
 >
+> ### 🎙️ 04/09 — LE VOCAL WEB EST EN LIGNE
+>
+> | Maillon | Preuve |
+> |---|---|
+> | `main` | **`ecc90b6`** |
+> | Netlify | ETag `cfedc589…` → **`fac18f19…`** ; site **HTTP 200** |
+> | `bobodo-vocal` | **v2** · `bobodo-chat` v105 · `whiteboard-tts` v34 |
+> | Sécurité | jeton forgé → **401** ; sans jeton → **401** |
+>
+> **Le web n'était pas muet, il parlait mal** : reconnaissance et synthèse du
+> navigateur étaient disponibles (3 voix françaises Microsoft, robotiques), et
+> aucun `kIsWeb` ne bloquait le vocal. L'API n'existe cependant **que dans
+> Chrome et Edge**.
+>
+> **Répartition** : voix cloud sur le **web**, natif sur **téléphone** (bon,
+> gratuit, immédiat). `language=fr` imposé + **prompt de vocabulaire** contre
+> « Bobodo » → « Bob au dos ». Modèle et voix **remplaçables par requête**, la
+> réponse dit toujours quel moteur a produit le texte.
+>
+> ⚠️ **NON TRANCHÉ** : quel moteur sur de l'audio burkinabè. Les bancs publics
+> annoncent 10,3 % (Whisper V3) mais **21–30 % sur accents africains**. Se
+> décide par un essai réel, pas sur une page de documentation.
+> **NON ÉPROUVÉ** : aucune vraie voix transcrite, aucune réponse prononcée par
+> le cloud à ce jour.
+>
 > ### 🚀 04/09 — TOUT EST EN LIGNE (constaté, pas supposé)
 >
 > | Maillon | Preuve |
