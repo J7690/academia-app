@@ -108,29 +108,45 @@ def rpc(nom: str, corps: dict | None = None):
 
 
 def reveiller_une_machine(job_id: str) -> None:
-    """Demande une machine TOUT DE SUITE, sans attendre le passage du cron.
+    """Demande une machine TOUT DE SUITE, des que la capsule est prete.
 
     POURQUOI CE RACCOURCI EXISTE.
-    `studio-orchestrateur` tourne toutes les trois minutes. Un etudiant qui
-    lance son animation pouvait donc attendre jusqu'a trois minutes AVANT
-    meme qu'on demande la machine -- une attente pure, pendant laquelle rien
-    ne se passe et rien ne s'affiche. Sur une production qu'on cherche a
-    raccourcir, c'est du temps perdu pour rien.
+    Le preparateur sait a la seconde pres quand la capsule devient prete. Sans
+    lui, l'etudiant attendrait le passage d'un cron -- une attente pure,
+    pendant laquelle rien ne se passe et rien ne s'affiche.
 
-    Le preparateur, lui, sait a la seconde pres quand la capsule devient
-    prete. Il declenche donc lui-meme, et le cron ne sert plus que de filet :
-    si cet appel echoue, le passage suivant rattrapera le travail.
+    POURQUOI `runpod-control` ET PLUS `studio-orchestrateur` (04/09/2026).
 
-    Les trois refus de l'orchestrateur protegent toujours : rien en attente ->
-    aucune machine ; une machine deja active -> refus ; plafond quotidien ->
-    refus. Appeler plus souvent ne peut donc pas faire louer davantage.
+    Cet appel visait `studio-orchestrateur`, qui cree ses machines sur
+    `runpod/pytorch:...` -- une image generique, SANS Blender ni moteur, ecrite
+    en dur ligne 55 de cette fonction. C'est exactement l'image qui a provoque
+    le defaut majeur du 14/08 (« deux chaines de production en parallele : la
+    vieille a pris le travail et l'a tue en 4 secondes »), apres quoi son cron a
+    ete desactive -- mais CET appel-ci, lui, est reste.
+
+    Consequence mesuree : le 21/08 a 06:55, la capsule « la tonneur » etait
+    PRETE (1 156 images, 5 scenes, narration de 46 s). Cet appel a cree la
+    machine `qlxutcbw5bh5wd` sur la mauvaise image : jamais amorcee, aucune
+    adresse SSH, journal vide, tuee a 07:20 pour `amorcage_jamais_abouti`. Le
+    cron « filet » evoque ci-dessus etant desactive, **le travail est reste
+    bloque 14 jours**. C'etait le dernier travail 3D du projet.
+
+    `runpod-control` est la chaine en service, celle qui a produit les rendus du
+    20/08 : elle lit l'image ET l'environnement dans `app.studio_config` (donc
+    `academia-studio:1.3.0`, avec Blender et le moteur), demande une RTX 4090 et
+    non une A40, et injecte le jeton AVANT la creation -- notre image n'ouvrant
+    pas sshd, un jeton ecrit apres coup n'arriverait jamais.
+
+    Les protections restent : plafond de machines et comptage des machines non
+    terminees sont dans `runpod-control`. Appeler plus souvent ne peut donc pas
+    faire louer davantage.
     """
     import json
     import urllib.request
     try:
         requete = urllib.request.Request(
-            f"{SUPABASE_URL}/functions/v1/studio-orchestrateur",
-            data=json.dumps({}).encode("utf-8"), method="POST",
+            f"{SUPABASE_URL}/functions/v1/runpod-control",
+            data=json.dumps({"action": "creer"}).encode("utf-8"), method="POST",
             headers={
                 "apikey": SERVICE_KEY,
                 "Authorization": f"Bearer {SERVICE_KEY}",
@@ -142,11 +158,17 @@ def reveiller_une_machine(job_id: str) -> None:
         journal(f"{job_id} machine demandee — {action}"
                 + (f" ({corps.get('pod_id')})" if corps.get("pod_id") else ""))
     except Exception as e:  # noqa: BLE001
-        # Non bloquant : le cron rattrapera dans les trois minutes. Mais on le
-        # DIT, sinon on croirait la machine demandee alors qu'on attend le
-        # filet.
+        # IL N'Y A PLUS DE FILET, ET ON LE DIT.
+        #
+        # Ce message annoncait « le cron prendra le relais dans 3 min au plus ».
+        # C'etait faux depuis le 14/08 : le cron `studio-orchestrateur` a ete
+        # desactive ce jour-la, et rien ne l'a remplace. Un message qui promet
+        # un rattrapage inexistant est pire que pas de message -- on lit le
+        # journal, on se rassure, et le travail dort pendant deux semaines.
+        # C'est litteralement ce qui est arrive au travail du 21/08.
         journal(f"{job_id} demande immediate impossible ({str(e)[:120]}) — "
-                f"le cron prendra le relais dans 3 min au plus")
+                f"AUCUN RATTRAPAGE AUTOMATIQUE : le travail restera en attente "
+                f"tant qu'une machine ne sera pas creee a la main")
 
 
 def preparer_un(job: dict) -> None:

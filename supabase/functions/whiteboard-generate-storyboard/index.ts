@@ -29,7 +29,7 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '
 const ACTION_CODE = 'generate_storyboard';
 const EDGE_FN = 'whiteboard-generate-storyboard';
 
-const CORS_HEADERS: Record<string, string> = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,accept', 'Access-Control-Allow-Methods': 'POST,OPTIONS' };
+const CORS_HEADERS: Record<string, string> = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,accept,x-client-info', 'Access-Control-Allow-Methods': 'POST,OPTIONS' };
 function jsonResponse(data: unknown, status = 200): Response { return new Response(JSON.stringify(data), { status, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }); }
 
 

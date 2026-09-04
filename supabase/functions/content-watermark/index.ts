@@ -15,7 +15,7 @@ const FONT_URL = 'https://cdn.jsdelivr.net/gh/google/fonts/apache/roboto/static/
 
 const CORS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization,apikey,content-type,accept',
+  'Access-Control-Allow-Headers': 'authorization,apikey,content-type,accept,x-client-info',
   'Access-Control-Allow-Methods': 'POST,OPTIONS',
 };
 

@@ -39,7 +39,7 @@ async function callWithCascade(msgs: Array<{role:string;content:string}>, maxTok
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization,apikey,content-type,accept',
+  'Access-Control-Allow-Headers': 'authorization,apikey,content-type,accept,x-client-info',
   'Access-Control-Allow-Methods': 'POST,OPTIONS',
 };
 

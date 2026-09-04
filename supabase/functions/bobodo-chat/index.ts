@@ -15,7 +15,7 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '
 // CORS headers for browser clients (Flutter Web, SPAs, etc.)
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization,apikey,content-type,accept',
+  'Access-Control-Allow-Headers': 'authorization,apikey,content-type,accept,x-client-info',
   'Access-Control-Allow-Methods': 'POST,OPTIONS',
 };
 
