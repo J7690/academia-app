@@ -459,6 +459,33 @@ multi-agents avec vérification adverse. **Rapport complet et ancré :
 > `academia-app-henna.vercel.app`, **qui répond 404**. Vestige d'un hébergeur
 > abandonné, à corriger dans les paramètres du dépôt.
 >
+> ### 🚀 04/09 — TOUT EST EN LIGNE (constaté, pas supposé)
+>
+> | Maillon | Preuve |
+> |---|---|
+> | `main` sur GitHub | `2a5c8ba` → **`7ecb360`** (relevé avant *et* après) |
+> | Edge Function `bobodo-chat` | version **104 → 105**, 13:14:28 UTC |
+> | Migrations base | appliquées, vérifiées rôle par rôle |
+> | **Netlify** | **ETag `d8e2c71…` → `cfedc589…`** — reconstruit |
+> | app.academiea.com | **HTTP 200**, sert le nouveau `main.dart.js` |
+>
+> **Reste NON ÉPROUVÉ en usage réel** (le code est en ligne, personne ne s'en
+> est encore servi) : téléchargement d'un reçu, barre mobile à 375 px, arrivée
+> des événements `program_apply` / `university_site_view` / `search` en base,
+> inscription par téléphone conservant le nom, colonne `origine` se remplissant.
+>
+> Requête de contrôle, à passer dans quelques jours :
+> `select event_type, count(*) from app.analytics_events where event_type in
+> ('program_apply','university_site_view','search') group by 1;`
+> et `select origine, count(*) from app.bobodo_messages group by 1;`
+>
+> ⚠️ **LWS — décision NON prise seul.** Jocelyn a ouvert l'accès au VPS pour
+> « installer les moteurs ». Mesuré ce jour : **4 cœurs, 8 Go, charge 0,00,
+> AUCUN GPU**. Y mettre un moteur de transcription contredirait la contrainte
+> non négociable n°2 de `CLAUDE.md` (« aucun calcul d'IA sur le VPS ») **et**
+> l'audit mesuré du 14/06 (Whisper y saturait à 261–303 % de CPU pour
+> 1 utilisateur, NO GO). Signalé pour arbitrage, pas exécuté.
+>
 > ### 🔒 04/09 — VOCAL BOBODO : FAILLE FERMÉE, ORIGINE TRACÉE
 >
 > **Faille (fermée)** : `app_append_bobodo_message` était un INSERT nu ouvert à

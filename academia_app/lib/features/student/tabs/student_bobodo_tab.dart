@@ -2,6 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
+
+import '../../../services/bobodo_vocal_cloud_service.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -1623,7 +1627,41 @@ class _StudentBobodoTabState extends State<StudentBobodoTab> {
     }
   }
 
+  /// Fait parler Bobodo.
+  ///
+  /// Sur le WEB, on demande d'abord la voix du cloud : les voix du navigateur
+  /// sont des voix système anciennes (mesuré le 04/09/2026 sur
+  /// app.academiea.com : Hortense, Julie, Paul — nettement robotiques), et un
+  /// assistant qui parle mal est un assistant qu'on n'écoute pas.
+  ///
+  /// Sur TÉLÉPHONE, la voix du système est bonne, gratuite et immédiate : on ne
+  /// paie pas des crédits pour faire moins bien.
+  ///
+  /// Dans tous les cas, un échec du cloud retombe sur la voix locale plutôt que
+  /// de laisser Bobodo muet. Le silence serait le pire des deux.
   Future<void> _speakWithLocalTts(String text) async {
+    if (text.trim().isEmpty) return;
+
+    if (kIsWeb) {
+      try {
+        final octets = await BobodoVocalCloudService.instance.parler(text);
+        if (octets != null && octets.isNotEmpty && mounted) {
+          setState(() => _isSpeaking = true);
+          await _audioPlayer.setSourceBytes(octets);
+          await _audioPlayer.resume();
+          _audioPlayer.onPlayerComplete.listen((_) {
+            if (!mounted) return;
+            setState(() => _isSpeaking = false);
+            if (_isConversationMode) _onAudioPlaybackComplete();
+          });
+          return;
+        }
+        debugPrint('[TTS] voix cloud indisponible — repli sur la voix du navigateur');
+      } catch (e) {
+        debugPrint('[TTS_CLOUD_ERROR] $e — repli sur la voix du navigateur');
+      }
+    }
+
     try {
       setState(() => _isSpeaking = true);
       await _flutterTts.speak(text);

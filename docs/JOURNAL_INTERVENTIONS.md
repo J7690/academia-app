@@ -1440,6 +1440,46 @@ est celle qui produit déjà 4 927 lignes, mais ces appels-ci n'ont jamais tourn
 app.analytics_events where event_type in ('program_apply','university_site_view',
 'search') group by 1`.
 
+### 04/09 — DÉPLOIEMENT COMPLET, ET UN REFUS MOTIVÉ SUR LWS
+
+Feu vert de Jocelyn pour déployer tout ce qui ne l'avait jamais été.
+
+**Déployé et prouvé :**
+- **Edge Function `bobodo-chat`** : version **104 → 105**, 13:14:28 UTC, relevé
+  par `supabase functions list`. Déployée avec `--no-verify-jwt` pour préserver
+  le réglage existant (la fonction vérifie le jeton elle-même).
+- **`main`** : `2a5c8ba` → **`7ecb360`**, relevé AVANT et APRÈS comme l'exige
+  `CLAUDE.md` §6. 27 fichiers, avance rapide, aucun conflit. Contrôle des gros
+  fichiers refait avant l'ajout (leçon du dump de 2,5 Go).
+- **Migrations base** : appliquées et vérifiées rôle par rôle au fil de la
+  séance.
+- Surveillance de l'`ETag` de `main.dart.js` armée pour constater le
+  redéploiement Netlify au lieu de l'annoncer.
+
+**Défaut corrigé** (celui que j'avais laissé) : le repli vocal testait
+`sender == 'bobodo'` alors que la base écrit `'assistant'` — il ne s'est jamais
+déclenché. Aligné sur `!= 'student'`, la forme employée partout ailleurs dans
+le fichier : elle ne dépend pas du libellé exact.
+
+**LWS — ce que je n'ai PAS fait, et pourquoi.** Jocelyn a signalé l'abonnement
+LWS et proposé d'y « installer les moteurs ». Mesure du VPS ce jour :
+**4 cœurs, 8 Go, charge 0,00, 117 Go libres, AUCUN GPU** (l'ASPEED est la puce
+d'administration du serveur, pas du calcul).
+
+Y installer un moteur de transcription contredirait **deux** choses écrites :
+1. `CLAUDE.md`, contrainte non négociable n°2 — « **Aucun calcul d'IA sur le
+   VPS.** 4 vCPU dédiés à la capture. Toute IA passe par une Edge Function
+   cloud » ;
+2. l'audit du **14/06** (`.windsurf/`, 78 documents) qui a MESURÉ Whisper sur
+   ce même VPS : **CPU 261–303 %**, **1 utilisateur**, audios de 5 personnes
+   mélangés, **NO GO de production**.
+
+Le VPS n'est pas inutile — il porte déjà trois services (studio-preparateur,
+video-worker, whiteboard-worker) et sa charge nulle le montre disponible pour
+eux. Mais la capture vidéo est précisément ce à quoi ses 4 cœurs sont réservés :
+y remettre de l'IA reviendrait à refaire l'erreur déjà payée. **Décision non
+prise seul : signalée à Jocelyn pour arbitrage.**
+
 ### 04/09 — AUDIT DU VOCAL BOBODO : CE QUI TOURNE N'EST PAS CE QU'ON CROYAIT
 
 Audit demandé par Jocelyn **avant** toute proposition : Supabase d'abord, puis
