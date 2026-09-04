@@ -459,6 +459,29 @@ multi-agents avec vérification adverse. **Rapport complet et ancré :
 > `academia-app-henna.vercel.app`, **qui répond 404**. Vestige d'un hébergeur
 > abandonné, à corriger dans les paramètres du dépôt.
 >
+> ### 🎙️ 04/09 (correctif) — LA DICTÉE WEB PASSE ENFIN PAR WHISPER
+>
+> Jocelyn a essayé : « détection de la voix très médiocre ». **Il avait raison :
+> je n'avais branché le cloud que sur la voix SORTANTE.** `transcrire()`
+> n'était appelée nulle part — l'écoute utilisait toujours le navigateur.
+>
+> **Corrigé** : `EnregistreurVoix` (via `startStream`, portable web + mobile,
+> en-tête WAV écrit à la main car le flux ne rend que du PCM brut). Web →
+> Whisper avec `language=fr` et le vocabulaire Academia ; téléphone → natif
+> (meilleur et gratuit). Le texte est **déposé dans le champ, jamais envoyé
+> seul** : l'étudiant corrige avant d'envoyer.
+> Bornes : 45 s max, moins de 0,3 s rejeté.
+>
+> **Mesuré** : analyze **0 erreur / 2 100** (le compteur était monté à 2 105 —
+> `anti_boucle.py` l'a signalé — puis ramené) ; build web réussi.
+> `main` → **`7916741`**.
+>
+> ⚠️ **INTERFACE : critique de fond NON traitée.** Audit : **2 micros, 2 boutons
+> « envoyer », 1 bouton clavier, 1 bouton conversation en haut**, et **3 états
+> qui se croisent** (`_isRecordingMode`, `_isConversationMode`,
+> `_conversationState` à 5 valeurs) sur **4 zones** d'écran. Seul l'état « Je
+> transcris… » a été ajouté. **Refonte à proposer séparément.**
+>
 > ### 🎙️ 04/09 — LE VOCAL WEB EST EN LIGNE
 >
 > | Maillon | Preuve |

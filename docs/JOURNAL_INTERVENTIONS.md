@@ -1440,6 +1440,60 @@ est celle qui produit déjà 4 927 lignes, mais ces appels-ci n'ont jamais tourn
 app.analytics_events where event_type in ('program_apply','university_site_view',
 'search') group by 1`.
 
+### 04/09 (correctif) — LA DICTÉE WEB N'ÉTAIT PAS BRANCHÉE SUR LE CLOUD
+
+Jocelyn a essayé la version déployée : « la détection de la voix est très très
+médiocre ». **Il avait raison, et la cause était de mon fait.**
+
+**Ce que j'avais annoncé sans le livrer.** Le commit `87214ca` envoyait la voix
+SORTANTE au cloud, mais l'écoute utilisait toujours `speech_to_text`, l'API du
+navigateur. Vérifié : **`transcrire()` n'était appelée NULLE PART**. Whisper,
+le `language=fr` imposé et le vocabulaire Academia n'entraient jamais en jeu.
+Ce que Jocelyn a essayé n'était donc pas ce que je lui avais décrit — c'est le
+défaut que ce dépôt traque, sous une autre forme : annoncer un correctif dont
+un maillon manque.
+
+**Écrit** : `EnregistreurVoix` — capte par `startStream()`, qui fonctionne sur
+le web ET sur téléphone, sans `dart:io` ni `dart:html`. L'enregistreur existant
+du projet (`CommunityAudioRecorder`) écrit dans `Directory.systemTemp`, d'où son
+`_stub` web qui refuse simplement d'enregistrer.
+
+Deux points techniques, mesurés et non supposés :
+- `startStream` ne rend que du **PCM brut**, sans en-tête : un moteur de
+  transcription le refuse, rien ne lui disant la fréquence ni les canaux. Les
+  44 octets d'en-tête WAV sont donc écrits à la main ;
+- **16 kHz mono 16 bits = 32 ko/s**, soit ~960 ko pour 30 s — loin des 25 Mo
+  acceptés par l'Edge Function, et exactement ce qu'attend Whisper.
+  Échantillonner plus haut alourdirait sans rien apporter.
+
+**Répartition assumée** : dictée cloud **sur le web**, reconnaissance **native
+sur téléphone** (meilleure ET gratuite). Le texte transcrit est **déposé dans
+le champ, jamais envoyé seul** : l'étudiant relit et corrige, ce qui rend
+acceptable un moteur donné à 21–30 % d'erreurs sur les accents d'Afrique de
+l'Ouest.
+
+**Bornes** : 45 s maximum (un micro laissé ouvert ne doit pas gonfler l'envoi),
+et moins de 0,3 s rejeté — c'est un appui involontaire, pas une question, et le
+moteur en tirerait un mot au hasard.
+
+**Interface — un pas, pas la refonte.** Ajout de l'état visible « Je transcris
+ce que tu viens de dire… » : entre l'arrêt du micro et l'arrivée du texte,
+l'écran restait muet plusieurs secondes. **La critique de fond de Jocelyn reste
+entière** et l'audit dit pourquoi : **deux micros, deux boutons « envoyer », un
+bouton clavier, un bouton conversation dans la barre du haut**, et **trois états
+qui se croisent** (`_isRecordingMode`, `_isConversationMode`,
+`_conversationState` à 5 valeurs) répartis sur **quatre zones** de l'écran.
+C'est une refonte à part entière, à proposer séparément.
+
+**Le garde-fou a servi.** `anti_boucle.py` a signalé 10 modifications du même
+fichier ; la mesure a montré que j'avais fait **monter le compteur de 2 100 à
+2 105**. Ramené à **2 100 exactement** avant le commit — la référence.
+
+**Mesuré** : `flutter analyze` **0 erreur / 2 100** ; build web release réussi
+(45,1 Mo). `main` : `ecc90b6` → **`7916741`**.
+
+**NON ÉPROUVÉ** : aucune voix réelle n'a encore traversé cette chaîne.
+
 ### 04/09 — LE VOCAL SUR LE WEB : IL N'ÉTAIT PAS MUET, IL PARLAIT MAL
 
 Demande de Jocelyn : rendre le vocal fonctionnel sur le web, avec une très
