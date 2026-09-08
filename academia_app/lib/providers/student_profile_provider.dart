@@ -162,6 +162,9 @@ class StudentProfileProvider extends ChangeNotifier {
     double? geoLongitude,
     String? bio,
     String? websiteUrl,
+    // Le SEUL champ academique encore exige pour candidater (08/09/2026).
+    String? lastDiploma,
+    String? lastDiplomaDetail,
   }) async {
     _setLoading(true);
     _setError(null);
@@ -188,6 +191,8 @@ class StudentProfileProvider extends ChangeNotifier {
         'p_geo_longitude': geoLongitude,
         'p_bio': bio,
         'p_website_url': websiteUrl,
+        'p_last_diploma': lastDiploma,
+        'p_last_diploma_detail': lastDiplomaDetail,
       };
 
       final result = await _client.rpc('app_student_update_full_profile', params: params);

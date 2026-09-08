@@ -24,6 +24,9 @@ enum DossierFieldKind {
   /// Mention scolaire, choisie dans [kMentionOptions].
   mention,
 
+  /// Dernier diplôme, choisi dans [kDiplomaOptions].
+  choice,
+
   /// Texte libre sur plusieurs lignes.
   longText,
 }
@@ -45,12 +48,41 @@ class DossierStep {
   const DossierStep({required this.title, required this.fields});
 }
 
-/// Les 12 champs exigés, en 3 étapes.
+/// CANDIDATER NE DEMANDE PLUS QU'UN CHAMP (décision du 08/09/2026).
 ///
-/// Une étape dont tous les champs sont déjà remplis n'est pas affichée : en
-/// pratique `full_name` est renseigné à l'inscription, l'étape 1 se réduit
-/// donc le plus souvent à la date de naissance.
+/// Le serveur exigeait DOUZE champs — identité, BEPC, BAC, projet d'études —
+/// avant d'accepter une candidature. Mesure du jour : 290 étudiants inscrits,
+/// **10 dossiers complets**, et 278 à qui il manquait onze champs ou plus.
+/// Aucune candidature déposée entre le 05/08 et le 08/09.
+///
+/// Le courtage n'a pas besoin de ces douze champs pour RECEVOIR une
+/// candidature ; il en a besoin pour monter le dossier envoyé à l'école — et
+/// c'est le travail de l'administrateur, qui parle de toute façon au candidat
+/// pendant la négociation.
+///
+/// Ne restent donc exigés que `full_name` (recueilli à la création du compte,
+/// `NOT NULL` en base) et `last_diploma`. **Les étapes suivantes ne sont plus
+/// jamais déclenchées par le dépôt d'une candidature** : elles sont conservées
+/// parce que ce formulaire sert aussi à compléter un profil, et parce que les
+/// dix dossiers déjà remplis doivent rester affichables.
+///
+/// Une étape dont tous les champs sont déjà remplis n'est pas affichée.
 const List<DossierStep> kDossierSteps = <DossierStep>[
+  DossierStep(
+    title: 'Ton parcours',
+    fields: <DossierField>[
+      // POURQUOI LE DERNIER DIPLÔME, ET NON LA SÉRIE DU BAC. Un candidat au
+      // master a une licence : lui demander sa série de bac ne dit rien de son
+      // parcours réel. Un seul champ couvre les deux cas.
+      DossierField('last_diploma', 'Dernier diplôme obtenu',
+          DossierFieldKind.choice),
+      // Facultatif : jamais réclamé par le serveur, donc jamais affiché seul.
+      // Il n'apparaît qu'à côté du diplôme, pour préciser « Licence en quoi ».
+      DossierField('last_diploma_detail', 'Précision (facultatif)',
+          DossierFieldKind.text,
+          hint: 'ex : série D, ou Informatique de gestion'),
+    ],
+  ),
   DossierStep(
     title: 'Identité',
     fields: <DossierField>[
@@ -101,6 +133,23 @@ const List<String> kMentionOptions = <String>[
   'Assez bien',
   'Bien',
   'Très bien',
+];
+
+/// Les diplômes proposés, du plus courant au plus rare dans le public visé.
+///
+/// « Aucun pour l'instant » n'est pas un aveu d'échec : un élève de terminale
+/// qui prépare son orientation doit pouvoir candidater. Le champ sert à
+/// orienter le courtage, pas à filtrer les candidats — c'est l'administrateur
+/// qui juge, pendant la négociation.
+const List<String> kDiplomaOptions = <String>[
+  'Baccalauréat',
+  'BEPC',
+  'Licence',
+  'Master',
+  'BTS / DUT',
+  'Doctorat',
+  'Autre',
+  "Aucun pour l'instant",
 ];
 
 final Map<String, DossierField> _byKey = <String, DossierField>{

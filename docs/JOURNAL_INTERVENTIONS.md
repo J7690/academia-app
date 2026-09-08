@@ -2120,3 +2120,100 @@ qui tournent réellement, les dix polices mesurées, les sources).
 
 **Rien de tout cela n'est commité.** Le moteur tourne sur LWS ; le dépôt ne
 l'enregistre pas encore. C'est la dette la plus urgente.
+
+---
+
+## 08/09/2026 (soir) — Le flux de candidature : cassé depuis un mois, débloqué et simplifié
+
+Demande de Jocelyn : « contrôle le flux de candidature et d'échange :
+candidat-admin-université, puis université-admin-étudiant ». Puis, après le
+constat : « beaucoup d'étudiants ont essayé de candidater et n'ont pas pu ».
+
+### Le flux lui-même est SAIN — treize étapes vérifiées
+
+Déroulé en simulant chaque identité (`set local request.jwt.claims`), pas en
+lisant le code : candidature → message du candidat → l'admin voit (32) → il lit,
+**transmet**, écrit à l'université → elle voit (3) et lit → elle répond et
+accepte → l'admin voit → répond au candidat → le candidat reçoit.
+
+**Cloisonnement étanche** : l'université lit *uniquement* le message de l'admin,
+jamais celui de l'étudiant ; l'étudiant lit *uniquement* son message et la
+réponse de l'admin — **ni la négociation, ni la réponse de l'université**.
+**Usurpation impossible** : quatre tentatives depuis une identité étudiant
+(se transmettre, s'auto-accepter, écrire comme admin, écrire comme université)
+→ `not_admin`, `not_university`.
+
+### Le défaut : une ligne SQL, deux filets neutralisés
+
+`app_is_student_dossier_complete()` : `v_missing_fields || 'date_of_birth'` —
+TEXT[] concaténé à un littéral **non typé**, d'où la surcharge `array||array`
+et `malformed array literal`. Reproduit hors contexte :
+`select (ARRAY[]::TEXT[]) || 'date_of_birth';`
+
+`full_name` ne plantait pas (toujours rempli) : **la première branche
+réellement atteinte levait**. Le défaut ne frappait donc QUE les dossiers
+incomplets — ceux que la fonction devait servir.
+
+La chaîne : la RPC lève → `checkDossier()` catch + **`debugPrint`** (invisible)
+→ `verified:false` → `apply_to_program.dart:101` **n'ouvre jamais le
+formulaire** → le filet de l'étape 4 attend `dossier_incomplete`, reçoit un
+SQLERRM, **ne se déclenche pas non plus**.
+
+**Preuve par les traces du tunnel** (instrumenté le 04/09) : `dossier_requis`
+= **0 personne**. Le formulaire ne s'est ouvert pour personne.
+
+### Mesures
+
+| | |
+|---|---|
+| étudiants inscrits | **290** |
+| dossiers complets | **10** |
+| à qui il manquait ≥ 11 champs | **278** (96 %) |
+| candidatures du 05/08 au 08/09 | **0** |
+| tunnel depuis le 04/09 | 3 clics, 3 abandons, 1 dépôt |
+
+### Décision de Jocelyn : un seul champ
+
+Douze champs exigés → **un**. Ne restent `full_name` (déjà `NOT NULL`) et
+`last_diploma`, nouveau. Le dernier diplôme plutôt que la série du bac : un
+candidat au master a une licence. Le reste est collecté par l'administrateur
+**pendant la négociation**. Résultat : 290 étudiants sur 290 n'ont plus qu'un
+champ à choisir dans une liste.
+
+### Actes
+
+- **Migration** `20260908210000_candidature_un_seul_champ.sql` — quatre actes :
+  correctif `array_append`, colonnes `last_diploma` / `last_diploma_detail`,
+  complétude ramenée à deux champs, `app_student_update_full_profile` étendue
+  **avec suppression explicite de l'ancienne signature** (le piège du doublon,
+  déjà payé sur `app_append_bobodo_message` le 05/09).
+- **Doublon supprimé** : `app_create_application(uuid, text)`. Vérifié avant —
+  sous-ensemble strict, **aucun appelant de production** (seul
+  `student_applications_provider.dart:117` appelle, avec les 8 paramètres),
+  absent du SQL source. Il rendait ambigu tout appel à 2 arguments.
+- **Dart** : `dossier_fields.dart` (nouveau `DossierFieldKind.choice`,
+  `kDiplomaOptions`, étape « Ton parcours » en tête),
+  `dossier_completion_sheet.dart` (saisie + rendu de la liste),
+  `student_profile_provider.dart` (deux paramètres).
+  `flutter analyze` : **2100**, le compte de référence — aucune régression.
+- **Nettoyage** : trois candidatures de contrôle retirées, et le profil d'un
+  vrai étudiant restauré — j'y avais écrit un diplôme qu'il n'a jamais déclaré.
+
+### Réfuté par la mesure
+
+La RLS de `app.application_messages` ne filtre pas l'`audience` : en base, un
+étudiant peut lire tous les messages de sa candidature. **Je m'apprêtais à
+l'annoncer comme une fuite ; c'est faux.** Le schéma `app` n'est pas exposé par
+PostgREST (404, PGRST205), la table n'est joignable que par les RPC, qui
+filtrent correctement. Défense en profondeur manquante, pas porte ouverte.
+
+### Reste ouvert
+
+- **`academia_app` n'est pas déployée.** Le serveur n'exige plus qu'un champ,
+  mais le formulaire qui le propose n'existe que dans le code. C'est le pas qui
+  rouvre réellement les candidatures.
+- Le `catch` de `checkDossier()` ne distingue pas « réseau coupé » de
+  « fonction serveur cassée » — c'est ce qui a rendu ce défaut invisible un mois.
+- L'audit par agents a été **coupé deux fois** par la limite de session (8/42
+  agents aboutis). Ses conclusions ne valent rien ; les alertes de sécurité ont
+  été retestées à la main.

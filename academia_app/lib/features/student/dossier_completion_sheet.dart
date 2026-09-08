@@ -86,7 +86,10 @@ class _DossierCompletionSheetState extends State<_DossierCompletionSheet> {
     _unsupported = unsupportedFields(missingFields);
     for (final step in _steps) {
       for (final field in step.fields) {
-        if (field.kind != DossierFieldKind.mention) {
+        // Les champs à choix n'ont pas de saisie libre : leur valeur vit dans
+        // `_choices`, pas dans un contrôleur de texte.
+        if (field.kind != DossierFieldKind.mention &&
+            field.kind != DossierFieldKind.choice) {
           _controllers.putIfAbsent(field.key, () => TextEditingController());
         }
       }
@@ -99,7 +102,8 @@ class _DossierCompletionSheetState extends State<_DossierCompletionSheet> {
   bool get _isLastStep => _index >= _steps.length - 1;
 
   String? _valueOf(DossierField field) {
-    if (field.kind == DossierFieldKind.mention) {
+    if (field.kind == DossierFieldKind.mention ||
+        field.kind == DossierFieldKind.choice) {
       return _choices[field.key];
     }
     final text = _controllers[field.key]?.text.trim() ?? '';
@@ -181,6 +185,8 @@ class _DossierCompletionSheetState extends State<_DossierCompletionSheet> {
       bacInstitution: _text('bac_institution'),
       bacCountry: _text('bac_country'),
       studyProjectText: _text('study_project_text'),
+      lastDiploma: _choice('last_diploma'),
+      lastDiplomaDetail: _text('last_diploma_detail'),
     );
     if (!mounted) return;
 
@@ -362,6 +368,39 @@ class _DossierCompletionSheetState extends State<_DossierCompletionSheet> {
 
   Widget _buildField(DossierField field) {
     switch (field.kind) {
+      // Le dernier diplôme : liste déroulante, même mécanique que la mention.
+      // C'est le SEUL champ académique encore exigé pour candidater — les onze
+      // autres sont devenus facultatifs le 08/09, l'administrateur collectant
+      // le dossier réel pendant la négociation.
+      case DossierFieldKind.choice:
+        return DropdownButtonFormField<String>(
+          key: ValueKey<String>(field.key),
+          initialValue: _choices[field.key],
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: field.label,
+            helperText: field.hint,
+            border: const OutlineInputBorder(),
+          ),
+          items: kDiplomaOptions
+              .map((option) => DropdownMenuItem<String>(
+                    value: option,
+                    child: Text(option),
+                  ))
+              .toList(),
+          onChanged: _saving
+              ? null
+              : (value) {
+                  setState(() {
+                    if (value == null) {
+                      _choices.remove(field.key);
+                    } else {
+                      _choices[field.key] = value;
+                    }
+                  });
+                },
+        );
+
       case DossierFieldKind.mention:
         return DropdownButtonFormField<String>(
           // `_choices` reste la source de vérité pour la validation ; le

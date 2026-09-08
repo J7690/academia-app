@@ -422,6 +422,13 @@ dérive de **l'index du mot**, jamais du hasard.
 
 ## 6. Prochain pas, dans l'ordre
 
+0 quater. **DÉPLOYER `academia_app`** — le seul pas qui manque au flux de
+   candidature (§9.0). Le serveur n'exige plus qu'un champ depuis le 08/09,
+   mais le formulaire qui le propose n'existe que dans le code local. Tant que
+   l'app n'est pas reconstruite, l'étudiant voit `last_diploma` signalé comme
+   un champ non corrigeable. **C'est le pas qui rouvre réellement les
+   candidatures pour 290 étudiants.**
+
 0 ter. **L'écriture manuscrite** (chantier ouvert le 08/09, en attente d'un
    choix de Jocelyn). Trois causes mesurées du « robotique » : durée **fixe**
    de 0,18 s quelle que soit la longueur du mot, courbe `linear`, révélation par
@@ -508,6 +515,67 @@ dérive de **l'index du mot**, jamais du hasard.
 Tout ce qui précède (§1-8) concerne le Smart Whiteboard / Studio 3D — **ça
 reste l'état mesuré de ce chantier-là**, ne pas le lire comme périmé par la
 ligne suivante.
+
+### 9.0 LE FLUX DE CANDIDATURE — débloqué et simplifié le 08/09
+
+**Le dépôt de candidature était cassé depuis le 05/08.** Zéro candidature en
+un mois. La cause tient en une ligne de `app_is_student_dossier_complete()` :
+
+```sql
+v_missing_fields := v_missing_fields || 'date_of_birth';   -- TEXT[] || littéral NON TYPÉ
+```
+
+PostgreSQL choisit la surcharge `array||array` et tente de convertir
+`'date_of_birth'` **en tableau** → `malformed array literal`. `full_name` ne
+plantait pas (toujours rempli, branche jamais atteinte) : **la première branche
+réellement exécutée levait**. Le défaut ne frappait donc QUE les dossiers
+incomplets — exactement ceux que la fonction devait servir.
+
+**La chaîne, et pourquoi elle était muette** :
+
+| # | Maillon | Effet |
+|---|---|---|
+| 1 | la RPC lève | pas de `missing_fields` |
+| 2 | `checkDossier()` catch + **`debugPrint`** | invisible en production, rend `verified:false` |
+| 3 | `apply_to_program.dart:101` exige `verified` | **le formulaire ne s'ouvre JAMAIS** |
+| 4 | le filet attend `dossier_incomplete`, reçoit un SQLERRM | **il ne se déclenche pas non plus** |
+
+**Preuve par vos propres traces** (tunnel instrumenté le 04/09) :
+`dossier_requis` = **0 personne**. Le formulaire ne s'est ouvert pour personne.
+
+**Décision de Jocelyn le 08/09 : candidater ne demande plus qu'UN champ.**
+Le dossier exigeait douze champs (identité 2, BEPC 4, BAC 5, projet rédigé)
+avant de postuler. Ne restent exigés que `full_name` (déjà `NOT NULL`,
+recueilli à l'inscription) et **`last_diploma`**, nouveau. Le dernier diplôme
+plutôt que la série du bac : un candidat au master a une licence. Le reste du
+dossier est collecté par **l'administrateur pendant la négociation** — il parle
+de toute façon au candidat.
+
+| Mesure | Avant | Après |
+|---|---|---|
+| étudiants inscrits | 290 | 290 |
+| dossiers complets | **10** | — |
+| à qui il manquait ≥ 11 champs | **278** | 0 |
+| champs à saisir pour candidater | **12** | **1** (liste déroulante) |
+| candidatures depuis le 05/08 | **0** | flux rouvert |
+
+**Aussi corrigé** : `app_create_application` existait **en double** (2 et 8
+arguments), rendant ambigu tout appel à 2 arguments. Vérifié avant suppression —
+sous-ensemble strict, aucun appelant de production, absent du SQL source.
+Migration : `20260908210000_candidature_un_seul_champ.sql`.
+
+**Le flux lui-même est SAIN**, vérifié étape par étape en simulant chaque
+identité : étudiant → admin → université → admin → étudiant, treize étapes.
+Le cloisonnement est étanche (l'université ne voit pas le message de
+l'étudiant ; l'étudiant ne voit ni la négociation ni la réponse de
+l'université) et l'usurpation impossible (quatre tentatives refusées :
+`not_admin`, `not_university`).
+
+**⚠️ RESTE À FAIRE** : la simplification est active **côté serveur**, mais le
+formulaire qui propose la liste déroulante n'existe que dans le code Dart —
+`academia_app` doit être reconstruite et déployée, sans quoi l'étudiant verra
+`last_diploma` signalé comme un champ « que le formulaire ne sait pas
+corriger ». Le code prévoit ce cas et le dit, mais le parcours reste incomplet.
 
 ### 9.1 Les JEUX de l'onglet Challenge — audité et partiellement corrigé le 20/08
 
