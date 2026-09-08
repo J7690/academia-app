@@ -5,7 +5,7 @@
 > lequel est vrai aujourd'hui. Celui-ci le dit. Les autres sont des **archives
 > datées** : on les lit pour comprendre *pourquoi*, jamais pour savoir *où on en est*.
 >
-> **Relevé le : 19/08/2026, 17 h.** Toute ligne non datée est réputée périmée.
+> **Relevé le : 08/09/2026, 11 h.** Toute ligne non datée est réputée périmée.
 > Toute affirmation ici doit être **mesurée**, jamais supposée (cf. §7).
 
 ---
@@ -18,7 +18,71 @@
 
 ## 1. Où on en est, en une phrase
 
-**Le flux 3D est validé DEPUIS L'APPLICATION, sur téléphone.** Le 20/08 à 13:11,
+> ### ⚠️ DEUX CHANTIERS DISTINCTS. NE PAS LES CONFONDRE.
+> | | moteur | où il tourne | état au 08/09 |
+> |---|---|---|---|
+> | **Tableau manuscrit** | `whiteboard_vision/`, HTML+CSS | **LWS** | chantier du 08/09 ci-dessous |
+> | **Animation 3D** | `studio_visuel/`, Three.js | pod RunPod | chantier du 05/09 (§1 bis) |
+>
+> Le 05/09, j'ai perdu un cycle GPU entier en corrigeant le chemin **Blender**
+> alors que la 3D tourne sur le **moteur navigateur**. Vérifier lequel on touche.
+
+**Le tableau manuscrit porte enfin la marque** (08/09). Ouvert par Jocelyn :
+« la présentation et les couleurs ne me conviennent pas », « le titre est hors
+du champ de la feuille », « la main est générique ». Références : **GoodNotes**
+et **CapCut**.
+
+| Ce qui clochait | Mesure | État |
+|---|---|---|
+| titre du générique hors cadre | 897 px pour **760 utiles** → dépassait de **137 px** | paliers 88/68/54 px |
+| titre de scène « pas assez grand » | **66 px — la taille exacte du corps** | **96 px**, centré, souligné |
+| titre collé en haut | **18 px** du bord | **318 px**, 184 px sous le bandeau |
+| badge du sujet non borné | 565 px / 33 car. → sortait au-delà de 45 car. | plafonné, coupure propre |
+| cinq accents sans rapport avec la marque | bleu, vert, rouge, jaune, marine | **vert `#388840` + rouge `#E02018`** |
+| la nappe sonore n'avait **jamais** joué | `music_bed.mp3` jamais déposé depuis le 27/07 | posée, **−43,7 dB** dans les silences |
+
+**Le logo se déplace pendant le cours**, façon TikTok : cycle de 18 s, trois
+positions de 6 s (bas-gauche → bas-droite → haut-droite), 150 px de marge
+partout. Il **saute** au lieu de glisser, pour ne jamais passer sur un mot.
+Tout est en CSS — voir §5 bis pour la raison, qui n'est pas évidente.
+
+Déployé sur LWS et **validé par Jocelyn sur une vidéo de 24 s**.
+
+## 1 bis. Le chantier 3D du 05/09 — toujours vrai
+
+**Les capsules montrent enfin l'OBJET DU SUJET** (05/09). Un septième verbe,
+`convoquer`, fait venir un modèle 3D réel d'Objaverse au lieu d'en dessiner une
+approximation. Mesure sur « le volcan », travail `44198332`, moteur **1.5.2** :
+
+```
+FAIT - chargeur glTF copie (87 entrees depuis examples/jsm)
+FAIT - convoquer tire a091df40 (by) 4214 Ko — a volcano with fire.
+FAIT - convoquer tire 2595a9b5 (by) 3477 Ko — mountain scene...
+FAIT - convoquer tire a30ff3a5 (by)  408 Ko — Planet Pluto
+FAIT - 3/3 maillage(s) charge(s)     COMPOSITION s1..s5 : 0 degradation convoquer
+```
+
+| | avant (1.4.4) | après (1.5.2) |
+|---|---|---|
+| contraste | 4,87 | **18,36** |
+| durée figée | 25,29 s | **0,0 s** |
+| objet du sujet à l'image | non | **oui** |
+
+Le défaut d'origine, signalé par Jocelyn le 05/09 : la capsule « volcan »
+montrait **la même lentille filaire dans les trois scènes** pendant que la
+narration parlait de chambre magmatique puis de cône volcanique. La cause
+n'était pas le style — c'est qu'aucun verbe ne savait faire venir un objet qui
+EXISTE : `silhouetter` prend des coordonnées, et aucun modèle de langue ne
+dessine un volcan point par point.
+
+**Il a fallu huit versions du moteur (1.4.5 → 1.5.2) et cinq défauts distincts**,
+dont trois muets — voir §4.6. Le plus coûteux : je corrigeais le chemin
+**Blender** alors que la production tourne sur le **moteur navigateur**.
+
+**Ce qui précède reste vrai** — le flux est validé depuis l'application, sur
+téléphone :
+
+Le 20/08 à 13:11,
 Jocelyn a saisi « géomètre » sur son TECNO ; les traces de l'appareil montrent la
 chaîne complète : commande → suivi → URL signée → `Building AcademiaPlaybackView`.
 **Il a regardé sa vidéo dans l'application.** C'est le maillon que la base seule
@@ -113,6 +177,43 @@ Mesures du 19/08 sauf mention contraire.
 - **Réveil événementiel** — machine créée ≈ 1,5 s après l'insertion du travail.
 - **Arrêt automatique** — machine coupée seule après 10 min de silence.
 
+Mesures du **05/09** (chantier `convoquer`) :
+
+- **L'index des objets** — 69 termes, 764 objets d'Objaverse, licences vérifiées
+  une par une (`by`, `by-sa`, `cc0` ; 316 candidats écartés). Chaque entrée porte
+  son **chemin** de téléchargement : sans lui, le pod tirerait
+  `object-paths.json.gz` (60 Mo) dans la boucle étudiant, à chaque capsule.
+  Banc d'essai : `contours/test_index_objets.py --index` → **764/764, 0 défaut**.
+- **La chaîne `convoquer` de bout en bout** — terme → index → téléchargement
+  HuggingFace → service HTTP local → `GLTFLoader` → objet dans la scène :
+  **3/3 maillages chargés**, 0 dégradation sur 5 scènes.
+- **Le journal du pod remonte** — déposé dans Storage sous
+  `capsules/refuses/<capsule>/<horodatage>/journal-{accepte,refus}.txt`, **y
+  compris quand la capsule est ACCEPTÉE**. C'est ce qui a permis de trouver les
+  causes 3 et 5 du §4.6 ; sans lui, on ne voyait que « image figée ».
+- **La compilation Flutter web** — `flutter analyze` 2100 issues (compte de
+  référence inchangé), `flutter build web --release` **code 0 en 236,5 s**,
+  sortie 45,1 Mo / `main.dart.js` 10,36 Mo.
+
+Mesures du **08/09** (tableau manuscrit) :
+
+- **Le filigrane, en conditions réelles** — Playwright sur LWS, `file://`,
+  1080×1920 : image chargée (240×218), **aucun chevauchement du titre aux trois
+  positions**, aucune requête en échec. Vérifié après un premier essai où le
+  logo était à 335 px et **mangeait le titre** (318 px) — défaut vu à l'image,
+  pas déduit.
+- **Le son** — dans un silence de narration : voix seule **−54,0 dB**, avec
+  nappe **−43,7 dB** (audible). Pendant la parole : **−20,1 dB dans les deux
+  cas**, donc la voix n'est jamais touchée. Boucle sans couture : **7,5 %**
+  d'écart début/fin (contre 52 % avec du bruit brun, qui dérive).
+- **Non-régression du gabarit** — six longueurs de titre × sept types de blocs,
+  plus le mode `typed` : tout passe, aucune variable de gabarit non résolue.
+- **Les polices** — dix candidates vérifiées avec `fontTools 4.64` sur les
+  fichiers réels de Google Fonts : **les dix portent tous les accents
+  français**. Ce qui départage est le titre à 96 px sur 780 px utiles : Kalam,
+  Architects Daughter, Petit Formal Script et Kaushan Script passent à **deux
+  lignes**.
+
 ## 4. Ce qui est CASSÉ, et ce qu'on en sait
 
 ### 4.1 Le cadrage mesurait le décor — CORRIGÉ le 19/08 (`6748e76`)
@@ -167,7 +268,30 @@ qu'il ne peut pas télécharger — la contrainte avait raison, l'encodage avait
 Les formes sont justes mais **génériques** : le navire-citerne du plan 5 est un
 bloc, les masses organiques du plan 1 sont trois ovoïdes. L'invite corrigée le
 18/08 donne les bons verbes et les bonnes proportions ; elle ne donne pas encore
-de silhouette reconnaissable pour les objets techniques. **Non traité.**
+de silhouette reconnaissable pour les objets techniques.
+
+**Partiellement traité le 05/09 par `convoquer`** (§1) : pour les 69 termes de
+l'index, la scène montre désormais un objet réel. Restent génériques : tout ce
+qui est hors index, et tout ce qui est abstrait — ce dernier cas étant voulu, on
+ne modélise pas « la sociologie ».
+
+### 4.2 bis Le filaire sur un maillage dense donne un APLAT BLANC — 05/09, non traité
+Vérifié sur images extraites du travail `44198332` : le volcan convoqué apparaît
+comme une **masse blanche opaque**, pas comme une structure lisible. Les modèles
+d'Objaverse portent bien plus de triangles que les formes fabriquées par les six
+verbes géométriques ; `matiereFilaire` (wireframe pur) sature alors l'image.
+
+C'est un défaut de STYLE, pas de chaîne : l'objet est bien là, bien placé, bien
+mis à l'échelle. Deux pistes non tranchées — simplifier le maillage à
+l'importation, ou donner aux objets convoqués une matière propre (surface vitrée
++ arêtes atténuées) au lieu du filaire des formes fabriquées.
+
+### 4.2 ter Le verbe `ecrire` est INCONNU du moteur navigateur — préexistant
+`web/academia3d_web.js` n'expose que cinq verbes (`revolutionner`, `sculpter`,
+`extruder`, `silhouetter`, `napper`) plus `convoquer` depuis le 05/09. Le modèle
+émet régulièrement `ecrire` ; chaque occurrence produit
+« verbe « ecrire » inconnu » et la scène perd son texte 3D. Mesuré sur trois
+capsules d'affilée. Non traité — demande `TextGeometry` et une police embarquée.
 
 ### 4.3 Ce que l'audit croisé a laissé en suspens
 Audit des 6 verbes coupé par une limite de session : `revolutionner` et
@@ -224,6 +348,49 @@ téléphone. C'est le prochain pas n°1.
   RLS de mon fait interrogeait une table illisible par `authenticated`. Trouvée
   par une capture d'écran de Jocelyn, pas par la supervision.
 
+### 4.6 Les CINQ défauts du chantier `convoquer` — 05/09, tous résolus
+Huit versions du moteur (1.4.5 → 1.5.2) pour un seul verbe. Chacun de ces
+défauts était invisible tant que le précédent n'était pas levé ; trois étaient
+**muets**, et se présentaient tous sous le même symptôme — « image figée ».
+
+1. **Sélection par sous-chaîne.** L'index testait `mot in texte`. Résultats en
+   tête de liste : *foie* → « Liverpool FC logo », *dent* → « Toothless the white
+   dragon », *feuille* → « leafless, dead trees ». Les deux derniers proposaient
+   **l'exact contraire** du terme demandé. Corrigé par une règle de mot fléchi
+   (`\b<mot>(?:s|es|ing|ed|ic|al)?\b`), plus les pluriels irréguliers et composés
+   déclarés au vocabulaire (leaf/leaves, tooth/teeth, coronavirus).
+2. **L'objet détourné.** Le mot était juste, l'objet faux : *cerveau* → « a brain
+   sushi roll », *crâne* → « Skull 38 Logo », *muscle* → « Red muscle car »,
+   *squelette* → « Skeleton Sword ». Corrigé par une pénalité `DETOURNE`
+   (nourriture, logos, déguisements, armes, enseignes) qui rend le score négatif.
+3. **`TypeError: 'Journal' object is not callable`** — MUET. `_g_convoquer`
+   passait l'objet `Journal` là où `convoquer()` appelle son paramètre comme une
+   fonction. Le geste échouait à CHAQUE appel, réussi ou non. Une ligne.
+4. **Le mauvais moteur.** Je corrigeais `composer_scene.py` (chemin **Blender**)
+   alors que la production tourne sur le **moteur navigateur** depuis le 18/08.
+   Le journal disait `MOTEUR web — node` et `verbe « convoquer » inconnu` : il a
+   fallu porter le verbe en Three.js pour qu'il serve à quelque chose.
+5. **Le serveur HTTP local résolvait par `basename`** — MUET. Il aplatissait
+   l'arborescence, donc `GLTFLoader` ne trouvait pas ses dépendances
+   (`../utils/...`) ; Chromium répondait « Failed to fetch dynamically imported
+   module » **en nommant le module racine**, celui qui était présent. Les
+   maillages étaient bien téléchargés (4 214 Ko pour le volcan) et aucun n'était
+   chargé. Corrigé par des chemins relatifs + garde anti-traversée.
+
+**La leçon, et elle a un coût mesuré.** Les points 3 et 5 ont chacun consommé un
+pod GPU et un cycle complet pour livrer un message qui parlait d'autre chose.
+Ce qui a débloqué le diagnostic n'est aucun de ces correctifs, mais la **remontée
+du journal du pod** : sans elle, je devinais. Réparer l'observabilité d'abord
+n'est pas une préférence de méthode, c'est ce qui a fait la différence ici.
+
+### 4.7 « On garde ce qu'on refuse » n'a JAMAIS rien gardé — 05/09, corrigé
+Le mécanisme écrit le 18/08 pour pouvoir juger un refus déposait sous
+`refuses/<capsule>/…`. La policy INSERT du bucket `studio-visuel` impose
+`foldername(name)[1] = 'capsules'` — vérifié dans `pg_policies`. **Chaque dépôt
+de refus était donc rejeté**, l'échec avalé par son `except`, et le message perdu
+avec le pod. Trois semaines de refus sans une seule preuve conservée. Corrigé en
+déposant sous `capsules/refuses/…` — pas en élargissant la règle de sécurité.
+
 ## 5. Le verrou d'architecture est levé
 
 Corriger une ligne du moteur exigeait un poste allumé, Docker démarré, 4,5 Go
@@ -231,7 +398,53 @@ reconstruits. Depuis le 14/08 : l'**image** change quelques fois par an, le
 **moteur** se livre par un fichier dans Storage. Trois moteurs ont été livrés le
 19/08 (1.4.0 → 1.4.2) sans reconstruire une seule image.
 
+## 5 bis. Pourquoi une animation INFINIE ne casse pas la capture
+
+Ce point n'est pas évident et mérite d'être écrit une fois pour toutes, parce
+qu'il conditionne tout ce qu'on peut animer en boucle (filigrane, respiration,
+et demain le balayage d'écriture).
+
+`record_scene.js:102` fait, avant de filmer :
+
+```js
+for (const a of document.getAnimations()) a.currentTime = ms;
+```
+
+Sur une animation **infinie**, le navigateur ramène ce temps **modulo la durée
+du cycle**. La position à l'instant *t* est donc la même quelle que soit la
+tranche qui la calcule : **le rendu reste déterministe**, ce qui est la
+condition de la capture en trois tranches parallèles.
+
+**Corollaire** : toute animation en boucle est permise, à condition qu'elle soit
+purement CSS et que rien n'y dépende de `Math.random()` ni de l'horloge du mur.
+Quand il faut de l'irrégularité — pour que l'écriture paraisse humaine — elle se
+dérive de **l'index du mot**, jamais du hasard.
+
 ## 6. Prochain pas, dans l'ordre
+
+0 ter. **L'écriture manuscrite** (chantier ouvert le 08/09, en attente d'un
+   choix de Jocelyn). Trois causes mesurées du « robotique » : durée **fixe**
+   de 0,18 s quelle que soit la longueur du mot, courbe `linear`, révélation par
+   **opacité** donc sans sens de lecture. Le rythme, lui, est déjà bon.
+   Correctif proposé : **balayage habité** — masque `background-clip:text` +
+   durée proportionnelle + irrégularité déterministe (≈ 1 h 30 avec la police).
+   Police recommandée : **Caveat Brush**, ou **Dancing Script** pour une vraie
+   cursive. **Un point reste à mesurer** : `background-clip:text` n'a pas encore
+   été éprouvé dans la capture Playwright sur LWS. Un rendu suffit.
+   Le **tracé réel** des lettres (Hershey / format Vara) est écarté pour
+   l'instant : 2–3 jours contre une heure, pour un résultat moins joli.
+   Pages d'arbitrage publiées : « Trois encres pour Academia » et
+   « La main et l'encre ».
+
+0. **Rendre les objets convoqués LISIBLES** (§4.2 bis) — c'est le seul reste du
+   chantier du 05/09, et il se voit à l'écran : le volcan est un aplat blanc.
+   Trancher entre simplifier le maillage à l'importation et donner aux objets
+   convoqués une matière propre. Ne pas relancer de pod avant d'avoir tranché :
+   le journal remonte désormais, autant s'en servir pour mesurer d'un seul essai.
+0 bis. **Committer et pousser le chantier `convoquer`.** 14 fichiers modifiés,
+   rien n'est sur `main`, donc rien n'est visible ni déployé (CLAUDE.md §6).
+   Le moteur, lui, EST en production : `studio_config.version_moteur = 1.5.2`.
+   **Le dépôt et la production ont divergé** — c'est une dette, pas un état.
 
 1. ~~Rejouer le flux depuis l'écran~~ — **fait le 20/08**, deux sujets, lecture
    confirmée dans l'application (§1).
@@ -276,6 +489,11 @@ reconstruits. Depuis le 14/08 : l'**image** change quelques fois par an, le
 | Pas de bon de courtage à présenter à l'université | 02/09 | **ouverte** — le reçu de paiement existe (18/18, PDF signé) et prouve le versement ; aucun document ne présente le candidat à l'établissement |
 | Le système de quotas n'existe pas | 02/09 | **ouverte** — aucune table, colonne ni RPC côté candidature. À concevoir si la taxation par quotas est maintenue |
 | **93 écrans sur 153 sans `SafeArea`, alors que l'app cible l'API 36** | 01/09 | **ouverte** — Android 16 rend l'affichage bord à bord obligatoire et a supprimé l'option de refus. Ces écrans ne plantent pas, mais leur contenu peut passer sous les barres système. Majorité d'écrans d'administration ; le parcours étudiant est mieux couvert. **Non vérifié faute d'appareil Android 16** |
+| **Le disque du poste est saturé** | 05/09 | **ouverte** — relevé à **183 Mo libres sur 238 Go** (100 %). `flutter clean` a rendu 2,1 Go, il reste **2,62 Go** : assez pour un build web, **pas confortable pour un APK**. C'est le piège déjà mémorisé — sur ce poste, un échec Gradle est plus souvent un disque plein qu'une régression. Vérifier l'espace AVANT de conclure à un défaut de code. **Où est la place** (mesuré) : `~/.gradle` **16 Go**, dont `caches/8.12` 6,17 Go (**exigée** par `gradle-wrapper.properties`, à garder) et `caches/8.14` **4,36 Go — qu'aucun projet d'ici n'utilise**. Déjà supprimée le 03/09, elle est revenue : Android Studio la retélécharge. Aussi : `AppData/Local/Android` 4,8 Go, `Pub/Cache` 1,5 Go, `./flutter` (SDK committé) 951 Mo. **Non supprimé** — `~/.gradle` est partagé avec les autres projets de Jocelyn, la décision lui revient |
+| **Rien n'est commité, et deux moteurs tournent en production** | 05/09 | **ouverte — la plus urgente.** Studio 3D : moteur **1.5.2** actif (`studio_config.version_moteur`). Tableau : `whiteboard_page_builder.py`, `whiteboard_sound_design.py`, `marque/academia_logo.png` et `sfx/music_bed.mp3` déployés sur LWS. **Le dépôt n'enregistre ni l'un ni l'autre** ; `main` est inchangé. Si le poste tombe, ce qui tourne n'existe plus nulle part en source. Sauvegarde LWS : `whiteboard_page_builder.py.avant-marque-0509` |
+| Le pane d'aperçu sert les pages en `data:` | 08/09 | **fermée, à retenir** — une image `file://` y est refusée par le navigateur. Le filigrane semblait cassé alors qu'il ne l'était pas : la preuve a dû être faite sur LWS, où la page est un vrai fichier. **Ne jamais conclure depuis l'aperçu** pour ce qui touche aux ressources locales |
+| Le compte d'essai des parcours a été crédité | 05/09 | **fermée, signalée** — `essai.parcours@academia-interne.test` était à 0 crédit (coût d'une capsule : 15). Crédité de **200**, tracé dans `app.credit_transactions` (type `gift`, motif explicite). Compte interne en `.test`, domaine non routable |
+| La revue par agents n'a pas pu tourner | 05/09 | **ouverte** — limite hebdomadaire d'usage atteinte : 15 agents sur 16 en erreur, réinitialisation le 08/09 à 5 h UTC. Le chantier `convoquer` n'a donc **pas** eu de relecture indépendante |
 | Déclaration `AD_ID` fausse en Play Console | 01/09 | **ouverte, côté Jocelyn** — la console déclare un identifiant publicitaire que l'app n'utilise pas (aucune bibliothèque pub dans le projet, permission retirée exprès du manifeste). Avertissement non bloquant, mais il reviendra à chaque version tant que la déclaration dit « oui » |
 | `in_app_purchase` embarqué mais importé par aucun code Dart | 01/09 | **ouverte, décision produit** — la bibliothèque Billing pèse dans l'APK et impose sa contrainte de version (elle a causé un refus le 01/09) sans que rien ne s'en serve. À garder si la vente via Google Play est prévue, à retirer sinon |
 | Capsule 3D injoignable après fermeture de l'app | 19/08 | **corrigée, TOUJOURS PAS EXERCÉE** — l'écran d'aperçu rattrape le travail via `studio_creer_travail_etudiant`, idempotente. L'essai du 20/08 14:04 n'a **pas** sollicité ce chemin : `URL already known, skipping poll` — l'URL vivait encore en mémoire. Il faut FERMER l'application (la sortir des récentes) avant de rouvrir le cours |

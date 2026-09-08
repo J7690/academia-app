@@ -249,9 +249,20 @@ Générer un cours réel, puis vérifier : durée vidéo (~100–130 s attendus)
 | `INTRO_SEC = 3.2` | `whiteboard_page_builder.plan()` **et** `adelay` ffmpeg dans `whiteboard_render_worker.py` | Voix décalée sur **toute** la vidéo |
 | `renders/<id>/preview.mp4` | `whiteboard_upload_renderer.preview_object_key` **et** `SmartWhiteboardRenderService._previewObjectKey` | Aperçu cassé **en silence** (404 traité comme « pas prêt ») |
 | `TTS_SPEED = 0.88` | `whiteboard_narration.py` (via ffmpeg `atempo`) | L'Edge Function TTS **ignore** tout paramètre `speed` : ne pas perdre de temps dessus |
+| **La liste des 69 termes de `convoquer`** | `contours/index_objets.json` (ce qui existe) **et** la liste écrite en clair dans `prompt_capsule.ts` (ce que le modèle croit exister) | Le modèle demande un terme absent, `convoquer` rend `None`, et **la scène n'a pas d'objet à montrer** — le défaut même que ce verbe corrige |
+| `version_moteur` | `app.studio_config` (ce que le pod tire) **et** le fichier `VERSION` **dans l'archive publiée** | `sonde_pret.js:81` **refuse la machine** si les deux diffèrent : plus aucun rendu, pour un écart d'étiquette |
+| La liste `FICHIERS` de `publier_moteur.sh` | le script **et** ce que `composer_scene` importe réellement | `convoquer.py` s'importe **dans** la fonction : oublié dans l'archive, tout s'installe, la sonde accepte, et seul l'objet du sujet manque |
 
 **Autre piège connu** : `proto_capture_bf.js` produit des **images blanches**. Pour toute
 validation visuelle, utiliser `snap_still.js` / `snap_frames.sh`.
+
+**Vérifier l'index avant de publier un moteur** :
+```bash
+python academia_bobodo_backend/studio_visuel/contours/test_index_objets.py --index
+```
+Il refuse les trois défauts déjà payés — le mot pris en sous-chaîne (« Liverpool »
+pour le foie), l'objet détourné (« a brain sushi roll » pour le cerveau), et
+l'entrée sans chemin (60 Mo retéléchargés par pod, dans la boucle étudiant).
 
 ---
 

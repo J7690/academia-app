@@ -1827,3 +1827,296 @@ que les six fichiers modifiés n'y étaient pour rien.
 À retenir pour les prochaines séances : ce poste travaille sur une marge de
 disque très faible, et un AAB release pèse 144 Mo. Le vérifier avant de lancer
 une compilation évite de confondre un disque plein avec une régression.
+
+---
+
+## 05/09/2026 — `convoquer` : les capsules montrent enfin l'objet du sujet
+
+**Point de départ, un constat de Jocelyn.** La capsule « le volcan » montrait la
+même lentille filaire dans les trois scènes pendant que la narration parlait de
+chambre magmatique puis de cône volcanique. Deuxième message, avec captures
+d'une référence (TikTok @matholic.ch) : « ça traite avec beaucoup plus de
+précisions, beaucoup plus d'illustrations que ce dont nous, on a pu produire ».
+
+**Cause.** Ce n'était pas le style — filaire bleu, grille, brume, sous-titres
+étaient conformes. Aucun des six verbes ne savait faire venir un objet qui
+EXISTE : `silhouetter` prend des coordonnées, et aucun modèle de langue ne
+dessine un volcan point par point. Faute de savoir tracer, il produit une forme
+neutre. La documentation du Studio nommait déjà ce manque.
+
+**Ce qui a été construit** — un septième verbe, `convoquer` :
+
+- `contours/construire_index_objets.py` — index bâti depuis Cap3D (1 006 782
+  descriptions) + métadonnées Objaverse. **69 termes, 764 objets**, licences
+  vérifiées une par une (`by`, `by-sa`, `cc0` ; 316 écartés). Chaque entrée porte
+  son **chemin** : sans lui le pod tirerait `object-paths.json.gz` (60 Mo) dans
+  la boucle étudiant, à chaque capsule, sur une machine qui vit dix minutes.
+- `convoquer.py` + `composer_scene.py` — le verbe côté Blender.
+- `web/academia3d_web.js` + `web/rendre_capsule_web.js` — le verbe côté **moteur
+  navigateur**, celui de production : résolution du terme et téléchargement côté
+  node, préchargement glTF dans la page, puis `convoquer()` synchrone.
+- `prompt_capsule.ts` — les **69 termes annoncés en clair** au modèle. Sans cette
+  liste il devinait ; « magma » n'existe pas, « volcan » oui.
+- `validate_capsule.ts` — validation du geste. Tests Deno : **37 passés, 0 échec**.
+- Deux bancs d'essai : `contours/test_index_objets.py` (règle + score + index) et
+  `test_convoquer_contrat.py` (le contrat, vérifiable sans Blender).
+
+**Huit versions du moteur, 1.4.5 → 1.5.2, et cinq défauts distincts** — chacun
+invisible tant que le précédent tenait, trois d'entre eux MUETS, et tous
+présentés sous le même symptôme : « image figée ».
+
+1. **Sous-chaîne** — l'index testait `mot in texte` : *foie* → « Liverpool FC
+   logo », *dent* → « Toothless the white dragon », *feuille* → « leafless, dead
+   trees ». Les deux derniers proposaient l'**exact contraire** du terme.
+   Corrigé par une règle de mot fléchi + pluriels irréguliers déclarés.
+2. **Objet détourné** — mot juste, objet faux : *cerveau* → « a brain sushi
+   roll », *crâne* → « Skull 38 Logo », *muscle* → « Red muscle car »,
+   *squelette* → « Skeleton Sword ». Pénalité `DETOURNE`, score rendu négatif.
+   Audit des 69 têtes de liste fait à l'œil avant de conclure.
+3. **`TypeError: 'Journal' object is not callable`** — MUET. `_g_convoquer`
+   passait l'objet journal là où `convoquer()` appelle son paramètre comme une
+   fonction : le geste échouait à **chaque** appel. Une ligne. Coût : un pod.
+4. **Le mauvais moteur** — je corrigeais le chemin **Blender** ; la production
+   tourne sur le **moteur navigateur** depuis le 18/08, et il répondait
+   « verbe « convoquer » inconnu ». Il a fallu porter le verbe en Three.js.
+5. **Serveur HTTP local par `basename`** — MUET. Il aplatissait l'arborescence,
+   `GLTFLoader` ne trouvait pas `../utils/...`, et Chromium répondait « Failed to
+   fetch dynamically imported module » **en nommant le module racine**, celui qui
+   était présent. Les maillages étaient téléchargés (4 214 Ko pour le volcan) et
+   aucun n'était chargé. Corrigé : chemins relatifs + garde anti-traversée.
+
+**Ce qui a débloqué le diagnostic n'est aucun de ces correctifs.** C'est la
+remontée du journal du pod. `journal()` n'était qu'un `print()` : tout mourait
+avec la machine, et seule une ligne d'erreur de 300 caractères remontait en base.
+Le journal est désormais déposé dans Storage — **y compris quand la capsule est
+ACCEPTÉE**, parce qu'une capsule acceptée peut être mauvaise : le travail
+`d1690901` est passé, déposé, lisible, et montrait une colonne rectangulaire
+surmontée d'une lentille.
+
+**Défaut annexe trouvé au passage — « on garde ce qu'on refuse » n'a jamais rien
+gardé.** Le mécanisme écrit le 18/08 déposait sous `refuses/…` ; la policy INSERT
+du bucket impose `foldername(name)[1] = 'capsules'` (vérifié dans `pg_policies`).
+Chaque dépôt était rejeté, l'échec avalé par son `except`, le message perdu avec
+le pod. Trois semaines de refus sans une preuve. Corrigé par le chemin
+(`capsules/refuses/…`), **pas** en élargissant la règle de sécurité.
+
+**Mesure finale** — travail `44198332`, sujet « le volcan », moteur **1.5.2** :
+
+```
+FAIT - chargeur glTF copie (87 entrees depuis examples/jsm)
+FAIT - convoquer tire a091df40 (by) 4214 Ko — a volcano with fire.
+FAIT - convoquer tire 2595a9b5 (by) 3477 Ko — mountain scene...
+FAIT - convoquer tire a30ff3a5 (by)  408 Ko — Planet Pluto
+FAIT - 3/3 maillage(s) charge(s)   COMPOSITION s1..s5 : 0 degradation convoquer
+```
+
+| | avant (1.4.4) | après (1.5.2) |
+|---|---|---|
+| contraste | 4,87 | **18,36** |
+| durée figée | 25,29 s | **0,0 s** |
+| objet du sujet à l'image | non | **oui** |
+
+**Ce qui reste, et se voit.** Le filaire appliqué à un maillage Objaverse dense
+donne un **aplat blanc** : l'objet est là, bien placé, bien à l'échelle, et peu
+lisible. Vérifié sur images extraites, pas déduit. Deux pistes non tranchées —
+simplifier le maillage à l'importation, ou donner aux objets convoqués une
+matière propre. Par ailleurs le verbe `ecrire` reste **inconnu du moteur
+navigateur** (défaut préexistant) : les textes 3D ne s'affichent pas.
+
+**Déploiements du jour** : Edge Function `whiteboard-generate-storyboard`
+(prompt + validation) ; moteurs 1.4.5 à 1.5.2 publiés dans `studio-moteur`,
+chacun relu par son URL publique avant bascule ; `studio_config.version_moteur`
+porté à **1.5.2**. Retour arrière : remettre cette clé à `1.4.4`.
+
+**Dépenses** : ~7 pods GPU RTX 4090 sur la séance, ≈ 0,02–0,04 $ la capsule.
+Un doublon relevé le matin (deux machines pour un seul travail, la seconde morte
+en « agent_muet ») — ≈ 0,15 $ perdus, cause non élucidée.
+
+**Compte d'essai** : `essai.parcours@academia-interne.test` était à 0 crédit
+(15 par capsule). Crédité de 200, tracé dans `app.credit_transactions` (type
+`gift`, motif explicite). Compte interne, domaine `.test` non routable.
+
+**Compilation, à la demande de Jocelyn en fin de séance.** Le disque était à
+**183 Mo libres sur 238 Go** — relevé avant de lancer quoi que ce soit, en
+application de la leçon du 03/09. `flutter clean` a rendu 2,1 Go (+ ~70 Mo de
+fichiers temporaires à moi). Résultat : `flutter analyze` **2100 issues**, soit
+le compte de référence inchangé — aucune régression ; `flutter build web
+--release` **code 0 en 236,5 s**, sortie 45,1 Mo, `main.dart.js` 10,36 Mo.
+Il reste **2,62 Go** : suffisant pour le web, juste pour un APK.
+
+**Non fait.** La revue indépendante du chantier : limite hebdomadaire d'usage
+atteinte, 15 agents sur 16 en erreur (réinitialisation le 08/09 à 5 h UTC). Le
+code n'a donc **pas** été relu par un regard extérieur. Et rien n'est commité :
+14 fichiers modifiés sur `candidature-dossier-inline`, `main` inchangé — alors
+que le moteur 1.5.2 tourne en production. **Le dépôt et la machine ont divergé.**
+
+---
+
+## 08/09/2026 — Le tableau manuscrit : marque, titre, filigrane, son
+
+**Chantier ouvert par Jocelyn** : « la présentation et les couleurs ne me
+conviennent pas », « le titre au début de la vidéo est hors du champ de la
+feuille », « la main qui écrit est générique ». Références citées :
+**GoodNotes** (la mise en page, l'écriture) et **CapCut** (les effets, le son).
+
+### Ce qui a été MESURÉ avant de toucher à quoi que ce soit
+
+- **Le titre du générique débordait.** Mesuré au navigateur sur le CSS réel :
+  la carte offrait **760 px utiles**, « L'interdépendance » en fait **897** —
+  il sortait de **137 px**, des deux côtés. « développement » passait à 24 px
+  près. Deux causes conjuguées : `font-size:88px` **fixe** quelle que soit la
+  longueur, et `.iw {white-space:nowrap}` — ce dernier ajouté exprès pour
+  éviter une coupure en plein mot (« sec / ond degré », vue à l'image). La
+  correction n'est donc pas de le retirer, mais de **descendre la taille** :
+  paliers 88 / 68 / 54 px selon le mot le plus long.
+- **Le titre de scène avait EXACTEMENT la taille du corps.** `.blk-title .txt`
+  portait `font-size:{font_size}px`, soit 66 px comme le texte courant. C'est
+  ce que Jocelyn décrivait par « pas suffisamment grand ». Porté à **96 px**
+  (1,45×), centré, souligné d'un trait de marque qui se tire depuis le centre.
+- **Le titre était collé à 18 px du haut.** `_plan()` calcule le défilement en
+  partant de `y = TOP_SAFE`, mais `#paper` n'avait **aucun padding-top** : les
+  blocs commençaient à 0. **Un décalage de 300 px entre le calcul et l'image.**
+  Corrigé ; le titre est à **318 px**, avec 184 px d'air sous le bandeau.
+- **Le badge du sujet n'était borné par rien** : 565 px pour 33 caractères, soit
+  ~17 px/caractère — au-delà de 45 caractères il sortait de la zone sûre du
+  feed. Plafonné à `CONTENT_W`, coupure propre.
+- **La main était faite de six primitives** (cercle beige, deux traits,
+  triangle, petit cercle). À 118 px sur 1080, cela se lit comme une tache.
+
+### Les couleurs de la marque, relevées et non estimées
+
+Comptage de pixels sur `academia_app/assets/marque/academia_logo.png` :
+**vert `#388840` (60,6 % des pixels colorés)** et **rouge `#E02018` (12,4 %)** —
+les couleurs du drapeau burkinabè. Elles remplacent **cinq accents** sans
+rapport avec la marque (bleu `#3b6fe0`, vert `#1aa179`, rouge `#d4452e`, jaune
+`#ffe066`, marine `#0f2c5c`) posés sur un fond à lignes et marge rouge
+d'écolier. Règle posée : **un fond, une encre, deux accents** — le vert porte la
+structure (titres, filets, définitions), le rouge ne sert qu'au mot-clé. Les
+lignes d'écolier deviennent un quadrillage pâle de 72 px : on quitte le cahier
+d'enfant sans quitter le cahier.
+
+### Le filigrane animé — et pourquoi c'était possible
+
+`record_scene.js:102` avance chaque animation par `a.currentTime = ms`. Sur une
+animation **infinie**, le navigateur ramène ce temps **modulo** la durée du
+cycle : la position du logo à l'instant *t* est donc identique quelle que soit
+la tranche qui la calcule. **Le rendu reste déterministe**, condition de la
+capture en trois tranches parallèles. Tout est en CSS, zéro JavaScript.
+
+Cycle de **18 s, trois positions de 6 s** : bas-gauche → bas-droite →
+haut-droite. Il **saute** au lieu de glisser — un logo qui traverse la page
+passerait sur le texte pendant tout son trajet.
+
+**Le vrai logo, pas un dessin approchant.** Une première version reconstituait
+la toque en SVG avec « ACADEMIA » en Georgia à côté ; Jocelyn a demandé le
+fichier réel. Recadré sur ses pixels visibles (600×545 utiles sur 600×664 — la
+marge transparente l'aurait décalé dans son cadre), réduit à 240×218, quantifié
+en 32 couleurs : **5 Ko au lieu de 212**. Affiché à 120×109 px, soit 11,1 % de
+la largeur.
+
+**Défaut trouvé au rendu réel, pas déduit** : en position haute le logo était à
+335 px et **chevauchait le titre**, qui commence à 318. Descendu dans la seule
+bande libre (162–271 px, entre le bandeau et le contenu). Une **assertion** rend
+désormais le conflit impossible : `MARQUE_HAUT + MARQUE_H < TOP_SAFE`.
+
+### Le son — la nappe n'avait jamais joué
+
+Le code la prévoit depuis le 27/07, **mais `sfx/music_bed.mp3` n'a jamais été
+déposé**. Les quatre bruitages (whoosh, pop, tampon, gratté) étaient bien là ;
+le fond, non. C'est pourquoi les capsules sonnaient à sec entre les phrases.
+
+Trois nappes ont été fabriquées **par ffmpeg** — aucun fichier tiers, aucune
+licence — et mixées sous une **vraie narration** avec le ducking de production,
+pour être écoutées : A drone, B pulsation, C souffle. Jocelyn a choisi **C**.
+
+**À signaler, et signalé à Jocelyn.** La démo C soumise au choix était à
+**−53,6 dB** dans les silences contre −54,0 pour la voix seule : **0,4 dB
+d'écart, quasi inaudible**. Son choix portait donc surtout sur « pas gênant ».
+Le niveau réel a été calibré ensuite : **VOL_MUSIC 0,10 → 0,14**, ce qui donne
+**−43,7 dB** dans le silence (+10,3 dB, audible) et **−20,1 dB pendant la voix,
+identique à sans nappe** — le `sidechaincompress` fait tout le travail.
+
+**La boucle est sans couture** : le fichier est une moitié suivie de son miroir
+(`areverse` + `concat`), donc début et fin sont identiques par construction.
+Mesure : **7,5 % d'écart** contre 52 % à la première tentative en bruit brun,
+qui dérivait.
+
+### La main : le stylo seul
+
+Choix de Jocelyn parmi trois options proposées (stylo seul, main dessinée,
+pointe lumineuse). Trois formes au lieu de six — corps en encre, capuchon en
+vert de marque, pointe. Il est en outre **neutre** : aucune question de teinte
+de peau devant le public visé.
+
+### Déploiement et vérification
+
+`whiteboard_page_builder.py`, `whiteboard_sound_design.py`,
+`marque/academia_logo.png` et `sfx/music_bed.mp3` copiés dans
+`/opt/whiteboard-worker/vision_engine/`. Sauvegarde :
+`whiteboard_page_builder.py.avant-marque-0509`. Worker redémarré, file
+interrogée normalement.
+
+Vérifié **en conditions réelles** sur LWS (Playwright, `file://`, 1080×1920) :
+image du logo chargée (240×218), **aucun chevauchement aux trois positions**,
+aucune requête en échec. Balayage de non-régression local : six longueurs de
+titre × sept types de blocs, plus le mode `typed` — tout passe, aucune variable
+de gabarit non résolue. Une **vidéo de 24 s** a été produite et livrée à
+Jocelyn, qui l'a validée.
+
+Un piège d'aperçu rencontré et écarté : le pane de prévisualisation sert les
+pages en `data:`, et une image `file://` y est **refusée par le navigateur**.
+Ce n'était pas un défaut du code — la preuve a dû être faite sur LWS, où la page
+est un vrai fichier. Ne pas conclure depuis l'aperçu.
+
+### Veille externe sur l'écriture (demandée explicitement par Jocelyn)
+
+Question : l'écriture est « robotique et rapide », et il veut une police
+« calligraphique mais manuscrite, très jolie ».
+
+**Trois causes mesurées** dans le code, toutes distinctes du rythme — lequel est
+déjà correct, `_words_html()` répartissant le délai au prorata des caractères
+déjà écrits : durée **fixe** de 0,18 s quelle que soit la longueur du mot ;
+courbe `linear` ; révélation par **opacité**, donc sans sens de lecture.
+
+**Quatre angles.** Technique : `stroke-dasharray` / `stroke-dashoffset` est la
+mécanique du tracé, **animable en CSS**. Plateformes : Doodly distingue le
+*standard wipe reveal* du *custom draw path* — **le balayage par masque est la
+norme du marché**, pas un pis-aller. Dépôts publics : **Vara.js**, licence
+**MIT vérifiée sur le dépôt**, polices en JSON de chemins, mais **exige
+JavaScript au rendu** — inutilisable en l'état avec notre capture ; polices
+**Hershey** (domaine public) pour le tracé à trait unique. Continuité : le
+journal ne contient **aucune décision motivée** sur le choix de Caveat — le
+rouvrir ne contredit donc rien.
+
+**Ce qui a été cherché pour contredire** : une bibliothèque d'écriture
+manuscrite **sans JavaScript** — aucune trouvée ; une police à trait unique
+aussi **belle** qu'une manuscrite — les Hershey sont utilitaires, faites pour
+graver, pas pour séduire.
+
+**Dix polices testées** avec `fontTools 4.64` sur les fichiers réels servis par
+Google Fonts (sous-ensemble `latin`), toutes en SIL OFL : **les dix portent tous
+les accents français**, le critère ne départage pas. Ce qui départage est le
+titre à 96 px sur 780 px utiles — **Kalam, Architects Daughter, Petit Formal
+Script et Kaushan Script passent à deux lignes** et repoussent tout le contenu.
+
+Recommandation soumise : **Caveat Brush** (même main, tracée au feutre ; Caveat
+est fine au point de paraître pâle à 66 px, et c'est une part de ce qui fait
+« générique »), ou **Dancing Script** pour une vraie cursive liée. Animation :
+**balayage habité** — masque + durée proportionnelle + irrégularité
+**déterministe dérivée de l'index, jamais aléatoire**, une capture en trois
+tranches devant produire exactement la même image. Tracé réel des lettres
+**écarté pour l'instant** : 2–3 jours contre une heure, pour un résultat moins
+joli.
+
+**Non vérifié, et dit comme tel** : `background-clip:text` fonctionne dans un
+navigateur (mesuré) mais **pas encore éprouvé dans la capture Playwright sur
+LWS**. Et les dix polices n'ont pas été comparées sur un téléphone réel.
+
+### Livrables
+
+Deux pages publiées pour arbitrage : « Trois encres pour Academia »
+(diagnostic + trois directions) et « La main et l'encre » (les trois animations
+qui tournent réellement, les dix polices mesurées, les sources).
+
+**Rien de tout cela n'est commité.** Le moteur tourne sur LWS ; le dépôt ne
+l'enregistre pas encore. C'est la dette la plus urgente.
