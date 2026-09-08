@@ -38,7 +38,20 @@ class DossierField {
   final DossierFieldKind kind;
   final String? hint;
 
-  const DossierField(this.key, this.label, this.kind, {this.hint});
+  /// Champ COMPAGNON : affiché avec son étape, jamais exigé.
+  ///
+  /// Sans cette notion, un champ que le serveur ne réclame pas ne peut pas
+  /// exister dans ce formulaire : `stepsForMissingFields` ne conserve que les
+  /// clés présentes dans `missing_fields`. `last_diploma_detail` — la précision
+  /// « Licence en quoi » — n'aurait donc JAMAIS pu s'afficher, alors que c'est
+  /// précisément ce qui rend le dernier diplôme exploitable pour le courtage.
+  ///
+  /// Un champ facultatif n'apparaît que si un AUTRE champ de son étape est
+  /// réclamé, et `_validateCurrentStep` ne le bloque jamais.
+  final bool optional;
+
+  const DossierField(this.key, this.label, this.kind,
+      {this.hint, this.optional = false});
 }
 
 class DossierStep {
@@ -80,7 +93,8 @@ const List<DossierStep> kDossierSteps = <DossierStep>[
       // Il n'apparaît qu'à côté du diplôme, pour préciser « Licence en quoi ».
       DossierField('last_diploma_detail', 'Précision (facultatif)',
           DossierFieldKind.text,
-          hint: 'ex : série D, ou Informatique de gestion'),
+          hint: 'ex : série D, ou Informatique de gestion',
+          optional: true),
     ],
   ),
   DossierStep(
@@ -165,16 +179,29 @@ String dossierFieldLabel(String key) => _byKey[key]?.label ?? key;
 List<String> unsupportedFields(List<String> missingFields) =>
     missingFields.where((key) => !_byKey.containsKey(key)).toList();
 
-/// Les étapes à afficher, réduites aux seuls champs réellement manquants.
+/// Les étapes à afficher, réduites aux champs réellement manquants — PLUS les
+/// champs facultatifs de ces mêmes étapes.
+///
+/// Le serveur ne réclame QUE ce qu'il exige. Un champ facultatif n'apparaît
+/// donc jamais dans `missing_fields`, et sans la seconde passe ci-dessous il
+/// serait invisible à jamais : c'était le cas de `last_diploma_detail`, la
+/// précision qui dit « Licence en quoi » et sans laquelle le dernier diplôme
+/// ne sert pas à grand-chose au courtage.
+///
+/// Une étape n'est retenue que si elle contient au moins un champ EXIGÉ : un
+/// facultatif seul n'a aucune raison d'interrompre l'étudiant.
 List<DossierStep> stepsForMissingFields(List<String> missingFields) {
   final missing = missingFields.toSet();
   final steps = <DossierStep>[];
   for (final step in kDossierSteps) {
-    final fields =
+    final exiges =
         step.fields.where((field) => missing.contains(field.key)).toList();
-    if (fields.isNotEmpty) {
-      steps.add(DossierStep(title: step.title, fields: fields));
-    }
+    if (exiges.isEmpty) continue;
+    // On reprend l'ordre déclaré, en ajoutant les facultatifs de l'étape.
+    final fields = step.fields
+        .where((field) => missing.contains(field.key) || field.optional)
+        .toList();
+    steps.add(DossierStep(title: step.title, fields: fields));
   }
   return steps;
 }

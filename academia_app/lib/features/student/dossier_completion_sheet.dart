@@ -136,7 +136,12 @@ class _DossierCompletionSheetState extends State<_DossierCompletionSheet> {
     final currentYear = DateTime.now().year;
     for (final field in _steps[_index].fields) {
       final value = _valueOf(field);
+      // Un champ FACULTATIF ne bloque jamais. Sans ce test, la précision
+      // « Licence en quoi » — affichée à côté du dernier diplôme depuis le
+      // 08/09 — serait devenue obligatoire, et l'on aurait refermé la porte
+      // qu'on venait justement d'ouvrir.
       if (value == null) {
+        if (field.optional) continue;
         return 'Renseigne « ${field.label} » pour continuer.';
       }
       if (field.kind == DossierFieldKind.year) {
