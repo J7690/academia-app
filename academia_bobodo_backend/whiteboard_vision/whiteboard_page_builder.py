@@ -52,7 +52,51 @@ def _default_katex(latex: str) -> str:
 # Police manuscrite : chemin ABSOLU, car la page est écrite dans un dossier temporaire
 # où un chemin relatif ne résoudrait pas. Si le fichier manque, le navigateur retombe
 # sur les polices cursives déclarées ensuite — le rendu reste lisible.
+# ─── LA POLICE MANUSCRITE, ET SES MESURES ───────────────────────────────────
+#
+# Choix de Jocelyn le 08/09 : **Dancing Script**, une vraie cursive liee, en
+# remplacement de Caveat -- jugee « generique », et de fait la plus fine des dix
+# candidates comparees.
+#
+# DEUX METRIQUES COMMANDENT LE REGLAGE, et elles ont ete relevees dans les
+# fichiers avec `fontTools`, pas estimees a l'oeil :
+#
+#                    hauteur d'x     largeur d'une phrase type
+#   Caveat              0,400              12,12 em
+#   Dancing Script      0,332              12,74 em
+#
+# La hauteur d'x est ce que l'oeil percoit comme « la taille » du texte : celle
+# de Dancing Script ne fait que 83 % de celle de Caveat. A taille egale, elle
+# paraitrait donc nettement plus petite. On compense par 0,400/0,332 = 1,205.
+#
+# Mais elle est AUSSI 5 % plus large. En l'agrandissant, une ligne tient donc
+# MOINS de caracteres : 24 au lieu de 31. Sans cet ajustement, `_estimate_lines`
+# sous-estimerait la hauteur du document, et le defilement -- calcule sur cette
+# hauteur -- se decalerait progressivement du contenu reel.
+POLICES_MANUSCRITES = {
+    "Dancing Script": dict(
+        fichier="DancingScript.ttf",
+        css="'ManuscritLocal','Dancing Script','Caveat',cursive",
+        # 1,28 (le reglage de Caveat) x 1,205 (compensation de hauteur d'x)
+        echelle=1.542,
+        chars_per_line=24,
+    ),
+    "Caveat": dict(
+        fichier="Caveat.ttf",
+        css="'ManuscritLocal','Caveat','Patrick Hand',cursive",
+        echelle=1.28,
+        chars_per_line=31,
+    ),
+}
+POLICE_MANUSCRITE = "Dancing Script"
+
 FONT_PATHS = [
+    Path("/opt/whiteboard-worker/vision_engine/fonts/"
+         + POLICES_MANUSCRITES[POLICE_MANUSCRITE]["fichier"]),
+    Path(__file__).parent / "fonts"
+        / POLICES_MANUSCRITES[POLICE_MANUSCRITE]["fichier"],
+    # Repli : l'ancienne police, pour qu'une machine non encore mise a jour
+    # rende un texte manuscrit plutot qu'une police systeme.
     Path("/opt/whiteboard-worker/vision_engine/fonts/Caveat.ttf"),
     Path("/opt/whiteboard-engine-remotion/public/fonts/Caveat.ttf"),
 ]
@@ -83,6 +127,45 @@ def _font_url() -> str:
     return ""
 
 
+# ─── Le LOGO de la marque ───────────────────────────────────────────────────
+#
+# Le vrai fichier, pas un dessin approchant. Une premiere version reconstituait
+# la toque en SVG et posait « ACADEMIA » en Georgia a cote : deux ecarts avec
+# la marque reelle -- la toque du logo porte des losanges entrelaces qu'un
+# trace a la main ne rend pas, et le mot est compose dans une serif qui lui est
+# propre. On embarque donc le PNG.
+#
+# Il est recadre sur ses pixels visibles (600x545 utiles sur 600x664 : le
+# fichier d'origine porte une marge transparente qui aurait decale le logo dans
+# son cadre) et reduit a 240x218 -- le double de la taille d'affichage, pour
+# rester net. Quantifie en 32 couleurs : 5 Ko au lieu de 212.
+#
+# Meme motif que la police et KaTeX : un fichier a cote du moteur, resolu en
+# `file://`. S'il manque, `_logo_url()` rend une chaine vide et le filigrane
+# n'est tout simplement pas ecrit dans la page -- degradation gracieuse, aucune
+# image cassee a l'ecran.
+LOGO_PATHS = [
+    Path(__file__).parent / "marque" / "academia_logo.png",
+    Path("/opt/whiteboard-worker/vision_engine/marque/academia_logo.png"),
+    Path("/opt/whiteboard-engine-remotion/public/marque/academia_logo.png"),
+]
+
+# Largeur d'affichage du filigrane, sur une page de 1080 px : 11,1 % de la
+# largeur. Assez grand pour ne pas passer inapercu, assez petit pour ne pas
+# envahir la page. La hauteur suit le rapport du fichier (240x218).
+MARQUE_W = 120
+MARQUE_H = 109
+MARQUE_BAS = 96      # position de repos, mesuree depuis le bas de l'ecran
+# MARQUE_HAUT est defini plus bas, apres TOP_SAFE dont il depend.
+
+
+def _logo_url() -> str:
+    for p in LOGO_PATHS:
+        if p.exists():
+            return p.resolve().as_uri()
+    return ""
+
+
 VIEW_W = 1080
 VIEW_H = 1920
 # Marge de sécurité horizontale (28/07/2026) : le feed Challenges affiche la vidéo en
@@ -96,8 +179,29 @@ VIEW_H = 1920
 PAD_LEFT = 150
 PAD_RIGHT = 150
 CONTENT_W = VIEW_W - PAD_LEFT - PAD_RIGHT
-TOP_SAFE = 190       # zone réservée au bandeau fixe
+# ZONE HAUTE : le titre ne doit être ni collé au bord, ni dans un angle.
+# Elle valait 190 px sur 1920, soit 9,9 % -- le bandeau fixe occupant déjà
+# jusqu'à ~90 px, il ne restait qu'une centaine de pixels avant le premier
+# bloc. Un titre de chapitre s'y retrouvait tassé contre le haut de l'écran,
+# et le cadre décoratif (`#frame`, inset 18 px) passait juste au-dessus.
+# 300 px (15,6 %) laissent le titre respirer sans repousser le contenu utile.
+TOP_SAFE = 300
 BLOCK_GAP = 46
+
+# HAUTEUR DE LA TROISIÈME POSITION DU FILIGRANE — et pourquoi elle n'est pas libre.
+#
+# Premier essai : le filigrane montait à 335 px. Rendu sur LWS, en file:// et
+# en 1080×1920 : IL CHEVAUCHAIT LE TITRE, qui commence à 318 px. Le logo
+# passait par-dessus le mot — exactement ce qu'un filigrane ne doit jamais faire.
+#
+# Il n'existe qu'une bande libre en haut de page : entre le bas du bandeau du
+# sujet (~134 px) et le début du contenu (TOP_SAFE). Le logo s'y loge.
+# L'assertion below rend le conflit IMPOSSIBLE : changer TOP_SAFE sans y penser
+# arrête la construction au lieu de produire une capsule où le logo mange le titre.
+MARQUE_HAUT = 162
+assert MARQUE_HAUT + MARQUE_H < TOP_SAFE, (
+    "le filigrane déborderait sur le contenu : "
+    f"{MARQUE_HAUT} + {MARQUE_H} >= {TOP_SAFE}")
 
 # ─── Chronométrage (secondes) ───────────────────────────────────────────────
 # Caractères par seconde. Valeurs abaissées le 25/07 au soir : « les écritures sont
@@ -137,7 +241,48 @@ SCROLL_SEC = 1.8
 # ─── Rendu du texte ─────────────────────────────────────────────────────────
 FONT_SIZE = 52
 LINE_H = 1.42
-CHARS_PER_LINE = 30   # approximation pour estimer la hauteur
+# Estimation du nombre de caracteres par ligne, PAR POLICE : une cursive plus
+# large en tient moins. Sert a estimer la hauteur du document, donc le
+# defilement -- une valeur trop haute decale la camera du contenu.
+CHARS_PER_LINE = POLICES_MANUSCRITES[POLICE_MANUSCRITE]["chars_per_line"]
+
+# ─── LES COULEURS DE LA MARQUE ──────────────────────────────────────────────
+#
+# Relevees dans `academia_app/assets/marque/academia_logo.png` par comptage des
+# pixels, pas estimees a l'oeil : le vert occupe 60,6 % des pixels colores, le
+# rouge 12,4 %. Ce sont les couleurs du drapeau burkinabe.
+#
+# CE QU'ELLES REMPLACENT. La page portait CINQ accents sans rapport avec la
+# marque -- bleu #3b6fe0, vert #1aa179, rouge #d4452e, jaune #ffe066, marine
+# #0f2c5c -- sur un fond a lignes et marge rouge d'ecolier. Rien ne
+# hierarchisait : tout ressortait en meme temps, donc rien ne ressortait.
+#
+# La regle desormais : UN fond, UNE encre, DEUX accents de marque. Le vert
+# porte la structure (titres, filets, definitions) ; le rouge ne sert qu'a ce
+# qu'un professeur ecrirait en rouge -- le mot-cle, et rien d'autre.
+VERT = "#388840"        # toque et losanges du logo
+VERT_SOMBRE = "#2b6a32"  # meme teinte, pour les traits fins sur papier clair
+ROUGE = "#e02018"       # le mot ACADEMIA
+PAPIER = "#f7f4ec"      # papier chaud, sans lignes d'ecolier
+ENCRE = "#1b2430"       # bleu-noir d'encre
+ENCRE_PALE = "#3d4653"  # texte secondaire
+SURLIGNE = "rgba(56,136,64,.18)"  # le vert de marque, tres dilue
+
+# Le titre de scene doit DOMINER le corps du texte. Il valait exactement
+# `font_size` -- soit la taille du corps -- ce qui le rendait indistinct.
+TITRE_ECHELLE = 1.45
+
+# Bornes de la duree d'ecriture d'UN mot. En deca de 0,20 s le balayage n'est
+# plus percu comme un trace ; au-dela de 0,75 s un mot long donne l'impression
+# que la main hesite.
+MOT_DUREE_MIN = 0.20
+MOT_DUREE_MAX = 0.75
+
+# Largeur du filigrane (toque 52 px + espace 14 px + « ACADEMIA » en Georgia
+# 31 px ≈ 200 px). Sert à calculer son déplacement vers le bord droit ; elle
+# est VÉRIFIÉE au navigateur par `test_page_builder.py`, car une valeur trop
+# petite ferait sortir le logo de la zone sûre du feed.
+MARQUE_L = 266
 
 
 def _speed_of(block: Dict[str, Any]) -> str:
@@ -402,13 +547,34 @@ def _words_html(text: str, start: float, duration: float,
     total_chars = max(1, sum(len(w) for w in words))
     out = []
     consumed = 0
-    for w in words:
+    for rang, w in enumerate(words):
         delay = start + duration * (consumed / total_chars)
+        # LA DURÉE SUIT LA LONGUEUR DU MOT. Elle valait 0,18 s pour tous, ce qui
+        # écrivait « où » aussi lentement que « photosynthèse » : rien dans
+        # l'image ne disait qu'on en traçait davantage. Elle est désormais
+        # proportionnelle, bornée pour qu'un mot d'une lettre reste visible et
+        # qu'un mot très long ne traîne pas.
+        duree = min(MOT_DUREE_MAX,
+                    max(MOT_DUREE_MIN, len(w) * duration / total_chars))
         consumed += len(w)
         bare = w.strip().strip(".,;:!?()«»\"'").lower()
         cls = "w kw" if key_tokens and bare and bare in key_tokens else "w"
+        # L'ÉCART À LA RÈGLE, ET POURQUOI IL EST DÉTERMINISTE.
+        #
+        # Ce qui fait humain n'est pas la vitesse, c'est l'irrégularité : un mot
+        # posé deux pixels trop bas, un autre d'un demi-degré de travers. On
+        # l'obtient par le RANG du mot, jamais par un tirage au sort.
+        #
+        # La raison est dans la capture : `record_scene.js` rend la vidéo en
+        # TROIS TRANCHES PARALLÈLES, chacune dans son propre navigateur. Un
+        # `Math.random()` donnerait trois valeurs différentes pour le même mot,
+        # et les tranches ne se raccorderaient pas. Le rang, lui, donne la même
+        # valeur partout.
+        dy = 1.4 + (rang % 3) * 0.8
+        rot = (-1 if rang % 2 else 1) * (0.22 + (rang % 3) * 0.11)
         out.append(
-            f'<span class="{cls}" style="animation-delay:{delay:.2f}s">'
+            f'<span class="{cls}" style="animation-delay:{delay:.2f}s;'
+            f'--d:{duree:.2f}s;--dy:{dy:.1f}px;--rot:{rot:.2f}deg">'
             f'{html_module.escape(w)}</span>'
         )
     return "".join(out)
@@ -570,10 +736,38 @@ def _block_html(pb: PlannedBlock, index: int, katex_renderer=None,
     )
 
 
+# ─── Générique : la taille s'adapte au MOT LE PLUS LONG ─────────────────────
+#
+# LE DÉFAUT, MESURÉ AU NAVIGATEUR LE 05/09. Le titre était rendu à 88 px fixes,
+# et `.iw {{ white-space:nowrap }}` rend les mots insécables -- ce dernier point
+# ajouté exprès, parce que le navigateur coupait sinon en plein mot
+# (« sec / ond degré », vu à l'image). Les deux ensemble donnent un
+# débordement : la largeur utile est de 760 px, et
+#     « L'interdépendance »  ->  897 px, soit 137 px HORS de la carte
+#     « développement »      ->  736 px, soit 24 px de marge seulement
+# Autrement dit : au-delà d'environ 14 caractères, le titre sortait du cadre.
+#
+# La correction ne consiste pas à retirer l'insécable -- ce serait rouvrir le
+# défaut d'origine -- mais à DESCENDRE LA TAILLE jusqu'à ce que le mot le plus
+# long tienne. Trois paliers suffisent pour couvrir tous les sujets scolaires.
+INTRO_PALIERS = ((14, 88), (18, 68), (99, 54))   # (longueur max du mot, px)
+INTRO_LARGEUR_UTILE = 900   # px disponibles pour le titre du générique
+
+
+def _intro_taille(subject: str) -> int:
+    """Taille du titre du générique, choisie sur le mot le plus long."""
+    mots = subject.split() or [subject]
+    plus_long = max(len(m) for m in mots)
+    for limite, px in INTRO_PALIERS:
+        if plus_long <= limite:
+            return px
+    return INTRO_PALIERS[-1][1]
+
+
 def _intro_html(subject: str) -> str:
     """
-    Carte-titre du générique : chaque lettre du titre entre séparément (délais
-    répartis entre INTRO_LETTER_FROM et INTRO_LETTER_TO), la carte sort ensuite.
+    Générique : chaque lettre du titre entre séparément (délais répartis entre
+    INTRO_LETTER_FROM et INTRO_LETTER_TO), puis le titre sort vers le haut.
     `subject` est DÉJÀ échappé par l'appelant.
     """
     # Les lettres sont groupées PAR MOT (conteneur insécable) : sans cela, le
@@ -595,7 +789,8 @@ def _intro_html(subject: str) -> str:
     return (
         f'<div id="intro" style="animation-delay:{INTRO_SEC - INTRO_OUT_SEC:.2f}s">'
         f'<div id="intro-card"><div id="intro-kicker">Cours</div>'
-        f'<div id="intro-title">{"".join(out)}</div>'
+        f'<div id="intro-title" style="font-size:{_intro_taille(subject)}px">'
+        f'{"".join(out)}</div>'
         f'<div id="intro-rule"></div></div></div>'
     )
 
@@ -666,10 +861,11 @@ def build_page(
                             for i, pb in enumerate(planned))
 
     font_stack = (
-        "'CaveatLocal','Caveat','Patrick Hand',cursive" if handwriting
+        POLICES_MANUSCRITES[POLICE_MANUSCRITE]["css"] if handwriting
         else "'Inter','Noto Sans','Liberation Sans',sans-serif"
     )
-    font_scale = 1.28 if handwriting else 1.0
+    font_scale = (POLICES_MANUSCRITES[POLICE_MANUSCRITE]["echelle"]
+                  if handwriting else 1.0)
 
     return _TEMPLATE.format(
         subject=subject,
@@ -693,6 +889,39 @@ def build_page(
         content_w=CONTENT_W,
         top_safe=TOP_SAFE,
         block_gap=BLOCK_GAP,
+        # ── Marque et titre ────────────────────────────────────────────────
+        vert=VERT,
+        vert_sombre=VERT_SOMBRE,
+        rouge=ROUGE,
+        papier=PAPIER,
+        encre=ENCRE,
+        encre_pale=ENCRE_PALE,
+        surligne=SURLIGNE,
+        titre_echelle=TITRE_ECHELLE,
+        titre_px=int(FONT_SIZE * font_scale * TITRE_ECHELLE),
+        # Le trait vit sous le titre : il lui faut sa propre place, sans quoi
+        # il chevaucherait la premiere ligne du corps.
+        titre_trait=int(FONT_SIZE * font_scale * 0.11),
+        titre_soulign_bas=int(FONT_SIZE * font_scale * 0.38),
+        titre_trait_max=int(CONTENT_W * 0.78),
+        intro_utile=INTRO_LARGEUR_UTILE,
+        # Déplacements du filigrane, calculés sur la géométrie réelle : il part
+        # en bas à gauche de la zone sûre, va au bas droit, puis remonte.
+        # `MARQUE_L` est la largeur mesurée de l'ensemble toque + mot.
+        marque_dx=CONTENT_W - MARQUE_W,
+        # Du repos (bas de l'écran) jusqu'à la bande libre du haut. Calculé,
+        # pas choisi : une valeur en dur se désynchroniserait du jour où
+        # MARQUE_BAS, MARQUE_H ou MARQUE_HAUT bougeraient.
+        marque_dy=MARQUE_HAUT - (VIEW_H - MARQUE_BAS - MARQUE_H),
+        marque_w=MARQUE_W,
+        marque_bas=MARQUE_BAS,
+        marque_h=MARQUE_H,
+        logo_url=_logo_url(),
+        # SANS LE FICHIER, PAS DE FILIGRANE DU TOUT. Un `background-image`
+        # pointant sur une URL vide laisserait un rectangle de 120 px collé
+        # dans la page ; mieux vaut que la marque soit absente que fausse.
+        marque=('  <div id="marque"></div>' if _logo_url() else
+                "  <!-- filigrane omis : logo introuvable dans LOGO_PATHS -->"),
         annot_total=ANNOT_TOTAL_SEC,
         # Le tracé, le maintien et l'effacement sont exprimés en pourcentage de la
         # durée totale de l'annotation, puisque les keyframes CSS sont en pourcentage.
@@ -708,25 +937,39 @@ _TEMPLATE = """<!DOCTYPE html>
 <style>
 * {{ margin:0; padding:0; box-sizing:border-box; }}
 @font-face {{
-  font-family:'CaveatLocal';
+  font-family:'ManuscritLocal';
   src:url('{font_url}') format('truetype');
   font-weight:400 700; font-display:block;
 }}
 body {{
   width:1080px; height:1920px; overflow:hidden;
-  background:#fffdf7; color:#20303f;
+  background:{papier}; color:{encre};
   font-family:{font_stack};
 }}
 
-/* ── La feuille : lignes de cahier + marge rouge, sur toute la hauteur ── */
+/* ── La feuille ─────────────────────────────────────────────────────────
+   ON QUITTE LE CAHIER D'ÉCOLIER SANS QUITTER LE CAHIER.
+   Le fond portait des lignes bleues tous les 48 px et une marge rouge à
+   76 px : la page d'un enfant qui apprend à écrire. Le texte manuscrit ne
+   suit d'ailleurs PAS ces lignes -- il est posé dessus, ce qui se voit.
+   Un quadrillage large et pâle donne le même repère de papier sans le
+   registre scolaire, et n'entre jamais en concurrence avec l'écriture. */
 #paper {{
   position:absolute; top:0; left:0; width:1080px; height:{doc_height}px;
-  background-color:#fffdf7;
+  /* LE PLAN LE SUPPOSAIT, LE RENDU NE LE FAISAIT PAS.
+     `_plan()` démarre son calcul de défilement à `y = TOP_SAFE`, mais la
+     feuille n'avait aucune marge haute : les blocs commençaient à 0. Le
+     premier titre d'une page se retrouvait donc collé à 18 px du bord
+     supérieur -- sous le cadre décoratif et le bandeau du sujet -- alors que
+     le défilement, lui, était calculé comme s'il démarrait 300 px plus bas.
+     Mesuré au navigateur en 1080×1920 : `top` du titre = 18 px.
+     Le padding réconcilie les deux, et donne au titre l'air qu'il lui faut. */
+  padding-top:{top_safe}px;
+  background-color:{papier};
   background-image:
-    linear-gradient(90deg, transparent 76px, #e8896b 76px, #e8896b 80px, transparent 80px),
-    linear-gradient(#a9c7e8 2px, transparent 2px);
-  background-size:100% 48px;
-  background-position:0 100px;
+    linear-gradient(rgba(27,36,48,.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(27,36,48,.055) 1px, transparent 1px);
+  background-size:72px 72px;
   will-change:transform;
 }}
 /* Le défilement : une seule animation, pilotée par les keyframes calculées. */
@@ -752,9 +995,58 @@ body.recording #paper {{ animation:scroll {total}s cubic-bezier(.33,0,.15,1) for
 .txt {{ font-size:{font_size}px; line-height:{line_h}; font-weight:600; white-space:pre-wrap; }}
 
 /* Révélation MOT PAR MOT : chaque mot a son propre délai. Tout en CSS. */
-.w {{ opacity:0; display:inline; position:relative; }}
-body.recording .w {{ animation:wIn .18s linear forwards; }}
-@keyframes wIn {{ from {{ opacity:0 }} to {{ opacity:1 }} }}
+/* ── LE MOT S'ÉCRIT, IL N'APPARAÎT PLUS ──────────────────────────────────
+   TROIS CAUSES faisaient le « robotique » signalé par Jocelyn le 08/09, et
+   aucune n'était le rythme -- celui-ci est correct depuis toujours,
+   `_words_html()` répartissant le délai au prorata des caractères écrits :
+
+     1. la DURÉE était fixe : `.18s`, que le mot fasse deux lettres ou douze.
+        « où » et « photosynthèse » s'affichaient à la même vitesse.
+     2. la COURBE était `linear` -- la seule qu'aucune main n'a jamais eue.
+     3. le mot n'avait AUCUN SENS DE LECTURE : il surgissait d'un bloc, par
+        opacité, alors que le stylo, lui, avance de gauche à droite.
+
+   COMMENT ON RÉPARE. On peint derrière le mot un dégradé mi-encre mi-vide, et
+   on demande au navigateur de ne l'afficher QUE dans la forme des lettres
+   (`background-clip:text`). Faire glisser ce dégradé remplit le mot de gauche
+   à droite. C'est la technique des plateformes -- Doodly la nomme
+   « standard wipe reveal ».
+
+   ÉPROUVÉ DANS LES CONDITIONS DE LA CAPTURE, pas seulement à l'écran : rendu
+   sur LWS le 08/09 avec les mêmes drapeaux Chromium (rendu logiciel, sans
+   carte), la progression des pixels d'encre est régulière et monotone --
+   0, 3 475, 6 561, 9 906, 12 901 aux cinq positions. Ni texte invisible, ni
+   texte plein d'un coup : les deux façons dont cette propriété peut échouer
+   en rendu logiciel.
+
+   `--d` (durée) et `--dy` / `--rot` (l'écart de la main) sont posés EN LIGNE
+   par `_words_html`, mot par mot. */
+/* LE DÉGRADÉ PREND `currentColor`, ET NON UNE COULEUR FIGÉE.
+   Un dégradé en encre en dur aurait écrit EN NOIR les blocs qui ont leur
+   propre couleur — la définition, en vert, s'affichait en encre.
+   `currentColor` fait suivre la couleur héritée du bloc.
+
+   ET C'EST POURQUOI `color` N'EST PAS MIS À `transparent` : ce serait rendre
+   `currentColor` transparent, donc effacer le dégradé lui-même. Seul
+   `-webkit-text-fill-color` est neutralisé — il rend le glyphe transparent
+   tout en laissant `color` porter sa vraie valeur. */
+.w {{
+  display:inline-block; position:relative;
+  background-image:linear-gradient(90deg,currentColor 50%,rgba(0,0,0,0) 50%);
+  background-size:200% 100%;
+  background-position:100% 0;
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent;
+  transform:translateY(var(--dy,0)) rotate(var(--rot,0deg));
+}}
+body.recording .w {{
+  animation:wIn var(--d,.28s) cubic-bezier(.32,.06,.28,1) forwards;
+}}
+@keyframes wIn {{
+  0%   {{ background-position:100% 0;
+          transform:translateY(var(--dy,0)) rotate(var(--rot,0deg)); }}
+  100% {{ background-position:0 0; transform:translateY(0) rotate(0deg); }}
+}}
 
 /* ── La MAIN qui écrit ─────────────────────────────────────────── */
 /* Une main tenant un stylo apparaît au bout de CHAQUE mot pendant qu'il s'écrit,
@@ -763,10 +1055,21 @@ body.recording .w {{ animation:wIn .18s linear forwards; }}
    Le délai est hérité du mot (`animation-delay:inherit`) : aucun calcul de position
    n'est nécessaire, la main est portée par le mot lui-même. Tout reste en CSS, donc
    compatible avec la capture par tranches. */
+/* LE STYLO SEUL, PAS UNE MAIN.
+   La main était faite de six primitives -- un cercle beige pour la paume, deux
+   traits pour le stylo, un triangle pour la pointe, un petit cercle pour le
+   pouce. À l'échelle où elle passe (118 px sur 1080), cela se lisait comme une
+   tache, pas comme une main.
+
+   Trois formes suffisent, et elles disent la même chose : un corps, un
+   capuchon, une pointe. Le stylo est en outre NEUTRE -- il ne pose aucune
+   question de teinte de peau devant un public à qui la capsule s'adresse.
+   Les couleurs sont celles de la marque : encre pour le corps, vert pour le
+   capuchon. */
 body.recording .w::after {{
-  content:""; position:absolute; left:100%; top:.34em; margin-left:-8px;
-  width:118px; height:118px; z-index:6; opacity:0; pointer-events:none;
-  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 132 132'><circle cx='92' cy='92' r='34' fill='%23f2c29b'/><path d='M14 14 62 62' stroke='%232f4160' stroke-width='15' stroke-linecap='round'/><path d='M56 56 78 78' stroke='%23d9a05f' stroke-width='17' stroke-linecap='round'/><path d='M5 5 24 12 12 24 Z' fill='%231f2d3f'/><circle cx='70' cy='99' r='13' fill='%23e5b088'/></svg>") no-repeat;
+  content:""; position:absolute; left:100%; top:.34em; margin-left:-6px;
+  width:92px; height:92px; z-index:6; opacity:0; pointer-events:none;
+  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 132 132'><path d='M18 18 66 66' stroke='%231b2430' stroke-width='15' stroke-linecap='round'/><path d='M60 60 92 92' stroke='%23388840' stroke-width='17' stroke-linecap='round'/><path d='M5 5 26 13 13 26 Z' fill='%231b2430'/></svg>") no-repeat;
   background-size:contain;
   animation:penHop .38s linear forwards;
   animation-delay:inherit;
@@ -783,7 +1086,19 @@ body.recording #intro .w::after, body.recording .il::after {{ content:none; }}
 /* ── TYPOGRAPHIE CINÉTIQUE (v3) : les mots-clés ressortent ──────────────── */
 /* Ce qu'un prof écrirait en rouge : plus gros, en couleur, pop élastique au
    moment exact où le mot s'écrit (synchronisé avec la voix). */
-.w.kw {{ display:inline-block; color:#d4452e; font-weight:800; font-size:1.12em; }}
+/* LE MOT-CLÉ ANNULE LE MASQUE, ET C'EST NÉCESSAIRE.
+   `.w` peint le texte via un dégradé découpé dans les lettres et met
+   `-webkit-text-fill-color:transparent`. Or cette propriété PRIME sur `color` :
+   sans la remettre ici, le mot-clé héritait du dégradé d'encre et s'affichait
+   en NOIR, perdant le rouge — vu à l'image le 08/09 sur « magma ».
+   Le mot-clé ne se balaie donc pas : il surgit en rouge, d'un coup. C'est
+   voulu — c'est le geste du professeur qui change de stylo, et le contraste
+   avec les mots balayés autour est précisément ce qui le fait ressortir. */
+.w.kw {{
+  display:inline-block; font-weight:800; font-size:1.12em;
+  background-image:none;
+  color:{rouge}; -webkit-text-fill-color:{rouge};
+}}
 body.recording .w.kw {{ animation:kwIn .55s cubic-bezier(.2,1.6,.4,1) forwards; }}
 @keyframes kwIn {{
   0%   {{ opacity:0; transform:scale(1.55) rotate(-3deg); }}
@@ -795,19 +1110,19 @@ body.recording .w.kw {{ animation:kwIn .55s cubic-bezier(.2,1.6,.4,1) forwards; 
 .chap {{
   position:absolute; top:-22px; left:-14px; z-index:2;
   font-family:'Inter','Noto Sans',sans-serif; font-size:26px; font-weight:800;
-  color:#fff; background:#0f2c5c; padding:8px 18px; border-radius:14px;
+  color:#fff; background:{encre}; padding:8px 18px; border-radius:14px;
   box-shadow:0 8px 18px rgba(15,44,92,.35); opacity:0;
 }}
 body.recording .chap {{ animation:popIn .5s cubic-bezier(.2,1.6,.35,1) forwards; animation-delay:inherit; }}
 
 /* ── Carte récap : point à retenir avec coche animée ──────────────────── */
 .blk-recap .txt {{
-  position:relative; background:#fff; border:2px solid #d9e6f7; border-radius:18px;
+  position:relative; background:#fff; border:2px solid rgba(56,136,64,.28); border-radius:18px;
   padding:20px 24px 20px 74px; box-shadow:0 10px 24px rgba(24,64,130,.10);
 }}
 .chk {{
   position:absolute; left:20px; top:18px; width:38px; height:38px; border-radius:50%;
-  background:#1aa179; color:#fff; text-align:center;
+  background:{vert}; color:#fff; text-align:center;
   font:800 24px/38px 'Inter','Noto Sans',sans-serif; opacity:0;
 }}
 body.recording .chk {{ animation:popIn .5s cubic-bezier(.2,1.6,.35,1) forwards; }}
@@ -815,7 +1130,7 @@ body.recording .chk {{ animation:popIn .5s cubic-bezier(.2,1.6,.35,1) forwards; 
 /* ── Tampon « validé » du professeur sur les corrections ───────────────── */
 .stamp {{
   display:inline-block; margin-left:16px; width:46px; height:46px; vertical-align:middle;
-  border:3px solid #1aa179; border-radius:50%; color:#1aa179; text-align:center;
+  border:3px solid {vert}; border-radius:50%; color:{vert}; text-align:center;
   font:800 26px/40px 'Inter','Noto Sans',sans-serif; opacity:0; transform:rotate(-12deg);
 }}
 body.recording .stamp {{ animation:stampIn .45s cubic-bezier(.2,1.8,.4,1) forwards; }}
@@ -828,7 +1143,7 @@ body.recording .stamp {{ animation:stampIn .45s cubic-bezier(.2,1.8,.4,1) forwar
 .lbl {{
   font-family:'Inter','Noto Sans',sans-serif; font-size:24px; font-weight:800;
   letter-spacing:.08em; text-transform:uppercase; color:#fff; margin-bottom:10px;
-  background:#1aa179; display:inline-block; padding:6px 18px; border-radius:22px;
+  background:{vert}; display:inline-block; padding:6px 18px; border-radius:22px;
   box-shadow:0 6px 16px rgba(26,161,121,.35);
   opacity:0; transform-origin:left center;
 }}
@@ -841,10 +1156,10 @@ body.recording .lbl {{ animation:popIn .5s cubic-bezier(.2,1.6,.35,1) forwards; 
 
 /* Le liseré de définition apparaît AVEC le premier mot (délai hérité du bloc),
    et non dès la première image — défaut vu à l'image : barre verte orpheline. */
-.blk-definition .txt {{ color:#1aa179; padding-left:28px; }}
+.blk-definition .txt {{ color:{vert}; padding-left:28px; }}
 .blk-definition::before {{
   content:""; position:absolute; left:0; top:4px; bottom:4px; width:6px;
-  border-radius:4px; background:#1aa179; opacity:0;
+  border-radius:4px; background:{vert}; opacity:0;
 }}
 body.recording .blk-definition::before {{
   animation:wIn .4s ease-out forwards; animation-delay:inherit;
@@ -857,21 +1172,51 @@ body.recording .blk-definition::before {{
 .blk-exercise .txt, .blk-correction .txt {{ opacity:.001; }}
 body.recording .blk-exercise .txt,
 body.recording .blk-correction .txt {{ animation:wIn 1.2s ease-out forwards; }}
-/* Plaquette de titre de scène : se DÉPLOIE (glisse + grossit) avant que les mots
-   ne s'écrivent dessus — l'entrée « spot publicitaire » demandée. */
+/* ── TITRE DE SCÈNE : ce qu'on écrit en haut d'une page de cahier ────────
+   CE QUI N'ALLAIT PAS, et c'est mesurable : `.blk-title .txt` portait
+   `font-size:{font_size}px` -- EXACTEMENT la taille du corps du texte. Le
+   titre d'un chapitre avait donc la même taille que la phrase qui le suit.
+   Il était en outre enfermé dans une plaquette à dégradé bleu-vert, arrondie
+   à 24 px : une pastille collée en haut de page, pas un titre.
+
+   CE QU'ON FAIT À LA PLACE -- ce qu'un professeur fait réellement au tableau :
+   il écrit le titre PLUS GROS, au milieu, et il le SOULIGNE. Trois gestes,
+   aucun décor.
+     · {titre_px} px contre {font_size} px pour le corps ({titre_echelle}×) ;
+     · centré, sans fond ni cadre : le papier reste le papier ;
+     · souligné d'un trait de marque qui SE TIRE de gauche à droite, comme un
+       trait de règle -- l'animation dure le temps que le titre s'installe.
+   Le trait est un pseudo-élément : aucun nœud supplémentaire, et tout reste
+   en CSS pur, condition de la capture par tranches. */
+.blk-title {{ margin-top:18px; }}
 .blk-title .txt {{
-  font-size:{font_size}px; text-align:center; font-weight:800; color:#fff;
-  background:linear-gradient(135deg,#3b6fe0,#1aa179);
-  padding:26px 38px; border-radius:24px; box-shadow:0 14px 34px rgba(0,0,0,.18);
+  font-size:{titre_px}px; line-height:1.16; text-align:center; font-weight:700;
+  color:{encre}; position:relative; display:block;
+  padding:0 10px {titre_soulign_bas}px;
   opacity:0; transform-origin:center;
 }}
-body.recording .blk-title .txt {{ animation:plaqueIn .65s cubic-bezier(.2,1.4,.35,1) forwards; }}
-@keyframes plaqueIn {{
-  0%   {{ opacity:0; transform:translateX(-46px) scale(.88); }}
-  100% {{ opacity:1; transform:translateX(0) scale(1); }}
+.blk-title .txt::after {{
+  content:""; position:absolute; left:50%; bottom:0; height:{titre_trait}px;
+  width:0; border-radius:{titre_trait}px; background:{vert};
+  transform:translateX(-50%);
+}}
+body.recording .blk-title .txt {{ animation:titreIn .55s cubic-bezier(.2,1.3,.35,1) forwards; }}
+body.recording .blk-title .txt::after {{
+  animation:soulignIn .62s cubic-bezier(.35,.9,.3,1) forwards;
+  animation-delay:inherit;
+}}
+@keyframes titreIn {{
+  0%   {{ opacity:0; transform:translateY(26px); }}
+  100% {{ opacity:1; transform:translateY(0); }}
+}}
+/* Le trait part du centre et s'ouvre vers les deux bords : c'est le geste de
+   la règle posée au milieu du mot, pas un balayage d'écran. */
+@keyframes soulignIn {{
+  0%   {{ width:0; }}
+  100% {{ width:min(78%, {titre_trait_max}px); }}
 }}
 /* Formule : surgit en « pop » centré (on n'écrit pas une formule à la main). */
-.blk-formula {{ text-align:center; padding:26px; background:#eef5ff; border:1px solid #cfe0fb; border-radius:16px; font-size:44px; opacity:0; }}
+.blk-formula {{ text-align:center; padding:26px; background:rgba(56,136,64,.07); border:1px solid rgba(56,136,64,.24); border-radius:16px; font-size:44px; opacity:0; }}
 body.recording .blk-formula {{ animation:formulaIn .8s cubic-bezier(.2,1.4,.4,1) forwards; }}
 @keyframes formulaIn {{
   0%   {{ opacity:0; transform:scale(.82) translateY(18px); }}
@@ -885,7 +1230,7 @@ body.recording .blk-formula {{ animation:formulaIn .8s cubic-bezier(.2,1.4,.4,1)
 .ann-underline {{ left:-6px; right:-6px; bottom:-18px; width:calc(100% + 12px); height:38px; }}
 .ann-circle    {{ left:-18px; top:-20px; width:calc(100% + 36px); height:calc(100% + 40px); }}
 .ann path {{
-  fill:none; stroke:#1aa179; stroke-width:2.6; stroke-linecap:round;
+  fill:none; stroke:{vert}; stroke-width:2.6; stroke-linecap:round;
   stroke-dasharray:1; stroke-dashoffset:1; opacity:0;
 }}
 body.recording .ann path {{ animation:draw {annot_total}s linear forwards; }}
@@ -900,7 +1245,7 @@ body.recording .ann path {{ animation:draw {annot_total}s linear forwards; }}
 /* Surlignage : reste en place (c'est un marqueur). */
 .hlbar {{
   position:absolute; left:-6px; top:8%; height:84%; width:0;
-  background:#ffe066; opacity:.55; border-radius:4px; transform:skewX(-3deg); z-index:-1;
+  background:{surligne}; opacity:1; border-radius:4px; transform:skewX(-3deg); z-index:-1;
 }}
 body.recording .hlbar {{ animation:sweep .45s ease-out forwards; }}
 @keyframes sweep {{ from {{ width:0 }} to {{ width:calc(100% + 12px) }} }}
@@ -911,7 +1256,7 @@ body.recording .hlbar {{ animation:sweep .45s ease-out forwards; }}
 /* ── Bandeau fixe + masque ────────────────────────────────────────── */
 #veil {{
   position:fixed; top:0; left:0; right:0; height:{top_safe}px;
-  background:linear-gradient(#fffdf7 62%, rgba(255,253,247,0) 100%);
+  background:linear-gradient({papier} 62%, rgba(247,244,236,0) 100%);
   z-index:8; pointer-events:none;
 }}
 #bar {{
@@ -922,8 +1267,14 @@ body.recording .hlbar {{ animation:sweep .45s ease-out forwards; }}
   font-family:'Inter','Noto Sans',sans-serif;
 }}
 #bar .subject {{
-  font-size:26px; font-weight:800; color:#fff; background:#3b6fe0;
+  font-size:26px; font-weight:800; color:#fff; background:{vert};
   padding:8px 22px; border-radius:30px;
+  /* Le badge grandit avec le sujet, et rien ne le bornait. Mesure au
+     navigateur : 565 px pour 33 caractères, soit ~17 px par caractère --
+     au-delà d'environ 45 caractères il sortait de la zone sûre du feed.
+     On borne, et on coupe proprement plutôt que de laisser filer. */
+  max-width:{content_w}px; overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap;
 }}
 #frame {{
   position:fixed; inset:18px; border-radius:26px;
@@ -937,17 +1288,31 @@ body.recording .hlbar {{ animation:sweep .45s ease-out forwards; }}
 }}
 #prog i {{
   display:block; height:100%; border-radius:6px;
-  background:linear-gradient(90deg,#3b6fe0,#1aa179);
+  background:linear-gradient(90deg,{vert},{rouge});
   transform:scaleX(0); transform-origin:left center;
 }}
 body.recording #prog i {{ animation:progGrow {total}s linear forwards; }}
 @keyframes progGrow {{ to {{ transform:scaleX(1); }} }}
 
-/* ── GÉNÉRIQUE D'OUVERTURE : carte-titre pleine page ──────────────────── */
+/* ── GÉNÉRIQUE D'OUVERTURE ───────────────────────────────────────────────
+   LA CARTE A DISPARU, ET C'EST LE FOND DE L'AFFAIRE.
+   Le titre était posé sur un rectangle en dégradé bleu-vert de 880 px, arrondi
+   à 44 px, avec ombre portée. Ce rectangle ne disait rien du cours : il
+   occupait 880 px de large pour encadrer du texte, et ne laissait que 760 px
+   utiles -- d'où le débordement mesuré (cf. INTRO_PALIERS).
+
+   En le retirant, le titre gagne 140 px de largeur, et le générique devient
+   LA PREMIÈRE PAGE DU CAHIER plutôt qu'une diapositive collée devant. La
+   sortie n'est plus une transition entre deux mondes : c'est la même feuille
+   qui remonte et sur laquelle le cours s'écrit. */
 #intro {{
   position:fixed; inset:0; z-index:30; display:flex; align-items:center;
   justify-content:center;
-  background:radial-gradient(circle at 30% 20%, #f4f9ff 0%, #e8f1fb 55%, #dcebf6 100%);
+  background-color:{papier};
+  background-image:
+    linear-gradient(rgba(27,36,48,.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(27,36,48,.055) 1px, transparent 1px);
+  background-size:72px 72px;
 }}
 body.recording #intro {{ animation:introOut {intro_out}s cubic-bezier(.5,0,.75,.2) forwards; }}
 @keyframes introOut {{
@@ -955,24 +1320,24 @@ body.recording #intro {{ animation:introOut {intro_out}s cubic-bezier(.5,0,.75,.
   100% {{ opacity:0; transform:translateY(-120px); visibility:hidden; }}
 }}
 #intro-card {{
-  width:880px; padding:90px 60px; text-align:center; border-radius:44px;
-  background:linear-gradient(140deg,#3b6fe0 0%,#2d8fd6 55%,#1aa179 100%);
-  box-shadow:0 40px 90px rgba(24,64,130,.35), inset 0 2px 0 rgba(255,255,255,.25);
-  opacity:0; transform:scale(.7) translateY(90px);
+  width:{intro_utile}px; padding:0 40px; text-align:center;
+  opacity:0; transform:translateY(52px);
 }}
 body.recording #intro-card {{ animation:introCard {intro_card_in}s cubic-bezier(.18,1.3,.35,1) forwards; }}
 @keyframes introCard {{
-  0%   {{ opacity:0; transform:scale(.7) translateY(90px); }}
-  100% {{ opacity:1; transform:scale(1) translateY(0); }}
+  0%   {{ opacity:0; transform:translateY(52px); }}
+  100% {{ opacity:1; transform:translateY(0); }}
 }}
 #intro-kicker {{
-  font-family:'Inter','Noto Sans',sans-serif; font-size:30px; font-weight:800;
-  letter-spacing:.42em; text-transform:uppercase; color:rgba(255,255,255,.85);
-  margin-bottom:34px;
+  font-family:'Inter','Noto Sans',sans-serif; font-size:28px; font-weight:700;
+  letter-spacing:.38em; text-transform:uppercase; color:{vert};
+  margin-bottom:38px;
 }}
+/* La taille est posée EN LIGNE par `_intro_taille()`, palier par palier :
+   elle dépend du titre, elle ne peut donc pas vivre dans la feuille de style. */
 #intro-title {{
-  font-family:'Inter','Noto Sans',sans-serif; font-size:88px; font-weight:900;
-  line-height:1.14; color:#fff; text-shadow:0 6px 22px rgba(0,0,0,.25);
+  font-family:{font_stack}; font-weight:700;
+  line-height:1.08; color:{encre}; text-wrap:balance;
 }}
 /* Chaque lettre du titre surgit séparément, en cascade — les mots restent insécables. */
 .iw {{ display:inline-block; white-space:nowrap; }}
@@ -983,8 +1348,58 @@ body.recording .il {{ animation:letterIn .45s cubic-bezier(.2,1.5,.4,1) forwards
   100% {{ opacity:1; transform:translateY(0) scale(1) rotate(0); }}
 }}
 #intro-rule {{
-  width:220px; height:8px; margin:44px auto 0; border-radius:6px;
-  background:rgba(255,255,255,.9); transform:scaleX(0);
+  width:220px; height:9px; margin:46px auto 0; border-radius:5px;
+  background:{rouge}; transform:scaleX(0);
+}}
+
+/* ── LA MARQUE QUI SE DÉPLACE ────────────────────────────────────────────
+   POURQUOI ELLE BOUGE. C'est la mécanique du filigrane TikTok, et elle a une
+   raison précise : un logo fixe se recadre, se floute ou se masque en un
+   geste. Un logo qui change de coin doit être suivi image par image — il
+   survit donc au repartage, qui est exactement ce qu'on veut d'une marque.
+
+   POURQUOI C'EST COMPATIBLE AVEC LA CAPTURE. `record_scene.js:102` avance
+   chaque animation par `a.currentTime = ms`. Sur une animation INFINIE, le
+   navigateur ramène ce temps modulo la durée du cycle : la position du logo à
+   l'instant t est donc la même quelle que soit la tranche qui la calcule.
+   Le rendu reste déterministe, condition de la capture en trois tranches
+   parallèles. Tout est en CSS, aucune ligne de JavaScript.
+
+   POURQUOI IL SAUTE AU LIEU DE GLISSER. Un logo qui traverse la page en
+   glissant passe SUR le texte pendant tout son trajet. Il s'efface donc,
+   se replace, et revient : on ne le voit jamais en travers d'un mot.
+
+   Trois positions seulement, toutes hors de la colonne de lecture : bas
+   gauche, bas droite, haut droite. Le haut gauche est pris par le badge du
+   sujet (`#bar`). Cycle de 18 s, soit 6 s par coin. */
+#marque {{
+  position:fixed; left:{pad_left}px; bottom:{marque_bas}px; z-index:11;
+  width:{marque_w}px; height:{marque_h}px;
+  background:url("{logo_url}") no-repeat center;
+  background-size:contain;
+  pointer-events:none; opacity:0;
+}}
+body.recording #marque {{
+  animation:marqueRonde 18s steps(1, end) infinite,
+            marqueFondu 18s ease-in-out infinite;
+}}
+/* Le déplacement est en marches (`steps`) : la position ne change qu'aux
+   instants où le fondu est à zéro. Les deux animations partagent la même
+   durée, donc les marches tombent toujours dans les creux. */
+@keyframes marqueRonde {{
+  0%   {{ transform:translate(0,0); }}
+  33%  {{ transform:translate({marque_dx}px, 0); }}
+  66%  {{ transform:translate({marque_dx}px, {marque_dy}px); }}
+  100% {{ transform:translate(0,0); }}
+}}
+@keyframes marqueFondu {{
+  0%,2%     {{ opacity:0; }}
+  6%,29%    {{ opacity:.55; }}
+  33%       {{ opacity:0; }}
+  39%,62%   {{ opacity:.55; }}
+  66%       {{ opacity:0; }}
+  72%,95%   {{ opacity:.55; }}
+  100%      {{ opacity:0; }}
 }}
 body.recording #intro-rule {{ animation:ruleIn .5s ease-out 1.35s forwards; }}
 @keyframes ruleIn {{ to {{ transform:scaleX(1); }} }}
@@ -995,6 +1410,7 @@ body.recording #intro-rule {{ animation:ruleIn .5s ease-out 1.35s forwards; }}
 {recalls}
   </div>
   <div id="veil"></div>
+{marque}
   <div id="bar"><span class="subject">{subject}</span></div>
   <div id="frame"></div>
   <div id="prog"><i></i></div>

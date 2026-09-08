@@ -35,7 +35,13 @@ VOL_WHOOSH = 0.32
 VOL_POP = 0.26
 VOL_STAMP = 0.40
 VOL_SCRATCH = 0.10
-VOL_MUSIC = 0.10
+# NIVEAU DE LA NAPPE — mesuré, pas choisi à l'oreille.
+# Repère : dans un silence de la narration, la voix seule est à −54,0 dB.
+#   0,10 -> −46,2 dB     0,14 -> −43,7 dB     0,30 -> −37,4 dB
+# À 0,14 la nappe s'entend (+10,3 dB sur le silence) sans jamais toucher la
+# voix : pendant la parole, le mixage reste à −20,1 dB, exactement comme sans
+# nappe — le `sidechaincompress` ci-dessous fait tout le travail.
+VOL_MUSIC = 0.14
 
 # Un cours n'est pas un clip : on borne le nombre d'événements sonores pour ne
 # jamais fatiguer l'oreille ni dépasser les limites d'entrées ffmpeg.
