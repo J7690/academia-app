@@ -717,6 +717,14 @@ def rendre_scene(scene_def, format_capsule, dossier, graine=0, accroche=False):
             # ON LE DIT. La couche precedente remplacait en silence ; celle-ci
             # journalise, et le journal remonte avec le rendu.
             print(f"DEGRADATION {scene_def['id']} {degradation}", flush=True)
+        for fait in journal.get("faits", []):
+            # LE COMPTE NE SUFFIT PAS : IL FAUT SAVOIR QUOI.
+            # « COMPOSITION s1 gestes=1 degradations=0 » se lit pareil que
+            # l'objet du sujet soit venu ou qu'une forme neutre l'ait remplace.
+            # `convoquer` inscrit ici l'uid, la licence et la description de ce
+            # qu'il a reellement importe — la seule preuve que la scene montre
+            # bien ce dont elle parle.
+            print(f"FAIT {scene_def['id']} {fait}", flush=True)
         print(f"COMPOSITION {scene_def['id']} gestes={journal.get('gestes')} "
               f"degradations={len(journal.get('degradations', []))}", flush=True)
         scene.render.fps = format_capsule["fps"]

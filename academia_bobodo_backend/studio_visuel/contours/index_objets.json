@@ -1,0 +1,4733 @@
+{
+ "source": "Objaverse (ODC-By) + Cap3D — licences verifiees objet par objet",
+ "licences_retenues": [
+  "by",
+  "by-sa",
+  "cc0"
+ ],
+ "attribution_requise": true,
+ "termes": {
+  "cerveau": [
+   {
+    "uid": "7a9bab32bb82497c93ba6ca9162daa33",
+    "licence": "by",
+    "description": "a brain in a glass jar on a stand.",
+    "chemin": "glbs/000-075/7a9bab32bb82497c93ba6ca9162daa33.glb"
+   },
+   {
+    "uid": "9afd4e256a38407399caf7cbec90dd99",
+    "licence": "by",
+    "description": "a brain, a baby, and Charlie Brown playing with a ball.",
+    "chemin": "glbs/000-155/9afd4e256a38407399caf7cbec90dd99.glb"
+   },
+   {
+    "uid": "b6d5c662cf194091a152012deca2a932",
+    "licence": "by",
+    "description": "a brain-shaped object with pink and blue lines and features.",
+    "chemin": "glbs/000-143/b6d5c662cf194091a152012deca2a932.glb"
+   },
+   {
+    "uid": "aca75c909788497faa953aee9e79af9a",
+    "licence": "by",
+    "description": "a brain, a strawberry, a pink and white ball, and a small rock.",
+    "chemin": "glbs/000-050/aca75c909788497faa953aee9e79af9a.glb"
+   },
+   {
+    "uid": "1aa3f008c7c74b52a401d96cfaf3fed7",
+    "licence": "by",
+    "description": "a brain-shaped sphere entangled with colorful ribbons and wires.",
+    "chemin": "glbs/000-083/1aa3f008c7c74b52a401d96cfaf3fed7.glb"
+   },
+   {
+    "uid": "d4047c2498f74595acdb3cbc2b06d2a6",
+    "licence": "by",
+    "description": "a brain featuring a red flower, red lightning bolt, and ice elements.",
+    "chemin": "glbs/000-040/d4047c2498f74595acdb3cbc2b06d2a6.glb"
+   },
+   {
+    "uid": "e2efad6dad2f4ce5a7ba8823af4466e9",
+    "licence": "by",
+    "description": "pink brain-shaped object.",
+    "chemin": "glbs/000-031/e2efad6dad2f4ce5a7ba8823af4466e9.glb"
+   },
+   {
+    "uid": "8ae8da15efad4554a8ea3d3bc778c2dc",
+    "licence": "by",
+    "description": "a brain trophy on a pedestal, suitable for printing and royalty-free use.",
+    "chemin": "glbs/000-156/8ae8da15efad4554a8ea3d3bc778c2dc.glb"
+   },
+   {
+    "uid": "35927eaf4339473697b2a8dcd255e123",
+    "licence": "by",
+    "description": "a brain, bomb, plant, cloud, and cubes with surrounding objects and debris.",
+    "chemin": "glbs/000-039/35927eaf4339473697b2a8dcd255e123.glb"
+   },
+   {
+    "uid": "7cdda47b615c4ed88c4c7496fab0c80d",
+    "licence": "by",
+    "description": "white brain model",
+    "chemin": "glbs/000-108/7cdda47b615c4ed88c4c7496fab0c80d.glb"
+   },
+   {
+    "uid": "677bc01f70284a359bee4f0ae670d201",
+    "licence": "by",
+    "description": "human brains and skulls.",
+    "chemin": "glbs/000-104/677bc01f70284a359bee4f0ae670d201.glb"
+   },
+   {
+    "uid": "91ea1b5c75a448268beeddd2795fdbec",
+    "licence": "by",
+    "description": "a blue brain",
+    "chemin": "glbs/000-059/91ea1b5c75a448268beeddd2795fdbec.glb"
+   }
+  ],
+  "neurone": [
+   {
+    "uid": "ab78907b908f45d8a31ba8a9a604cd61",
+    "licence": "by",
+    "description": "a neuron in a tube with other cells and objects.",
+    "chemin": "glbs/000-143/ab78907b908f45d8a31ba8a9a604cd61.glb"
+   },
+   {
+    "uid": "22026922b74245a29729155a357f2d43",
+    "licence": "by",
+    "description": "a neuron and brain with different colored wires and lines",
+    "chemin": "glbs/000-018/22026922b74245a29729155a357f2d43.glb"
+   },
+   {
+    "uid": "e72ee11030a44232b2b5d0d5bdfb41df",
+    "licence": "by",
+    "description": "a neuron and tree with roots and branches in black and white.",
+    "chemin": "glbs/000-133/e72ee11030a44232b2b5d0d5bdfb41df.glb"
+   },
+   {
+    "uid": "e42bbb5e1afd48b08669d2b3ac45a5e5",
+    "licence": "by",
+    "description": "a neuron, windmill, nerve cell, tree, and brain with a stick.",
+    "chemin": "glbs/000-082/e42bbb5e1afd48b08669d2b3ac45a5e5.glb"
+   },
+   {
+    "uid": "e2586a36897c451896c0edcfaa503e59",
+    "licence": "by",
+    "description": "white neuron model",
+    "chemin": "glbs/000-060/e2586a36897c451896c0edcfaa503e59.glb"
+   },
+   {
+    "uid": "bac40ba35e3b4065b1178018a0e74afc",
+    "licence": "by",
+    "description": "white neuron model",
+    "chemin": "glbs/000-070/bac40ba35e3b4065b1178018a0e74afc.glb"
+   },
+   {
+    "uid": "22fa9afe14724d9bbcffcc1160d6c447",
+    "licence": "by",
+    "description": "a pink neuron",
+    "chemin": "glbs/000-080/22fa9afe14724d9bbcffcc1160d6c447.glb"
+   },
+   {
+    "uid": "6834b20a2bc6473d85737587a20ff84f",
+    "licence": "by-sa",
+    "description": "a blue neuron.",
+    "chemin": "glbs/000-055/6834b20a2bc6473d85737587a20ff84f.glb"
+   },
+   {
+    "uid": "90ef97fc74b94d368cda5a4d8e76f3ef",
+    "licence": "by",
+    "description": "a neuron, blood vessel, heart with arteries and veins, human nervous system, and a colorful tree.",
+    "chemin": "glbs/000-066/90ef97fc74b94d368cda5a4d8e76f3ef.glb"
+   },
+   {
+    "uid": "ba9d5124d7bf422a93dc5ab3fd932a13",
+    "licence": "by",
+    "description": "a white neuron",
+    "chemin": "glbs/000-108/ba9d5124d7bf422a93dc5ab3fd932a13.glb"
+   },
+   {
+    "uid": "d2a2dedec2f846cf9a04cb1969e40782",
+    "licence": "by",
+    "description": "white neuron and bird models on a gray background.",
+    "chemin": "glbs/000-037/d2a2dedec2f846cf9a04cb1969e40782.glb"
+   },
+   {
+    "uid": "d40557a1e4154267b78117433bc51296",
+    "licence": "by",
+    "description": "white neuron resembling a squid, worm, and limb skeleton.",
+    "chemin": "glbs/000-145/d40557a1e4154267b78117433bc51296.glb"
+   }
+  ],
+  "coeur": [
+   {
+    "uid": "b2bab3306ab043b9968883f370581116",
+    "licence": "by",
+    "description": "human heart, lungs, and kidney.",
+    "chemin": "glbs/000-040/b2bab3306ab043b9968883f370581116.glb"
+   },
+   {
+    "uid": "fb5b5e84262e4b858d8a3220de4b7c05",
+    "licence": "by",
+    "description": "a human heart",
+    "chemin": "glbs/000-145/fb5b5e84262e4b858d8a3220de4b7c05.glb"
+   },
+   {
+    "uid": "f12470d093914c858d966ea0c4c15e84",
+    "licence": "by",
+    "description": "a human heart",
+    "chemin": "glbs/000-031/f12470d093914c858d966ea0c4c15e84.glb"
+   },
+   {
+    "uid": "ec67e64d48c94526a7c735cfa6035492",
+    "licence": "by",
+    "description": "a Human Heart",
+    "chemin": "glbs/000-023/ec67e64d48c94526a7c735cfa6035492.glb"
+   },
+   {
+    "uid": "e43bdaf4cc9f49c7aab6859350d9b1b4",
+    "licence": "by",
+    "description": "a human heart",
+    "chemin": "glbs/000-144/e43bdaf4cc9f49c7aab6859350d9b1b4.glb"
+   },
+   {
+    "uid": "dec407ece5a94222839e94a688ea36ac",
+    "licence": "by",
+    "description": "a human heart",
+    "chemin": "glbs/000-138/dec407ece5a94222839e94a688ea36ac.glb"
+   },
+   {
+    "uid": "dd79bd224b5141488c56755cbf7d6dba",
+    "licence": "by",
+    "description": "a human heart",
+    "chemin": "glbs/000-146/dd79bd224b5141488c56755cbf7d6dba.glb"
+   },
+   {
+    "uid": "cffa553431a942b884e67293ff5ded8d",
+    "licence": "by",
+    "description": "a Human Heart",
+    "chemin": "glbs/000-056/cffa553431a942b884e67293ff5ded8d.glb"
+   },
+   {
+    "uid": "cc238dff82fa43a0ba7d63f1a7b600ae",
+    "licence": "by",
+    "description": "a human heart",
+    "chemin": "glbs/000-069/cc238dff82fa43a0ba7d63f1a7b600ae.glb"
+   },
+   {
+    "uid": "c0016d486862461cbd0c88f5f811290e",
+    "licence": "by",
+    "description": "a Human Heart",
+    "chemin": "glbs/000-089/c0016d486862461cbd0c88f5f811290e.glb"
+   },
+   {
+    "uid": "bee1952b2875432ea147402acd591fd0",
+    "licence": "by",
+    "description": "a human heart",
+    "chemin": "glbs/000-157/bee1952b2875432ea147402acd591fd0.glb"
+   },
+   {
+    "uid": "b74a6deacb504b61a0680bfd8e056fc3",
+    "licence": "by",
+    "description": "a human heart",
+    "chemin": "glbs/000-112/b74a6deacb504b61a0680bfd8e056fc3.glb"
+   }
+  ],
+  "poumon": [
+   {
+    "uid": "ab3c9dce586a4975982afa27aa61585d",
+    "licence": "by",
+    "description": "lungs - royalty-free preview no. 1",
+    "chemin": "glbs/000-085/ab3c9dce586a4975982afa27aa61585d.glb"
+   },
+   {
+    "uid": "9408a8c1703846288450459f9b6b9922",
+    "licence": "by",
+    "description": "lungs - royalty free illustration.",
+    "chemin": "glbs/000-109/9408a8c1703846288450459f9b6b9922.glb"
+   },
+   {
+    "uid": "99d872157ca34f7fab0fed33c3becc36",
+    "licence": "by",
+    "description": "Lungs - Royalty Free - Preview 1 & 2",
+    "chemin": "glbs/000-026/99d872157ca34f7fab0fed33c3becc36.glb"
+   },
+   {
+    "uid": "a7ac43a140644662a9b896b8a8a10f57",
+    "licence": "by",
+    "description": "pink lungs, royalty-free.",
+    "chemin": "glbs/000-005/a7ac43a140644662a9b896b8a8a10f57.glb"
+   },
+   {
+    "uid": "8812aa5f0fc545379148024c370e51e5",
+    "licence": "by",
+    "description": "pink lungs, royalty-free.",
+    "chemin": "glbs/000-100/8812aa5f0fc545379148024c370e51e5.glb"
+   },
+   {
+    "uid": "80de4dda393e4d58bc86e42c37506f26",
+    "licence": "by",
+    "description": "pink lungs - royalty free.",
+    "chemin": "glbs/000-103/80de4dda393e4d58bc86e42c37506f26.glb"
+   },
+   {
+    "uid": "49437d1222f04039813797258299a47e",
+    "licence": "by",
+    "description": "pink lungs and a pink hat.",
+    "chemin": "glbs/000-132/49437d1222f04039813797258299a47e.glb"
+   },
+   {
+    "uid": "e5812a3e6574408ab450937a7343795e",
+    "licence": "by",
+    "description": "human lungs.",
+    "chemin": "glbs/000-084/e5812a3e6574408ab450937a7343795e.glb"
+   },
+   {
+    "uid": "974d63ce2b1f4760a885e6e88dca7f78",
+    "licence": "by",
+    "description": "human lungs.",
+    "chemin": "glbs/000-045/974d63ce2b1f4760a885e6e88dca7f78.glb"
+   },
+   {
+    "uid": "8617c230121a47f5802386bfd7b997f7",
+    "licence": "by",
+    "description": "human lungs.",
+    "chemin": "glbs/000-055/8617c230121a47f5802386bfd7b997f7.glb"
+   },
+   {
+    "uid": "5c05a1b3e8794facae1e74aa919c262c",
+    "licence": "by",
+    "description": "human lungs.",
+    "chemin": "glbs/000-036/5c05a1b3e8794facae1e74aa919c262c.glb"
+   },
+   {
+    "uid": "748eefe048294feaab81670658a94642",
+    "licence": "by",
+    "description": "Lungs: High-quality, royalty-free model compatible with 3ds Max, Maya, Blender, and other animation software.",
+    "chemin": "glbs/000-081/748eefe048294feaab81670658a94642.glb"
+   }
+  ],
+  "rein": [
+   {
+    "uid": "a33c807e44074177ab20b949b97ef837",
+    "licence": "by",
+    "description": "kidney anatomy, royalty-free illustration.",
+    "chemin": "glbs/000-066/a33c807e44074177ab20b949b97ef837.glb"
+   },
+   {
+    "uid": "e506edcc6bed417fbbcffac70d0b3bbb",
+    "licence": "by",
+    "description": "kidneys and bladder, royalty-free, in pink color.",
+    "chemin": "glbs/000-105/e506edcc6bed417fbbcffac70d0b3bbb.glb"
+   },
+   {
+    "uid": "6175fb15da2c4b56a873ab10b63f03d8",
+    "licence": "by",
+    "description": "kidney model with red and blue tubes, royalty-free.",
+    "chemin": "glbs/000-068/6175fb15da2c4b56a873ab10b63f03d8.glb"
+   },
+   {
+    "uid": "f697fa02f513426c9f29158604acc508",
+    "licence": "by",
+    "description": "a kidney, royalty-free.",
+    "chemin": "glbs/000-068/f697fa02f513426c9f29158604acc508.glb"
+   },
+   {
+    "uid": "070bbef3b481451bbcaee6dd711f8569",
+    "licence": "by",
+    "description": "kidney model with red and blue anatomy, royalty-free.",
+    "chemin": "glbs/000-055/070bbef3b481451bbcaee6dd711f8569.glb"
+   },
+   {
+    "uid": "e5422aee46b3474ab5cc33643975ab6e",
+    "licence": "by",
+    "description": "a kidney and white sphere.",
+    "chemin": "glbs/000-003/e5422aee46b3474ab5cc33643975ab6e.glb"
+   },
+   {
+    "uid": "757eebd68d344ca1994b7fab3d8b542b",
+    "licence": "by",
+    "description": "a kidney with bubbles on it.",
+    "chemin": "glbs/000-142/757eebd68d344ca1994b7fab3d8b542b.glb"
+   },
+   {
+    "uid": "7f91467d51ad4a8db6c62961c0cffff6",
+    "licence": "by",
+    "description": "a kidney in red and blue colors.",
+    "chemin": "glbs/000-139/7f91467d51ad4a8db6c62961c0cffff6.glb"
+   },
+   {
+    "uid": "bff2ca4fc1754a15b989ab016b5a5038",
+    "licence": "by",
+    "description": "a kidney, green egg, and white egg.",
+    "chemin": "glbs/000-078/bff2ca4fc1754a15b989ab016b5a5038.glb"
+   },
+   {
+    "uid": "8e553145f8b14f188075bffb5975c4e2",
+    "licence": "by",
+    "description": "a kidney, ureter, and colorful intestine.",
+    "chemin": "glbs/000-154/8e553145f8b14f188075bffb5975c4e2.glb"
+   },
+   {
+    "uid": "f5e0cae91bb24899ad11f1ca8036a537",
+    "licence": "by",
+    "description": "a kidney-shaped object with two pink spheres.",
+    "chemin": "glbs/000-024/f5e0cae91bb24899ad11f1ca8036a537.glb"
+   },
+   {
+    "uid": "2d658e180d1748cba3c2b0a4d930ca82",
+    "licence": "by",
+    "description": "a kidney with a shoe and hat on it, royalty-free.",
+    "chemin": "glbs/000-071/2d658e180d1748cba3c2b0a4d930ca82.glb"
+   }
+  ],
+  "estomac": [
+   {
+    "uid": "7ed21193e58244fea89bccb611019674",
+    "licence": "by",
+    "description": "the stomach.",
+    "chemin": "glbs/000-113/7ed21193e58244fea89bccb611019674.glb"
+   },
+   {
+    "uid": "2b91f979420944ed87362be369362877",
+    "licence": "by",
+    "description": "human stomach, intestine, and heart.",
+    "chemin": "glbs/000-103/2b91f979420944ed87362be369362877.glb"
+   },
+   {
+    "uid": "cf86f91a1f5e400588b6ed64983d3eb5",
+    "licence": "by",
+    "description": "a human stomach",
+    "chemin": "glbs/000-154/cf86f91a1f5e400588b6ed64983d3eb5.glb"
+   },
+   {
+    "uid": "b6c3662d06f94b9eacdcc311cac51587",
+    "licence": "by",
+    "description": "a human stomach",
+    "chemin": "glbs/000-141/b6c3662d06f94b9eacdcc311cac51587.glb"
+   },
+   {
+    "uid": "b0096e611d684984b09a91302f45d446",
+    "licence": "by",
+    "description": "a human stomach",
+    "chemin": "glbs/000-113/b0096e611d684984b09a91302f45d446.glb"
+   },
+   {
+    "uid": "6d532aa54ee14cefaaefbfbab3c29e43",
+    "licence": "by",
+    "description": "a human stomach",
+    "chemin": "glbs/000-111/6d532aa54ee14cefaaefbfbab3c29e43.glb"
+   },
+   {
+    "uid": "3f1f3946a18e47d790a0a0789f94fd31",
+    "licence": "by",
+    "description": "a human stomach",
+    "chemin": "glbs/000-006/3f1f3946a18e47d790a0a0789f94fd31.glb"
+   },
+   {
+    "uid": "312859528ff245e884e4354b3d448215",
+    "licence": "by",
+    "description": "a human stomach",
+    "chemin": "glbs/000-120/312859528ff245e884e4354b3d448215.glb"
+   },
+   {
+    "uid": "27aab66065264fb69067f9610b5342de",
+    "licence": "by",
+    "description": "a human stomach",
+    "chemin": "glbs/000-057/27aab66065264fb69067f9610b5342de.glb"
+   },
+   {
+    "uid": "23a91caa37864e6ab1ba0eac7c94777b",
+    "licence": "by",
+    "description": "a human stomach",
+    "chemin": "glbs/000-022/23a91caa37864e6ab1ba0eac7c94777b.glb"
+   },
+   {
+    "uid": "0c3b93a8d0ac41c7ae4116c2f1c15bc7",
+    "licence": "by",
+    "description": "a human stomach",
+    "chemin": "glbs/000-100/0c3b93a8d0ac41c7ae4116c2f1c15bc7.glb"
+   },
+   {
+    "uid": "fa692a82f72349a08d3667e94aa9e702",
+    "licence": "by",
+    "description": "a human stomach.",
+    "chemin": "glbs/000-008/fa692a82f72349a08d3667e94aa9e702.glb"
+   }
+  ],
+  "foie": [
+   {
+    "uid": "861d1048bf8d47a2abc52d64476d9458",
+    "licence": "by",
+    "description": "'Liver and Gallbladder - Royalty-Free'",
+    "chemin": "glbs/000-116/861d1048bf8d47a2abc52d64476d9458.glb"
+   },
+   {
+    "uid": "8ded37c75d8b44a1ac7e2787323622c5",
+    "licence": "by",
+    "description": "a liver, shell, and rock.",
+    "chemin": "glbs/000-128/8ded37c75d8b44a1ac7e2787323622c5.glb"
+   },
+   {
+    "uid": "2ce05e9969e64a079aad26bda827a519",
+    "licence": "by",
+    "description": "liver model, royalty-free, with red and green tulip elements.",
+    "chemin": "glbs/000-132/2ce05e9969e64a079aad26bda827a519.glb"
+   },
+   {
+    "uid": "5736c3198ecc4947b3ae6f8b9fd4286b",
+    "licence": "by",
+    "description": "a liver, black and red heart, and burgundy hat.",
+    "chemin": "glbs/000-008/5736c3198ecc4947b3ae6f8b9fd4286b.glb"
+   },
+   {
+    "uid": "33ae6d6749cc4bd2a412df965de7be67",
+    "licence": "by",
+    "description": "liver and gallbladder with right and left lobes, and a heart with a hole in it.",
+    "chemin": "glbs/000-033/33ae6d6749cc4bd2a412df965de7be67.glb"
+   },
+   {
+    "uid": "c03bfaf8faa640f185548db42ff7455a",
+    "licence": "by",
+    "description": "a liver, human heart, red pepper, and red-blue surfboard.",
+    "chemin": "glbs/000-012/c03bfaf8faa640f185548db42ff7455a.glb"
+   },
+   {
+    "uid": "9703d28dab3f4b0993f2fd5b5a667f0b",
+    "licence": "by",
+    "description": "a liver, gallbladder, and pancreas in red and yellow colors.",
+    "chemin": "glbs/000-149/9703d28dab3f4b0993f2fd5b5a667f0b.glb"
+   },
+   {
+    "uid": "0d9b6b93d5094827b3e7db5d8ffcdb9a",
+    "licence": "by",
+    "description": "a red liver.",
+    "chemin": "glbs/000-097/0d9b6b93d5094827b3e7db5d8ffcdb9a.glb"
+   },
+   {
+    "uid": "1225691039364826ba1686b95a60b065",
+    "licence": "by",
+    "description": "a liver with gallbladder and yellow liquid dripping, in a royalty-free illustration.",
+    "chemin": "glbs/000-143/1225691039364826ba1686b95a60b065.glb"
+   },
+   {
+    "uid": "5fdb80e22a61461bb6d3cdc5aef95b2d",
+    "licence": "by",
+    "description": "a pink liver",
+    "chemin": "glbs/000-014/5fdb80e22a61461bb6d3cdc5aef95b2d.glb"
+   },
+   {
+    "uid": "3dbe77b7b4d64d5a8f97c75c0f1bf618",
+    "licence": "by",
+    "description": "a pink liver",
+    "chemin": "glbs/000-154/3dbe77b7b4d64d5a8f97c75c0f1bf618.glb"
+   },
+   {
+    "uid": "79bed7cea73045549fbfe6ffee1deae0",
+    "licence": "by",
+    "description": "a pink liver.",
+    "chemin": "glbs/000-048/79bed7cea73045549fbfe6ffee1deae0.glb"
+   }
+  ],
+  "squelette": [
+   {
+    "uid": "8fdd03c69ead48c5867c6693a78729bd",
+    "licence": "by",
+    "description": "Skeleton Warrior in Armor",
+    "chemin": "glbs/000-152/8fdd03c69ead48c5867c6693a78729bd.glb"
+   },
+   {
+    "uid": "22d343006a01480684b5bc1b8fa0d627",
+    "licence": "by",
+    "description": "skeleton with arms raised.",
+    "chemin": "glbs/000-133/22d343006a01480684b5bc1b8fa0d627.glb"
+   },
+   {
+    "uid": "31cba4964dec43a0a1cf60c346978b57",
+    "licence": "by",
+    "description": "Skeleton with a bird's head",
+    "chemin": "glbs/000-145/31cba4964dec43a0a1cf60c346978b57.glb"
+   },
+   {
+    "uid": "f9715c00988c4243994b289eed6d8471",
+    "licence": "by",
+    "description": "Skeleton Pirate Royalty-Free",
+    "chemin": "glbs/000-005/f9715c00988c4243994b289eed6d8471.glb"
+   },
+   {
+    "uid": "6cc42ce74b3a456c9dbea4c601ccfd6f",
+    "licence": "by",
+    "description": "skeleton cat holding a lantern.",
+    "chemin": "glbs/000-032/6cc42ce74b3a456c9dbea4c601ccfd6f.glb"
+   },
+   {
+    "uid": "43b5f9e25785492ca0816cc315edd059",
+    "licence": "by",
+    "description": "Skeleton Model in Black and White",
+    "chemin": "glbs/000-124/43b5f9e25785492ca0816cc315edd059.glb"
+   },
+   {
+    "uid": "5c831e9250934390b8cde28812b84ffd",
+    "licence": "by",
+    "description": "Skeleton with wings - royalty-free",
+    "chemin": "glbs/000-150/5c831e9250934390b8cde28812b84ffd.glb"
+   },
+   {
+    "uid": "98e8a4696e7948abacd21618f474f94e",
+    "licence": "by",
+    "description": "Skeleton wearing a top hat and cape",
+    "chemin": "glbs/000-063/98e8a4696e7948abacd21618f474f94e.glb"
+   },
+   {
+    "uid": "469c502f361f4eb899ed22db505ea14d",
+    "licence": "by",
+    "description": "Skeleton with horns, hat, and trumpet",
+    "chemin": "glbs/000-007/469c502f361f4eb899ed22db505ea14d.glb"
+   },
+   {
+    "uid": "9685ea3d22644c89959212da4306ddf4",
+    "licence": "by",
+    "description": "Skeleton sniper rifle with a long barrel",
+    "chemin": "glbs/000-132/9685ea3d22644c89959212da4306ddf4.glb"
+   },
+   {
+    "uid": "03f33a6af86a4583891a39358fa69eb0",
+    "licence": "by",
+    "description": "Skeleton holding a bow, arrow, and spear.",
+    "chemin": "glbs/000-077/03f33a6af86a4583891a39358fa69eb0.glb"
+   },
+   {
+    "uid": "7fdcaa5609a24de597921a6dc3c11ead",
+    "licence": "by",
+    "description": "a skeleton leg",
+    "chemin": "glbs/000-110/7fdcaa5609a24de597921a6dc3c11ead.glb"
+   }
+  ],
+  "os": [
+   {
+    "uid": "2b0b22873d7440d0a9dc674f2d7acc1b",
+    "licence": "by",
+    "description": "bone model in white plastic.",
+    "chemin": "glbs/000-003/2b0b22873d7440d0a9dc674f2d7acc1b.glb"
+   },
+   {
+    "uid": "5428067687b74f5a8751383bd3898f53",
+    "licence": "by",
+    "description": "bone model with a green handle.",
+    "chemin": "glbs/000-069/5428067687b74f5a8751383bd3898f53.glb"
+   },
+   {
+    "uid": "36c550ddca7241619542ab1c383b077e",
+    "licence": "by",
+    "description": "bone pipe with a long wooden handle.",
+    "chemin": "glbs/000-118/36c550ddca7241619542ab1c383b077e.glb"
+   },
+   {
+    "uid": "c681854e53db464f83b899bffab67f75",
+    "licence": "by",
+    "description": "bone-shaped object with a handle and hole.",
+    "chemin": "glbs/000-119/c681854e53db464f83b899bffab67f75.glb"
+   },
+   {
+    "uid": "5c4bc6c9d52e4f208c3971f4bfa046d7",
+    "licence": "by",
+    "description": "a bone skeleton",
+    "chemin": "glbs/000-099/5c4bc6c9d52e4f208c3971f4bfa046d7.glb"
+   },
+   {
+    "uid": "d6258662a15745ab97dd127e2c5966ae",
+    "licence": "by",
+    "description": "a bone in white.",
+    "chemin": "glbs/000-022/d6258662a15745ab97dd127e2c5966ae.glb"
+   },
+   {
+    "uid": "564d4403a1bc41d2866721b2e0090113",
+    "licence": "cc0",
+    "description": "a bone and horn.",
+    "chemin": "glbs/000-131/564d4403a1bc41d2866721b2e0090113.glb"
+   },
+   {
+    "uid": "201c9a368ed6421f83eb7e449ba107dd",
+    "licence": "by",
+    "description": "a bone sculpture",
+    "chemin": "glbs/000-072/201c9a368ed6421f83eb7e449ba107dd.glb"
+   },
+   {
+    "uid": "1f12ee4c015740919c7c410339f97b17",
+    "licence": "by",
+    "description": "a bone sculpture",
+    "chemin": "glbs/000-115/1f12ee4c015740919c7c410339f97b17.glb"
+   },
+   {
+    "uid": "e922e96e071240bb8de980cc2077a9a4",
+    "licence": "by",
+    "description": "bone sculpture resembling a fish and a mushroom.",
+    "chemin": "glbs/000-041/e922e96e071240bb8de980cc2077a9a4.glb"
+   },
+   {
+    "uid": "b50e0642376a48389c94b128e797f892",
+    "licence": "by",
+    "description": "bone-shaped wooden toothpick with a ring on top.",
+    "chemin": "glbs/000-054/b50e0642376a48389c94b128e797f892.glb"
+   },
+   {
+    "uid": "1232621eab6946ffabdbc6a08dfdfe37",
+    "licence": "by",
+    "description": "a bone and a fish.",
+    "chemin": "glbs/000-029/1232621eab6946ffabdbc6a08dfdfe37.glb"
+   }
+  ],
+  "crane": [
+   {
+    "uid": "f8afa50eb758405e989873718b940661",
+    "licence": "by",
+    "description": "skull with horns and antlers.",
+    "chemin": "glbs/000-045/f8afa50eb758405e989873718b940661.glb"
+   },
+   {
+    "uid": "854c0b2598394cef9df60c68bf6b9d1c",
+    "licence": "by-sa",
+    "description": "skull model wearing a blue knitted hat.",
+    "chemin": "glbs/000-004/854c0b2598394cef9df60c68bf6b9d1c.glb"
+   },
+   {
+    "uid": "1768ad36821a43cda1c6fdfaf548c06b",
+    "licence": "by",
+    "description": "skull and crossbones with a yellow and red hat.",
+    "chemin": "glbs/000-077/1768ad36821a43cda1c6fdfaf548c06b.glb"
+   },
+   {
+    "uid": "d493c000fd6a499c9c5c9bef7cbdaaf3",
+    "licence": "by",
+    "description": "a skull sculpture.",
+    "chemin": "glbs/000-052/d493c000fd6a499c9c5c9bef7cbdaaf3.glb"
+   },
+   {
+    "uid": "17f97d66f6a14f158a2ece0a48a485c0",
+    "licence": "by",
+    "description": "Skull-topped wooden pencils and knitting needles",
+    "chemin": "glbs/000-121/17f97d66f6a14f158a2ece0a48a485c0.glb"
+   },
+   {
+    "uid": "fd751c4c682e43699161131fc6613d88",
+    "licence": "by",
+    "description": "a skull with horns.",
+    "chemin": "glbs/000-086/fd751c4c682e43699161131fc6613d88.glb"
+   },
+   {
+    "uid": "a33867e30bc84fc092732ffea9ebb4c6",
+    "licence": "by",
+    "description": "a skull and a rock.",
+    "chemin": "glbs/000-126/a33867e30bc84fc092732ffea9ebb4c6.glb"
+   },
+   {
+    "uid": "06f05411c1244a60b6cf73ff32db0dd2",
+    "licence": "by",
+    "description": "skulls of a hippopotamus, tiger, wolf, and hyena.",
+    "chemin": "glbs/000-110/06f05411c1244a60b6cf73ff32db0dd2.glb"
+   },
+   {
+    "uid": "e8b246fe4a7c411a87637fce9174a3f4",
+    "licence": "by",
+    "description": "a skull and a sphere.",
+    "chemin": "glbs/000-121/e8b246fe4a7c411a87637fce9174a3f4.glb"
+   },
+   {
+    "uid": "fa2c0dc019064a2fa9feff589396e566",
+    "licence": "by",
+    "description": "a skull wearing a hat.",
+    "chemin": "glbs/000-100/fa2c0dc019064a2fa9feff589396e566.glb"
+   },
+   {
+    "uid": "7b9205e6996c45ea9b1e960d0f6c244d",
+    "licence": "by",
+    "description": "a skull with green eyes.",
+    "chemin": "glbs/000-005/7b9205e6996c45ea9b1e960d0f6c244d.glb"
+   },
+   {
+    "uid": "e17047a074ef4cd193861f040d05d25c",
+    "licence": "by",
+    "description": "a skull with a white hat.",
+    "chemin": "glbs/000-099/e17047a074ef4cd193861f040d05d25c.glb"
+   }
+  ],
+  "corps humain": [
+   {
+    "uid": "dc517f5f21e94294b1021d23c97a1ba4",
+    "licence": "by",
+    "description": "a human body.",
+    "chemin": "glbs/000-064/dc517f5f21e94294b1021d23c97a1ba4.glb"
+   },
+   {
+    "uid": "d23bf4acc3e947f4ae0f73c67671bdcd",
+    "licence": "by",
+    "description": "a human body with muscles",
+    "chemin": "glbs/000-156/d23bf4acc3e947f4ae0f73c67671bdcd.glb"
+   },
+   {
+    "uid": "ca36d43dec034fff905c118d571bb21d",
+    "licence": "by",
+    "description": "a human body with muscles",
+    "chemin": "glbs/000-108/ca36d43dec034fff905c118d571bb21d.glb"
+   },
+   {
+    "uid": "b57891186f094d84bb1df0f363f57e98",
+    "licence": "by",
+    "description": "a human body with muscles.",
+    "chemin": "glbs/000-082/b57891186f094d84bb1df0f363f57e98.glb"
+   },
+   {
+    "uid": "96f883e4f8404df6908037f990bdd0c2",
+    "licence": "by",
+    "description": "a human body with muscles.",
+    "chemin": "glbs/000-154/96f883e4f8404df6908037f990bdd0c2.glb"
+   },
+   {
+    "uid": "3bffa758131d4219ae3441674a6a49f2",
+    "licence": "by",
+    "description": "a human body with muscles.",
+    "chemin": "glbs/000-074/3bffa758131d4219ae3441674a6a49f2.glb"
+   },
+   {
+    "uid": "31b40fd809b14665b93773936d67c52c",
+    "licence": "by-sa",
+    "description": "a human body with muscles.",
+    "chemin": "glbs/000-072/31b40fd809b14665b93773936d67c52c.glb"
+   },
+   {
+    "uid": "1e31971802a8472d8086be56c55b7067",
+    "licence": "by",
+    "description": "a human body with muscles.",
+    "chemin": "glbs/000-042/1e31971802a8472d8086be56c55b7067.glb"
+   },
+   {
+    "uid": "5484c885b3e2471eaf465b4279b81bbd",
+    "licence": "by",
+    "description": "a human body with labeled organs",
+    "chemin": "glbs/000-080/5484c885b3e2471eaf465b4279b81bbd.glb"
+   },
+   {
+    "uid": "3185924ee3c64db1be6184cc40cd212b",
+    "licence": "by",
+    "description": "a human body showcasing muscles.",
+    "chemin": "glbs/000-104/3185924ee3c64db1be6184cc40cd212b.glb"
+   },
+   {
+    "uid": "03fe165b4f7f4bf894e27e888b4e1863",
+    "licence": "by",
+    "description": "a human body showcasing muscles.",
+    "chemin": "glbs/000-148/03fe165b4f7f4bf894e27e888b4e1863.glb"
+   },
+   {
+    "uid": "df2c69d57e014496b9aeef3493dfde35",
+    "licence": "by",
+    "description": "a human body with colored muscles",
+    "chemin": "glbs/000-086/df2c69d57e014496b9aeef3493dfde35.glb"
+   }
+  ],
+  "oeil": [
+   {
+    "uid": "fe29f952b31b4293aa65df961167358e",
+    "licence": "by",
+    "description": "eyeball model in white sphere form.",
+    "chemin": "glbs/000-143/fe29f952b31b4293aa65df961167358e.glb"
+   },
+   {
+    "uid": "f46c012ead344bf1b9e36a8c4d7bb42f",
+    "licence": "by",
+    "description": "eyeball model in white and black sphere.",
+    "chemin": "glbs/000-021/f46c012ead344bf1b9e36a8c4d7bb42f.glb"
+   },
+   {
+    "uid": "a15514bc12824de3b1fca9cfa023168c",
+    "licence": "by",
+    "description": "an eyeball on a stick.",
+    "chemin": "glbs/000-031/a15514bc12824de3b1fca9cfa023168c.glb"
+   },
+   {
+    "uid": "4d90e996632945af8bfdf8e4b0e7dda2",
+    "licence": "by",
+    "description": "an eyeball on a stand.",
+    "chemin": "glbs/000-008/4d90e996632945af8bfdf8e4b0e7dda2.glb"
+   },
+   {
+    "uid": "a3029bc9117d4599af68ed1df15a8d1d",
+    "licence": "by",
+    "description": "the human eye.",
+    "chemin": "glbs/000-039/a3029bc9117d4599af68ed1df15a8d1d.glb"
+   },
+   {
+    "uid": "9ce9f22fee064c58a31fd696c570a1bc",
+    "licence": "by",
+    "description": "the human eye.",
+    "chemin": "glbs/000-015/9ce9f22fee064c58a31fd696c570a1bc.glb"
+   },
+   {
+    "uid": "b42d09ed18034063a528d9b1a2a9654a",
+    "licence": "by",
+    "description": "a human eye, pink ball, bladder, and oesophagus.",
+    "chemin": "glbs/000-032/b42d09ed18034063a528d9b1a2a9654a.glb"
+   },
+   {
+    "uid": "9a7f135ab0d54f24b355d89439d0b248",
+    "licence": "by",
+    "description": "a human eye with pink and white sphere and red veins.",
+    "chemin": "glbs/000-043/9a7f135ab0d54f24b355d89439d0b248.glb"
+   },
+   {
+    "uid": "4fed6c71faca4932926c70a9385a7cee",
+    "licence": "by",
+    "description": "an eyeball with a blue and white iris.",
+    "chemin": "glbs/000-038/4fed6c71faca4932926c70a9385a7cee.glb"
+   },
+   {
+    "uid": "0291f2fb9f9848c7ba32bdda539fad3b",
+    "licence": "by",
+    "description": "a human eye with red and white stripes and a red vein.",
+    "chemin": "glbs/000-041/0291f2fb9f9848c7ba32bdda539fad3b.glb"
+   },
+   {
+    "uid": "6963d57a2fa64c7297c15bad084581a0",
+    "licence": "by",
+    "description": "an eyeball with red veins and white spots.",
+    "chemin": "glbs/000-139/6963d57a2fa64c7297c15bad084581a0.glb"
+   },
+   {
+    "uid": "da456a99a0514f66b1b8c2ab206c0f33",
+    "licence": "by",
+    "description": "an eyeball with a blue iris and red accents.",
+    "chemin": "glbs/000-093/da456a99a0514f66b1b8c2ab206c0f33.glb"
+   }
+  ],
+  "dent": [
+   {
+    "uid": "2f2f57e880fd4644a27f3e24e59f90d0",
+    "licence": "by",
+    "description": "teeth with dental braces.",
+    "chemin": "glbs/000-119/2f2f57e880fd4644a27f3e24e59f90d0.glb"
+   },
+   {
+    "uid": "2fc68f27da334b5691cd760142903f2b",
+    "licence": "by",
+    "description": "tooth model with a white filling.",
+    "chemin": "glbs/000-052/2fc68f27da334b5691cd760142903f2b.glb"
+   },
+   {
+    "uid": "daf838c9a8f445f288024e444636dfb1",
+    "licence": "by",
+    "description": "a tooth and bone.",
+    "chemin": "glbs/000-071/daf838c9a8f445f288024e444636dfb1.glb"
+   },
+   {
+    "uid": "02582e483b324368919d34cf13c849af",
+    "licence": "by",
+    "description": "a tooth-shaped cone.",
+    "chemin": "glbs/000-045/02582e483b324368919d34cf13c849af.glb"
+   },
+   {
+    "uid": "b77dcbc5052e4740b87cdb1964649742",
+    "licence": "by",
+    "description": "a tooth with a filling.",
+    "chemin": "glbs/000-049/b77dcbc5052e4740b87cdb1964649742.glb"
+   },
+   {
+    "uid": "3de5acfbcf854026926e877864c581fb",
+    "licence": "by",
+    "description": "a tooth and a human leg",
+    "chemin": "glbs/000-130/3de5acfbcf854026926e877864c581fb.glb"
+   },
+   {
+    "uid": "394b9b6eec804d6aad83faf83af76d7d",
+    "licence": "by",
+    "description": "a tooth and toothbrush.",
+    "chemin": "glbs/000-103/394b9b6eec804d6aad83faf83af76d7d.glb"
+   },
+   {
+    "uid": "ee71e282769c4d17b8d32c7b56aaf7cd",
+    "licence": "by",
+    "description": "a tooth with a blue tip.",
+    "chemin": "glbs/000-042/ee71e282769c4d17b8d32c7b56aaf7cd.glb"
+   },
+   {
+    "uid": "0c6e099bada245b0a7ffdb9910de7502",
+    "licence": "by",
+    "description": "a tooth and man's teeth.",
+    "chemin": "glbs/000-001/0c6e099bada245b0a7ffdb9910de7502.glb"
+   },
+   {
+    "uid": "dfd2f33d13374725bdf06ff7b40dd83d",
+    "licence": "by",
+    "description": "a tooth and peeled banana.",
+    "chemin": "glbs/000-047/dfd2f33d13374725bdf06ff7b40dd83d.glb"
+   },
+   {
+    "uid": "d565a52838514ef9996459fa86dcdc3a",
+    "licence": "by",
+    "description": "teeth with braces, dental implant, denture, and denture.",
+    "chemin": "glbs/000-045/d565a52838514ef9996459fa86dcdc3a.glb"
+   },
+   {
+    "uid": "61e728cb260545d48ef3446b9fdca67d",
+    "licence": "by",
+    "description": "a tooth and crocodile jaw.",
+    "chemin": "glbs/000-102/61e728cb260545d48ef3446b9fdca67d.glb"
+   }
+  ],
+  "muscle": [
+   {
+    "uid": "5b3c8e21cb214357ab76c8710d835d11",
+    "licence": "by",
+    "description": "a human arm showcasing muscle anatomy, along with a pig's head and human stomach.",
+    "chemin": "glbs/000-025/5b3c8e21cb214357ab76c8710d835d11.glb"
+   },
+   {
+    "uid": "cff4e74bab6d4fdca81521343a485897",
+    "licence": "by",
+    "description": "Stylized representation of the human muscular system featuring simplified muscle groups in blue and yellow, wi",
+    "chemin": "glbs/000-016/cff4e74bab6d4fdca81521343a485897.glb"
+   },
+   {
+    "uid": "20a57636ec0c44c996e7f36313792cea",
+    "licence": "by",
+    "description": "a flying giraffe with extended wings and visible muscle anatomy.",
+    "chemin": "glbs/000-017/20a57636ec0c44c996e7f36313792cea.glb"
+   },
+   {
+    "uid": "f1155a4e9a1c431aa5264f7450dd2286",
+    "licence": "by",
+    "description": "Transparent a human figure with visible skeletal and muscular systems.",
+    "chemin": "glbs/000-108/f1155a4e9a1c431aa5264f7450dd2286.glb"
+   }
+  ],
+  "peau": [
+   {
+    "uid": "bf864eec8ba4422c83817b12613a6e64",
+    "licence": "by",
+    "description": "a skin layer structure with red and blue lines.",
+    "chemin": "glbs/000-145/bf864eec8ba4422c83817b12613a6e64.glb"
+   }
+  ],
+  "sang": [
+   {
+    "uid": "d792dde9f01c4a6b8cfaece591c9b267",
+    "licence": "by",
+    "description": "red blood cells floating in the air.",
+    "chemin": "glbs/000-076/d792dde9f01c4a6b8cfaece591c9b267.glb"
+   },
+   {
+    "uid": "4926c0ef2f474434b1fe76348ec263be",
+    "licence": "by",
+    "description": "red blood cells floating in the air.",
+    "chemin": "glbs/000-052/4926c0ef2f474434b1fe76348ec263be.glb"
+   },
+   {
+    "uid": "92cc821747484cc3a29346d2eb04f7bb",
+    "licence": "by",
+    "description": "Red blood cell-shaped sphere with a hole in the middle and insects on it.",
+    "chemin": "glbs/000-119/92cc821747484cc3a29346d2eb04f7bb.glb"
+   },
+   {
+    "uid": "c3f0295dca6244e286a0b21999c2d0ce",
+    "licence": "by",
+    "description": "red balls resembling blood cells.",
+    "chemin": "glbs/000-108/c3f0295dca6244e286a0b21999c2d0ce.glb"
+   },
+   {
+    "uid": "970f8497ee994a7d9864f8b12100fde8",
+    "licence": "by",
+    "description": "a bloody mushroom, a red blood cell, a woman's uterus, a human brain, a human eye, a woman's head, and a float",
+    "chemin": "glbs/000-016/970f8497ee994a7d9864f8b12100fde8.glb"
+   },
+   {
+    "uid": "45cd625779844071ba5f8d42a4b2626a",
+    "licence": "by",
+    "description": "a red kidney, white kidney, red blood cells, and a red and green berry.",
+    "chemin": "glbs/000-127/45cd625779844071ba5f8d42a4b2626a.glb"
+   },
+   {
+    "uid": "0400cf6a94904bb7aecdb5c1f6d1f1f8",
+    "licence": "by",
+    "description": "a box containing red liquid and blood cells, labeled as Pepo-OA and Ferro-FL.",
+    "chemin": "glbs/000-007/0400cf6a94904bb7aecdb5c1f6d1f1f8.glb"
+   },
+   {
+    "uid": "b5d568bc68134f62b734caa30325bc5a",
+    "licence": "by",
+    "description": "a Fero blood product box with red blood cells, used for treating blood clots.",
+    "chemin": "glbs/000-099/b5d568bc68134f62b734caa30325bc5a.glb"
+   },
+   {
+    "uid": "1d9c32c2c01043bb909b43b583d7e8ba",
+    "licence": "by",
+    "description": "a red and white sphere resembling a blood cell or kidney.",
+    "chemin": "glbs/000-156/1d9c32c2c01043bb909b43b583d7e8ba.glb"
+   },
+   {
+    "uid": "f017f86ce3f04e288d3de19ff7cb6d25",
+    "licence": "by",
+    "description": "a small orange creature resembling a red blood cell and a blood splatter.",
+    "chemin": "glbs/000-064/f017f86ce3f04e288d3de19ff7cb6d25.glb"
+   },
+   {
+    "uid": "b1a15a1918b74ec299942cef2c32ab84",
+    "licence": "by",
+    "description": "a white sphere with red dots, resembling a blood cell.",
+    "chemin": "glbs/000-066/b1a15a1918b74ec299942cef2c32ab84.glb"
+   },
+   {
+    "uid": "64433627d44544eeaf4eabf35c2fce05",
+    "licence": "by",
+    "description": "A syringe with red liquid inside, next to a red blood cell.",
+    "chemin": "glbs/000-154/64433627d44544eeaf4eabf35c2fce05.glb"
+   }
+  ],
+  "cellule": [
+   {
+    "uid": "8d5f094da45b4069ad6288542f0835e9",
+    "licence": "by",
+    "description": "a cell membrane and structure",
+    "chemin": "glbs/000-155/8d5f094da45b4069ad6288542f0835e9.glb"
+   },
+   {
+    "uid": "00dbeb4848fb4062b5314931ccb62f99",
+    "licence": "by",
+    "description": "a cell membrane and structure.",
+    "chemin": "glbs/000-020/00dbeb4848fb4062b5314931ccb62f99.glb"
+   },
+   {
+    "uid": "c62d8fb1473444729f2990145dc666b3",
+    "licence": "by",
+    "description": "a cell membrane with protein structure.",
+    "chemin": "glbs/000-082/c62d8fb1473444729f2990145dc666b3.glb"
+   },
+   {
+    "uid": "2286784a21b943cebbe600620ae056d4",
+    "licence": "by",
+    "description": "a cell membrane with protein structure.",
+    "chemin": "glbs/000-060/2286784a21b943cebbe600620ae056d4.glb"
+   },
+   {
+    "uid": "c0e9add19929466091d09c6a11be0a89",
+    "licence": "by",
+    "description": "a cell membrane with blue and red cells.",
+    "chemin": "glbs/000-094/c0e9add19929466091d09c6a11be0a89.glb"
+   },
+   {
+    "uid": "50010ef7abef46958fff2c3948a0f26f",
+    "licence": "by",
+    "description": "a plant cell with a red ball and a lid, resembling a ceiling light fixture.",
+    "chemin": "glbs/000-068/50010ef7abef46958fff2c3948a0f26f.glb"
+   },
+   {
+    "uid": "a13924064fe94a2ea1a7712b56d14936",
+    "licence": "by",
+    "description": "a plant cell, animal cell, egg, fruit, colorful ring, and green and yellow flower.",
+    "chemin": "glbs/000-075/a13924064fe94a2ea1a7712b56d14936.glb"
+   },
+   {
+    "uid": "4057e9ce063b494bb8f17dd451ae9401",
+    "licence": "by",
+    "description": "an animal cell, a plant cell, and a fish with green and yellow colors.",
+    "chemin": "glbs/000-086/4057e9ce063b494bb8f17dd451ae9401.glb"
+   },
+   {
+    "uid": "abad8edfcf594834ad9ef02cb98248c6",
+    "licence": "by",
+    "description": "'The Plant Cell' by Liza Drini, a green box rendering.",
+    "chemin": "glbs/000-067/abad8edfcf594834ad9ef02cb98248c6.glb"
+   },
+   {
+    "uid": "6de4065b726348239f93e6baa5855173",
+    "licence": "by",
+    "description": "a green plant cell",
+    "chemin": "glbs/000-094/6de4065b726348239f93e6baa5855173.glb"
+   },
+   {
+    "uid": "8694bdda0afc4886b005da10fefae8ad",
+    "licence": "by-sa",
+    "description": "a green plant cell.",
+    "chemin": "glbs/000-058/8694bdda0afc4886b005da10fefae8ad.glb"
+   },
+   {
+    "uid": "ecbc83af4d8b44909b0d426f998c6b6e",
+    "licence": "by",
+    "description": "a green plant cell with a red dot.",
+    "chemin": "glbs/000-082/ecbc83af4d8b44909b0d426f998c6b6e.glb"
+   }
+  ],
+  "adn": [
+   {
+    "uid": "e3f82ab0c50a490bbace8d5ccc4698b8",
+    "licence": "by",
+    "description": "DNA Strand Model",
+    "chemin": "glbs/000-103/e3f82ab0c50a490bbace8d5ccc4698b8.glb"
+   },
+   {
+    "uid": "e3966d84d71b44d99d9892264040bb0e",
+    "licence": "by",
+    "description": "DNA strand model",
+    "chemin": "glbs/000-146/e3966d84d71b44d99d9892264040bb0e.glb"
+   },
+   {
+    "uid": "efc0ff9ec884484688c6b6f6ac297807",
+    "licence": "by",
+    "description": "DNA double helix model",
+    "chemin": "glbs/000-119/efc0ff9ec884484688c6b6f6ac297807.glb"
+   },
+   {
+    "uid": "746f0754e7cb45a4b54840e1b858b01d",
+    "licence": "by",
+    "description": "DNA strand molecule model",
+    "chemin": "glbs/000-152/746f0754e7cb45a4b54840e1b858b01d.glb"
+   },
+   {
+    "uid": "45f0707098b140468d993d54a258d5f3",
+    "licence": "by",
+    "description": "DNA Strand - Royalty Free",
+    "chemin": "glbs/000-042/45f0707098b140468d993d54a258d5f3.glb"
+   },
+   {
+    "uid": "571ef432a67245d0bddde52913cc8f3b",
+    "licence": "by",
+    "description": "DNA double helix strand model",
+    "chemin": "glbs/000-039/571ef432a67245d0bddde52913cc8f3b.glb"
+   },
+   {
+    "uid": "ddbd40955218446895acd331024c5b1b",
+    "licence": "by",
+    "description": "a DNA strand",
+    "chemin": "glbs/000-145/ddbd40955218446895acd331024c5b1b.glb"
+   },
+   {
+    "uid": "b36ecc38ac1a466bbad70ed949e406b1",
+    "licence": "by",
+    "description": "a DNA strand",
+    "chemin": "glbs/000-099/b36ecc38ac1a466bbad70ed949e406b1.glb"
+   },
+   {
+    "uid": "53fbb21cb7cc4503840164f43ea0f336",
+    "licence": "by",
+    "description": "a DNA strand",
+    "chemin": "glbs/000-078/53fbb21cb7cc4503840164f43ea0f336.glb"
+   },
+   {
+    "uid": "360f24c050454356a23cc279fe2fbec0",
+    "licence": "by",
+    "description": "a DNA strand",
+    "chemin": "glbs/000-112/360f24c050454356a23cc279fe2fbec0.glb"
+   },
+   {
+    "uid": "fd2f8b3614314f19a47f3e7dce412c95",
+    "licence": "by",
+    "description": "a DNA molecule",
+    "chemin": "glbs/000-133/fd2f8b3614314f19a47f3e7dce412c95.glb"
+   },
+   {
+    "uid": "beb962996ca246e9a3c9714c1d7b29da",
+    "licence": "by",
+    "description": "a DNA molecule",
+    "chemin": "glbs/000-020/beb962996ca246e9a3c9714c1d7b29da.glb"
+   }
+  ],
+  "virus": [
+   {
+    "uid": "6833a2ae42234d09a676d324ab9d753d",
+    "licence": "by",
+    "description": "coronavirus.",
+    "chemin": "glbs/000-151/6833a2ae42234d09a676d324ab9d753d.glb"
+   },
+   {
+    "uid": "adf9a3ff3fe74d3fbf46b61c2ebf67ff",
+    "licence": "by",
+    "description": "Coronavirus Model",
+    "chemin": "glbs/000-002/adf9a3ff3fe74d3fbf46b61c2ebf67ff.glb"
+   },
+   {
+    "uid": "a742b80293cb4e73bac62083b70b413f",
+    "licence": "by",
+    "description": "Coronavirus Model",
+    "chemin": "glbs/000-122/a742b80293cb4e73bac62083b70b413f.glb"
+   },
+   {
+    "uid": "9b791066661241bfbf37327fa9cbd473",
+    "licence": "by",
+    "description": "Coronavirus Model",
+    "chemin": "glbs/000-005/9b791066661241bfbf37327fa9cbd473.glb"
+   },
+   {
+    "uid": "8f4bd371129f43ff8b64be27c061ce30",
+    "licence": "by",
+    "description": "Coronavirus model",
+    "chemin": "glbs/000-013/8f4bd371129f43ff8b64be27c061ce30.glb"
+   },
+   {
+    "uid": "5f21361595b44fdb846baa48c62e4823",
+    "licence": "by",
+    "description": "coronavirus model",
+    "chemin": "glbs/000-049/5f21361595b44fdb846baa48c62e4823.glb"
+   },
+   {
+    "uid": "3560336dadd641a9a1dc4927672d733f",
+    "licence": "by",
+    "description": "Coronavirus Model",
+    "chemin": "glbs/000-036/3560336dadd641a9a1dc4927672d733f.glb"
+   },
+   {
+    "uid": "0f7c65c4a83d493fb719e4cf78033156",
+    "licence": "by",
+    "description": "Coronavirus Model",
+    "chemin": "glbs/000-071/0f7c65c4a83d493fb719e4cf78033156.glb"
+   },
+   {
+    "uid": "4df4b378dd1b404bbbac7cd2cad48b51",
+    "licence": "by",
+    "description": "coronavirus isolated",
+    "chemin": "glbs/000-020/4df4b378dd1b404bbbac7cd2cad48b51.glb"
+   },
+   {
+    "uid": "374c51d16fed40be90656b602d5766f3",
+    "licence": "by",
+    "description": "Coronavirus rendering",
+    "chemin": "glbs/000-016/374c51d16fed40be90656b602d5766f3.glb"
+   },
+   {
+    "uid": "d0d57c60a0d54840948f6d410bf0d3b8",
+    "licence": "by",
+    "description": "coronavirus illustration",
+    "chemin": "glbs/000-080/d0d57c60a0d54840948f6d410bf0d3b8.glb"
+   },
+   {
+    "uid": "ca252403ad0d496ead678216afefce58",
+    "licence": "by",
+    "description": "Coronavirus Model in Red",
+    "chemin": "glbs/000-133/ca252403ad0d496ead678216afefce58.glb"
+   }
+  ],
+  "bacterie": [
+   {
+    "uid": "b226ccd1e0984c7d9c97eaa691da1397",
+    "licence": "by",
+    "description": "a spiky microbe or virus",
+    "chemin": "glbs/000-116/b226ccd1e0984c7d9c97eaa691da1397.glb"
+   },
+   {
+    "uid": "22902fc847da44ddb5a1b91f6355a90d",
+    "licence": "by",
+    "description": "A stylized representation of bacteria with the text Coprococcus and two pill-like shapes.",
+    "chemin": "glbs/000-002/22902fc847da44ddb5a1b91f6355a90d.glb"
+   },
+   {
+    "uid": "e6d5b0bdaf7f425e9a9000a3a832ad61",
+    "licence": "by",
+    "description": "a spiky microorganism, possibly a bacteria or virus, with elements of red, yellow, and purple, associated with",
+    "chemin": "glbs/000-014/e6d5b0bdaf7f425e9a9000a3a832ad61.glb"
+   }
+  ],
+  "graine": [
+   {
+    "uid": "a78ef12e1b2643c094d9c81a21136fd8",
+    "licence": "by",
+    "description": "a green tomato seed packet with a label.",
+    "chemin": "glbs/000-013/a78ef12e1b2643c094d9c81a21136fd8.glb"
+   },
+   {
+    "uid": "b77db40f9ea74ea88103c5b4296cb618",
+    "licence": "by",
+    "description": "a pine cone with seeds.",
+    "chemin": "glbs/000-055/b77db40f9ea74ea88103c5b4296cb618.glb"
+   },
+   {
+    "uid": "509980aaf55746ddbe18b7f03e15c9c6",
+    "licence": "by",
+    "description": "a large, dried seed pod resembling a spiky, hairy animal and flower.",
+    "chemin": "glbs/000-079/509980aaf55746ddbe18b7f03e15c9c6.glb"
+   },
+   {
+    "uid": "63632060294d4fbd89008d27fe245cc9",
+    "licence": "by",
+    "description": "Textured a seed with visible intricate patterns and suture lines, having a tan to brown gradient and small pun",
+    "chemin": "glbs/000-023/63632060294d4fbd89008d27fe245cc9.glb"
+   },
+   {
+    "uid": "6dcfe567b48e4c9e8f6c78529f7930b2",
+    "licence": "by",
+    "description": "a pine cone with seeds resembling a durian and pineapple fruit.",
+    "chemin": "glbs/000-061/6dcfe567b48e4c9e8f6c78529f7930b2.glb"
+   },
+   {
+    "uid": "3cf0abf9310c4595b4d2c7b76efa793e",
+    "licence": "by",
+    "description": "Rustic brown seed pod with a durable outer shell and a visible split, revealing interior seeds. Attached is a ",
+    "chemin": "glbs/000-110/3cf0abf9310c4595b4d2c7b76efa793e.glb"
+   },
+   {
+    "uid": "346d0b5a95c94c2890dbff3b38984719",
+    "licence": "by",
+    "description": "a persimmon with seeds, accompanied by two oranges, a ripe tomato, and a peach.",
+    "chemin": "glbs/000-030/346d0b5a95c94c2890dbff3b38984719.glb"
+   },
+   {
+    "uid": "21b31b6d18914d81b8d0fb3cc14596cc",
+    "licence": "by",
+    "description": "Brown elongated seed pod with a black bulge at the center, resembling a propeller with two tapered ends.",
+    "chemin": "glbs/000-077/21b31b6d18914d81b8d0fb3cc14596cc.glb"
+   },
+   {
+    "uid": "707a6f761da94b2582be0a1c1875807b",
+    "licence": "by",
+    "description": "Two halves of a seeded whole grain baguette with a golden-brown crust and visible air pockets in the crumb.",
+    "chemin": "glbs/000-145/707a6f761da94b2582be0a1c1875807b.glb"
+   },
+   {
+    "uid": "6bd56957e9d749b9b3d78f905f6fe991",
+    "licence": "by",
+    "description": "Twin conical seed pods attached at the base with a textured, striped pattern and a looped stem on one end, ren",
+    "chemin": "glbs/000-096/6bd56957e9d749b9b3d78f905f6fe991.glb"
+   },
+   {
+    "uid": "8cfb803305e7494682845cdf1be94505",
+    "licence": "by",
+    "description": "a dried plant seed pod, resembling a poppy seed head, with a long, thin, curved stem. The seed pod has a textu",
+    "chemin": "glbs/000-028/8cfb803305e7494682845cdf1be94505.glb"
+   },
+   {
+    "uid": "816db654b44d462cab96601f585e20e7",
+    "licence": "by",
+    "description": "a planter with plants, seeds, and water in a tray, accompanied by pots and a broken cell phone.",
+    "chemin": "glbs/000-101/816db654b44d462cab96601f585e20e7.glb"
+   }
+  ],
+  "germination": [
+   {
+    "uid": "f6c2c1e6637e4e5eae085c8f7545b2b9",
+    "licence": "by",
+    "description": "a plant sprouting from the ground with leaves, stems, and a dead plant nearby.",
+    "chemin": "glbs/000-013/f6c2c1e6637e4e5eae085c8f7545b2b9.glb"
+   },
+   {
+    "uid": "57f085f4ff1642fd92e11194076605f9",
+    "licence": "by",
+    "description": "a potato with sprouts, branches, and leaves.",
+    "chemin": "glbs/000-141/57f085f4ff1642fd92e11194076605f9.glb"
+   },
+   {
+    "uid": "76054992f0754c21bde6958589c6b7e8",
+    "licence": "by",
+    "description": "a small plant sprouting and growing in the ground.",
+    "chemin": "glbs/000-058/76054992f0754c21bde6958589c6b7e8.glb"
+   },
+   {
+    "uid": "7b34fb5117264d6db60a7419ee1cc025",
+    "licence": "by",
+    "description": "a planter with seedlings and green sprouts.",
+    "chemin": "glbs/000-112/7b34fb5117264d6db60a7419ee1cc025.glb"
+   },
+   {
+    "uid": "4c5134b980eb4747b7789a0135e44e4d",
+    "licence": "by",
+    "description": "Stylized green sprout character with a round body, one leaf on a curved stem, small tail, and a simple face.",
+    "chemin": "glbs/000-015/4c5134b980eb4747b7789a0135e44e4d.glb"
+   },
+   {
+    "uid": "9ce900774dae490590781027b76d8da0",
+    "licence": "by",
+    "description": "A small white crocus sprouting from the ground",
+    "chemin": "glbs/000-031/9ce900774dae490590781027b76d8da0.glb"
+   },
+   {
+    "uid": "90dc65ca5cf44d5f9d16a3862dcd2d56",
+    "licence": "by",
+    "description": "A minimalist white sprout emerging from a circular base, situated on a flat round platform, presented in a mon",
+    "chemin": "glbs/000-147/90dc65ca5cf44d5f9d16a3862dcd2d56.glb"
+   },
+   {
+    "uid": "7009f0c744f146228fcffeef9f7282e0",
+    "licence": "by",
+    "description": "a plant with a pink flower sprouting from a purple pot.",
+    "chemin": "glbs/000-115/7009f0c744f146228fcffeef9f7282e0.glb"
+   },
+   {
+    "uid": "572ee36b64524bb898eaa52dca8bf765",
+    "licence": "by",
+    "description": "yellow flower with the word 'sprout' on it.",
+    "chemin": "glbs/000-155/572ee36b64524bb898eaa52dca8bf765.glb"
+   },
+   {
+    "uid": "d4c8625d55fa468ca9da9410061fe20e",
+    "licence": "by",
+    "description": "A biodegradable plant tray with seedlings, featuring segmented compartments holding soil and small green plant",
+    "chemin": "glbs/000-043/d4c8625d55fa468ca9da9410061fe20e.glb"
+   },
+   {
+    "uid": "e063754cc6cf4363873b06d97724d74f",
+    "licence": "by",
+    "description": "a white planter with green plants and sprouts in it.",
+    "chemin": "glbs/000-077/e063754cc6cf4363873b06d97724d74f.glb"
+   },
+   {
+    "uid": "39046a8e8d4449a9b7c94a4cfd51d455",
+    "licence": "by",
+    "description": "Green spiral structure resembling a sprouting plant, mounted on a white and grey cylindrical base.",
+    "chemin": "glbs/000-026/39046a8e8d4449a9b7c94a4cfd51d455.glb"
+   }
+  ],
+  "plante": [
+   {
+    "uid": "14f80dc03d934e5a8657c6c11a58b7aa",
+    "licence": "by",
+    "description": "potted plant.",
+    "chemin": "glbs/000-048/14f80dc03d934e5a8657c6c11a58b7aa.glb"
+   },
+   {
+    "uid": "2ddb3e587d004ef6a13557d4b068245c",
+    "licence": "by-sa",
+    "description": "plants and rocks.",
+    "chemin": "glbs/000-100/2ddb3e587d004ef6a13557d4b068245c.glb"
+   },
+   {
+    "uid": "0b80514d84c04589b5897e86e4764080",
+    "licence": "by",
+    "description": "plants with blue flowers.",
+    "chemin": "glbs/000-032/0b80514d84c04589b5897e86e4764080.glb"
+   },
+   {
+    "uid": "231445f7a8c44711b3043763abf46ff7",
+    "licence": "by",
+    "description": "potted plant with flowers.",
+    "chemin": "glbs/000-150/231445f7a8c44711b3043763abf46ff7.glb"
+   },
+   {
+    "uid": "f8cb0b11b24549718ee09e7bd9698a9f",
+    "licence": "by",
+    "description": "plant in a white pot on a wall.",
+    "chemin": "glbs/000-017/f8cb0b11b24549718ee09e7bd9698a9f.glb"
+   },
+   {
+    "uid": "dcda5d0317974a91bf950b3f3d5a5877",
+    "licence": "by",
+    "description": "potted plants on wooden surfaces.",
+    "chemin": "glbs/000-084/dcda5d0317974a91bf950b3f3d5a5877.glb"
+   },
+   {
+    "uid": "d10eb8c7196a43de8c10a425fed58867",
+    "licence": "by",
+    "description": "plants and grass with purple flowers.",
+    "chemin": "glbs/000-110/d10eb8c7196a43de8c10a425fed58867.glb"
+   },
+   {
+    "uid": "6b0940d16aa548d0891c9d29b19e7bbd",
+    "licence": "by",
+    "description": "plants, flowers, and mushrooms near a pond.",
+    "chemin": "glbs/000-051/6b0940d16aa548d0891c9d29b19e7bbd.glb"
+   },
+   {
+    "uid": "f9b9f2215efd4ae6a8f54dc9a8c65f48",
+    "licence": "by",
+    "description": "a potted plant",
+    "chemin": "glbs/000-004/f9b9f2215efd4ae6a8f54dc9a8c65f48.glb"
+   },
+   {
+    "uid": "f7efd5f33a5b47f98e11205dd13dbf52",
+    "licence": "by",
+    "description": "a potted plant",
+    "chemin": "glbs/000-110/f7efd5f33a5b47f98e11205dd13dbf52.glb"
+   },
+   {
+    "uid": "e73ec35bb2744665822fa58d16c32cb2",
+    "licence": "by",
+    "description": "a potted plant",
+    "chemin": "glbs/000-138/e73ec35bb2744665822fa58d16c32cb2.glb"
+   },
+   {
+    "uid": "be65b876e67e48e7a2085101c4d788ec",
+    "licence": "by",
+    "description": "a potted plant",
+    "chemin": "glbs/000-066/be65b876e67e48e7a2085101c4d788ec.glb"
+   }
+  ],
+  "feuille": [
+   {
+    "uid": "eb167acc4621447fb3e20cc97ac76262",
+    "licence": "by",
+    "description": "a leaf on a piece of paper.",
+    "chemin": "glbs/000-070/eb167acc4621447fb3e20cc97ac76262.glb"
+   },
+   {
+    "uid": "b690ccf50b84499b9f43e3f3fcf896d4",
+    "licence": "by",
+    "description": "a leaf-shaped flint arrowhead.",
+    "chemin": "glbs/000-019/b690ccf50b84499b9f43e3f3fcf896d4.glb"
+   },
+   {
+    "uid": "a1e3030233774d149f307b5f2e60bc26",
+    "licence": "by",
+    "description": "a leaf, a bird, and a butterfly.",
+    "chemin": "glbs/000-024/a1e3030233774d149f307b5f2e60bc26.glb"
+   },
+   {
+    "uid": "dfb3bc8bcf4445e081efa92583d9cf43",
+    "licence": "by",
+    "description": "a leaf, mountainous terrain, and textured rocks.",
+    "chemin": "glbs/000-028/dfb3bc8bcf4445e081efa92583d9cf43.glb"
+   },
+   {
+    "uid": "0824e8cf8e2241c0967c94f2424b0988",
+    "licence": "by",
+    "description": "a leaf, ping pong ball, large feather, and spoon.",
+    "chemin": "glbs/000-050/0824e8cf8e2241c0967c94f2424b0988.glb"
+   },
+   {
+    "uid": "7f2009f946b04deeacd3ffb8472d22df",
+    "licence": "by",
+    "description": "a leaf-shaped rock with moss, grass, and trees on it.",
+    "chemin": "glbs/000-055/7f2009f946b04deeacd3ffb8472d22df.glb"
+   },
+   {
+    "uid": "471c6cbd0bef49269053f4a17c277e87",
+    "licence": "by-sa",
+    "description": "a leaf-shaped island with a small pond in the middle.",
+    "chemin": "glbs/000-105/471c6cbd0bef49269053f4a17c277e87.glb"
+   },
+   {
+    "uid": "7c7433e1bc0a4d7095f9de1066670176",
+    "licence": "by",
+    "description": "red leaves with a flower.",
+    "chemin": "glbs/000-082/7c7433e1bc0a4d7095f9de1066670176.glb"
+   },
+   {
+    "uid": "14d95e04c5684198b34489f768ebce15",
+    "licence": "by",
+    "description": "a leaf, plane, road, and mountain in a desert landscape.",
+    "chemin": "glbs/000-096/14d95e04c5684198b34489f768ebce15.glb"
+   },
+   {
+    "uid": "9734831dbe894069a99dbf3fc916e3bb",
+    "licence": "by",
+    "description": "a leaf, small boat, and island with a green piece of paper.",
+    "chemin": "glbs/000-026/9734831dbe894069a99dbf3fc916e3bb.glb"
+   },
+   {
+    "uid": "e8fd2b8d259b4fee97d7103774ab376f",
+    "licence": "by-sa",
+    "description": "a leaf, white arrowhead, flint piece, paper, and large shell.",
+    "chemin": "glbs/000-022/e8fd2b8d259b4fee97d7103774ab376f.glb"
+   },
+   {
+    "uid": "b3d7c5f590714deaa1cfe955790f477a",
+    "licence": "by",
+    "description": "a leaf, a large piece of stone, a small stone, and a stone slab.",
+    "chemin": "glbs/000-103/b3d7c5f590714deaa1cfe955790f477a.glb"
+   }
+  ],
+  "fleur": [
+   {
+    "uid": "31438a94fd5844bcbaea293c009d0812",
+    "licence": "by",
+    "description": "flowers and paper in a vase.",
+    "chemin": "glbs/000-098/31438a94fd5844bcbaea293c009d0812.glb"
+   },
+   {
+    "uid": "2e5fb714db794694bd2be504eb9f2b57",
+    "licence": "by",
+    "description": "flowers and gardening tools.",
+    "chemin": "glbs/000-082/2e5fb714db794694bd2be504eb9f2b57.glb"
+   },
+   {
+    "uid": "2ea44564c0714b89bea6eef2d6956366",
+    "licence": "by",
+    "description": "flowers, bees, and a bicycle.",
+    "chemin": "glbs/000-146/2ea44564c0714b89bea6eef2d6956366.glb"
+   },
+   {
+    "uid": "4f67ce63ab5645e297d65489b1aee5ca",
+    "licence": "by-sa",
+    "description": "flowers with leaves and stems.",
+    "chemin": "glbs/000-064/4f67ce63ab5645e297d65489b1aee5ca.glb"
+   },
+   {
+    "uid": "4081e9372cba4cb7af64353ea86d03c0",
+    "licence": "by",
+    "description": "Flower II Box: a Floral Box Set",
+    "chemin": "glbs/000-014/4081e9372cba4cb7af64353ea86d03c0.glb"
+   },
+   {
+    "uid": "295991726b1d4ad6a5d81aadad4d84b7",
+    "licence": "by",
+    "description": "flowers and rocks in a graveyard setting.",
+    "chemin": "glbs/000-027/295991726b1d4ad6a5d81aadad4d84b7.glb"
+   },
+   {
+    "uid": "889665bdeb2c4582a8920e7198df828e",
+    "licence": "by",
+    "description": "a flower/plant.",
+    "chemin": "glbs/000-159/889665bdeb2c4582a8920e7198df828e.glb"
+   },
+   {
+    "uid": "9aedd7f4ef2a42fda87b89eafc934a95",
+    "licence": "by",
+    "description": "a flower in a pot",
+    "chemin": "glbs/000-042/9aedd7f4ef2a42fda87b89eafc934a95.glb"
+   },
+   {
+    "uid": "7020bb7e0dd049a39e922b853dee5d13",
+    "licence": "by",
+    "description": "a flower in a pot",
+    "chemin": "glbs/000-033/7020bb7e0dd049a39e922b853dee5d13.glb"
+   },
+   {
+    "uid": "e4dea23c40fb40ffa6a54d89913f3e9c",
+    "licence": "by",
+    "description": "a flower in a pot.",
+    "chemin": "glbs/000-068/e4dea23c40fb40ffa6a54d89913f3e9c.glb"
+   },
+   {
+    "uid": "d0f38eacd0564763ae0a7faccee04d17",
+    "licence": "by-sa",
+    "description": "a flower in a pot.",
+    "chemin": "glbs/000-086/d0f38eacd0564763ae0a7faccee04d17.glb"
+   },
+   {
+    "uid": "c0e396ff759841d3852f99c29e98af27",
+    "licence": "by",
+    "description": "a flower in a pot.",
+    "chemin": "glbs/000-106/c0e396ff759841d3852f99c29e98af27.glb"
+   }
+  ],
+  "racine": [
+   {
+    "uid": "90d529b510b64fe8846b4ed597ae50f7",
+    "licence": "by",
+    "description": "a white hand with tree roots.",
+    "chemin": "glbs/000-103/90d529b510b64fe8846b4ed597ae50f7.glb"
+   },
+   {
+    "uid": "e2fae2df0acd44f58beff73614dc642e",
+    "licence": "by",
+    "description": "A weathered wooden tree root resting atop colorful paperback books on a teal cloth surface.",
+    "chemin": "glbs/000-024/e2fae2df0acd44f58beff73614dc642e.glb"
+   },
+   {
+    "uid": "063c1f11d4e34e48b97a39170fef6404",
+    "licence": "by",
+    "description": "A cross-section of earth and tree roots with varying soil layers and vegetation remnants.",
+    "chemin": "glbs/000-149/063c1f11d4e34e48b97a39170fef6404.glb"
+   },
+   {
+    "uid": "c8108fd9761c496da981f31a200570ff",
+    "licence": "by",
+    "description": "a tree stump with exposed root system, featuring a detailed texture that mimics the appearance of weathered wo",
+    "chemin": "glbs/000-104/c8108fd9761c496da981f31a200570ff.glb"
+   },
+   {
+    "uid": "04bb24f17afe418fa91460de828b045e",
+    "licence": "by-sa",
+    "description": "Tree stump with extended root system on a textured ground surface, featuring earthy tones and a blend of organ",
+    "chemin": "glbs/000-058/04bb24f17afe418fa91460de828b045e.glb"
+   },
+   {
+    "uid": "53480017c203463997d2b13440d00ff4",
+    "licence": "by-sa",
+    "description": "A bonsai tree with a complex root system attached to a feathered wing, accompanied by a floating, abstract clo",
+    "chemin": "glbs/000-131/53480017c203463997d2b13440d00ff4.glb"
+   },
+   {
+    "uid": "27f50f0e288140b7be3432731fe6c108",
+    "licence": "by",
+    "description": "Textured landscape with protruding tree roots and scattered foliage.",
+    "chemin": "glbs/000-145/27f50f0e288140b7be3432731fe6c108.glb"
+   },
+   {
+    "uid": "cc354c65fdb741018109059dd44d4810",
+    "licence": "by",
+    "description": "Digital a tree stump with exposed root system and adjacent rock formations, featuring intricate textures and r",
+    "chemin": "glbs/000-101/cc354c65fdb741018109059dd44d4810.glb"
+   },
+   {
+    "uid": "bd60213e01574f94a715d01936f4ee82",
+    "licence": "by",
+    "description": "Realistic tree stump with intricate root system, featuring varying shades of brown and touches of green moss, ",
+    "chemin": "glbs/000-027/bd60213e01574f94a715d01936f4ee82.glb"
+   },
+   {
+    "uid": "1d5f7ce5e4234cfb8dee85e96699c399",
+    "licence": "by",
+    "description": "an outdoor scene with a sculptural tree root, fragmented stone walls, and patches of grass on irregular terrai",
+    "chemin": "glbs/000-078/1d5f7ce5e4234cfb8dee85e96699c399.glb"
+   },
+   {
+    "uid": "b51c4ec9480d40c1a44a4139cce89363",
+    "licence": "by",
+    "description": "rendition of a rocky outcrop with intricate root systems, moss, and patches of ice, showcasing a realistic nat",
+    "chemin": "glbs/000-131/b51c4ec9480d40c1a44a4139cce89363.glb"
+   },
+   {
+    "uid": "b45750eb6f594cebb1f5b2be10c91fd8",
+    "licence": "by-sa",
+    "description": "Stylized two-leaf plant with a thick, coiled root system, featuring a soft green color for the leaves and a be",
+    "chemin": "glbs/000-156/b45750eb6f594cebb1f5b2be10c91fd8.glb"
+   }
+  ],
+  "arbre": [
+   {
+    "uid": "7376a540d36e4d969bff7a9e4bfce38f",
+    "licence": "by",
+    "description": "trees and a door.",
+    "chemin": "glbs/000-054/7376a540d36e4d969bff7a9e4bfce38f.glb"
+   },
+   {
+    "uid": "7b9e72437df3442180548e4ec7bd067f",
+    "licence": "by",
+    "description": "trees with leaves.",
+    "chemin": "glbs/000-155/7b9e72437df3442180548e4ec7bd067f.glb"
+   },
+   {
+    "uid": "b5e945e7abcc471da6547c04e314774c",
+    "licence": "by",
+    "description": "tree with green leaves.",
+    "chemin": "glbs/000-131/b5e945e7abcc471da6547c04e314774c.glb"
+   },
+   {
+    "uid": "28df8f294f484f18add0516500fe6958",
+    "licence": "by",
+    "description": "trees in a grassy area.",
+    "chemin": "glbs/000-146/28df8f294f484f18add0516500fe6958.glb"
+   },
+   {
+    "uid": "489504f4fc014d01a790776cd3c3bacb",
+    "licence": "by",
+    "description": "trees with green leaves.",
+    "chemin": "glbs/000-057/489504f4fc014d01a790776cd3c3bacb.glb"
+   },
+   {
+    "uid": "c2b836f30ec944948b351d3670b1d643",
+    "licence": "by",
+    "description": "trees, rocks, and bushes.",
+    "chemin": "glbs/000-143/c2b836f30ec944948b351d3670b1d643.glb"
+   },
+   {
+    "uid": "798988fd318140ba9a5cfad828de27ed",
+    "licence": "by",
+    "description": "trees with leaves and rocks.",
+    "chemin": "glbs/000-092/798988fd318140ba9a5cfad828de27ed.glb"
+   },
+   {
+    "uid": "f5b214d7b29540c08a768fa55872b10f",
+    "licence": "by",
+    "description": "tree with a ladder and swing.",
+    "chemin": "glbs/000-049/f5b214d7b29540c08a768fa55872b10f.glb"
+   },
+   {
+    "uid": "eb475732180f46d3a9c31d479304bc29",
+    "licence": "by",
+    "description": "trees in a snowy environment.",
+    "chemin": "glbs/000-038/eb475732180f46d3a9c31d479304bc29.glb"
+   },
+   {
+    "uid": "96449bca41f04ca1b6f99a375b00e3a3",
+    "licence": "by",
+    "description": "trees in a field and on a hill.",
+    "chemin": "glbs/000-136/96449bca41f04ca1b6f99a375b00e3a3.glb"
+   },
+   {
+    "uid": "14c1c9fb009144ba8aa56961df5d4b3d",
+    "licence": "by",
+    "description": "trees, rocks, a hammer, and a hat.",
+    "chemin": "glbs/000-059/14c1c9fb009144ba8aa56961df5d4b3d.glb"
+   },
+   {
+    "uid": "6f6b767b8c35477ea45e2022c686cc51",
+    "licence": "by",
+    "description": "trees, bushes, shrubs, and flowers.",
+    "chemin": "glbs/000-110/6f6b767b8c35477ea45e2022c686cc51.glb"
+   }
+  ],
+  "fruit": [
+   {
+    "uid": "955d09c7df624d77900b5500c5f5a1ac",
+    "licence": "by",
+    "description": "a fruit-filled bowl.",
+    "chemin": "glbs/000-101/955d09c7df624d77900b5500c5f5a1ac.glb"
+   },
+   {
+    "uid": "81c1fe8557f74983b723383b34b8675c",
+    "licence": "by",
+    "description": "a fruit-filled basket.",
+    "chemin": "glbs/000-128/81c1fe8557f74983b723383b34b8675c.glb"
+   },
+   {
+    "uid": "368e681cac614850b6b4a1887fc1bcce",
+    "licence": "by",
+    "description": "a fruit (apple and peach).",
+    "chemin": "glbs/000-057/368e681cac614850b6b4a1887fc1bcce.glb"
+   },
+   {
+    "uid": "a1161cf2b7094555b220e4724a5c7714",
+    "licence": "by",
+    "description": "a fruit platter on a table",
+    "chemin": "glbs/000-049/a1161cf2b7094555b220e4724a5c7714.glb"
+   },
+   {
+    "uid": "180bf23d0488416bb30a992ff1e76235",
+    "licence": "by",
+    "description": "a fruit and a Rubik's cube.",
+    "chemin": "glbs/000-053/180bf23d0488416bb30a992ff1e76235.glb"
+   },
+   {
+    "uid": "f4b83a6440ca4c2d8e9532be58b16895",
+    "licence": "by",
+    "description": "a fruit bowl on top of a green box.",
+    "chemin": "glbs/000-134/f4b83a6440ca4c2d8e9532be58b16895.glb"
+   },
+   {
+    "uid": "64c3d61ba7b549b5b7c72b37d7532b48",
+    "licence": "by-sa",
+    "description": "a fruit bowl with an apple, on a table.",
+    "chemin": "glbs/000-034/64c3d61ba7b549b5b7c72b37d7532b48.glb"
+   },
+   {
+    "uid": "e7822dcde0c448289e62daeb6075d680",
+    "licence": "by",
+    "description": "a fruit tart with blueberries and kiwis.",
+    "chemin": "glbs/000-072/e7822dcde0c448289e62daeb6075d680.glb"
+   },
+   {
+    "uid": "e7bd52ef34b64c07920061c70fd0dd6c",
+    "licence": "by",
+    "description": "a fruit, resembling an apple and a peach.",
+    "chemin": "glbs/000-135/e7bd52ef34b64c07920061c70fd0dd6c.glb"
+   },
+   {
+    "uid": "0784506ef37f4d93a57a5d13527d61f6",
+    "licence": "by",
+    "description": "a fruit salad with vegetables and leaves.",
+    "chemin": "glbs/000-070/0784506ef37f4d93a57a5d13527d61f6.glb"
+   },
+   {
+    "uid": "7486979e40fc4af1a934e967ad2ef3c4",
+    "licence": "by",
+    "description": "a fruit-topped ice cream sundae in a bowl.",
+    "chemin": "glbs/000-123/7486979e40fc4af1a934e967ad2ef3c4.glb"
+   },
+   {
+    "uid": "ea4a33aff0f543b59eb5ddc41bafebd4",
+    "licence": "by",
+    "description": "a fruit, bone, human skull, and piece of meat.",
+    "chemin": "glbs/000-007/ea4a33aff0f543b59eb5ddc41bafebd4.glb"
+   }
+  ],
+  "insecte": [
+   {
+    "uid": "5738c014bf344613a3ea93f11b9d7219",
+    "licence": "by",
+    "description": "an insect on a white wall with a door.",
+    "chemin": "glbs/000-040/5738c014bf344613a3ea93f11b9d7219.glb"
+   },
+   {
+    "uid": "5ea69511817d42b1bed282515201a38b",
+    "licence": "by",
+    "description": "an insect, featuring both ant and spider variations.",
+    "chemin": "glbs/000-128/5ea69511817d42b1bed282515201a38b.glb"
+   },
+   {
+    "uid": "2df87db5815b43938d500a30f21946f3",
+    "licence": "by",
+    "description": "white insect model (ant/beetle/spider)",
+    "chemin": "glbs/000-107/2df87db5815b43938d500a30f21946f3.glb"
+   },
+   {
+    "uid": "605fcc5d33de4d24850272c059e39f4b",
+    "licence": "by",
+    "description": "a white insect or fly.",
+    "chemin": "glbs/000-116/605fcc5d33de4d24850272c059e39f4b.glb"
+   },
+   {
+    "uid": "cc7dec76533846caa60a2d7123b961af",
+    "licence": "by",
+    "description": "a flying insect.",
+    "chemin": "glbs/000-130/cc7dec76533846caa60a2d7123b961af.glb"
+   },
+   {
+    "uid": "28757f454cd9457d8e9319a288eda153",
+    "licence": "by",
+    "description": "a white insect, resembling an ant.",
+    "chemin": "glbs/000-042/28757f454cd9457d8e9319a288eda153.glb"
+   },
+   {
+    "uid": "021a5902e34c4742a828335c86bfe4cd",
+    "licence": "by",
+    "description": "a winged insect with long legs.",
+    "chemin": "glbs/000-038/021a5902e34c4742a828335c86bfe4cd.glb"
+   },
+   {
+    "uid": "d1bdf5065da3415cbbce5f91406bdd70",
+    "licence": "by",
+    "description": "a black insect, resembling a butterfly and a bee.",
+    "chemin": "glbs/000-130/d1bdf5065da3415cbbce5f91406bdd70.glb"
+   },
+   {
+    "uid": "b625e6ae603f4503bbea9875360a313e",
+    "licence": "by",
+    "description": "a green insect, bird, and arrow flying in the air.",
+    "chemin": "glbs/000-052/b625e6ae603f4503bbea9875360a313e.glb"
+   },
+   {
+    "uid": "ce384d1c264f474fa318e3cff1ae2166",
+    "licence": "by-sa",
+    "description": "a white insect-like sculpture with tripod features.",
+    "chemin": "glbs/000-027/ce384d1c264f474fa318e3cff1ae2166.glb"
+   },
+   {
+    "uid": "42ecb84eec434f16ac639a5d88dacf90",
+    "licence": "by",
+    "description": "a gray insect-shaped robot with a large head, arms, and long legs.",
+    "chemin": "glbs/000-067/42ecb84eec434f16ac639a5d88dacf90.glb"
+   },
+   {
+    "uid": "de275582302f4b7f8af7a8f81b31dac6",
+    "licence": "by",
+    "description": "a green insect with long legs, resembling a scorpion.",
+    "chemin": "glbs/000-040/de275582302f4b7f8af7a8f81b31dac6.glb"
+   }
+  ],
+  "poisson": [
+   {
+    "uid": "55d3a5c2a4ec4139ac336fc7b19956c7",
+    "licence": "by",
+    "description": "fish skeleton model",
+    "chemin": "glbs/000-078/55d3a5c2a4ec4139ac336fc7b19956c7.glb"
+   },
+   {
+    "uid": "47101cc45c1743479ec5ce8c29d7e6c9",
+    "licence": "by",
+    "description": "fish skeleton model",
+    "chemin": "glbs/000-051/47101cc45c1743479ec5ce8c29d7e6c9.glb"
+   },
+   {
+    "uid": "3f13a02c257840b6a6957cf13d51e639",
+    "licence": "by",
+    "description": "fish skeleton model",
+    "chemin": "glbs/000-124/3f13a02c257840b6a6957cf13d51e639.glb"
+   },
+   {
+    "uid": "e9f8c643d45142cba30d76c608eeeb1a",
+    "licence": "by",
+    "description": "fish next to a cube.",
+    "chemin": "glbs/000-042/e9f8c643d45142cba30d76c608eeeb1a.glb"
+   },
+   {
+    "uid": "9ac11128ecac4edb8f72900fb9dda949",
+    "licence": "by",
+    "description": "fish skeleton model.",
+    "chemin": "glbs/000-035/9ac11128ecac4edb8f72900fb9dda949.glb"
+   },
+   {
+    "uid": "65687eed953843d691f66fc86ee078c7",
+    "licence": "by",
+    "description": "fish and Rubik's cube.",
+    "chemin": "glbs/000-118/65687eed953843d691f66fc86ee078c7.glb"
+   },
+   {
+    "uid": "fd509b37fecc4db0be5814669999debc",
+    "licence": "by",
+    "description": "fish, rocks, and plants.",
+    "chemin": "glbs/000-157/fd509b37fecc4db0be5814669999debc.glb"
+   },
+   {
+    "uid": "6cd60534511b4c50bb87cc9aa8130575",
+    "licence": "by",
+    "description": "fish floating in the air.",
+    "chemin": "glbs/000-130/6cd60534511b4c50bb87cc9aa8130575.glb"
+   },
+   {
+    "uid": "755f5c237a924b4ea86c8ff73070f1fd",
+    "licence": "by",
+    "description": "fish with a ball and cube.",
+    "chemin": "glbs/000-022/755f5c237a924b4ea86c8ff73070f1fd.glb"
+   },
+   {
+    "uid": "695731ec4d04430e8ad08f7f27e47d03",
+    "licence": "by",
+    "description": "fish model chasing a ball.",
+    "chemin": "glbs/000-120/695731ec4d04430e8ad08f7f27e47d03.glb"
+   },
+   {
+    "uid": "570c91d601a84ea5bda2ae2f390e57c3",
+    "licence": "by",
+    "description": "fish next to a Rubik's Cube.",
+    "chemin": "glbs/000-120/570c91d601a84ea5bda2ae2f390e57c3.glb"
+   },
+   {
+    "uid": "23858e0840684890bfb5822d54fd847c",
+    "licence": "by",
+    "description": "fish next to a Rubik's cube.",
+    "chemin": "glbs/000-059/23858e0840684890bfb5822d54fd847c.glb"
+   }
+  ],
+  "oiseau": [
+   {
+    "uid": "e07991d7b74e4ac4a71451d3f614b259",
+    "licence": "by",
+    "description": "Bird skeleton",
+    "chemin": "glbs/000-134/e07991d7b74e4ac4a71451d3f614b259.glb"
+   },
+   {
+    "uid": "1459e1767ac2419287aceaef047bfb8c",
+    "licence": "by",
+    "description": "bird skull model",
+    "chemin": "glbs/000-106/1459e1767ac2419287aceaef047bfb8c.glb"
+   },
+   {
+    "uid": "e1b7f9b8dc964e9fbf505f3c332bb2fe",
+    "licence": "by",
+    "description": "Bird of Paradise Plant",
+    "chemin": "glbs/000-010/e1b7f9b8dc964e9fbf505f3c332bb2fe.glb"
+   },
+   {
+    "uid": "7b81beda100840398f36a39ec042159c",
+    "licence": "by",
+    "description": "bird skeleton in white.",
+    "chemin": "glbs/000-153/7b81beda100840398f36a39ec042159c.glb"
+   },
+   {
+    "uid": "168c6a0c75ce4ef6b782b2d580621497",
+    "licence": "by",
+    "description": "bird figurine on a rock",
+    "chemin": "glbs/000-031/168c6a0c75ce4ef6b782b2d580621497.glb"
+   },
+   {
+    "uid": "03a1e9900d6749429be0ccc1a6239541",
+    "licence": "by",
+    "description": "bird skeleton with wings.",
+    "chemin": "glbs/000-126/03a1e9900d6749429be0ccc1a6239541.glb"
+   },
+   {
+    "uid": "501ce9d50afe49f8b4861b9141107787",
+    "licence": "by",
+    "description": "Bird skeleton on a wooden stand",
+    "chemin": "glbs/000-048/501ce9d50afe49f8b4861b9141107787.glb"
+   },
+   {
+    "uid": "85c002b556254dc5af84ccabc674c0c1",
+    "licence": "by",
+    "description": "bird figurine wearing a headdress.",
+    "chemin": "glbs/000-125/85c002b556254dc5af84ccabc674c0c1.glb"
+   },
+   {
+    "uid": "5624a29e5b9844d8a05be630b4cc9e96",
+    "licence": "by",
+    "description": "bird, fish, and dinosaur skeletons.",
+    "chemin": "glbs/000-096/5624a29e5b9844d8a05be630b4cc9e96.glb"
+   },
+   {
+    "uid": "18d8cd549f564efdb524bdcf876b7205",
+    "licence": "by",
+    "description": "Birds flying in the sky with leaves",
+    "chemin": "glbs/000-079/18d8cd549f564efdb524bdcf876b7205.glb"
+   },
+   {
+    "uid": "8155a8a165314b63ad73690f2ab50935",
+    "licence": "by",
+    "description": "birds flying around a map in the sky.",
+    "chemin": "glbs/000-034/8155a8a165314b63ad73690f2ab50935.glb"
+   },
+   {
+    "uid": "242700c86256425cafd7fd080203b4fe",
+    "licence": "by",
+    "description": "bird, lizard, and rat skeletons in white.",
+    "chemin": "glbs/000-107/242700c86256425cafd7fd080203b4fe.glb"
+   }
+  ],
+  "atome": [
+   {
+    "uid": "c9b783f0f225463cb4493292a8c33065",
+    "licence": "by",
+    "description": "atomic structure with green and orange spheres.",
+    "chemin": "glbs/000-113/c9b783f0f225463cb4493292a8c33065.glb"
+   },
+   {
+    "uid": "438f10665243486bb29cff87bea7cd57",
+    "licence": "by",
+    "description": "an atom with a red ball.",
+    "chemin": "glbs/000-111/438f10665243486bb29cff87bea7cd57.glb"
+   },
+   {
+    "uid": "cda521c02a68458780db32b5d01f3a96",
+    "licence": "by",
+    "description": "an atom with two purple spheres.",
+    "chemin": "glbs/000-113/cda521c02a68458780db32b5d01f3a96.glb"
+   },
+   {
+    "uid": "c744accbb4cc48dfbd0a8126d1a7f6d0",
+    "licence": "by",
+    "description": "an atom with blue and white spheres.",
+    "chemin": "glbs/000-133/c744accbb4cc48dfbd0a8126d1a7f6d0.glb"
+   },
+   {
+    "uid": "b505bc59e6fb48569e4f032a0734f743",
+    "licence": "by",
+    "description": "an atom with a sphere in the middle.",
+    "chemin": "glbs/000-109/b505bc59e6fb48569e4f032a0734f743.glb"
+   },
+   {
+    "uid": "67a1cc15eb0e416190bb179c09fcbe77",
+    "licence": "by",
+    "description": "an atom featuring a central red ball.",
+    "chemin": "glbs/000-136/67a1cc15eb0e416190bb179c09fcbe77.glb"
+   },
+   {
+    "uid": "132410dcc28744bbb111f81b0bf0e4da",
+    "licence": "by",
+    "description": "an atom with blue and yellow spheres.",
+    "chemin": "glbs/000-026/132410dcc28744bbb111f81b0bf0e4da.glb"
+   },
+   {
+    "uid": "cd9d71f758dc4a4993f7da85b05bbbad",
+    "licence": "by",
+    "description": "an atom featuring red and blue spheres.",
+    "chemin": "glbs/000-014/cd9d71f758dc4a4993f7da85b05bbbad.glb"
+   },
+   {
+    "uid": "b2793bab8a584f2f8abfe801da435657",
+    "licence": "by",
+    "description": "an atom featuring red and blue spheres.",
+    "chemin": "glbs/000-097/b2793bab8a584f2f8abfe801da435657.glb"
+   },
+   {
+    "uid": "b01a17c572874793a2c468f5d329e89c",
+    "licence": "by",
+    "description": "an atom featuring red and blue spheres.",
+    "chemin": "glbs/000-134/b01a17c572874793a2c468f5d329e89c.glb"
+   },
+   {
+    "uid": "97357dcdddce4f5bb29c984d206a9fa9",
+    "licence": "by",
+    "description": "atomic gold flask charm with a measuring scale and the words 'gold' and 'NYC' on it.",
+    "chemin": "glbs/000-091/97357dcdddce4f5bb29c984d206a9fa9.glb"
+   },
+   {
+    "uid": "92646c01d84a4f1380e21940383eabd5",
+    "licence": "by",
+    "description": "an atom featuring red and blue spheres.",
+    "chemin": "glbs/000-097/92646c01d84a4f1380e21940383eabd5.glb"
+   }
+  ],
+  "molecule": [
+   {
+    "uid": "bd9bc58d87194a3ab5b416ee4601483d",
+    "licence": "by",
+    "description": "molecule model with black, white, and red balls.",
+    "chemin": "glbs/000-141/bd9bc58d87194a3ab5b416ee4601483d.glb"
+   },
+   {
+    "uid": "de11ad3b36d441c4a0a1f539478c24c5",
+    "licence": "by",
+    "description": "a molecule and a ball",
+    "chemin": "glbs/000-156/de11ad3b36d441c4a0a1f539478c24c5.glb"
+   },
+   {
+    "uid": "b3bee5735e2243218ba1a46eab152470",
+    "licence": "by",
+    "description": "a molecule and a graph",
+    "chemin": "glbs/000-070/b3bee5735e2243218ba1a46eab152470.glb"
+   },
+   {
+    "uid": "98afd2a35bc143218c5feb1f3cff8c7c",
+    "licence": "by",
+    "description": "a molecule with a red dot.",
+    "chemin": "glbs/000-031/98afd2a35bc143218c5feb1f3cff8c7c.glb"
+   },
+   {
+    "uid": "56bfc2419c054fcead7975914d4c6b85",
+    "licence": "by",
+    "description": "a molecule with a red dot.",
+    "chemin": "glbs/000-094/56bfc2419c054fcead7975914d4c6b85.glb"
+   },
+   {
+    "uid": "8d9d45e0513d4b88a1f340fa3f44e1be",
+    "licence": "by",
+    "description": "a molecule with a red ball.",
+    "chemin": "glbs/000-000/8d9d45e0513d4b88a1f340fa3f44e1be.glb"
+   },
+   {
+    "uid": "7eb10f7debd34ddfbf689b7800f8bf0f",
+    "licence": "by",
+    "description": "a molecule with two spheres.",
+    "chemin": "glbs/000-054/7eb10f7debd34ddfbf689b7800f8bf0f.glb"
+   },
+   {
+    "uid": "ee641e0282b049b796c48b177cff3ae9",
+    "licence": "by",
+    "description": "a molecule with pink spheres.",
+    "chemin": "glbs/000-106/ee641e0282b049b796c48b177cff3ae9.glb"
+   },
+   {
+    "uid": "94ecf350cf5743b48f5e4c2d79ef79ee",
+    "licence": "by",
+    "description": "a molecule with three spheres.",
+    "chemin": "glbs/000-145/94ecf350cf5743b48f5e4c2d79ef79ee.glb"
+   },
+   {
+    "uid": "8384fe8ee1264e7c88bc5f43a4b54583",
+    "licence": "by",
+    "description": "a molecule with three spheres.",
+    "chemin": "glbs/000-062/8384fe8ee1264e7c88bc5f43a4b54583.glb"
+   },
+   {
+    "uid": "144cd33f6b8d4f71ad16d59e6117981c",
+    "licence": "by",
+    "description": "a molecule in black and white.",
+    "chemin": "glbs/000-062/144cd33f6b8d4f71ad16d59e6117981c.glb"
+   },
+   {
+    "uid": "21aef24bbde049298c3b1af2be03d8f3",
+    "licence": "by",
+    "description": "a molecule featuring a blue ball.",
+    "chemin": "glbs/000-144/21aef24bbde049298c3b1af2be03d8f3.glb"
+   }
+  ],
+  "aimant": [
+   {
+    "uid": "bf578d1b7e1b4952a836d19f13889da6",
+    "licence": "by",
+    "description": "a magnet with pink and black arrows representing the magnetic field.",
+    "chemin": "glbs/000-014/bf578d1b7e1b4952a836d19f13889da6.glb"
+   },
+   {
+    "uid": "88f62d60b3a74b40982f9fe0be7aee0e",
+    "licence": "by",
+    "description": "a red magnet attached to a tree.",
+    "chemin": "glbs/000-051/88f62d60b3a74b40982f9fe0be7aee0e.glb"
+   },
+   {
+    "uid": "da06b4f2641f4390a3886213f654f2e9",
+    "licence": "by",
+    "description": "a magnet with arrows pointing to it, accompanied by an orange arrow and a square illustration.",
+    "chemin": "glbs/000-039/da06b4f2641f4390a3886213f654f2e9.glb"
+   },
+   {
+    "uid": "14f17cd9b48f4fe89aea6e69f80980d2",
+    "licence": "by",
+    "description": "A red magnet with a horseshoe shape and white poles.",
+    "chemin": "glbs/000-007/14f17cd9b48f4fe89aea6e69f80980d2.glb"
+   },
+   {
+    "uid": "81e9765e51db429cbc1a930b17e12e92",
+    "licence": "by",
+    "description": "A red magnet with a lightning bolt, a yellow ring, and a metal piece attached to it.",
+    "chemin": "glbs/000-053/81e9765e51db429cbc1a930b17e12e92.glb"
+   },
+   {
+    "uid": "6f1917239d424a198e533f5db9f79028",
+    "licence": "by",
+    "description": "a cell, magnetic field, cluster of arrows, spider web, hanging balls, sperm cells, and a wired light bulb.",
+    "chemin": "glbs/000-129/6f1917239d424a198e533f5db9f79028.glb"
+   },
+   {
+    "uid": "1ddbc89c472344e58bb33875419881de",
+    "licence": "by",
+    "description": "Red U-shaped magnet with white poles.",
+    "chemin": "glbs/000-016/1ddbc89c472344e58bb33875419881de.glb"
+   },
+   {
+    "uid": "93a1f8fd488d4b58b2e50c689589a7f1",
+    "licence": "by",
+    "description": "Red horseshoe magnet with white tips.",
+    "chemin": "glbs/000-140/93a1f8fd488d4b58b2e50c689589a7f1.glb"
+   },
+   {
+    "uid": "bd68913760ea4cbba329d1425615fef9",
+    "licence": "by",
+    "description": "Red horseshoe magnet with white tips on the poles.",
+    "chemin": "glbs/000-142/bd68913760ea4cbba329d1425615fef9.glb"
+   },
+   {
+    "uid": "47f1f9d5b5554bbcb05b59b2782bd5bc",
+    "licence": "by",
+    "description": "A red and black magnet with two black balls, resembling a ring.",
+    "chemin": "glbs/000-094/47f1f9d5b5554bbcb05b59b2782bd5bc.glb"
+   },
+   {
+    "uid": "adf165f557d74966a5bb3837388b3f74",
+    "licence": "by",
+    "description": "A stylized magnet-shaped with a horseshoe design, featuring a gray body and red-painted poles, resembling the ",
+    "chemin": "glbs/000-019/adf165f557d74966a5bb3837388b3f74.glb"
+   },
+   {
+    "uid": "559c6fa2c7b9407ebdb6da948ca48aee",
+    "licence": "by",
+    "description": "A stylized magnet shape with a pink U-shaped body, dark eyes, a purple circular base, and a yellow cylindrical",
+    "chemin": "glbs/000-075/559c6fa2c7b9407ebdb6da948ca48aee.glb"
+   }
+  ],
+  "pendule": [
+   {
+    "uid": "520e472fb3d64ac1886cbf1e9530e30c",
+    "licence": "by",
+    "description": "a pendulum with balls on a stand.",
+    "chemin": "glbs/000-067/520e472fb3d64ac1886cbf1e9530e30c.glb"
+   },
+   {
+    "uid": "904d4c91698740f694fac68b37780a45",
+    "licence": "by",
+    "description": "a pendulum with balls and a hanging light fixture.",
+    "chemin": "glbs/000-058/904d4c91698740f694fac68b37780a45.glb"
+   },
+   {
+    "uid": "cc66b26c36b143cdb0bddb6d8cff7b5c",
+    "licence": "by",
+    "description": "a pendulum on a stand with a hanging light fixture.",
+    "chemin": "glbs/000-089/cc66b26c36b143cdb0bddb6d8cff7b5c.glb"
+   },
+   {
+    "uid": "64e2753a06b941408feaf1e012329bb9",
+    "licence": "by",
+    "description": "a pendulum with balls on a stand, resembling a hanging light fixture.",
+    "chemin": "glbs/000-153/64e2753a06b941408feaf1e012329bb9.glb"
+   },
+   {
+    "uid": "29f53311a1df478da6170e9a4e24ba77",
+    "licence": "by",
+    "description": "a ball pendulum swinging from a metal frame.",
+    "chemin": "glbs/000-086/29f53311a1df478da6170e9a4e24ba77.glb"
+   },
+   {
+    "uid": "3dd880c963b24af9824e186370fdef6b",
+    "licence": "by",
+    "description": "a wooden pendulum with a ball on a stand.",
+    "chemin": "glbs/000-119/3dd880c963b24af9824e186370fdef6b.glb"
+   },
+   {
+    "uid": "4560a4d40b8c4d02aad2b071682cbd05",
+    "licence": "by",
+    "description": "a metal ball pendulum in a frame.",
+    "chemin": "glbs/000-020/4560a4d40b8c4d02aad2b071682cbd05.glb"
+   },
+   {
+    "uid": "5550e3bd6a8a4de4a664d2e151dcd0d5",
+    "licence": "by",
+    "description": "a ball and pendulum on a circular wooden table with a metal frame.",
+    "chemin": "glbs/000-091/5550e3bd6a8a4de4a664d2e151dcd0d5.glb"
+   },
+   {
+    "uid": "02ca08c7261742b29b4ac1f4eecc347d",
+    "licence": "by",
+    "description": "wooden model of a pendulum on a chair-like stand with a stick attached.",
+    "chemin": "glbs/000-025/02ca08c7261742b29b4ac1f4eecc347d.glb"
+   },
+   {
+    "uid": "3817c928acc74cc8af64eac3f10aeca2",
+    "licence": "by",
+    "description": "a yellow and pink pendulum street sign with an arrow-shaped skateboard design.",
+    "chemin": "glbs/000-001/3817c928acc74cc8af64eac3f10aeca2.glb"
+   },
+   {
+    "uid": "f64a342e675548b2bd70118b240d07fd",
+    "licence": "by",
+    "description": "a grandfather clock with a pendulum.",
+    "chemin": "glbs/000-133/f64a342e675548b2bd70118b240d07fd.glb"
+   },
+   {
+    "uid": "71abd52e387749a1a7978a04636f71e3",
+    "licence": "by",
+    "description": "Simplified a swinging pendulum composed of a spherical weight, a thin rod, and a pivot point, displayed in mon",
+    "chemin": "glbs/000-104/71abd52e387749a1a7978a04636f71e3.glb"
+   }
+  ],
+  "prisme": [
+   {
+    "uid": "ddeff7c126884b36b731c0cc541a5f27",
+    "licence": "by",
+    "description": "a triangular object, possibly a pyramid or glass prism.",
+    "chemin": "glbs/000-128/ddeff7c126884b36b731c0cc541a5f27.glb"
+   }
+  ],
+  "circuit": [
+   {
+    "uid": "e6037b2aa13c4a2e8250a9f6cf520bbf",
+    "licence": "by",
+    "description": "a circuit board (PCB)",
+    "chemin": "glbs/000-007/e6037b2aa13c4a2e8250a9f6cf520bbf.glb"
+   },
+   {
+    "uid": "79d0d8457490464785e7c8d1289e2ad6",
+    "licence": "by",
+    "description": "a circuit board with multiple connectors.",
+    "chemin": "glbs/000-112/79d0d8457490464785e7c8d1289e2ad6.glb"
+   },
+   {
+    "uid": "4304b7dbbd4d4d49ab66005f13b4ca3d",
+    "licence": "by",
+    "description": "circuit board featuring a yellow circle and black disc with yellow dots.",
+    "chemin": "glbs/000-012/4304b7dbbd4d4d49ab66005f13b4ca3d.glb"
+   },
+   {
+    "uid": "9816842aec984629861b683f099f4419",
+    "licence": "by",
+    "description": "a circuit board featuring resistors, capacitors, and wires.",
+    "chemin": "glbs/000-109/9816842aec984629861b683f099f4419.glb"
+   },
+   {
+    "uid": "7f38f4de0f354b659a534be3cbabd8b1",
+    "licence": "by",
+    "description": "a circuit board with electronic components and two connectors.",
+    "chemin": "glbs/000-143/7f38f4de0f354b659a534be3cbabd8b1.glb"
+   },
+   {
+    "uid": "d4167e2b649a4d5b88a4869bfce87e59",
+    "licence": "by",
+    "description": "a circuit board with a purple battery and electronic components.",
+    "chemin": "glbs/000-007/d4167e2b649a4d5b88a4869bfce87e59.glb"
+   },
+   {
+    "uid": "750c4f9a891549079fab1c0ca6366aad",
+    "licence": "by",
+    "description": "a circuit board, cityscape, paper map, and flying paper airplane.",
+    "chemin": "glbs/000-126/750c4f9a891549079fab1c0ca6366aad.glb"
+   },
+   {
+    "uid": "4069f62a5cc84da8bccbfa1ace8c41c7",
+    "licence": "by",
+    "description": "red circuit board with a green component.",
+    "chemin": "glbs/000-068/4069f62a5cc84da8bccbfa1ace8c41c7.glb"
+   },
+   {
+    "uid": "b66c8c1165fb48e4a659e26ea7c89bf8",
+    "licence": "by",
+    "description": "a circuit board on a box with electronic components and a yellow stripe.",
+    "chemin": "glbs/000-050/b66c8c1165fb48e4a659e26ea7c89bf8.glb"
+   },
+   {
+    "uid": "f245110b1bd84c50b8583d0e330438ff",
+    "licence": "by",
+    "description": "a circuit board with electronic components and power supply, featuring a blue metal plate.",
+    "chemin": "glbs/000-059/f245110b1bd84c50b8583d0e330438ff.glb"
+   },
+   {
+    "uid": "697d342878a34264bc147adba06484b7",
+    "licence": "by",
+    "description": "a blue circuit board",
+    "chemin": "glbs/000-016/697d342878a34264bc147adba06484b7.glb"
+   },
+   {
+    "uid": "ea9dc77614c146c784876a2062c3105f",
+    "licence": "by",
+    "description": "a green circuit board.",
+    "chemin": "glbs/000-133/ea9dc77614c146c784876a2062c3105f.glb"
+   }
+  ],
+  "pile": [
+   {
+    "uid": "cccf3dcca7be4365b22ff59433024586",
+    "licence": "by",
+    "description": "battery box model with the word 'battery' on it.",
+    "chemin": "glbs/000-002/cccf3dcca7be4365b22ff59433024586.glb"
+   },
+   {
+    "uid": "8ad5a0a8b4424fa38ea4ddb7018a235e",
+    "licence": "by",
+    "description": "a battery box with a blue stripe and lid.",
+    "chemin": "glbs/000-113/8ad5a0a8b4424fa38ea4ddb7018a235e.glb"
+   },
+   {
+    "uid": "4a103abd2f90490497246313a388b8c2",
+    "licence": "by",
+    "description": "a battery testing unit with the word 'battery' on it.",
+    "chemin": "glbs/000-047/4a103abd2f90490497246313a388b8c2.glb"
+   },
+   {
+    "uid": "37fb8d46df784b6eb50a49d80d766adf",
+    "licence": "by",
+    "description": "a battery pack consisting of stacked metal cylinders.",
+    "chemin": "glbs/000-088/37fb8d46df784b6eb50a49d80d766adf.glb"
+   },
+   {
+    "uid": "ec4304b938f9465eb067e98611d5e4ea",
+    "licence": "by",
+    "description": "a battery charger featuring a clock, wires, and a white box with red lines.",
+    "chemin": "glbs/000-123/ec4304b938f9465eb067e98611d5e4ea.glb"
+   },
+   {
+    "uid": "511c0a009794494184b2c0009f82bab2",
+    "licence": "by",
+    "description": "a battery pack with red and black wires attached, resembling a multimeter and battery charger.",
+    "chemin": "glbs/000-004/511c0a009794494184b2c0009f82bab2.glb"
+   },
+   {
+    "uid": "1ec8d370ae764afaa9eef9bea5e3ab9c",
+    "licence": "by",
+    "description": "Black battery pack with blue lights",
+    "chemin": "glbs/000-007/1ec8d370ae764afaa9eef9bea5e3ab9c.glb"
+   },
+   {
+    "uid": "a0178e77db6c46a19334c7d5dfd7b4ad",
+    "licence": "by",
+    "description": "Green battery box with attached wires,",
+    "chemin": "glbs/000-125/a0178e77db6c46a19334c7d5dfd7b4ad.glb"
+   },
+   {
+    "uid": "97e3104b7086401f85ad7155b5996f63",
+    "licence": "by",
+    "description": "Pink AA battery",
+    "chemin": "glbs/000-043/97e3104b7086401f85ad7155b5996f63.glb"
+   },
+   {
+    "uid": "28d9d0ce1d68404286e4bc3974b3cd6b",
+    "licence": "by",
+    "description": "a Tesla battery",
+    "chemin": "glbs/000-133/28d9d0ce1d68404286e4bc3974b3cd6b.glb"
+   },
+   {
+    "uid": "2a6f9eb562e44c7598984526adddf8e6",
+    "licence": "by",
+    "description": "a white battery box",
+    "chemin": "glbs/000-083/2a6f9eb562e44c7598984526adddf8e6.glb"
+   },
+   {
+    "uid": "d25cdd19e14a4043bec4ca2f4f0bc8d8",
+    "licence": "by",
+    "description": "an AA battery with an orange stripe and the word 'battery' on it.",
+    "chemin": "glbs/000-030/d25cdd19e14a4043bec4ca2f4f0bc8d8.glb"
+   }
+  ],
+  "engrenage": [
+   {
+    "uid": "c108317a98fb4eefbfa55bfe7fe88a05",
+    "licence": "by",
+    "description": "gear ring model",
+    "chemin": "glbs/000-118/c108317a98fb4eefbfa55bfe7fe88a05.glb"
+   },
+   {
+    "uid": "8e7094f61fc74b7898c28265eb25e4a0",
+    "licence": "by",
+    "description": "gear wheel model",
+    "chemin": "glbs/000-124/8e7094f61fc74b7898c28265eb25e4a0.glb"
+   },
+   {
+    "uid": "5ae31dba98694237ae5db2bba800a822",
+    "licence": "by",
+    "description": "gear wheel model",
+    "chemin": "glbs/000-062/5ae31dba98694237ae5db2bba800a822.glb"
+   },
+   {
+    "uid": "4256e97daa794ab19a6c972b966f3075",
+    "licence": "by",
+    "description": "gear wheel model",
+    "chemin": "glbs/000-141/4256e97daa794ab19a6c972b966f3075.glb"
+   },
+   {
+    "uid": "a68ba7530c8d465c8bfae06a6d4fdc5e",
+    "licence": "by",
+    "description": "gears iPhone 5 case in silver metal",
+    "chemin": "glbs/000-118/a68ba7530c8d465c8bfae06a6d4fdc5e.glb"
+   },
+   {
+    "uid": "8431fe8ef1624993a6dfaa2b3ad3d8f4",
+    "licence": "by",
+    "description": "a gear wheel",
+    "chemin": "glbs/000-101/8431fe8ef1624993a6dfaa2b3ad3d8f4.glb"
+   },
+   {
+    "uid": "c5013ece451a4a289d87bf21c54d8060",
+    "licence": "by",
+    "description": "a gear wheel.",
+    "chemin": "glbs/000-057/c5013ece451a4a289d87bf21c54d8060.glb"
+   },
+   {
+    "uid": "c0e106b89ee34264a06b9123e19859cb",
+    "licence": "by",
+    "description": "a gear wheel.",
+    "chemin": "glbs/000-040/c0e106b89ee34264a06b9123e19859cb.glb"
+   },
+   {
+    "uid": "9c0bdce7e9ea4cd4ba925544e0342b66",
+    "licence": "by",
+    "description": "a gear wheel.",
+    "chemin": "glbs/000-111/9c0bdce7e9ea4cd4ba925544e0342b66.glb"
+   },
+   {
+    "uid": "5930755faae24299b46c942e603eeab6",
+    "licence": "by",
+    "description": "a gear wheel.",
+    "chemin": "glbs/000-042/5930755faae24299b46c942e603eeab6.glb"
+   },
+   {
+    "uid": "695708a992484ea8bd9b436a9abd5659",
+    "licence": "by",
+    "description": "a gear and chain.",
+    "chemin": "glbs/000-137/695708a992484ea8bd9b436a9abd5659.glb"
+   },
+   {
+    "uid": "844435a5474e41b6a6be46205b0f419a",
+    "licence": "by",
+    "description": "Gears of War: armored man character from the game.",
+    "chemin": "glbs/000-078/844435a5474e41b6a6be46205b0f419a.glb"
+   }
+  ],
+  "ressort": [
+   {
+    "uid": "d550d1355d7340cab710a05fdfe2aa1c",
+    "licence": "by",
+    "description": "a spiral spring coil",
+    "chemin": "glbs/000-020/d550d1355d7340cab710a05fdfe2aa1c.glb"
+   },
+   {
+    "uid": "a698662670c54a4ca932a4e5a6bc4e4e",
+    "licence": "by",
+    "description": "White shock absorber with a detailed spring coil, upper and lower mounting points.",
+    "chemin": "glbs/000-033/a698662670c54a4ca932a4e5a6bc4e4e.glb"
+   }
+  ],
+  "thermometre": [
+   {
+    "uid": "5ef4251b270c4997aca6931a094f9621",
+    "licence": "by",
+    "description": "A thermometer with a red tip.",
+    "chemin": "glbs/000-027/5ef4251b270c4997aca6931a094f9621.glb"
+   },
+   {
+    "uid": "294000ded18f4d73b436ceb8a78dffea",
+    "licence": "by",
+    "description": "thermometer with red, yellow, and green colors and numbers on it.",
+    "chemin": "glbs/000-124/294000ded18f4d73b436ceb8a78dffea.glb"
+   },
+   {
+    "uid": "6c68aa444f4c42729e2b485f50558fc9",
+    "licence": "by",
+    "description": "a thermometer and clock on a wooden block.",
+    "chemin": "glbs/000-083/6c68aa444f4c42729e2b485f50558fc9.glb"
+   },
+   {
+    "uid": "aaa662c7d6934d6ab24483c98706b118",
+    "licence": "by",
+    "description": "a thermometer and ruler with a small piece of wood and sand.",
+    "chemin": "glbs/000-077/aaa662c7d6934d6ab24483c98706b118.glb"
+   },
+   {
+    "uid": "2dbce7dc9fd544618e2b9408db3e6f6a",
+    "licence": "by",
+    "description": "A thermometer with a white base and handle, featuring a glass tube.",
+    "chemin": "glbs/000-074/2dbce7dc9fd544618e2b9408db3e6f6a.glb"
+   },
+   {
+    "uid": "a333c4613be64b46a71d2e508031eb85",
+    "licence": "by",
+    "description": "a thermometer with rocks and a wooden stick with a piece of paper on it.",
+    "chemin": "glbs/000-023/a333c4613be64b46a71d2e508031eb85.glb"
+   },
+   {
+    "uid": "5e57e6dedb93423c9615bc437b54aa2e",
+    "licence": "by",
+    "description": "white thermometer with a glass tube and sphere.",
+    "chemin": "glbs/000-039/5e57e6dedb93423c9615bc437b54aa2e.glb"
+   },
+   {
+    "uid": "acb2c16f9224404d996ab44c26d58176",
+    "licence": "by",
+    "description": "digital thermometer model.",
+    "chemin": "glbs/000-030/acb2c16f9224404d996ab44c26d58176.glb"
+   },
+   {
+    "uid": "b2365fe152534314ae487e34a285c111",
+    "licence": "by",
+    "description": "digital thermometer model resembling a white utensil.",
+    "chemin": "glbs/000-048/b2365fe152534314ae487e34a285c111.glb"
+   },
+   {
+    "uid": "92b2a963bf134d1b9b907fffe61a7d4c",
+    "licence": "by",
+    "description": "digital thermometer with a green display and cube design.",
+    "chemin": "glbs/000-101/92b2a963bf134d1b9b907fffe61a7d4c.glb"
+   },
+   {
+    "uid": "dcd26a4ec93a49de8f6ca2fe4484762a",
+    "licence": "by",
+    "description": "a white thermometer, handgun, hair dryer, and remote control.",
+    "chemin": "glbs/000-070/dcd26a4ec93a49de8f6ca2fe4484762a.glb"
+   },
+   {
+    "uid": "f3f637a1c6b54e698527e0280af8ccd6",
+    "licence": "by",
+    "description": "a ruler, thermometer, tall book, and paper tube.",
+    "chemin": "glbs/000-054/f3f637a1c6b54e698527e0280af8ccd6.glb"
+   }
+  ],
+  "balance": [
+   {
+    "uid": "73b31a00e15a48fd99721b80865ff70c",
+    "licence": "by",
+    "description": "a weighing scale with a stand.",
+    "chemin": "glbs/000-053/73b31a00e15a48fd99721b80865ff70c.glb"
+   },
+   {
+    "uid": "9c440e7f5ab9440697c01c9d2e6ea8c9",
+    "licence": "by",
+    "description": "a balance scale, also known as scales of justice.",
+    "chemin": "glbs/000-064/9c440e7f5ab9440697c01c9d2e6ea8c9.glb"
+   },
+   {
+    "uid": "d613cd13378e41e289e66f9ec076c203",
+    "licence": "by",
+    "description": "a balance scale with two plates hanging from a chain.",
+    "chemin": "glbs/000-023/d613cd13378e41e289e66f9ec076c203.glb"
+   },
+   {
+    "uid": "6fe64e3d3a684e268e6bd72b73a138a2",
+    "licence": "by",
+    "description": "a balance scale with two plates, representing justice.",
+    "chemin": "glbs/000-137/6fe64e3d3a684e268e6bd72b73a138a2.glb"
+   },
+   {
+    "uid": "e34f55ac5b574d199dc33538c4dba77a",
+    "licence": "by",
+    "description": "a weighing scale on a pedestal, featuring a red disc-shaped object on it.",
+    "chemin": "glbs/000-019/e34f55ac5b574d199dc33538c4dba77a.glb"
+   },
+   {
+    "uid": "3acc9c2f735743aba6028bc909ef79b3",
+    "licence": "by",
+    "description": "a balance scale with a bird and a cat on it, featuring wheels and a sun design.",
+    "chemin": "glbs/000-156/3acc9c2f735743aba6028bc909ef79b3.glb"
+   },
+   {
+    "uid": "cb1bf483e4704fc68b750cfc9cbae9a1",
+    "licence": "by",
+    "description": "a weighing scale with a metal stand and ring, placed on a table, featuring a mirror and metal plate.",
+    "chemin": "glbs/000-044/cb1bf483e4704fc68b750cfc9cbae9a1.glb"
+   },
+   {
+    "uid": "5aa71a3db5b84906a344c71f7620da3a",
+    "licence": "by",
+    "description": "a weighing scale, Polaroid camera, cigarette box, coffee machine, ceiling-mounted light, and roof vent.",
+    "chemin": "glbs/000-068/5aa71a3db5b84906a344c71f7620da3a.glb"
+   },
+   {
+    "uid": "bf8147025369460eaf4da8d29ca6e24b",
+    "licence": "by",
+    "description": "a metal weighing scale with a large display and wheels.",
+    "chemin": "glbs/000-056/bf8147025369460eaf4da8d29ca6e24b.glb"
+   },
+   {
+    "uid": "b2af93d0489840668b8abb272b0ad4f4",
+    "licence": "by",
+    "description": "a small weighing scale on top of a wooden box with wheels.",
+    "chemin": "glbs/000-012/b2af93d0489840668b8abb272b0ad4f4.glb"
+   },
+   {
+    "uid": "57712befdff441efb068ed513a8b6a9b",
+    "licence": "by",
+    "description": "White balance scale with a sliding weight, featuring a central fulcrum and ornamental end caps.",
+    "chemin": "glbs/000-036/57712befdff441efb068ed513a8b6a9b.glb"
+   },
+   {
+    "uid": "a5642617ca35403583ed884d6a2b5ef7",
+    "licence": "by",
+    "description": "a smart weighing scale, a table with a laptop and a phone, and a phone with a case.",
+    "chemin": "glbs/000-058/a5642617ca35403583ed884d6a2b5ef7.glb"
+   }
+  ],
+  "volcan": [
+   {
+    "uid": "a091df401e8b40c0869a67ef6321328c",
+    "licence": "by",
+    "description": "a volcano with fire.",
+    "chemin": "glbs/000-053/a091df401e8b40c0869a67ef6321328c.glb"
+   },
+   {
+    "uid": "ebd280803e554b89ae5c3bfc7d3e0ca3",
+    "licence": "by",
+    "description": "a volcano with lava flowing down.",
+    "chemin": "glbs/000-084/ebd280803e554b89ae5c3bfc7d3e0ca3.glb"
+   },
+   {
+    "uid": "f4ee6082e6c5440b931c4d1a3b0284b5",
+    "licence": "by",
+    "description": "a volcano, world map, and a plane flying in the air.",
+    "chemin": "glbs/000-135/f4ee6082e6c5440b931c4d1a3b0284b5.glb"
+   },
+   {
+    "uid": "14e64fda80664dc8a7338d651370a4af",
+    "licence": "by",
+    "description": "a volcano with a rock on top and lava flowing out of it.",
+    "chemin": "glbs/000-062/14e64fda80664dc8a7338d651370a4af.glb"
+   },
+   {
+    "uid": "9b7a8cfbf4f0495d9b8b49ea12aca91d",
+    "licence": "by",
+    "description": "a volcano with lava flowing out and a small mountain on top.",
+    "chemin": "glbs/000-101/9b7a8cfbf4f0495d9b8b49ea12aca91d.glb"
+   },
+   {
+    "uid": "494afac4f3024d7e93124771632f5009",
+    "licence": "by",
+    "description": "a volcano with lava flowing, rocks, and a mountainous terrain.",
+    "chemin": "glbs/000-128/494afac4f3024d7e93124771632f5009.glb"
+   },
+   {
+    "uid": "ab2d85d86d034c33b9c3c464be93df69",
+    "licence": "by",
+    "description": "an erupting volcano with red smoke coming out of it.",
+    "chemin": "glbs/000-124/ab2d85d86d034c33b9c3c464be93df69.glb"
+   },
+   {
+    "uid": "8972c606c2ad4b7d8cee212cd7043bc3",
+    "licence": "by",
+    "description": "a volcano with lava flowing out, smoke, and a mountain in the background.",
+    "chemin": "glbs/000-137/8972c606c2ad4b7d8cee212cd7043bc3.glb"
+   },
+   {
+    "uid": "b26cf44d4b604b51a86d0677089efc4a",
+    "licence": "by",
+    "description": "an erupting volcano with smoke and a person standing on top.",
+    "chemin": "glbs/000-058/b26cf44d4b604b51a86d0677089efc4a.glb"
+   },
+   {
+    "uid": "aafcbe2ce9744bde81ab74bdfcf249b5",
+    "licence": "by",
+    "description": "an erupting volcano with smoke and flames, situated on a rock.",
+    "chemin": "glbs/000-057/aafcbe2ce9744bde81ab74bdfcf249b5.glb"
+   },
+   {
+    "uid": "9fce437722614f96ac760bea6ff389ef",
+    "licence": "by",
+    "description": "a volcano on a small island with a flame, featuring green and yellow elements.",
+    "chemin": "glbs/000-111/9fce437722614f96ac760bea6ff389ef.glb"
+   },
+   {
+    "uid": "e622eabdd2fb4a3eb6cb82dc70f3b0cd",
+    "licence": "by",
+    "description": "a volcano on a mountain, featuring lava flow, smoke, and clouds emanating from it.",
+    "chemin": "glbs/000-033/e622eabdd2fb4a3eb6cb82dc70f3b0cd.glb"
+   }
+  ],
+  "montagne": [
+   {
+    "uid": "2595a9b548bf4679808d5515935caa7b",
+    "licence": "by",
+    "description": "mountain scene featuring trees and people.",
+    "chemin": "glbs/000-002/2595a9b548bf4679808d5515935caa7b.glb"
+   },
+   {
+    "uid": "398999b3360b4e6997a9aae253d6acbd",
+    "licence": "by-sa",
+    "description": "a mountain bike",
+    "chemin": "glbs/000-068/398999b3360b4e6997a9aae253d6acbd.glb"
+   },
+   {
+    "uid": "e27258afb8594382889ef6ba737d5d64",
+    "licence": "by",
+    "description": "a mountain range",
+    "chemin": "glbs/000-013/e27258afb8594382889ef6ba737d5d64.glb"
+   },
+   {
+    "uid": "b2f7f8b1ab5b4abe98169cfa03fb17be",
+    "licence": "by",
+    "description": "a mountain range",
+    "chemin": "glbs/000-014/b2f7f8b1ab5b4abe98169cfa03fb17be.glb"
+   },
+   {
+    "uid": "77de8648eaa740f9ae847b2fbea177a8",
+    "licence": "by",
+    "description": "a mountain range",
+    "chemin": "glbs/000-119/77de8648eaa740f9ae847b2fbea177a8.glb"
+   },
+   {
+    "uid": "7705172490db4747b5b036adf9e606ed",
+    "licence": "by",
+    "description": "a mountain range",
+    "chemin": "glbs/000-090/7705172490db4747b5b036adf9e606ed.glb"
+   },
+   {
+    "uid": "6fb8d28d4ad943e2bf2ea5b4f0c1e2c3",
+    "licence": "by",
+    "description": "a mountain range",
+    "chemin": "glbs/000-130/6fb8d28d4ad943e2bf2ea5b4f0c1e2c3.glb"
+   },
+   {
+    "uid": "29bde669c107466eb92a1f5850265591",
+    "licence": "by",
+    "description": "a mountain range",
+    "chemin": "glbs/000-113/29bde669c107466eb92a1f5850265591.glb"
+   },
+   {
+    "uid": "22324eb156964be1b5f7d44944091a69",
+    "licence": "by",
+    "description": "a mountain range",
+    "chemin": "glbs/000-145/22324eb156964be1b5f7d44944091a69.glb"
+   },
+   {
+    "uid": "16741320932a487dab9acfa59020a4dd",
+    "licence": "by",
+    "description": "a mountain range",
+    "chemin": "glbs/000-154/16741320932a487dab9acfa59020a4dd.glb"
+   },
+   {
+    "uid": "e9601c9d67394daf98598aef711ac945",
+    "licence": "by",
+    "description": "a mountain range.",
+    "chemin": "glbs/000-029/e9601c9d67394daf98598aef711ac945.glb"
+   },
+   {
+    "uid": "e400dcb545294c5d832138d9b73f5361",
+    "licence": "by",
+    "description": "a mountain range.",
+    "chemin": "glbs/000-017/e400dcb545294c5d832138d9b73f5361.glb"
+   }
+  ],
+  "riviere": [
+   {
+    "uid": "1039feb7cda74956b1c9b277f6219c2e",
+    "licence": "by",
+    "description": "a river with blue water and a mountain.",
+    "chemin": "glbs/000-077/1039feb7cda74956b1c9b277f6219c2e.glb"
+   },
+   {
+    "uid": "18f52e28ace54f5f80ea935c3629e484",
+    "licence": "by",
+    "description": "a river, road, trees, a small island, and a boat.",
+    "chemin": "glbs/000-071/18f52e28ace54f5f80ea935c3629e484.glb"
+   },
+   {
+    "uid": "6b5399f21c8f4b0292c8439d8daeebbb",
+    "licence": "by",
+    "description": "a river flowing through a farmland with grass and trees.",
+    "chemin": "glbs/000-132/6b5399f21c8f4b0292c8439d8daeebbb.glb"
+   },
+   {
+    "uid": "384ad1a637a349bcbda3659a77aa0b30",
+    "licence": "by",
+    "description": "a river flowing through a field, with a lake and a road nearby.",
+    "chemin": "glbs/000-083/384ad1a637a349bcbda3659a77aa0b30.glb"
+   },
+   {
+    "uid": "6287c0e9b4c841c8a610cbc24b9b4cc3",
+    "licence": "by",
+    "description": "a river flowing through a green landscape with a mountain, lake, and small island.",
+    "chemin": "glbs/000-023/6287c0e9b4c841c8a610cbc24b9b4cc3.glb"
+   },
+   {
+    "uid": "d339397634e64248aa5ed1b6c3145224",
+    "licence": "by",
+    "description": "a river and lake in a field with surrounding trees and grass, resembling the Pacific coast of California.",
+    "chemin": "glbs/000-157/d339397634e64248aa5ed1b6c3145224.glb"
+   },
+   {
+    "uid": "b621c64d0ed74283873c8c2b9a949bd3",
+    "licence": "by",
+    "description": "a Fall River Columbia Salmon tin can.",
+    "chemin": "glbs/000-095/b621c64d0ed74283873c8c2b9a949bd3.glb"
+   },
+   {
+    "uid": "4c14f0b5b3c64cc383915ab54d43ff6c",
+    "licence": "by",
+    "description": "Brisbane River book cover",
+    "chemin": "glbs/000-076/4c14f0b5b3c64cc383915ab54d43ff6c.glb"
+   },
+   {
+    "uid": "43b153a1e9014a098e8624908bb637f8",
+    "licence": "by",
+    "description": "a river with a small island, surrounded by trees, buildings, and a construction site, featuring a boat and a l",
+    "chemin": "glbs/000-083/43b153a1e9014a098e8624908bb637f8.glb"
+   },
+   {
+    "uid": "fe6c346c486c4e0ba7d1b26e0c43f430",
+    "licence": "by",
+    "description": "a hill, river, trees, and grass landscape.",
+    "chemin": "glbs/000-064/fe6c346c486c4e0ba7d1b26e0c43f430.glb"
+   },
+   {
+    "uid": "4dec910aadb64e539ce2f5eec3a8b979",
+    "licence": "by",
+    "description": "a snowy river scene painting in a white frame.",
+    "chemin": "glbs/000-075/4dec910aadb64e539ce2f5eec3a8b979.glb"
+   },
+   {
+    "uid": "5338b388455244259f5b0c2503187ab2",
+    "licence": "by",
+    "description": "a city, river, and mountain landscape featuring a small island and a lake.",
+    "chemin": "glbs/000-072/5338b388455244259f5b0c2503187ab2.glb"
+   }
+  ],
+  "nuage": [
+   {
+    "uid": "251b2387a91040a98da7b51bc5ca686e",
+    "licence": "by",
+    "description": "clouds with rain falling.",
+    "chemin": "glbs/000-072/251b2387a91040a98da7b51bc5ca686e.glb"
+   },
+   {
+    "uid": "81db58c0cd0f46f682183f5c74da08ad",
+    "licence": "by",
+    "description": "clouds with a moon and a window.",
+    "chemin": "glbs/000-135/81db58c0cd0f46f682183f5c74da08ad.glb"
+   },
+   {
+    "uid": "612b086cf88f4834a77d667acb56daac",
+    "licence": "by",
+    "description": "clouds and a moon in a blue sky.",
+    "chemin": "glbs/000-021/612b086cf88f4834a77d667acb56daac.glb"
+   },
+   {
+    "uid": "b6eda19a94794336859fd61e6b7d5ae2",
+    "licence": "by",
+    "description": "clouds and rain falling from the sky.",
+    "chemin": "glbs/000-143/b6eda19a94794336859fd61e6b7d5ae2.glb"
+   },
+   {
+    "uid": "01e7373d27094a83bbf84e358905a704",
+    "licence": "by-sa",
+    "description": "clouds in a black and white composition.",
+    "chemin": "glbs/000-054/01e7373d27094a83bbf84e358905a704.glb"
+   },
+   {
+    "uid": "b4f7768da0fd4521878ab4d7884128c8",
+    "licence": "by",
+    "description": "clouds, a moon, and a screen in a blue sky.",
+    "chemin": "glbs/000-085/b4f7768da0fd4521878ab4d7884128c8.glb"
+   },
+   {
+    "uid": "4fbb66053aa74cc884bd9e9879a6d1b8",
+    "licence": "by",
+    "description": "cloud model with the word 'OneDrive' on it.",
+    "chemin": "glbs/000-038/4fbb66053aa74cc884bd9e9879a6d1b8.glb"
+   },
+   {
+    "uid": "901d6e9d0c8241cfb9187c3105fa89f3",
+    "licence": "by",
+    "description": "a cloud and green sphere.",
+    "chemin": "glbs/000-011/901d6e9d0c8241cfb9187c3105fa89f3.glb"
+   },
+   {
+    "uid": "cfbefda15b504f9d9f020a57ecce1e70",
+    "licence": "by",
+    "description": "clouds composed of small white balls floating above a box.",
+    "chemin": "glbs/000-067/cfbefda15b504f9d9f020a57ecce1e70.glb"
+   },
+   {
+    "uid": "361ede74a21b47adb53a812c6e2c6770",
+    "licence": "by",
+    "description": "a cloud with a green ball on top.",
+    "chemin": "glbs/000-119/361ede74a21b47adb53a812c6e2c6770.glb"
+   },
+   {
+    "uid": "f315ca5f8ee64efbaf95c7cf4f5853fd",
+    "licence": "by",
+    "description": "a cloud with a green lightning bolt.",
+    "chemin": "glbs/000-006/f315ca5f8ee64efbaf95c7cf4f5853fd.glb"
+   },
+   {
+    "uid": "7b17631ccc8b4b5b8a71083d335987ec",
+    "licence": "by",
+    "description": "a cloud resembling smoke or a snowman.",
+    "chemin": "glbs/000-065/7b17631ccc8b4b5b8a71083d335987ec.glb"
+   }
+  ],
+  "globe": [
+   {
+    "uid": "c5a9e43bf8c744e394b916dcefc0b0af",
+    "licence": "by",
+    "description": "Earth and Moon.",
+    "chemin": "glbs/000-038/c5a9e43bf8c744e394b916dcefc0b0af.glb"
+   },
+   {
+    "uid": "2ce35460af2b4c978e78067c2b22d9c1",
+    "licence": "by",
+    "description": "Earth and Moon.",
+    "chemin": "glbs/000-050/2ce35460af2b4c978e78067c2b22d9c1.glb"
+   },
+   {
+    "uid": "daf2f089adbe480d9452a9994965fdf2",
+    "licence": "by",
+    "description": "Earth with clouds.",
+    "chemin": "glbs/000-123/daf2f089adbe480d9452a9994965fdf2.glb"
+   },
+   {
+    "uid": "9ea670d1a842491fac0f6e02d8471bbb",
+    "licence": "by",
+    "description": "Earth with clouds.",
+    "chemin": "glbs/000-090/9ea670d1a842491fac0f6e02d8471bbb.glb"
+   },
+   {
+    "uid": "4de1bcbd22a444abb4f089b9b78ec96a",
+    "licence": "by",
+    "description": "Earth with clouds.",
+    "chemin": "glbs/000-130/4de1bcbd22a444abb4f089b9b78ec96a.glb"
+   },
+   {
+    "uid": "439de097307b4a37ac626a2a5f990e81",
+    "licence": "by",
+    "description": "Earth with clouds.",
+    "chemin": "glbs/000-070/439de097307b4a37ac626a2a5f990e81.glb"
+   },
+   {
+    "uid": "2b691638fa034aca919abb9e4d77c632",
+    "licence": "by",
+    "description": "Earth with clouds.",
+    "chemin": "glbs/000-134/2b691638fa034aca919abb9e4d77c632.glb"
+   },
+   {
+    "uid": "db0633a98bf743388860626a6a79d40c",
+    "licence": "by",
+    "description": "Earth with clouds on it",
+    "chemin": "glbs/000-136/db0633a98bf743388860626a6a79d40c.glb"
+   },
+   {
+    "uid": "9afb9697e3a44476bb9976284521d5e8",
+    "licence": "by",
+    "description": "Earth in a circle shape.",
+    "chemin": "glbs/000-131/9afb9697e3a44476bb9976284521d5e8.glb"
+   },
+   {
+    "uid": "91f8f5e827fc4d32902906511cb7e64d",
+    "licence": "by",
+    "description": "Earth with clouds on it.",
+    "chemin": "glbs/000-028/91f8f5e827fc4d32902906511cb7e64d.glb"
+   },
+   {
+    "uid": "0269763acb7a4ab880a09bef35217e79",
+    "licence": "by",
+    "description": "globe on a wooden stand.",
+    "chemin": "glbs/000-000/0269763acb7a4ab880a09bef35217e79.glb"
+   },
+   {
+    "uid": "ec7b6ed3225c4fb49d7cf8bbc85e91a8",
+    "licence": "by",
+    "description": "Earth featuring Australia.",
+    "chemin": "glbs/000-036/ec7b6ed3225c4fb49d7cf8bbc85e91a8.glb"
+   }
+  ],
+  "planete": [
+   {
+    "uid": "a30ff3a5f4f3477d87fc534e0d1df7e2",
+    "licence": "by",
+    "description": "Planet Pluto",
+    "chemin": "glbs/000-040/a30ff3a5f4f3477d87fc534e0d1df7e2.glb"
+   },
+   {
+    "uid": "927673b96b0d426fb0508bb2b62c4b42",
+    "licence": "by",
+    "description": "Planet Pluto",
+    "chemin": "glbs/000-021/927673b96b0d426fb0508bb2b62c4b42.glb"
+   },
+   {
+    "uid": "9207add61653476e905b4448b102e322",
+    "licence": "by",
+    "description": "Planet Venus",
+    "chemin": "glbs/000-006/9207add61653476e905b4448b102e322.glb"
+   },
+   {
+    "uid": "5fc8b7168b044527a05ed3903c998b65",
+    "licence": "by",
+    "description": "planet Mars.",
+    "chemin": "glbs/000-030/5fc8b7168b044527a05ed3903c998b65.glb"
+   },
+   {
+    "uid": "9dccc16d86c34af28792334089db7fe6",
+    "licence": "by",
+    "description": "Planet Jupiter",
+    "chemin": "glbs/000-054/9dccc16d86c34af28792334089db7fe6.glb"
+   },
+   {
+    "uid": "82556a27de344031aafd84829770363c",
+    "licence": "by",
+    "description": "Planet Mars displayed on a gray background.",
+    "chemin": "glbs/000-019/82556a27de344031aafd84829770363c.glb"
+   },
+   {
+    "uid": "c33586da940845d99426f6e0c55c72f3",
+    "licence": "by",
+    "description": "a planet with its moons.",
+    "chemin": "glbs/000-045/c33586da940845d99426f6e0c55c72f3.glb"
+   },
+   {
+    "uid": "816d14fb09974160aed7cb264bd770bc",
+    "licence": "by",
+    "description": "a planet featuring water.",
+    "chemin": "glbs/000-074/816d14fb09974160aed7cb264bd770bc.glb"
+   },
+   {
+    "uid": "43946e958fbb4fd0ade4e82e63f159f0",
+    "licence": "by",
+    "description": "Planet Earth with the words 'Terra Terra' and a green arrow.",
+    "chemin": "glbs/000-092/43946e958fbb4fd0ade4e82e63f159f0.glb"
+   },
+   {
+    "uid": "a24c6dd259f844068dc33601006f8ae4",
+    "licence": "by",
+    "description": "planets Saturn, Jupiter, and Neptune with accompanying moons.",
+    "chemin": "glbs/000-136/a24c6dd259f844068dc33601006f8ae4.glb"
+   },
+   {
+    "uid": "45610542874f4159a2a8f48c34b0bf00",
+    "licence": "by",
+    "description": "a planet, ball, and spacecraft.",
+    "chemin": "glbs/000-123/45610542874f4159a2a8f48c34b0bf00.glb"
+   },
+   {
+    "uid": "6117cf56f2ff4892b3de8020d24d7efd",
+    "licence": "by",
+    "description": "a planet featuring a sun and Saturn.",
+    "chemin": "glbs/000-119/6117cf56f2ff4892b3de8020d24d7efd.glb"
+   }
+  ],
+  "roche": [
+   {
+    "uid": "4e0d1490192d4d488f1041ff4ff9acf2",
+    "licence": "by",
+    "description": "rocks and water",
+    "chemin": "glbs/000-115/4e0d1490192d4d488f1041ff4ff9acf2.glb"
+   },
+   {
+    "uid": "cbf066bb7a3d4ef1b02ef088413f45aa",
+    "licence": "by",
+    "description": "rocks and grass.",
+    "chemin": "glbs/000-134/cbf066bb7a3d4ef1b02ef088413f45aa.glb"
+   },
+   {
+    "uid": "645b73cd597c413882c403b9fa7199dc",
+    "licence": "by",
+    "description": "rocks and shells",
+    "chemin": "glbs/000-105/645b73cd597c413882c403b9fa7199dc.glb"
+   },
+   {
+    "uid": "838071fbd3f44353b7206abf56c068bf",
+    "licence": "by",
+    "description": "rocks and stones.",
+    "chemin": "glbs/000-002/838071fbd3f44353b7206abf56c068bf.glb"
+   },
+   {
+    "uid": "c7814a2dd9434847beac62ecb703f1d4",
+    "licence": "by",
+    "description": "Rocking Horse Model",
+    "chemin": "glbs/000-128/c7814a2dd9434847beac62ecb703f1d4.glb"
+   },
+   {
+    "uid": "8d214b0ce5e04b7c8c676b9f2d351e2f",
+    "licence": "by",
+    "description": "rock with a hole in it.",
+    "chemin": "glbs/000-018/8d214b0ce5e04b7c8c676b9f2d351e2f.glb"
+   },
+   {
+    "uid": "51422b677b48472286dd0731b38e4951",
+    "licence": "by",
+    "description": "rocks with moss on them.",
+    "chemin": "glbs/000-147/51422b677b48472286dd0731b38e4951.glb"
+   },
+   {
+    "uid": "38e0a8b9311c477f8ccc516cc5e5187f",
+    "licence": "by",
+    "description": "rock with writing on it.",
+    "chemin": "glbs/000-133/38e0a8b9311c477f8ccc516cc5e5187f.glb"
+   },
+   {
+    "uid": "9cd318865b244df783a7676d7eaa2a89",
+    "licence": "by",
+    "description": "rocks, grass, and a tree.",
+    "chemin": "glbs/000-089/9cd318865b244df783a7676d7eaa2a89.glb"
+   },
+   {
+    "uid": "c985042a860a40859c4d5ac94f1b3479",
+    "licence": "by",
+    "description": "rocks and minerals for sale",
+    "chemin": "glbs/000-075/c985042a860a40859c4d5ac94f1b3479.glb"
+   },
+   {
+    "uid": "ab5fcc68a35b49dd8baef79320d26e64",
+    "licence": "by",
+    "description": "rock model with a blue dot.",
+    "chemin": "glbs/000-065/ab5fcc68a35b49dd8baef79320d26e64.glb"
+   },
+   {
+    "uid": "8027bcb22b964ed29609c4b85b4e6ccc",
+    "licence": "by",
+    "description": "rocks and gravel in a pile.",
+    "chemin": "glbs/000-078/8027bcb22b964ed29609c4b85b4e6ccc.glb"
+   }
+  ],
+  "cristal": [
+   {
+    "uid": "73146e37b9814b8fac6da5aa130f81f3",
+    "licence": "by",
+    "description": "a crystal structure.",
+    "chemin": "glbs/000-026/73146e37b9814b8fac6da5aa130f81f3.glb"
+   },
+   {
+    "uid": "d0515c21dcd347be9bb5131548c47c0d",
+    "licence": "by",
+    "description": "Crystal Structure Model Exhibiting Hexagonal Arrangement",
+    "chemin": "glbs/000-139/d0515c21dcd347be9bb5131548c47c0d.glb"
+   },
+   {
+    "uid": "72dc800fe3174563b0eac9b9a959dd9a",
+    "licence": "by",
+    "description": "Crystal-like stylized cat sculpture with geometric facets.",
+    "chemin": "glbs/000-074/72dc800fe3174563b0eac9b9a959dd9a.glb"
+   },
+   {
+    "uid": "606c0128f5094166bb3fc7f777a48be0",
+    "licence": "by-sa",
+    "description": "a crystal and statue on a rock.",
+    "chemin": "glbs/000-014/606c0128f5094166bb3fc7f777a48be0.glb"
+   },
+   {
+    "uid": "3ed6b065878142a7b31ef78b7dd6924f",
+    "licence": "by",
+    "description": "a crystal and molecular structure.",
+    "chemin": "glbs/000-137/3ed6b065878142a7b31ef78b7dd6924f.glb"
+   },
+   {
+    "uid": "0b8a2c78c94c4c7ea1c5456c92c3768c",
+    "licence": "by",
+    "description": "crystal ring featuring purple and blue crystals on a stone base.",
+    "chemin": "glbs/000-121/0b8a2c78c94c4c7ea1c5456c92c3768c.glb"
+   },
+   {
+    "uid": "f3f5325fb6444bd9bd550acac1e7edef",
+    "licence": "by",
+    "description": "crystal skull with intricate etched designs and embedded gemstones.",
+    "chemin": "glbs/000-001/f3f5325fb6444bd9bd550acac1e7edef.glb"
+   },
+   {
+    "uid": "b5d7150ef3ee4b60a7934043eed005c1",
+    "licence": "by",
+    "description": "Crystal clarinet with intricate designs and textured embellishments.",
+    "chemin": "glbs/000-085/b5d7150ef3ee4b60a7934043eed005c1.glb"
+   },
+   {
+    "uid": "a9f5161e3dea4829b3e968570a1059ad",
+    "licence": "by",
+    "description": "Crystal sculpture with etched symbols and green luminescent accents.",
+    "chemin": "glbs/000-045/a9f5161e3dea4829b3e968570a1059ad.glb"
+   },
+   {
+    "uid": "435691c072e84d8fa09bc07e8825d3ca",
+    "licence": "by",
+    "description": "red crystals.",
+    "chemin": "glbs/000-049/435691c072e84d8fa09bc07e8825d3ca.glb"
+   },
+   {
+    "uid": "bf8f28fcd29b4da2bf05b0f166b43551",
+    "licence": "by",
+    "description": "red crystal formations",
+    "chemin": "glbs/000-082/bf8f28fcd29b4da2bf05b0f166b43551.glb"
+   },
+   {
+    "uid": "f0cc9ec3f3ad4160bbbe525e1b71365e",
+    "licence": "by",
+    "description": "Crystal-textured tiger head with distinctive facial stripes and piercing eye detail.",
+    "chemin": "glbs/000-007/f0cc9ec3f3ad4160bbbe525e1b71365e.glb"
+   }
+  ],
+  "goutte": [
+   {
+    "uid": "51f585fb1cc04691bd390bc10d383168",
+    "licence": "by",
+    "description": "blue water drop with the word 'SOS' on it.",
+    "chemin": "glbs/000-060/51f585fb1cc04691bd390bc10d383168.glb"
+   },
+   {
+    "uid": "9dd00a88dde34497825e99bfffc71350",
+    "licence": "by",
+    "description": "a blue water drop",
+    "chemin": "glbs/000-118/9dd00a88dde34497825e99bfffc71350.glb"
+   },
+   {
+    "uid": "574e4175f7a14b109a5746e988002a58",
+    "licence": "by",
+    "description": "a blue water drop.",
+    "chemin": "glbs/000-028/574e4175f7a14b109a5746e988002a58.glb"
+   },
+   {
+    "uid": "3ab29ec449e74e91befbe336a57ab922",
+    "licence": "by",
+    "description": "a blue water drop.",
+    "chemin": "glbs/000-027/3ab29ec449e74e91befbe336a57ab922.glb"
+   },
+   {
+    "uid": "f72508621d6748cab180959dd01f719d",
+    "licence": "by",
+    "description": "blue water drop character with red eyes and a smile.",
+    "chemin": "glbs/000-132/f72508621d6748cab180959dd01f719d.glb"
+   },
+   {
+    "uid": "d9fffc8ac54740128ade51a566ec8f95",
+    "licence": "by",
+    "description": "a blue water drop-shaped object",
+    "chemin": "glbs/000-109/d9fffc8ac54740128ade51a566ec8f95.glb"
+   },
+   {
+    "uid": "f65828fbd40b4de1be8d3ec50d50d63d",
+    "licence": "by",
+    "description": "a water droplet with a splash effect.",
+    "chemin": "glbs/000-097/f65828fbd40b4de1be8d3ec50d50d63d.glb"
+   },
+   {
+    "uid": "47cfe34956bc46b58d439166b3de8121",
+    "licence": "by",
+    "description": "a white droplet-shaped object on a gray surface.",
+    "chemin": "glbs/000-131/47cfe34956bc46b58d439166b3de8121.glb"
+   },
+   {
+    "uid": "0c81fadc16c94cd8a12e0f553d94d395",
+    "licence": "by",
+    "description": "a blue water drop, resembling a plastic, glass, or crystal teardrop.",
+    "chemin": "glbs/000-111/0c81fadc16c94cd8a12e0f553d94d395.glb"
+   },
+   {
+    "uid": "6bc842f0cad04029b00b11f9cb8a94e5",
+    "licence": "by",
+    "description": "A blue water drop, white candle, blue feather, blue bird, and blue utensil with an illustration of a candle.",
+    "chemin": "glbs/000-036/6bc842f0cad04029b00b11f9cb8a94e5.glb"
+   },
+   {
+    "uid": "1653d8d1b76b41f096323e2587882557",
+    "licence": "by",
+    "description": "a water droplet, green liquid splash, white flower with a green stem, green leaf, and a tree with green leaves",
+    "chemin": "glbs/000-010/1653d8d1b76b41f096323e2587882557.glb"
+   },
+   {
+    "uid": "32a53aa3b586416eb797bc20eccadb93",
+    "licence": "by",
+    "description": "A black water droplet shape.",
+    "chemin": "glbs/000-155/32a53aa3b586416eb797bc20eccadb93.glb"
+   }
+  ],
+  "pyramide": [
+   {
+    "uid": "6573d5c6792c44889cf7d71ba87ef68f",
+    "licence": "by",
+    "description": "pyramid of wooden blocks.",
+    "chemin": "glbs/000-027/6573d5c6792c44889cf7d71ba87ef68f.glb"
+   },
+   {
+    "uid": "f4e8761bf64f488095ee57f2cb5698c4",
+    "licence": "by",
+    "description": "pyramid model with red dots.",
+    "chemin": "glbs/000-098/f4e8761bf64f488095ee57f2cb5698c4.glb"
+   },
+   {
+    "uid": "09ec56cbb63249d5ab9cfb521b494b6e",
+    "licence": "by",
+    "description": "pyramid made of white cubes.",
+    "chemin": "glbs/000-129/09ec56cbb63249d5ab9cfb521b494b6e.glb"
+   },
+   {
+    "uid": "d2076f00f66843eba2bb749e86809cce",
+    "licence": "by",
+    "description": "pyramid model with red lines.",
+    "chemin": "glbs/000-153/d2076f00f66843eba2bb749e86809cce.glb"
+   },
+   {
+    "uid": "89ea8b8357fa48d4beb25ed1203091ea",
+    "licence": "by",
+    "description": "pyramid model with red lines.",
+    "chemin": "glbs/000-120/89ea8b8357fa48d4beb25ed1203091ea.glb"
+   },
+   {
+    "uid": "96b05c62bde941e98e47417741353450",
+    "licence": "by",
+    "description": "Pyramid with Obama's face on it",
+    "chemin": "glbs/000-096/96b05c62bde941e98e47417741353450.glb"
+   },
+   {
+    "uid": "a2bbfaa4f26648429a911ce4ad063cb7",
+    "licence": "by",
+    "description": "pyramid model with a yellow side.",
+    "chemin": "glbs/000-154/a2bbfaa4f26648429a911ce4ad063cb7.glb"
+   },
+   {
+    "uid": "796357114d0e43ed948ead49636d2884",
+    "licence": "by",
+    "description": "pyramid model in black and white.",
+    "chemin": "glbs/000-093/796357114d0e43ed948ead49636d2884.glb"
+   },
+   {
+    "uid": "edcc0eb9bdfe45d4ad1625b1881e7b0c",
+    "licence": "by",
+    "description": "Pyramid of Chichen Itza with stairs",
+    "chemin": "glbs/000-152/edcc0eb9bdfe45d4ad1625b1881e7b0c.glb"
+   },
+   {
+    "uid": "e783e4369ff940bbac647a6f2e5c2e3d",
+    "licence": "by",
+    "description": "pyramid with a smiling man's face on it.",
+    "chemin": "glbs/000-043/e783e4369ff940bbac647a6f2e5c2e3d.glb"
+   },
+   {
+    "uid": "dc52ab44ceba4ac8a1f7ec87f1138788",
+    "licence": "by",
+    "description": "pyramid-shaped object with a foil accent.",
+    "chemin": "glbs/000-052/dc52ab44ceba4ac8a1f7ec87f1138788.glb"
+   },
+   {
+    "uid": "c96a5ba56f7b4ddaa1f94cccc0618af1",
+    "licence": "by",
+    "description": "pyramid featuring a person's face and ear.",
+    "chemin": "glbs/000-019/c96a5ba56f7b4ddaa1f94cccc0618af1.glb"
+   }
+  ],
+  "chateau": [
+   {
+    "uid": "5c77188b8a67400187ca68b5115bed8c",
+    "licence": "by",
+    "description": "Castle Model",
+    "chemin": "glbs/000-148/5c77188b8a67400187ca68b5115bed8c.glb"
+   },
+   {
+    "uid": "8e45806f10cd41f18cb045a61afd3ddc",
+    "licence": "by",
+    "description": "castle model made of wooden building blocks.",
+    "chemin": "glbs/000-097/8e45806f10cd41f18cb045a61afd3ddc.glb"
+   },
+   {
+    "uid": "6c75c20ce506426ab725ca4143cafec1",
+    "licence": "by",
+    "description": "a castle tower",
+    "chemin": "glbs/000-008/6c75c20ce506426ab725ca4143cafec1.glb"
+   },
+   {
+    "uid": "d8af2084bc9141e3aface945b5ee5f29",
+    "licence": "by",
+    "description": "a castle tower.",
+    "chemin": "glbs/000-104/d8af2084bc9141e3aface945b5ee5f29.glb"
+   },
+   {
+    "uid": "c971a3eb22d1432d8d2ec86fd42b11ad",
+    "licence": "by",
+    "description": "a castle tower.",
+    "chemin": "glbs/000-109/c971a3eb22d1432d8d2ec86fd42b11ad.glb"
+   },
+   {
+    "uid": "c134684a874d4f948cc7159a11663d37",
+    "licence": "by",
+    "description": "a castle tower.",
+    "chemin": "glbs/000-008/c134684a874d4f948cc7159a11663d37.glb"
+   },
+   {
+    "uid": "b53eda2ae0cf4f72adc48f593592fff6",
+    "licence": "by-sa",
+    "description": "a castle tower.",
+    "chemin": "glbs/000-063/b53eda2ae0cf4f72adc48f593592fff6.glb"
+   },
+   {
+    "uid": "9ba9dc8767f441559eb367159036e252",
+    "licence": "by",
+    "description": "a castle tower.",
+    "chemin": "glbs/000-136/9ba9dc8767f441559eb367159036e252.glb"
+   },
+   {
+    "uid": "70bf6e4096b645928b37ba0776a005f7",
+    "licence": "by",
+    "description": "a castle tower.",
+    "chemin": "glbs/000-143/70bf6e4096b645928b37ba0776a005f7.glb"
+   },
+   {
+    "uid": "635b6e907e174f3f9b828688f37108d7",
+    "licence": "by",
+    "description": "a castle tower.",
+    "chemin": "glbs/000-033/635b6e907e174f3f9b828688f37108d7.glb"
+   },
+   {
+    "uid": "5ba6c564f4bc4316b9f3e2d34e748623",
+    "licence": "by",
+    "description": "a castle tower.",
+    "chemin": "glbs/000-081/5ba6c564f4bc4316b9f3e2d34e748623.glb"
+   },
+   {
+    "uid": "07ec19dae8894c1fa827356878cbd176",
+    "licence": "by",
+    "description": "a castle tower.",
+    "chemin": "glbs/000-010/07ec19dae8894c1fa827356878cbd176.glb"
+   }
+  ],
+  "temple": [
+   {
+    "uid": "61b663c7ef5f48948af624410c364540",
+    "licence": "by",
+    "description": "a temple with two pillars/columns",
+    "chemin": "glbs/000-088/61b663c7ef5f48948af624410c364540.glb"
+   },
+   {
+    "uid": "0c428b9c67254b50b2415a66042ec1ac",
+    "licence": "by",
+    "description": "a temple with columns and pillars",
+    "chemin": "glbs/000-148/0c428b9c67254b50b2415a66042ec1ac.glb"
+   },
+   {
+    "uid": "4b1e03f3d42b4211ab700ad584c0a762",
+    "licence": "by",
+    "description": "a temple on a small island in a lake.",
+    "chemin": "glbs/000-118/4b1e03f3d42b4211ab700ad584c0a762.glb"
+   },
+   {
+    "uid": "1a6fcd03bff54625b3f31cf6099420f9",
+    "licence": "by",
+    "description": "a temple featuring columns and pillars.",
+    "chemin": "glbs/000-063/1a6fcd03bff54625b3f31cf6099420f9.glb"
+   },
+   {
+    "uid": "c0140b76cee2449ea527feafdbe141bb",
+    "licence": "by",
+    "description": "a temple with a clock tower and walkway.",
+    "chemin": "glbs/000-010/c0140b76cee2449ea527feafdbe141bb.glb"
+   },
+   {
+    "uid": "52977627667448e5ae3fd0cd76327864",
+    "licence": "by",
+    "description": "a temple building with columns and a roof.",
+    "chemin": "glbs/000-019/52977627667448e5ae3fd0cd76327864.glb"
+   },
+   {
+    "uid": "3279eccde05346b3af53bf19f0f21690",
+    "licence": "by",
+    "description": "a temple with columns, pillars, and a green roof.",
+    "chemin": "glbs/000-155/3279eccde05346b3af53bf19f0f21690.glb"
+   },
+   {
+    "uid": "0433ac8801b64ea39427d171c2ac79a1",
+    "licence": "by",
+    "description": "a temple-castle hybrid with stairs and a pedestal.",
+    "chemin": "glbs/000-011/0433ac8801b64ea39427d171c2ac79a1.glb"
+   },
+   {
+    "uid": "98393d8a51d84c0f912f2b2e99a32aed",
+    "licence": "by",
+    "description": "a temple with stairs, resembling a castle in the sky.",
+    "chemin": "glbs/000-117/98393d8a51d84c0f912f2b2e99a32aed.glb"
+   },
+   {
+    "uid": "fc10963ab156407e9f7d416fe6b12cd3",
+    "licence": "by",
+    "description": "a temple/small castle with statues, situated on a rock.",
+    "chemin": "glbs/000-008/fc10963ab156407e9f7d416fe6b12cd3.glb"
+   },
+   {
+    "uid": "f3d975407b684f83abb707ebd8804e74",
+    "licence": "by",
+    "description": "a temple featuring stairs, wooden pillars, and columns.",
+    "chemin": "glbs/000-012/f3d975407b684f83abb707ebd8804e74.glb"
+   },
+   {
+    "uid": "93f8ea238a2e49cebf769e99ff0241d9",
+    "licence": "by",
+    "description": "a temple, forest, and small island with trees and rocks.",
+    "chemin": "glbs/000-136/93f8ea238a2e49cebf769e99ff0241d9.glb"
+   }
+  ],
+  "statue": [
+   {
+    "uid": "e15aa13e83ee4ba7b2f702bb9138ffa1",
+    "licence": "by",
+    "description": "Statue of Liberty",
+    "chemin": "glbs/000-006/e15aa13e83ee4ba7b2f702bb9138ffa1.glb"
+   },
+   {
+    "uid": "75b0334f424141d8afd78f72e8ad4e4b",
+    "licence": "by",
+    "description": "Statue of Liberty",
+    "chemin": "glbs/000-059/75b0334f424141d8afd78f72e8ad4e4b.glb"
+   },
+   {
+    "uid": "cfdd53038fad447da4bb994ad16bdaae",
+    "licence": "by",
+    "description": "Statue of Liberty Mug",
+    "chemin": "glbs/000-115/cfdd53038fad447da4bb994ad16bdaae.glb"
+   },
+   {
+    "uid": "e3717a02667840d6aee9b58b637a35a6",
+    "licence": "by",
+    "description": "statue of a robed figure.",
+    "chemin": "glbs/000-123/e3717a02667840d6aee9b58b637a35a6.glb"
+   },
+   {
+    "uid": "88c9eda0b3e7474aa412ecb8b074ce65",
+    "licence": "by",
+    "description": "statue of a crowned king.",
+    "chemin": "glbs/000-012/88c9eda0b3e7474aa412ecb8b074ce65.glb"
+   },
+   {
+    "uid": "0074481fb14e45b2996442c97769578e",
+    "licence": "by",
+    "description": "Statue of a sitting woman",
+    "chemin": "glbs/000-012/0074481fb14e45b2996442c97769578e.glb"
+   },
+   {
+    "uid": "d4450b1d7636408ba3d09ccd0cf96b21",
+    "licence": "by",
+    "description": "statue of a cow on a stand",
+    "chemin": "glbs/000-128/d4450b1d7636408ba3d09ccd0cf96b21.glb"
+   },
+   {
+    "uid": "c537f863ee9c4910a07af6231555f413",
+    "licence": "by",
+    "description": "statue of a Buddhist monk.",
+    "chemin": "glbs/000-079/c537f863ee9c4910a07af6231555f413.glb"
+   },
+   {
+    "uid": "20378bf9e4eb4f28a68d873220b5cd8d",
+    "licence": "by",
+    "description": "statue of a Buddhist monk.",
+    "chemin": "glbs/000-048/20378bf9e4eb4f28a68d873220b5cd8d.glb"
+   },
+   {
+    "uid": "4bad80992568445283262912fa1dd427",
+    "licence": "by",
+    "description": "statue of a cloaked figure.",
+    "chemin": "glbs/000-112/4bad80992568445283262912fa1dd427.glb"
+   },
+   {
+    "uid": "e37427feac8f4753a035d545ff73298d",
+    "licence": "by",
+    "description": "statue of a Chinese emperor.",
+    "chemin": "glbs/000-109/e37427feac8f4753a035d545ff73298d.glb"
+   },
+   {
+    "uid": "c8c8472007ad4321adf735b6f69eef89",
+    "licence": "by",
+    "description": "Statue of a man wearing a hat",
+    "chemin": "glbs/000-028/c8c8472007ad4321adf735b6f69eef89.glb"
+   }
+  ],
+  "piece": [
+   {
+    "uid": "75c50060d8544b1fb283f6a80cbceb1f",
+    "licence": "by",
+    "description": "An ancient coin with Arabic inscription.",
+    "chemin": "glbs/000-061/75c50060d8544b1fb283f6a80cbceb1f.glb"
+   },
+   {
+    "uid": "d93269013cab473e9b1fab434e0710ce",
+    "licence": "by",
+    "description": "Ancient coin with classical reliefs and inscriptions alongside a black and white reference ruler.",
+    "chemin": "glbs/000-024/d93269013cab473e9b1fab434e0710ce.glb"
+   },
+   {
+    "uid": "ac4532f3d0964739a16e8a71cd52f400",
+    "licence": "by",
+    "description": "an ancient coin with a ruler, resembling a stone object.",
+    "chemin": "glbs/000-152/ac4532f3d0964739a16e8a71cd52f400.glb"
+   },
+   {
+    "uid": "cbe043d4393d4951a5921f1c33adf437",
+    "licence": "by",
+    "description": "Ancient coin with embossed figures and symbols accompanied by a measuring scale with centimeter markings.",
+    "chemin": "glbs/000-088/cbe043d4393d4951a5921f1c33adf437.glb"
+   },
+   {
+    "uid": "f4097b28f0474b1eb5f7c0456214d19e",
+    "licence": "by",
+    "description": "Ancient coin with embossed figures and inscriptions, exhibiting a patina and corrosion typical of aged metal a",
+    "chemin": "glbs/000-079/f4097b28f0474b1eb5f7c0456214d19e.glb"
+   },
+   {
+    "uid": "eac39e8fb40c4dc89f01b8d8e750c9ba",
+    "licence": "by",
+    "description": "Ancient coin with embossed figures and inscriptions, slightly eroded and tarnished surface, possibly made of c",
+    "chemin": "glbs/000-142/eac39e8fb40c4dc89f01b8d8e750c9ba.glb"
+   },
+   {
+    "uid": "81b68d6553a0402087c8302ae1b94f66",
+    "licence": "by",
+    "description": "An ancient coin model with the words 'Mauritus', 'Iato', and 'Antoninus' inscribed on it.",
+    "chemin": "glbs/000-026/81b68d6553a0402087c8302ae1b94f66.glb"
+   },
+   {
+    "uid": "1ee14f106e1648bca4f42cd73956941a",
+    "licence": "by",
+    "description": "an ancient coin with measurements, a tennis ball, a stone object on a scale, and a fish.",
+    "chemin": "glbs/000-143/1ee14f106e1648bca4f42cd73956941a.glb"
+   },
+   {
+    "uid": "b7bc2efa5a784a05ab2be5a18d7da04c",
+    "licence": "by",
+    "description": "Ancient coin with weathered surfaces; one side features a raised profile of a person's head, the other a geome",
+    "chemin": "glbs/000-083/b7bc2efa5a784a05ab2be5a18d7da04c.glb"
+   },
+   {
+    "uid": "5d3d3340bf2b4567970e5f16a3a94b8e",
+    "licence": "by",
+    "description": "Ancient coin with a figure on one side and stylized designs on the other, cast in a dark metallic material wit",
+    "chemin": "glbs/000-031/5d3d3340bf2b4567970e5f16a3a94b8e.glb"
+   },
+   {
+    "uid": "961566dac04247d286c9da47c73c07f7",
+    "licence": "by",
+    "description": "Ancient coin featuring the profile of a ruler on one side and a pair of fish on the other, surrounded by inscr",
+    "chemin": "glbs/000-030/961566dac04247d286c9da47c73c07f7.glb"
+   },
+   {
+    "uid": "99fbbbd2ed004e398b06997d10dbb246",
+    "licence": "by",
+    "description": "Ancient coin with profile of a helmeted figure on one side and a pattern of inscriptions and motifs on the oth",
+    "chemin": "glbs/000-121/99fbbbd2ed004e398b06997d10dbb246.glb"
+   }
+  ],
+  "vase": [
+   {
+    "uid": "1ac4581e09b04ea6968a50e404a781ce",
+    "licence": "by",
+    "description": "vases on a bench.",
+    "chemin": "glbs/000-134/1ac4581e09b04ea6968a50e404a781ce.glb"
+   },
+   {
+    "uid": "e7541f5bface4070b2d12b414bc49aba",
+    "licence": "by",
+    "description": "vases with flowers on a table.",
+    "chemin": "glbs/000-003/e7541f5bface4070b2d12b414bc49aba.glb"
+   },
+   {
+    "uid": "6983147ca8ce4f438286db57aac40ffc",
+    "licence": "by",
+    "description": "vases, a chair, a stool, and a table.",
+    "chemin": "glbs/000-013/6983147ca8ce4f438286db57aac40ffc.glb"
+   },
+   {
+    "uid": "3fbfd1dbf40f47c8b37029de4b1c2fe1",
+    "licence": "by",
+    "description": "vase with a yellow and pink striped pattern.",
+    "chemin": "glbs/000-069/3fbfd1dbf40f47c8b37029de4b1c2fe1.glb"
+   },
+   {
+    "uid": "9b6a83626cc2403e93120e712097016a",
+    "licence": "by",
+    "description": "a vase and an apple.",
+    "chemin": "glbs/000-005/9b6a83626cc2403e93120e712097016a.glb"
+   },
+   {
+    "uid": "0ad7aecfcb874fceaa38a98436991c03",
+    "licence": "by",
+    "description": "a vase with red tulips.",
+    "chemin": "glbs/000-152/0ad7aecfcb874fceaa38a98436991c03.glb"
+   },
+   {
+    "uid": "cf42c74258414e93bca2e4ec32631026",
+    "licence": "by",
+    "description": "vases, jugs, sticks, and brushes on a table and shelf.",
+    "chemin": "glbs/000-159/cf42c74258414e93bca2e4ec32631026.glb"
+   },
+   {
+    "uid": "b66ca62f86564cbdaa0b36a0e42035bb",
+    "licence": "by",
+    "description": "vase with a koi fish and bubbles design painted on it.",
+    "chemin": "glbs/000-049/b66ca62f86564cbdaa0b36a0e42035bb.glb"
+   },
+   {
+    "uid": "7b6302f21c4548ad80d51c61171b620a",
+    "licence": "by",
+    "description": "a vase, bottle, and jar.",
+    "chemin": "glbs/000-089/7b6302f21c4548ad80d51c61171b620a.glb"
+   },
+   {
+    "uid": "67ba95ccd3ba4458a3518ec05663dc2a",
+    "licence": "by",
+    "description": "a vase with pink tulips.",
+    "chemin": "glbs/000-155/67ba95ccd3ba4458a3518ec05663dc2a.glb"
+   },
+   {
+    "uid": "6bbb31dc5a184d2ca2add2bf72036159",
+    "licence": "by",
+    "description": "a vase, fish, and cactus.",
+    "chemin": "glbs/000-041/6bbb31dc5a184d2ca2add2bf72036159.glb"
+   },
+   {
+    "uid": "5a07f8456bd746908ac9402b6df669b8",
+    "licence": "by",
+    "description": "a vase with flowers in it",
+    "chemin": "glbs/000-030/5a07f8456bd746908ac9402b6df669b8.glb"
+   }
+  ],
+  "livre": [
+   {
+    "uid": "03f935f1c9174cfdbcc512db947395ec",
+    "licence": "by",
+    "description": "Open book with worn brown cover and yellowed pages.",
+    "chemin": "glbs/000-000/03f935f1c9174cfdbcc512db947395ec.glb"
+   },
+   {
+    "uid": "64301919b776437db5bdc1685b8da769",
+    "licence": "by",
+    "description": "an open book",
+    "chemin": "glbs/000-102/64301919b776437db5bdc1685b8da769.glb"
+   },
+   {
+    "uid": "0056bf73a1474aaf9d60227776a3e167",
+    "licence": "by-sa",
+    "description": "an open book",
+    "chemin": "glbs/000-144/0056bf73a1474aaf9d60227776a3e167.glb"
+   },
+   {
+    "uid": "48a029617a0646ea996b16e26e243606",
+    "licence": "by",
+    "description": "an open book.",
+    "chemin": "glbs/000-077/48a029617a0646ea996b16e26e243606.glb"
+   },
+   {
+    "uid": "528f346bf9cd400d856918882ea0f0c9",
+    "licence": "by",
+    "description": "Open book with green cover, white pages, and a blue ribbon bookmark.",
+    "chemin": "glbs/000-058/528f346bf9cd400d856918882ea0f0c9.glb"
+   },
+   {
+    "uid": "fdeed37ffb9e4cdfa40e44a5f2ca5c53",
+    "licence": "by",
+    "description": "Open book with a tan cover and white pages featuring green ledger lines.",
+    "chemin": "glbs/000-091/fdeed37ffb9e4cdfa40e44a5f2ca5c53.glb"
+   },
+   {
+    "uid": "76d1eb497c5241bca27a96fb0083e40e",
+    "licence": "by",
+    "description": "An open book on top of a box",
+    "chemin": "glbs/000-047/76d1eb497c5241bca27a96fb0083e40e.glb"
+   },
+   {
+    "uid": "fdc258c0ee734ef1a950057f89a2116d",
+    "licence": "by",
+    "description": "open book with a red and blue cover, featuring a red stripe and a white lid.",
+    "chemin": "glbs/000-154/fdc258c0ee734ef1a950057f89a2116d.glb"
+   },
+   {
+    "uid": "d43d1e74315a46359a2e898f31fa94c2",
+    "licence": "by",
+    "description": "an open book with writing on it.",
+    "chemin": "glbs/000-122/d43d1e74315a46359a2e898f31fa94c2.glb"
+   },
+   {
+    "uid": "e8af23487fed49e9abf87b5a3c902a66",
+    "licence": "by",
+    "description": "an open book and an armored chest.",
+    "chemin": "glbs/000-012/e8af23487fed49e9abf87b5a3c902a66.glb"
+   },
+   {
+    "uid": "b52fdceb5c4d4b94a78306ff13ab9872",
+    "licence": "by",
+    "description": "Open book with textured cover and visible pages, some with printed text and graphics.",
+    "chemin": "glbs/000-081/b52fdceb5c4d4b94a78306ff13ab9872.glb"
+   },
+   {
+    "uid": "b4ed98d6a7994a809433901e488df59c",
+    "licence": "by",
+    "description": "an open book with a black and gold cover.",
+    "chemin": "glbs/000-048/b4ed98d6a7994a809433901e488df59c.glb"
+   }
+  ],
+  "parchemin": [
+   {
+    "uid": "8f383d36da0e494a9cea4929d872eee7",
+    "licence": "by",
+    "description": "scroll with a quill pen and feather on it.",
+    "chemin": "glbs/000-106/8f383d36da0e494a9cea4929d872eee7.glb"
+   },
+   {
+    "uid": "877462f34318424790f881dbdc3bc525",
+    "licence": "by",
+    "description": "a scroll with a red ribbon.",
+    "chemin": "glbs/000-035/877462f34318424790f881dbdc3bc525.glb"
+   },
+   {
+    "uid": "662d7d8b4170468381f1f1cd7ce90be8",
+    "licence": "by",
+    "description": "a scroll with a cross on it.",
+    "chemin": "glbs/000-109/662d7d8b4170468381f1f1cd7ce90be8.glb"
+   },
+   {
+    "uid": "bc94283b659246e2a39f8addd7cfc588",
+    "licence": "by",
+    "description": "a scroll featuring a city map.",
+    "chemin": "glbs/000-049/bc94283b659246e2a39f8addd7cfc588.glb"
+   },
+   {
+    "uid": "c8f056e093f74be99b2e83034099c40a",
+    "licence": "by",
+    "description": "A scroll with a map, rolled up as",
+    "chemin": "glbs/000-128/c8f056e093f74be99b2e83034099c40a.glb"
+   },
+   {
+    "uid": "f07ff4d794fe4b4a9bf78f8c0c5dce85",
+    "licence": "by",
+    "description": "a scroll and a candle with a wooden pen.",
+    "chemin": "glbs/000-040/f07ff4d794fe4b4a9bf78f8c0c5dce85.glb"
+   },
+   {
+    "uid": "4c32fc04e7a3413b96e56d48618ca484",
+    "licence": "by",
+    "description": "a scroll with handwritten writing on it.",
+    "chemin": "glbs/000-079/4c32fc04e7a3413b96e56d48618ca484.glb"
+   },
+   {
+    "uid": "0d54a7e3cebf4e838f6eef9d02ce2c73",
+    "licence": "by",
+    "description": "a scroll with a wooden handle and rolling pin.",
+    "chemin": "glbs/000-117/0d54a7e3cebf4e838f6eef9d02ce2c73.glb"
+   },
+   {
+    "uid": "7baae153c17b4985a7280a04829f8c31",
+    "licence": "by",
+    "description": "A scroll with a map, wooden handle, and wooden rollers.",
+    "chemin": "glbs/000-028/7baae153c17b4985a7280a04829f8c31.glb"
+   },
+   {
+    "uid": "559e9caa23f343c5bf6cd6463ea8b553",
+    "licence": "by",
+    "description": "a scroll with a wooden and blue handle, hanging on a wall.",
+    "chemin": "glbs/000-009/559e9caa23f343c5bf6cd6463ea8b553.glb"
+   },
+   {
+    "uid": "fcfd2743d4eb4fba8a5dd01d29989a31",
+    "licence": "by",
+    "description": "a scroll with a cross on it, featuring red and yellow tube-like elements.",
+    "chemin": "glbs/000-042/fcfd2743d4eb4fba8a5dd01d29989a31.glb"
+   },
+   {
+    "uid": "d87bb6f3afdb4bd98b100fd14d70c585",
+    "licence": "by",
+    "description": "a scroll with a cell phone, wooden ring, metal ring, and green jewel on it.",
+    "chemin": "glbs/000-067/d87bb6f3afdb4bd98b100fd14d70c585.glb"
+   }
+  ],
+  "tracteur": [
+   {
+    "uid": "60fa82cf22c542089421f7cb54e01f93",
+    "licence": "by",
+    "description": "tractors and other equipment.",
+    "chemin": "glbs/000-019/60fa82cf22c542089421f7cb54e01f93.glb"
+   },
+   {
+    "uid": "fec0a961dcf2456c939c2379f4683f21",
+    "licence": "by",
+    "description": "a tractor tire.",
+    "chemin": "glbs/000-116/fec0a961dcf2456c939c2379f4683f21.glb"
+   },
+   {
+    "uid": "a6e7fcbc4a2c470b883221b4d79b9040",
+    "licence": "by",
+    "description": "a tractor tire.",
+    "chemin": "glbs/000-157/a6e7fcbc4a2c470b883221b4d79b9040.glb"
+   },
+   {
+    "uid": "7cef082957b0408f8e68f888899fbeb7",
+    "licence": "by",
+    "description": "a tractor tire.",
+    "chemin": "glbs/000-032/7cef082957b0408f8e68f888899fbeb7.glb"
+   },
+   {
+    "uid": "d06e1e3c353c412482d66559c085f738",
+    "licence": "by",
+    "description": "a tractor and monster truck.",
+    "chemin": "glbs/000-113/d06e1e3c353c412482d66559c085f738.glb"
+   },
+   {
+    "uid": "7d66304951be4c1eb8b8871980300456",
+    "licence": "by",
+    "description": "a tractor pulling a trailer.",
+    "chemin": "glbs/000-078/7d66304951be4c1eb8b8871980300456.glb"
+   },
+   {
+    "uid": "af309a58b664495c9415c80efc1cf92f",
+    "licence": "by",
+    "description": "a tractor tire with a gold rim.",
+    "chemin": "glbs/000-079/af309a58b664495c9415c80efc1cf92f.glb"
+   },
+   {
+    "uid": "2077e90151894cad994d543ecbbcd80d",
+    "licence": "by",
+    "description": "a tractor with tires and wheels.",
+    "chemin": "glbs/000-037/2077e90151894cad994d543ecbbcd80d.glb"
+   },
+   {
+    "uid": "163b8b5289ac44da999ec7043e726872",
+    "licence": "by",
+    "description": "a tractor tire with a yellow rim.",
+    "chemin": "glbs/000-130/163b8b5289ac44da999ec7043e726872.glb"
+   },
+   {
+    "uid": "104bc69fd1ad41649aa573e9204e2ba7",
+    "licence": "by",
+    "description": "a tractor tire with a yellow rim.",
+    "chemin": "glbs/000-036/104bc69fd1ad41649aa573e9204e2ba7.glb"
+   },
+   {
+    "uid": "f17aa784f88b4c24ab0a8e7b56d50ed7",
+    "licence": "by",
+    "description": "a tractor, shack, outhouse, and wheelbarrow.",
+    "chemin": "glbs/000-067/f17aa784f88b4c24ab0a8e7b56d50ed7.glb"
+   },
+   {
+    "uid": "fac7fe3fc89c4c29875991c01fe7ebe6",
+    "licence": "by",
+    "description": "a tractor, truck, trailer, forklift, and crane.",
+    "chemin": "glbs/000-126/fac7fe3fc89c4c29875991c01fe7ebe6.glb"
+   }
+  ],
+  "charrue": [
+   {
+    "uid": "f09363172a0f436c8eac7876acf6e212",
+    "licence": "by",
+    "description": "a red and gold medium-sized plough, resembling a spaceship and robot, with typewriter and light fixture elemen",
+    "chemin": "glbs/000-148/f09363172a0f436c8eac7876acf6e212.glb"
+   }
+  ],
+  "puits": [
+   {
+    "uid": "64d453f5c70e4e009e195e20af399335",
+    "licence": "by",
+    "description": "a water well with a red roof.",
+    "chemin": "glbs/000-084/64d453f5c70e4e009e195e20af399335.glb"
+   },
+   {
+    "uid": "30c7a878d0cc4ac4a42cb6d72da88340",
+    "licence": "by",
+    "description": "a water well with a blue roof",
+    "chemin": "glbs/000-075/30c7a878d0cc4ac4a42cb6d72da88340.glb"
+   },
+   {
+    "uid": "19262219b2fd4e51acdae1e78b5360ec",
+    "licence": "by",
+    "description": "a water well with a red roof.",
+    "chemin": "glbs/000-145/19262219b2fd4e51acdae1e78b5360ec.glb"
+   },
+   {
+    "uid": "1ed7131ab9494516a47c15983f30454f",
+    "licence": "by",
+    "description": "a water well with a wooden roof.",
+    "chemin": "glbs/000-132/1ed7131ab9494516a47c15983f30454f.glb"
+   },
+   {
+    "uid": "597468f534a14f87908ec19905320699",
+    "licence": "by",
+    "description": "a water well surrounded by grass.",
+    "chemin": "glbs/000-155/597468f534a14f87908ec19905320699.glb"
+   },
+   {
+    "uid": "09c8f78499f94dd78751690341a517d6",
+    "licence": "by",
+    "description": "a water well with a blue roof and buckets.",
+    "chemin": "glbs/000-070/09c8f78499f94dd78751690341a517d6.glb"
+   },
+   {
+    "uid": "a5a6d6903ed94b70a33be8bb94b757ad",
+    "licence": "by",
+    "description": "a water well with a wooden roof in a muddy area.",
+    "chemin": "glbs/000-158/a5a6d6903ed94b70a33be8bb94b757ad.glb"
+   },
+   {
+    "uid": "89f05717da584d8fb8d3462f17f214ee",
+    "licence": "by",
+    "description": "a water well with a wooden roof and water wheel.",
+    "chemin": "glbs/000-048/89f05717da584d8fb8d3462f17f214ee.glb"
+   },
+   {
+    "uid": "2b9bc0d644314160bb2ff2cd5d151810",
+    "licence": "by",
+    "description": "a water well with a green roof and wooden structure.",
+    "chemin": "glbs/000-121/2b9bc0d644314160bb2ff2cd5d151810.glb"
+   },
+   {
+    "uid": "5f67e5333fbd4605bf84fc288d872a5b",
+    "licence": "by",
+    "description": "a water well featuring a wooden pot hanging from a rope.",
+    "chemin": "glbs/000-111/5f67e5333fbd4605bf84fc288d872a5b.glb"
+   },
+   {
+    "uid": "5e841db3c65a4bc0945109fd80c166ae",
+    "licence": "by",
+    "description": "a water well with a red, tiled roof and a small tower-like structure.",
+    "chemin": "glbs/000-034/5e841db3c65a4bc0945109fd80c166ae.glb"
+   },
+   {
+    "uid": "3c1add67157f4ff9b538496c43410292",
+    "licence": "by",
+    "description": "a water well featuring a red roof, wooden bucket, and small watering can.",
+    "chemin": "glbs/000-044/3c1add67157f4ff9b538496c43410292.glb"
+   }
+  ],
+  "panneau solaire": [
+   {
+    "uid": "3cac37e2da1a4ebfb03f41d62da83f75",
+    "licence": "by",
+    "description": "a solar panel",
+    "chemin": "glbs/000-016/3cac37e2da1a4ebfb03f41d62da83f75.glb"
+   },
+   {
+    "uid": "728b63a6333145009ed6aff9f03a047d",
+    "licence": "by",
+    "description": "a solar panel.",
+    "chemin": "glbs/000-022/728b63a6333145009ed6aff9f03a047d.glb"
+   },
+   {
+    "uid": "7e98e7cbaa75492ab11599c26f13f3f9",
+    "licence": "by",
+    "description": "a Solar Panel Array",
+    "chemin": "glbs/000-018/7e98e7cbaa75492ab11599c26f13f3f9.glb"
+   },
+   {
+    "uid": "006306c2f46b486881527193b709910d",
+    "licence": "by",
+    "description": "a solar panel on grass.",
+    "chemin": "glbs/000-133/006306c2f46b486881527193b709910d.glb"
+   },
+   {
+    "uid": "6f3da1f0a2ad48ebb038e186702ac183",
+    "licence": "by",
+    "description": "a solar panel on grassy field.",
+    "chemin": "glbs/000-011/6f3da1f0a2ad48ebb038e186702ac183.glb"
+   },
+   {
+    "uid": "2bd3f3ac96e9405ea2952a88745c5942",
+    "licence": "by",
+    "description": "a solar panel and black shelf.",
+    "chemin": "glbs/000-064/2bd3f3ac96e9405ea2952a88745c5942.glb"
+   },
+   {
+    "uid": "114fc64ac8064daa8c9053f4602d6f3c",
+    "licence": "by",
+    "description": "a solar panel on grassy field.",
+    "chemin": "glbs/000-081/114fc64ac8064daa8c9053f4602d6f3c.glb"
+   },
+   {
+    "uid": "b132aa68f2614bc1a8bf6aed886427de",
+    "licence": "by",
+    "description": "a solar panel on a grassy area.",
+    "chemin": "glbs/000-083/b132aa68f2614bc1a8bf6aed886427de.glb"
+   },
+   {
+    "uid": "8d52870caafd415e90a3552cbc09016d",
+    "licence": "by",
+    "description": "a solar panel on a grassy area.",
+    "chemin": "glbs/000-080/8d52870caafd415e90a3552cbc09016d.glb"
+   },
+   {
+    "uid": "f96e524ec3bb4eb4b4b478d59e537a74",
+    "licence": "by",
+    "description": "a solar panel in a grassy field.",
+    "chemin": "glbs/000-106/f96e524ec3bb4eb4b4b478d59e537a74.glb"
+   },
+   {
+    "uid": "ef6586852fbf4eafb952a9ac6bacb471",
+    "licence": "by",
+    "description": "a solar panel as a ceiling tile.",
+    "chemin": "glbs/000-126/ef6586852fbf4eafb952a9ac6bacb471.glb"
+   },
+   {
+    "uid": "ced5cc0ca8d54b2788612558034b0d5d",
+    "licence": "by",
+    "description": "a solar panel on a grassy field.",
+    "chemin": "glbs/000-138/ced5cc0ca8d54b2788612558034b0d5d.glb"
+   }
+  ],
+  "eolienne": [
+   {
+    "uid": "de33ad9f7d364c628e08008b6d0a2561",
+    "licence": "by",
+    "description": "Wind Turbine",
+    "chemin": "glbs/000-084/de33ad9f7d364c628e08008b6d0a2561.glb"
+   },
+   {
+    "uid": "c72abb57dbd24b89b6c88edf1aa7cbf9",
+    "licence": "by",
+    "description": "wind turbines and a tractor.",
+    "chemin": "glbs/000-035/c72abb57dbd24b89b6c88edf1aa7cbf9.glb"
+   },
+   {
+    "uid": "dd70b592feb14fa189ab490a95b49ab0",
+    "licence": "by",
+    "description": "wind turbine and airplane illustration",
+    "chemin": "glbs/000-006/dd70b592feb14fa189ab490a95b49ab0.glb"
+   },
+   {
+    "uid": "c178d989878649b3a1c3ea7060daa51c",
+    "licence": "by",
+    "description": "wind turbines, solar panels, and trees.",
+    "chemin": "glbs/000-066/c178d989878649b3a1c3ea7060daa51c.glb"
+   },
+   {
+    "uid": "b7db270375934222bde922aad753c890",
+    "licence": "by",
+    "description": "a wind turbine",
+    "chemin": "glbs/000-090/b7db270375934222bde922aad753c890.glb"
+   },
+   {
+    "uid": "b4543ed55af94c8e9868cbf40f262807",
+    "licence": "by",
+    "description": "a wind turbine",
+    "chemin": "glbs/000-077/b4543ed55af94c8e9868cbf40f262807.glb"
+   },
+   {
+    "uid": "5ab3eaea4bd34682bd3237671bdeec50",
+    "licence": "by",
+    "description": "a wind turbine",
+    "chemin": "glbs/000-159/5ab3eaea4bd34682bd3237671bdeec50.glb"
+   },
+   {
+    "uid": "4feb15af7b554c16b88bf9cbe179558b",
+    "licence": "by",
+    "description": "a wind turbine",
+    "chemin": "glbs/000-051/4feb15af7b554c16b88bf9cbe179558b.glb"
+   },
+   {
+    "uid": "25009f8f8e6c4b85947be08b2a79927b",
+    "licence": "by",
+    "description": "a wind turbine",
+    "chemin": "glbs/000-046/25009f8f8e6c4b85947be08b2a79927b.glb"
+   },
+   {
+    "uid": "bb43066c97fe4d1ba2566049531e5ef9",
+    "licence": "by",
+    "description": "a wind turbine.",
+    "chemin": "glbs/000-096/bb43066c97fe4d1ba2566049531e5ef9.glb"
+   },
+   {
+    "uid": "76a5c63001e14041be291a5b1a3d924b",
+    "licence": "by",
+    "description": "a wind turbine.",
+    "chemin": "glbs/000-128/76a5c63001e14041be291a5b1a3d924b.glb"
+   },
+   {
+    "uid": "2da9563d3cac4590bdf40e84faa73005",
+    "licence": "by",
+    "description": "a wind turbine.",
+    "chemin": "glbs/000-097/2da9563d3cac4590bdf40e84faa73005.glb"
+   }
+  ],
+  "pont": [
+   {
+    "uid": "7c98fb287a8f4b9b99c2236ab40a560e",
+    "licence": "by",
+    "description": "a bridge over water.",
+    "chemin": "glbs/000-080/7c98fb287a8f4b9b99c2236ab40a560e.glb"
+   },
+   {
+    "uid": "250ff654f7164ae583c8f34941f2750f",
+    "licence": "by",
+    "description": "a bridge over water.",
+    "chemin": "glbs/000-112/250ff654f7164ae583c8f34941f2750f.glb"
+   },
+   {
+    "uid": "ff6dc0191ff64c14a6e2373530a57e6d",
+    "licence": "by",
+    "description": "a bridge with arches.",
+    "chemin": "glbs/000-121/ff6dc0191ff64c14a6e2373530a57e6d.glb"
+   },
+   {
+    "uid": "aced6f7e791148bc8f9998ed6b15155e",
+    "licence": "by",
+    "description": "a bridge with railings.",
+    "chemin": "glbs/000-072/aced6f7e791148bc8f9998ed6b15155e.glb"
+   },
+   {
+    "uid": "fa2c3d6b81da48e5bb005d912582aead",
+    "licence": "by",
+    "description": "a bridge with red railings.",
+    "chemin": "glbs/000-085/fa2c3d6b81da48e5bb005d912582aead.glb"
+   },
+   {
+    "uid": "434ef202d8014b7a887fb3ed47b7ab70",
+    "licence": "by",
+    "description": "a bridge with blue railings.",
+    "chemin": "glbs/000-119/434ef202d8014b7a887fb3ed47b7ab70.glb"
+   },
+   {
+    "uid": "b84a9760c23b4e6c90bb2f9ca5fea8f3",
+    "licence": "by",
+    "description": "a bridge over a grassy field.",
+    "chemin": "glbs/000-153/b84a9760c23b4e6c90bb2f9ca5fea8f3.glb"
+   },
+   {
+    "uid": "926725d4e34645ab9bd4fd0f5b980428",
+    "licence": "by",
+    "description": "a bridge with a white railing.",
+    "chemin": "glbs/000-055/926725d4e34645ab9bd4fd0f5b980428.glb"
+   },
+   {
+    "uid": "34a1eee52efa4ead92d0e1fa9c3f4fca",
+    "licence": "by",
+    "description": "a bridge over a flowing river.",
+    "chemin": "glbs/000-149/34a1eee52efa4ead92d0e1fa9c3f4fca.glb"
+   },
+   {
+    "uid": "7b810b4ab6a34a7b906b87540eef1ca5",
+    "licence": "by",
+    "description": "a bridge, park, and stone wall.",
+    "chemin": "glbs/000-102/7b810b4ab6a34a7b906b87540eef1ca5.glb"
+   },
+   {
+    "uid": "5dbcfc6eb2424084adddf96ffafae9e8",
+    "licence": "by",
+    "description": "a bridge with stairs and railings.",
+    "chemin": "glbs/000-047/5dbcfc6eb2424084adddf96ffafae9e8.glb"
+   },
+   {
+    "uid": "09bf2284e0924edabe974452550277b1",
+    "licence": "by",
+    "description": "a bridge with stairs and railings.",
+    "chemin": "glbs/000-094/09bf2284e0924edabe974452550277b1.glb"
+   }
+  ],
+  "barrage": [
+   {
+    "uid": "2be951293a1447e08d48e4410c398c2e",
+    "licence": "by",
+    "description": "a building, dam, fence, forest, river, and water system with trees.",
+    "chemin": "glbs/000-046/2be951293a1447e08d48e4410c398c2e.glb"
+   },
+   {
+    "uid": "df8efdcb297049e09a20f2030bf6cf4f",
+    "licence": "by",
+    "description": "a large concrete dam with a bridge and metal railings.",
+    "chemin": "glbs/000-086/df8efdcb297049e09a20f2030bf6cf4f.glb"
+   },
+   {
+    "uid": "882679600dc84aee94a3f17048ba37df",
+    "licence": "by",
+    "description": "Aerial view of a dam and reservoir with adjacent winding roads amidst greenery.",
+    "chemin": "glbs/000-053/882679600dc84aee94a3f17048ba37df.glb"
+   },
+   {
+    "uid": "2ed661de1daa41cb8376753c0c10a192",
+    "licence": "by",
+    "description": "a large building, dam, bridges, boats, and natural elements like trees and cliffs.",
+    "chemin": "glbs/000-097/2ed661de1daa41cb8376753c0c10a192.glb"
+   },
+   {
+    "uid": "6f7beb20b4b04471b73058ed2ff23e2f",
+    "licence": "by",
+    "description": "a large hydroelectric dam with debris.",
+    "chemin": "glbs/000-041/6f7beb20b4b04471b73058ed2ff23e2f.glb"
+   },
+   {
+    "uid": "7ee0e0bcd08f42e38a690aa2613de043",
+    "licence": "by",
+    "description": "Minimalist digital a river dam, featuring a blue water body, uniform grey dam structures, and surrounding whit",
+    "chemin": "glbs/000-010/7ee0e0bcd08f42e38a690aa2613de043.glb"
+   },
+   {
+    "uid": "9fa06a71f5af468ba242750ab19a7789",
+    "licence": "by",
+    "description": "a city with buildings, a castle, a large dam, a power plant, and a ship with a crane.",
+    "chemin": "glbs/000-021/9fa06a71f5af468ba242750ab19a7789.glb"
+   },
+   {
+    "uid": "99be03691d3447cbb2f0a4c9ae690764",
+    "licence": "by",
+    "description": "a building, bridge, dam, and various rock and concrete structures.",
+    "chemin": "glbs/000-118/99be03691d3447cbb2f0a4c9ae690764.glb"
+   }
+  ],
+  "microscope": [
+   {
+    "uid": "fb21c4f65bf0461f9ff0b6f2b70331ff",
+    "licence": "by-sa",
+    "description": "a microscope",
+    "chemin": "glbs/000-041/fb21c4f65bf0461f9ff0b6f2b70331ff.glb"
+   },
+   {
+    "uid": "f195dea3125d4b188ad6134121ce60d3",
+    "licence": "by",
+    "description": "a microscope",
+    "chemin": "glbs/000-072/f195dea3125d4b188ad6134121ce60d3.glb"
+   },
+   {
+    "uid": "de69307eca7442f88c9f3bfe99300e9b",
+    "licence": "by",
+    "description": "a microscope",
+    "chemin": "glbs/000-007/de69307eca7442f88c9f3bfe99300e9b.glb"
+   },
+   {
+    "uid": "d33522b94a11432fb8a43364e684207e",
+    "licence": "by",
+    "description": "a microscope",
+    "chemin": "glbs/000-038/d33522b94a11432fb8a43364e684207e.glb"
+   },
+   {
+    "uid": "a6f430f3c38f4800b01ca53b4a279943",
+    "licence": "by",
+    "description": "a microscope",
+    "chemin": "glbs/000-047/a6f430f3c38f4800b01ca53b4a279943.glb"
+   },
+   {
+    "uid": "9562226299a045bab13c3d66f8593208",
+    "licence": "by",
+    "description": "a microscope",
+    "chemin": "glbs/000-058/9562226299a045bab13c3d66f8593208.glb"
+   },
+   {
+    "uid": "890ff5efadb74a4f8167e4b79ec2bf76",
+    "licence": "by",
+    "description": "a microscope",
+    "chemin": "glbs/000-017/890ff5efadb74a4f8167e4b79ec2bf76.glb"
+   },
+   {
+    "uid": "5584999f982f4a9fbeac140816b9de44",
+    "licence": "by",
+    "description": "a microscope",
+    "chemin": "glbs/000-117/5584999f982f4a9fbeac140816b9de44.glb"
+   },
+   {
+    "uid": "2c1befd921b3487a97d58931d489ebaf",
+    "licence": "by",
+    "description": "a microscope",
+    "chemin": "glbs/000-059/2c1befd921b3487a97d58931d489ebaf.glb"
+   },
+   {
+    "uid": "dd9e73d51edb43198bd40d0bbd2dd54e",
+    "licence": "by",
+    "description": "a microscope.",
+    "chemin": "glbs/000-135/dd9e73d51edb43198bd40d0bbd2dd54e.glb"
+   },
+   {
+    "uid": "d6b969f86f0648a29b92ce9e2690d799",
+    "licence": "by",
+    "description": "a microscope.",
+    "chemin": "glbs/000-028/d6b969f86f0648a29b92ce9e2690d799.glb"
+   },
+   {
+    "uid": "d40fdecddc254175996276153ea5ed7d",
+    "licence": "by",
+    "description": "a microscope.",
+    "chemin": "glbs/000-016/d40fdecddc254175996276153ea5ed7d.glb"
+   }
+  ],
+  "maison": [
+   {
+    "uid": "30eb637595a541dea97641cb465b3ab8",
+    "licence": "by",
+    "description": "houses on a grassy field.",
+    "chemin": "glbs/000-155/30eb637595a541dea97641cb465b3ab8.glb"
+   },
+   {
+    "uid": "0c46d06e4d1b4fe3ae9a0cad1df68e32",
+    "licence": "by",
+    "description": "houses on a green and blue hill.",
+    "chemin": "glbs/000-116/0c46d06e4d1b4fe3ae9a0cad1df68e32.glb"
+   },
+   {
+    "uid": "76da6cf24c89411fb8a3c80aac0219ac",
+    "licence": "by",
+    "description": "houses with purple and blue roofs.",
+    "chemin": "glbs/000-104/76da6cf24c89411fb8a3c80aac0219ac.glb"
+   },
+   {
+    "uid": "1a7f46a44ed4407db4dac025de89fa8a",
+    "licence": "by",
+    "description": "houses on a green and brown block.",
+    "chemin": "glbs/000-081/1a7f46a44ed4407db4dac025de89fa8a.glb"
+   },
+   {
+    "uid": "497c148afaba4426ac3df955ec3fed8a",
+    "licence": "by",
+    "description": "houses with a road in front of them.",
+    "chemin": "glbs/000-007/497c148afaba4426ac3df955ec3fed8a.glb"
+   },
+   {
+    "uid": "bd6d379eb94d4a27a3fd2ddf10861cb4",
+    "licence": "by",
+    "description": "a house model",
+    "chemin": "glbs/000-101/bd6d379eb94d4a27a3fd2ddf10861cb4.glb"
+   },
+   {
+    "uid": "8f78ba8ce0554a10bf66f848bd25d945",
+    "licence": "by",
+    "description": "a house on a hill",
+    "chemin": "glbs/000-071/8f78ba8ce0554a10bf66f848bd25d945.glb"
+   },
+   {
+    "uid": "1c1d7798aeb74bc09f99db2c314e8b1f",
+    "licence": "by",
+    "description": "a house on a hill",
+    "chemin": "glbs/000-145/1c1d7798aeb74bc09f99db2c314e8b1f.glb"
+   },
+   {
+    "uid": "f3a9b11ea46147b58acf47e2e17ea39c",
+    "licence": "by",
+    "description": "a house on a hill.",
+    "chemin": "glbs/000-083/f3a9b11ea46147b58acf47e2e17ea39c.glb"
+   },
+   {
+    "uid": "d3fe032503cb4a5c98a4198d9aed3c2f",
+    "licence": "by",
+    "description": "a house on a hill.",
+    "chemin": "glbs/000-056/d3fe032503cb4a5c98a4198d9aed3c2f.glb"
+   },
+   {
+    "uid": "cb9f9b30a7a24eabbb8e424c491ed691",
+    "licence": "by",
+    "description": "a house on a hill.",
+    "chemin": "glbs/000-042/cb9f9b30a7a24eabbb8e424c491ed691.glb"
+   },
+   {
+    "uid": "c64ecb4bf28046979f95a5ef01d4b60f",
+    "licence": "by",
+    "description": "a house on a hill.",
+    "chemin": "glbs/000-085/c64ecb4bf28046979f95a5ef01d4b60f.glb"
+   }
+  ],
+  "outil": [
+   {
+    "uid": "cdfabbef2573450190120ae3c2e82042",
+    "licence": "by",
+    "description": "Hammer Model",
+    "chemin": "glbs/000-016/cdfabbef2573450190120ae3c2e82042.glb"
+   },
+   {
+    "uid": "be44e535941042aaa0623abe5834c49b",
+    "licence": "by",
+    "description": "Hammer Model",
+    "chemin": "glbs/000-090/be44e535941042aaa0623abe5834c49b.glb"
+   },
+   {
+    "uid": "7d2ebeece55f4ef7b6e05fa449e8aa22",
+    "licence": "by",
+    "description": "Hammer Model",
+    "chemin": "glbs/000-063/7d2ebeece55f4ef7b6e05fa449e8aa22.glb"
+   },
+   {
+    "uid": "79d352623fcf4f3aa39ffae715e6b4a8",
+    "licence": "by",
+    "description": "Hammer Model",
+    "chemin": "glbs/000-130/79d352623fcf4f3aa39ffae715e6b4a8.glb"
+   },
+   {
+    "uid": "6b6c4fd48b124a64b3a2d932fc997560",
+    "licence": "by",
+    "description": "Hammer Model",
+    "chemin": "glbs/000-034/6b6c4fd48b124a64b3a2d932fc997560.glb"
+   },
+   {
+    "uid": "545528e5ee8b4dc6a58a6f7963081e54",
+    "licence": "by",
+    "description": "Hammer Model",
+    "chemin": "glbs/000-077/545528e5ee8b4dc6a58a6f7963081e54.glb"
+   },
+   {
+    "uid": "4e656e7e7f5d4bbe9549e6f7b43868ca",
+    "licence": "by",
+    "description": "Hammer Model",
+    "chemin": "glbs/000-131/4e656e7e7f5d4bbe9549e6f7b43868ca.glb"
+   },
+   {
+    "uid": "d6ec099fbcf54968b3e3592a5285c810",
+    "licence": "by",
+    "description": "Hammer for Sale",
+    "chemin": "glbs/000-109/d6ec099fbcf54968b3e3592a5285c810.glb"
+   },
+   {
+    "uid": "0434e614b2d946eb9ee72e2a50834c74",
+    "licence": "by",
+    "description": "Hammer for Sale",
+    "chemin": "glbs/000-000/0434e614b2d946eb9ee72e2a50834c74.glb"
+   },
+   {
+    "uid": "8e23b92742784ad0ac67d3906883a71d",
+    "licence": "by",
+    "description": "Hammer - Preview No. 1",
+    "chemin": "glbs/000-071/8e23b92742784ad0ac67d3906883a71d.glb"
+   },
+   {
+    "uid": "a9adea858f2e449f95e195e8971bcca9",
+    "licence": "by",
+    "description": "Hammer and Chisel Model",
+    "chemin": "glbs/000-072/a9adea858f2e449f95e195e8971bcca9.glb"
+   },
+   {
+    "uid": "e9d9f54942f64b6084fc9567a98ddde5",
+    "licence": "by",
+    "description": "Hammer with wooden handle",
+    "chemin": "glbs/000-118/e9d9f54942f64b6084fc9567a98ddde5.glb"
+   }
+  ]
+ }
+}

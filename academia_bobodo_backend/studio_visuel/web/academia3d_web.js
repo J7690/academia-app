@@ -174,7 +174,68 @@ export function napper(p, couleur) {
   return g;
 }
 
-export const VERBES = { revolutionner, sculpter, extruder, silhouetter, napper };
+// ── `convoquer` : faire venir l'OBJET DU SUJET ────────────────────────────
+//
+// LE SEUL VERBE QUI NE DESSINE PAS. Les cinq autres fabriquent une forme a
+// partir de coordonnees ; aucun modele de langue ne trace un volcan point par
+// point, et ce qu'il produit alors est une forme neutre qui pourrait illustrer
+// n'importe quoi. Mesure du 05/09 sur « le volcan » : la narration disait
+// « chambre magmatique » puis « cone volcanique », et l'image montrait la meme
+// lentille aplatie dans les trois scenes.
+//
+// POURQUOI UN CACHE ET NON UN CHARGEMENT ICI. `composer()` est SYNCHRONE, et
+// doit le rester : c'est `page.evaluate` qui l'appelle, scene par scene. Le
+// chargement glTF, lui, est asynchrone. Les maillages sont donc tires AVANT,
+// par `window.__precharger`, et ce verbe ne fait que puiser dans le resultat.
+const _OBJETS = new Map();
+
+/** Depose un maillage deja charge, sous la cle que `convoquer` demandera. */
+export function deposerObjet(cle, objet3d) { _OBJETS.set(cle, objet3d); }
+
+export function convoquer(p, couleur) {
+  const cle = p.fichier || p.terme;
+  const source = _OBJETS.get(cle);
+  // ON NE REMPLACE PAS PAR UNE FORME DECORATIVE. Un terme sans objet doit se
+  // voir dans le journal, pas s'habiller en approximation : une forme neutre
+  // presentee comme le sujet ment a l'etudiant, et c'est le defaut corrige.
+  if (!source) throw new Error(`convoquer : aucun maillage pour « ${cle} »`);
+
+  const groupe = new Group();
+  // On CLONE : la meme scene peut convoquer trois volcans (echelle), et
+  // reutiliser l'original les ferait partager position et echelle.
+  const objet = source.clone(true);
+
+  // Le style du Studio l'emporte sur les materiaux du fichier telecharge.
+  // Sans cela, chaque objet arriverait avec ses propres couleurs, et la
+  // capsule ne ressemblerait plus a une capsule Academia.
+  objet.traverse((n) => {
+    if (n.isMesh && n.geometry) {
+      n.material = matiereFilaire(couleur);
+      n.renderOrder = 1;
+    }
+  });
+
+  // Normalisation a la taille demandee, mesuree sur la boite englobante :
+  // les fichiers d'Objaverse arrivent a des echelles quelconques.
+  const boite = new Box3().setFromObject(objet);
+  const dim = boite.getSize(new Vector3());
+  const plusGrand = Math.max(dim.x, dim.y, dim.z);
+  const taille = Math.max(0.2, Math.min(12, p.taille ?? 2.0));
+  if (plusGrand > 0) objet.scale.setScalar(taille / plusGrand);
+
+  // Recentrage : on veut l'objet AU point demande, pas son origine de fichier.
+  const centre = boite.getCenter(new Vector3()).multiplyScalar(taille / (plusGrand || 1));
+  objet.position.sub(centre);
+
+  groupe.add(objet);
+  const pos = p.position || [0, 0, 0];
+  groupe.position.copy(v(pos[0] ?? 0, pos[1] ?? 0, pos[2] ?? 0));
+  return groupe;
+}
+
+export const VERBES = {
+  convoquer, revolutionner, sculpter, extruder, silhouetter, napper,
+};
 
 // ── Le cadrage, porte de `academia3d.cadrer_sur` ──────────────────────────
 //
@@ -207,19 +268,44 @@ export function composer(description, largeur, hauteur) {
     journal.degradations.push(`intention « ${description.intention} » inconnue — ramenee a objet`);
   }
 
-  const produits = [];
+  // ON RETIENT LE VERBE AVEC SON OBJET, PAS DEUX LISTES EN PARALLELE.
+  //
+  // Le cadrage plus bas excluait le terrain par l'INDEX du geste. Les deux
+  // listes ne coincident que si chaque geste produit exactement un objet : un
+  // seul verbe inconnu ou en echec decale tout le reste, et le filtre attribue
+  // alors le verbe du voisin. Un `napper` ainsi mal etiquete fait cadrer sur
+  // 190 unites de terrain — le defaut mesure le 19/08 sur « le petrole ».
+  const poses = [];
   for (const [rang, geste] of (description.gestes || []).entries()) {
     const faire = VERBES[geste.verbe];
     if (!faire) { journal.degradations.push(`geste ${rang} : verbe « ${geste.verbe} » inconnu`); continue; }
     try {
       const couleur = geste.role === 'sujet' ? STYLE.BLEU_VIF : STYLE.BLEU;
       const objet = faire(geste.parametres || {}, couleur);
-      scene.add(objet); produits.push(objet);
+      scene.add(objet); poses.push([objet, geste.verbe]);
       journal.faits.push(`${geste.verbe}(${Object.keys(geste.parametres || {}).sort().join(', ')})`);
     } catch (e) {
       journal.degradations.push(`geste ${rang} « ${geste.verbe} » : ${e.message}`);
     }
   }
+
+  // RIEN N'A TENU : ON MONTRE AU MOINS LE SUJET.
+  //
+  // Sans ce repli, une scene dont tous les gestes echouent rendait un cadre
+  // NOIR ET IMMOBILE. La porte d'acceptation le refuse pour « image figee » —
+  // un message qui parle du symptome et jamais de la cause. Mesure du 05/09,
+  // travail bca57f6c : trois scenes sur quatre vides, 25,29 s figees, et rien
+  // dans le refus pour dire que les verbes n'existaient pas.
+  if (!poses.length) {
+    const sujet = String(description.sujet || '').trim();
+    journal.degradations.push(
+      `aucun geste n'a produit d'objet — repli sur une forme temoin${sujet ? ` pour « ${sujet} »` : ''}`);
+    const temoin = new Group();
+    temoin.add(new Mesh(new IcosahedronGeometry(1.6, 2), matiereFilaire(STYLE.BLEU_VIF)));
+    scene.add(temoin); poses.push([temoin, 'temoin']);
+  }
+
+  const produits = poses.map(([o]) => o);
 
   const cam = new PerspectiveCamera(38, largeur / hauteur, 0.1, 1000);
 
@@ -237,8 +323,7 @@ export function composer(description, largeur, hauteur) {
   //
   // Le terrain reste dans la scene : il donne l'echelle et la profondeur. Il ne
   // COMMANDE simplement plus le cadrage.
-  const cadrables = produits.filter((_, i) =>
-    (description.gestes || [])[i]?.verbe !== 'napper');
+  const cadrables = poses.filter(([, verbe]) => verbe !== 'napper').map(([o]) => o);
   const aCadrer = cadrables.length ? cadrables : produits;
   if (cadrables.length !== produits.length) {
     journal.faits.push(`cadrage : ${produits.length - cadrables.length} terrain(s) exclu(s) de la mesure`);

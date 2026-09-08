@@ -49,9 +49,16 @@ CLE="${SUPABASE_SERVICE_KEY:-${SUPABASE_SERVICE_ROLE_KEY:-}}"
 # embarquer alourdirait l'archive et brouillerait ce qui fait foi.
 FICHIERS=(
   worker_pod.py executer_capsule.py generateur_scenes.py academia_scene.py
-  academia3d.py academia3d_style.py composer_scene.py
+  academia3d.py academia3d_style.py composer_scene.py convoquer.py
   style_reference.py generateur_ia.py montage.py sound_design.py narration.py
 )
+# `convoquer.py` EST OBLIGATOIRE DEPUIS 1.4.5, et son absence serait muette.
+# `composer_scene._g_convoquer` l'importe DANS la fonction : sans le fichier,
+# l'archive s'installe, la sonde accepte la machine, et seul le geste tombe --
+# en rendant une scene sans l'objet du sujet. C'est-a-dire exactement le defaut
+# du 05/09 que ce verbe corrige. La liste ci-dessus est explicite pour cette
+# raison : un `*.py` embarquerait aussi les moteurs abandonnes (CLAUDE.md §10),
+# mais un fichier oublie ne se voit qu'a la capsule suivante.
 
 ATELIER="$(mktemp -d)"
 trap 'rm -rf "$ATELIER"' EXIT

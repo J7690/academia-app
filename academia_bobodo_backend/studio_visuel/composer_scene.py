@@ -111,6 +111,43 @@ class Journal:
 # ── Les gestes executables ────────────────────────────────────────────────
 # Chaque entree prend (parametres, journal) et rend l'objet cree, ou None.
 
+def _g_convoquer(p, j):
+    """Fait venir un objet REEL du sujet, au lieu d'en dessiner une approximation.
+
+    POURQUOI CE VERBE (05/09/2026). Les six autres verbes fabriquent une forme a
+    partir de coordonnees. Aucun modele de langue ne dessine un volcan point par
+    point : faute de savoir tracer, il produit une forme neutre. Mesure sur la
+    capsule « le volcan » — la narration disait « chambre magmatique », puis
+    « cone volcanique », et l'image montrait la MEME lentille aplatie.
+
+    `convoquer` prend un NOM et va chercher le maillage dans l'index verifie
+    (`contours/index_objets.json`). Il rend `None` si rien ne correspond — et
+    c'est une reponse valable : on ne modelise pas « la sociologie », et une
+    forme decorative presentee comme le sujet ment a l'etudiant.
+    """
+    terme = (p.get("terme") or p.get("nom") or "").strip()
+    if not terme:
+        raise ValueError("convoquer sans terme")
+    from convoquer import convoquer as _conv
+    # ON PASSE UNE FONCTION, PAS LE JOURNAL.
+    #
+    # `convoquer` appelle son parametre : `journal(f"...")`. Lui donner `j` --
+    # un objet `Journal`, qui n'a que `fait()` et `degrade()` -- levait
+    # `TypeError: 'Journal' object is not callable` A CHAQUE APPEL, reussi ou
+    # non. Le geste passait donc toujours pour un echec.
+    #
+    # Mesure du 05/09, travail df934af7 « le volcan » : les cinq scenes
+    # employaient `convoquer`, les cinq sont tombees sur le texte de secours --
+    # qui ne bouge pas -- et la porte d'acceptation a refuse la capsule pour
+    # « image figee 27.31 s ». Le verbe etait juste, l'index etait juste, et
+    # rien ne s'affichait : une seule ligne separait les deux.
+    return _conv(terme,
+                 taille=float(p.get("taille", 2.0)),
+                 position=tuple(p.get("position", (0, 0, 0))),
+                 nom=p.get("nom"),
+                 journal=j.fait)
+
+
 def _g_silhouetter(p, j):
     segments = p.get("segments") or []
     if not segments:
@@ -171,6 +208,10 @@ def _g_ecrire(p, j):
 
 
 GESTES = {
+    # `convoquer` en tete : c'est le seul qui fait venir l'OBJET DU SUJET.
+    # Les six autres fabriquent une forme a partir de coordonnees, ce qui
+    # convient a la structure et jamais au referent.
+    "convoquer": _g_convoquer,
     "silhouetter": _g_silhouetter,
     "revolutionner": _g_revolutionner,
     "extruder": _g_extruder,
@@ -239,7 +280,15 @@ def composer(scene: dict) -> dict:
         j.degrade(f"intention inconnue « {intention} » — ramenee a « objet »")
         intention = "objet"
 
-    produits = []
+    # ON RETIENT LE VERBE AVEC SON OBJET, PAS DEUX LISTES EN PARALLELE.
+    #
+    # Le cadrage plus bas excluait le terrain par `zip(produits, verbes)`, ou
+    # `verbes` etait relu depuis la description. Les deux listes ne coincident
+    # que si CHAQUE geste produit exactement un objet : un seul geste ecarte
+    # (verbe inconnu) ou en echec decale tout le reste, et le zip attribue
+    # alors le verbe du voisin. Un `napper` ainsi mal etiquete revient a cadrer
+    # sur 190 unites de terrain — le defaut mesure le 19/08 sur « le petrole ».
+    poses: list[tuple[object, str]] = []
     for rang, geste in enumerate(scene.get("gestes") or []):
         verbe = str(geste.get("verbe") or "")
         parametres = geste.get("parametres") or {}
@@ -248,8 +297,20 @@ def composer(scene: dict) -> dict:
             continue
         try:
             objet = GESTES[verbe](parametres, j)
+            # UN GESTE PEUT LEGITIMEMENT NE RIEN PRODUIRE, SANS ECHOUER.
+            #
+            # Les six verbes de forme levent quand ils ne peuvent pas tracer.
+            # `convoquer` est le premier a rendre `None` comme reponse VALABLE :
+            # aucun objet verifie ne correspond au terme. Ajouter ce `None` aux
+            # produits aurait deux effets, tous deux muets — le repli sur le
+            # texte du sujet ne se declencherait plus (la liste n'est pas vide),
+            # et le cadrage recevrait un `None` a mesurer.
+            if objet is None:
+                j.degrade(f"geste {rang} « {verbe} » n'a produit aucun objet "
+                          f"— rien n'est montre plutot qu'une forme decorative")
+                continue
             _habiller(objet, geste, j)
-            produits.append(objet)
+            poses.append((objet, verbe))
             j.fait(f"{verbe}({', '.join(sorted(parametres))})")
         except Exception as e:  # noqa: BLE001
             # ON NE REMPLACE PAS EN SILENCE. `validate_capsule.ts:74`
@@ -258,7 +319,7 @@ def composer(scene: dict) -> dict:
             j.degrade(f"geste {rang} « {verbe} » a echoue : {type(e).__name__}: {e}")
             j.degrade(traceback.format_exc().strip().splitlines()[-1])
 
-    if not produits:
+    if not poses:
         # RIEN N'A TENU. Plutot qu'une image vide, on ecrit le sujet : il dit
         # au moins de quoi parle la scene.
         sujet = str(scene.get("sujet") or "").strip()
@@ -270,7 +331,9 @@ def composer(scene: dict) -> dict:
             objet.data.materials.append(style.matiere_hologramme(
                 "secours", st.BLEU if hasattr(st, "BLEU") else a3.BLEU,
                 st.EMISSION_SUJET))
-            produits.append(objet)
+            poses.append((objet, "ecrire"))
+
+    produits = [o for o, _ in poses]
 
     cadre = _CADRAGE[intention]
     # ON CADRE SUR CE QUI EXISTE. `produits` porte les objets reellement crees ;
@@ -295,10 +358,9 @@ def composer(scene: dict) -> dict:
     #
     # Le terrain reste dans la scene : il donne l'echelle. Il ne COMMANDE plus
     # le cadrage.
-    verbes = [str(g.get("verbe") or "") for g in (scene.get("gestes") or [])]
-    cadrables = [o for o, v in zip(produits, verbes) if v != "napper"]
-    if len(cadrables) != len(produits):
-        j.fait(f"cadrage : {len(produits) - len(cadrables)} terrain(s) exclu(s) de la mesure")
+    cadrables = [o for o, v in poses if v != "napper"]
+    if len(cadrables) != len(poses):
+        j.fait(f"cadrage : {len(poses) - len(cadrables)} terrain(s) exclu(s) de la mesure")
     if not cadrables:
         cadrables = produits
 

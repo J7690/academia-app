@@ -25,6 +25,13 @@ export const INTENTIONS = [
 ] as const;
 
 export const VERBES = [
+  // `convoquer` fait venir un objet REEL du sujet depuis l'index verifie du
+  // Studio, au lieu de le dessiner. Ajoute le 05/09/2026 apres la capsule
+  // « le volcan » : la narration disait « chambre magmatique » puis « cone
+  // volcanique », et les trois scenes montraient la meme lentille aplatie.
+  // Les six autres verbes fabriquent depuis des coordonnees — aucun modele ne
+  // dessine un volcan point par point, alors il rend une forme neutre.
+  "convoquer",
   "silhouetter", "revolutionner", "extruder", "sculpter", "napper", "ecrire",
 ] as const;
 
@@ -98,6 +105,27 @@ function validerGeste(brut: unknown, id: string, rang: number,
   const pIn = (g.parametres ?? {}) as Record<string, unknown>;
   const p: Record<string, unknown> = {};
   const role = g.role === "sujet" ? "sujet" : "structure";
+
+  if (verbe === "convoquer") {
+    // Un seul parametre compte : le TERME. C'est un nom d'objet en francais
+    // (« volcan », « cerveau », « graine »), que le moteur cherche dans son
+    // index. On nettoie sans juger : le moteur sait deja repondre « aucun
+    // objet connu » et retomber sur une forme geometrique, ce qui vaut mieux
+    // qu'un refus ici — rejeter ferait perdre a l'etudiant ses credits ET sa
+    // video.
+    const terme = String(pIn.terme ?? pIn.nom ?? "").trim().slice(0, 60);
+    if (!terme) {
+      corr.push(`${id}.g${rang}: convoquer sans terme, geste ecarte`);
+      return null;
+    }
+    p.terme = terme;
+    const taille = Number(pIn.taille);
+    p.taille = Number.isFinite(taille) && taille > 0.2 && taille < 12
+      ? taille : 2.0;
+    const pos = point3(pIn.position);
+    if (pos) p.position = pos;
+    return { verbe, role, parametres: p };
+  }
 
   if (verbe === "silhouetter") {
     const brutSeg = Array.isArray(pIn.segments) ? pIn.segments : [];

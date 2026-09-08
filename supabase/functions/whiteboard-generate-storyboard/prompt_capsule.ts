@@ -45,7 +45,54 @@ Le moteur exécute ta description telle quelle.
    C'est l'intention qui adapte la vidéo au sujet. La forme n'en est que la
    conséquence.
 
-2. LES GESTES qui fabriquent la scène. Six verbes, tous décrits en NOMBRES :
+2. LES GESTES qui fabriquent la scène. Sept verbes.
+
+   convoquer    FAIT VENIR UN OBJET RÉEL, par son nom. Le seul verbe qui ne
+                dessine pas : il va chercher un modèle 3D existant.
+                { "verbe":"convoquer", "role":"sujet",
+                  "parametres":{ "terme":"volcan", "taille":2.5,
+                                 "position":[0,0,0] } }
+
+                EMPLOIE-LE DÈS QUE LA SCÈNE MONTRE UNE CHOSE DU MONDE : un
+                volcan, un cerveau, un cœur, une graine qui germe, un atome,
+                une pyramide, un tracteur, un microscope. Les autres verbes
+                dessinent à partir de coordonnées — tu ne sais pas tracer un
+                volcan point par point, et ce que tu produis alors est une
+                forme neutre qui pourrait illustrer n'importe quoi.
+
+                « terme » est un nom commun FRANÇAIS, au singulier, SANS article :
+                "volcan", "cerveau", "graine", "atome". Pas "le volcan", pas
+                "chambre magmatique du volcan" — le nom de la chose, seul.
+
+                LA BIBLIOTHÈQUE CONNAÎT EXACTEMENT CES 69 TERMES. Emploie l'un
+                d'eux, à la lettre. Tout autre mot ne trouvera rien :
+
+                adn, aimant, arbre, atome, bacterie, balance, barrage, cellule,
+                cerveau, charrue, chateau, circuit, coeur, corps humain, crane,
+                cristal, dent, engrenage, eolienne, estomac, feuille, fleur,
+                foie, fruit, germination, globe, goutte, graine, insecte,
+                livre, maison, microscope, molecule, montagne, muscle, neurone,
+                nuage, oeil, oiseau, os, outil, panneau solaire, parchemin,
+                peau, pendule, piece, pile, planete, plante, poisson, pont,
+                poumon, prisme, puits, pyramide, racine, rein, ressort,
+                riviere, roche, sang, squelette, statue, temple, thermometre,
+                tracteur, vase, virus, volcan
+
+                CHOISIS LE PLUS PROCHE plutôt que d'inventer. Une scène sur le
+                magma prend "volcan" ; une scène sur la photosynthèse prend
+                "feuille" ; une scène sur la circulation prend "coeur" ou
+                "sang". Le terme nomme l'OBJET À MONTRER, pas le titre du cours.
+
+                Si le sujet n'a aucun objet dans cette liste, n'emploie pas
+                convoquer : le moteur le signalerait et la scène n'aurait rien
+                à montrer. Les verbes géométriques sont là pour ce cas.
+
+                POUR LES IDÉES ABSTRAITES — la justice, la démocratie, une
+                fonction mathématique — n'emploie PAS convoquer : aucun objet
+                ne les représente. Les verbes géométriques ci-dessous sont là
+                pour ça, et c'est leur bon usage.
+
+   Les six verbes de fabrication, tous décrits en NOMBRES :
 
    silhouetter  un squelette de segments, épaissi en volume.
                 LE VERBE LE PLUS PUISSANT : c'est le SEUL dont l'orientation est

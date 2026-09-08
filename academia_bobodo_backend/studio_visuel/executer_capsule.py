@@ -113,8 +113,42 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
 SUPABASE_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
 
 
+# CE QUE LE POD A DIT, POUR QU'IL EN RESTE QUELQUE CHOSE.
+#
+# `journal()` n'ecrivait que sur la sortie standard. Un pod vit une dizaine de
+# minutes et meurt : tout ce qu'il a raconte meurt avec lui, et seule une ligne
+# d'erreur de 300 caracteres remonte en base. Mesure du 05/09, travail
+# df934af7 : refus « image figee 27.31 s », et rien pour savoir si les objets
+# du sujet avaient ete places ou si la scene etait tombee sur le texte de
+# secours -- deux causes opposees, un seul message.
+_LIGNES: list[str] = []
+
+
 def journal(message: str) -> None:
-    print(f"{time.strftime('%H:%M:%S')} {message}", flush=True)
+    ligne = f"{time.strftime('%H:%M:%S')} {message}"
+    _LIGNES.append(ligne)
+    print(ligne, flush=True)
+
+
+def deposer_journal(capsule: dict, depart: float, suffixe: str) -> None:
+    """Depose le journal a cote de la capsule. Ne leve jamais.
+
+    Le prefixe `capsules/` est impose par la policy RLS du bucket (cf. le
+    commentaire du depot de refus) : tout autre dossier est rejete.
+    """
+    try:
+        import tempfile
+        with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False,
+                                         encoding="utf-8") as f:
+            f.write("\n".join(_LIGNES))
+            chemin = f.name
+        cle = (f"capsules/refuses/{capsule.get('capsule_id', 'capsule')}/"
+               f"{int(depart)}/journal-{suffixe}.txt")
+        ok, detail = deposer(chemin, cle)
+        print(f"JOURNAL {'depose' if ok else 'NON depose'} — "
+              f"{cle if ok else detail}", flush=True)
+    except Exception as e:  # noqa: BLE001
+        print(f"JOURNAL non depose : {e}", flush=True)
 
 
 def deposer(chemin: str, cle: str) -> tuple[bool, str]:
@@ -301,7 +335,7 @@ def executer(capsule: dict, travail: str | None = None) -> tuple[bool, str]:
         # comme une composition reussie.
         for ligne in rendu.stdout.splitlines():
             if ligne.startswith(("SCENE ", "GENERATEUR_", "CAPSULE ",
-                                 "COMPOSITION ", "DEGRADATION ")):
+                                 "COMPOSITION ", "DEGRADATION ", "FAIT ")):
                 journal("  " + ligne)
     else:
         rendu = None
@@ -406,14 +440,28 @@ def executer(capsule: dict, travail: str | None = None) -> tuple[bool, str]:
         # Le depot ne bloque JAMAIS : si Storage refuse, on le dit et on rend
         # quand meme le verdict. Perdre la preuve est un moindre mal ; perdre
         # le verdict serait pire.
+        # LE PREFIXE `capsules/` N'EST PAS DECORATIF : IL EST EXIGE PAR RLS.
+        #
+        # Ce depot visait `refuses/...` depuis le 18/08. La policy INSERT du
+        # bucket impose `foldername(name)[1] = 'capsules'` — mesure du
+        # 05/09 : `select ... from pg_policies` le dit noir sur blanc. Chaque
+        # depot de refus etait donc rejete, l'echec avale par le `except`
+        # ci-dessous, et le message perdu avec le pod.
+        #
+        # Resultat : le mecanisme ecrit pour PROUVER qu'un refus etait juste
+        # n'a jamais rien conserve. Constate sur le travail df934af7 (« le
+        # volcan », refus « image figee 27.31 s ») — rien a regarder, donc
+        # impossible de savoir si `convoquer` avait place ses objets.
         try:
-            cle_refus = (f"refuses/{capsule['capsule_id']}/{int(depart)}/"
-                         f"capsule.mp4")
+            cle_refus = (f"capsules/refuses/{capsule['capsule_id']}/"
+                         f"{int(depart)}/capsule.mp4")
             garde, detail_garde = deposer(video, cle_refus)
             journal(f"REFUS CONSERVE {'oui' if garde else 'non'} — "
                     f"{cle_refus if garde else detail_garde}")
         except Exception as e:  # noqa: BLE001
             journal(f"REFUS NON CONSERVE : {e}")
+        # Le journal APRES la video : il contient alors le sort de celle-ci.
+        deposer_journal(capsule, depart, "refus")
         # Code stable, pour que la cause reste lisible en base et dans les
         # journaux. L'ordre suit la gravite : illisible d'abord, puis ce qui
         # manque, puis ce qui est noir.
@@ -441,6 +489,17 @@ def executer(capsule: dict, travail: str | None = None) -> tuple[bool, str]:
     total = int(time.time() - depart)
     journal(f"TERMINE en {total}s — cout GPU estime {total/3600*0.44:.3f} USD")
     journal(f"RESULTAT {BUCKET}/{cle}")
+    # LE JOURNAL VAUT AUSSI POUR CE QUI PASSE.
+    #
+    # Il n'etait depose qu'en cas de refus. Or une capsule ACCEPTEE peut etre
+    # mauvaise : mesure du 05/09, travail d1690901 « le volcan » — capsule
+    # acceptee, deposee, lisible... et montrant une colonne rectangulaire
+    # surmontee d'une lentille. Les gestes `convoquer` avaient echoue, la
+    # capsule est passee sur les autres verbes, et rien ne le disait.
+    #
+    # La porte d'acceptation mesure qu'une video n'est ni noire ni figee. Elle
+    # ne mesure pas qu'elle montre le bon objet — seul le journal le peut.
+    deposer_journal(capsule, depart, "accepte")
     return True, cle
 
 
