@@ -189,12 +189,18 @@ serve(async (req) => {
 
     const userId = createdUser.user.id;
 
+    // Ce que le clonage a refusé, s'il a refusé. Remonté dans la réponse :
+    // une université créée sans son gabarit n'est pas un échec de création,
+    // mais l'administrateur doit le savoir plutôt que de le découvrir en
+    // ouvrant un mini-site vide.
+    let cloneWarning: string | null = null;
+
     // Clonage automatique du mini-site & des offres à partir de l'université modèle Arbilo.
     // Cette opération est idempotente et n'ajoute du contenu que si l'université cible
     // n'a encore aucun bloc/média/programme configuré. En cas d'erreur, on ne bloque pas
     // la création du compte, on se contente de logguer l'erreur pour audit.
     try {
-      const { error: cloneError } = await supabaseService.rpc(
+      const { data: cloneData, error: cloneError } = await supabaseService.rpc(
         'app_admin_clone_university_from_template',
         {
           p_template_slug: 'universite-arbilo',
@@ -206,6 +212,19 @@ serve(async (req) => {
           'Error cloning university mini-site & offers from template Arbilo',
           cloneError.message ?? cloneError,
         );
+        cloneWarning = cloneError.message ?? String(cloneError);
+      } else if (cloneData && (cloneData as any).success === false) {
+        // LE CLONAGE PEUT ECHOUER SANS LEVER, ET C'EST CE QUI EST ARRIVE.
+        // La RPC rend `{success:false, error:...}` -- pas une exception. Le
+        // `if (cloneError)` ci-dessus ne voyait donc rien, et l'universite
+        // etait creee vide en silence. Mesure du 09/09 : le modele avait ete
+        // desactive, la RPC repondait `template_university_not_found`, et DIX
+        // universites sur quatorze n'avaient aucune configuration de site.
+        console.error(
+          'Clone refused by RPC',
+          JSON.stringify(cloneData),
+        );
+        cloneWarning = (cloneData as any).error ?? 'clone_refused';
       }
     } catch (e) {
       console.error('Unexpected error while cloning university mini-site from template', e);
@@ -231,7 +250,13 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, university_id: universityId, user_id: userId }),
+      JSON.stringify({
+        success: true,
+        university_id: universityId,
+        user_id: userId,
+        // `null` quand le mini-site a bien été initialisé.
+        mini_site_avertissement: cloneWarning,
+      }),
       { status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
     );
   } catch (e) {

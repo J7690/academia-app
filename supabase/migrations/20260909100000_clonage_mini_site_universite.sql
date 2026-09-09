@@ -1,0 +1,48 @@
+-- ============================================================================
+-- LE MINI-SITE DES NOUVELLES UNIVERSITES N'ETAIT JAMAIS INITIALISE.
+-- Migration appliquee le 09/09/2026. Consignee ici pour que le depot cesse
+-- d'etre en retard sur ce qui tourne.
+--
+-- SIGNALE PAR JOCELYN : « la nouvelle universite DADOH n'affiche pas ses
+-- offres de formation et l'image ne s'affiche pas ».
+--
+-- CE QUI ETAIT VRAI, ET CE QUI NE L'ETAIT PAS.
+-- Les offres, elles, etaient bien la : les QUATRE chemins d'affichage les
+-- rendaient (mini-site public, accueil etudiant, liste des partenaires,
+-- tableau de bord de l'ecole). L'image aussi -- HTTP 200 sur un bucket public.
+--
+-- CE QUI MANQUAIT : la CONFIGURATION du mini-site. Sans elle, ni titre, ni
+-- couleurs, ni image de couverture -- la page paraissait vide.
+--
+-- CAUSE RACINE. `admin-create-university-account` clone le mini-site depuis
+-- l'universite modele « Universite d'Arbilo ». La RPC de clonage resolvait ce
+-- modele avec :
+--     WHERE slug = p_template_slug AND is_active = TRUE
+-- Or le modele est DESACTIVE -- et c'est le bon reglage, sans quoi il
+-- figurerait dans la liste publique des partenaires, aux cotes des vraies
+-- ecoles. Les deux exigences se contredisaient :
+--     select app_admin_clone_university_from_template('universite-arbilo', ...)
+--     -> {"success": false, "error": "template_university_not_found"}
+--
+-- POURQUOI CELA A DURE. L'Edge Function journalisait l'echec sans le remonter
+-- (« on ne bloque pas la creation du compte »). Et la RPC rend
+-- `{success:false}` au lieu de lever : le `if (cloneError)` ne voyait donc
+-- rien. Mesure du 09/09 : DIX universites actives sur quatorze n'avaient
+-- aucune configuration de site.
+--
+-- DEUXIEME DEFAUT, DECOUVERT EN CORRIGEANT LE PREMIER. Le clonage recopiait
+-- `hero_title` tel quel : la premiere universite reparee affichait
+-- « Universite d'Arbilo » en tete de son mini-site. Le gabarit donne la FORME,
+-- jamais l'IDENTITE -- le titre vient desormais du nom de l'ecole cible.
+--
+-- CE QUI RESTE OUVERT : `logo_url` est nul pour les QUATORZE universites. Le
+-- champ n'a jamais ete rempli par personne ; ce n'est donc pas propre a DAHOH,
+-- et cela demande une decision (promouvoir une image de mini-site en logo, ou
+-- demander un logo a l'inscription).
+-- ============================================================================
+
+-- La definition exacte appliquee en production figure dans la migration
+-- distante `clonage_le_titre_est_celui_de_l_ecole`. Ce fichier documente
+-- l'intention et sert de trace au depot ; il n'est pas rejouable tel quel.
+SELECT 'voir migrations distantes : clonage_modele_universite_sans_exiger_actif '
+       'puis clonage_le_titre_est_celui_de_l_ecole' AS note;
