@@ -51,10 +51,8 @@ class AdminUserInvitationsProvider extends ChangeNotifier {
       }
 
       if (data['success'] != true) {
-        _setError(
-          data['error']?.toString() ??
-              'Erreur lors de la création du compte marchand.',
-        );
+        _setError(messageLisible(data['error']?.toString(),
+            quoi: 'du compte marchand'));
         return null;
       }
 
@@ -182,10 +180,8 @@ class AdminUserInvitationsProvider extends ChangeNotifier {
       }
 
       if (data['success'] != true) {
-        _setError(
-          data['error']?.toString() ??
-              'Erreur lors de la création du compte administrateur.',
-        );
+        _setError(messageLisible(data['error']?.toString(),
+            quoi: 'du compte administrateur'));
         return null;
       }
 
@@ -225,10 +221,8 @@ class AdminUserInvitationsProvider extends ChangeNotifier {
       }
 
       if (data['success'] != true) {
-        _setError(
-          data['error']?.toString() ??
-              'Erreur lors de la création du compte université.',
-        );
+        _setError(messageLisible(data['error']?.toString(),
+            quoi: 'du compte université'));
         return null;
       }
 
@@ -307,10 +301,8 @@ class AdminUserInvitationsProvider extends ChangeNotifier {
       }
 
       if (data['success'] != true) {
-        _setError(
-          data['error']?.toString() ??
-              'Erreur lors de la création du compte commercial.',
-        );
+        _setError(messageLisible(data['error']?.toString(),
+            quoi: 'du compte commercial'));
         return null;
       }
 
@@ -318,6 +310,105 @@ class AdminUserInvitationsProvider extends ChangeNotifier {
       return data;
     } catch (e) {
       _setError(e.toString());
+      return null;
+    } finally {
+      _setSaving(false);
+    }
+  }
+
+  /// Traduit le code d'erreur du serveur en une phrase que l'admin peut agir.
+  ///
+  /// POURQUOI. Les fonctions de création renvoyaient toutes le même code
+  /// générique, et l'écran l'affichait tel quel. Mesure du 09/09 : trois
+  /// tentatives ont échoué pour trois raisons distinctes — adresse déjà prise,
+  /// adresse mal formée — que rien ne distinguait à l'écran. Une erreur qu'on
+  /// ne peut pas nommer est une erreur qu'on ne peut pas corriger.
+  static String messageLisible(String? code, {required String quoi}) {
+    switch (code) {
+      case 'email_deja_utilise':
+        return 'Cette adresse est déjà utilisée par un compte. '
+            'Vérifie la liste, ou change de rôle le compte existant.';
+      case 'email_invalide':
+        return "L'adresse e-mail n'est pas valide. Vérifie qu'il n'y a ni "
+            'espace ni caractère en trop.';
+      case 'mot_de_passe_trop_court':
+        return 'Le mot de passe est trop court : il faut au moins '
+            '6 caractères.';
+      case 'email_password_required':
+        return "L'adresse e-mail et le mot de passe sont obligatoires.";
+      case 'not_admin':
+        return "Ce compte n'a pas les droits d'administrateur.";
+      case 'not_authenticated':
+        return 'Session expirée. Reconnecte-toi, puis recommence.';
+      case null:
+        return 'Erreur lors de la création $quoi.';
+      default:
+        return 'Erreur lors de la création $quoi ($code).';
+    }
+  }
+
+  /// Crée un compte ÉTUDIANT depuis le tableau de bord administrateur.
+  ///
+  /// Ce parcours passait par `createInvitation(role: 'student')`, et la RPC
+  /// `app_admin_create_user_invitation` n'accepte que
+  /// `admin, university, instructor, merchant` : la réponse était
+  /// `unsupported_role`, systématiquement. Le mot de passe saisi par l'admin
+  /// n'était par ailleurs jamais transmis — `createInvitation` n'a pas de
+  /// paramètre pour lui.
+  ///
+  /// Les six autres formulaires appellent chacun leur Edge Function ; celui-ci
+  /// fait désormais comme eux.
+  Future<Map<String, dynamic>?> createStudentAccountDirect({
+    required String email,
+    required String password,
+    String? fullName,
+  }) async {
+    _setSaving(true);
+    _setError(null);
+    try {
+      final response = await _client.functions.invoke(
+        'admin-create-student-account',
+        body: <String, dynamic>{
+          'email': email.trim(),
+          'password': password,
+          if (fullName != null && fullName.trim().isNotEmpty)
+            'full_name': fullName.trim(),
+        },
+      );
+
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        _setError(
+          'Réponse invalide du serveur lors de la création du compte étudiant.',
+        );
+        return null;
+      }
+
+      if (data['success'] != true) {
+        _setError(messageLisible(data['error']?.toString(),
+            quoi: 'du compte étudiant'));
+        return null;
+      }
+
+      return data;
+    } catch (e) {
+      // `functions.invoke` lève sur tout statut hors 2xx : le corps JSON, et
+      // donc le code d'erreur, est dans le message de l'exception.
+      final brut = e.toString();
+      for (final code in const <String>[
+        'email_deja_utilise',
+        'email_invalide',
+        'mot_de_passe_trop_court',
+        'email_password_required',
+        'not_admin',
+        'not_authenticated',
+      ]) {
+        if (brut.contains(code)) {
+          _setError(messageLisible(code, quoi: 'du compte étudiant'));
+          return null;
+        }
+      }
+      _setError(brut);
       return null;
     } finally {
       _setSaving(false);
@@ -351,10 +442,8 @@ class AdminUserInvitationsProvider extends ChangeNotifier {
       }
 
       if (data['success'] != true) {
-        _setError(
-          data['error']?.toString() ??
-              'Erreur lors de la création du compte enseignant.',
-        );
+        _setError(messageLisible(data['error']?.toString(),
+            quoi: 'du compte enseignant'));
         return null;
       }
 

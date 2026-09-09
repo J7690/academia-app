@@ -1088,14 +1088,24 @@ class _CreateStudentFormState extends State<_CreateStudentForm> {
         }
         setState(() => _creating = true);
         final invP = context.read<AdminUserInvitationsProvider>();
-        // Use invitation system with role 'student' — creates account via Edge Function
-        final resp = await invP.createInvitation(email: _emailC.text.trim(), role: 'student', fullName: _nameC.text.trim().isEmpty ? null : _nameC.text.trim());
+        // CE FORMULAIRE PASSAIT PAR LE SYSTEME D'INVITATION, ET NE POUVAIT PAS
+        // FONCTIONNER. `app_admin_create_user_invitation` n'accepte que
+        // `admin, university, instructor, merchant` : avec 'student' elle
+        // répondait `unsupported_role`, systématiquement — et la table
+        // `user_invitations` est restée vide depuis toujours. Le mot de passe
+        // saisi ici n'était en outre jamais transmis.
+        // Il appelle désormais sa propre Edge Function, comme les six autres.
+        final resp = await invP.createStudentAccountDirect(
+          email: _emailC.text.trim(),
+          password: _passwordC.text,
+          fullName: _nameC.text.trim().isEmpty ? null : _nameC.text.trim(),
+        );
         if (mounted) setState(() => _creating = false);
         if (!mounted) return;
         if (resp != null) {
           _emailC.clear(); _passwordC.clear(); _nameC.clear();
           context.read<AdminUsersOverviewProvider>().loadUsers();
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invitation étudiant créée.')));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Compte étudiant créé.')));
         } else {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(invP.error ?? 'Erreur')));
         }
