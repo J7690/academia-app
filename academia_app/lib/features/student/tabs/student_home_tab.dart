@@ -755,8 +755,34 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
               key: _shareBoundaryKey,
               child: Stack(
                 children: [
-                  CustomScrollView(
-                    slivers: slivers,
+                  // TIRER POUR RAFRAICHIR — sans quoi la liste ne se recharge
+                  // JAMAIS. `loadHomeOffers()` n'est appelé qu'une fois, dans
+                  // `initState()` : tant que l'onglet n'est pas reconstruit,
+                  // l'étudiant regarde les offres telles qu'elles étaient à
+                  // l'ouverture de l'application.
+                  //
+                  // Mesure du 09/09 : une université créée le matin même avait
+                  // ses six filières en TÊTE de `app_list_home_offers`, et
+                  // restait invisible pour qui avait ouvert l'application
+                  // avant. Le seul recours était de fermer complètement
+                  // l'application — ce que personne ne devine.
+                  RefreshIndicator(
+                    onRefresh: () async {
+                      // On recharge ensemble ce que la page affiche : les
+                      // offres ET les écoles, sinon une nouvelle université
+                      // apparaîtrait dans une liste sans figurer dans l'autre.
+                      await Future.wait<void>(<Future<void>>[
+                        offersProvider.loadHomeOffers(),
+                        offersProvider.loadPartnerUniversities(),
+                      ]);
+                    },
+                    child: CustomScrollView(
+                      // Le geste doit fonctionner même quand la liste tient
+                      // dans l'écran : sans cette physique, une page courte
+                      // n'accepte pas le tirer-pour-rafraîchir.
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: slivers,
+                    ),
                   ),
                   Positioned(
                     right: 16,
