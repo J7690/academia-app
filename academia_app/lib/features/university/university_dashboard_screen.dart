@@ -23,6 +23,28 @@ import '../../widgets/support_fab.dart';
 import '../../services/push_trigger_service.dart';
 import '../../services/analytics_tracking_service.dart';
 
+/// L'onglet « Paiements » est MASQUÉ, pas supprimé (10/09/2026).
+///
+/// POURQUOI. Il donnait à l'établissement le reçu de paiement de l'intéressé —
+/// c'est-à-dire ce que l'étudiant a versé à Nexiom Group pour que Nexiom
+/// négocie sa place. Cela ne regarde pas l'école. Le document qui la concerne
+/// est le BON DE COURTAGE, qu'elle retrouve dans « Mes documents » : il atteste
+/// de la négociation sans dire ce que le candidat a payé.
+///
+/// POURQUOI MASQUER PLUTÔT QUE SUPPRIMER. Jocelyn, le 10/09 : « lorsque plus
+/// tard on va vouloir réactiver, on va réactiver l'onglet de paiement ».
+/// Supprimer l'écran et son fournisseur obligerait à les réécrire. Ici,
+/// repasser cette constante à `true` suffit — rien d'autre n'a bougé,
+/// `UniversityPaymentsScreen` et `UniversityPaymentsProvider` restent intacts.
+///
+/// CE QUE CETTE CONSTANTE ÉVITE. La longueur du `DefaultTabController`, la
+/// liste des onglets et celle des vues doivent rester rigoureusement
+/// identiques ; les désynchroniser lève une exception à l'ouverture de l'écran.
+/// C'est le piège déjà rencontré le 10/09 en passant de trois onglets à quatre.
+/// Les trois se déduisent désormais de la même valeur, et ne peuvent plus
+/// diverger.
+const bool _ongletPaiementsVisible = false;
+
 class UniversityDashboardScreen extends StatefulWidget {
   const UniversityDashboardScreen({super.key});
 
@@ -82,9 +104,9 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
     final email = user?.email ?? '';
 
     return DefaultTabController(
-      // 4 depuis le 10/09/2026 : l'onglet « Mes documents » s'ajoute.
-      // Ce nombre DOIT suivre la liste des onglets ET celle des vues.
-      length: 4,
+      // Se déduit de `_ongletPaiementsVisible`, comme la liste des onglets et
+      // celle des vues : les trois ne peuvent plus se désynchroniser.
+      length: _ongletPaiementsVisible ? 4 : 3,
       child: Consumer2<UniversityApplicationsProvider, UniversitySiteProvider>(
         builder: (context, applicationsProvider, siteProvider, child) {
           final unread = applicationsProvider.unreadTotal;
@@ -173,7 +195,7 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                 unselectedLabelColor: Colors.white.withOpacity(0.85),
                 tabs: [
                   Tab(child: _UniversityTabLabel(text: 'Candidatures', count: unread)),
-                  const Tab(text: 'Paiements'),
+                  if (_ongletPaiementsVisible) const Tab(text: 'Paiements'),
                   // Ajouté le 10/09/2026 : les bons de courtage qu'Academia
                   // transmet à l'établissement. Copie d'annonce seulement —
                   // le candidat vient toujours au guichet avec son bon.
@@ -272,10 +294,11 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                   child: TabBarView(
                     children: [
                       const _UniversityCandidaturesWorkspace(),
-                      ChangeNotifierProvider(
-                        create: (_) => UniversityPaymentsProvider(),
-                        child: const UniversityPaymentsScreen(),
-                      ),
+                      if (_ongletPaiementsVisible)
+                        ChangeNotifierProvider(
+                          create: (_) => UniversityPaymentsProvider(),
+                          child: const UniversityPaymentsScreen(),
+                        ),
                       const UniversityDocumentsTab(),
                       const _UniversitySiteWorkspace(),
                     ],
