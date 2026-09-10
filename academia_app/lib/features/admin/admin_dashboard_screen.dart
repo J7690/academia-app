@@ -11,7 +11,7 @@ import '../../services/notification_sound_service.dart';
 import '../student/student_settings_screen.dart';
 import 'admin_applications_screen.dart';
 import 'admin_payments_screen.dart';
-import 'admin_payment_receipts_screen.dart';
+import 'admin_documents_screen.dart';
 import 'admin_programs_screen.dart';
 import 'admin_communities_screen.dart';
 import 'admin_challenges_screen.dart';
@@ -308,6 +308,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       // 29 onglets et 29 vues. La valeur était à 28 : le dernier onglet
       // (Coordination commerciale) n'était donc jamais atteignable par le
       // contrôleur, et l'alignement onglet/vue devenait imprévisible.
+      // 30 depuis le 10/09/2026 : l'onglet « Bons de courtage » s'ajoute.
+      // Ce nombre DOIT suivre la liste des onglets et celle des vues — un
+      // écart fait planter l'écran d'administration à l'ouverture.
       length: 29,
       child: Consumer<AdminApplicationsProvider>(
         builder: (context, applicationsProvider, child) {
@@ -383,7 +386,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       hasNew: _hasNewPayments,
                     ),
                   ),
-                  const Tab(text: 'Reçus'),
+                  // UN SEUL ONGLET POUR LES TROIS DOCUMENTS (10/09/2026).
+                  // « Reçus » et « Bons de courtage » étaient deux onglets
+                  // voisins sur trente. Jocelyn demande que l'administrateur
+                  // « puisse les télécharger et les recevoir dans ces
+                  // documents lui aussi » : ils sont regroupés dans un espace
+                  // « Mes documents », à trois volets — reçu de courtage,
+                  // reçu des autres achats, bon de courtage. Le compte des
+                  // onglets descend de 30 à 29 ; `length:` suit, deux lignes
+                  // plus haut, sans quoi l'onglet de fin disparaît en silence.
+                  const Tab(text: '📄 Mes documents'),
                   const Tab(text: 'Programmes'),
                   Tab(
                     child: _AdminDotLabel(
@@ -452,7 +464,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               children: [
                 AdminApplicationsScreen(),
                 AdminPaymentsScreen(),
-                AdminPaymentReceiptsScreen(),
+                const AdminDocumentsScreen(),
                 AdminProgramsScreen(),
                 const AdminMarketplaceControlTowerScreen(),
                 AdminCommunitiesScreen(),

@@ -481,6 +481,8 @@ class _AdminApplicationDetailScreenState
           style: const TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
         ),
         const SizedBox(height: 12),
+        _buildTauxNegocieSection(context),
+        const SizedBox(height: 12),
         _buildPaymentsSection(context, compact: compact),
         if (hasPreferencesSection) ...[
           const SizedBox(height: 16),
@@ -545,6 +547,229 @@ class _AdminApplicationDetailScreenState
         ),
       ],
     );
+  }
+
+  /// La réduction négociée, et le bouton qui l'enregistre.
+  ///
+  /// POURQUOI CETTE SECTION EXISTE, ET POURQUOI ELLE EST SÉPARÉE DES
+  /// « PRÉFÉRENCES ». Depuis le 09/09, le serveur refuse tout paiement de
+  /// courtage tant que ce taux est nul (`taux_de_reduction_non_fixe`). Les
+  /// préférences disent ce que l'étudiant DEMANDE avant la négociation ; ce
+  /// taux dit ce qui a été OBTENU après, et c'est lui qui ouvre l'encaissement.
+  /// Les mélanger ferait passer un acte financier pour une case à cocher.
+  ///
+  /// La section s'affiche TOUJOURS, y compris quand le taux manque : un verrou
+  /// dont on ne voit pas qu'il est fermé se lit comme une panne.
+  Widget _buildTauxNegocieSection(BuildContext context) {
+    final app = widget.application;
+    final brut = app['discount_rate'];
+    final double? taux =
+        brut is num ? brut.toDouble() : double.tryParse(brut?.toString() ?? '');
+    final valideLe = (app['discount_validated_at']?.toString() ?? '').trim();
+    final fixe = taux != null;
+
+    return Card(
+      margin: EdgeInsets.zero,
+      color: fixe ? const Color(0xFFF0F7F1) : const Color(0xFFFDF3F2),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Icon(fixe ? Icons.verified_outlined : Icons.lock_outline,
+                    size: 20,
+                    color: fixe
+                        ? const Color(0xFF388840)
+                        : const Color(0xFFE02018)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    fixe
+                        ? 'Réduction négociée : ${_formaterTaux(taux)} %'
+                        : 'Réduction négociée : pas encore enregistrée',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              fixe
+                  ? (valideLe.isEmpty
+                      ? "L'étudiant peut régler ses frais de courtage."
+                      : "Enregistrée le ${_jourLisible(valideLe)}. "
+                          "L'étudiant peut régler ses frais de courtage.")
+                  : "Tant que le taux n'est pas enregistré, l'étudiant ne peut "
+                      'pas payer ses frais de courtage. C\'est ce taux que le '
+                      'bon de courtage imprimera.',
+              style: const TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
+            ),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ElevatedButton.icon(
+                onPressed: () => _ouvrirSaisieDuTaux(context, taux),
+                icon: Icon(fixe ? Icons.edit_outlined : Icons.percent, size: 18),
+                label: Text(fixe ? 'Modifier le taux' : 'Enregistrer le taux'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 15 plutôt que 15.00, mais 12.5 reste 12.5 : on n'invente pas de précision
+  /// et on n'en supprime pas non plus.
+  static String _formaterTaux(double? t) {
+    if (t == null) return '';
+    return t == t.roundToDouble()
+        ? t.toStringAsFixed(0)
+        : t.toString().replaceAll(RegExp(r'0+$'), '');
+  }
+
+  static String _jourLisible(String iso) {
+    final d = DateTime.tryParse(iso);
+    if (d == null) return iso;
+    final l = d.toLocal();
+    return '${l.day.toString().padLeft(2, '0')}/'
+        '${l.month.toString().padLeft(2, '0')}/${l.year}';
+  }
+
+  Future<void> _ouvrirSaisieDuTaux(
+      BuildContext context, double? tauxActuel) async {
+    final champTaux = TextEditingController(
+        text: tauxActuel == null ? '' : _formaterTaux(tauxActuel));
+    final champNote = TextEditingController();
+    String? erreur;
+    bool enCours = false;
+
+    await showDialog<void>(
+      context: context,
+      useSafeArea: true,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AdaptiveDialog(
+          title: const Text('Réduction obtenue'),
+          actions: [
+            TextButton(
+              onPressed:
+                  enCours ? null : () => Navigator.of(dialogContext).pop(),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: enCours
+                  ? null
+                  : () async {
+                      final saisie =
+                          champTaux.text.trim().replaceAll(',', '.');
+                      final valeur = double.tryParse(saisie);
+                      if (valeur == null || valeur < 0 || valeur > 100) {
+                        setDialogState(() => erreur =
+                            'Entre un nombre entre 0 et 100. Zéro est accepté : '
+                            '« négocié, rien obtenu » est un résultat.');
+                        return;
+                      }
+                      setDialogState(() {
+                        enCours = true;
+                        erreur = null;
+                      });
+
+                      final appId =
+                          widget.application['id']?.toString() ?? '';
+                      final provider =
+                          context.read<AdminApplicationsProvider>();
+                      final messenger = ScaffoldMessenger.of(context);
+                      final ok = await provider.setApplicationDiscount(
+                        applicationId: appId,
+                        discountRate: valeur,
+                        note: champNote.text,
+                      );
+
+                      // Les deux contextes sont vérifiés, pas seulement celui
+                      // de l'écran : la boîte de dialogue peut avoir été
+                      // fermée pendant l'appel réseau, et `mounted` de l'État
+                      // ne dit rien d'elle.
+                      if (!mounted || !dialogContext.mounted) return;
+                      if (!ok) {
+                        setDialogState(() {
+                          enCours = false;
+                          erreur = provider.error ??
+                              'Le taux n\'a pas pu être enregistré.';
+                        });
+                        return;
+                      }
+
+                      // On reflète le nouvel état sans attendre un rechargement
+                      // complet : l'écran garde sa copie locale du dossier.
+                      setState(() {
+                        widget.application['discount_rate'] = valeur;
+                        widget.application['discount_validated_at'] =
+                            DateTime.now().toIso8601String();
+                      });
+                      Navigator.of(dialogContext).pop();
+                      messenger.showSnackBar(SnackBar(
+                        content: Text(
+                            'Réduction de ${_formaterTaux(valeur)} % enregistrée. '
+                            'Le paiement du courtage est ouvert.'),
+                      ));
+                    },
+              child: enCours
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Enregistrer'),
+            ),
+          ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+            const Text(
+              "Le taux accordé par l'établissement, après accord des deux "
+              'parties. Il ouvre le paiement des frais de courtage et sera '
+              'imprimé sur le bon de courtage.',
+              style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: champTaux,
+              autofocus: true,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: 'Taux de réduction',
+                suffixText: '%',
+                border: OutlineInputBorder(),
+                helperText: 'Entre 0 et 100',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: champNote,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Note de négociation (facultatif)',
+                border: OutlineInputBorder(),
+                helperText: 'Remplace le texte libre existant si renseignée',
+              ),
+            ),
+            if (erreur != null) ...[
+              const SizedBox(height: 12),
+              Text(erreur!,
+                  style: const TextStyle(color: Color(0xFFE02018), fontSize: 13)),
+            ],
+            ],
+          ),
+        ),
+      ),
+    );
+
+    champTaux.dispose();
+    champNote.dispose();
   }
 
   Widget _buildPaymentsSection(BuildContext context, {required bool compact}) {

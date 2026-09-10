@@ -691,6 +691,25 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                       );
                     }
 
+                    // LE TAUX COMMANDE LE PAIEMENT (09/09/2026).
+                    // Le serveur refuse un paiement de courtage tant que
+                    // l'administrateur n'a pas enregistré la réduction obtenue
+                    // (`taux_de_reduction_non_fixe`). Un bouton qui échoue à
+                    // l'appui se lit comme une panne : on ferme le bouton ET
+                    // on écrit pourquoi, avant que l'étudiant n'essaie.
+                    final tauxBrut = widget.application['discount_rate'];
+                    final double? tauxNegocie = tauxBrut is num
+                        ? tauxBrut.toDouble()
+                        : double.tryParse(tauxBrut?.toString() ?? '');
+                    final bool tauxFixe = tauxNegocie != null;
+                    // 15 plutôt que 15.0, mais 12,5 reste 12,5 : on n'invente
+                    // pas de précision et on n'en retire pas.
+                    final String tauxTexte = tauxNegocie == null
+                        ? ''
+                        : (tauxNegocie == tauxNegocie.roundToDouble()
+                            ? tauxNegocie.toStringAsFixed(0)
+                            : tauxNegocie.toString());
+
                     return FadeInUp(
                       duration: const Duration(milliseconds: 350),
                       child: Container(
@@ -737,7 +756,8 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                     color: Color(0xFF0A2540),
                                   ),
                                 ),
-                                TextButton.icon(
+                                if (tauxFixe)
+                                  TextButton.icon(
                                   onPressed: appId.isEmpty
                                       ? null
                                       : () async {
@@ -801,8 +821,25 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                               final data = resp as Map<String, dynamic>?;
                                               if (data == null || data['success'] != true) {
                                                 if (!context.mounted) return;
+                                                // Le serveur nomme ses refus et
+                                                // joint parfois une phrase déjà
+                                                // écrite pour l'étudiant : on la
+                                                // préfère au code brut, qui ne
+                                                // veut rien dire pour lui.
+                                                final phrase =
+                                                    (data?['message']?.toString() ?? '').trim();
+                                                final code =
+                                                    (data?['error']?.toString() ?? '').trim();
                                                 ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(content: Text(data?['error']?.toString() ?? 'Erreur création paiement')),
+                                                  SnackBar(
+                                                    content: Text(
+                                                      phrase.isNotEmpty
+                                                          ? phrase
+                                                          : (code.isEmpty
+                                                              ? 'Le paiement n\'a pas pu être ouvert.'
+                                                              : 'Le paiement n\'a pas pu être ouvert ($code).'),
+                                                    ),
+                                                  ),
                                                 );
                                                 return;
                                               }
@@ -835,6 +872,83 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                   ),
                                 ),
                               ],
+                            ),
+                            const SizedBox(height: 10),
+                            // L'ÉTAT DE LA NÉGOCIATION, ÉCRIT. Sans ce bandeau,
+                            // l'étudiant voit un encart « Frais de courtage »
+                            // sans bouton et n'a aucun moyen de savoir si
+                            // l'application est cassée ou s'il doit attendre.
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: tauxFixe
+                                    ? const Color(0xFFF0F7F1)
+                                    : const Color(0xFFFFF7ED),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: tauxFixe
+                                      ? const Color(0xFF388840)
+                                          .withOpacity(0.35)
+                                      : const Color(0xFFF59E0B)
+                                          .withOpacity(0.45),
+                                ),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    tauxFixe
+                                        ? Icons.verified_outlined
+                                        : Icons.hourglass_top_outlined,
+                                    size: 18,
+                                    color: tauxFixe
+                                        ? const Color(0xFF388840)
+                                        : const Color(0xFFB45309),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          tauxFixe
+                                              ? 'Réduction obtenue : $tauxTexte %'
+                                              : 'Négociation en cours',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
+                                            color: tauxFixe
+                                                ? const Color(0xFF1F5C27)
+                                                : const Color(0xFF92400E),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          tauxFixe
+                                              ? 'Tu peux régler tes frais de '
+                                                  'courtage. Ton bon de courtage '
+                                                  'sera disponible dans « Mes '
+                                                  'documents » dès le paiement '
+                                                  'confirmé.'
+                                              : 'Academia négocie ta réduction '
+                                                  "auprès de l'établissement. "
+                                                  'Le paiement des frais de '
+                                                  "courtage s'ouvrira dès que "
+                                                  'la réduction sera '
+                                                  'enregistrée.',
+                                          style: const TextStyle(
+                                            fontSize: 12.5,
+                                            color: Color(0xFF4B5563),
+                                            height: 1.35,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                             const SizedBox(height: 12),
                             content,

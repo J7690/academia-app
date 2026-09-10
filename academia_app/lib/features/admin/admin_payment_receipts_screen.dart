@@ -2,29 +2,61 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/admin_payment_receipts_provider.dart';
+import '../../utils/payment_receipt_pdf.dart';
 import 'admin_payment_detail_screen.dart';
 
+/// La liste des reçus, vue par l'administrateur.
+///
+/// TROIS CHANGEMENTS DU 10/09/2026, tous demandés par Jocelyn — « l'administrateur
+/// doit être capable de pouvoir les télécharger et les recevoir dans ces
+/// documents lui aussi » :
+///
+///   1. LE TÉLÉCHARGEMENT EST ICI, en un clic. Il fallait auparavant ouvrir le
+///      détail d'un paiement — deux clics et un second aller-retour serveur —
+///      alors que l'écran jumeau des bons télécharge depuis sa liste. Un même
+///      geste pour deux documents de même nature.
+///   2. LE MÊME DOCUMENT POUR TOUS. La RPC rend désormais `signature_hash` et
+///      le nom du payeur : la copie de l'administrateur porte l'empreinte de
+///      vérification et nomme la personne, comme celle de l'étudiant. Elles
+///      différaient.
+///   3. LE FILTRE `courtageSeulement` sépare les deux familles de reçus sans
+///      dupliquer cet écran : le courtage d'un côté, les autres achats de
+///      l'autre. C'est ce qui permet à « Mes documents » d'avoir trois volets
+///      et un seul code de liste.
+///
+/// UN SEUL OBJET SERT DE PAIEMENT ET DE REÇU. `app_admin_list_payment_receipts_with_context`
+/// rend une ligne à plat qui porte les deux jeux de clés ; les deux paramètres
+/// de `construirePdfRecu` reçoivent donc la même carte. Aller rechercher le
+/// paiement séparément ajouterait un appel pour des données déjà en main.
 class AdminPaymentReceiptsScreen extends StatelessWidget {
-  const AdminPaymentReceiptsScreen({super.key});
+  const AdminPaymentReceiptsScreen({super.key, this.courtageSeulement});
+
+  /// `null` : tous les reçus. `true` : seulement le courtage
+  /// (`application_fee`). `false` : tous les autres achats.
+  final bool? courtageSeulement;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<AdminPaymentReceiptsProvider>(
       create: (_) => AdminPaymentReceiptsProvider()..loadAllReceipts(),
-      child: const _AdminPaymentReceiptsBody(),
+      child: _AdminPaymentReceiptsBody(courtageSeulement: courtageSeulement),
     );
   }
 }
 
 class _AdminPaymentReceiptsBody extends StatefulWidget {
-  const _AdminPaymentReceiptsBody();
+  const _AdminPaymentReceiptsBody({this.courtageSeulement});
+
+  final bool? courtageSeulement;
 
   @override
-  State<_AdminPaymentReceiptsBody> createState() => _AdminPaymentReceiptsBodyState();
+  State<_AdminPaymentReceiptsBody> createState() =>
+      _AdminPaymentReceiptsBodyState();
 }
 
 class _AdminPaymentReceiptsBodyState extends State<_AdminPaymentReceiptsBody> {
   String _query = '';
+  String? _enCours;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +64,14 @@ class _AdminPaymentReceiptsBodyState extends State<_AdminPaymentReceiptsBody> {
       builder: (context, receiptsProvider, child) {
         final isLoading = receiptsProvider.isLoading;
         final error = receiptsProvider.error;
-        final all = receiptsProvider.receipts;
+
+        var all = receiptsProvider.receipts;
+        if (widget.courtageSeulement != null) {
+          all = all.where((r) {
+            final courtage = r['payment_reason']?.toString() == 'application_fee';
+            return courtage == widget.courtageSeulement;
+          }).toList(growable: false);
+        }
 
         List<Map<String, dynamic>> filtered = all;
         final q = _query.trim().toLowerCase();
@@ -45,6 +84,8 @@ class _AdminPaymentReceiptsBodyState extends State<_AdminPaymentReceiptsBody> {
 
             return contains(r['receipt_number']) ||
                 contains(r['reference_code']) ||
+                contains(r['student_name']) ||
+                contains(libelleDuMotif(r['payment_reason']?.toString())) ||
                 contains(r['payment_reason']) ||
                 contains(r['payment_status']) ||
                 contains(r['program_title']) ||
@@ -62,7 +103,7 @@ class _AdminPaymentReceiptsBodyState extends State<_AdminPaymentReceiptsBody> {
                     child: TextField(
                       decoration: const InputDecoration(
                         labelText:
-                            'Rechercher par reçu, référence, statut, programme ou université',
+                            'Rechercher par reçu, payeur, référence, programme ou université',
                         prefixIcon: Icon(Icons.search),
                         border: OutlineInputBorder(),
                         isDense: true,
@@ -140,7 +181,9 @@ class _AdminPaymentReceiptsBodyState extends State<_AdminPaymentReceiptsBody> {
                     final amountDue = r['amount_due']?.toString() ?? '';
                     final amountPaid = r['amount_paid']?.toString() ?? '';
                     final currency = r['currency']?.toString() ?? '';
-                    final paymentReason = r['payment_reason']?.toString() ?? '';
+                    final payeur = r['student_name']?.toString() ?? '';
+                    final motif = libelleDuMotif(
+                        r['payment_reason']?.toString());
                     final programTitle = r['program_title']?.toString() ?? '';
                     final universityName =
                         r['university_name']?.toString() ?? '';
@@ -184,6 +227,11 @@ class _AdminPaymentReceiptsBodyState extends State<_AdminPaymentReceiptsBody> {
                                 ],
                               ),
                               const SizedBox(height: 4),
+                              if (payeur.isNotEmpty)
+                                Text(
+                                  payeur,
+                                  style: const TextStyle(fontSize: 12.5),
+                                ),
                               if (issuedAt.isNotEmpty)
                                 Text(
                                   'Émis le $issuedAt',
@@ -200,9 +248,9 @@ class _AdminPaymentReceiptsBodyState extends State<_AdminPaymentReceiptsBody> {
                                   'Université : $universityName',
                                   style: const TextStyle(fontSize: 12),
                                 ),
-                              if (paymentReason.isNotEmpty)
+                              if (motif.isNotEmpty)
                                 Text(
-                                  'Type : $paymentReason',
+                                  motif,
                                   style: const TextStyle(fontSize: 12),
                                 ),
                               if (amountDue.isNotEmpty)
@@ -215,6 +263,24 @@ class _AdminPaymentReceiptsBodyState extends State<_AdminPaymentReceiptsBody> {
                                 Text(
                                   'Référence opérateur : $externalReference',
                                 ),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: FilledButton.tonalIcon(
+                                  onPressed: _enCours == receiptNumber
+                                      ? null
+                                      : () => _telecharger(r),
+                                  icon: _enCours == receiptNumber
+                                      ? const SizedBox(
+                                          width: 15,
+                                          height: 15,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2),
+                                        )
+                                      : const Icon(Icons.download, size: 18),
+                                  label: const Text('Télécharger'),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -227,6 +293,33 @@ class _AdminPaymentReceiptsBodyState extends State<_AdminPaymentReceiptsBody> {
         );
       },
     );
+  }
+
+  /// Le retour est LU, jamais supposé. Un « téléchargé » affiché sans vérifier
+  /// ce que la fabrique a rendu est le faux succès corrigé le 03/09, où
+  /// « Télécharger » ouvrait en réalité un aperçu d'impression.
+  Future<void> _telecharger(Map<String, dynamic> ligne) async {
+    final numero = ligne['receipt_number']?.toString() ?? '';
+    setState(() => _enCours = numero);
+    final messager = ScaffoldMessenger.of(context);
+    try {
+      final resultat = await genererEtEnregistrerRecuPdf(
+        payment: ligne,
+        receipt: ligne,
+      );
+      messager.showSnackBar(SnackBar(
+        content: Text(
+          !resultat.reussi
+              ? 'Reçu non enregistré : ${resultat.erreur}'
+              : resultat.enregistreSurLAppareil
+                  ? 'Reçu enregistré dans Téléchargements '
+                      '(${resultat.nomFichier})'
+                  : 'Reçu téléchargé',
+        ),
+      ));
+    } finally {
+      if (mounted) setState(() => _enCours = null);
+    }
   }
 
   Widget _statusChip(String status) {
@@ -272,5 +365,41 @@ class _AdminPaymentReceiptsBodyState extends State<_AdminPaymentReceiptsBody> {
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       visualDensity: VisualDensity.compact,
     );
+  }
+}
+
+/// Les onze motifs de `payment_reason`, en français.
+///
+/// Cette table existait déjà à deux endroits — dans `app.emettre_recu` et dans
+/// le générateur de PDF — et à un troisième, incomplète : l'écran de détail
+/// n'en traduisait que trois, et la liste affichait la valeur brute
+/// (« Type : credit_purchase »). Elle est ici pour que les écrans
+/// d'administration en partagent une seule.
+String libelleDuMotif(String? motif) {
+  switch (motif) {
+    case 'application_fee':
+      return 'Frais de courtage — candidature universitaire';
+    case 'registration_fee':
+      return 'Frais d\'inscription';
+    case 'tuition_deposit':
+      return 'Acompte sur frais de scolarité';
+    case 'td_access':
+      return 'Accès aux travaux dirigés';
+    case 'subscription':
+      return 'Abonnement Academia';
+    case 'credit_purchase':
+      return 'Achat de crédits';
+    case 'online_course':
+      return 'Cours en ligne';
+    case 'orientation_consultation':
+      return 'Consultation d\'orientation';
+    case 'prep_concours':
+      return 'Préparation aux concours';
+    case 'marketplace_purchase':
+      return 'Achat sur la place de marché';
+    case 'other':
+      return 'Prestation Academia';
+    default:
+      return motif == null || motif.isEmpty ? '' : motif;
   }
 }
