@@ -16,6 +16,7 @@ import '../../providers/university_payments_provider.dart';
 import 'university_payments_screen.dart';
 import '../../widgets/mini_site_hero_video.dart';
 import 'university_application_detail_screen.dart';
+import 'university_documents_tab.dart';
 import '../../services/notification_sound_service.dart';
 import '../student/student_settings_screen.dart';
 import '../../widgets/support_fab.dart';
@@ -81,7 +82,9 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
     final email = user?.email ?? '';
 
     return DefaultTabController(
-      length: 3,
+      // 4 depuis le 10/09/2026 : l'onglet « Mes documents » s'ajoute.
+      // Ce nombre DOIT suivre la liste des onglets ET celle des vues.
+      length: 4,
       child: Consumer2<UniversityApplicationsProvider, UniversitySiteProvider>(
         builder: (context, applicationsProvider, siteProvider, child) {
           final unread = applicationsProvider.unreadTotal;
@@ -171,6 +174,10 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                 tabs: [
                   Tab(child: _UniversityTabLabel(text: 'Candidatures', count: unread)),
                   const Tab(text: 'Paiements'),
+                  // Ajouté le 10/09/2026 : les bons de courtage qu'Academia
+                  // transmet à l'établissement. Copie d'annonce seulement —
+                  // le candidat vient toujours au guichet avec son bon.
+                  const Tab(text: 'Mes documents'),
                   const Tab(text: 'Mini-site & offres'),
                 ],
               ),
@@ -269,6 +276,7 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                         create: (_) => UniversityPaymentsProvider(),
                         child: const UniversityPaymentsScreen(),
                       ),
+                      const UniversityDocumentsTab(),
                       const _UniversitySiteWorkspace(),
                     ],
                   ),

@@ -49,9 +49,21 @@ class StudentApplicationPaymentsProvider extends ChangeNotifier {
   bool _documentsEnCours = false;
   String? _erreurDocuments;
   List<Map<String, dynamic>> _recus = [];
+  List<Map<String, dynamic>> _bons = [];
+  String? _erreurBons;
 
   bool get documentsEnCours => _documentsEnCours;
   String? get erreurDocuments => _erreurDocuments;
+
+  /// Les bons de courtage de l'étudiant.
+  ///
+  /// LEUR ÉCHEC EST SÉPARÉ DE CELUI DES REÇUS, à dessein. Les deux volets de
+  /// « Mes documents » se chargent ensemble mais ne dépendent pas l'un de
+  /// l'autre : si les bons tombent, l'étudiant doit quand même voir ses reçus.
+  /// Un seul indicateur d'erreur aurait vidé les deux volets pour une panne
+  /// qui n'en touche qu'un.
+  List<Map<String, dynamic>> get bons => _bons;
+  String? get erreurBons => _erreurBons;
 
   /// Les reçus de l'étudiant courant, du plus récent au plus ancien, chacun
   /// accompagné du paiement qu'il atteste.
@@ -93,6 +105,11 @@ class StudentApplicationPaymentsProvider extends ChangeNotifier {
         _erreurDocuments = e2.toString();
       }
     } finally {
+      // DANS LE `finally`, ET C'EST VOULU : les bons se chargent même si les
+      // reçus ont échoué. Les deux volets de « Mes documents » sont
+      // indépendants ; enchaîner dans le `try` aurait vidé le second volet
+      // pour une panne du premier.
+      await chargerMesBons();
       _documentsEnCours = false;
       notifyListeners();
     }
@@ -133,6 +150,33 @@ class StudentApplicationPaymentsProvider extends ChangeNotifier {
       for (final r in recus)
         {...r, 'paiement': parId[r['payment_id']?.toString()] ?? const {}},
     ];
+  }
+
+  /// Charge les bons de courtage de l'étudiant.
+  ///
+  /// Passe par `app_list_my_brokerage_vouchers`, une fonction serveur, et non
+  /// par une lecture directe : la table a RLS active et AUCUNE politique, comme
+  /// celle des reçus. Elle porte le secret qui permet de vérifier le bon, et
+  /// une fonction ne rend que ce qu'on lui a fait rendre.
+  Future<void> chargerMesBons() async {
+    _erreurBons = null;
+    try {
+      final reponse = await _client.rpc('app_list_my_brokerage_vouchers');
+      if (reponse is! Map<String, dynamic> || reponse['success'] != true) {
+        _erreurBons = reponse is Map<String, dynamic>
+            ? (reponse['error']?.toString() ??
+                'Les bons de courtage n\'ont pas pu être chargés.')
+            : 'Réponse inattendue du serveur.';
+        return;
+      }
+      final liste = reponse['vouchers'];
+      _bons = liste is List
+          ? liste.map((e) => Map<String, dynamic>.from(e as Map)).toList()
+          : <Map<String, dynamic>>[];
+    } catch (e, st) {
+      debugPrint('[StudentApplicationPaymentsProvider] chargerMesBons $e\n$st');
+      _erreurBons = e.toString();
+    }
   }
 
   Future<bool> declareExistingPayment({

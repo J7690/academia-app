@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/student_application_payments_provider.dart';
+import '../../utils/bon_courtage_pdf.dart';
 import '../../utils/payment_receipt_pdf.dart';
 import 'widgets/student_mobile_scaffold.dart';
 
@@ -16,9 +17,14 @@ import 'widgets/student_mobile_scaffold.dart';
 ///   — le REÇU prouve ce que l'étudiant a versé à Nexiom Group ;
 ///   — le BON DE COURTAGE se présente à l'établissement.
 ///
-/// Le second volet est vide et le dit : la table des bons n'existe pas encore
-/// en base. Afficher une liste vide sans l'expliquer laisserait croire à une
-/// panne.
+/// Les deux volets sont vivants depuis le 09/09/2026. Le second lisait
+/// jusque-là « cette fonctionnalité arrive prochainement » : la table des bons
+/// n'existait pas. Elle existe, l'émission est automatique à la confirmation
+/// d'un paiement de courtage, et le bon se télécharge ici.
+///
+/// LES DEUX VOLETS SONT INDÉPENDANTS. Ils se chargent ensemble mais leurs
+/// erreurs sont distinctes : une panne sur les bons ne doit pas vider la liste
+/// des reçus, ni l'inverse.
 class StudentDocumentsScreen extends StatefulWidget {
   const StudentDocumentsScreen({super.key});
 
@@ -65,7 +71,7 @@ class _StudentDocumentsScreenState extends State<StudentDocumentsScreen>
             controller: _onglets,
             children: [
               _VoletRecus(provider: provider),
-              const _VoletBons(),
+              _VoletBons(provider: provider),
             ],
           ),
         );
@@ -308,21 +314,242 @@ class _CarteRecu extends StatelessWidget {
 }
 
 class _VoletBons extends StatelessWidget {
-  const _VoletBons();
+  const _VoletBons({required this.provider});
+
+  final StudentApplicationPaymentsProvider provider;
 
   @override
   Widget build(BuildContext context) {
-    return const _Message(
-      icone: Icons.confirmation_number_outlined,
-      titre: 'Pas encore de bon de courtage',
-      // Formulation honnête : la fonctionnalité n'est pas en panne, elle
-      // n'est pas encore livrée. La maquette est validée, la table des bons
-      // reste à créer.
-      detail: 'Le bon de courtage t\'est remis quand une réduction a été '
-          'obtenue auprès d\'un établissement. Tu le présentes à '
-          'l\'établissement, qui vérifie son code. Cette fonctionnalité '
-          'arrive prochainement.',
+    if (provider.documentsEnCours && provider.bons.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (provider.erreurBons != null && provider.bons.isEmpty) {
+      return _Message(
+        icone: Icons.wifi_off_outlined,
+        titre: 'Tes bons n\'ont pas pu être chargés',
+        detail: provider.erreurBons!,
+        action: TextButton.icon(
+          onPressed: provider.chargerMesDocuments,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Réessayer'),
+        ),
+      );
+    }
+
+    if (provider.bons.isEmpty) {
+      return const _Message(
+        icone: Icons.confirmation_number_outlined,
+        titre: 'Aucun bon de courtage pour le moment',
+        detail: 'Le bon t\'est remis dès que tes frais de courtage sont '
+            'confirmés, une fois la réduction négociée auprès de '
+            'l\'établissement. Tu le présentes à l\'école, qui vérifie son '
+            'code depuis son propre espace Academia.',
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: provider.chargerMesDocuments,
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        itemCount: provider.bons.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 11),
+        itemBuilder: (context, i) => _CarteBon(bon: provider.bons[i]),
+      ),
     );
+  }
+}
+
+class _CarteBon extends StatelessWidget {
+  const _CarteBon({required this.bon});
+
+  final Map<String, dynamic> bon;
+
+  @override
+  Widget build(BuildContext context) {
+    final snapshot = bon['snapshot'] is Map
+        ? Map<String, dynamic>.from(bon['snapshot'] as Map)
+        : <String, dynamic>{};
+    final reduction = snapshot['reduction'] is Map
+        ? Map<String, dynamic>.from(snapshot['reduction'] as Map)
+        : <String, dynamic>{};
+    final formation = snapshot['formation'] is Map
+        ? Map<String, dynamic>.from(snapshot['formation'] as Map)
+        : <String, dynamic>{};
+
+    final numero = (bon['voucher_number'] ?? '').toString();
+    final ecole = (bon['universite'] ?? '').toString();
+    final titreFormation = (formation['titre'] ?? '').toString();
+    final taux = _taux(reduction['taux']);
+    final echeance = DateTime.tryParse((bon['expires_at'] ?? '').toString());
+    final consomme = (bon['consumed_at'] ?? '').toString().isNotEmpty;
+    final expire = bon['expire'] == true;
+
+    // TROIS ÉTATS, TROIS COULEURS, ET LE MOTIF ÉCRIT. Un bon périmé qui
+    // ressemblerait à un bon valable enverrait l'étudiant se présenter pour
+    // rien à la scolarité d'une école.
+    final (String etiquette, Color fond, Color encre, String note) = consomme
+        ? (
+            'ACCEPTÉ',
+            const Color(0xFFEDF3FF),
+            const Color(0xFF1B4F9C),
+            'Ce bon a été accepté par l\'établissement. Il ne peut plus '
+                'servir.'
+          )
+        : expire
+            ? (
+                'ÉCHU',
+                const Color(0xFFFFF1F0),
+                const Color(0xFFB3261E),
+                'Le délai est passé. Rapproche-toi d\'Academia pour obtenir '
+                    'un nouveau bon.'
+              )
+            : (
+                'VALABLE',
+                const Color(0xFFEAF6EE),
+                const Color(0xFF14663A),
+                echeance == null
+                    ? 'Présente ce bon à l\'établissement.'
+                    : 'À présenter à l\'établissement avant le '
+                        '${DateFormat('dd/MM/yyyy').format(echeance.toLocal())}.'
+              );
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE4E9E5)),
+        borderRadius: BorderRadius.circular(13),
+      ),
+      padding: const EdgeInsets.fromLTRB(15, 14, 15, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                          color: fond, borderRadius: BorderRadius.circular(99)),
+                      child: Text(etiquette,
+                          style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: .5,
+                              color: encre)),
+                    ),
+                    const SizedBox(height: 8),
+                    if (ecole.isNotEmpty)
+                      Text(ecole,
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF14251D))),
+                    if (titreFormation.isNotEmpty)
+                      Text(titreFormation,
+                          style: const TextStyle(
+                              fontSize: 12.5, color: Color(0xFF5A6560))),
+                  ],
+                ),
+              ),
+              if (taux != null) ...[
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('$taux %',
+                        style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF14663A))),
+                    const Text('de réduction',
+                        style:
+                            TextStyle(fontSize: 10.5, color: Color(0xFF5A6560))),
+                  ],
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text('$numero · ${_codeLisible(bon['verification_code'])}',
+              style: const TextStyle(
+                  fontSize: 12,
+                  fontFamily: 'monospace',
+                  color: Color(0xFF3E4A44))),
+          const SizedBox(height: 6),
+          Text(note,
+              style: const TextStyle(
+                  fontSize: 12, height: 1.4, color: Color(0xFF5A6560))),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 40,
+            child: OutlinedButton.icon(
+              onPressed: () => _telechargerBon(context, bon),
+              icon: const Icon(Icons.download_outlined, size: 17),
+              label: const Text('Télécharger le bon'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF14251D),
+                side: const BorderSide(color: Color(0xFF14251D)),
+                shape:
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+                textStyle:
+                    const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 15 plutôt que 15.0, mais 12,5 reste 12,5.
+  static String? _taux(dynamic v) {
+    if (v == null) return null;
+    final d = v is num ? v.toDouble() : double.tryParse(v.toString());
+    if (d == null) return null;
+    return d == d.roundToDouble()
+        ? d.toStringAsFixed(0)
+        : d.toString().replaceAll(RegExp(r'0+$'), '');
+  }
+
+  /// Le code se lit par groupes de quatre : il se recopie à la main.
+  static String _codeLisible(dynamic v) {
+    final c =
+        (v ?? '').toString().replaceAll(RegExp(r'[^0-9A-Za-z]'), '').toUpperCase();
+    if (c.length <= 4) return c;
+    final m = <String>[];
+    for (var i = 0; i < c.length; i += 4) {
+      m.add(c.substring(i, i + 4 > c.length ? c.length : i + 4));
+    }
+    return m.join('-');
+  }
+
+  Future<void> _telechargerBon(
+      BuildContext context, Map<String, dynamic> bon) async {
+    final messager = ScaffoldMessenger.of(context);
+    try {
+      final resultat = await genererEtEnregistrerBonPdf(bon: bon);
+      if (!resultat.reussi) {
+        messager.showSnackBar(SnackBar(
+            content: Text(
+                'Le bon n\'a pas pu être enregistré : ${resultat.erreur}')));
+        return;
+      }
+      messager.showSnackBar(SnackBar(
+        content: Text(resultat.enregistreSurLAppareil
+            ? 'Bon enregistré dans Téléchargements (${resultat.nomFichier})'
+            : 'Bon téléchargé'),
+      ));
+    } catch (e) {
+      messager.showSnackBar(
+          SnackBar(content: Text('Le bon n\'a pas pu être préparé : $e')));
+    }
   }
 }
 
@@ -432,6 +659,23 @@ class _AspectMotif {
       case 'tuition_deposit':
         return const _AspectMotif(
             'ACOMPTE SCOLARITÉ', Color(0xFFE8F5ED), Color(0xFF14663A));
+      // LES QUATRE MOTIFS AJOUTÉS LE 10/09/2026. L'énumération
+      // `payment_reason` en compte onze ; sept étaient traités, et les quatre
+      // autres retombaient sur « PAIEMENT ». Sur un reçu de version 1 — c'est
+      // le cas des dix-huit reçus existants — la désignation est vide : la
+      // carte ne disait alors NI ce qui avait été payé, ni pour quoi.
+      case 'online_course':
+        return const _AspectMotif(
+            'COURS EN LIGNE', Color(0xFFEEF2FB), Color(0xFF2B4F84));
+      case 'orientation_consultation':
+        return const _AspectMotif(
+            'ORIENTATION', Color(0xFFF3EFFB), Color(0xFF4B2B84));
+      case 'prep_concours':
+        return const _AspectMotif(
+            'PRÉPA CONCOURS', Color(0xFFFBF3EF), Color(0xFFA3441B));
+      case 'marketplace_purchase':
+        return const _AspectMotif(
+            'PLACE DE MARCHÉ', Color(0xFFFDF6E3), Color(0xFF7A5A00));
       default:
         return const _AspectMotif(
             'PAIEMENT', Color(0xFFEFF1F0), Color(0xFF4A5551));
