@@ -42,6 +42,19 @@ except ImportError:
     _HAS_VISION_V2 = False
     INTRO_SEC = 0.0
 
+# Normalisation du storyboard (09/09/2026) : le titre d'une scene ne se dessine
+# que s'il existe un bloc « title ». Le modele range le titre dans `scene.title`
+# et n'en emet presque jamais -- 772 scenes sur 1 087 avaient un titre que
+# personne ne voyait. L'injection se fait AVANT la narration, pour que le titre
+# recoive sa propre duree de parole et que `block_durations` garde la meme
+# longueur que `blocks` (sans quoi la synchronisation voix/ecriture retombe sur
+# l'etirement par scene).
+try:
+    from whiteboard_page_builder import injecter_titres_de_scene
+    _HAS_TITRES = True
+except ImportError:
+    _HAS_TITRES = False
+
 # Narration Audio (Phase G) — TTS gTTS + mixage FFmpeg
 try:
     import whiteboard_narration
@@ -258,6 +271,21 @@ async def _process_single_job(job: Dict[str, Any], worker_id: str) -> None:
         logger.exception("[whiteboard_render_worker] Job %s: storyboard invalide", job_id)
         await _mark_job_failed(job_id, f"storyboard invalide: {exc}")
         return
+
+    # Le titre de chaque scene, ecrit en gros et souligne en haut de page. Sans
+    # cette etape il reste dans `scene.title`, ou personne ne le lit. On compte
+    # ce qu'on ajoute : un correctif dont on ne mesure pas l'effet ne se verifie
+    # pas, et celui-ci est reste invisible pendant des semaines.
+    if _HAS_TITRES:
+        try:
+            ajoutes = injecter_titres_de_scene(storyboard)
+            logger.info("[whiteboard_render_worker] Job %s: %d titre(s) de scene ajoute(s)",
+                        job_id, ajoutes)
+        except Exception as exc:  # noqa: BLE001
+            # On degrade, on ne rejette pas : mieux vaut un cours sans titres
+            # qu'un etudiant sans cours.
+            logger.warning("[whiteboard_render_worker] Job %s: injection des titres "
+                           "impossible (%s), on rend sans titres", job_id, exc)
 
     # Claim the job
     try:

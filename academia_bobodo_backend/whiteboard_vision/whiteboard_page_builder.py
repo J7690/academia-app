@@ -338,6 +338,78 @@ class PlannedBlock:
         self.annot_end = annot_end
 
 
+# ─── Le titre d'une scène doit EXISTER pour pouvoir être écrit ───────────────
+#
+# LE DÉFAUT, MESURÉ LE 09/09 SUR LES 1 087 SCÈNES DE PRODUCTION :
+#
+#     scènes portant un titre ..................... 976
+#     scènes qui l'affichaient réellement ......... 213
+#     titre présent, jamais dessiné ............... 772   soit 71 %
+#
+# `_block_html` ne dessine un titre que pour un bloc de type « title ». Or le
+# modèle range le titre dans `scene.title` -- c'est ce que `prompt.ts` lui
+# demande -- et n'émet presque jamais de bloc « title ». Tout le travail du
+# 08/09 sur `.blk-title` (titre plus gros que le corps, centré, souligné)
+# portait donc sur un élément que la chaîne ne produisait pas.
+#
+# Ce que l'étudiant voyait en haut de page n'était pas un titre : c'était la
+# PREMIÈRE PHRASE du cours, à la taille du corps et alignée à gauche. Sur la
+# capsule « chaine alimentaire », « La nature : un grand repas ! » tenait lieu
+# de titre, et le vrai titre -- « Qui mange qui ? » -- n'apparaissait nulle part.
+#
+# POURQUOI L'INJECTION SE FAIT EN AMONT, ET NON DANS `plan()`.
+# `build_block_narration` rend une durée PAR BLOC, et `plan()` ne s'en sert que
+# si `len(block_durations) == len(blocks)`. Ajouter le titre dans `plan()`
+# romprait cette égalité : on retomberait sur l'étirement par scène, et la
+# synchronisation voix/écriture gagnée le 07/08 serait perdue -- un titre payé
+# d'un décalage sur tout le cours. Injecté AVANT la narration, le titre reçoit
+# sa propre durée : 1,6 s, le temps du geste, sans parole (`whiteboard_narration`
+# accorde cela à tout bloc sans texte à dire).
+def injecter_titres_de_scene(storyboard: Dict[str, Any]) -> int:
+    """Ajoute le bloc « title » manquant en tête de chaque scène qui en porte un.
+
+    Idempotent : une scène qui possède déjà un bloc « title » n'est pas touchée,
+    et la fonction peut donc être appelée plusieurs fois sans dupliquer.
+
+    Retourne le nombre de titres ajoutés — un correctif dont on ne compte pas
+    l'effet est un correctif qu'on ne peut pas vérifier.
+    """
+    ajoutes = 0
+    for scene in (storyboard.get("scenes") or []):
+        if not isinstance(scene, dict):
+            continue
+        titre = str(scene.get("title") or "").strip()
+        if not titre:
+            continue
+
+        blocs = scene.get("blocks")
+        if not isinstance(blocs, list):
+            blocs = []
+            scene["blocks"] = blocs
+        if any(isinstance(b, dict) and b.get("type") == "title" for b in blocs):
+            continue
+
+        blocs.insert(0, {
+            "id": f"{scene.get('id') or 'scene'}-titre",
+            "type": "title",
+            "content": titre,
+            "visible": True,
+            # Pas de champ `narration` : le titre s'écrit en silence, comme au
+            # tableau. Le donner à dire ferait répéter à la voix ce que l'oeil
+            # vient de lire — exactement la redondance que le principe de Mayer
+            # demande d'éviter.
+            "write_speed": "slow",
+        })
+        # `order` est renuméroté plutôt que laissé faux : `validate.ts` ne
+        # l'utilise que pour combler un trou, mais un champ qui ment finit
+        # toujours par être cru.
+        for rang, bloc in enumerate(blocs):
+            if isinstance(bloc, dict):
+                bloc["order"] = rang
+        ajoutes += 1
+    return ajoutes
+
+
 def plan(storyboard: Dict[str, Any], narration: Optional[List[Dict[str, Any]]] = None):
     """
     Calcule la chronologie complète et la position de chaque bloc.
@@ -1094,10 +1166,21 @@ body.recording #intro .w::after, body.recording .il::after {{ content:none; }}
    Le mot-clé ne se balaie donc pas : il surgit en rouge, d'un coup. C'est
    voulu — c'est le geste du professeur qui change de stylo, et le contraste
    avec les mots balayés autour est précisément ce qui le fait ressortir. */
+/* ...MAIS ANNULER LE MASQUE REND LE MOT VISIBLE AVANT SON TOUR (mesuré 09/09).
+   `.w` est transparent tant qu'il n'est pas balayé ; `.w.kw` repeint le texte
+   en rouge PLEIN, donc son état de repos est « lisible ». Or `kwIn` porte un
+   `animation-delay` et un remplissage `forwards` : pendant le délai, aucune
+   image-clé ne s'applique et l'élément garde son état de repos. Résultat vu
+   à l'image : TOUS les mots-clés de la page rouges dès la première seconde,
+   flottant seuls sur le papier avant que leur phrase existe.
+   On remet donc l'opacité à zéro au repos : `kwIn` la ramène à 1 au moment
+   exact où le mot s'écrit. Aucune incidence sur la mesure des positions,
+   l'opacité ne changeant pas la géométrie. */
 .w.kw {{
   display:inline-block; font-weight:800; font-size:1.12em;
   background-image:none;
   color:{rouge}; -webkit-text-fill-color:{rouge};
+  opacity:0;
 }}
 body.recording .w.kw {{ animation:kwIn .55s cubic-bezier(.2,1.6,.4,1) forwards; }}
 @keyframes kwIn {{

@@ -347,6 +347,29 @@ garde-fou qu'on désactive.
 les met en `deny` ou en `ask` : **ne pas contourner** en passant par une autre
 commande.
 
+### Jamais de mot de passe sur le compte d'une personne réelle (09/09/2026)
+
+> Un script ne pose **jamais** de mot de passe sur le compte d'un humain, même
+> « le temps d'un test », même sans jamais l'afficher.
+
+Le 09/09, pour obtenir une session admin, un script a posé un
+`secrets.token_urlsafe(24)` sur `wendenkoote@gmail.com` — le compte de Jocelyn —
+puis n'a pas écrit l'étape qui le retire. Résultat mesuré : **verrouillage de
+08:19 à 15:53**, six tentatives refusées, une demande de réinitialisation, et
+une journée sans administrateur. La valeur n'étant pas imprimée « par
+prudence », elle était irrécupérable ; l'empreinte bcrypt de l'ancien mot de
+passe, elle, ne se déchiffre pas.
+
+**Ce qu'il faut faire à la place** : utiliser `admin.review@academia.test`
+(`5f0584e1-e260-4635-aba9-ad3352f31a6a`, rôle `admin`), compte d'essai dont le
+mot de passe nous appartient. Et si un secret éphémère est vraiment nécessaire,
+**écrire la remise en état avant la pose**, jamais après.
+
+Corollaire, mesuré le même jour : **aucun écran ne permet à un administrateur de
+changer son mot de passe.** Sa seule porte de secours est le courriel de
+récupération, dont le jeton est de type PKCE — il ne s'ouvre que dans le
+navigateur qui l'a demandé.
+
 ### La règle qui prime sur toutes les autres
 
 > **Ne jamais déduire un état de ce qu'on ne voit pas.**

@@ -2217,3 +2217,1063 @@ filtrent correctement. Défense en profondeur manquante, pas porte ouverte.
 - L'audit par agents a été **coupé deux fois** par la limite de session (8/42
   agents aboutis). Ses conclusions ne valent rien ; les alertes de sécurité ont
   été retestées à la main.
+
+---
+
+## 09/09/2026 (soir) — Le compte administrateur, verrouillé par mon propre script
+
+**Ouvert par Jocelyn** : « impossible de se connecter en tant qu'administrateur ».
+Question posée : la base ou les tables de l'administrateur sont-elles en cause ?
+
+**Non. C'est moi.** À **08:19:29 UTC**, le script lancé pour vérifier que
+`admin-create-student-account` nomme enfin ses erreurs a posé un mot de passe
+aléatoire (`secrets.token_urlsafe(24)`) sur `wendenkoote@gmail.com`, s'en est
+servi pour ouvrir une session admin, et **ne l'a jamais remis**. La valeur
+n'était pas imprimée — par prudence, écrivait le commentaire du script. Elle
+était donc irrécupérable, et l'empreinte bcrypt de l'ancien mot de passe ne se
+déchiffre pas.
+
+| Heure (locale = UTC) | Fait mesuré |
+|---|---|
+| 07:06:18 | Jocelyn se connecte normalement (`login_method: password`) |
+| **08:19:29** | `PUT /auth/v1/admin/users/040e7e6e…` → 200 — **l'écrasement** |
+| 08:19:30 | connexion du script avec le mot de passe éphémère → 200 |
+| 11:31:02 | déconnexion depuis le navigateur Android |
+| 11:31:26 → 11:34:59 | **six** `400 invalid_credentials` |
+| 11:35:01 | demande de réinitialisation par courriel (jeton **PKCE**) |
+| 15:13:29 | une dernière tentative refusée, depuis Firefox |
+| 15:53:19 | mot de passe reposé sur autorisation explicite, connexion vérifiée |
+
+**Ce que la mesure a écarté, dans l'ordre.** Les trois déclencheurs sur
+`auth.users` (`on_auth_user_created`, `trg_admin_new_account_notify`,
+`trg_sync_role_from_app_metadata`) ne peuvent pas faire échouer la connexion
+d'un admin : le second rend `NEW` dès que le rôle vaut `admin`, le troisième ne
+fait que recopier une métadonnée. Compte ni banni ni supprimé, adresse
+confirmée, rôle `admin` présent des deux côtés, `app.user_admin_status` vide.
+Le service d'authentification répondait `invalid_credentials`, pas une erreur de
+base. **Sonde décisive** : des trois identifiants d'essai du dépôt, celui de
+l'université et celui de l'étudiant passaient encore, **seul celui de l'admin
+était refusé**.
+
+**Un seul compte touché.** Sur 24 h, un seul `PUT /auth/v1/admin/users/…`. Les
+trois `DELETE` du matin portaient sur des comptes créés quelques minutes plus
+tôt par mes propres tests.
+
+### La règle qui manquait
+
+> **Un script ne pose jamais de mot de passe sur le compte d'une personne
+> réelle.** Le compte `admin.review@academia.test` (`5f0584e1…`, rôle `admin`)
+> existe pour ça. Poser un secret éphémère sans écrire d'abord l'étape qui le
+> retire, c'est fabriquer un verrou dont on jette la clé.
+
+Le tort n'était pas de vouloir une session admin. Il était de la prendre sur le
+compte de quelqu'un, et de ne pas écrire la remise en état **avant** la pose.
+
+### Reste ouvert
+
+- **Aucun écran ne permet à un administrateur de changer son mot de passe.**
+  `updateUser(UserAttributes(password:))` n'existe que dans `auth_callback_screen`
+  (le lien de récupération), le tableau de bord commercial et celui des
+  universités. Un admin verrouillé n'a que le courriel de récupération.
+- Le lien de récupération de 11:35 portait un jeton **PKCE** : il n'aurait
+  fonctionné que dans le navigateur Android qui l'avait demandé. Ouvert sur le
+  poste Windows, il aurait échoué sans dire pourquoi.
+- `.devin/test_auth_login.py` porte en clair les mots de passe de **trois
+  comptes de production**. Le dossier n'est pas suivi par git (rien n'est parti
+  sur GitHub), mais deux de ces trois mots de passe fonctionnent toujours.
+- `auth.audit_log_entries` est **vide** (0 ligne, jamais). Le diagnostic a dû
+  passer par le flux de journaux, pas par la table.
+
+---
+
+## 09/09/2026 (soir, 2) — Le titre de scène n'était pas mal placé : il n'était pas dessiné
+
+**Ouvert par Jocelyn**, capture à l'appui : « le titre au commencement de la
+lecture de la vidéo doit être plus grand, plus centré, plus visible ».
+
+**Ce qu'il prenait pour le titre était la PREMIÈRE PHRASE du cours.** Sur la
+capsule « chaine alimentaire », « La nature : un grand repas ! » est le
+`block-001` de la scène 0, un `paragraph` à la taille du corps, aligné à gauche.
+Le vrai titre de la scène, « Qui mange qui ? », n'était dessiné nulle part.
+
+**La cause, mesurée sur les 1 087 scènes de production :**
+
+| | |
+|---|---|
+| scènes portant un titre | 976 |
+| scènes qui l'affichaient | 213 |
+| **titre présent, jamais dessiné** | **772 — 71 %** |
+
+`_block_html` ne dessine un titre que pour un bloc de type `title`. `prompt.ts`
+demande au modèle de ranger le titre dans `scene.title`, et le modèle n'émet
+presque jamais de bloc `title`. **Tout le travail du 08/09 sur `.blk-title`
+portait donc sur un élément que la chaîne ne produisait pas.**
+
+### Deux dates à ne pas confondre
+
+    rendu de la capsule regardée par Jocelyn ....... 08/09 10:59
+    déploiement du moteur corrigé sur LWS .......... 08/09 12:10   (+1 h 11)
+    rendus effectués depuis ce déploiement ......... 0   (sur 114 au total)
+
+Personne n'a encore vu le moteur du 08/09. La capsule regardée est la **dernière
+sortie de l'ancien**.
+
+### Ce qui a été écrit
+
+`injecter_titres_de_scene()` (page builder) ajoute le bloc `title` manquant à
+partir de `scene.title`. Idempotent, vérifié : 2ᵉ appel = 0 ajout.
+
+**Appelé depuis le worker, AVANT la narration, et c'est le point d'architecture.**
+`build_block_narration` rend une durée par bloc ; `plan()` ne s'en sert que si
+`len(block_durations) == len(blocks)`. Injecter dans `plan()` aurait rompu cette
+égalité et fait retomber sur l'étirement par scène — la synchronisation
+voix/écriture gagnée le 07/08, perdue pour un titre. En amont, le titre reçoit
+sa propre durée : 1,6 s de silence (`whiteboard_narration:446`, bloc sans parole).
+
+Mesures après correction, sur le storyboard réel :
+
+| | avant | après |
+|---|---|---|
+| bloc 0 de la scène 1 | `paragraph` « La nature… » | **`title` « Qui mange qui ? »** |
+| taille du titre | — | **116 px** contre 80 px pour le corps (1,45×) |
+| durée planifiée (2 scènes) | 22,7 s | 27,2 s |
+| coût réel attendu | — | ~1,6 s/scène, 112 s → ~122 s (cible 90–150 s tenue) |
+
+### Un second défaut, trouvé à l'image et non cherché
+
+Le correctif du 08/09 qui rendait leur rouge aux mots-clés (`.w.kw` annule le
+masque et repeint en `-webkit-text-fill-color`) leur donnait un **état de repos
+LISIBLE**. Or `kwIn` porte un `animation-delay` avec remplissage `forwards` :
+pendant le délai, aucune image-clé ne s'applique. **Tous les mots-clés de la page
+étaient donc rouges dès la première image**, flottant seuls sur le papier avant
+que leur phrase existe — « chaîne alimentaire » et « soleil » visibles à 7 s sur
+la capture témoin. Jamais vu par personne, puisque 0 rendu depuis le 08/09.
+Corrigé par `opacity:0` au repos : aucune incidence sur la mesure des positions.
+
+Preuve : deux images 1080×1920 fabriquées **sur LWS** avec `snap_still.js`, dans
+`/tmp/moteur_titres` — une copie du moteur. `/opt/whiteboard-worker` **n'a pas
+été touché**.
+
+### Reste ouvert
+
+- **Rien n'est déployé.** Deux fichiers attendent l'autorisation de Jocelyn :
+  `whiteboard_page_builder.py` et `whiteboard_render_worker.py`.
+- Aucun rendu réel n'a validé la chaîne complète : les images sont des captures
+  fixes, pas une vidéo. Un rendu d'essai reste à lancer après déploiement.
+- `prompt.ts` continue de ne pas demander de bloc `title`. L'injection le
+  compense côté moteur, y compris pour les 772 scènes déjà en base — mais les
+  deux versions de la vérité coexistent.
+
+---
+
+## 09/09/2026 (soir) — Courtage : le taux commande le paiement
+
+**Décision de Jocelyn** : l'université donne son accord, l'étudiant accepte,
+puis **l'administrateur inscrit le taux obtenu** — et c'est ce geste, et lui
+seul, qui ouvre le paiement des frais de courtage. « Pas de paiement possible
+tant que l'administrateur n'a pas validé le pourcentage. C'est vraiment
+important. »
+
+### CE QUI CLOCHAIT, MESURÉ AVANT DE TOUCHER
+
+| Constat | Mesure |
+|---|---|
+| le taux n'était **pas un nombre** | `discount_details` en texte libre, 2 à 354 caractères ; valeurs réelles : « 75% », « 50 », « rgh », « uuu », « aaa », « je demande une réduction de 36% » |
+| rien n'ordonnait le paiement | l'étudiant pouvait payer dès `status = accepted`, taux ou pas |
+| le taux n'atteignait aucun écran | `app_list_admin_applications` et `app_list_student_applications` exposaient `discount_details`, **pas** `discount_rate` |
+| candidatures de courtage sans dossier | **0 sur 13** — la règle « un paiement de courtage porte une candidature » tenait déjà |
+
+**Nuance retenue** : la règle ne peut pas valoir pour tous les motifs. **19
+paiements sur 33** n'ont pas de candidature — achat de crédits, travaux
+dirigés — et c'est normal. Le verrou ne vise que `application_fee`.
+
+### DEUX MIGRATIONS, APPLIQUÉES ET ÉPROUVÉES
+
+`courtage_taux_valide_avant_paiement` — trois colonnes (`discount_rate`,
+`discount_validated_at`, `discount_validated_by`), une borne `[0, 100]`, la RPC
+`app_admin_set_application_discount` (rôle lu dans `raw_app_meta_data`, tracé
+dans `admin_audit_log` avec le taux précédent), et le verrou dans
+`app_create_application_payment`. **Le verrou de prix du 02/09 et le contrôle
+`not_owner` sont recopiés à l'identique** : un seul ajout, signalé en commentaire.
+
+`exposer_le_taux_aux_ecrans` — le taux et sa date ajoutés au JSON des deux RPC
+de liste. Fait par **réécriture de la définition en place**, pas à la main :
+3 000 caractères recopiés, c'est une ligne perdue en chemin. Le bloc refuse
+d'agir si le motif n'est pas présent exactement une fois, et il est idempotent.
+
+**Éprouvé sur le parcours réel**, clé publique et vraies sessions, pas la clé de
+service :
+
+```
+1. etudiant paie sans taux    -> taux_de_reduction_non_fixe   REFUSE
+2. admin fixe 15 %            -> success                      OK
+3. etudiant retente           -> payment_id ...229c9b          OK
+```
+
+**Base rendue à l'identique** : le paiement d'essai supprimé, le taux et la note
+remis à NULL. Vérifié après coup — 33 paiements, 18 reçus, 0 taux posé,
+16 dossiers en attente. Un **aveu** : la note d'essai a écrasé le
+`discount_details` du dossier d'essai `625ea108`, et sa valeur antérieure n'est
+pas récupérable. Dossier de test (université « Test », courtage à 100 F).
+
+### CE QUE ÇA CHANGE POUR LES ÉTUDIANTS, DÈS MAINTENANT
+
+**16 candidatures acceptées, aucune n'a de taux.** 14 n'ont pas encore de
+paiement de courtage : leurs **4 étudiants** ne peuvent plus le déclencher tant
+qu'un administrateur n'a pas saisi le taux. C'est l'effet demandé, il commence
+à la seconde où la migration passe. Les 13 paiements existants ne bougent pas.
+La vue `app.candidatures_en_attente_de_taux` montre qui attend — un verrou dont
+on ne voit pas qui il bloque finit comme `app.email_queue`, restée à 3 entrées
+en attente depuis juillet sans que personne le sache.
+
+### CÔTÉ APPLICATION
+
+`AdminApplicationsProvider.setApplicationDiscount` + `messageDuTaux`, qui nomme
+chaque code d'erreur au lieu de l'afficher brut. Section « Réduction négociée »
+dans l'écran administrateur d'une candidature, **toujours visible**, verte quand
+le taux est posé, rouge quand il manque, avec le motif écrit. Séparée des
+« préférences de candidature » à dessein : les préférences disent ce que
+l'étudiant DEMANDE, le taux dit ce qui a été OBTENU, et lui seul ouvre un
+encaissement.
+
+`flutter analyze` sur les deux fichiers : **0 erreur**, 3 `info` toutes
+antérieures. Le lint que j'avais introduit (`use_build_context_synchronously`)
+est refermé en vérifiant `dialogContext.mounted` et non seulement `mounted`.
+
+### RESTE À FAIRE SUR CE CHANTIER
+
+- côté étudiant : afficher le motif quand le paiement est fermé (le code
+  d'erreur est prêt, l'écran ne le lit pas encore) ;
+- le **bon de courtage** : table, séquence `BC-`, émission unique, PDF, QR ;
+- l'écran de **vérification par l'université** ;
+- la **saisie manuelle** par l'administrateur, qui doit passer par la même
+  fonction d'émission — deux portes, un seul mécanisme.
+
+## 09/09/2026 (nuit) — L'identité d'une université cesse d'être déclarative
+
+**Ouvert par Jocelyn**, en choisissant le scanner intégré : « si un étudiant
+prend un bon de courtage d'une université A et l'amène dans une université B,
+au scan l'université B verrait qu'elle n'est pas la destinataire ». Toute la
+garantie repose sur une question : **de qui l'application tient-elle que le
+compte qui scanne appartient à B ?**
+
+### LA MESURE, ET ELLE ÉTAIT MAUVAISE
+
+| | |
+|---|---|
+| comptes université | 30 |
+| identifiant dans `raw_user_meta_data` | 29 |
+| identifiant dans `raw_app_meta_data` | **0** |
+| fonctions qui le lisent dans `user_meta` | 31 |
+
+`raw_user_meta_data` est écrit **par l'utilisateur lui-même**. Un compte
+université pouvait donc s'attribuer l'identifiant d'une autre école. La
+distinction app/user retenue le 03/09 pour le **rôle** n'avait jamais été
+étendue à l'**université**.
+
+### CE QUI EST FAIT
+
+Identifiant recopié dans `raw_app_meta_data` pour les 29 comptes. Le
+déclencheur `sync_role_from_app_metadata` le **repose** à chaque modification —
+il ne se contente pas de comparer — et le **promeut** de user vers app à la
+création, moment de confiance puisque l'inscription publique est forcée à
+`student`. Nouvelle fonction `app.universite_de_l_utilisateur()`, qui préfère
+la source de confiance ; les 31 fonctions existantes ne sont pas réécrites,
+elles sont désormais couvertes.
+
+**Prudence** : ce déclencheur s'exécute à chaque connexion. Après application,
+les trois rôles ont été reconnectés immédiatement — admin, université, étudiant,
+HTTP 200 — avant toute autre chose.
+
+### ÉPROUVÉ EN TENTANT LA FRAUDE
+
+Depuis le compte université lui-même, `auth.updateUser` vers l'identifiant
+d'ISTAPEM :
+
+```
+avant       : caa0d821  (Universite d'Arbilo)
+tentative   : 58bf2713  (ISTAPEM)
+updateUser  : HTTP 200 — l'appel passe, la reponse ECHO la valeur usurpee
+relecture   : app=caa0d821  user=caa0d821   -> FRAUDE BLOQUEE
+```
+
+**Le détail qui compte** : la réponse de `updateUser` renvoie la valeur
+usurpée, parce que GoTrue rend ce qu'on lui a envoyé avant de relire. Seule la
+relecture montre l'écrasement. Un contrôle qui se serait fié à cette réponse
+aurait conclu à l'échec du correctif.
+
+### VÉRIFIÉ AU PASSAGE : AUCUNE LECTURE DE L'UNIVERSITÉ DANS LE JETON
+
+60 fonctions lisent l'université **dans la table** (donc couvertes), **0** dans
+le jeton. Une seule politique RLS le faisait, `university_select_own_payments`
+sur `app.application_payments`. **Elle est morte, et c'est mesuré** : le claim
+`role` au premier niveau d'un jeton Supabase vaut `authenticated`, jamais
+`university`, et il n'y a pas de claim `university_id`. Résultat réel : **0 ligne
+visible pour 4 en base**. Ce n'est donc pas une fuite, c'est une règle qui n'a
+jamais rien accordé — les universités passent par des RPC `SECURITY DEFINER`.
+À retirer ou à réécrire, mais sans urgence.
+
+### AUSSI CE SOIR — le motif côté étudiant (point 1 du plan)
+
+L'écran de candidature ne propose plus « Payer maintenant » quand le taux n'est
+pas fixé : il affiche « Négociation en cours » et explique que le paiement
+s'ouvrira dès l'enregistrement de la réduction. Quand le taux est là, il
+l'affiche et annonce le bon de courtage. Le refus serveur reste en filet, et
+préfère désormais la phrase envoyée par le serveur au code brut.
+`flutter analyze` : **0 erreur**, les 2 avertissements restants sont antérieurs.
+
+## 09/09/2026 (nuit, suite) — Le bon de courtage : socle, émission, vérification
+
+### VEILLE EXTERNE, quatre angles (demandée par Jocelyn)
+
+- **Le standard qui traite le cas** : OpenID for Verifiable Presentations lie la
+  preuve à l'identifiant du vérificateur prévu, précisément « pour détecter la
+  présentation à une partie autre que celle visée ». Le mécanisme imaginé par
+  Jocelyn porte un nom : la **liaison à l'audience**.
+- **diplome.gouv.fr** : clé de contrôle à **8 caractères** + QR. Confirme la
+  forme, mais **modèle de sécurité inverse** : quiconque tient la clé vérifie,
+  parce que c'est le titulaire qui la transmet. Le consentement y remplace la
+  restriction. Écarté pour notre cas, motif ci-dessous.
+- **L'analogue métier n'est pas le diplôme, c'est le recrutement** : le « right
+  to represent » est l'enregistrement horodaté de la présentation d'un candidat
+  à un client **nommé**, et il fonde le droit à commission. Fenêtres de
+  protection de 6 à 12 mois. Confirme l'analogie du bon de visite immobilier
+  retenue le 02/09 (preuve de l'intervention, pas contrat).
+- **Bons d'achat** : la vérification doit distinguer valide / consommé / expiré
+  / inconnu, « faute de quoi le personnel en est réduit à deviner ».
+
+### RÉFUTATION, ET CE QU'ELLE A CHANGÉ
+
+J'avais proposé que le refus à la mauvaise école **nomme l'établissement
+destinataire**, en raisonnant qu'elle tient le papier et sait déjà tout.
+**Jocelyn a corrigé, et il a raison** : on peut lui envoyer une PHOTO du QR ou
+lui dicter le code au téléphone — elle n'a alors rien entre les mains. Le refus
+ne nomme donc **rien**.
+
+Second point : « numéro inconnu » et « code faux » devaient donner des réponses
+différentes. Non — on retrouverait les codes en essayant. **Une seule réponse.**
+
+Troisième, mesuré : **un compte université sur trente n'a pas d'identifiant
+d'école**. Il ne pourrait vérifier aucun bon, pas même le sien. D'où le chemin
+de secours : l'administrateur peut vérifier, mais **pas clore** — clore, c'est
+accepter l'inscription, et cela n'appartient qu'à l'école.
+
+### CE QUI EST POSÉ
+
+Table `app.brokerage_vouchers` calquée sur les reçus : numéro `BC-2026-000001`,
+instantané figé, empreinte SHA-256, code à 8 caractères tiré d'un alphabet
+**sans caractères confondables** (ni 0/O, ni 1/I/L — le code se lit à l'oeil et
+se dicte), échéance à 14 jours, verrou d'immuabilité, colonnes de consommation.
+Registre `app.brokerage_voucher_checks` : qui a scanné quoi, et qu'a-t-il vu.
+Vues `app.courtages_sans_bon` et `app.bons_a_verifier`.
+
+`app.emettre_bon` — idempotente, une seule fonction, **deux portes** (parcours
+normal et saisie manuelle), l'origine n'étant notée que pour la trace.
+Branchée après `app.emettre_recu` dans les **deux** chemins concernés, et
+**l'exception est rattrapée** : si l'émission échouait et remontait, elle
+annulerait la confirmation du paiement — l'étudiant perdrait son argent *et*
+son bon. L'échec s'inscrit dans le registre ; `courtages_sans_bon` le montre.
+
+### ÉPROUVÉ DE BOUT EN BOUT, VRAIES SESSIONS, CLÉ PUBLIQUE
+
+Deux bons produits par le parcours réel (taux → paiement → déclaration →
+confirmation → **émission automatique**), empreintes valides.
+
+| Cas | Réponse | Données rendues |
+|---|---|---|
+| l'école destinataire scanne | `valide` | candidat, formation, taux |
+| **la mauvaise école scanne** | `pas_le_destinataire` | **aucune** |
+| code faux sur un vrai bon | `introuvable` | aucune |
+| numéro inventé | `introuvable` (même phrase) | aucune |
+| un étudiant scanne | `reserve_aux_universites` | aucune |
+| l'école clôt | `consomme` | — |
+| elle rescanne | `deja_consomme` | — |
+| elle re-clôt | `deja_consomme` | aucune |
+
+**Base rendue à l'identique** : triggers d'immuabilité neutralisés le temps
+d'une transaction puis remis (vérifié : 2 actifs), 33 paiements, 18 reçus,
+0 bon, 0 contrôle, 0 taux posé.
+
+### RESTE OUVERT, ET IL FAUT LE DIRE
+
+`app.courtages_sans_bon` affiche **8 lignes** : huit courtages encaissés avant
+aujourd'hui, qui n'auront jamais de bon automatiquement. Aucun ne porte de
+taux. Les rattraper suppose qu'un administrateur saisisse leur taux, puis qu'on
+émette. **Décision de Jocelyn.**
+
+Reste à construire : le PDF avec son QR (le paquet `pdf` embarque déjà
+`barcode`, mesuré — aucune dépendance nouvelle), le volet « Bons de courtage »
+côté étudiant, l'écran de scan côté université (`mobile_scanner`, dépendance et
+permission caméra à prévoir), la saisie manuelle par l'administrateur, et
+l'envoi par courriel.
+
+### 09/09 (nuit) — La relecture de sécurité avait raison sur le code du bon
+
+Signalement automatique : `app.code_verification_bon()` tirait le code avec
+`random()`, un générateur **pseudo**-aléatoire. Fondé — les connexions sont
+mutualisées, plusieurs bons peuvent sortir du même processus, et l'état d'un
+tel générateur se reconstitue à partir de sorties observées.
+
+Corrigé, et **au-delà de ce qui était demandé** :
+
+- `gen_random_bytes` (pgcrypto 1.3, déjà présent) remplace `random()` ;
+- **le correctif suggéré gardait un biais** : alphabet de 31 lettres et `% 31`,
+  alors que 256 = 8 × 31 + 8. Les huit premières lettres seraient sorties plus
+  souvent. Passage à **32 lettres**, celles de **Crockford base32**, où `% 32`
+  est exact ;
+- Crockford **n'exclut pas** O et I, il les **décode** vers 0 et 1. D'où
+  `app.normaliser_code_bon`, qui rattrape casse, séparateurs et confusions.
+  Une transcription humaine fautive se corrige au lieu d'échouer.
+
+**Refusé : allonger le code à 10-12 caractères.** Huit, c'est la maquette
+validée le 02/09 et c'est aussi diplome.gouv.fr. Changer la longueur change le
+document imprimé : décision produit, pas technique. Les 40 bits sont compensés
+par un **étranglement** — au-delà de 20 échecs par compte et par heure, refus.
+**Mesuré : l'étranglement se déclenche au 21ᵉ essai.** À ce rythme, épuiser
+l'espace demanderait plus de cinquante milliards d'heures.
+
+Vérifié : 500 codes tirés, **500 distincts** ; normalisation correcte sur
+minuscules, tirets et O/I/L. Registre d'essai purgé (26 lignes).
+
+**LOOSE END À RÉSOUDRE** : quatre migrations ont été appliquées à distance ce
+soir et **trois n'ont pas encore de fichier** dans `supabase/migrations/` —
+`bon_de_courtage_emission_et_verification`,
+`emettre_le_bon_apres_la_confirmation` et
+`verification_du_bon_normalisation_et_etranglement`. Leur SQL est récupérable
+par `pg_get_functiondef`, mais tant que les fichiers manquent, le dépôt ne
+décrit pas la base. À exporter à la prochaine séance.
+
+### 09/09 (nuit, fin) — Deux secrets pour deux lecteurs, et le dépôt remis en accord
+
+**Le compromis est levé.** La relecture demandait 10-12 caractères ; la maquette
+validée en porte 8. Plutôt que trancher entre les deux, le bon porte désormais
+**deux secrets, parce qu'il a deux lecteurs** :
+
+| | longueur | qui le lit | protection |
+|---|---|---|---|
+| code imprimé | 8 car. / 40 bits | l'oeil, la main, la voix | étranglé, 20 échecs/h/compte |
+| jeton du QR | 32 car. / **128 bits** | une machine | inutile de l'étrangler |
+
+**Le document imprimé ne change pas d'un pixel.** Le QR encode
+`/v/<numéro>/<jeton long>` au lieu du code court.
+
+**Conséquence gagnée au passage** : l'étranglement ne gêne plus le chemin
+normal. On cherche d'abord, on étrangle ensuite — une école qui scanne son bon
+passe même si quelqu'un a mal recopié dix codes avant elle. Seuls les échecs
+comptent.
+
+Le verrou d'immuabilité couvre maintenant `scan_token`, et aussi `expires_at`
+et `origin`, oubliés au premier jet. Repousser une échéance ou requalifier une
+saisie manuelle en émission automatique, ce serait réécrire ce que le document
+atteste. **La rotation du jeton n'est pas prévue, et c'est un choix** : elle
+invaliderait un QR déjà imprimé. Si le besoin vient, il faudra RÉÉMETTRE.
+
+**Réépreuvé de bout en bout** : le code imprimé (majuscules, minuscules,
+tirets) et le jeton du QR ouvrent la même porte ; la mauvaise école est refusée
+par les deux chemins, sans une donnée ; codes faux, jeton faux et jeton d'un
+autre bon donnent tous `introuvable`. Base rendue à l'identique : 33 paiements,
+18 reçus, 0 bon, 0 contrôle, 3 verrous actifs.
+
+### LE DÉPÔT DÉCRIT DE NOUVEAU LA BASE, ET C'EST PROUVÉ
+
+Deux écarts trouvés et refermés :
+
+1. **trois migrations sans fichier**, plus deux nouvelles ce soir — les dix
+   migrations du 09/09 ont désormais leur fichier ;
+2. **cinq fichiers dont l'horodatage ne correspondait pas** à la version
+   enregistrée en base — renommés. Sans cela, un `db push` aurait tenté de les
+   rejouer.
+
+**La preuve n'est pas une impression** : on compare l'empreinte md5 de
+`pg_proc.prosrc` — le corps tel que la base le stocke — à celui extrait du
+fichier.
+
+```
+app.emettre_bon                       5228/5228   IDENTIQUE
+public.app_verifier_bon_de_courtage   4782/4782   IDENTIQUE
+public.app_consommer_bon_de_courtage  2526/2526   IDENTIQUE
+app.bon_immuable                      1084/1084   IDENTIQUE
+```
+
+Le premier essai donnait `DIFFERENT` sur `emettre_bon`, à 110 caractères près :
+mon fichier assemblé avait perdu un commentaire de deux lignes que la base
+porte. **Sans cette comparaison, l'écart serait passé inaperçu** — c'est
+exactement le défaut que ce dépôt paie depuis un an : croire un état au lieu de
+le mesurer.
+
+Outil laissé pour la suite : `comparer_depot_et_base.py` (bac à sable), à
+rejouer après toute migration.
+
+### 09/09 (nuit) — Le document : `bon_courtage_pdf.dart`, et son QR mesuré
+
+Générateur écrit d'après la maquette validée le 02/09, frère du reçu : même
+palette, même Roboto embarquée, même logo détouré, même dégradation gracieuse
+(un logo ou une police manquante ne bloque jamais l'émission).
+
+**Aucune dépendance nouvelle** : le paquet `pdf` réexporte `package:barcode`,
+donc `pw.BarcodeWidget` + `pw.Barcode.qrCode()` suffisent. Vérifié dans le cache
+local avant de l'affirmer.
+
+**LE QR NE PORTE PAS LES DONNÉES**, seulement `…/v/<numéro>/<jeton>`. S'il les
+portait, on fabriquerait un faux QR cohérent avec un faux papier. Et il porte
+le **jeton de 128 bits**, jamais le code court : celui-ci reste imprimé
+en clair, groupé par quatre (`7K4M-92XQ`), pour la saisie à la main.
+
+#### LA TAILLE DU QR EST MESURÉE, PAS CHOISIE
+
+Premier jet à 84 points. Relecture par OpenCV du document rendu à différentes
+résolutions :
+
+```
+ 84 pt : 300dpi OK · 150dpi OK · 110dpi OK · 96dpi ECHEC · 72dpi ECHEC
+112 pt : 300dpi OK · 150dpi OK · 110dpi OK · 96dpi OK    · 72dpi OK
+```
+
+**Un A4 affiché plein écran sur un téléphone est précisément autour de 96 dpi.**
+À 84 points, une école qui scanne depuis un écran aurait échoué — et ce n'est
+pas une hypothèse, c'est le défaut exact du 02/09 (41 modules dans 78 px).
+Porté à 112 points. Contenu relu à 72 dpi :
+`https://www.app.academiea.com/v/BC-2026-000147/a3f7c21e…`
+
+#### CONTRÔLE DU CONTENU, ET UN OUTIL ÉLARGI PLUTÔT QUE DUPLIQUÉ
+
+`outils/verifier_recu_pdf.py` prend désormais le dossier en argument :
+`… apercus_bon`. Dupliquer le script aurait laissé le second vieillir sans
+qu'on s'en aperçoive.
+
+Trois contrôles échouaient au premier passage, tous sur des intitulés composés
+avec `letterSpacing` : le PDF positionne chaque lettre séparément et
+l'extraction rend « À L ' A T T E N T I O N D E ». **Le texte est là, dans le
+bon ordre.** Le script réessaie donc sans espaces, et **le dit dans sa sortie**
+plutôt que de l'assouplir en silence — un contrôle qui se tait sur ce qu'il a
+relâché ne vaut plus rien.
+
+Mesures : `flutter test` **3 tests, 0 échec** · contenu **28/28** ·
+`flutter analyze` **0 problème** · non-régression du reçu **44/44**.
+
+Trois cas couverts : nominal, **taux décimal** (12,5 % ne devient ni 12 ni 13),
+et **bon sans jeton de scan** (dégradation gracieuse : il sort avec le code
+seul). Un contrôle d'ABSENCE vérifie que le jeton long ne s'imprime jamais en
+clair — sinon les deux secrets n'en feraient qu'un.
+
+### 09/09 (nuit) — Les deux marques sur le bon, et un test qui ne les voyait pas
+
+**Relevé par Jocelyn** : le logo Academia manquait en haut à droite, et Nexiom
+n'était « pas suffisamment visible ». Exact des deux côtés.
+
+**Ce qui n'allait pas.** Mon premier jet posait Nexiom à **26 points** sous un
+intitulé, et n'appelait pas du tout `academia_logo.png`. Le reçu validé le
+02/09 fait autrement, et c'est lui la référence : bande de marque en tête,
+Nexiom à gauche à **42 points**, Academia à droite à **46 points**, filet sombre
+de 1,6 pt en dessous. Le bon reprend désormais cette bande **au point près** :
+un établissement qui reçoit les deux pièces doit les reconnaître comme venant
+de la même maison.
+
+**Le flou n'en était pas un.** Les sources font 600 px de côté — à 42 points,
+cela reste ~175 px à 300 dpi. Ce qui se lisait comme du flou était la petitesse.
+Vérifié après coup sur le document produit :
+
+```
+600x600 px  ->  place a 42x42 pt     (Nexiom)
+600x664 px  ->  place a 42x46 pt     (Academia)
+```
+
+#### LE TEST LAISSAIT PASSER UN DOCUMENT SANS LOGO
+
+Le contrôle de poids valait `> 100 Ko`, hérité de l'époque où le bon ne portait
+qu'un logo. Avec les deux, le document pèse **385 Ko**. Le seuil laissait donc
+passer un bon **sans logo Academia** — Jocelyn l'a vu à l'oeil, le test non.
+Relevé à **300 Ko**, comme celui du reçu. C'est le même défaut que le 02/09 :
+un contrôle qui ne peut pas échouer ne mesure rien.
+
+Mesures après reprise : `flutter test` **3 tests, 0 échec** · contenu **28/28** ·
+`flutter analyze` **0 problème** · QR toujours relu à **96 dpi**.
+
+## 10/09/2026 — Le volet « Bons de courtage » est vivant
+
+Le second onglet de « Mes documents » affichait depuis le 02/09 :
+« cette fonctionnalité arrive prochainement ». La table existait depuis hier
+soir ; l'écran ne la lisait pas. Il la lit.
+
+### CÔTÉ SERVEUR
+
+`app_list_my_brokerage_vouchers()` — une **fonction**, pas une politique RLS.
+La table a RLS active et **aucune** politique : elle ne se lit que par des
+fonctions `SECURITY DEFINER`, comme celle des reçus. Motif identique : le bon
+porte le secret qui permet de le vérifier ; une politique de lecture, même
+juste, exposerait la table entière à la moindre erreur de jointure PostgREST.
+
+Le filtre porte sur `auth.uid()`, **jamais sur un paramètre**. L'étudiant voit
+son propre jeton de scan, et c'est normal : il détient le document, le jeton
+sert à fabriquer le QR de son bon.
+
+**Éprouvé avec trois sessions réelles** :
+
+| qui appelle | bons rendus |
+|---|---|
+| l'étudiant propriétaire | **2**, avec jeton, école, taux |
+| un autre étudiant | 0 |
+| une université | 0 |
+
+### CÔTÉ APPLICATION
+
+Trois états, trois couleurs, **et le motif écrit** : `VALABLE` (avec la date
+limite), `ACCEPTÉ` (le bon a servi, il ne peut plus), `ÉCHU` (le délai est
+passé, se rapprocher d'Academia). Un bon périmé qui ressemblerait à un bon
+valable enverrait l'étudiant se présenter pour rien à la scolarité d'une école.
+
+La carte porte l'école, la formation, le taux en gros, le numéro et le code
+groupé par quatre, et le bouton de téléchargement — qui appelle le générateur
+PDF écrit hier.
+
+**LES DEUX VOLETS SONT INDÉPENDANTS.** `chargerMesBons()` est appelée dans le
+`finally` de `chargerMesDocuments()`, pas à la suite dans le `try` : une panne
+sur les bons ne doit pas vider la liste des reçus, ni l'inverse. Les erreurs
+sont portées par deux champs distincts.
+
+### VÉRIFICATIONS
+
+`dart analyze` sur les trois fichiers touchés : **0 problème**. Les clés de
+l'instantané rendu par la RPC correspondent exactement à ce que le générateur
+PDF lit (`candidat`, `courtage`, `destinataire`, `emetteur`, `formation`,
+`reduction`). Base rendue à l'identique après l'essai : 33 paiements,
+18 reçus, 0 bon, 0 contrôle, 2 verrous actifs.
+
+`supabase/migrations/20260909230703_…` écrit, et **l'empreinte md5 de son corps
+de fonction est identique à `pg_proc.prosrc`** : le dépôt décrit toujours la base.
+
+### À NOTER POUR L'ÉCRAN DE SCAN
+
+**La permission caméra est DÉJÀ déclarée** dans `AndroidManifest.xml` (ligne 5),
+parce que `camera` et `image_picker` sont utilisés. Contrairement à ce que
+j'avais annoncé à Jocelyn, ajouter un lecteur de QR **ne coûtera pas** une
+permission de plus à justifier au Play Store — seulement une dépendance.
+
+## 10/09/2026 — Le transfert du bon à l'université : la copie n'ouvre pas la porte
+
+**Demandé par Jocelyn** : une copie de tous les bons côté administrateur, et la
+possibilité de transmettre le bon numérique à l'établissement, qui le retrouve
+dans son onglet « Mes documents ».
+
+**Sa précision, et elle commande toute la conception** : « l'étudiant doit quand
+même aller au guichet pour le scan. **On ne change pas la procédure.** C'est
+pour que l'école ait déjà une copie à son niveau. »
+
+### LA COPIE TRANSMISE NE PORTE PAS LE SECRET
+
+C'est la conséquence directe, et elle n'était pas dans la demande — je l'ai
+soulevée avant de coder. `app_university_list_brokerage_vouchers` rend tout
+**sauf** `verification_code` et `scan_token`.
+
+Sans cette omission, une école qui reçoit le transfert aurait pu appeler
+`app_consommer_bon_de_courtage` avec le code et **clore le bon sans avoir vu le
+candidat** — exactement le contraire de ce qui est demandé. Le secret voyage
+avec le papier, la copie informe sans autoriser.
+
+Vérifié sur la réponse réelle. Clés rendues à l'université :
+`consumed_at, expire, expires_at, id, issued_at, signature_hash, snapshot,
+transferred_at, voucher_number`. Ni code, ni jeton.
+
+### CE QUI EST POSÉ
+
+Deux colonnes de trace (`transferred_at`, `transferred_by`), et le verrou
+d'immuabilité les laisse passer **une seule fois** : retransmettre effacerait
+la date réelle de la première transmission.
+
+Trois fonctions : la liste **admin** (tous les bons, avec l'étudiant et
+l'école), le **transfert** (manuel, jamais automatique), et la liste
+**université** (seulement les bons transmis, sans le secret).
+
+Le transfert prévient **chaque compte** rattaché à l'établissement, par la voie
+de notification déjà en place (`app_queue_notification_event`), et **compte les
+comptes prévenus**. S'il n'y en a aucun, il le dit : « Bon transmis, mais aucun
+compte n'est rattaché à cet établissement. » Sans ce compteur, un administrateur
+croirait avoir transmis à quelqu'un — et c'est un cas réel, un compte
+université sur trente n'a pas d'identifiant d'école.
+
+### ÉPROUVÉ, SEPT POINTS, SESSIONS RÉELLES
+
+| | attendu | obtenu |
+|---|---|---|
+| l'admin voit tous les bons | 2 | 2, avec étudiant et école |
+| l'université avant transfert | 0 | 0 |
+| le transfert prévient | ≥1 | 1 compte |
+| l'université après transfert | 1 | 1, **sans code ni jeton** |
+| le bon d'une autre école | invisible | invisible |
+| second transfert | sans effet | `deja_transmis` |
+| un étudiant appelle la liste | refus | `reserve_aux_universites` |
+
+Notification retrouvée en base : domaine `university_documents`, destinataire
+correct, numéro et candidat dans la charge utile.
+
+**Base rendue à l'identique** : 33 paiements, 18 reçus, 0 bon, 0 contrôle,
+0 notification d'essai, 2 verrous actifs. Fichier de migration écrit, et les
+**quatre corps de fonction ont la même empreinte md5 que `pg_proc.prosrc`** :
+le dépôt décrit la base.
+
+### RESTE
+
+Les deux écrans : la liste des bons côté administrateur avec le bouton de
+transfert, et l'onglet « Mes documents » côté université — qui **n'existe pas**,
+son tableau de bord n'ayant que trois onglets (Candidatures, Paiements,
+Mini-site et offres).
+
+### 10/09 — Les deux écrans du transfert
+
+**Côté administrateur** : nouvel onglet « Bons de courtage », jumeau de
+« Reçus », placé juste après lui. Recherche par numéro, candidat, établissement
+ou formation. Chaque carte porte trois pastilles — l'état du bon, l'origine
+(`SAISIE MANUELLE` quand c'est le cas), et l'état du transfert — puis deux
+boutons : **Télécharger** (le PDF complet, avec code et QR) et **Transmettre**
+(la copie d'annonce, sans secret).
+
+Un bandeau compte les bons **pas encore transmis**, et le transfert demande
+confirmation : il ne se défait pas, et il prévient l'établissement. Un appui
+malheureux annoncerait un candidat à une école avant que le dossier ne soit prêt.
+
+**Côté université** : onglet « Mes documents », qui n'existait pas — le tableau
+de bord n'avait que trois onglets. En tête de liste, un rappel de la procédure :
+« Ces bons sont des copies d'annonce. Le candidat doit se présenter avec son
+bon. » Sans lui, un agent pourrait croire qu'un bon vu à l'écran vaut
+inscription.
+
+**Ni bouton « accepter », ni téléchargement du PDF**, et c'est délibéré : le PDF
+porte le code. Le donner ici viderait de son sens la règle posée côté serveur.
+
+### LE PIÈGE DES ONGLETS, ET UN FAUX POSITIF QUE J'AI FAILLI « CORRIGER »
+
+`length` doit suivre EXACTEMENT la liste des onglets et celle des vues ; un
+écart fait planter l'écran à l'ouverture. Admin : 29 → 30. Université : 3 → 4.
+
+J'ai écrit un compteur pour le vérifier plutôt que de me fier à l'oeil. **Il a
+annoncé « INCOHÉRENT : 30 onglets, 33 vues ».** Faux : il comptait aussi les
+`ChangeNotifierProvider` imbriqués. En filtrant sur l'indentation du premier
+niveau : 30, 30, 30. Université : 4, 4, 4.
+
+À retenir : **un contrôle qui se trompe coûte plus cher qu'un contrôle absent**,
+parce qu'il fait « réparer » du code sain. J'ai vérifié la liste à la main avant
+de toucher quoi que ce soit.
+
+`dart analyze` sur les quatre fichiers touchés : **0 erreur**. Les avertissements
+du tableau de bord université (lignes 370-375, 2512, 5142) sont antérieurs.
+
+### 10/09 — L'écran de scan, et un outil d'alignement qui a menti deux fois
+
+**`mobile_scanner 7.4.1`**, résolu sans conflit. Variante **non embarquée** du
+modèle MLKit (`dev.steenbakker.mobile_scanner.useUnbundled=true`) : le modèle se
+télécharge au premier usage, ~600 Ko au lieu de plusieurs mégaoctets de
+bibliothèques natives. Moins de `.so` ajoutés, moins de risque. Le compromis est
+nul : vérifier un bon exige de toute façon le réseau.
+
+**Correction à ce que j'avais annoncé** : la permission caméra est **déjà**
+déclarée dans le manifeste (ligne 5), `camera` et `image_picker` étant utilisés.
+Aucune permission de plus à justifier au Play Store.
+
+L'écran lit le QR, en extrait le numéro et le jeton de l'adresse
+`…/v/<numéro>/<jeton>`, **n'ouvre pas cette adresse** et interroge le serveur.
+Il rend les six réponses telles que le serveur les envoie — les dupliquer côté
+écran ferait vieillir les deux versions séparément. Saisie à la main toujours
+offerte : papier froissé, QR trop petit, appareil photo indisponible.
+Bouton « Accepter et clore » seulement quand le serveur dit `peut_consommer`.
+
+### L'OUTIL QUI A MENTI DEUX FOIS, ET CE QU'IL A FALLU POUR LE CROIRE
+
+`outils/verifier_alignement_16ko.py`, écrit parce que `ar_flutter_plugin` avait
+dû être retiré pour ce motif et qu'aucun contrôle n'existait.
+
+**Premier mensonge.** Version 1 : elle lisait la position de chaque `.so` DANS
+L'ARCHIVE. Verdict sur le bundle du 09/09 : **les cinquante bibliothèques non
+alignées** — pour une application publiée. Deux choses se confondaient :
+l'alignement zip, qui ne concerne que l'APK et que Play refait lui-même à partir
+d'un bundle ; et l'alignement des **segments ELF** (`p_align` des PT_LOAD), qui
+est la propriété de la bibliothèque et la vraie exigence d'Android 15.
+
+**Second mensonge.** Version 2, corrigée pour lire les en-têtes ELF :
+**20 bibliothèques fautives**. Ventilé par architecture :
+
+```
+arm64-v8a     21 conformes,  0 sous 16 Ko
+x86_64        21 conformes,  0 sous 16 Ko
+armeabi-v7a    9 conformes, 20 sous 16 Ko
+```
+
+Les vingt étaient **toutes en 32 bits**. La page de 16 Ko est une affaire
+d'appareils 64 bits ; ffmpeg, WebRTC et libc++ resteront en 4 Ko en `armeabi-v7a`
+sans que Play s'en émeuve. Version 3 : ne juge que le 64 bits.
+
+**Référence établie avant l'ajout** : 42 bibliothèques 64 bits, **toutes** à
+16 Ko. L'application est publiable en l'état ; il reste à vérifier que le
+lecteur de QR ne casse pas ce résultat (construction en cours).
+
+> **Ce qu'on retient.** Un contrôle qui se trompe coûte plus cher qu'un contrôle
+> absent : deux fois de suite, celui-ci allait me faire annoncer une catastrophe
+> inexistante. C'est la deuxième fois de la journée, après le compteur d'onglets.
+> Un outil neuf se vérifie D'ABORD sur un cas dont on connaît la réponse.
+
+---
+
+## 10/09/2026 — la saisie au comptoir, et la clé étrangère que je n'avais pas regardée
+
+**Ce que Jocelyn a demandé.** Que l'administrateur puisse saisir lui-même les
+données d'une personne et produire le reçu et le bon de courtage, *« que
+l'application le considère comme si ça avait suivi le processus normal. Même
+pour la vérification de l'université, que ce soit exactement comme si c'était le
+processus normal. »*
+
+**Ce qui a été construit.** `public.app_admin_emettre_documents_manuels` :
+fiche complétée → candidature `accepted` **avec son taux** → paiement confirmé
+« encaissé hors plateforme » → puis les **mêmes** `app.emettre_recu` et
+`app.emettre_bon` que le parcours étudiant. Aucun deuxième générateur de
+documents. Le bon produit se vérifie, se consomme et se transfère par les
+fonctions déjà en place ; seul `brokerage_vouchers.origin` le distingue, et il
+n'apparaît pas sur le papier.
+
+**LA FAUTE, ET COMMENT ELLE S'EST VUE.** J'avais écrit noir sur blanc, dans la
+migration `20260910081554`, que `app.students` n'a aucune clé étrangère vers
+`auth.users` — et bâti dessus toute la fonction, qui créait une fiche pour une
+personne sans compte. J'avais interrogé `pg_constraint` sur **cinq tables
+nommées**, et `students` n'en faisait pas partie. Une absence de résultat sur
+une table qu'on n'a pas interrogée n'est pas une absence de contrainte. La
+mesure juste :
+
+```
+students_id_fkey  FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE
+```
+
+L'essai transactionnel l'a dit en une seconde :
+
+```
+ERROR 23503: insert or update on table "students" violates foreign key
+constraint "students_id_fkey"
+```
+
+**Ce que la plateforme avait déjà tranché.** L'Edge Function
+`admin-create-student-account` (09/09) crée le compte depuis le tableau de bord,
+et le déclencheur `on_auth_user_created` pose la fiche `app.students` pour
+**tout** compte. « Une personne qui ne peut pas créer de compte » veut dire
+qu'elle ne peut pas le faire elle-même : l'administrateur le fait pour elle.
+Migration `20260910082315` : la saisie s'appuie sur un compte existant, complète
+la fiche sans jamais effacer un champ déjà renseigné, et ne marque
+`manual_entry_by` que sur un compte **jamais ouvert** par son titulaire —
+marquer la fiche d'un étudiant actif dirait une contre-vérité sur lui.
+
+**Ce que ça coûte, et qui doit trancher.** Une adresse de courriel devient
+obligatoire au comptoir, puisque Auth en exige une. L'autre voie serait de
+remplacer `students_id_fkey` par un déclencheur conditionnel : c'est une
+décision de modèle de données, elle revient à Jocelyn.
+
+**Preuves, toutes en transaction annulée** (`RAISE EXCEPTION` en fin de bloc,
+qui rend le résultat *et* défait l'écriture) :
+
+| Cas | Résultat mesuré |
+|---|---|
+| émission | reçu `REC-…`, bon `BC-…`, `origin = saisie_manuelle` |
+| taux décimal 12,5 | conservé tel quel dans l'instantané du bon |
+| courriel saisi | porté sur le reçu (`payment_receipts.student_email`) |
+| montant saisi 20 000 au lieu des 25 000 du programme | honoré, et tracé au journal d'audit |
+| bonne école, QR | bon complet |
+| bonne école, code à 8 caractères | même bon complet |
+| mauvaise école | *« émis par Nexiom Group, mais il n'est pas adressé à votre établissement »*, **sans nommer le destinataire** |
+| deuxième émission identique | refusée, `bon_deja_vivant`, le bon existant est nommé |
+| avec `p_forcer` | second bon émis |
+| appel par un étudiant | `not_admin` |
+| après les essais | `brokerage_vouchers`, `payment_receipts`, `applications` : **0 ligne restée** |
+
+**Deux ajouts utiles au passage.** `app.emettre_recu` accepte un courriel de
+repli (une seule ligne du corps change ; l'ancienne signature à trois arguments
+est supprimée pour qu'aucun appel ne devienne ambigu), et
+`app_admin_documents_du_paiement` rend le paiement, le reçu et le bon dans les
+formes exactes qu'attendent les deux fabriques de PDF — un appel pour imprimer,
+et le même geste pour réimprimer plus tard.
+
+**Côté application.** `AdminManualDocumentsProvider` et
+`AdminManualDocumentsScreen`, ouverts par un bouton « Saisie au comptoir » posé
+dans l'écran des bons — et pas dans un 31ᵉ onglet : ce que la saisie produit,
+c'est un bon ; sa place est là où les bons se regardent. `flutter analyze` :
+**0 erreur**.
+
+**Une inquiétude levée par la mesure.** Une dizaine de fonctions lisent le rôle
+dans `raw_user_meta_data`, que l'utilisateur peut écrire. Le déclencheur
+`trg_sync_role_from_app_metadata` (BEFORE INSERT OR UPDATE sur `auth.users`)
+**repose** ce champ depuis `raw_app_meta_data` dans la même transaction : une
+tentative d'auto-promotion est effacée avant d'être visible. Ces contrôles sont
+donc sûrs en pratique ; il n'y a pas de chantier de reprise à ouvrir.
+
+> **Ce qu'on retient.** Le même défaut que la veille avec le compteur d'onglets
+> et le contrôle d'alignement : j'ai conclu d'un silence que je n'avais pas
+> provoqué. Ce qui a sauvé la mise cette fois, c'est d'avoir essayé **en
+> transaction annulée** avant d'annoncer quoi que ce soit — le coût de l'essai
+> était d'une seconde, celui de la fausse annonce aurait été une saisie au
+> comptoir qui échoue devant un candidat.
+
+---
+
+## 10/09/2026 (soir) — les trois documents, et une porte de service restée ouverte
+
+**Ce que Jocelyn a précisé.** Les trois documents sont le **bon de courtage**,
+le **reçu du courtage** et le **reçu des autres achats** (crédits et le reste).
+Sa demande : *« l'administrateur doit être capable de pouvoir les télécharger et
+les recevoir dans ces documents lui aussi, ainsi que l'étudiant »*, sans
+affaiblir la transmission à l'école. Il a joint `recu_credits.pdf`, le modèle
+validé.
+
+**Le modèle validé est ce que le code produit déjà.** Les deux images
+incrustées dans son PDF mesurent 600×600 et 600×664 pixels — exactement
+`assets/marque/nexiom_logo.png` et `assets/marque/academia_logo.png`, les deux
+fichiers que charge `payment_receipt_pdf.dart`. Nexiom est posé à gauche en
+42×42 points, Academia à droite en 42×46. Le reçu d'achat de crédits n'est donc
+pas à refaire.
+
+### La porte de service
+
+Un audit en cinq dimensions a tourné avant tout code. Il a rendu quatre
+dimensions sur cinq — la limite de session a emporté la cinquième et l'étape de
+réfutation. J'ai donc vérifié moi-même les constats les plus graves. Le premier
+était vrai, et grave :
+
+```
+fonction                  proacl                     authenticated  anon
+app.emettre_recu          NULL (= EXECUTE à PUBLIC)  oui            oui
+app.emettre_bon           NULL (= EXECUTE à PUBLIC)  oui            oui
+app.code_verification_bon NULL (= EXECUTE à PUBLIC)  oui            oui
+```
+
+Le schéma `app` est atteignable depuis le client — 40 appels
+`client.schema('app')` dans `academia_app/lib` — donc PostgREST expose aussi
+`POST /rest/v1/rpc/emettre_bon`. Et `app.emettre_bon` ne vérifiait **ni**
+l'appelant **ni le statut du paiement**. Un étudiant dont l'administrateur vient
+de fixer le taux pouvait, **sans payer**, se fabriquer un bon de courtage
+authentique : numéroté, signé, avec son QR et son code, indiscernable au guichet.
+Le verrou du 09/09 — « pas de paiement possible tant que le pourcentage n'est
+pas validé » — était contournable par la porte de service.
+
+Cause : une fonction PostgreSQL est exécutable par PUBLIC **par défaut**. Les RPC
+de `public` portent toutes un REVOKE ; ces deux-là, écrites les 02/09 et 09/09,
+n'en ont jamais eu, et l'`ALTER DEFAULT PRIVILEGES` du 04/08 ne les couvrait pas.
+
+**Deux verrous plutôt qu'un** : le REVOKE ferme la porte, une garde de statut la
+verrouille de l'intérieur (`paiement_non_confirme`).
+
+### La régression que j'ai introduite en la corrigeant
+
+En réécrivant `app.emettre_bon` pour y poser la garde, j'ai recopié son
+`SET search_path` **de mémoire** : `'public', 'app', 'pg_temp'`. La vraie valeur
+était `'app', 'public', 'extensions', 'pg_temp'`, et `extensions` n'y était pas
+par hasard — c'est là que vit pgcrypto, donc `gen_random_bytes`, donc le jeton du
+QR. Résultat immédiat :
+
+```
+ERROR 42883: function gen_random_bytes(integer) does not exist
+QUERY: v_jeton := encode(gen_random_bytes(16), 'hex')
+```
+
+Plus aucun bon n'était émissible. Vu en trente secondes par l'essai en
+transaction annulée qui suivait, et corrigé par un `ALTER FUNCTION ... SET` qui
+ne touche pas au corps. `app.brokerage_vouchers` étant vide, aucun document réel
+n'a été perdu — mais la saisie au comptoir livrée le matin aurait échoué devant
+un candidat.
+
+> **Ce qu'on retient.** Un `SET search_path` fait partie du contrat d'une
+> fonction, au même titre que sa signature. Le recopier de mémoire, c'est
+> réécrire une dépendance sans l'avoir lue. Troisième fois en deux jours que je
+> conclus d'un silence que je n'avais pas provoqué.
+
+**Preuves, en transaction annulée** :
+
+| Cas | Résultat mesuré |
+|---|---|
+| porte `authenticated` / `anon` | fermée / fermée |
+| parcours normal (saisie au comptoir) | bon `BC-…` et reçu `REC-…` émis |
+| bon sur paiement `pending` | `paiement_non_confirme` |
+| reçu sur paiement `pending` | `paiement_non_confirme` |
+| après les essais | 0 ligne restée |
+
+### La demande de Jocelyn
+
+**La copie de l'administrateur ne valait pas celle de l'étudiant.**
+`app_admin_list_payment_receipts_with_context` rendait l'instantané mais pas
+`signature_hash`, `student_name`, `student_phone`, `student_email`,
+`training_name`, `credit_pack_name`. Le PDF n'imprime le bloc d'empreinte que si
+`signature_hash` est renseigné : la copie administrateur sortait **sans
+empreinte de vérification**, et sur les 18 reçus de production — tous antérieurs
+à l'instantané version 2 — **sans le nom du payeur**. Mesure après correction :
+18 reçus, **0 sans nom**. Reste : `signature_hash` NULL sur 18/18, que seule une
+reprise pourrait remplir, et qui suppose de lever le déclencheur
+`payment_receipts_no_update`.
+
+**Le téléchargement était à deux clics** côté administrateur, contre un seul sur
+l'écran jumeau des bons. Il est désormais dans la liste, et le retour est **lu**
+— un « téléchargé » affiché sans vérifier est le faux succès du 03/09.
+
+**« Mes documents » de l'administrateur** regroupe les trois documents en trois
+volets : reçu de courtage, reçu des autres achats, bon de courtage. C'est un
+**regroupement, pas un onglet de plus** : les deux onglets « Reçus » et « Bons de
+courtage » n'en font plus qu'un, et le tableau de bord passe de **30 à 29
+onglets**. Les deux listes sont réutilisées telles quelles, la première avec un
+filtre de motif : aucun troisième écran de liste, donc aucun troisième endroit où
+corriger le prochain défaut.
+
+**Côté étudiant**, les quatre motifs sans étiquette — cours en ligne,
+orientation, prépa concours, place de marché — en ont une. Sur un reçu de
+version 1 la désignation est vide : la carte ne disait alors ni ce qui avait été
+payé, ni pour quoi.
+
+`flutter analyze` sur tout le projet : **0 erreur, 0 avertissement**. Les cinq
+fonctions touchées sont identiques au caractère près entre le dépôt et la base
+(comparaison md5 de `pg_proc.prosrc`). Onglets et vues relus un par un : 29 et
+29, cohérents avec `length: 29` — un compteur écrit pour l'occasion avait
+répondu 34 et 30, et on ne compte pas ce qu'on peut lire.
+
+---
+
+## 10/09/2026 (nuit) — la compilation échouait pour trois raisons empilées
+
+Jocelyn : « la compilation dans ton terminal intégré n'a pas abouti ». Aucune
+n'était une régression du code. `flutter analyze` était à 0 erreur avant, pendant
+et après.
+
+**Couche 1 — le disque.** `java.io.IOException: Espace insuffisant sur le
+disque` sur `:app:mergeDebugNativeLibs`. Mesure : **0,1 Go libre sur 237**, soit
+0 %. `flutter clean` a rendu 4,2 Go ; la compilation a resaturé et échoué au
+même endroit. Ce sont les caches Gradle qui portent le volume : `caches/8.14`
+(4,4 Go), puis `caches/8.12` (8,0 Go) après avoir arrêté le démon qui tenait
+`fileContent.lock`. Total **16 Go**.
+
+**Couche 2 — la mémoire du démon.** La compilation suivante a tenu 17 minutes,
+puis : `Execution failed for JetifyTransform: ...io.flutter/arm64_v8a_debug...jar
+> Java heap space`. Jetifier réécrit chaque archive vers AndroidX ; tant que les
+transformations sont en cache il n'en refait aucune, et 3 Go passent. **À froid
+il les refait toutes dans le même démon**, et 3 Go ne passent plus. C'est un
+réglage qui ne se voit que le jour où le cache disparaît — et sur ce poste le
+cache disparaît chaque fois que le disque sature. Porté à **6 Go** dans
+`academia_app/android/gradle.properties`, sur une machine de 23,8 Go.
+
+**Couche 3 — la place n'était pas dans le projet.** Le projet et ses caches ne
+pesaient que 22 Go sur 237. Relevé : Docker 24 Go, Packages 15,3, OneDrive 13,3,
+Google 10,8, CapCut 9,7. Sur autorisation explicite de Jocelyn, Docker a été
+vidé.
+
+> **Le point technique qui compte.** `docker system prune` n'aurait rendu **aucun
+> octet** : sur Windows/WSL2, le disque virtuel ne se rétracte pas quand on
+> efface son contenu. Il faut supprimer `AppData\Local\Docker\wsl\disk\docker_data.vhdx`
+> (23,84 Go), moteur arrêté et `wsl --shutdown` passé, sans quoi le fichier est
+> verrouillé. Docker Desktop le recrée vide au démarrage suivant. Le contenu
+> n'a pas pu être énuméré : le moteur ne répondait pas en 45 s, la distribution
+> WSL étant arrêtée. Ce qui s'y trouvait est perdu ; le Docker de production sur
+> LWS est une autre machine et n'est pas concerné.
+
+**Résultat mesuré** :
+
+| | |
+|---|---|
+| Libre au départ | 0,1 Go |
+| Libre après nettoyage complet | 24,91 Go |
+| Compilation | `√ Built build\app\outputs\flutter-apk\app-debug.apk` |
+| APK | 313 Mo, 20 h 28 |
+| Durée de la tâche Gradle | 592 s |
+| Libre après compilation | 13,03 Go |
+
+**Deux erreurs commises en route, pour mémoire.** Vider `AppData\Local\Temp` en
+entier détruit `Temp\claude\<projet>\<session>\tasks`, où l'agent écrit ses
+propres sorties d'outil : la commande s'exécute, son résultat devient illisible.
+Et `~/.gradle/daemon` est refusé par le garde-fou du dépôt — ce qui est bien.

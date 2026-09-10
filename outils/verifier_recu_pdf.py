@@ -33,7 +33,16 @@ except ImportError:  # pragma: no cover
     sys.exit(2)
 
 
-DOSSIER = Path(__file__).resolve().parent.parent / "academia_app" / "build" / "apercus_recu"
+BUILD = Path(__file__).resolve().parent.parent / "academia_app" / "build"
+
+# Le dossier se passe en argument depuis le 09/09, pour que le BON DE COURTAGE
+# soit contrôlé par le même outil que le reçu. Deux documents, deux jeux de
+# contrôles, une seule mécanique — dupliquer ce script aurait laissé le second
+# vieillir sans qu'on s'en aperçoive.
+#
+#     python ../outils/verifier_recu_pdf.py              -> apercus_recu
+#     python ../outils/verifier_recu_pdf.py apercus_bon  -> le bon de courtage
+DOSSIER = BUILD / (sys.argv[1] if len(sys.argv) > 1 else "apercus_recu")
 
 
 def normaliser(t: str) -> str:
@@ -61,6 +70,7 @@ def main() -> int:
 
     controles = json.loads(manifeste.read_text(encoding="utf-8"))
     fautes: list[str] = []
+    espaces: list[str] = []
     verifies = 0
 
     for c in controles:
@@ -74,11 +84,23 @@ def main() -> int:
                 fautes.append(f"{c['fichier']} : {doc.page_count} pages, une seule attendue")
             texte = normaliser("\n".join(p.get_text() for p in doc))
 
+        # LE CRÉNAGE CASSE LA COMPARAISON, ET CE N'EST PAS UNE FAUTE.
+        # Les intitulés de section sont composés avec `letterSpacing` : le PDF
+        # positionne alors chaque lettre séparément, et l'extraction rend
+        # « À L ' A T T E N T I O N  D E ». Le texte EST là, dans le bon ordre.
+        # On réessaie donc sans aucune espace avant de crier au manque, et on
+        # le dit dans la sortie plutôt que de le masquer — un contrôle qui se
+        # tait sur ce qu'il a assoupli ne vaut plus rien.
+        sans_espaces = "".join(texte.split())
+
         for attendu in c["attendus"]:
-            if normaliser(attendu) not in texte:
-                fautes.append(f"{c['fichier']} : MANQUE « {attendu} »")
-            else:
+            if normaliser(attendu) in texte:
                 verifies += 1
+            elif "".join(normaliser(attendu).split()) in sans_espaces:
+                verifies += 1
+                espaces.append(f"{c['fichier']} : « {attendu} » (lettres espacées)")
+            else:
+                fautes.append(f"{c['fichier']} : MANQUE « {attendu} »")
 
         for absent in c.get("absents", []):
             if normaliser(absent) in texte:
@@ -87,6 +109,11 @@ def main() -> int:
                 verifies += 1
 
     print(f"{len(controles)} document(s), {verifies} contrôle(s) satisfait(s).")
+    if espaces:
+        print(f"\n{len(espaces)} trouvé(s) seulement après suppression des espaces "
+              f"(crénage des intitulés, attendu) :")
+        for e in espaces:
+            print(f"  · {e}")
     if fautes:
         print(f"\n{len(fautes)} FAUTE(S) :")
         for f in fautes:

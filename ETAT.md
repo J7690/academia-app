@@ -5,10 +5,170 @@
 > lequel est vrai aujourd'hui. Celui-ci le dit. Les autres sont des **archives
 > datées** : on les lit pour comprendre *pourquoi*, jamais pour savoir *où on en est*.
 >
-> **Relevé le : 08/09/2026, 11 h.** Toute ligne non datée est réputée périmée.
+> **Relevé le : 10/09/2026, 19 h.** Toute ligne non datée est réputée périmée.
 > Toute affirmation ici doit être **mesurée**, jamais supposée (cf. §7).
 
 ---
+
+> ### 🟠 TABLEAU MANUSCRIT AU 09/09 — écrit, prouvé à l'image, **PAS DÉPLOYÉ**
+>
+> **Le titre de scène n'était pas mal placé : il n'était pas dessiné.** Le moteur
+> ne dessine un titre que pour un bloc de type `title` ; le modèle range le titre
+> dans `scene.title` et n'en émet presque jamais. Mesure sur la production :
+> **772 scènes sur 1 087 (71 %) portent un titre que personne n'a jamais vu.**
+> Ce que Jocelyn prenait pour le titre était la première phrase du cours.
+>
+> Corrigé par `injecter_titres_de_scene()`, appelée **avant la narration** (sinon
+> `len(block_durations) != len(blocks)` et la synchronisation voix/écriture du
+> 07/08 est perdue). Titre à **116 px contre 80 px** pour le corps, centré,
+> souligné. Coût ~1,6 s par scène.
+>
+> Second défaut trouvé à l'image : le correctif du 08/09 sur les mots-clés les
+> rendait **rouges dès la première image**, avant leur phrase. Fermé par
+> `opacity:0` au repos.
+>
+> **Ni l'un ni l'autre n'est en ligne.** `whiteboard_page_builder.py` et
+> `whiteboard_render_worker.py` attendent l'autorisation. Et surtout :
+> **0 rendu depuis le déploiement du 08/09 12:10** — le moteur du 08/09 n'a
+> encore jamais tourné pour personne.
+>
+> ### 🟢 CHANTIER EN COURS AU 09/09 (soir) — le courtage, de bout en bout
+>
+> **Fait et éprouvé** : le taux de réduction est devenu un **nombre**, et
+> **aucun paiement de courtage n'est possible tant qu'un administrateur ne l'a
+> pas fixé**. Deux migrations appliquées, verrou éprouvé sur le parcours réel
+> (refus sans taux → l'admin pose 15 % → paiement ouvert), base rendue à
+> l'identique. L'écran administrateur porte la section « Réduction négociée ».
+>
+> **Effet immédiat sur la production** : 16 candidatures acceptées, aucune n'a
+> de taux ; **4 étudiants** ne peuvent plus déclencher leur paiement de
+> courtage tant qu'un administrateur n'a pas saisi le taux. Voulu. La vue
+> `app.candidatures_en_attente_de_taux` dit qui attend.
+>
+> **Reste sur ce chantier** : le motif affiché côté étudiant, puis le **bon de
+> courtage** (table, séquence `BC-`, émission unique, PDF, QR), l'écran de
+> **vérification par l'université**, et la **saisie manuelle** par
+> l'administrateur — qui doit passer par la même fonction d'émission.
+> Détail et mesures : journal du 09/09 (soir).
+>
+> ### 🟢 AU 10/09 — le bon de courtage est complet, la saisie au comptoir aussi
+>
+> **Ce qui existe et a été éprouvé, en base et à l'écran** :
+>
+> * **Le bon de courtage** : table, séquence `BC-`, émission unique, empreinte,
+>   deux secrets (jeton de 128 bits dans le QR, code de 8 caractères sur le
+>   papier), expiration à 14 jours, verrou d'immuabilité.
+> * **La vérification par l'université** : scanner intégré à l'application
+>   (`mobile_scanner`, variante **non embarquée** — l'APK ne gagne **aucune**
+>   bibliothèque native, mesuré : 42 bibliothèques 64 bits, toutes ≥ 16 Ko,
+>   identique à la référence d'avant le changement). Une école qui scanne un
+>   bon qui ne lui est pas adressé lit : *« émis par Nexiom Group, mais il
+>   n'est pas adressé à votre établissement »* — **sans nommer le
+>   destinataire**.
+> * **La copie et le transfert** : l'administrateur voit tous les bons et
+>   transmet manuellement la copie d'annonce à l'école, qui la retrouve dans
+>   son onglet « Mes documents » et est notifiée. **La procédure ne change
+>   pas** : l'étudiant se présente quand même au guichet pour le scan.
+> * **La saisie au comptoir** (10/09) : `app_admin_emettre_documents_manuels`
+>   fabrique les mêmes lignes que le parcours étudiant puis appelle
+>   `app.emettre_recu` et `app.emettre_bon`. Éprouvé en transaction annulée :
+>   émission → `origin = saisie_manuelle` → la bonne école lit le bon complet
+>   par QR **et** par code, la mauvaise est refusée, un second bon vivant est
+>   refusé (`bon_deja_vivant`), un étudiant reçoit `not_admin`. **Rien n'est
+>   resté en base après l'essai** (vérifié).
+>
+> **CE QUE ÇA COÛTE, ET IL FAUT LE TRANCHER** : `app.students.id` référence
+> `auth.users(id)`. Une fiche **est** un compte. La saisie au comptoir crée
+> donc le compte du candidat via l'Edge Function `admin-create-student-account`
+> déjà en place — ce qui rend **une adresse de courriel obligatoire**. Si ce
+> public n'en a pas, l'autre voie est de remplacer `students_id_fkey` par un
+> déclencheur conditionnel : décision de modèle de données, elle revient à
+> Jocelyn.
+>
+> **Migrations du 10/09** : `20260910071847` (transfert),
+> `20260910081554` (colonne `manual_entry_by`, `emettre_recu` accepte un
+> courriel de repli — **sa fonction de saisie était fausse, voir ci-dessous**),
+> `20260910082315` (la saisie corrigée), `20260910082816`
+> (`app_admin_documents_du_paiement`).
+>
+> **Faute du 10/09, corrigée le jour même** : j'ai écrit « `app.students` n'a
+> aucune clé étrangère vers `auth.users` » après avoir interrogé
+> `pg_constraint` sur cinq tables **qui ne comprenaient pas `students`**. Une
+> absence de résultat sur une table qu'on n'a pas interrogée n'est pas une
+> absence de contrainte. L'essai transactionnel l'a montré avant tout
+> déploiement.
+>
+> ### 🔴 AU 10/09 (SOIR) — une porte de service refermée, et les trois documents
+>
+> **LE DÉFAUT LE PLUS GRAVE DE LA JOURNÉE, trouvé par audit et vérifié à la
+> main.** `app.emettre_recu` et `app.emettre_bon` avaient `proacl` à NULL,
+> c'est-à-dire **EXECUTE ouvert à PUBLIC** — `anon` compris. Le schéma `app`
+> étant exposé au client (40 appels `client.schema('app')`), PostgREST offrait
+> `POST /rest/v1/rpc/emettre_bon`. Et `emettre_bon` ne vérifiait ni l'appelant
+> ni le statut du paiement : **un étudiant dont le taux venait d'être fixé
+> pouvait se fabriquer un bon de courtage authentique sans payer.** Fermé par
+> REVOKE **et** par une garde de statut à l'intérieur des deux fonctions.
+> Éprouvé : porte fermée pour `authenticated` et `anon`, parcours normal
+> intact, `paiement_non_confirme` sur un paiement en attente, 0 ligne restée.
+>
+> **Régression introduite puis corrigée dans la foulée** : en réécrivant
+> `emettre_bon`, j'ai recopié son `SET search_path` de mémoire et perdu le
+> schéma `extensions` — donc `gen_random_bytes`, donc le jeton du QR. Plus
+> aucun bon émissible pendant quelques minutes. Aucun document réel perdu (la
+> table était vide), mais la saisie au comptoir aurait échoué devant un
+> candidat.
+>
+> **Les trois documents, côté administrateur** (demande de Jocelyn du 10/09) :
+> son onglet **« 📄 Mes documents »** regroupe reçu de courtage, reçu des autres
+> achats et bon de courtage, chacun téléchargeable **en un clic**. C'est un
+> regroupement : les deux onglets « Reçus » et « Bons de courtage » fusionnent,
+> le tableau de bord passe de **30 à 29 onglets**.
+>
+> **La copie de l'administrateur valait moins que celle de l'étudiant** : sa RPC
+> ne rendait ni `signature_hash` ni le nom du payeur, donc son PDF sortait sans
+> empreinte de vérification et sans nommer personne. Corrigé ; mesure après :
+> 18 reçus, **0 sans nom**.
+>
+> **Le modèle validé du reçu de crédits est ce que le code produit déjà** : les
+> deux images de `recu_credits.pdf` sont exactement les deux logos de
+> `assets/marque/`, aux tailles que pose le générateur.
+>
+> **CE QUI RESTE, ET QUI DEMANDE UNE DÉCISION DE JOCELYN** :
+> * les 18 reçus existants n'ont **pas d'empreinte** (`signature_hash` NULL sur
+>   18/18) ; la remplir suppose de lever le déclencheur d'immuabilité ;
+> * **« recevoir » n'est vrai pour personne** : `app.email_queue` compte 11
+>   lignes, toutes en attente, la plus ancienne du 15/07 — **aucune tâche cron
+>   ne la vide**, et 8 de ces lignes désignent des reçus qui n'existent plus ;
+> * la **place de marché** n'émet aucun reçu (elle écrit dans
+>   `app.marketplace_payments`, que `payment_receipts` ne peut pas référencer) ;
+> * les **8 courtages confirmés** d'avant le 09/09 n'ont pas de bon et ne sont
+>   pas rattrapables en l'état (leur taux est NULL).
+>
+> **Rien n'est commité ni poussé.** `main` est figé au 05/08.
+>
+> **Rappel mesuré le 09/09** : les trois reçus validés sont reproduits **au
+> caractère près** par le code d'aujourd'hui (1 408 / 1 224 / 1 116 caractères,
+> texte identique), et l'écran « Mes documents » **fonctionne** — session
+> étudiante réelle, HTTP 200, 18 reçus. Ce point, noté « jamais tourné » au
+> 02/09, est levé.
+
+> ### 🔴 INCIDENT DU 09/09 — le compte administrateur, verrouillé par mon script
+>
+> De **08:19 à 15:53**, Jocelyn n'a pas pu se connecter. Cause : mon script de
+> test a posé un mot de passe aléatoire sur son compte admin
+> (`wendenkoote@gmail.com`) pour ouvrir une session, et n'a pas écrit l'étape
+> qui le retire. Ni la base ni les tables administrateur n'étaient en cause :
+> les trois déclencheurs sur `auth.users` sont inoffensifs pour un admin, le
+> compte n'était ni banni ni suspendu. Réparé sur autorisation explicite,
+> connexion revérifiée par le chemin de l'application (clé anon).
+>
+> **La règle qui en sort est dans `CLAUDE.md` §11** : un script ne pose jamais
+> de mot de passe sur le compte d'une personne réelle. Utiliser
+> `admin.review@academia.test`. Détail complet dans le journal, 09/09 (soir).
+>
+> Reste ouvert : **aucun écran ne permet à un admin de changer son mot de
+> passe** ; sa seule porte de secours est le courriel de récupération, dont le
+> jeton PKCE n'ouvre que dans le navigateur qui l'a demandé.
 
 > **PASSATION** — pour reprendre le chantier sans ce fil de discussion :
 > `docs/PASSATION_STUDIO_3D_2026-08-14.md` (architecture, huit couches du
