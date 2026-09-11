@@ -3277,3 +3277,73 @@ vidé.
 entier détruit `Temp\claude\<projet>\<session>\tasks`, où l'agent écrit ses
 propres sorties d'outil : la commande s'exécute, son résultat devient illisible.
 Et `~/.gradle/daemon` est refusé par le garde-fou du dépôt — ce qui est bien.
+
+---
+
+## 11/09/2026 — masquer un écran ne ferme pas la porte du serveur
+
+La veille au soir, l'onglet « Paiements » du tableau de bord université a été
+masqué, sur ce motif de Jocelyn : « l'onglet paiement côté université reçoit
+aussi le reçu du paiement de l'intéressé. » L'écran a disparu. **Les droits
+serveur, eux, n'avaient pas bougé** — un compte université garde son jeton et
+peut appeler les fonctions directement.
+
+Quatre portes restaient ouvertes, mesurées une par une.
+
+| Porte | Ce qui passait |
+|---|---|
+| `app_university_list_brokerage_vouchers` — onglet « Mes documents » | `snapshot` entier, donc `courtage.montant` et `courtage.reference` |
+| `app_verifier_bon_de_courtage` — le scan au guichet | le même instantané, dans trois branches sur cinq |
+| `app_university_list_payments` | `amount_due`, `amount_paid`, `reference_code` — la source de l'onglet masqué |
+| `trg_uni_payment_notify` | `amount_paid` dans le payload stocké : **53 événements** destinés à des écoles |
+
+Les deux premières sont précisément les chemins que Jocelyn veut **garder**.
+Le bon de courtage transportait donc lui-même ce que le reçu disait.
+
+**Le correctif tient en une fonction.** `app.bon_vu_par_l_ecole(jsonb)` retire
+`montant`, `reference` et `devise` du bloc `courtage`, et **conserve
+`acquitte_le`** : l'école doit savoir que les frais sont réglés, pas combien ils
+étaient. Le filtre vit à un seul endroit parce que deux fonctions rendent ce
+bon ; chacune filtrant de son côté, elles auraient divergé au premier champ
+ajouté. Au scan, la vue dépend de qui regarde — l'administrateur, qui a
+encaissé, garde tout.
+
+> **On filtre à la sortie, jamais à l'émission.** L'instantané stocké ne bouge
+> pas : `app.empreinte_bon` en dépend et `app.bon_immuable` refuse toute
+> écriture dessus. Le PDF du candidat et la copie de l'administrateur gardent
+> le montant ; seule la copie de l'école le perd.
+
+**Preuve, sur le bon réel de production BC-2026-000015 :**
+
+```
+stocké en base    devise, montant 25000, reference, acquitte_le
+école — scan      acquitte_le
+école — liste     acquitte_le
+admin — scan      devise, montant 25000, reference, acquitte_le
+```
+
+Le scan de l'école rend toujours `valide` : la vérification n'est pas abîmée.
+
+**Une alerte de la revue était fausse, et il faut le dire.** Elle donnait la
+lecture directe de `app.application_payments` par PostgREST comme la fuite la
+plus large. Mesure en transaction annulée, rôle `authenticated` endossé :
+
+```
+jeton RÉEL de Supabase        -> 0 paiement, 0 reçu visibles
+jeton avec role à la racine   -> 1 paiement
+```
+
+La politique `university_select_own_payments` teste `auth.jwt() ->> 'role'` à la
+**racine** du jeton ; Supabase y met `authenticated` et range le rôle métier
+dans `app_metadata`, et ce projet n'a aucun hook de jeton personnalisé. La porte
+est donc close — **par accident**. La politique ne protège pas, elle ne
+s'applique jamais. Le noter, pour que personne ne la « répare » en ouvrant ce
+qui est fermé.
+
+**Le jumeau serveur du masquage.** `app_university_list_payments` est révoquée.
+Réactiver l'onglet demandera donc deux gestes, pas un : la constante côté
+Flutter et le `GRANT` côté base. C'est voulu — un écran qui revient doit être
+une décision, pas un oubli.
+
+Quatre empreintes md5 vérifiées entre les fichiers de migration et
+`pg_proc.prosrc` : le dépôt décrit la base.
