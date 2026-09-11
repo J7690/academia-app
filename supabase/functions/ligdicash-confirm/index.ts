@@ -176,6 +176,55 @@ serve(async (req: Request) => {
 
       ligdicashToken = lgData.token || '';
 
+      // ── LE JETON S'ÉCRIT AVANT LA SCRUTATION, PAS APRÈS (11/09/2026) ─────
+      //
+      // Le POST ci-dessus a LANCÉ LE DÉBIT. À partir d'ici, l'argent peut
+      // quitter le compte de l'étudiant, que la suite de cette fonction
+      // réussisse ou non.
+      //
+      // La scrutation qui suit n'attend que 30 secondes. Au-delà, la fonction
+      // sortait en erreur SANS RIEN ÉCRIRE, et le jeton était perdu. Or
+      // `ligdicash-callback` — que LigdiCash appelle quand le paiement se
+      // termine plus tard — retrouve le paiement PAR CE JETON :
+      //     .eq('ligdicash_token', token)
+      // Sans jeton en base, le rappel ne trouve rien et journalise lui-même
+      // « Jeton vérifié mais introuvable en base ». Un débit abouti à la
+      // quarantième seconde n'était donc jamais encaissé côté plateforme :
+      // l'étudiant payait, ne recevait pas ses crédits, et rien ne permettait
+      // de rapprocher la transaction.
+      //
+      // LA MESURE QUI A RÉVÉLÉ LE DÉFAUT (11/09) : sur les 21 paiements
+      // LigdiCash de la base, les 11 réussis portent tous un jeton, et les 8
+      // échoués n'en portent AUCUN. Un paiement avait un jeton si et seulement
+      // s'il avait abouti — parce que seule la voie du succès en écrivait un.
+      //
+      // L'écriture est délibérément NON BLOQUANTE : si elle échoue, on
+      // poursuit la scrutation. Abandonner ici laisserait un débit déjà lancé
+      // sans la moindre chance d'être constaté.
+      if (ligdicashToken) {
+        const tableDuJeton = payment_type === 'marketplace'
+          ? 'marketplace_payments'
+          : 'application_payments';
+        const { error: erreurJeton } = await supabase
+          .schema('app')
+          .from(tableDuJeton)
+          .update({
+            ligdicash_token: ligdicashToken,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', payment_id);
+        if (erreurJeton) {
+          console.error(
+            '[ligdicash-confirm] JETON NON ENREGISTRÉ — un débit tardif serait perdu:',
+            erreurJeton,
+          );
+        } else {
+          console.log(
+            `[ligdicash-confirm] Jeton enregistré pour ${payment_id} : le rappel pourra rattraper un débit tardif.`,
+          );
+        }
+      }
+
       // Étape 3 : Polling agressif — 10 tentatives × 3s = ~30s max
       // Le débit mobile money prend typiquement 5-15s après soumission OTP
       if (ligdicashToken) {
@@ -205,8 +254,9 @@ serve(async (req: Request) => {
             if (verifyData.response_code === '00' && statut === 'completed') {
               ligdicashTransactionId = verifyData.transaction_id || '';
               ligdicashOperator = verifyData.operator_name || '';
-              // Le montant que LigdiCash confirme, et lui seul. Il alimente
-              // `amount_paid`, sans lequel aucune commission ne peut naître.
+              // Le montant que LigdiCash confirme, et lui seul. Il est ensuite
+              // rapproché du montant dû côté base, et alimente `amount_paid`
+              // sans lequel aucune commission ne peut naître.
               const m = Number(verifyData.amount ?? verifyData.montant ?? 0);
               montantEncaisse = Number.isFinite(m) && m > 0 ? m : null;
               verified = true;
@@ -237,14 +287,36 @@ serve(async (req: Request) => {
 
         if (!verified) {
           console.log(`[ligdicash-confirm] Payment not completed after ${MAX_POLLS} polls (~${MAX_POLLS * POLL_INTERVAL_MS / 1000}s)`);
+          // NE PAS INVITER À RÉESSAYER (11/09/2026). Le message disait
+          // « Vérifiez votre solde et réessayez ». Or le débit est LANCÉ : un
+          // second essai soumet une seconde facture, et l'étudiant peut être
+          // débité deux fois pour un seul achat. Un délai dépassé n'est pas un
+          // échec, c'est une réponse qui n'est pas encore arrivée — le jeton
+          // vient d'être écrit en base, et le rappel de LigdiCash finira le
+          // travail.
+          //
+          // LE CODE RENVOYÉ EST CELUI QUE L'APPLICATION ATTEND DÉJÀ. Le
+          // fournisseur Flutter porte depuis longtemps une branche pour ce cas
+          // (`ligdicash_provider.dart:150`), déclenchée par `payment_pending`,
+          // qui affiche « Paiement en cours de traitement. Vous serez crédité
+          // dès confirmation » et empêche la re-soumission. Elle n'avait
+          // jamais été atteinte : le serveur ne renvoyait pas ce code. On
+          // branche l'un sur l'autre au lieu d'écrire un troisième message.
+          //
+          // 202 plutôt que 408 : la requête n'a pas expiré, elle est ACCEPTÉE
+          // et son issue viendra plus tard. `success: false` la maintient hors
+          // du chemin de succès du fournisseur.
           return new Response(
             JSON.stringify({
               success: false,
-              error: 'ligdicash_payment_failed',
-              message: 'Le paiement n\'a pas abouti dans le délai imparti. Vérifiez votre solde et réessayez.',
+              error: 'payment_pending',
+              status: 'pending',
+              message: 'Paiement en cours de traitement chez l\'opérateur. '
+                + 'Ne recommencez pas : vous seriez débité deux fois. '
+                + 'Vous serez crédité dès confirmation.',
               token: ligdicashToken,
             }),
-            { status: 408, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+            { status: 202, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
           );
         }
       }
@@ -284,9 +356,9 @@ serve(async (req: Request) => {
           p_ligdicash_transaction_id: ligdicashTransactionId,
           p_ligdicash_operator: ligdicashOperator,
           p_payment_type: payment_type,
-          // Le montant encaissé, vérifié auprès de LigdiCash. Sans lui,
-          // `amount_paid` restait NULL et les générateurs de commission
-          // abandonnaient en silence sur « no_amount_paid ».
+          // Le montant encaissé, vérifié auprès de LigdiCash puis rapproché du
+          // montant dû. Sans lui, `amount_paid` restait NULL et les générateurs
+          // de commission abandonnaient en silence sur « no_amount_paid ».
           p_amount_paid: montantEncaisse,
         });
 
@@ -299,6 +371,21 @@ serve(async (req: Request) => {
     }
 
     const result = confirmResult as Record<string, unknown> | null;
+
+    // Écart de montant : l'argent est arrivé mais ne correspond pas. Le paiement
+    // est en vérification côté base ; on le dit clairement à l'utilisateur.
+    if (result && result.success === false && result.error === 'amount_mismatch') {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'amount_mismatch',
+          rapprochement: result.rapprochement ?? null,
+          message: result.message ?? 'Le montant reçu ne correspond pas au montant attendu. Votre paiement est en cours de vérification.',
+        }),
+        { status: 409, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+      );
+    }
+
     if (!result || result.success !== true) {
       return new Response(
         JSON.stringify({ success: false, error: 'confirmation_failed', details: result }),
@@ -315,6 +402,7 @@ serve(async (req: Request) => {
         receipt_number: result.receipt_number || null,
         transaction_id: ligdicashTransactionId,
         operator: ligdicashOperator,
+        rapprochement: result.rapprochement ?? null,
         commission_created: result.commission_created || false,
         commission_amount: result.commission_amount || 0,
       }),

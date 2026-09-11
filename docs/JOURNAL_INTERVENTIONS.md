@@ -3347,3 +3347,96 @@ une décision, pas un oubli.
 
 Quatre empreintes md5 vérifiées entre les fichiers de migration et
 `pg_proc.prosrc` : le dépôt décrit la base.
+
+---
+
+## 11/09/2026 — le paiement mobile : un débit lancé pouvait être perdu
+
+Jocelyn : « j'ai essayé avec un rôle étudiant et le paiement de crédit était mis
+en attente. Est-ce que tu peux aller consulter le journal et voir ce qui bloque
+le processus de paiement ? C'est vraiment le point névralgique de l'app car ça
+touche aux finances. »
+
+### LA MISE EN ATTENTE N'EST PAS LA PANNE
+
+Le journal d'audit des paiements tranche, à la microseconde près :
+
+```
+18:55:32  créé      -> processing   PR-20260909185532-b62607
+19:01:50  modifié   -> processing   (nouvelle tentative)
+19:03:44  créé      -> processing   PR-20260909190344-04dba2
+21:30:00.057012  modifié  processing -> pending   LES DEUX, même instruction
+```
+
+Une seule instruction a basculé les deux lignes : la tâche planifiée **jobid 5,
+`reset_stale_processing_payments`**, `30 * * * *`, qui remet en attente tout
+paiement resté « en cours » plus de deux heures. C'est du ménage, et il fait son
+travail. La panne est en amont.
+
+### CE QUI BLOQUE VRAIMENT
+
+`ligdicash-initiate` en mode live **n'appelle pas LigdiCash** : il rend le code
+USSD que l'utilisateur compose lui-même. Le débit est lancé par
+`ligdicash-confirm`, au POST `straight/checkout-invoice/create` qui porte l'OTP.
+
+**À partir de ce POST, l'argent peut quitter le compte de l'étudiant.** La
+fonction scrutait ensuite le statut pendant 30 secondes. Au-delà, elle sortait
+en erreur **sans rien écrire** — et jetait le jeton que LigdiCash venait de lui
+donner.
+
+Or `ligdicash-callback`, que LigdiCash appelle quand le paiement se termine plus
+tard, retrouve le paiement **par ce jeton** (`.eq('ligdicash_token', token)`).
+Sans jeton en base, il ne trouve rien et journalise lui-même « Jeton vérifié
+mais introuvable en base ».
+
+> **Un débit abouti à la quarantième seconde n'était jamais encaissé côté
+> plateforme.** L'étudiant payait, ne recevait pas ses crédits, et aucune
+> transaction n'était rapprochable.
+
+### LA MESURE QUI L'ÉTABLIT
+
+| | Avec jeton | Sans jeton |
+|---|---|---|
+| Paiements LigdiCash réussis | 11 | 0 |
+| Paiements LigdiCash échoués | 0 | 8 |
+
+Un paiement portait un jeton **si et seulement si** il avait abouti, parce que
+seule la voie du succès en écrivait un. Dernier paiement LigdiCash réussi :
+**19/07/2026**. Mode mesuré via `ligdicash-diag` : `live`, les deux clés
+présentes — la configuration n'était pas en cause.
+
+### CE QUI A ÉTÉ CORRIGÉ (`ligdicash-confirm`, version 73)
+
+1. **Le jeton s'écrit dès que LigdiCash le rend**, avant la scrutation, sur
+   `application_payments` ou `marketplace_payments` selon le type. L'écriture
+   est non bloquante : si elle échoue, on poursuit plutôt que d'abandonner un
+   débit déjà lancé.
+2. **Le délai dépassé ne dit plus « réessayez ».** Il disait « Vérifiez votre
+   solde et réessayez » — or un second essai soumet une seconde facture et peut
+   débiter deux fois. Il rend désormais `payment_pending` / 202, le code que le
+   fournisseur Flutter attend **depuis toujours**
+   (`ligdicash_provider.dart:150`) et qu'il n'avait jamais reçu : il affiche
+   « Paiement en cours de traitement. Vous serez crédité dès confirmation » et
+   bloque la re-soumission.
+
+### UNE RÉGRESSION QUE J'AI CAUSÉE, ET RATTRAPÉE
+
+Le fichier du dépôt était **en retard** sur la fonction déployée. Mon premier
+déploiement (version 72) a donc effacé la gestion de l'`amount_mismatch` posée
+le 02/09, ainsi que le champ `rapprochement`. Vu en relisant le corps déployé,
+rétabli, redéployé en version 73, et revérifié sur le corps réellement en ligne.
+
+> **Ce qu'on retient.** Déployer depuis un dépôt qu'on n'a pas d'abord comparé à
+> ce qui tourne, c'est écraser du travail qu'on ne voit pas. La comparaison
+> avait été faite pour `ligdicash-initiate` — identique — et j'ai supposé qu'il
+> en allait de même pour `ligdicash-confirm`. C'est la même faute que la clé
+> étrangère de `students` la veille : conclure d'une vérification voisine.
+
+### CE QUI RESTE OUVERT
+
+- Les **8 paiements non aboutis** n'ont pas de jeton : ils sont irrattrapables.
+  Si l'un d'eux correspond à un débit réel, seul un relevé LigdiCash le dira.
+- `reset_stale_processing_payments` remet en `pending` après 2 h. Un rappel
+  tardif au-delà de ce délai doit encore être accepté : à éprouver.
+- Le correctif ne peut être prouvé de bout en bout que par un **paiement réel**.
+  Rien ici ne remplace cet essai.
