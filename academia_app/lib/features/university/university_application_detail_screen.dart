@@ -378,10 +378,18 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
                           Text('Date de naissance : ${studentProfile['date_of_birth']}'),
                         if (studentProfile['country'] != null || studentProfile['city'] != null)
                           Text('Localisation : ${studentProfile['city'] ?? ''} ${studentProfile['country'] ?? ''}'),
+                        if (studentProfile['last_diploma'] != null) ...[
+                          const SizedBox(height: 8),
+                          Text('Dernier diplôme : ${studentProfile['last_diploma']}'
+                              '${studentProfile['last_diploma_detail'] != null ? ' — ${studentProfile['last_diploma_detail']}' : ''}'),
+                        ],
                         const SizedBox(height: 8),
-                        Text('Parcours scolaire :'),
-                        Text('- BEPC : ${studentProfile['bepc_year'] ?? ''} ${studentProfile['bepc_institution'] ?? ''} (${studentProfile['bepc_country'] ?? ''}) ${studentProfile['bepc_mention'] ?? ''}'),
-                        Text('- BAC : ${studentProfile['bac_year'] ?? ''} ${studentProfile['bac_series'] ?? ''} ${studentProfile['bac_institution'] ?? ''} (${studentProfile['bac_country'] ?? ''}) ${studentProfile['bac_mention'] ?? ''}'),
+                        if (studentProfile['bepc_year'] != null || studentProfile['bac_year'] != null)
+                          const Text('Parcours scolaire :'),
+                        if (studentProfile['bepc_year'] != null)
+                          Text('- BEPC : ${studentProfile['bepc_year'] ?? ''} ${studentProfile['bepc_institution'] ?? ''} (${studentProfile['bepc_country'] ?? ''}) ${studentProfile['bepc_mention'] ?? ''}'),
+                        if (studentProfile['bac_year'] != null)
+                          Text('- BAC : ${studentProfile['bac_year'] ?? ''} ${studentProfile['bac_series'] ?? ''} ${studentProfile['bac_institution'] ?? ''} (${studentProfile['bac_country'] ?? ''}) ${studentProfile['bac_mention'] ?? ''}'),
                         const SizedBox(height: 8),
                         if (studentProfile['study_project_text'] != null &&
                             (studentProfile['study_project_text'] as String).isNotEmpty)

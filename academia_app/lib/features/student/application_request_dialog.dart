@@ -62,7 +62,10 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
   final TextEditingController _discountDetailsController = TextEditingController();
   final TextEditingController _commentController = TextEditingController();
 
-  bool _discountRequested = false;
+  // La demande de courtage est cochée par défaut : toute candidature passe
+  // par le courtage, et le taux de réduction est un champ attendu par
+  // l'administrateur pour négocier avec l'université.
+  bool _discountRequested = true;
 
   @override
   void initState() {
@@ -103,7 +106,7 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Merci de détailler votre demande de réduction / échelonnement des frais.',
+            'Merci d\'indiquer le pourcentage de réduction souhaité (ex : 30%).',
           ),
         ),
       );
@@ -164,7 +167,7 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'Merci de préciser quelques informations pour votre candidature.',
+                    'Précise tes préférences pour cette candidature.',
                     style: TextStyle(
                       fontSize: 13,
                       color: Color(0xFF6B7280),
@@ -245,13 +248,13 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
               children: [
                 _buildInputField(
                   controller: _degreeController,
-                  label: "Niveau d'étude souhaité",
+                  label: 'Niveau souhaité (Licence, Master, BTS…)',
                   icon: Icons.school_outlined,
                 ),
                 const SizedBox(height: 16),
                 _buildInputField(
                   controller: _modeController,
-                  label: "Mode d'étude souhaité (présentiel, en ligne, etc.)",
+                  label: 'Présentiel, en ligne ou hybride ?',
                   icon: Icons.access_time_outlined,
                 ),
                 const SizedBox(height: 16),
@@ -280,7 +283,7 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
                       });
                     },
                     title: const Text(
-                      'Je souhaite demander une réduction ou un échelonnement des frais',
+                      'Demande de réduction des frais de scolarité',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -293,15 +296,15 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
                   const SizedBox(height: 16),
                   _buildInputField(
                     controller: _discountDetailsController,
-                    label: 'Détail de votre demande de réduction / échelonnement (situation, montant, etc.)',
+                    label: 'Pourcentage de réduction souhaité (ex : 50%)',
                     icon: Icons.payments_outlined,
-                    maxLines: 3,
+                    maxLines: 2,
                   ),
                 ],
                 const SizedBox(height: 16),
                 _buildInputField(
                   controller: _commentController,
-                  label: "Commentaire pour l'université / l'équipe",
+                  label: 'Message ou précision (facultatif)',
                   icon: Icons.comment_outlined,
                   maxLines: 3,
                 ),
