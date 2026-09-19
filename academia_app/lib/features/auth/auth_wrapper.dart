@@ -1,11 +1,17 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../services/push_notification_service.dart';
 import '../../services/share_tracking_service.dart';
+import '../../config/supabase_config.dart';
+import '../../services/install_referrer_service.dart';
+import '../../services/deep_link_service.dart';
 import '../student/student_dashboard_screen.dart';
 import '../university/university_dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
@@ -27,6 +33,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
   late final SupabaseClient _client;
   StreamSubscription<AuthState>? _authSub;
   String? _pendingApplicationIdFromNotification;
+  bool _referralHandledForSession = false;
 
   @override
   void initState() {
@@ -36,6 +43,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     _authSub = _client.auth.onAuthStateChange.listen((_) {
       if (mounted) {
         setState(() {
+          _referralHandledForSession = false;
           _marketingAttrHandledForSession = false;
         });
       }
@@ -49,6 +57,15 @@ class _AuthWrapperState extends State<AuthWrapper> {
     // Brancher le handler de notifications push pour les candidatures étudiant.
     PushNotificationService.instance
         .setOnApplicationNotification(_handleApplicationNotification);
+
+    // Capturer le jeton Play Store (Android uniquement)
+    InstallReferrerService.instance.initialize();
+
+    // Capturer les deep links entrants (App Links Android)
+    DeepLinkService.instance.getInitialLink().then((link) {
+      if (link != null) _captureReferralFromDeepLink(link);
+    });
+    DeepLinkService.instance.listenForLinks(_captureReferralFromDeepLink);
   }
 
   @override
@@ -142,6 +159,93 @@ class _AuthWrapperState extends State<AuthWrapper> {
     }
   }
 
+  static const _pendingTokenKey = 'pending_referral_token_v2';
+
+  Future<void> _captureReferralFromDeepLink(String link) async {
+    try {
+      final uri = Uri.parse(link);
+      const allowedHosts = {'app.academiea.com', 'www.app.academiea.com'};
+      if (uri.scheme != 'https' || !allowedHosts.contains(uri.host)) return;
+
+      final segments = uri.pathSegments;
+      if (segments.length < 2 || segments.first != 'ref') return;
+      final refCode = segments[1].trim();
+      if (refCode.isEmpty) return;
+
+      final edgeFnUrl =
+          '${SupabaseConfig.url}/functions/v1/referral-redirect/ref/$refCode';
+      final response = await HttpClient()
+          .getUrl(Uri.parse(edgeFnUrl))
+          .then((req) {
+        req.headers.set('Accept', 'application/json');
+        return req.close();
+      });
+
+      if (response.statusCode != 200) return;
+      final body = await response.transform(utf8.decoder).join();
+      final json = jsonDecode(body);
+      final token = (json is Map ? json['token'] : null)?.toString();
+      if (token == null || token.isEmpty) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_pendingTokenKey, token);
+      debugPrint('ReferralDeepLink: token captured from Edge Function');
+    } catch (e) {
+      debugPrint('ReferralDeepLink: $e');
+    }
+  }
+
+  Future<void> _attachReferralIfNeeded() async {
+    if (_referralHandledForSession) return;
+
+    final session = _client.auth.currentSession;
+    if (session == null) return;
+
+    try {
+      String? token;
+      String source = 'link';
+
+      // Priorite 1 : jeton du Play Store Install Referrer
+      if (!kIsWeb) {
+        final installToken =
+            await InstallReferrerService.instance.consumeToken();
+        if (installToken != null && installToken.isNotEmpty) {
+          token = installToken;
+          source = 'play_store';
+        }
+      }
+
+      // Priorite 2 : jeton stocke (deep link ou ?rt= web)
+      if (token == null) {
+        final prefs = await SharedPreferences.getInstance();
+        final stored = prefs.getString(_pendingTokenKey);
+        if (stored != null && stored.isNotEmpty) {
+          token = stored;
+        }
+      }
+
+      if (token == null || token.isEmpty) {
+        _referralHandledForSession = true;
+        return;
+      }
+
+      final result = await _client.rpc(
+        'app_register_referral_for_current_user',
+        params: {'p_token': token, 'p_source': source},
+      );
+
+      if (result is Map && result['success'] == true) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_pendingTokenKey);
+        debugPrint('ReferralAttach: success');
+      }
+    } catch (e) {
+      debugPrint('ReferralAttach: $e');
+    } finally {
+      _referralHandledForSession = true;
+    }
+  }
+
   void _startActivityTracking() {
     _activityTimer?.cancel();
     final session = _client.auth.currentSession;
@@ -207,6 +311,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
     if (_accountBlocked) {
       return const AuthLandingScreen();
     }
+
+    // Rattacher un eventuel parrainage capture avant la creation du compte.
+    _attachReferralIfNeeded();
 
     // Capturer les partages depuis les paramètres URL
     _captureShareIfNeeded();

@@ -307,6 +307,17 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
 
   static const String _landingHeroCacheKey = 'landing_hero_playlist_v1';
 
+  void _captureReferralTokenFromUrl() {
+    try {
+      final rt = Uri.base.queryParameters['rt'];
+      if (rt == null || rt.isEmpty) return;
+      if (!RegExp(r'^[0-9A-Fa-f]{32}$').hasMatch(rt)) return;
+      SharedPreferences.getInstance().then((prefs) {
+        prefs.setString('pending_referral_token_v2', rt.toUpperCase());
+      });
+    } catch (_) {}
+  }
+
   Future<void> _loadHeroPlaylistFromCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -543,6 +554,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
       _startTicker();
 
       await _refreshHeroPlaylistFromRemote();
+      _captureReferralTokenFromUrl();
     });
   }
 
