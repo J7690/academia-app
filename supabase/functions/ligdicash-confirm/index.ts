@@ -139,7 +139,9 @@ serve(async (req: Request) => {
             customer_firstname: customerFirstname,
             customer_lastname: customerLastname,
             customer_email: customerEmail,
-            external_id: payment_id,
+            // La doc LigdiCash exige que external_id soit toujours vide ("").
+            // Le payment_id est transmis dans custom_data à la place.
+            external_id: '',
             otp: otp_code,
           },
           store: { name: 'Academia', website_url: 'https://nexiomgroup.space' },
@@ -168,6 +170,17 @@ serve(async (req: Request) => {
       console.log(`[ligdicash-confirm] straight/checkout response:`, JSON.stringify(lgData));
 
       if (lgData.response_code !== '00') {
+        // Journaliser la réponse LigdiCash dans la base pour diagnostic.
+        // Sans cela, les erreurs sont perdues dans les logs ephémères de l'Edge Function.
+        const tableErreur = payment_type === 'marketplace'
+          ? 'marketplace_payments' : 'application_payments';
+        await supabase.schema('app').from(tableErreur).update({
+          student_note: `LigdiCash ${lgData.response_code}: ${lgData.response_text ?? ''} (${new Date().toISOString()})`,
+          updated_at: new Date().toISOString(),
+        }).eq('id', payment_id).then(({ error: noteErr }) => {
+          if (noteErr) console.error('[ligdicash-confirm] écriture note erreur:', noteErr);
+        });
+
         return new Response(
           JSON.stringify({ success: false, error: 'ligdicash_payment_failed', details: lgData }),
           { status: 502, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }

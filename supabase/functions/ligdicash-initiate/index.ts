@@ -398,12 +398,18 @@ serve(async (req: Request) => {
     let ussdCode = '';
     let ussdMessage = '';
 
+    // Codes USSD officiels selon la doc LigdiCash (developers.ligdicash.com) :
+    //   Orange BF : *144*4*6#  (USSD OTP, sans le montant)
+    //   Moov BF   : USSD Push (pas de code à composer, l'opérateur envoie un push)
+    //   Telecel   : non documenté, fallback générique
     if (op === 'orange') {
-      ussdCode = `*144*4*6*${roundedAmount}#`;
-      ussdMessage = `Composez ${ussdCode} sur votre téléphone pour recevoir votre code OTP Orange Money.`;
+      ussdCode = '*144*4*6#';
+      ussdMessage = `Composez ${ussdCode} sur votre téléphone Orange pour recevoir votre code OTP.`;
     } else if (op === 'moov') {
-      ussdCode = '*555*6#';
-      ussdMessage = `Composez ${ussdCode} sur votre téléphone pour recevoir votre code OTP Moov Money.`;
+      // Moov BF utilise USSD Push (avec fallback Guided USSD) selon la doc LigdiCash.
+      // L'utilisateur n'a pas de code à composer : le push arrive après la soumission.
+      ussdCode = '';
+      ussdMessage = 'Moov Money : validez le paiement quand vous recevrez la notification sur votre téléphone.';
     } else if (op === 'telecel') {
       ussdCode = '*100*6#';
       ussdMessage = `Composez ${ussdCode} sur votre téléphone pour recevoir votre code OTP Telecel Money.`;
@@ -421,7 +427,7 @@ serve(async (req: Request) => {
           operator: op || 'mock',
           phone: cleanPhone,
           amount,
-          ussd_code: ussdCode || '*144*4*6*100#',
+          ussd_code: ussdCode || '*144*4*6#',
           message: ussdCode
             ? `Mode test. ${ussdMessage} Puis saisissez le code 123456.`
             : 'Mode test : utilisez le code 123456.',
