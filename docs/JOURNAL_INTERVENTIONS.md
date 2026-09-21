@@ -15,6 +15,21 @@
 
 ---
 
+## 2026-09-21 (soir) — Correction UX de la boîte de dialogue Candidater
+
+- `—` · **FLUTTER** · `application_request_dialog.dart` :
+  - `barrierDismissible: false` pour éviter que la fenêtre ne se ferme lors
+    d'un tap à l'extérieur ou à l'ouverture du clavier.
+  - `scrollPadding: EdgeInsets.only(bottom: 140)` sur chaque `TextField` pour
+    que le champ actif reste visible quand le clavier apparaît.
+  - `onTapOutside` sur chaque `TextField` pour fermer le clavier sans fermer
+    la boîte.
+  - Libellés `(Obligatoire)` ajoutés sur numéro de téléphone, WhatsApp et
+    pourcentage de réduction.
+  - Exemples précisés : mode de suivi (Présentiel, En ligne, Hybride),
+    disponibilités, pourcentage de réduction (25 %, 30 %, 50 %).
+- `—` · **VÉRIFICATION** · `flutter build apk --debug` code 0.
+
 ## 2026-09-21 (soir) — Phase 3 média appliquée en production
 
 - `—` · **MIGRATION** · `20260920140000_application_messages_media.sql`

@@ -34,6 +34,7 @@ Future<ApplicationRequestData?> showApplicationRequestDialog(
   return showDialog<ApplicationRequestData>(
     context: context,
     useSafeArea: true,
+    barrierDismissible: false,
     builder: (context) {
       return _ApplicationRequestDialog(
         programTitle: programTitle,
@@ -309,14 +310,14 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
                 const SizedBox(height: 16),
                 _buildInputField(
                   controller: _modeController,
-                  hint: 'Ex : Présentiel',
-                  label: 'Présentiel, en ligne ou hybride ?',
+                  hint: 'Ex : Présentiel, En ligne, Hybride',
+                  label: 'Mode de suivi (présentiel, en ligne ou hybride)',
                   icon: Icons.access_time_outlined,
                 ),
                 const SizedBox(height: 16),
                 _buildInputField(
                   controller: _scheduleController,
-                  hint: 'Ex : lundi-vendredi, matinée 8h-12h',
+                  hint: 'Ex : Lundi-vendredi, matinée 8h-12h',
                   label: 'Disponibilités / horaires préférés',
                   icon: Icons.calendar_today_outlined,
                   maxLines: 2,
@@ -353,8 +354,8 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
                   const SizedBox(height: 16),
                   _buildInputField(
                     controller: _discountDetailsController,
-                    hint: 'Ex : 30%',
-                    label: 'Pourcentage de réduction souhaité (ex : 50%)',
+                    hint: 'Ex : 25%, 30%, 50%',
+                    label: 'Pourcentage de réduction souhaité (Obligatoire)',
                     icon: Icons.payments_outlined,
                     maxLines: 2,
                   ),
@@ -362,7 +363,7 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
                 const SizedBox(height: 16),
                 _buildInputField(
                   controller: _commentController,
-                  hint: 'Ex : je souhaite commencer à la rentrée de janvier',
+                  hint: 'Ex : Je souhaite commencer à la rentrée de janvier',
                   label: 'Message ou précision (facultatif)',
                   icon: Icons.comment_outlined,
                   maxLines: 3,
@@ -370,16 +371,14 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
                 const SizedBox(height: 16),
                 _buildInputField(
                   controller: _phoneController,
-                  hint: 'Ex : +226 70 12 34 56',
-                  label: 'Numéro de téléphone',
+                  label: 'Numéro de téléphone (Obligatoire)',
                   icon: Icons.phone_outlined,
                   keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: 16),
                 _buildInputField(
                   controller: _whatsappPhoneController,
-                  hint: 'Ex : +226 65 98 76 54',
-                  label: 'Numéro WhatsApp',
+                  label: 'Numéro WhatsApp (Obligatoire)',
                   icon: Icons.chat_outlined,
                   keyboardType: TextInputType.phone,
                 ),
@@ -392,7 +391,7 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
   Widget _buildInputField({
     required TextEditingController controller,
     required String label,
-    required String hint,
+    String? hint,
     required IconData icon,
     int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
@@ -410,6 +409,8 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
         controller: controller,
         maxLines: maxLines,
         keyboardType: keyboardType,
+        scrollPadding: const EdgeInsets.only(bottom: 140),
+        onTapOutside: (_) => FocusScope.of(context).unfocus(),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,

@@ -1230,6 +1230,13 @@ Statut des validations :
 - Le tab Documents réutilise l'écran existant ; son fonctionnement dépend des
   mêmes RPC `payment_receipts` / `app_list_my_brokerage_vouchers`.
 
+**21/09/2026 — Correction de la boîte de dialogue Candidater.** Le dialogue
+ne se ferme plus en tapant à l'extérieur (`barrierDismissible: false`). Les
+champs de saisie remontent au-dessus du clavier (`scrollPadding`) et perdent
+le focus sur un tap hors zone. Les libellés indiquent désormais les champs
+obligatoires `(Obligatoire)` et les exemples ont été clarifiés pour le mode de
+suivi, les disponibilités et le pourcentage de réduction.
+
 Reste à faire sur la Phase 4 :
 1. Valider le parcours de paiement complet sur un cas réel (candidature
    acceptée + taux fixé).
