@@ -100,7 +100,8 @@ const List<DossierStep> kDossierSteps = <DossierStep>[
   DossierStep(
     title: 'Identité',
     fields: <DossierField>[
-      DossierField('full_name', 'Nom complet', DossierFieldKind.text),
+      DossierField('full_name', 'Nom complet', DossierFieldKind.text,
+          hint: 'ex : Ouédraogo Aminata'),
       DossierField('date_of_birth', 'Date de naissance', DossierFieldKind.date),
     ],
   ),
@@ -110,7 +111,8 @@ const List<DossierStep> kDossierSteps = <DossierStep>[
       DossierField('bepc_year', 'Année du BEPC', DossierFieldKind.year,
           hint: 'ex : 2018'),
       DossierField(
-          'bepc_institution', 'Établissement du BEPC', DossierFieldKind.text),
+          'bepc_institution', 'Établissement du BEPC', DossierFieldKind.text,
+          hint: 'ex : Lycée Zinda'),
       DossierField('bepc_country', 'Pays du BEPC', DossierFieldKind.text,
           hint: 'ex : Burkina Faso'),
       DossierField('bepc_mention', 'Mention du BEPC', DossierFieldKind.mention),
@@ -126,7 +128,8 @@ const List<DossierStep> kDossierSteps = <DossierStep>[
       DossierField(
           'bac_mention', 'Mention du Baccalauréat', DossierFieldKind.mention),
       DossierField(
-          'bac_institution', 'Établissement du Bac', DossierFieldKind.text),
+          'bac_institution', 'Établissement du Bac', DossierFieldKind.text,
+          hint: 'ex : Lycée Philippe Zinda Kaboré'),
       DossierField('bac_country', 'Pays du Bac', DossierFieldKind.text,
           hint: 'ex : Burkina Faso'),
       DossierField(

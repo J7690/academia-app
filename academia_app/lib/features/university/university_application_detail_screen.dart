@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../widgets/application_attachment_button.dart';
+import '../../widgets/application_message_content.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -530,13 +533,15 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
                 );
               }
 
-              return ListView.builder(
+              return RefreshIndicator(
+                onRefresh: () => provider.loadMessages(widget.application['id'].toString()),
+                child: ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 itemCount: messages.length,
                 itemBuilder: (context, index) {
                   final msg = messages[index];
                   final senderRole = msg['sender_role']?.toString() ?? '';
-                  final content = msg['content']?.toString() ?? '';
                   final createdAtMsg = msg['created_at']?.toString() ?? '';
 
                   final isUniversity = senderRole == 'university';
@@ -563,7 +568,7 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
                             style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 2),
-                          Text(content),
+                          ApplicationMessageContent(message: msg, outgoing: isUniversity),
                           if (createdAtMsg.isNotEmpty) ...[
                             const SizedBox(height: 2),
                             Text(
@@ -576,7 +581,7 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
                     ),
                   );
                 },
-              );
+              ));
             },
           ),
         ),
@@ -584,7 +589,13 @@ class _UniversityApplicationDetailPanelState extends State<UniversityApplication
           padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              Expanded(
+              ApplicationAttachmentButton(
+                        applicationId: widget.application['id']?.toString() ?? '',
+                        sender: 'university', channel: 'university',
+                        onSent: () => context.read<UniversityApplicationMessagesProvider>()
+                            .loadMessages(widget.application['id'].toString()),
+                      ),
+                      Expanded(
                 child: TextField(
                   controller: _messageController,
                   minLines: 1,

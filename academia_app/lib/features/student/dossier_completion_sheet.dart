@@ -94,8 +94,30 @@ class _DossierCompletionSheetState extends State<_DossierCompletionSheet> {
         }
       }
     }
+    // Pré-remplir depuis le profil existant : nom et date de naissance,
+    // qui peuvent déjà être connus (compte OAuth, saisie antérieure).
+    final profile = widget.profileProvider.profile;
+    if (profile != null) {
+      _prefillFromProfile(profile);
+    }
     if (_index >= _steps.length) {
       _index = _steps.isEmpty ? 0 : _steps.length - 1;
+    }
+  }
+
+  void _prefillFromProfile(Map<String, dynamic> profile) {
+    const profileToField = <String, String>{
+      'full_name': 'full_name',
+      'date_of_birth': 'date_of_birth',
+    };
+    for (final entry in profileToField.entries) {
+      final value = profile[entry.key]?.toString() ?? '';
+      if (value.isNotEmpty) {
+        final controller = _controllers[entry.value];
+        if (controller != null && controller.text.isEmpty) {
+          controller.text = value;
+        }
+      }
     }
   }
 

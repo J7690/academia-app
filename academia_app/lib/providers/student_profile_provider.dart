@@ -143,6 +143,7 @@ class StudentProfileProvider extends ChangeNotifier {
   Future<bool> updateProfile({
     String? fullName,
     String? phone,
+    String? whatsappPhone,
     String? country,
     String? city,
     String? dateOfBirth,
@@ -172,6 +173,7 @@ class StudentProfileProvider extends ChangeNotifier {
       final params = <String, dynamic>{
         'p_full_name': fullName,
         'p_phone': phone,
+        'p_whatsapp_phone': whatsappPhone,
         'p_country': country,
         'p_city': city,
         'p_date_of_birth': dateOfBirth,

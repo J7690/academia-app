@@ -15,6 +15,57 @@
 
 ---
 
+## 2026-09-21 (soir) — Phase 3 média appliquée en production
+
+- `—` · **MIGRATION** · `20260920140000_application_messages_media.sql`
+  appliquée via l'éditeur SQL Supabase : colonnes `type`, `media_url`,
+  `media_mime`, `read_at` sur `app.application_messages` ; bucket privé
+  `application-media` ; surcharges 5 args des RPC d'envoi ; policies Storage et
+  RLS restrictives.
+- `—` · **MESURE** · vérification post-migration : colonnes, bucket, RPC et
+  policies tous présents. `flutter test` Phase 2 + Phase 3 : 12/12 passés.
+- `—` · **FLUTTER** · Activation par défaut des boutons de pièces jointes dans
+  `application_media_service.dart` (flag
+  `APPLICATION_MESSAGE_MEDIA_ENABLED=true` par défaut, désactivable).
+- `—` · **VÉRIFICATION** · `flutter build apk --debug` code 0.
+
+## 2026-09-21 (après-midi) — Phase 4 : onglets Paiements et Documents étudiant
+
+- `—` · **MESURE** · `postgres` n'est toujours PAS membre de
+  `supabase_storage_admin` : la migration Phase 3 média ne peut pas être
+  appliquée via `admin_execute_sql`. `supabase db push` est bloqué par un
+  historique de migrations désynchronisé. Seul le SQL Editor du dashboard ou
+  un nettoyage de l'historique permettra de l'appliquer.
+- `—` · **FLUTTER** · Ajout des onglets 11 (Paiements) et 12 (Documents) dans
+  `student_dashboard_screen.dart` ; création de
+  `tabs/student_payments_tab.dart` et `tabs/student_documents_tab.dart` ;
+  création de `utils/payment_status.dart` pour les libellés et couleurs des
+  statuts de paiement.
+- `—` · **FLUTTER** · L'onglet Paiements liste uniquement les candidatures dont
+  le statut est `accepted` ET dont `discount_rate` est fixé ; chaque carte
+  expose la formation, l'université, la réduction, le montant du courtage et
+  un bouton qui initie le paiement via `LigdiCashPaymentSheet`. Un bandeau en
+  5 étapes numérotées explique le parcours.
+- `—` · **VÉRIFICATION** · `flutter build apk --debug` code 0 ; analyse du
+  projet : 0 erreur.
+
+## 2026-09-21 (matin) — Téléphone/WhatsApp déplacés du dossier vers la candidature
+
+- `—` · **DÉCISION** · le mécanisme « aller remplir son profil » est abandonné :
+  les contacts sont demandés au moment de la candidature, dans la même boîte de
+  dialogue que la filière, le niveau et le taux de courtage.
+- `—` · **MIGRATION** · `20260921080000_telephone_whatsapp_dans_candidature.sql` :
+  `app_is_student_dossier_complete()` ne vérifie plus `phone` ni
+  `whatsapp_phone` ; `app_create_application()` accepte
+  `p_phone` et `p_whatsapp_phone`, les rend obligatoires (≥ 8 chiffres),
+  met à jour `app.students`, puis crée la candidature.
+- `—` · **FLUTTER** · `application_request_dialog.dart` : deux champs obligatoires
+  « Numéro de téléphone » et « Numéro WhatsApp », avec clavier téléphonique et
+  validation ; `dossier_fields.dart` et `dossier_completion_sheet.dart` : les
+  champs contact sont retirés de la complétion de dossier.
+- `—` · **VÉRIFICATION** · `flutter build apk --debug` code 0 ; corps des fonctions
+  vérifiés en base ; ancienne surcharge de `app_create_application` supprimée.
+
 ## 2026-08-19
 
 - `—` · **MESURE DECISIVE** · **le moteur navigateur rend 10 × plus vite que

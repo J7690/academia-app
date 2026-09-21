@@ -20,6 +20,7 @@ class StudentProfileScreen extends StatefulWidget {
 class _StudentProfileScreenState extends State<StudentProfileScreen> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _whatsappPhoneController = TextEditingController();
   final TextEditingController _countryController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _dobController = TextEditingController();
@@ -53,6 +54,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   void dispose() {
     _fullNameController.dispose();
     _phoneController.dispose();
+    _whatsappPhoneController.dispose();
     _countryController.dispose();
     _cityController.dispose();
     _dobController.dispose();
@@ -98,6 +100,8 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
           if (!_initializedFromProfile && profile.isNotEmpty) {
             _fullNameController.text = profile['full_name']?.toString() ?? '';
             _phoneController.text = profile['phone']?.toString() ?? '';
+            _whatsappPhoneController.text =
+                profile['whatsapp_phone']?.toString() ?? '';
             _countryController.text = profile['country']?.toString() ?? '';
             _cityController.text = profile['city']?.toString() ?? '';
             final dobRaw = profile['date_of_birth'];
@@ -196,8 +200,20 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: _phoneController,
+                  keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(
                     labelText: 'Téléphone',
+                    hintText: 'Ex : +226 70 12 34 56',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _whatsappPhoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Numéro WhatsApp',
+                    hintText: 'Ex : +226 65 98 76 54',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -441,6 +457,10 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                           final success = await provider.updateProfile(
                             fullName: fullName.isEmpty ? null : fullName,
                             phone: phone.isEmpty ? null : phone,
+                            whatsappPhone:
+                                _whatsappPhoneController.text.trim().isEmpty
+                                    ? null
+                                    : _whatsappPhoneController.text.trim(),
                             country: country.isEmpty ? null : country,
                             city: city.isEmpty ? null : city,
                             dateOfBirth: dobText.isEmpty ? null : dobText,

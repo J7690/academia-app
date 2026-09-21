@@ -1,6 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+
+import '../../widgets/application_attachment_button.dart';
+import '../../widgets/application_message_content.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/admin_application_messages_provider.dart';
@@ -9,6 +12,7 @@ import '../../providers/admin_application_payments_provider.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/adaptive_dialog.dart';
 import 'admin_application_status.dart';
+import 'application_message_templates.dart';
 
 /// Seuil à partir duquel on bascule sur un affichage deux colonnes
 /// (informations à gauche, conversation à droite).
@@ -32,6 +36,47 @@ class _AdminApplicationDetailScreenState
   final ScrollController _infoScrollController = ScrollController();
   final ScrollController _messagesScrollController = ScrollController();
   String _target = 'student';
+  bool _sendingMessage = false;
+  final Map<String, TextEditingValue> _drafts = {};
+
+  void _changeMessageTarget(String target) {
+    if (target == _target) return;
+    _drafts[_target] = _messageController.value;
+    setState(() {
+      _target = target;
+      _messageController.value = _drafts[target] ?? TextEditingValue.empty;
+    });
+  }
+
+  Future<void> _applyMessageTemplate(ApplicationMessageTemplate template) async {
+    if (_messageController.text.trim().isNotEmpty) {
+      final replace = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Remplacer le brouillon ?'),
+          content: const Text(
+            'Le modèle remplacera le texte en cours. Vous pourrez ensuite le modifier avant de l’envoyer.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Conserver le brouillon'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Remplacer'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted || replace != true) return;
+    }
+    final text = template.render(widget.application);
+    _messageController.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
 
   @override
   void initState() {
@@ -272,6 +317,7 @@ class _AdminApplicationDetailScreenState
   }
 
   Future<void> _sendMessage() async {
+    if (_sendingMessage) return;
     final appId = widget.application['id']?.toString();
     if (appId == null || appId.isEmpty) return;
     final text = _messageController.text.trim();
@@ -279,12 +325,15 @@ class _AdminApplicationDetailScreenState
 
     final provider = context.read<AdminApplicationMessagesProvider>();
     final messenger = ScaffoldMessenger.of(context);
+    setState(() => _sendingMessage = true);
     final bool ok = _target == 'student'
         ? await provider.sendToStudent(applicationId: appId, content: text)
         : await provider.sendToUniversity(applicationId: appId, content: text);
 
     if (!mounted) return;
+    setState(() => _sendingMessage = false);
     if (ok) {
+      _drafts.remove(_target);
       _messageController.clear();
       try {
         await context.read<AdminApplicationsProvider>().loadApplications();
@@ -873,7 +922,10 @@ class _AdminApplicationDetailScreenState
             final bubbleMaxWidth = constraints.maxWidth *
                 (constraints.maxWidth < AppBreakpoints.mobile ? 0.86 : 0.7);
 
-            return ListView.builder(
+            return RefreshIndicator(
+                onRefresh: () => provider.loadMessages(widget.application['id'].toString()),
+                child: ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
               controller: _messagesScrollController,
               primary: false,
               padding: EdgeInsets.symmetric(
@@ -889,7 +941,7 @@ class _AdminApplicationDetailScreenState
                   maxWidth: bubbleMaxWidth,
                 );
               },
-            );
+            ));
           },
         );
       },
@@ -897,7 +949,9 @@ class _AdminApplicationDetailScreenState
   }
 
   Widget _buildComposer(BuildContext context, {required bool compact}) {
-    final destinationSelector = DropdownButtonHideUnderline(
+    // Le Scaffold retire l'inset du clavier du MediaQuery de son body.
+    final keyboardOpen = MediaQuery.viewInsetsOf(this.context).bottom > 0;
+    final destinationDropdown = DropdownButtonHideUnderline(
       child: DropdownButton<String>(
         value: _target,
         isDense: true,
@@ -906,17 +960,39 @@ class _AdminApplicationDetailScreenState
           DropdownMenuItem(value: 'student', child: Text('→ Étudiant')),
           DropdownMenuItem(value: 'university', child: Text('→ Université')),
         ],
-        onChanged: (value) {
-          if (value == null) return;
-          setState(() => _target = value);
-        },
+        onChanged: _sendingMessage
+            ? null
+            : (value) {
+                if (value == null) return;
+                _changeMessageTarget(value);
+              },
       ),
+    );
+
+    final destinationSelector = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        destinationDropdown,
+        if (keyboardOpen)
+          PopupMenuButton<ApplicationMessageTemplate>(
+            tooltip: 'Modèles de messages',
+            icon: const Icon(Icons.text_snippet_outlined),
+            enabled: !_sendingMessage,
+            onSelected: _applyMessageTemplate,
+            itemBuilder: (_) => [
+              for (final template in applicationMessageTemplates)
+                if (template.target == _target)
+                  PopupMenuItem(value: template, child: Text(template.label)),
+            ],
+          ),
+      ],
     );
 
     final field = TextField(
       controller: _messageController,
+      enabled: !_sendingMessage,
       minLines: 1,
-      maxLines: 5,
+      maxLines: keyboardOpen ? 2 : 5,
       textInputAction: TextInputAction.newline,
       keyboardType: TextInputType.multiline,
       decoration: const InputDecoration(
@@ -927,10 +1003,17 @@ class _AdminApplicationDetailScreenState
       ),
     );
 
+    final attachmentButton = ApplicationAttachmentButton(
+      applicationId: widget.application['id']?.toString() ?? '',
+      sender: 'admin', channel: _target, enabled: !_sendingMessage,
+      onSent: () => context.read<AdminApplicationMessagesProvider>()
+          .loadMessages(widget.application['id'].toString()),
+    );
+
     final sendButton = IconButton.filled(
       icon: const Icon(Icons.send),
       tooltip: 'Envoyer',
-      onPressed: _sendMessage,
+      onPressed: _sendingMessage ? null : _sendMessage,
     );
 
     return Material(
@@ -940,45 +1023,78 @@ class _AdminApplicationDetailScreenState
         top: false,
         child: Padding(
           padding: EdgeInsets.fromLTRB(compact ? 8 : 16, 8, compact ? 8 : 16, 8),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // Sous ~420 px, le sélecteur passe sur sa propre ligne pour
-              // laisser au champ de saisie une largeur utilisable.
-              if (constraints.maxWidth < 420) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: destinationSelector,
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Expanded(child: field),
-                        const SizedBox(width: 8),
-                        sendButton,
-                      ],
-                    ),
-                  ],
-                );
-              }
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: destinationSelector,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (!keyboardOpen) ...[
+                const Text(
+                  'Modèles — à modifier avant envoi',
+                  style: TextStyle(fontSize: 12),
+                ),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (final template in applicationMessageTemplates)
+                        if (template.target == _target)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ActionChip(
+                              label: Text(template.label),
+                              onPressed: _sendingMessage
+                                  ? null
+                                  : () => _applyMessageTemplate(template),
+                            ),
+                          ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(child: field),
-                  const SizedBox(width: 8),
-                  sendButton,
-                ],
-              );
-            },
+                ),
+                const SizedBox(height: 6),
+              ],
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  // Sous ~420 px, le sélecteur passe sur sa propre ligne pour
+                  // laisser au champ de saisie une largeur utilisable.
+                  if (constraints.maxWidth < 420) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: destinationSelector,
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            attachmentButton,
+                            Expanded(child: field),
+                            const SizedBox(width: 8),
+                            sendButton,
+                          ],
+                        ),
+                      ],
+                    );
+                  }
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: destinationSelector,
+                      ),
+                      const SizedBox(width: 8),
+                      attachmentButton,
+                            Expanded(child: field),
+                      const SizedBox(width: 8),
+                      sendButton,
+                    ],
+                  );
+                },
+              ),
+            ],
           ),
         ),
       ),
@@ -1026,7 +1142,6 @@ class _MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final senderRole = message['sender_role']?.toString() ?? '';
     final audience = message['audience']?.toString() ?? '';
-    final content = message['content']?.toString() ?? '';
     final createdAtMsg = message['created_at']?.toString() ?? '';
 
     String label;
@@ -1076,7 +1191,7 @@ class _MessageBubble extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              SelectableText(content),
+              ApplicationMessageContent(message: message, outgoing: senderRole == 'admin'),
               if (createdAtMsg.isNotEmpty) ...[
                 const SizedBox(height: 2),
                 Text(

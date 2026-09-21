@@ -10,6 +10,8 @@ class ApplicationRequestData {
   final bool discountRequested;
   final String? discountDetails;
   final String? studentComment;
+  final String phone;
+  final String whatsappPhone;
 
   const ApplicationRequestData({
     this.requestedDegreeLevel,
@@ -18,6 +20,8 @@ class ApplicationRequestData {
     required this.discountRequested,
     this.discountDetails,
     this.studentComment,
+    required this.phone,
+    required this.whatsappPhone,
   });
 }
 
@@ -61,6 +65,8 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
   final TextEditingController _scheduleController = TextEditingController();
   final TextEditingController _discountDetailsController = TextEditingController();
   final TextEditingController _commentController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _whatsappPhoneController = TextEditingController();
 
   // La demande de courtage est cochée par défaut : toute candidature passe
   // par le courtage, et le taux de réduction est un champ attendu par
@@ -81,6 +87,8 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
     _scheduleController.dispose();
     _discountDetailsController.dispose();
     _commentController.dispose();
+    _phoneController.dispose();
+    _whatsappPhoneController.dispose();
     super.dispose();
   }
 
@@ -90,6 +98,8 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
     final schedule = _scheduleController.text.trim();
     final discountDetails = _discountDetailsController.text.trim();
     final comment = _commentController.text.trim();
+    final phone = _phoneController.text.trim();
+    final whatsappPhone = _whatsappPhoneController.text.trim();
 
     if (degree.isEmpty && mode.isEmpty && schedule.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -113,6 +123,46 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
       return;
     }
 
+    if (phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Merci d\'indiquer votre numéro de téléphone.'),
+        ),
+      );
+      return;
+    }
+
+    if (_digitsOf(phone).length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Le numéro de téléphone doit contenir au moins 8 chiffres.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (whatsappPhone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Merci d\'indiquer votre numéro WhatsApp.'),
+        ),
+      );
+      return;
+    }
+
+    if (_digitsOf(whatsappPhone).length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Le numéro WhatsApp doit contenir au moins 8 chiffres.',
+          ),
+        ),
+      );
+      return;
+    }
+
     final data = ApplicationRequestData(
       requestedDegreeLevel: degree.isEmpty ? null : degree,
       requestedStudyMode: mode.isEmpty ? null : mode,
@@ -120,10 +170,14 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
       discountRequested: _discountRequested,
       discountDetails: discountDetails.isEmpty ? null : discountDetails,
       studentComment: comment.isEmpty ? null : comment,
+      phone: phone,
+      whatsappPhone: whatsappPhone,
     );
 
     Navigator.of(context).pop(data);
   }
+
+  String _digitsOf(String value) => value.replaceAll(RegExp(r'[^0-9]'), '');
 
   @override
   Widget build(BuildContext context) {
@@ -248,18 +302,21 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
               children: [
                 _buildInputField(
                   controller: _degreeController,
+                  hint: 'Ex : Licence 1, Master 2, BTS',
                   label: 'Niveau souhaité (Licence, Master, BTS…)',
                   icon: Icons.school_outlined,
                 ),
                 const SizedBox(height: 16),
                 _buildInputField(
                   controller: _modeController,
+                  hint: 'Ex : Présentiel',
                   label: 'Présentiel, en ligne ou hybride ?',
                   icon: Icons.access_time_outlined,
                 ),
                 const SizedBox(height: 16),
                 _buildInputField(
                   controller: _scheduleController,
+                  hint: 'Ex : lundi-vendredi, matinée 8h-12h',
                   label: 'Disponibilités / horaires préférés',
                   icon: Icons.calendar_today_outlined,
                   maxLines: 2,
@@ -296,6 +353,7 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
                   const SizedBox(height: 16),
                   _buildInputField(
                     controller: _discountDetailsController,
+                    hint: 'Ex : 30%',
                     label: 'Pourcentage de réduction souhaité (ex : 50%)',
                     icon: Icons.payments_outlined,
                     maxLines: 2,
@@ -304,9 +362,26 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
                 const SizedBox(height: 16),
                 _buildInputField(
                   controller: _commentController,
+                  hint: 'Ex : je souhaite commencer à la rentrée de janvier',
                   label: 'Message ou précision (facultatif)',
                   icon: Icons.comment_outlined,
                   maxLines: 3,
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _phoneController,
+                  hint: 'Ex : +226 70 12 34 56',
+                  label: 'Numéro de téléphone',
+                  icon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _whatsappPhoneController,
+                  hint: 'Ex : +226 65 98 76 54',
+                  label: 'Numéro WhatsApp',
+                  icon: Icons.chat_outlined,
+                  keyboardType: TextInputType.phone,
                 ),
               ],
             ),
@@ -317,8 +392,10 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
   Widget _buildInputField({
     required TextEditingController controller,
     required String label,
+    required String hint,
     required IconData icon,
     int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -332,8 +409,10 @@ class _ApplicationRequestDialogState extends State<_ApplicationRequestDialog> {
       child: TextField(
         controller: controller,
         maxLines: maxLines,
+        keyboardType: keyboardType,
         decoration: InputDecoration(
           labelText: label,
+          hintText: hint,
           prefixIcon: Icon(icon, color: const Color(0xFF9CA3AF)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.all(16),

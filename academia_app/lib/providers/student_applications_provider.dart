@@ -100,6 +100,8 @@ class StudentApplicationsProvider extends ChangeNotifier {
     bool? discountRequested,
     String? discountDetails,
     String? studentComment,
+    required String phone,
+    required String whatsappPhone,
   }) async {
     _setLoading(true);
     _setError(null);
@@ -124,6 +126,8 @@ class StudentApplicationsProvider extends ChangeNotifier {
           'p_discount_requested': discountRequested,
           'p_discount_details': _normalizeText(discountDetails),
           'p_student_comment': _normalizeText(studentComment),
+          'p_phone': phone.trim(),
+          'p_whatsapp_phone': whatsappPhone.trim(),
         },
       );
       final data = response as Map<String, dynamic>?;

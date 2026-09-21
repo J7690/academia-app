@@ -286,6 +286,8 @@ Future<bool?> _sendWithProgress(
       discountRequested: request.discountRequested,
       discountDetails: request.discountDetails,
       studentComment: request.studentComment,
+      phone: request.phone,
+      whatsappPhone: request.whatsappPhone,
     ),
   );
 }

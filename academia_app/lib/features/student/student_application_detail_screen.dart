@@ -3,6 +3,9 @@ import 'dart:typed_data';
 import 'package:animate_do/animate_do.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+
+import '../../widgets/application_attachment_button.dart';
+import '../../widgets/application_message_content.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -1236,13 +1239,15 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                         );
                       }
 
-                      return ListView.builder(
+                      return RefreshIndicator(
+                onRefresh: () => provider.loadMessages(widget.application['id'].toString()),
+                child: ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(16),
                         itemCount: messages.length,
                         itemBuilder: (context, index) {
                           final msg = messages[index];
                           final senderRole = msg['sender_role']?.toString() ?? '';
-                          final content = msg['content']?.toString() ?? '';
                           final createdAtMsg = msg['created_at']?.toString() ?? '';
 
                           final isStudent = senderRole == 'student';
@@ -1251,9 +1256,6 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                           final Color bubbleColor = isStudent
                               ? const Color(0xFF3275D0).withValues(alpha: 0.12)
                               : Theme.of(context).colorScheme.surfaceContainerHighest;
-                          final Color textColor = isStudent
-                              ? const Color(0xFF0A2540)
-                              : const Color(0xFF111827);
                           final label = isStudent ? 'Vous' : 'Plateforme / Admin';
 
                           return Align(
@@ -1282,13 +1284,7 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  Text(
-                                    content,
-                                    style: TextStyle(
-                                      color: textColor,
-                                      fontSize: 13,
-                                    ),
-                                  ),
+                                  ApplicationMessageContent(message: msg, outgoing: isStudent),
                                   if (createdAtMsg.isNotEmpty) ...[
                                     const SizedBox(height: 2),
                                     Text(
@@ -1301,7 +1297,7 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                             ),
                           );
                         },
-                      );
+                      ));
                     },
                   ),
                 ),
@@ -1309,6 +1305,12 @@ class _StudentApplicationDetailScreenState extends State<StudentApplicationDetai
                   padding: const EdgeInsets.all(8.0),
                   child: Row(
                     children: [
+                      ApplicationAttachmentButton(
+                        applicationId: widget.application['id']?.toString() ?? '',
+                        sender: 'student', channel: 'student',
+                        onSent: () => context.read<StudentApplicationMessagesProvider>()
+                            .loadMessages(widget.application['id'].toString()),
+                      ),
                       Expanded(
                         child: TextField(
                           controller: _messageController,

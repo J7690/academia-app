@@ -46,7 +46,9 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Nous avons besoin d’accéder à votre photothèque pour enregistrer des vidéos téléchargées.</string>
+	<string>Accéder à votre photothèque pour joindre des images et vidéos à vos messages.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Enregistrer un message vocal à joindre à votre candidature.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Nous avons besoin d’enregistrer des vidéos téléchargées dans votre photothèque.</string>
 </dict>

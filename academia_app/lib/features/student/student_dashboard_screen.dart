@@ -28,6 +28,8 @@ import 'tabs/student_coming_soon_tab.dart';
 import 'tabs/student_courses_tab.dart';
 import 'tabs/student_live_sessions_tab.dart';
 import 'tabs/student_orientation_tab.dart';
+import 'tabs/student_documents_tab.dart';
+import 'tabs/student_payments_tab.dart';
 import '../share/share_mode_provider.dart';
 import '../../widgets/student_assistant_overlay.dart';
 import '../../services/push_trigger_service.dart';
@@ -491,6 +493,18 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         case 10:
           child = const StudentOrientationTab();
           break;
+        case 11:
+          child = ChangeNotifierProvider(
+            create: (_) => StudentApplicationPaymentsProvider(),
+            child: const StudentPaymentsTab(),
+          );
+          break;
+        case 12:
+          child = ChangeNotifierProvider(
+            create: (_) => StudentApplicationPaymentsProvider(),
+            child: const StudentDocumentsTab(),
+          );
+          break;
         default:
           child = const StudentHomeMobileTab();
       }
@@ -548,6 +562,18 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         case 10:
           child = const StudentOrientationTab();
           break;
+        case 11:
+          child = ChangeNotifierProvider(
+            create: (_) => StudentApplicationPaymentsProvider(),
+            child: const StudentPaymentsTab(),
+          );
+          break;
+        case 12:
+          child = ChangeNotifierProvider(
+            create: (_) => StudentApplicationPaymentsProvider(),
+            child: const StudentDocumentsTab(),
+          );
+          break;
         default:
           child = const StudentHomeTab();
       }
@@ -558,7 +584,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   static const List<String> _tabNames = [
     'Accueil', 'Candidatures', 'Cours', 'Communautes',
     'Partenaires', 'Prep Concours', 'TD', 'Bobodo', 'Challenges', 'Lives',
-    'Orientation',
+    'Orientation', 'Paiements', 'Documents',
   ];
 
   void _onDestinationSelected(int index) {
@@ -667,6 +693,18 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         label: 'Orientation',
         icon: Icon(Icons.explore_outlined),
         selectedIcon: Icon(Icons.explore),
+      ),
+      const _DesktopNavEntry(
+        semanticIndex: 11,
+        label: 'Paiements',
+        icon: Icon(Icons.payments_outlined),
+        selectedIcon: Icon(Icons.payments),
+      ),
+      const _DesktopNavEntry(
+        semanticIndex: 12,
+        label: 'Documents',
+        icon: Icon(Icons.folder_copy_outlined),
+        selectedIcon: Icon(Icons.folder_copy),
       ),
     ];
 
@@ -865,6 +903,20 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                           icon: const Icon(Icons.explore_outlined),
                           selectedIcon: const Icon(Icons.explore),
                         ),
+                        // 11 - Paiements (courtage)
+                        _buildMobileNavItem(
+                          index: 11,
+                          label: 'Paiements',
+                          icon: const Icon(Icons.payments_outlined),
+                          selectedIcon: const Icon(Icons.payments),
+                        ),
+                        // 12 - Documents (reçus + bons de courtage)
+                        _buildMobileNavItem(
+                          index: 12,
+                          label: 'Documents',
+                          icon: const Icon(Icons.folder_copy_outlined),
+                          selectedIcon: const Icon(Icons.folder_copy),
+                        ),
                       ],
                     ),
                   ),
@@ -891,6 +943,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     7: Color(0xFFE11D48), // Challenges — rose vif (TikTok)
     8: Color(0xFF6366F1), // Cours — indigo (Coursera)
     9: Color(0xFFDC2626), // Lives — rouge (live broadcast)
+    11: Color(0xFF1EA75C), // Paiements — vert confirmation
+    12: Color(0xFF0EA5E9), // Documents — bleu documents
   };
 
   Widget _buildMobileNavItem({

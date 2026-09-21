@@ -678,6 +678,13 @@ ligne suivante.
 
 ### 9.0 LE FLUX DE CANDIDATURE — débloqué et simplifié le 08/09
 
+> **Note du 21/09/2026.** Le numéro de téléphone et le numéro WhatsApp ne sont
+> plus demandés dans le profil/dossier. Ils sont collectés **obligatoirement**
+> dans la boîte de dialogue de candidature, au même niveau que la filière, le
+> niveau et le taux de réduction de courtage. Migration
+> `20260921080000_telephone_whatsapp_dans_candidature.sql` appliquée ; build
+> `flutter build apk --debug` code 0. Voir journal.
+
 **Le dépôt de candidature était cassé depuis le 05/08.** Zéro candidature en
 un mois. La cause tient en une ligne de `app_is_student_dossier_complete()` :
 
@@ -1182,6 +1189,54 @@ très utilisés), `student_credits` 18, `student_dossier_documents` 5,
 **Découverte de méthode** : la chaîne `.windsurf/` (le « PC administrateur »)
 pointe, dans son `.env`, vers un projet Supabase **mort** (`evaegkqrnyjitnrcaqgt`).
 Le relevé a été refait contre le projet vivant. Elle repose en outre sur B1.
+
+---
+
+## 10. Phase 3 — Médias dans la messagerie de candidature
+
+Migration `20260920140000_application_messages_media.sql` appliquée en
+production le 21/09/2026 via l'éditeur SQL Supabase. Vérifications réalisées :
+
+| Élément | État |
+|---|---|
+| Colonnes `type`, `media_url`, `media_mime`, `read_at` sur `app.application_messages` | ✅ |
+| Bucket privé `application-media` (limite 25 Mo) | ✅ |
+| Surcharges 5 args des RPC d'envoi de message (texte + média) | ✅ |
+| Policies Storage et RLS restrictives | ✅ |
+| Boutons pièces jointes activés côté Flutter | ✅ |
+
+Tests Flutter Phase 2 + Phase 3 : 12/12 passés. `flutter build apk --debug` :
+code 0. Aucun test réel d'envoi de média n'a encore été fait avec un compte
+étudiant/admin/université.
+
+---
+
+## 11. Phase 4 — Navigation Paiements / Documents étudiant
+
+Mise en place le 21/09/2026. Deux onglets ajoutés à la barre de navigation
+étudiante : **Paiements** (index 11) et **Documents** (index 12). Le but est de
+sortir ces deux parcours du menu caché « ⋯ » et de les rendre
+auto-explicatifs.
+
+| Onglet | Fichier | Comportement |
+|---|---|---|
+| Paiements | `lib/features/student/tabs/student_payments_tab.dart` | Liste **uniquement les candidatures acceptées** avec un taux de réduction fixé. Chaque carte montre la formation, l'université, la réduction et le montant des frais de courtage. Un bouton « Payer / Continuer » ouvre le flux LigdiCash existant. Un bandeau en haut explique en 5 étapes numérotées le parcours : candidature acceptée → paiement → OTP → reçu + bon de courtage dans Documents → présentation à la scolarité. |
+| Documents | `lib/features/student/tabs/student_documents_tab.dart` | Réutilise `StudentDocumentsScreen` en mode onglet (reçus + bons de courtage). |
+
+Statut des validations :
+- `flutter build apk --debug` : code 0.
+- `flutter analyze` : 0 erreur (avertissements d'info préexistants).
+- Le tab Paiements n'est pas encore exercé sur une vraie session étudiante.
+- Le tab Documents réutilise l'écran existant ; son fonctionnement dépend des
+  mêmes RPC `payment_receipts` / `app_list_my_brokerage_vouchers`.
+
+Reste à faire sur la Phase 4 :
+1. Valider le parcours de paiement complet sur un cas réel (candidature
+   acceptée + taux fixé).
+2. Afficher un compte à rebours / date butoir si un délai de 7 jours est
+   enregistré côté serveur.
+3. Vérifier le rendu sur écran étroit (360 dp).
+4. Connecter la déclaration manuelle pour les paiements en espèces/guichet.
 
 ---
 
