@@ -15,6 +15,14 @@
 
 ---
 
+## 2026-09-21 (soir) — Poussée sur main et build AAB release +34
+
+- `—` · **GIT** · `git push origin candidature-dossier-inline:main` en avance
+  rapide (`0d245b2..12cc302`).
+- `—` · **VERSION** · `academia_app/pubspec.yaml` : `1.0.6+33` → `1.0.6+34`.
+- `—` · **BUILD** · `flutter build appbundle` : code 0 ; fichier
+  `build/app/outputs/bundle/release/app-release.aab` (~146 Mo).
+
 ## 2026-09-21 (soir) — Cycle de vie acceptation/refus + délai + paiement manuel
 
 - `—` · **SUPABASE** · migration `20260921200000_acceptance_deadline_et_paiement_manuel.sql` :

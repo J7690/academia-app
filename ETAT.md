@@ -1270,6 +1270,13 @@ Validation :
   avertissements préexistants sur `BuildContext` across async gaps restent).
 - Migration appliquée en production via SQL Editor.
 
+**21/09/2026 — Poussée et build release.**
+- `git push origin candidature-dossier-inline:main` : avance rapide OK.
+- `origin/main` pointe désormais sur `12cc302`.
+- Version passée à `1.0.6+34`.
+- `flutter build appbundle` : code 0.
+- Fichier généré : `build/app/outputs/bundle/release/app-release.aab`.
+
 Reste à faire sur la Phase 4 :
 1. Valider le parcours de paiement complet sur un cas réel (candidature
    acceptée + taux fixé).
