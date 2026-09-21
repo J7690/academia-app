@@ -172,6 +172,86 @@ class _StudentPaymentsTabState extends State<StudentPaymentsTab> {
     );
   }
 
+  Future<void> _declareManualPayment(
+    BuildContext context,
+    Map<String, dynamic> application,
+  ) async {
+    final appId = application['id']?.toString() ?? '';
+    if (appId.isEmpty) return;
+
+    final notesController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Paiement en espèces / au guichet'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Choisissez cette option si vous avez versé les frais de courtage à un agent Academia ou au guichet. Votre paiement sera vérifié avant d’être confirmé.',
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: notesController,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Précisions (optionnel)',
+                hintText: 'Ex. : nom de l’agent, date et lieu du versement',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Déclarer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) {
+      notesController.dispose();
+      return;
+    }
+
+    final paymentsProvider = context.read<StudentApplicationPaymentsProvider>();
+    try {
+      final resp = await _AppServices.declareManualPayment(
+        appId,
+        notes: notesController.text.trim().isEmpty ? null : notesController.text.trim(),
+      );
+      notesController.dispose();
+      final data = resp as Map<String, dynamic>?;
+      if (!context.mounted) return;
+      if (data == null || data['success'] != true) {
+        AppSnack.error(
+          context,
+          data?['message']?.toString() ??
+              data?['error']?.toString() ??
+              'La déclaration n\'a pas pu être enregistrée.',
+        );
+        return;
+      }
+      await paymentsProvider.loadMyPayments();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Paiement déclaré. Il sera confirmé sous peu.'),
+        ),
+      );
+    } catch (e) {
+      notesController.dispose();
+      if (!context.mounted) return;
+      AppSnack.error(context, e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isShareMode = context.select<ShareModeProvider, bool>((p) => p.isShareModeEnabled);
@@ -223,6 +303,7 @@ class _StudentPaymentsTabState extends State<StudentPaymentsTab> {
                     application: app,
                     payment: payment,
                     onPay: () => _openPaymentFlow(context, app),
+                    onDeclareManual: () => _declareManualPayment(context, app),
                     onDetail: () => _openDetail(context, app, payment),
                   );
                 }),
@@ -273,6 +354,19 @@ class _AppServices {
         'p_application_id': applicationId,
         'p_payment_reason': 'application_fee',
         'p_amount_due': amount,
+      },
+    );
+  }
+
+  static Future<dynamic> declareManualPayment(
+    String applicationId, {
+    String? notes,
+  }) async {
+    return _client.rpc(
+      'app_student_declare_manual_payment',
+      params: {
+        'p_application_id': applicationId,
+        'p_notes': notes,
       },
     );
   }
@@ -356,12 +450,14 @@ class _ApplicationPaymentCard extends StatelessWidget {
     required this.application,
     this.payment,
     required this.onPay,
+    required this.onDeclareManual,
     required this.onDetail,
   });
 
   final Map<String, dynamic> application;
   final Map<String, dynamic>? payment;
   final VoidCallback onPay;
+  final VoidCallback onDeclareManual;
   final VoidCallback onDetail;
 
   @override
@@ -441,6 +537,7 @@ class _ApplicationPaymentCard extends StatelessWidget {
                   style: const TextStyle(fontSize: 12, color: Color(0xFF1EA75C)),
                 ),
               ],
+              _DeadlineCountdown(deadlineString: application['payment_deadline_at']?.toString()),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -464,20 +561,91 @@ class _ApplicationPaymentCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  FilledButton.icon(
-                    onPressed: onPay,
-                    icon: const Icon(Icons.payment, size: 18),
-                    label: Text(hasPayment ? 'Continuer' : 'Payer'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF1EA75C),
-                      foregroundColor: Colors.white,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      FilledButton.icon(
+                        onPressed: onPay,
+                        icon: const Icon(Icons.payment, size: 18),
+                        label: Text(hasPayment ? 'Continuer' : 'Payer'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF1EA75C),
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                      if (status != 'confirmed')
+                        TextButton.icon(
+                          onPressed: onDeclareManual,
+                          icon: const Icon(Icons.storefront, size: 16),
+                          label: const Text('Espèces / guichet', style: TextStyle(fontSize: 12)),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(0, 32),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _DeadlineCountdown extends StatelessWidget {
+  final String? deadlineString;
+
+  const _DeadlineCountdown({this.deadlineString});
+
+  @override
+  Widget build(BuildContext context) {
+    if (deadlineString == null || deadlineString!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final deadline = DateTime.tryParse(deadlineString!);
+    if (deadline == null) return const SizedBox.shrink();
+
+    final now = DateTime.now();
+    final remaining = deadline.difference(now);
+    final days = remaining.inDays;
+    final hours = remaining.inHours - days * 24;
+    final expired = remaining.isNegative;
+
+    String text;
+    Color color;
+    IconData icon;
+    if (expired) {
+      text = 'Délai dépassé. Contactez Academia rapidement.';
+      color = const Color(0xFFDC2626);
+      icon = Icons.warning;
+    } else if (days >= 1) {
+      text = 'Il vous reste $days jour${days > 1 ? 's' : ''} et $hours heure${hours > 1 ? 's' : ''} pour payer et officialiser votre inscription.';
+      color = const Color(0xFF1EA75C);
+      icon = Icons.timer;
+    } else {
+      text = 'Il vous reste moins de 24 heures pour payer et officialiser votre inscription.';
+      color = const Color(0xFFEA580C);
+      icon = Icons.timer_outlined;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 12, color: color, height: 1.35),
+            ),
+          ),
+        ],
       ),
     );
   }

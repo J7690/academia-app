@@ -212,6 +212,41 @@ class AdminApplicationsProvider extends ChangeNotifier {
     }
   }
 
+  /// Change le statut d'une candidature du schema app.applications.
+  /// Utilise app_admin_set_application_status (pas app_admin_update_application_status
+  /// qui cible app.opportunity_applications).
+  Future<bool> setApplicationStatus({
+    required String applicationId,
+    required String status,
+    String? adminNotes,
+  }) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(
+        'app_admin_set_application_status',
+        params: {
+          'p_application_id': applicationId,
+          'p_status': status,
+          'p_admin_notes': adminNotes,
+        },
+      );
+      if (response is! Map<String, dynamic> || response['success'] != true) {
+        _setError(response is Map<String, dynamic>
+            ? response['error']?.toString() ?? 'Erreur lors du changement de statut.'
+            : 'Erreur lors du changement de statut.');
+        return false;
+      }
+      await loadApplications();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   Future<void> markApplicationSeen(String applicationId) async {
     try {
       final response = await _client.rpc(

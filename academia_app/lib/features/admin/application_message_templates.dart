@@ -60,17 +60,20 @@ const applicationMessageTemplates = <ApplicationMessageTemplate>[
   ApplicationMessageTemplate(
     label: 'Acceptation et paiement',
     target: 'student',
-    // À adapter lors de la phase 4, après création des onglets dédiés.
     body: 'Bonjour {nom},\n\n'
-        'Votre candidature pour {filiere} auprès de {universite} a été '
-        'acceptée. Une fois le taux de réduction fixé par Academia, vous '
-        'pourrez régler les frais de courtage indiqués dans l’application.\n\n'
-        'Depuis l’accueil, ouvrez le menu « … », puis « Mes paiements », '
-        'et suivez les instructions de paiement. Si le paiement n’est pas '
-        'encore disponible, répondez-nous ici.\n\n'
-        'Après confirmation du paiement, retrouvez le reçu et le bon de '
-        'courtage dans « Mes documents », accessible depuis le même menu. '
-        'Présentez ces deux documents ensemble à la scolarité.\n\n'
+        'Félicitations, votre candidature pour {filiere} auprès de '
+        '{universite} a été acceptée.\n\n'
+        'Prochaines étapes :\n'
+        '1. Ouvrez l’application et allez dans « Mes paiements ».\n'
+        '2. Réglez les frais de courtage indiqués par mobile money.\n'
+        '3. Après confirmation, retrouvez le reçu et le bon de courtage '
+        'dans « Mes documents ».\n'
+        '4. Présentez le reçu ET le bon de courtage à la scolarité de '
+        'l’université pour officialiser votre inscription.\n\n'
+        'Important : les conditions négociées sont temporaires et les '
+        'places ne sont pas garanties indéfiniment. Vous disposez de '
+        '7 jours à compter de ce message pour payer et finaliser votre '
+        'inscription. Passé ce délai, l’offre pourra être réévaluée.\n\n'
         'L’équipe Academia',
   ),
   ApplicationMessageTemplate(

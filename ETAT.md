@@ -1245,13 +1245,35 @@ pulsent légèrement pour indiquer l'étape suivante. Un bouton copie le code
 USSD, un autre ouvre le composeur téléphonique. Le champ OTP remonte au-
 dessus du clavier.
 
+**21/09/2026 — Cycle de vie complet acceptation/refus + délai de 7 jours +
+paiement manuel.**
+- Supabase : colonne `app.applications.payment_deadline_at`, délai fixé
+  automatiquement à J+7 par `app_university_update_application_status` et
+  `app_admin_set_application_status`.
+- Supabase : RPC `app_student_declare_manual_payment` pour déclarer un
+  versement espèces/guichet ; `app_create_application_payment` refuse de
+  doubler une déclaration manuelle en cours.
+- Admin : boutons « Accepter » / « Refuser » dans le détail d'une candidature
+  `app.applications`, avec confirmation et pré-remplissage du modèle de message
+  correspondant dans le compositeur.
+- Étudiant : onglet Paiements affiche un compte à rebours du délai de
+  paiement et un bouton « Espèces / guichet » pour déclarer un paiement
+  manuel.
+- Modèle « Acceptation et paiement » : mentionne les étapes de paiement,
+  les documents à présenter, le caractère temporaire des conditions, le
+  délai de 7 jours et le fait que les places ne sont pas garanties.
+
+Validation :
+- `flutter build apk --debug` : code 0.
+- `flutter test` Phase 2 + Phase 3 : 12/12.
+- `flutter analyze` sur les fichiers modifiés : 0 erreur (seuls des
+  avertissements préexistants sur `BuildContext` across async gaps restent).
+- Migration appliquée en production via SQL Editor.
+
 Reste à faire sur la Phase 4 :
 1. Valider le parcours de paiement complet sur un cas réel (candidature
    acceptée + taux fixé).
-2. Afficher un compte à rebours / date butoir si un délai de 7 jours est
-   enregistré côté serveur.
-3. Vérifier le rendu sur écran étroit (360 dp).
-4. Connecter la déclaration manuelle pour les paiements en espèces/guichet.
+2. Vérifier le rendu final sur un écran étroit (360 dp) en condition réelle.
 
 ---
 

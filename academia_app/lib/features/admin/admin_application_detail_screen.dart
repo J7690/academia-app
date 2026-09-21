@@ -48,6 +48,97 @@ class _AdminApplicationDetailScreenState
     });
   }
 
+  String get _status {
+    return widget.application['status']?.toString() ?? '';
+  }
+
+  bool get _canChangeStatus {
+    return _status.isEmpty ||
+        ['draft', 'submitted', 'under_review'].contains(_status);
+  }
+
+  bool get _canAccept => _canChangeStatus;
+  bool get _canReject => _canChangeStatus;
+
+  Future<void> _setStatusWithTemplate(
+    String status,
+    ApplicationMessageTemplate template,
+  ) async {
+    final appId = widget.application['id']?.toString();
+    if (appId == null || appId.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          status == 'accepted' ? 'Accepter la candidature' : 'Refuser la candidature',
+        ),
+        content: Text(
+          status == 'accepted'
+              ? 'Le statut passera à « Acceptée ». Un délai de 7 jours sera automatiquement fixé pour le paiement des frais de courtage. Le modèle de message sera pré-rempli dans le compositeur ci-dessous.'
+              : 'Le statut passera à « Refusée ». Le modèle de message sera pré-rempli dans le compositeur ci-dessous.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Confirmer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final provider = context.read<AdminApplicationsProvider>();
+    final success = await provider.setApplicationStatus(
+      applicationId: appId,
+      status: status,
+    );
+    if (!mounted) return;
+
+    if (success) {
+      setState(() {
+        widget.application['status'] = status;
+        widget.application['payment_deadline_at'] =
+            DateTime.now().add(const Duration(days: 7)).toIso8601String();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            status == 'accepted'
+                ? 'Candidature acceptée. Délai de paiement : 7 jours.'
+                : 'Candidature refusée.',
+          ),
+        ),
+      );
+      _changeMessageTarget(template.target);
+      _applyMessageTemplate(template);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.error ?? 'Erreur lors du changement de statut.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _acceptApplication() async {
+    final template = applicationMessageTemplates.firstWhere(
+      (t) => t.label == 'Acceptation et paiement',
+    );
+    await _setStatusWithTemplate('accepted', template);
+  }
+
+  Future<void> _rejectApplication() async {
+    final template = applicationMessageTemplates.firstWhere(
+      (t) => t.label == 'Réponse défavorable',
+    );
+    await _setStatusWithTemplate('rejected', template);
+  }
+
   Future<void> _applyMessageTemplate(ApplicationMessageTemplate template) async {
     if (_messageController.text.trim().isNotEmpty) {
       final replace = await showDialog<bool>(
@@ -586,11 +677,31 @@ class _AdminApplicationDetailScreenState
               icon: const Icon(Icons.edit),
               label: const Text('Modifier les préférences'),
             ),
-            if (!sentToUniversity)
+            if (!sentToUniversity && _canChangeStatus)
               ElevatedButton.icon(
                 onPressed: _forwardToUniversity,
                 icon: const Icon(Icons.send),
                 label: const Text("Transmettre à l'université"),
+              ),
+            if (_canAccept)
+              ElevatedButton.icon(
+                onPressed: _acceptApplication,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF16A34A),
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.check_circle),
+                label: const Text('Accepter'),
+              ),
+            if (_canReject)
+              ElevatedButton.icon(
+                onPressed: _rejectApplication,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFDC2626),
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.cancel),
+                label: const Text('Refuser'),
               ),
           ],
         ),

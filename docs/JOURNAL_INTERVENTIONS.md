@@ -15,6 +15,31 @@
 
 ---
 
+## 2026-09-21 (soir) — Cycle de vie acceptation/refus + délai + paiement manuel
+
+- `—` · **SUPABASE** · migration `20260921200000_acceptance_deadline_et_paiement_manuel.sql` :
+  - Colonne `app.applications.payment_deadline_at` ; fixée à J+7 sur
+    acceptation par `app_university_update_application_status` et
+    `app_admin_set_application_status`.
+  - RPC `app_student_declare_manual_payment` pour déclarer un paiement
+    espèces/guichet.
+  - `app_create_application_payment` refuse de doubler une déclaration
+    manuelle.
+  - Mise à jour de `app_list_student_applications` et
+    `app_list_admin_applications` pour renvoyer `payment_deadline_at`.
+- `—` · **FLUTTER** · `admin_application_detail_screen.dart` :
+  - Boutons « Accepter » / « Refuser » avec confirmation.
+  - Pré-remplissage du modèle de message correspondant dans le compositeur.
+- `—` · **FLUTTER** · `student_payments_tab.dart` :
+  - Compte à rebours du délai de paiement.
+  - Bouton « Espèces / guichet » + dialogue de déclaration manuelle.
+- `—` · **FLUTTER** · `application_message_templates.dart` :
+  - Modèle « Acceptation et paiement » enrichi avec étapes, documents,
+    délai de 7 jours, caractère temporaire des conditions, places non
+    garanties.
+- `—` · **VÉRIFICATION** · `flutter build apk --debug` code 0 ; tests 12/12 ;
+  migration appliquée en production.
+
 ## 2026-09-21 (soir) — Amélioration UX du flux de paiement OTP LigdiCash
 
 - `—` · **FLUTTER** · `ligdicash_payment_sheet.dart` :
