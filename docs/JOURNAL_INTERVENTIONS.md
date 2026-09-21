@@ -15,6 +15,21 @@
 
 ---
 
+## 2026-09-21 (soir) — Amélioration UX du flux de paiement OTP LigdiCash
+
+- `—` · **FLUTTER** · `ligdicash_payment_sheet.dart` :
+  - `_PulsingButton` : boutons d'action principaux avec halo pulsé pour guider
+    l'utilisateur vers l'étape suivante.
+  - Guide étape par étape numéroté dans la vue OTP : ne pas fermer la
+    fenêtre, composer le code USSD sur le téléphone, recevoir le SMS,
+    revenir coller le code.
+  - Boutons « Copier » et « Ouvrir le composeur » pour le code USSD.
+  - `scrollPadding` sur le champ OTP pour rester visible au-dessus du clavier.
+  - `onTapOutside` pour fermer le clavier sans fermer la feuille.
+- `—` · **VÉRIFICATION** · `flutter build apk --debug` code 0 ;
+  `flutter analyze lib/widgets/ligdicash_payment_sheet.dart` : 0 erreur,
+  0 avertissement.
+
 ## 2026-09-21 (soir) — Correction UX de la boîte de dialogue Candidater
 
 - `—` · **FLUTTER** · `application_request_dialog.dart` :

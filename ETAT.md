@@ -1237,6 +1237,14 @@ le focus sur un tap hors zone. Les libellés indiquent désormais les champs
 obligatoires `(Obligatoire)` et les exemples ont été clarifiés pour le mode de
 suivi, les disponibilités et le pourcentage de réduction.
 
+**21/09/2026 — Amélioration UX du flux de paiement OTP LigdiCash.** Le bottom
+sheet de paiement affiche désormais un guide étape par étape numéroté pour
+l'OTP : ne pas fermer la fenêtre, composer le code USSD sur le téléphone,
+recevoir le SMS, revenir coller le code. Les boutons d'action principaux
+pulsent légèrement pour indiquer l'étape suivante. Un bouton copie le code
+USSD, un autre ouvre le composeur téléphonique. Le champ OTP remonte au-
+dessus du clavier.
+
 Reste à faire sur la Phase 4 :
 1. Valider le parcours de paiement complet sur un cas réel (candidature
    acceptée + taux fixé).
