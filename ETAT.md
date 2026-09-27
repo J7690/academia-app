@@ -1277,6 +1277,24 @@ Validation :
 - `flutter build appbundle` : code 0.
 - Fichier généré : `build/app/outputs/bundle/release/app-release.aab`.
 
+**22/09/2026 — Audit et filtre des notifications de paiement.**
+- Problème : un clic sur « Payer » créait une ligne `application_payments` en
+  statut `pending`, ce qui faisait apparaître immédiatement un badge de
+  notification (admin + étudiant) alors que la transaction n'était pas
+  aboutie.
+- Cause racine : `app_get_notification_summary` comptait toutes les lignes
+  sans filtrer le statut ; `app_notify_student_payment_status` notifiait sur
+  *tout* changement de statut (`pending → processing`).
+- Correctif appliqué en production :
+  - `app_get_notification_summary` ignore les statuts `pending`/`processing`/
+    `declared_by_student` pour l'étudiant et `pending`/`processing` pour
+    l'admin.
+  - `app_notify_student_payment_status` ne notifie que sur `confirmed`,
+    `failed`, `rejected`, `under_verification`.
+  - Les triggers admin/université/commercial sur `application_payments`
+    (déjà présents) confirment le filtre `declared_by_student`/`confirmed`.
+- Migration : `supabase/migrations/20260921230000_filtrer_notifications_paiement.sql`.
+
 Reste à faire sur la Phase 4 :
 1. Valider le parcours de paiement complet sur un cas réel (candidature
    acceptée + taux fixé).

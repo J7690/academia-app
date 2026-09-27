@@ -15,6 +15,19 @@
 
 ---
 
+## 2026-09-22 — Audit et filtre des notifications de paiement
+
+- `—` · **AUDIT** · `app_get_notification_summary` comptait toutes les lignes
+  `application_payments` (dont `pending`/`processing`) pour les badges
+  admin/étudiant.
+- `—` · **AUDIT** · `app_notify_student_payment_status` notifiait l'étudiant
+  sur *tout* changement de statut, y compris `pending → processing` au clic
+  sur « Payer ».
+- `—` · **FIX** · `supabase/migrations/20260921230000_filtrer_notifications_paiement.sql`
+  filtre les statuts qui méritent réellement une alerte.
+- `—` · **PROD** · Migration appliquée via `admin_execute_sql` ; les triggers
+  admin/université/commercial sur `application_payments` sont confirmés.
+
 ## 2026-09-21 (soir) — Poussée sur main et build AAB release +34
 
 - `—` · **GIT** · `git push origin candidature-dossier-inline:main` en avance
