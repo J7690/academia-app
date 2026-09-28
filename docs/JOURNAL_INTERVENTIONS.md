@@ -3567,3 +3567,41 @@ rétabli, redéployé en version 73, et revérifié sur le corps réellement en 
   tardif au-delà de ce délai doit encore être accepté : à éprouver.
 - Le correctif ne peut être prouvé de bout en bout que par un **paiement réel**.
   Rien ici ne remplace cet essai.
+
+## 28/09/2026 — Bouton WhatsApp dans la fiche candidature (administrateur)
+
+Demande de Jocelyn : pouvoir écrire à un candidat sur WhatsApp. L'intégration
+par API (Meta Cloud API ou Twilio) a été étudiée puis écartée par Jocelyn comme
+trop lourde (compte Meta Business vérifié, modèles approuvés, ~0,01 $ le
+message). Retenu : le lien officiel « click to chat » `https://wa.me/<numéro>?text=…`,
+qui ouvre le WhatsApp de l'administrateur (application ou WhatsApp Web) avec un
+message pré-rempli. Aucun coût, aucun compte tiers, rien n'est envoyé sans que
+l'administrateur appuie sur Envoyer.
+
+- Migration `20260927120000_whatsapp_phone_dans_liste_admin.sql` :
+  `app_list_admin_applications` rend `student_phone` et `student_whatsapp_phone`.
+  Définition de production relevée AVANT : identique au dépôt (`20260921200000`).
+- **Durcissement dans la même migration** : le rôle admin est lu dans
+  `raw_app_meta_data` au lieu de `raw_user_meta_data` (modifiable par
+  l'utilisateur), et `<> 'admin'` devient `IS DISTINCT FROM 'admin'` (un rôle
+  NULL passait le contrôle). Sans cela, exposer les numéros aurait permis à un
+  étudiant de lister ceux de tous les candidats. Mesure avant : 7 admins, 7/7
+  avec `raw_app_meta_data.role = 'admin'`.
+- Appliquée via `admin_execute_sql`. Mesures après : la définition contient
+  `student_whatsapp_phone` et `raw_app_meta_data`, plus `raw_user_meta_data` ;
+  appel simulé admin de test → 73 candidatures, clé présente 73/73, numéro
+  renseigné 13/73 ; appel simulé étudiant → `not_admin`.
+- Flutter : `admin_application_detail_screen.dart`, widget `_WhatsAppButton`
+  (pastille verte à côté du nom), affiché seulement si le numéro existe.
+  Numéro à 8 chiffres → préfixe 226. Les 13 numéros actuels ont 8 chiffres.
+  `flutter analyze` : 2098 issues avant, 2098 après, 0 erreur.
+
+### CE QUI RESTE OUVERT
+
+- **Non commité, non poussé, dans aucun build.** La migration est en production ;
+  le bouton n'apparaîtra qu'après build/déploiement de l'app. D'ici là,
+  l'ancienne app ignore les deux champs ajoutés (sans effet).
+- 60 candidatures sur 73 n'ont pas de numéro WhatsApp (antérieures au champ
+  obligatoire du 21/09) : le bouton ne s'affiche pas pour elles.
+- Les échanges faits sur WhatsApp ne sont pas tracés dans Academia.
+- Le clic n'a pas été éprouvé sur un appareil réel.

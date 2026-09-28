@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../widgets/application_attachment_button.dart';
 import '../../widgets/application_message_content.dart';
@@ -574,6 +575,7 @@ class _AdminApplicationDetailScreenState
         Wrap(
           spacing: 6,
           runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             _Pill(
               label: adminStatusLabel(status),
@@ -583,6 +585,11 @@ class _AdminApplicationDetailScreenState
               label: 'Étudiant : ${app['student_full_name'] ?? '—'}',
               color: const Color(0xFF6B7280),
             ),
+            if ((app['student_whatsapp_phone']?.toString() ?? '').isNotEmpty)
+              _WhatsAppButton(
+                phone: app['student_whatsapp_phone'].toString(),
+                studentName: app['student_full_name']?.toString() ?? '',
+              ),
           ],
         ),
       ],
@@ -1237,6 +1244,75 @@ class _Pill extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w500,
           color: color,
+        ),
+      ),
+    );
+  }
+}
+
+/// Bouton WhatsApp : ouvre une conversation wa.me vers le numero de l'etudiant,
+/// avec un message pre-rempli. L'admin envoie depuis son propre WhatsApp.
+class _WhatsAppButton extends StatelessWidget {
+  const _WhatsAppButton({required this.phone, required this.studentName});
+
+  final String phone;
+  final String studentName;
+
+  /// Normalise le numero vers le format international sans '+' pour wa.me.
+  String _normalizeForWaMe(String raw) {
+    String s = raw.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    if (s.startsWith('+')) s = s.substring(1);
+    if (s.startsWith('00')) s = s.substring(2);
+    // Numero Burkina (8 chiffres) sans indicatif
+    if (s.length == 8) s = '226$s';
+    return s;
+  }
+
+  Future<void> _openWhatsApp(BuildContext context) async {
+    final normalized = _normalizeForWaMe(phone);
+    final prenom = studentName.split(' ').first;
+    final text = Uri.encodeComponent(
+      'Bonjour $prenom, concernant votre candidature sur Academia, ',
+    );
+    final uri = Uri.parse('https://wa.me/$normalized?text=$text');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Impossible d\'ouvrir WhatsApp.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Écrire sur WhatsApp ($phone)',
+      child: Material(
+        color: const Color(0xFF25D366),
+        borderRadius: BorderRadius.circular(999),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onTap: () => _openWhatsApp(context),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.chat, size: 14, color: Colors.white),
+                SizedBox(width: 4),
+                Text(
+                  'WhatsApp',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

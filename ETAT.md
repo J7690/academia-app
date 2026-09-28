@@ -10,6 +10,17 @@
 
 ---
 
+> ### 🟠 AU 28/09 — bouton WhatsApp côté administrateur : base en ligne, app PAS encore
+>
+> Fiche candidature admin : une pastille verte « WhatsApp » ouvre
+> `wa.me/<numéro>` avec un message pré-rempli, depuis le WhatsApp de l'admin.
+> **En production** : `app_list_admin_applications` rend `student_whatsapp_phone`
+> (migration `20260927120000`), et son contrôle de rôle lit désormais
+> `raw_app_meta_data` (mesuré : admin de test → 73 candidatures ; étudiant →
+> `not_admin`). **Pas encore visible** : le code Flutter n'est ni commité, ni
+> poussé, ni dans un build. 13 candidatures sur 73 ont un numéro WhatsApp.
+> Détail : journal du 28/09.
+
 > ### 🟠 TABLEAU MANUSCRIT AU 09/09 — écrit, prouvé à l'image, **PAS DÉPLOYÉ**
 >
 > **Le titre de scène n'était pas mal placé : il n'était pas dessiné.** Le moteur
