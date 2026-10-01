@@ -15,6 +15,17 @@
 
 ---
 
+## 2026-10-01 — Correctif enum `payment_status: "failed"` bloquant les paiements
+
+- `15:00` · **DÉFAUT** · `app_notify_student_payment_status()` et `app_get_notification_summary()` · la migration du 21/09 (`20260921230000`) a introduit `'failed'` dans des `IN (...)` sur l'enum `payment_status` ; cette valeur n'existe pas dans l'enum → erreur 22P02 sur **toute** mise à jour de statut de paiement depuis 10 jours.
+- `15:00` · **CORRECTIF** · production Supabase (`thevdfcwlcqzdoybfvgs`) · `CREATE OR REPLACE FUNCTION` sur les deux fonctions : `'failed'` retiré des listes `IN (...)`. Mesuré : `pg_proc WHERE prosrc LIKE '%failed%'` sur les deux noms → 0 ligne.
+- `15:00` · **MIGRATION** · locale · `supabase/migrations/20261001145000_fix_payment_status_failed_enum.sql` créée.
+- `15:00` · **MESURE** · `application_payments` · paiement `AP-20261001141114-85ee8e` (25 000 XOF) : statut `pending`, `amount_paid` NULL, `external_reference` NULL — LigdiCash a confirmé par mail mais le webhook n'a pas écrit en base. À valider manuellement.
+- `15:12` · **CORRECTIF** · production Supabase · paiement `02e8db72…` : `amount_paid` mis à 25 000, `channel` à `ligdicash`, statut passé à `confirmed` via `app_admin_confirm_payment`. Reçu REC-2026-000020 et bon BC-2026-000019 émis automatiquement.
+- `15:12` · **MESURE** · `brokerage_vouchers` · BC-2026-000019, code DNN595XV, snapshot complet (Oumar Sanou, ISTAPEM, 50 %), expire le 15/10/2026.
+- `16:00` · **CORRECTIF** · `admin_application_detail_screen.dart` · bouton « Révoquer l'acceptation » ajouté : visible quand `status == 'accepted'`, passe à `rejected` via RPC existante. `_canChangeStatus` étendu à `rejected` pour permettre la réacceptation. `flutter analyze` : 0 erreur, 0 warning.
+- `16:00` · **MESURE** · `app.applications` · 41 accepted, 31 submitted, 5 rejected, 2 under_review. Jocelyn signale des confusions sur les acceptations.
+
 ## 2026-09-22 — Audit et filtre des notifications de paiement
 
 - `—` · **AUDIT** · `app_get_notification_summary` comptait toutes les lignes

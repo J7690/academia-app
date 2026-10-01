@@ -5,10 +5,33 @@
 > lequel est vrai aujourd'hui. Celui-ci le dit. Les autres sont des **archives
 > datées** : on les lit pour comprendre *pourquoi*, jamais pour savoir *où on en est*.
 >
-> **Relevé le : 10/09/2026, 19 h.** Toute ligne non datée est réputée périmée.
+> **Relevé le : 01/10/2026, 16 h.** Toute ligne non datée est réputée périmée.
 > Toute affirmation ici doit être **mesurée**, jamais supposée (cf. §7).
 
 ---
+
+> ### 🟢 AU 01/10 — enum `payment_status: "failed"` corrigé, paiement confirmé
+>
+> **Corrigé en production** : `'failed'` retiré de `app_notify_student_payment_status()`
+> et `app_get_notification_summary()`. Mesuré : `pg_proc WHERE prosrc LIKE '%failed%'`
+> → 0 ligne. Migration locale : `20261001145000_fix_payment_status_failed_enum.sql`.
+>
+> **Paiement confirmé** : `AP-20261001141114-85ee8e` (25 000 XOF, Oumar Sanou,
+> ISTAPEM). Statut `confirmed`, reçu REC-2026-000020 (signature_hash présent),
+> bon de courtage BC-2026-000019 (code DNN595XV, expire le 15/10).
+>
+> ### 🟠 AU 01/10 — révocation d'acceptation de candidature : code écrit, PAS commité
+>
+> 41 candidatures `accepted`, certaines par erreur. Bouton « Révoquer
+> l'acceptation » ajouté dans `admin_application_detail_screen.dart` :
+> - visible uniquement quand `status == 'accepted'`
+> - dialogue de confirmation, passe le statut à `rejected` via la RPC existante
+>   `app_admin_set_application_status`
+> - l'étudiant ne peut plus payer (garde existante `student_payments_tab.dart:49`)
+> - l'admin peut réaccepter ensuite (les boutons Accepter/Refuser réapparaissent)
+>
+> `flutter analyze` : 0 erreur, 0 warning (2 info pré-existantes).
+> **Pas commité, pas poussé, pas dans un build.**
 
 > ### 🟠 AU 28/09 — bouton WhatsApp côté administrateur : base en ligne, app PAS encore
 >
