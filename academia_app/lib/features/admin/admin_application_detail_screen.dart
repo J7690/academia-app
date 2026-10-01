@@ -55,11 +55,12 @@ class _AdminApplicationDetailScreenState
 
   bool get _canChangeStatus {
     return _status.isEmpty ||
-        ['draft', 'submitted', 'under_review'].contains(_status);
+        ['draft', 'submitted', 'under_review', 'rejected'].contains(_status);
   }
 
   bool get _canAccept => _canChangeStatus;
   bool get _canReject => _canChangeStatus;
+  bool get _canRevoke => _status == 'accepted';
 
   Future<void> _setStatusWithTemplate(
     String status,
@@ -138,6 +139,65 @@ class _AdminApplicationDetailScreenState
       (t) => t.label == 'Réponse défavorable',
     );
     await _setStatusWithTemplate('rejected', template);
+  }
+
+  Future<void> _revokeAcceptance() async {
+    final appId = widget.application['id']?.toString();
+    if (appId == null || appId.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Révoquer l\'acceptation'),
+        content: const Text(
+          'La candidature repassera à « Refusée ». '
+          'L\'étudiant ne pourra plus payer ses frais de courtage.\n\n'
+          'Cette action est réversible : vous pourrez réaccepter la candidature plus tard.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Révoquer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final provider = context.read<AdminApplicationsProvider>();
+    final success = await provider.setApplicationStatus(
+      applicationId: appId,
+      status: 'rejected',
+    );
+    if (!mounted) return;
+
+    if (success) {
+      setState(() {
+        widget.application['status'] = 'rejected';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Acceptation révoquée. L\'étudiant ne peut plus payer.',
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            provider.error ?? 'Erreur lors de la révocation.',
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _applyMessageTemplate(ApplicationMessageTemplate template) async {
@@ -709,6 +769,16 @@ class _AdminApplicationDetailScreenState
                 ),
                 icon: const Icon(Icons.cancel),
                 label: const Text('Refuser'),
+              ),
+            if (_canRevoke)
+              ElevatedButton.icon(
+                onPressed: _revokeAcceptance,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFDC2626),
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.undo),
+                label: const Text('Révoquer l\'acceptation'),
               ),
           ],
         ),
