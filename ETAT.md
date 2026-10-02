@@ -5,10 +5,31 @@
 > lequel est vrai aujourd'hui. Celui-ci le dit. Les autres sont des **archives
 > datées** : on les lit pour comprendre *pourquoi*, jamais pour savoir *où on en est*.
 >
-> **Relevé le : 01/10/2026, 16 h.** Toute ligne non datée est réputée périmée.
+> **Relevé le : 01/10/2026, 17 h.** Toute ligne non datée est réputée périmée.
 > Toute affirmation ici doit être **mesurée**, jamais supposée (cf. §7).
 
 ---
+
+> ### 🟠 AU 02/10 — validation express : code écrit, migration NON appliquée, flutter analyze EN COURS
+>
+> **Objectif** : l'admin prend une candidature, fixe le taux, et confirme le
+> paiement en espèces d'un seul geste — reçu et bon de courtage générés
+> automatiquement. Pour les étudiants qui viennent avec l'argent en main.
+>
+> **Ce qui est écrit** :
+> - Migration SQL `20261002100000_validation_express_admin.sql` : nouvelle RPC
+>   `app_admin_validation_express(p_application_id, p_discount_rate, p_note)`.
+>   Tout dans une seule transaction PostgreSQL (accepte → taux → paiement cash
+>   → confirme → reçu → bon saisie_manuelle → commissions → audit).
+> - `admin_applications_provider.dart` : méthode `validationExpress()`.
+> - `admin_application_detail_screen.dart` : bouton violet « Validation express »
+>   + dialogue (taux + note). Visible sauf sur `canceled`.
+>
+> **Mesuré** : `flutter analyze` → 0 erreur, 0 warning (2098 info pré-existantes).
+>
+> **Ce qui manque** :
+> - Migration **non appliquée en production** — la RPC n'existe pas encore en base.
+> - Rien n'est commité ni poussé.
 
 > ### 🟢 AU 01/10 — enum `payment_status: "failed"` corrigé, paiement confirmé
 >
@@ -31,7 +52,7 @@
 > - l'admin peut réaccepter ensuite (les boutons Accepter/Refuser réapparaissent)
 >
 > `flutter analyze` : 0 erreur, 0 warning (2 info pré-existantes).
-> **Pas commité, pas poussé, pas dans un build.**
+> **Commité, poussé sur `main` (`b9b6944`), AAB 1.0.7+35 compilé (146,2 Mo).**
 
 > ### 🟠 AU 28/09 — bouton WhatsApp côté administrateur : base en ligne, app PAS encore
 >

@@ -15,6 +15,15 @@
 
 ---
 
+## 2026-10-02 — Validation express (paiement en espèces, un seul geste admin)
+
+- `—` · **DÉCISION** · candidatures · l'admin doit pouvoir accepter + confirmer le paiement cash + générer reçu et bon en un seul geste, pour les étudiants qui viennent avec l'argent en main.
+- `—` · **MIGRATION** · locale · `supabase/migrations/20261002100000_validation_express_admin.sql` : nouvelle RPC `app_admin_validation_express(p_application_id, p_discount_rate, p_note)`. Transaction unique : accepte → taux → paiement cash → confirme → reçu → bon (origine `saisie_manuelle`) → commissions → audit. Gardes : `already_paid`, `brokerage_fee_not_defined`, `taux_invalide`.
+- `—` · **CORRECTIF** · `admin_applications_provider.dart` · méthode `validationExpress()` ajoutée avec traduction des codes d'erreur en français.
+- `—` · **CORRECTIF** · `admin_application_detail_screen.dart` · bouton violet « Validation express » dans le Wrap des actions (visible sauf `canceled`), dialogue avec taux + note, feedback avec numéros de reçu et de bon.
+- `—` · **MESURE** · `flutter analyze` · 0 erreur, 0 warning (2098 info pré-existantes `prefer_const` dans les tests). Code valide.
+- `—` · **BLOQUÉ** · Migration **non appliquée en production**. Rien commité.
+
 ## 2026-10-01 — Correctif enum `payment_status: "failed"` bloquant les paiements
 
 - `15:00` · **DÉFAUT** · `app_notify_student_payment_status()` et `app_get_notification_summary()` · la migration du 21/09 (`20260921230000`) a introduit `'failed'` dans des `IN (...)` sur l'enum `payment_status` ; cette valeur n'existe pas dans l'enum → erreur 22P02 sur **toute** mise à jour de statut de paiement depuis 10 jours.
@@ -25,6 +34,8 @@
 - `15:12` · **MESURE** · `brokerage_vouchers` · BC-2026-000019, code DNN595XV, snapshot complet (Oumar Sanou, ISTAPEM, 50 %), expire le 15/10/2026.
 - `16:00` · **CORRECTIF** · `admin_application_detail_screen.dart` · bouton « Révoquer l'acceptation » ajouté : visible quand `status == 'accepted'`, passe à `rejected` via RPC existante. `_canChangeStatus` étendu à `rejected` pour permettre la réacceptation. `flutter analyze` : 0 erreur, 0 warning.
 - `16:00` · **MESURE** · `app.applications` · 41 accepted, 31 submitted, 5 rejected, 2 under_review. Jocelyn signale des confusions sur les acceptations.
+- `16:30` · **DÉPLOIEMENT** · `git push origin candidature-dossier-inline:main` · `main` avancé de `aa0e5cd` à `b9b6944` (2 commits : fix enum + révocation). Avance rapide confirmée.
+- `17:00` · **IMAGE** · AAB release · `app-release.aab` 1.0.7+35, 146,2 Mo. Cache Gradle vidé (18 Go → 25 Go libres) après crash JVM par disque plein (0,25 Go restant).
 
 ## 2026-09-22 — Audit et filtre des notifications de paiement
 

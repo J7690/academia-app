@@ -247,6 +247,63 @@ class AdminApplicationsProvider extends ChangeNotifier {
     }
   }
 
+  Future<Map<String, dynamic>?> validationExpress({
+    required String applicationId,
+    required double discountRate,
+    String? note,
+  }) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(
+        'app_admin_validation_express',
+        params: {
+          'p_application_id': applicationId,
+          'p_discount_rate': discountRate,
+          'p_note': (note == null || note.trim().isEmpty) ? null : note.trim(),
+        },
+      );
+
+      if (response is! Map<String, dynamic> || response['success'] != true) {
+        final code = response is Map<String, dynamic>
+            ? response['error']?.toString()
+            : null;
+        _setError(_messageValidationExpress(code));
+        return null;
+      }
+
+      await loadApplications();
+      return response;
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  static String _messageValidationExpress(String? code) {
+    switch (code) {
+      case 'not_admin':
+        return 'Seul un administrateur peut effectuer cette action.';
+      case 'taux_invalide':
+        return 'Le taux doit être un nombre compris entre 0 et 100.';
+      case 'application_not_found':
+        return 'Cette candidature est introuvable.';
+      case 'already_paid':
+        return 'Les frais de courtage ont déjà été réglés pour ce dossier.';
+      case 'brokerage_fee_not_defined':
+        return 'Le montant des frais de courtage n\'est pas défini '
+            'pour cette formation. Vérifiez le programme.';
+      case 'not_authenticated':
+        return 'Session expirée. Reconnectez-vous et réessayez.';
+      default:
+        return code == null || code.isEmpty
+            ? 'La validation express a échoué.'
+            : 'La validation express a échoué ($code).';
+    }
+  }
+
   Future<void> markApplicationSeen(String applicationId) async {
     try {
       final response = await _client.rpc(

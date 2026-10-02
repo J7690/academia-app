@@ -200,6 +200,165 @@ class _AdminApplicationDetailScreenState
     }
   }
 
+  Future<void> _validationExpress() async {
+    final appId = widget.application['id']?.toString();
+    if (appId == null || appId.isEmpty) return;
+
+    final currentRate = widget.application['discount_rate'];
+    final double? tauxActuel = currentRate is num
+        ? currentRate.toDouble()
+        : double.tryParse(currentRate?.toString() ?? '');
+
+    final champTaux = TextEditingController(
+      text: tauxActuel == null ? '0' : _formaterTaux(tauxActuel),
+    );
+    final champNote = TextEditingController();
+    String? erreur;
+    bool enCours = false;
+
+    await showDialog<void>(
+      context: context,
+      useSafeArea: true,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AdaptiveDialog(
+          title: const Text('Validation express'),
+          actions: [
+            TextButton(
+              onPressed:
+                  enCours ? null : () => Navigator.of(dialogContext).pop(),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF16A34A),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: enCours
+                  ? null
+                  : () async {
+                      final saisie =
+                          champTaux.text.trim().replaceAll(',', '.');
+                      final valeur = double.tryParse(saisie);
+                      if (valeur == null || valeur < 0 || valeur > 100) {
+                        setDialogState(() => erreur =
+                            'Entrez un nombre entre 0 et 100.');
+                        return;
+                      }
+                      setDialogState(() {
+                        enCours = true;
+                        erreur = null;
+                      });
+
+                      final provider =
+                          context.read<AdminApplicationsProvider>();
+                      final messenger = ScaffoldMessenger.of(context);
+                      final result = await provider.validationExpress(
+                        applicationId: appId,
+                        discountRate: valeur,
+                        note: champNote.text,
+                      );
+
+                      if (!mounted || !dialogContext.mounted) return;
+                      if (result == null) {
+                        setDialogState(() {
+                          enCours = false;
+                          erreur = provider.error ??
+                              'La validation express a échoué.';
+                        });
+                        return;
+                      }
+
+                      setState(() {
+                        widget.application['status'] = 'accepted';
+                        widget.application['discount_rate'] = valeur;
+                        widget.application['discount_validated_at'] =
+                            DateTime.now().toIso8601String();
+                        widget.application['payment_deadline_at'] =
+                            DateTime.now()
+                                .add(const Duration(days: 7))
+                                .toIso8601String();
+                      });
+
+                      try {
+                        context
+                            .read<AdminApplicationPaymentsProvider>()
+                            .loadPaymentsForApplication(appId);
+                      } catch (_) {}
+
+                      Navigator.of(dialogContext).pop();
+
+                      final recuNum =
+                          result['receipt']?['receipt_number'] ?? '';
+                      final bonNum =
+                          result['voucher']?['voucher_number'] ?? '';
+                      messenger.showSnackBar(SnackBar(
+                        duration: const Duration(seconds: 6),
+                        content: Text(
+                          'Validation express terminée.\n'
+                          'Reçu $recuNum — Bon $bonNum\n'
+                          'Montant : ${result['amount']} XOF (espèces)',
+                        ),
+                      ));
+                    },
+              child: enCours
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
+                  : const Text('Valider et confirmer'),
+            ),
+          ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Cette action va en une seule étape :\n'
+                '1. Accepter la candidature\n'
+                '2. Fixer le taux de réduction\n'
+                '3. Créer et confirmer le paiement en espèces\n'
+                '4. Générer le reçu et le bon de courtage',
+                style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: champTaux,
+                autofocus: true,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'Taux de réduction négocié',
+                  suffixText: '%',
+                  border: OutlineInputBorder(),
+                  helperText: 'Entre 0 et 100',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: champNote,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  labelText: 'Note (facultatif)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              if (erreur != null) ...[
+                const SizedBox(height: 12),
+                Text(erreur!,
+                    style:
+                        const TextStyle(color: Color(0xFFE02018), fontSize: 13)),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+
+    champTaux.dispose();
+    champNote.dispose();
+  }
+
   Future<void> _applyMessageTemplate(ApplicationMessageTemplate template) async {
     if (_messageController.text.trim().isNotEmpty) {
       final replace = await showDialog<bool>(
@@ -779,6 +938,16 @@ class _AdminApplicationDetailScreenState
                 ),
                 icon: const Icon(Icons.undo),
                 label: const Text('Révoquer l\'acceptation'),
+              ),
+            if (_status != 'canceled')
+              ElevatedButton.icon(
+                onPressed: _validationExpress,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF7C3AED),
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.flash_on),
+                label: const Text('Validation express'),
               ),
           ],
         ),
