@@ -5,31 +5,108 @@
 > lequel est vrai aujourd'hui. Celui-ci le dit. Les autres sont des **archives
 > datées** : on les lit pour comprendre *pourquoi*, jamais pour savoir *où on en est*.
 >
-> **Relevé le : 01/10/2026, 17 h.** Toute ligne non datée est réputée périmée.
+> **Relevé le : 22/10/2026, 13 h 45.** Toute ligne non datée est réputée périmée.
 > Toute affirmation ici doit être **mesurée**, jamais supposée (cf. §7).
 
 ---
 
-> ### 🟠 AU 02/10 — validation express : code écrit, migration NON appliquée, flutter analyze EN COURS
+> ### 🟠 AU 27/10 (après-midi) — formations courtes, lot 1 : BASE EN PRODUCTION, APP NON DÉPLOYÉE
+>
+> **« Payer, c'est s'inscrire »** — décisions de Jocelyn : compte créé dans le
+> formulaire avec un code à 6 chiffres ; 66 66 05 38 = numéro Mobile Money de
+> Nexiom ; aucun remboursement après le début de la formation.
+>
+> **En production (mesuré)** — migrations `20261027110000` (motif
+> `short_training`) et `20261027120000` appliquées :
+> - `app_short_training_checkout` : seule entrée d'inscription-paiement,
+>   montant lu côté serveur, place tenue 30 min (LigdiCash) ou 48 h (Mobile
+>   Money déclaré + référence), refus si complet / date limite / commencée ;
+> - confirmation **par le serveur** (déclencheur sur `application_payments`) ;
+>   le Mobile Money déclaré se valide dans l'écran admin des paiements existant ;
+> - reçu personnalisé : libellé « Inscription — formation pratique », bloc
+>   `formation_courte` (organisateur, dates, accueil, pratique, avantages,
+>   mentions) ; mention par défaut « Aucun remboursement après le début… » ;
+> - page publique : `short_training_highlights` enfin renvoyé ;
+> - **créer une session échouait** depuis le 28/11/2025 (déclencheur lisant
+>   `registrations.training_id`, absente) : corrigé.
+> - Éprouvé en transaction annulée : **28/28** avant application, **11/11**
+>   après (`supabase/tests/formations_courtes_rollback.sql`), 0 ligne restée.
+>   Effet résiduel : 3 numéros de reçu consommés (séquence non transactionnelle).
+> - **Session Nexiom saisie** : formation `bb430b96…`, session `37eb598e…`
+>   (14/11 08 h → 15/11 17 h, Tanghin / Kamboinssin, 10 000 F, à la une,
+>   capacité non fixée, heures supposées). 291 notifications « nouvelle
+>   formation » mises en file.
+>
+> **Écrit, analysé (0 erreur), NON commité, NON déployé** :
+> `features/short_trainings/short_training_checkout_sheet.dart` (formulaire
+> unique), page publique (carte + bloc « À la une » avec affiche), accueil
+> connecté et rangée mobile branchés dessus, reçu PDF (bloc FORMATION),
+> affiche `academia_app/web/affiches/asticots-novembre-2026.webp`.
+> **Vérifié** : `flutter build web --release` réussi sur une copie propre
+> (HEAD + ces fichiers seuls) ; dans le navigateur, page publique sans compte :
+> bloc « À la une », carte (dates, deux lieux, 10 000 FCFA), formulaire ouvert,
+> contrôle de saisie. **Non vu** : l'étape paiement connectée (aurait exigé
+> d'envoyer un identifiant à la base de production) et l'affiche (servie
+> seulement après déploiement).
+>
+> ⚠️ **La copie de travail ne compile pas** — sans rapport avec ce lot :
+> `student_opportunities_tab.dart` (chantier marketplace, non commité, modifié
+> le 07/10) appelle `_FilterChipPill` et `_CategoryBubble`, qui n'existent
+> nulle part. Pousser la copie entière casserait le build Netlify : **ne
+> commiter que les fichiers de ce lot**.
+>
+> Tant que l'app n'est pas poussée sur `main`, l'ancienne version tourne : elle
+> affiche la formation et passe par l'ancien appel, désormais sûr (montant
+> serveur). L'affiche n'existe en ligne qu'après le déploiement Netlify.
+>
+> **Reste (lot 2)** : encaissement au guichet (espèces), écran admin de la
+> session, champs affiche/avantages/lieux dans l'écran admin, filtre dans
+> Opportunités, lien partageable par formation, QR du ticket.
+
+> ### 🔴 AU 27/10 — formations courtes : le paiement en ligne n'a JAMAIS pu marcher
+>
+> Diagnostic seul (rien modifié en base ni dans le code), pour la formation
+> Nexiom « asticots » des 14–15/11 (10 000 F) annoncée sur affiche.
+> - `app_student_create_short_training_payment` insère dans `user_id`,
+>   `payment_type`, `reference_id`, `amount` : **aucune de ces colonnes
+>   n'existe** dans `app.application_payments` → échec à chaque appel. Le
+>   montant vient en plus du téléphone (`p_amount`), et `payment_reason` n'a
+>   pas de valeur `short_training`. Exécutable par `anon`.
+> - `app_public_landing_content` ne renvoie **pas** `short_training_highlights`
+>   (clés mesurées : config, videos, partners, why_cards, announcements) → la
+>   section « Formations courtes à venir » de la page publique ne s'affiche jamais.
+> - Mesuré : 5 formations (2 actives : repassage 12 500 F, rédaction de projet
+>   5 000 F), 3 sessions toutes passées (déc. 2025) → `app_list_public_short_training_sessions` = `[]`.
+>   3 inscriptions (tests de nov. 2025), 0 payée.
+> - Le parcours est une **réservation** (`registered`) ; payer n'est proposé que
+>   si l'étudiant choisit « Mobile money » dans le formulaire.
+
+> ### 🟢 AU 22/10 — correction de nom + validation express Koalai NEBIE
+>
+> **Correction de nom** : compte `96696099` renommé de « Wendyam Ella Ouedraogo »
+> en **OUEDRAOGO WENDABO ELIANE** dans `auth.users`, `app.students` et
+> `app.support_conversations`. Aucun reçu antérieur à corriger.
+>
+> **Validation express** : Koalai NEBIE (Gestion des Projets / IIM), paiement
+> cash 25 000 F. Reçu **REC-2026-000022**, bon **BC-2026-000021** (code
+> `9ZAVRKD1`, expire 05/11). Documents disponibles admin + étudiant.
+
+> ### 🟢 AU 02/10 — validation express : RPC en production, commité, poussé sur main
 >
 > **Objectif** : l'admin prend une candidature, fixe le taux, et confirme le
 > paiement en espèces d'un seul geste — reçu et bon de courtage générés
 > automatiquement. Pour les étudiants qui viennent avec l'argent en main.
 >
-> **Ce qui est écrit** :
-> - Migration SQL `20261002100000_validation_express_admin.sql` : nouvelle RPC
->   `app_admin_validation_express(p_application_id, p_discount_rate, p_note)`.
->   Tout dans une seule transaction PostgreSQL (accepte → taux → paiement cash
->   → confirme → reçu → bon saisie_manuelle → commissions → audit).
+> **Fait** :
+> - RPC `app_admin_validation_express(p_application_id, p_discount_rate, p_note)`
+>   créée en production (mesuré : `pg_proc` → 1 ligne, 3 params).
+>   Transaction atomique : accepte → taux → paiement cash → confirme → reçu
+>   → bon `saisie_manuelle` → commissions → audit.
 > - `admin_applications_provider.dart` : méthode `validationExpress()`.
 > - `admin_application_detail_screen.dart` : bouton violet « Validation express »
 >   + dialogue (taux + note). Visible sauf sur `canceled`.
->
-> **Mesuré** : `flutter analyze` → 0 erreur, 0 warning (2098 info pré-existantes).
->
-> **Ce qui manque** :
-> - Migration **non appliquée en production** — la RPC n'existe pas encore en base.
-> - Rien n'est commité ni poussé.
+> - `flutter analyze` : 0 erreur, 0 warning.
+> - **Commité `ad705dc`, poussé sur `main`** (`b9b6944..ad705dc`).
 
 > ### 🟢 AU 01/10 — enum `payment_status: "failed"` corrigé, paiement confirmé
 >

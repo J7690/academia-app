@@ -361,6 +361,7 @@ class _DonutSection extends StatelessWidget {
     'marketplace_purchase': 'Marketplace',
     'subscription': 'Abonnement',
     'online_course': 'Cours en ligne',
+    'short_training': 'Formation courte',
     'instructor': 'Enseignant',
     'commercial': 'Commercial',
     'merchant': 'Marchand',

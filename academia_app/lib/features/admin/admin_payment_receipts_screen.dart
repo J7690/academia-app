@@ -397,6 +397,8 @@ String libelleDuMotif(String? motif) {
       return 'Préparation aux concours';
     case 'marketplace_purchase':
       return 'Achat sur la place de marché';
+    case 'short_training':
+      return 'Inscription — formation pratique';
     case 'other':
       return 'Prestation Academia';
     default:

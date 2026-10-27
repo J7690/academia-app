@@ -19,6 +19,7 @@ import '../../providers/online_courses_catalog_provider.dart';
 import '../../providers/student_online_courses_provider.dart';
 import '../../providers/home_formations_provider.dart';
 import '../../providers/student_short_trainings_provider.dart';
+import '../short_trainings/short_training_checkout_sheet.dart';
 import '../../providers/student_weather_provider.dart';
 import '../../providers/student_announcements_provider.dart';
 import '../../providers/student_academic_calendar_provider.dart';
@@ -2705,7 +2706,8 @@ class _ShortTrainingMobileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final title = session['title']?.toString() ?? '';
     final category = session['category']?.toString() ?? '';
-    final imageUrl = session['image_url']?.toString() ?? '';
+    final imageUrl =
+        (session['poster_url'] ?? session['image_url'])?.toString() ?? '';
 
     final dynamic rawPrice = session['price'];
     num? priceValue;
@@ -2720,7 +2722,20 @@ class _ShortTrainingMobileCard extends StatelessWidget {
       priceText = '$formatted FCFA';
     }
 
-    return Container(
+    // Toucher la carte ouvre le formulaire unique : inscription + paiement.
+    return GestureDetector(
+      onTap: () {
+        final provider = context.read<StudentShortTrainingsProvider>();
+        ShortTrainingCheckoutSheet.show(
+          context,
+          session,
+          onChanged: () {
+            provider.loadPublicSessions();
+            provider.loadMyTrainings();
+          },
+        );
+      },
+      child: Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -2818,6 +2833,7 @@ class _ShortTrainingMobileCard extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

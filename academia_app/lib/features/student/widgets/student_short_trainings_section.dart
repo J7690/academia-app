@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../providers/student_short_trainings_provider.dart';
-import '../../../providers/student_profile_provider.dart';
 import '../../../providers/student_short_training_messages_provider.dart';
 import '../../../providers/student_home_slots_provider.dart';
-import '../../../widgets/ligdicash_payment_sheet.dart';
+import '../../short_trainings/short_training_checkout_sheet.dart';
 
 class StudentShortTrainingsSection extends StatefulWidget {
   const StudentShortTrainingsSection({super.key});
@@ -42,7 +40,7 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Messages avec Nexium Group',
+                  'Messages avec Nexiom Group',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -189,269 +187,26 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
       },
     );
   }
-  Future<void> _openRegistrationDialog(
-    BuildContext context,
-    Map<String, dynamic> session,
-  ) async {
-    final trainingsProvider = context.read<StudentShortTrainingsProvider>();
-    final profileProvider = context.read<StudentProfileProvider>();
-    final profile = profileProvider.profile;
-    final phoneFromProfile = profile?['phone']?.toString() ?? '';
-
-    final phoneController = TextEditingController(text: phoneFromProfile);
-    final companyController = TextEditingController();
-    final notesController = TextEditingController();
-
-    String? preferredChannel;
-    String? paymentMethod;
-    bool wantsInvoice = false;
-
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        final title = session['title']?.toString() ?? '';
-        final startAt = session['start_at']?.toString() ?? '';
-        final location = session['location']?.toString() ?? '';
-        return StatefulBuilder(
-          builder: (dialogContext, setStateDialog) {
-            return AlertDialog(
-              title: const Text('Confirmation d\'inscription'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (title.isNotEmpty)
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    if (startAt.isNotEmpty || location.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text([
-                        if (startAt.isNotEmpty) startAt,
-                        if (location.isNotEmpty) location,
-                      ].join(' · ')),
-                    ],
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: phoneController,
-                      keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(
-                        labelText: 'Téléphone',
-                        hintText: 'Numéro où Nexium peut vous joindre',
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: preferredChannel,
-                      decoration: const InputDecoration(
-                        labelText: 'Canal de contact préféré',
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'whatsapp',
-                          child: Text('WhatsApp'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'phone',
-                          child: Text('Appel téléphonique'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'email',
-                          child: Text('Email'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setStateDialog(() {
-                          preferredChannel = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: paymentMethod,
-                      decoration: const InputDecoration(
-                        labelText: 'Mode de paiement prévu',
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'mobile_money',
-                          child: Text('Mobile money'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'cash',
-                          child: Text('Espèces sur place'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'bank_transfer',
-                          child: Text('Virement bancaire'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'other',
-                          child: Text('Autre'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setStateDialog(() {
-                          paymentMethod = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    SwitchListTile(
-                      value: wantsInvoice,
-                      onChanged: (value) {
-                        setStateDialog(() {
-                          wantsInvoice = value;
-                        });
-                      },
-                      title: const Text('Souhaite une facture'),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: companyController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nom de l\'entreprise (optionnel)',
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: notesController,
-                      minLines: 2,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                        labelText: 'Message pour Nexium (optionnel)',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                  },
-                  child: const Text('Annuler'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    final sessionId = session['session_id']?.toString() ?? '';
-                    if (sessionId.isEmpty) {
-                      Navigator.of(dialogContext).pop();
-                      return;
-                    }
-
-                    final ok = await trainingsProvider.registerForSessionWithDetails(
-                      sessionId: sessionId,
-                      contactPhone: phoneController.text.trim().isEmpty
-                          ? null
-                          : phoneController.text.trim(),
-                      preferredChannel: preferredChannel,
-                      paymentMethod: paymentMethod,
-                      wantsInvoice: wantsInvoice,
-                      companyName: companyController.text.trim().isEmpty
-                          ? null
-                          : companyController.text.trim(),
-                      notes: notesController.text.trim().isEmpty
-                          ? null
-                          : notesController.text.trim(),
-                    );
-
-                    if (!mounted) return;
-                    Navigator.of(dialogContext).pop();
-
-                    if (!ok) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            trainingsProvider.error ??
-                                'Erreur lors de l\'inscription.',
-                          ),
-                        ),
-                      );
-                      return;
-                    }
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Inscription enregistrée.')),
-                    );
-
-                    // Propose paiement LigdiCash si prix > 0
-                    final dynamic rawPrice = session['price'];
-                    final double price = (rawPrice is num) ? rawPrice.toDouble() : 0;
-                    if (price > 0 && paymentMethod == 'mobile_money') {
-                      await _offerPayment(
-                        context,
-                        sessionId: sessionId,
-                        title: session['title']?.toString() ?? 'Formation',
-                        price: price,
-                      );
-                    }
-                  },
-                  child: const Text('Valider mon inscription'),
-                ),
-              ],
-            );
-          },
-        );
+  /// Le formulaire unique (inscription + paiement), cf. ShortTrainingCheckoutSheet.
+  void _openCheckout(Map<String, dynamic> session) {
+    final provider = context.read<StudentShortTrainingsProvider>();
+    ShortTrainingCheckoutSheet.show(
+      context,
+      session,
+      onChanged: () {
+        provider.loadPublicSessions();
+        provider.loadMyTrainings();
       },
     );
   }
-  Future<void> _offerPayment(
-    BuildContext ctx, {
-    required String sessionId,
-    required String title,
-    required double price,
-  }) async {
-    // Find registration id from myTrainings
-    final provider = ctx.read<StudentShortTrainingsProvider>();
-    String? registrationId;
-    for (final reg in provider.myTrainings) {
-      if (reg['session_id']?.toString() == sessionId ||
-          reg['title']?.toString() == title) {
-        registrationId = reg['registration_id']?.toString();
-        break;
-      }
-    }
-    if (registrationId == null || registrationId.isEmpty) return;
 
-    // Create payment record
-    try {
-      final res = await Supabase.instance.client.rpc(
-        'app_student_create_short_training_payment',
-        params: {
-          'p_registration_id': registrationId,
-          'p_amount': price,
-          'p_payment_method': 'mobile_money',
-        },
-      );
-      final paymentId = (res is Map) ? res['payment_id']?.toString() : null;
-      if (paymentId == null || paymentId.isEmpty) return;
-      if (!mounted) return;
-
-      // Open LigdiCash payment sheet
-      await LigdiCashPaymentSheet.show(
-        context: ctx,
-        paymentType: 'short_training',
-        paymentId: paymentId,
-        amount: price,
-        description: 'Formation: $title',
-        onSuccess: () {
-          // Confirm payment
-          Supabase.instance.client.rpc(
-            'app_confirm_short_training_payment',
-            params: {'p_payment_id': paymentId},
-          );
-          provider.loadMyTrainings();
-        },
-      );
-    } catch (e) {
-      debugPrint('[ShortTrainings] _offerPayment error: $e');
+  static String _statusLabel(String status, String paymentStatus) {
+    if (status == 'confirmed') return 'Place confirmée';
+    if (paymentStatus == 'declared_by_student' || paymentStatus == 'under_verification') {
+      return 'Paiement en vérification';
     }
+    if (paymentStatus == 'processing') return 'Paiement en cours';
+    return 'En attente de paiement';
   }
 
   @override
@@ -512,7 +267,7 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Formations courtes Nexium Group',
+                  'Formations courtes',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -608,7 +363,7 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
                                   onPressed: sessionId.isEmpty
                                       ? null
                                       : () {
-                                          _openRegistrationDialog(context, session);
+                                          _openCheckout(session);
                                         },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF3275D0),
@@ -645,6 +400,9 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
                           registration['start_at']?.toString() ?? '';
                       final regStatus =
                           registration['status']?.toString() ?? '';
+                      final regPaymentStatus =
+                          registration['payment_status']?.toString() ?? '';
+                      final regStatusLabel = _statusLabel(regStatus, regPaymentStatus);
                       final registrationId =
                           registration['registration_id']?.toString() ?? '';
 
@@ -666,7 +424,7 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
                       final subtitleParts = <String>[
                         if (regLocation.isNotEmpty) regLocation,
                         if (regStartAt.isNotEmpty) regStartAt,
-                        if (regStatus.isNotEmpty) 'Statut: $regStatus',
+                        if (registration['receipt_number'] != null) 'Reçu ${registration['receipt_number']}',
                       ];
 
                       return SizedBox(
@@ -732,29 +490,20 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
                                               BorderRadius.circular(14),
                                         ),
                                         child: Text(
-                                          regStatus,
+                                          regStatusLabel,
                                           style: const TextStyle(
                                             fontSize: 11,
                                           ),
                                         ),
                                       ),
                                     const Spacer(),
-                                    if (regStatus == 'registered' || regStatus == 'pending')
+                                    if (regStatus != 'confirmed' &&
+                                        regPaymentStatus != 'declared_by_student' &&
+                                        regPaymentStatus != 'under_verification')
                                       TextButton.icon(
                                         onPressed: registrationId.isEmpty
                                             ? null
-                                            : () {
-                                                final dynamic rawPrice = registration['price'] ?? registration['amount_due'];
-                                                final double price = (rawPrice is num) ? rawPrice.toDouble() : 0;
-                                                if (price > 0) {
-                                                  _offerPayment(
-                                                    context,
-                                                    sessionId: registration['session_id']?.toString() ?? '',
-                                                    title: regTitle,
-                                                    price: price,
-                                                  );
-                                                }
-                                              },
+                                            : () => _openCheckout(registration),
                                         icon: const Icon(Icons.payment, color: Color(0xFF1EA75C)),
                                         label: const Text('Payer', style: TextStyle(color: Color(0xFF1EA75C))),
                                       ),

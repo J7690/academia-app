@@ -380,6 +380,8 @@ class _AdminPaymentsBodyState extends State<_AdminPaymentsBody> {
         return 'Frais d\'inscription';
       case 'tuition_deposit':
         return 'Acompte scolarité';
+      case 'short_training':
+        return 'Formation courte';
       default:
         return 'Paiement';
     }

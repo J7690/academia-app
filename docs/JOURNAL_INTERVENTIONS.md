@@ -15,6 +15,13 @@
 
 ---
 
+## 2026-10-22 — Correction de nom + validation express Koalai NEBIE
+
+- `13:42` · **CORRECTIF** · base de production · nom du compte `96696099` (ex « Wendyam Ella Ouedraogo ») corrigé en **OUEDRAOGO WENDABO ELIANE** dans `auth.users` (raw_user_meta_data), `app.students` et `app.support_conversations` (1 conversation). Demande de Jocelyn.
+- `13:42` · **MESURE** · production · validation express déclenchée pour Koalai NEBIE (candidature `777ecd0f`, Gestion des Projets / IIM). Paiement cash 25 000 F confirmé (`AP-20261020195359-f9cb83`). Reçu **REC-2026-000022**, bon **BC-2026-000021** (code `9ZAVRKD1`, expire 05/11/2026). Documents disponibles côté admin et côté étudiant.
+
+---
+
 ## 2026-10-02 — Validation express (paiement en espèces, un seul geste admin)
 
 - `—` · **DÉCISION** · candidatures · l'admin doit pouvoir accepter + confirmer le paiement cash + générer reçu et bon en un seul geste, pour les étudiants qui viennent avec l'argent en main.
@@ -22,7 +29,8 @@
 - `—` · **CORRECTIF** · `admin_applications_provider.dart` · méthode `validationExpress()` ajoutée avec traduction des codes d'erreur en français.
 - `—` · **CORRECTIF** · `admin_application_detail_screen.dart` · bouton violet « Validation express » dans le Wrap des actions (visible sauf `canceled`), dialogue avec taux + note, feedback avec numéros de reçu et de bon.
 - `—` · **MESURE** · `flutter analyze` · 0 erreur, 0 warning (2098 info pré-existantes `prefer_const` dans les tests). Code valide.
-- `—` · **BLOQUÉ** · Migration **non appliquée en production**. Rien commité.
+- `—` · **MIGRATION** · production Supabase (`thevdfcwlcqzdoybfvgs`) · `CREATE OR REPLACE FUNCTION app_admin_validation_express` (3 params). Mesuré : `pg_proc` → 1 ligne.
+- `—` · **DÉPLOIEMENT** · `git push origin candidature-dossier-inline:main` · `main` avancé de `b9b6944` à `ad705dc` (avance rapide). Netlify reconstruira `app.academiea.com`.
 
 ## 2026-10-01 — Correctif enum `payment_status: "failed"` bloquant les paiements
 
@@ -3627,3 +3635,17 @@ l'administrateur appuie sur Envoyer.
   obligatoire du 21/09) : le bouton ne s'affiche pas pour elles.
 - Les échanges faits sur WhatsApp ne sont pas tracés dans Academia.
 - Le clic n'a pas été éprouvé sur un appareil réel.
+
+**27/10/2026 — Diagnostic formations courtes (affiche Nexiom asticots, 14–15/11).**
+Lecture seule. Paiement en ligne cassé depuis l'origine (`app_student_create_short_training_payment`
+écrit 4 colonnes inexistantes de `app.application_payments`, montant fourni par le client) ;
+page publique sans formations (`app_public_landing_content` ne renvoie pas `short_training_highlights`) ;
+0 session à venir en base. Propositions remises à Jocelyn, rien implémenté.
+
+**27/10/2026 (après-midi) — Formations courtes, lot 1 : « payer, c'est s'inscrire ».**
+Migrations `20261027110000` + `20261027120000` appliquées en production après essai
+annulé 28/28 (puis 11/11 sur la version appliquée). Défaut supplémentaire trouvé par
+l'essai et corrigé : créer une session échouait (`app_notify_short_training_session`
+lisait `registrations.training_id`). Session Nexiom asticots (14–15/11, 10 000 F) saisie.
+Flutter : formulaire unique `short_training_checkout_sheet.dart`, page publique, accueil,
+rangée mobile, reçu PDF — analysé, non commité, non déployé.

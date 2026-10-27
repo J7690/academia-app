@@ -19,6 +19,7 @@ import 'login_screen.dart';
 import 'signup_screen.dart';
 import 'phone_signup_screen.dart';
 import '../share/share_service.dart';
+import '../short_trainings/short_training_checkout_sheet.dart';
 import '../share/share_mode_provider.dart';
 import '../share/widgets/share_signature.dart';
 import '../../services/analytics_tracking_service.dart';
@@ -799,15 +800,26 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
     );
   }
 
+  // Formations courtes : la carte ouvre le formulaire unique, qui crée le
+  // compte au besoin — plus de détour par l'écran de connexion (27/10).
+  void _openShortTrainingCheckout(Map<String, dynamic> item) {
+    final landing = context.read<LandingContentProvider>();
+    ShortTrainingCheckoutSheet.show(
+      context,
+      item,
+      onChanged: landing.loadPublicLandingContent,
+    );
+  }
+
   Widget _buildShortTrainingCard(Map<String, dynamic> item) {
     final title = (item['title'] ?? '').toString();
-    final category = (item['category'] ?? '').toString();
-    final modality = (item['modality'] ?? '').toString();
-    final location = (item['location'] ?? '').toString();
+    final organizer = (item['organizer_name'] ?? 'Nexiom Group').toString();
+    final dates = formatShortTrainingDates(item['start_at'], item['end_at']);
+    final location =
+        (item['practice_location'] ?? item['welcome_location'] ?? item['location'] ?? '').toString();
     final rawPrice = item['price'];
-    final priceText = rawPrice == null || rawPrice.toString().trim().isEmpty
-        ? 'Tarif : à préciser'
-        : 'Tarif : ${rawPrice.toString()}';
+    final price = rawPrice is num ? rawPrice : num.tryParse('${rawPrice ?? ''}');
+    final seatsLeft = item['seats_left'];
 
     return Container(
       decoration: BoxDecoration(
@@ -827,90 +839,79 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          _showAuthRequiredDialog();
-        },
+        onTap: () => _openShortTrainingCheckout(item),
         child: Padding(
           padding: const EdgeInsets.all(14),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF0A2540),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    if (category.isNotEmpty || modality.isNotEmpty) ...[
-                      Text(
-                        [category, modality]
-                            .where((e) => e.trim().isNotEmpty)
-                            .join(' • '),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF6B7280),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                    ],
-                    if (location.isNotEmpty) ...[
-                      Text(
-                        location,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF6B7280),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                    ],
-                    Text(
-                      priceText,
+              Text(
+                organizer.toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 1,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1EA75C),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0A2540),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                [dates, location].where((e) => e.trim().isNotEmpty).join(' · '),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+              ),
+              if (seatsLeft is num && seatsLeft <= 10)
+                Text(
+                  seatsLeft <= 0 ? 'Complet' : 'Plus que ${seatsLeft.toInt()} place(s)',
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFC2410C),
+                  ),
+                ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      price == null || price <= 0 ? 'Tarif : à préciser' : formatFcfa(price),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF3275D0),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0A2540),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3275D0),
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(0, 36),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const LoginScreen(),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1EA75C),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(0, 36),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999),
+                      ),
                     ),
-                  );
-                },
-                child: const Text('S’inscrire'),
+                    onPressed: () => _openShortTrainingCheckout(item),
+                    child: const Text('Je m’inscris'),
+                  ),
+                ],
               ),
             ],
           ),
@@ -918,6 +919,151 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
       ),
     );
   }
+
+  /// La formation « à la une » : l'affiche, et le bouton qui inscrit et fait
+  /// payer en une fois. Affichée pour la première session `is_featured`.
+  Widget _buildFeaturedShortTraining(Map<String, dynamic> item) {
+    final title = (item['title'] ?? '').toString();
+    final organizer = (item['organizer_name'] ?? 'Nexiom Group').toString();
+    final dates = formatShortTrainingDates(item['start_at'], item['end_at']);
+    final poster = (item['poster_url'] ?? '').toString();
+    final description = (item['short_description'] ?? '').toString();
+    final welcome = (item['welcome_location'] ?? item['location'] ?? '').toString();
+    final practice = (item['practice_location'] ?? '').toString();
+    final rawPrice = item['price'];
+    final num price = rawPrice is num ? rawPrice : (num.tryParse('${rawPrice ?? ''}') ?? 0);
+
+    final details = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF6A623),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: const Text(
+            'À LA UNE',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF0A2540)),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          organizer,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1EA75C)),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF0A2540),
+            height: 1.15,
+          ),
+        ),
+        if (description.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text(description, style: const TextStyle(fontSize: 13.5, color: Color(0xFF374151))),
+        ],
+        const SizedBox(height: 10),
+        if (dates.isNotEmpty) _featuredLine(Icons.event, dates),
+        if (welcome.isNotEmpty) _featuredLine(Icons.how_to_reg_outlined, 'Accueil et inscriptions : $welcome'),
+        if (practice.isNotEmpty) _featuredLine(Icons.agriculture_outlined, 'Formation pratique : $practice'),
+        const SizedBox(height: 14),
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1EA75C),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () => _openShortTrainingCheckout(item),
+            child: Text(
+              'Je m’inscris — ${formatFcfa(price)}',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'Orange Money, Moov Money ou espèces au siège. Reçu immédiat.',
+          style: TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+        ),
+      ],
+    );
+
+    Widget posterImage(double? width, double height) => ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Image.network(
+            poster,
+            width: width,
+            height: height,
+            fit: BoxFit.cover,
+            alignment: Alignment.topCenter,
+            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          ),
+        );
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFF1EA75C), width: 2),
+        boxShadow: const [BoxShadow(color: Color(0x14000000), blurRadius: 16, offset: Offset(0, 4))],
+      ),
+      child: LayoutBuilder(
+        builder: (context, c) {
+          if (c.maxWidth < 640) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (poster.isNotEmpty) ...[
+                  GestureDetector(
+                    onTap: () => _openShortTrainingCheckout(item),
+                    child: posterImage(null, 300),
+                  ),
+                  const SizedBox(height: 14),
+                ],
+                details,
+              ],
+            );
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (poster.isNotEmpty) ...[
+                GestureDetector(
+                  onTap: () => _openShortTrainingCheckout(item),
+                  child: posterImage(260, 390),
+                ),
+                const SizedBox(width: 20),
+              ],
+              Expanded(child: details),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _featuredLine(IconData icon, String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 16, color: const Color(0xFF6B7280)),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(text, style: const TextStyle(fontSize: 13, color: Color(0xFF0A2540))),
+            ),
+          ],
+        ),
+      );
 
   Widget _buildOpportunityHighlightCard(Map<String, dynamic> item) {
     final title = (item['title'] ?? '').toString();
@@ -1596,6 +1742,14 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      for (final featured in shortTrainingHighlights
+                          .where((e) =>
+                              e['is_featured'] == true &&
+                              (e['poster_url'] ?? '').toString().isNotEmpty)
+                          .take(1)) ...[
+                        _buildFeaturedShortTraining(featured),
+                        const SizedBox(height: 24),
+                      ],
                       const Text(
                         'Formations courtes à venir',
                         style: TextStyle(
@@ -1605,7 +1759,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'Découvre quelques sessions publiques avant de créer ton compte.',
+                        'Inscris-toi et paie en ligne en une minute, même sans compte.',
                         style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
                       ),
                       const SizedBox(height: 16),
@@ -1614,7 +1768,7 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
                           final isNarrow = constraints.maxWidth < 900;
                           if (isNarrow) {
                             return SizedBox(
-                              height: 180,
+                              height: 196,
                               child: ListView.separated(
                                 scrollDirection: Axis.horizontal,
                                 itemCount: shortTrainingHighlights.length,

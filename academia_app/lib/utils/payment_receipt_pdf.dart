@@ -125,6 +125,19 @@ Future<Uint8List> construirePdfRecu({
   );
   final refDossier = _texte(dossier['candidature_id']);
 
+  // Formation courte (27/10) : quoi, quand, où, et à quelles conditions. Le
+  // reçu sert de ticket le jour de la formation. Tout vient de l'instantané,
+  // figé à l'émission : les mentions ne changent pas si la fiche change.
+  final formationCourte = _objet(snap['formation_courte']);
+  final fcOrganisateur = _texte(formationCourte['organisateur']);
+  final fcDates = _texte(formationCourte['dates']);
+  final fcAccueil = _texte(formationCourte['lieu_accueil']);
+  final fcPratique = _texte(formationCourte['lieu_pratique']);
+  final fcAvantages = (formationCourte['avantages'] is List)
+      ? (formationCourte['avantages'] as List).map((e) => '$e').where((e) => e.isNotEmpty).toList()
+      : const <String>[];
+  final fcMentions = _texte(formationCourte['mentions']);
+
   final devise = _ouSinon(snap['devise'],
       _texte(payment['currency']).isEmpty ? 'XOF' : _texte(payment['currency']));
   final montant = _nombre(snap['montant']) ??
@@ -398,6 +411,44 @@ Future<Uint8List> construirePdfRecu({
                 'Montant attendu au titre de cette prestation ; le montant encaissé '
                 'n\'a pas pu être confirmé auprès de l\'opérateur.',
                 style: const pw.TextStyle(fontSize: 8.5, color: _grisClair)),
+          ],
+
+          // ── FORMATION (formations courtes uniquement) ──────────────────────
+          if (formationCourte.isNotEmpty) ...[
+            pw.SizedBox(height: 14),
+            pw.Container(
+              padding: const pw.EdgeInsets.fromLTRB(14, 11, 14, 12),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: _vert, width: 1.2),
+                borderRadius: pw.BorderRadius.circular(3),
+              ),
+              child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+                _intertitre('FORMATION'),
+                pw.SizedBox(height: 7),
+                pw.Row(children: [
+                  pw.Expanded(child: _ligne('Organisateur', fcOrganisateur)),
+                  pw.SizedBox(width: 22),
+                  pw.Expanded(child: _ligne('Dates', fcDates)),
+                ]),
+                pw.SizedBox(height: 5),
+                pw.Row(children: [
+                  pw.Expanded(child: _ligne('Accueil', fcAccueil)),
+                  pw.SizedBox(width: 22),
+                  pw.Expanded(child: _ligne('Pratique', fcPratique)),
+                ]),
+                if (fcAvantages.isNotEmpty) ...[
+                  pw.SizedBox(height: 7),
+                  pw.Text('Inclus : ${fcAvantages.join(' · ')}',
+                      style: const pw.TextStyle(fontSize: 8.5, color: _encre)),
+                ],
+                if (fcMentions.isNotEmpty) ...[
+                  pw.SizedBox(height: 7),
+                  pw.Text(fcMentions,
+                      style: pw.TextStyle(
+                          fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: _vertFonce)),
+                ],
+              ]),
+            ),
           ],
 
           // ── RÈGLEMENT ──────────────────────────────────────────────────────
