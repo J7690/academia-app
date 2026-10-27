@@ -3655,3 +3655,11 @@ Lot 1 poussé sur `main` (`ad705dc` → `22e4fba`), Netlify reconstruit (ETag `d
 contrôlé). Lot 2 : migration `20261027150000` appliquée après essai annulé 18/18 ;
 écran admin de session + formulaire guichet (création de compte par `/auth/v1/signup` en HTTP,
 pour ne pas faire basculer la session admin via le BroadcastChannel de gotrue). Non commité.
+- Lot 2 commité `f26703b` (6 fichiers) et poussé : `main` `22e4fba` → `f26703b` (ls-remote).
+  Netlify : ETag `ddd9c9bb…` → `a9fdf0a1…`, `app_admin_short_training_cash` présent dans le bundle
+  compressé et non compressé, 3 relevés stables. Non vu : l'écran admin connecté, un encaissement réel.
+
+**27/10/2026 (soir) — Chantier marketplace (05–07/10) remis en état de compiler et commité sur la branche.**
+Les 8 composants manquants de `student_opportunities_tab.dart` écrits (le fichier s'arrêtait sur
+`// PART3`) ; `flutter analyze lib` → 0 erreur. Essai E2E rejoué en transaction annulée : 0 échec.
+Commité sur `candidature-dossier-inline`, **non poussé sur `main`** (à voir d'abord avec un compte étudiant).

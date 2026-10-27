@@ -16,8 +16,9 @@ class MarketplaceShimmerBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: const Color(0xFFE5E7EB),
-      highlightColor: const Color(0xFFF3F4F6),
+      baseColor: const Color(0xFFE6E9F5),
+      highlightColor: const Color(0xFFF6F7FD),
+      period: const Duration(milliseconds: 1300),
       child: Container(
         width: width,
         height: height,

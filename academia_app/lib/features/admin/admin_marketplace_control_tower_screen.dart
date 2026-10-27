@@ -727,6 +727,208 @@ class _AdminMarketplaceControlTowerScreenState
     );
   }
 
+  static const Map<String, String> _adminOrderStatusLabels = {
+    'pending': 'En attente de paiement',
+    'paid': 'Payée',
+    'confirmed': 'Confirmée',
+    'accepted': 'Acceptée',
+    'shipped': 'Expédiée',
+    'delivered': 'Livrée',
+    'completed': 'Terminée',
+    'cancelled': 'Annulée',
+    'disputed': 'Litige',
+    'refunded': 'Remboursée',
+  };
+
+  Future<String?> _askAdminNote(String title, String hint) async {
+    final controller = TextEditingController();
+    final r = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: controller,
+          maxLines: 3,
+          maxLength: 300,
+          decoration: InputDecoration(
+            hintText: hint,
+            border: const OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Retour'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+            child: const Text('Valider'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    return (r == null || r.isEmpty) ? null : r;
+  }
+
+  Future<void> _openAdminOrderSheet(
+    AdminMarketplaceControlTowerProvider provider,
+    String orderId,
+  ) async {
+    final detail = await provider.getOrderDetail(orderId);
+    if (!mounted) return;
+    if (detail == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(provider.error ?? 'Commande introuvable.')),
+      );
+      return;
+    }
+    final order = Map<String, dynamic>.from(detail['order'] as Map);
+    final actions = detail['actions'] is Map
+        ? Map<String, dynamic>.from(detail['actions'])
+        : <String, dynamic>{};
+    final payments = (detail['payments'] as List? ?? const [])
+        .whereType<Map>()
+        .toList();
+    final events = (detail['events'] as List? ?? const [])
+        .whereType<Map>()
+        .toList();
+    final items = (detail['items'] as List? ?? const [])
+        .whereType<Map>()
+        .toList();
+    final status = order['status']?.toString() ?? '';
+    final currency = order['currency']?.toString();
+
+    Future<void> run(Future<bool> Function() action, String okMessage) async {
+      final ok = await action();
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ok ? okMessage : (provider.error ?? 'Erreur.'))),
+      );
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: SizedBox(
+          height: MediaQuery.of(sheetContext).size.height * 0.8,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Text(
+                'Commande #${orderId.substring(0, 8).toUpperCase()} — ${_adminOrderStatusLabels[status] ?? status}',
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Text('Total : ${_formatMoney(order['total_amount'], currency)}'),
+              Text('Acheteur : ${detail['student_name'] ?? '-'}'),
+              Text('Marchand : ${detail['merchant_name'] ?? '-'}'),
+              if ((order['dispute_reason']?.toString() ?? '').isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Réclamation : ${order['dispute_reason']}',
+                  style: const TextStyle(color: Color(0xFFB91C1C), fontWeight: FontWeight.w700),
+                ),
+              ],
+              if ((order['cancel_reason']?.toString() ?? '').isNotEmpty)
+                Text('Motif d\'annulation : ${order['cancel_reason']}'),
+              if (actions['can_resolve'] == true) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB91C1C)),
+                        onPressed: () async {
+                          final note = await _askAdminNote(
+                            'Rembourser l\'acheteur',
+                            'Motif de la décision (communiqué aux deux parties)',
+                          );
+                          if (note == null) return;
+                          await run(
+                            () => provider.resolveDispute(orderId: orderId, refundBuyer: true, note: note),
+                            'Acheteur remboursé.',
+                          );
+                        },
+                        icon: const Icon(Icons.undo, size: 18),
+                        label: const Text('Rembourser'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(backgroundColor: const Color(0xFF047857)),
+                        onPressed: () async {
+                          final note = await _askAdminNote(
+                            'Payer le vendeur',
+                            'Motif de la décision (communiqué aux deux parties)',
+                          );
+                          if (note == null) return;
+                          await run(
+                            () => provider.resolveDispute(orderId: orderId, refundBuyer: false, note: note),
+                            'Fonds versés au vendeur.',
+                          );
+                        },
+                        icon: const Icon(Icons.check, size: 18),
+                        label: const Text('Payer le vendeur'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              if (actions['can_cancel'] == true) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final reason = await _askAdminNote(
+                      'Annuler la commande',
+                      'Motif (l\'acheteur est remboursé intégralement s\'il a payé)',
+                    );
+                    if (reason == null) return;
+                    await run(
+                      () => provider.cancelOrder(orderId: orderId, reason: reason),
+                      'Commande annulée.',
+                    );
+                  },
+                  icon: const Icon(Icons.cancel_outlined, size: 18),
+                  label: const Text('Annuler la commande'),
+                ),
+              ],
+              const SizedBox(height: 16),
+              const Text('Articles', style: TextStyle(fontWeight: FontWeight.w900)),
+              ...items.map((i) => Text(
+                    '• ${i['title'] ?? ''} x${i['quantity'] ?? ''} — ${_formatMoney(i['unit_price'], i['currency']?.toString())}',
+                  )),
+              const SizedBox(height: 16),
+              const Text('Paiements', style: TextStyle(fontWeight: FontWeight.w900)),
+              if (payments.isEmpty) const Text('Aucun.'),
+              ...payments.map((p) => Text(
+                    '• ${_formatMoney(p['gross_amount'], currency)} — ${p['status']} — ${p['phone_number'] ?? 'numéro inconnu'}',
+                  )),
+              const SizedBox(height: 16),
+              const Text('Historique', style: TextStyle(fontWeight: FontWeight.w900)),
+              ...events.map((e) => Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      '• ${e['created_at']?.toString().substring(0, 16).replaceFirst('T', ' ') ?? ''} — '
+                      '${_adminOrderStatusLabels[e['to_status']] ?? e['to_status']} (${e['actor_role']})'
+                      '${(e['note']?.toString() ?? '').isEmpty ? '' : '\n   ${e['note']}'}',
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  )),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildOrdersTab(AdminMarketplaceControlTowerProvider provider) {
     final items = provider.orders;
 
@@ -760,17 +962,26 @@ class _AdminMarketplaceControlTowerScreenState
           final merchantName = o['merchant_name']?.toString() ?? '';
           final createdAt = o['created_at']?.toString() ?? '';
 
+          final orderId = (o['id'] ?? o['order_id'])?.toString() ?? '';
+          final isDispute = status == 'disputed';
+
           return Card(
+            color: isDispute ? const Color(0xFFFEF2F2) : null,
             child: ListTile(
+              leading: isDispute
+                  ? const Icon(Icons.gavel, color: Color(0xFFB91C1C))
+                  : null,
               title: Text(
                 _formatMoney(total, currency),
                 style: const TextStyle(fontWeight: FontWeight.w900),
               ),
               subtitle: Text(
-                'Statut: $status${merchantName.isEmpty ? '' : '\nMarchand: $merchantName'}${createdAt.isEmpty ? '' : '\nCréée: $createdAt'}',
+                'Statut : ${_adminOrderStatusLabels[status] ?? status}${merchantName.isEmpty ? '' : '\nMarchand : $merchantName'}${createdAt.isEmpty ? '' : '\nCréée : $createdAt'}',
               ),
               trailing: const Icon(Icons.chevron_right),
-              onTap: null,
+              onTap: orderId.isEmpty
+                  ? null
+                  : () => _openAdminOrderSheet(provider, orderId),
             ),
           );
         },

@@ -119,6 +119,7 @@ class MerchantMarketplaceConsoleProviderV2 extends ChangeNotifier {
   Future<bool> updateOrderStatus({
     required String orderId,
     required String status,
+    String? note,
   }) async {
     final id = orderId.trim();
     final st = status.trim();
@@ -135,6 +136,7 @@ class MerchantMarketplaceConsoleProviderV2 extends ChangeNotifier {
         params: {
           'p_order_id': id,
           'p_status': st,
+          'p_note': note,
         },
       );
 
@@ -143,7 +145,9 @@ class MerchantMarketplaceConsoleProviderV2 extends ChangeNotifier {
         return false;
       }
       if (response['success'] != true) {
-        _setError(response['error']?.toString() ?? 'Erreur serveur.');
+        _setError(response['message']?.toString() ??
+            response['error']?.toString() ??
+            'Erreur serveur.');
         return false;
       }
 

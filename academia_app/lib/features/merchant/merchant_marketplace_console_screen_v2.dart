@@ -13,6 +13,35 @@ import 'merchant_inquiry_chat_screen_v1.dart';
 import '../../widgets/marketplace/marketplace_shimmer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+const Map<String, String> _orderStatusLabels = {
+  'pending': 'En attente de paiement',
+  'paid': 'Payée',
+  'confirmed': 'Confirmée',
+  'accepted': 'Acceptée',
+  'shipped': 'Expédiée',
+  'delivered': 'Livrée',
+  'completed': 'Terminée',
+  'cancelled': 'Annulée',
+  'canceled': 'Annulée',
+  'disputed': 'Réclamation en cours',
+  'refunded': 'Remboursée',
+};
+
+const Map<String, List<String>> _orderNextStatuses = {
+  'pending': ['cancelled'],
+  'paid': ['accepted', 'cancelled'],
+  'confirmed': ['accepted'],
+  'accepted': ['shipped', 'cancelled'],
+  'shipped': ['delivered'],
+};
+
+String _formatShortDate(dynamic v) {
+  final d = DateTime.tryParse(v?.toString() ?? '')?.toLocal();
+  if (d == null) return '';
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${two(d.day)}/${two(d.month)} à ${two(d.hour)}:${two(d.minute)}';
+}
+
 class MerchantMarketplaceConsoleScreenV2 extends StatefulWidget {
   const MerchantMarketplaceConsoleScreenV2({super.key});
 
@@ -87,6 +116,9 @@ class _MerchantMarketplaceConsoleScreenV2State
         Map<String, dynamic>? order;
         List<Map<String, dynamic>> items = const [];
         String? status;
+        List<String>? allowedNext;
+        Map<String, dynamic> deadlines = const {};
+        Map<String, dynamic>? payment;
 
         Future<void> load() async {
           loading = true;
@@ -107,6 +139,14 @@ class _MerchantMarketplaceConsoleScreenV2State
                     .toList(growable: false)
                 : <Map<String, dynamic>>[];
             status = order?['status']?.toString();
+            final an = res['allowed_next'];
+            allowedNext = an is List
+                ? an.map((e) => e.toString()).toList(growable: false)
+                : null;
+            final dl = res['deadlines'];
+            deadlines = dl is Map ? Map<String, dynamic>.from(dl) : const {};
+            final pm = res['payment'];
+            payment = pm is Map ? Map<String, dynamic>.from(pm) : null;
           } catch (e) {
             error = e.toString();
           } finally {
@@ -134,6 +174,45 @@ class _MerchantMarketplaceConsoleScreenV2State
 
             final currency = order?['currency']?.toString();
             final total = order?['total_amount'];
+            final String? deadlineText = deadlines['accept_before'] != null
+                ? 'À accepter avant le ${_formatShortDate(deadlines['accept_before'])}, sinon annulation et remboursement automatiques.'
+                : deadlines['ship_before'] != null
+                    ? 'À expédier avant le ${_formatShortDate(deadlines['ship_before'])}, sinon annulation et remboursement automatiques.'
+                    : deadlines['auto_complete_at'] != null
+                        ? 'Paiement automatique le ${_formatShortDate(deadlines['auto_complete_at'])} sauf réclamation de l\'acheteur.'
+                        : null;
+            final paymentStatus = payment?['status']?.toString();
+
+            Future<String?> askReason() async {
+              final controller = TextEditingController();
+              final r = await showDialog<String>(
+                context: sheetContext,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Annuler la commande'),
+                  content: TextField(
+                    controller: controller,
+                    maxLines: 3,
+                    maxLength: 300,
+                    decoration: const InputDecoration(
+                      hintText: 'Motif (communiqué à l\'acheteur, remboursé intégralement)',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text('Retour'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+                      child: const Text('Confirmer l\'annulation'),
+                    ),
+                  ],
+                ),
+              );
+              controller.dispose();
+              return r;
+            }
 
             return SafeArea(
               child: SizedBox(
@@ -202,6 +281,28 @@ class _MerchantMarketplaceConsoleScreenV2State
                                       fontWeight: FontWeight.w900,
                                     ),
                                   ),
+                                  if (payment != null && payment?['net_amount'] != null) ...[
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Vous recevrez : ${_formatMoney(payment?['net_amount'], currency)} (commission ${_formatMoney(payment?['commission_amount'], currency)})'
+                                      '${paymentStatus == 'captured' ? ' — fonds en séquestre' : paymentStatus == 'released' ? ' — versé' : paymentStatus == 'refunded' ? ' — acheteur remboursé' : ''}',
+                                      style: const TextStyle(color: Color(0xFF374151), fontSize: 13),
+                                    ),
+                                  ],
+                                  if (deadlineText != null) ...[
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      deadlineText,
+                                      style: const TextStyle(color: Color(0xFFB45309), fontSize: 13, fontWeight: FontWeight.w600),
+                                    ),
+                                  ],
+                                  if (status == 'disputed') ...[
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Réclamation de l\'acheteur : ${order?['dispute_reason'] ?? ''}\nAcademia arbitre ; le paiement est gelé.',
+                                      style: const TextStyle(color: Color(0xFFB91C1C), fontSize: 13),
+                                    ),
+                                  ],
                                   const SizedBox(height: 10),
                                   Row(
                                     children: [
@@ -214,41 +315,50 @@ class _MerchantMarketplaceConsoleScreenV2State
                                       const Spacer(),
                                       DropdownButton<String>(
                                         value: (status ?? 'pending'),
-                                        items: const [
-                                          DropdownMenuItem(
-                                            value: 'pending',
-                                            child: Text('pending'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 'accepted',
-                                            child: Text('accepted'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 'shipped',
-                                            child: Text('shipped'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 'completed',
-                                            child: Text('completed'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 'canceled',
-                                            child: Text('canceled'),
-                                          ),
-                                        ],
+                                        items: <String>{
+                                          status ?? 'pending',
+                                          ...(allowedNext ??
+                                              _orderNextStatuses[
+                                                  status ?? 'pending'] ??
+                                              const <String>[]),
+                                        }
+                                            .map(
+                                              (s) => DropdownMenuItem(
+                                                value: s,
+                                                child: Text(
+                                                  _orderStatusLabels[s] ?? s,
+                                                ),
+                                              ),
+                                            )
+                                            .toList(),
                                         onChanged: provider.isLoading
                                             ? null
                                             : (v) async {
                                                 final newStatus = v ?? 'pending';
-                                                setState(() {
-                                                  status = newStatus;
-                                                });
+                                                if (newStatus == status) return;
+                                                String? note;
+                                                if (newStatus == 'cancelled') {
+                                                  note = await askReason();
+                                                  if (note == null) return;
+                                                  if (note.isEmpty && status != 'pending') {
+                                                    if (!sheetContext.mounted) return;
+                                                    ScaffoldMessenger.of(sheetContext).showSnackBar(
+                                                      const SnackBar(content: Text('Le motif est obligatoire.')),
+                                                    );
+                                                    return;
+                                                  }
+                                                }
                                                 final ok =
                                                     await provider.updateOrderStatus(
                                                   orderId: id,
                                                   status: newStatus,
+                                                  note: note,
                                                 );
                                                 if (!sheetContext.mounted) return;
+                                                if (ok) {
+                                                  await reload();
+                                                  if (!sheetContext.mounted) return;
+                                                }
                                                 ScaffoldMessenger.of(sheetContext)
                                                     .showSnackBar(
                                                   SnackBar(
@@ -1290,10 +1400,16 @@ class _MerchantMarketplaceConsoleScreenV2State
           return const Center(child: CircularProgressIndicator(strokeWidth: 2));
         }
         final balance = snapshot.data ?? {};
-        final available = balance['available_balance'] ?? 0;
+        final available = balance['in_escrow'] ?? 0;
         final totalEarned = balance['total_earned'] ?? 0;
         final totalCommission = balance['total_commission'] ?? 0;
         final currency = balance['currency']?.toString() ?? 'XOF';
+        final paidOut = balance['paid_out'] ?? 0;
+        final inProgress = balance['payout_in_progress'] ?? 0;
+        final waitingPhone = balance['payout_waiting_phone'] ?? 0;
+        final failed = balance['payout_failed'] ?? 0;
+        final refunded = balance['total_refunded'] ?? 0;
+        final payoutPhone = balance['payout_phone']?.toString() ?? '';
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -1309,7 +1425,7 @@ class _MerchantMarketplaceConsoleScreenV2State
                 ),
                 child: Column(
                   children: [
-                    const Text('Solde disponible', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                    const Text('En séquestre (versé à la validation des commandes)', style: TextStyle(color: Colors.white70, fontSize: 12)),
                     const SizedBox(height: 6),
                     Text('${_formatMoney(available, currency)}',
                         style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
@@ -1320,7 +1436,7 @@ class _MerchantMarketplaceConsoleScreenV2State
                         Column(children: [
                           Text(_formatMoney(totalEarned, currency),
                               style: const TextStyle(color: Color(0xFF4ADE80), fontSize: 14, fontWeight: FontWeight.bold)),
-                          const Text('Total gagné', style: TextStyle(color: Colors.white60, fontSize: 10)),
+                          const Text('Total gagné (net)', style: TextStyle(color: Colors.white60, fontSize: 10)),
                         ]),
                         Container(width: 1, height: 30, color: Colors.white24),
                         Column(children: [
@@ -1330,6 +1446,31 @@ class _MerchantMarketplaceConsoleScreenV2State
                         ]),
                       ],
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Versements', style: TextStyle(fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 8),
+                    _revenueInfoRow(Icons.check_circle, 'Versés : ${_formatMoney(paidOut, currency)}'),
+                    _revenueInfoRow(Icons.schedule, 'En cours d\'envoi : ${_formatMoney(inProgress, currency)}'),
+                    if (waitingPhone is num && waitingPhone > 0)
+                      _revenueInfoRow(Icons.phone_disabled, 'Bloqués faute de numéro de versement : ${_formatMoney(waitingPhone, currency)}'),
+                    if (failed is num && failed > 0)
+                      _revenueInfoRow(Icons.error_outline, 'Échoués (contactez le support) : ${_formatMoney(failed, currency)}'),
+                    if (refunded is num && refunded > 0)
+                      _revenueInfoRow(Icons.undo, 'Remboursés aux acheteurs : ${_formatMoney(refunded, currency)}'),
+                    _revenueInfoRow(Icons.phone_android, payoutPhone.isEmpty ? 'Aucun numéro de versement : renseignez-le dans votre profil marchand.' : 'Numéro de versement : $payoutPhone'),
                   ],
                 ),
               ),
@@ -1360,8 +1501,8 @@ class _MerchantMarketplaceConsoleScreenV2State
               const Text('Comment ça marche', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
               _revenueInfoRow(Icons.shopping_cart, 'Un client passe commande et paie via LigdiCash'),
-              _revenueInfoRow(Icons.lock, 'Le montant est bloqué en escrow jusqu\'à la livraison'),
-              _revenueInfoRow(Icons.check_circle, 'Après livraison, l\'escrow est libéré'),
+              _revenueInfoRow(Icons.lock, 'Le montant est bloqué en séquestre : acceptez sous 48 h, expédiez sous 5 jours'),
+              _revenueInfoRow(Icons.check_circle, 'Le client confirme la réception, ou validation automatique 72 h après « Livrée »'),
               _revenueInfoRow(Icons.account_balance_wallet, 'Votre part est automatiquement transférée vers votre compte LigdiCash'),
             ],
           ),
@@ -1385,15 +1526,12 @@ class _MerchantMarketplaceConsoleScreenV2State
 
   Future<Map<String, dynamic>> _loadMerchantBalance() async {
     try {
-      final client = Supabase.instance.client;
-      final userId = client.auth.currentUser?.id;
-      if (userId == null) return {};
-      final merchant = await client.schema('app').from('marketplace_merchants')
-          .select('id').eq('owner_user_id', userId).limit(1).maybeSingle();
-      if (merchant == null) return {};
-      final balance = await client.schema('app').from('marketplace_merchant_balances')
-          .select().eq('merchant_id', merchant['id']).maybeSingle();
-      return balance ?? {};
+      final res = await Supabase.instance.client
+          .rpc('app_merchant_get_marketplace_earnings');
+      if (res is Map && res['success'] == true) {
+        return Map<String, dynamic>.from(res);
+      }
+      return {};
     } catch (_) {
       return {};
     }

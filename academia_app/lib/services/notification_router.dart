@@ -21,6 +21,8 @@ import '../features/admin/admin_support_screen.dart';
 import '../features/commercial/commercial_dashboard_screen.dart';
 import '../features/instructor/instructor_dashboard_screen.dart';
 import '../features/live/session_summary_screen.dart';
+import '../features/merchant/merchant_marketplace_console_screen_v2.dart';
+import '../features/student/marketplace/student_marketplace_my_orders_screen_v1.dart';
 import '../features/student/student_dashboard_screen.dart';
 import '../features/student/student_payments_screen.dart';
 import '../features/university/university_applications_screen.dart';
@@ -120,6 +122,12 @@ class NotificationRouter {
           create: (_) => StudentApplicationPaymentsProvider(),
           child: const StudentPaymentsScreen(),
         );
+      case 'student_marketplace':
+        return const StudentMarketplaceMyOrdersScreenV1();
+
+      // --- Marchand ---
+      case 'merchant_marketplace':
+        return const MerchantMarketplaceConsoleScreenV2();
 
       // --- Admin (écrans dédiés) ---
       case 'admin_payments':

@@ -85,6 +85,64 @@ class AdminMarketplaceControlTowerProvider extends ChangeNotifier {
     }
   }
 
+  Future<Map<String, dynamic>?> getOrderDetail(String orderId) async {
+    try {
+      final response = await _client.rpc(
+        'app_admin_get_marketplace_order_detail',
+        params: {'p_order_id': orderId},
+      );
+      if (response is Map && response['success'] == true) {
+        return Map<String, dynamic>.from(response);
+      }
+      _setError(response is Map ? response['error']?.toString() : 'Réponse invalide du serveur.');
+      return null;
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    }
+  }
+
+  Future<bool> _orderAction(String rpc, Map<String, dynamic> params) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final response = await _client.rpc(rpc, params: params);
+      if (response is Map && response['success'] == true) {
+        await loadOrders();
+        return true;
+      }
+      _setError(response is Map
+          ? (response['message'] ?? response['error'])?.toString()
+          : 'Réponse invalide du serveur.');
+      return false;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<bool> resolveDispute({
+    required String orderId,
+    required bool refundBuyer,
+    required String note,
+  }) =>
+      _orderAction('app_admin_resolve_marketplace_dispute', {
+        'p_order_id': orderId,
+        'p_decision': refundBuyer ? 'refund' : 'release',
+        'p_note': note,
+      });
+
+  Future<bool> cancelOrder({
+    required String orderId,
+    required String reason,
+  }) =>
+      _orderAction('app_admin_cancel_marketplace_order', {
+        'p_order_id': orderId,
+        'p_reason': reason,
+      });
+
   Future<void> loadPublishedListings({
     int limit = 50,
     int offset = 0,

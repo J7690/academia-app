@@ -1,51 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 import 'alibaba_marketplace_tokens.dart';
+import 'alibaba_press_scale.dart';
 import 'marketplace_media_carousel.dart';
+import 'marketplace_motion.dart';
 import 'marketplace_seller_badge.dart';
 import '../report_content_sheet.dart';
 
-/// Card produit style Amazon — carousel photos, rating, prix, MOQ, badge vendeur.
+/// Carte produit Academia Market : image immersive, actions en verre dépoli,
+/// prix mis en avant et ajout au panier animé.
 class MarketplaceProductCard extends StatelessWidget {
   final Map<String, dynamic> listing;
   final VoidCallback? onTap;
   final VoidCallback? onAddToCart;
+  final Future<bool> Function()? onAddToCartAsync;
   final VoidCallback? onBookmark;
   final bool compact;
+  final String? heroTag;
 
   const MarketplaceProductCard({
     super.key,
     required this.listing,
     this.onTap,
     this.onAddToCart,
+    this.onAddToCartAsync,
     this.onBookmark,
     this.compact = false,
+    this.heroTag,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    final title = listing['title']?.toString() ?? '';
-    final coverUrl = listing['cover_url']?.toString();
-    final priceFrom = listing['price_from'];
-    final priceTo = listing['price_to'];
-    final currency = listing['currency']?.toString() ?? 'XOF';
-    final minOrderQty = listing['min_order_qty'];
-    final leadTimeDays = listing['lead_time_days'];
-    final isReadyToShip = listing['is_ready_to_ship'] == true;
-    final ratingAvg = (listing['rating_avg'] is num)
-        ? (listing['rating_avg'] as num).toDouble()
-        : 0.0;
-    final ratingCount = listing['rating_count'] as int? ?? 0;
-    final salesCount = listing['sales_count'] as int? ?? 0;
-    final isBookmarked = listing['is_bookmarked'] == true;
-    final merchantName = listing['merchant_name']?.toString() ??
-        listing['organization_name']?.toString();
-    final merchantVerified = listing['merchant_is_verified'] == true;
-    final verificationLevel =
-        listing['merchant_verification_level']?.toString() ?? 'none';
-
-    // Collect media URLs for carousel
+  static List<String> mediaUrlsOf(Map<String, dynamic> listing) {
     final mediaUrls = <String>[];
     final mediaList = listing['media'];
     if (mediaList is List) {
@@ -63,285 +47,341 @@ class MarketplaceProductCard extends StatelessWidget {
         }
       }
     }
+    return mediaUrls;
+  }
 
-    final cardRadius = BorderRadius.circular(AlibabaMarketplaceTokens.radiusCard);
-    final imageH = compact ? 140.0 : 180.0;
+  void _report(BuildContext context) {
+    final listingId = listing['id']?.toString();
+    if (listingId == null) return;
+    ReportContentSheet.show(
+      context,
+      contentType: 'listing',
+      contentId: listingId,
+      targetUserId: listing['merchant_id']?.toString(),
+      contentPreview: listing['title']?.toString(),
+    );
+  }
 
-    return GestureDetector(
+  @override
+  Widget build(BuildContext context) {
+    final title = listing['title']?.toString() ?? '';
+    final coverUrl = listing['cover_url']?.toString();
+    final currency = AlibabaMarketplaceTokens.currencyLabel(listing['currency']?.toString());
+    final isReadyToShip = listing['is_ready_to_ship'] == true;
+    final ratingAvg = (listing['rating_avg'] is num)
+        ? (listing['rating_avg'] as num).toDouble()
+        : 0.0;
+    final ratingCount = (listing['rating_count'] as num?)?.toInt() ?? 0;
+    final salesCount = (listing['sales_count'] as num?)?.toInt() ?? 0;
+    final isBookmarked = listing['is_bookmarked'] == true;
+    final merchantName = listing['merchant_name']?.toString() ??
+        listing['organization_name']?.toString();
+    final merchantVerified = listing['merchant_is_verified'] == true;
+    final verificationLevel =
+        listing['merchant_verification_level']?.toString() ?? 'none';
+
+    final radius = AlibabaMarketplaceTokens.radiusCard;
+    final cardRadius = BorderRadius.circular(radius);
+    final imageH = compact ? 150.0 : 200.0;
+    final canAdd = onAddToCartAsync != null || onAddToCart != null;
+
+    Future<bool> add() async {
+      if (onAddToCartAsync != null) return onAddToCartAsync!();
+      onAddToCart?.call();
+      return true;
+    }
+
+    Widget image = MarketplaceMediaCarousel(
+      coverUrl: coverUrl,
+      imageUrls: mediaUrlsOf(listing),
+      height: imageH,
+      borderRadius: BorderRadius.vertical(top: Radius.circular(radius)),
+    );
+    if (heroTag != null) {
+      image = Hero(tag: heroTag!, child: image);
+    }
+
+    return AlibabaPressScale(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: cardRadius,
-          border: Border.all(color: AlibabaMarketplaceTokens.divider),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image carousel
-            Stack(
-              children: [
-                MarketplaceMediaCarousel(
-                  coverUrl: coverUrl,
-                  imageUrls: mediaUrls,
-                  height: imageH,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(AlibabaMarketplaceTokens.radiusCard),
-                    topRight: Radius.circular(AlibabaMarketplaceTokens.radiusCard),
-                  ),
-                ),
-                // Bookmark button
-                if (onBookmark != null)
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: GestureDetector(
-                      onTap: onBookmark,
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isBookmarked
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          size: 16,
-                          color: isBookmarked
-                              ? const Color(0xFFEF4444)
-                              : const Color(0xFF9CA3AF),
+      pressedScale: 0.975,
+      borderRadius: cardRadius,
+      child: GestureDetector(
+        onLongPress: () => _report(context),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AlibabaMarketplaceTokens.surface,
+            borderRadius: cardRadius,
+            boxShadow: AlibabaMarketplaceTokens.shadowSoft,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: imageH,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    image,
+                    const IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(gradient: AlibabaMarketplaceTokens.imageScrim),
+                      ),
+                    ),
+                    if (isReadyToShip)
+                      const Positioned(
+                        top: 10,
+                        left: 10,
+                        child: _Pill(
+                          icon: Icons.bolt_rounded,
+                          label: 'Prêt',
+                          color: AlibabaMarketplaceTokens.success,
                         ),
                       ),
-                    ),
-                  ),
-                // Report button
-                Positioned(
-                  top: onBookmark != null ? 38 : 6,
-                  right: 6,
-                  child: GestureDetector(
-                    onTap: () {
-                      final listingId = listing['id']?.toString();
-                      final merchantId = listing['merchant_id']?.toString();
-                      if (listingId != null) {
-                        ReportContentSheet.show(
-                          context,
-                          contentType: 'listing',
-                          contentId: listingId,
-                          targetUserId: merchantId,
-                          contentPreview: listing['title']?.toString(),
-                        );
-                      }
-                    },
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.flag_outlined, size: 14, color: Color(0xFF9CA3AF)),
-                    ),
-                  ),
-                ),
-                // Ready to ship badge
-                if (isReadyToShip)
-                  Positioned(
-                    top: 6,
-                    left: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF10B981),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'Prêt',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            // Content
-            Padding(
-              padding: EdgeInsets.all(compact ? 8 : 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: compact ? 12 : 13,
-                      fontWeight: FontWeight.w600,
-                      color: AlibabaMarketplaceTokens.textPrimary,
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  // Rating
-                  if (ratingCount > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Column(
                         children: [
-                          RatingBarIndicator(
-                            rating: ratingAvg,
-                            itemBuilder: (_, __) => const Icon(
-                                Icons.star, color: Color(0xFFF59E0B)),
-                            itemCount: 5,
-                            itemSize: compact ? 12 : 14,
-                            unratedColor: const Color(0xFFE5E7EB),
+                          if (onBookmark != null)
+                            MarketplaceFavoriteButton(
+                              isFavorite: isBookmarked,
+                              onTap: onBookmark,
+                              size: compact ? 32 : 36,
+                            ),
+                          const SizedBox(height: 6),
+                          MarketplaceGlassButton(
+                            size: compact ? 28 : 32,
+                            tooltip: 'Signaler',
+                            onTap: () => _report(context),
+                            child: const Icon(Icons.outlined_flag_rounded,
+                                size: 15, color: AlibabaMarketplaceTokens.textSecondary),
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '($ratingCount)',
-                            style: TextStyle(
-                              fontSize: compact ? 10 : 11,
-                              color: AlibabaMarketplaceTokens.textMeta,
+                        ],
+                      ),
+                    ),
+                    if (ratingCount > 0)
+                      Positioned(
+                        left: 10,
+                        bottom: 10,
+                        child: IgnorePointer(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.45),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.star_rounded, size: 14, color: AlibabaMarketplaceTokens.star),
+                                const SizedBox(width: 3),
+                                Text(
+                                  '${ratingAvg.toStringAsFixed(1)} ($ratingCount)',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          if (salesCount > 0) ...[
-                            const SizedBox(width: 6),
-                            Text(
-                              '$salesCount vendus',
-                              style: TextStyle(
-                                fontSize: compact ? 10 : 11,
-                                color: AlibabaMarketplaceTokens.textMeta,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(12, 10, 12, compact ? 12 : 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AlibabaMarketplaceTokens.productTitle.copyWith(
+                        fontSize: compact ? 13 : 14.5,
+                      ),
+                    ),
+                    if (merchantName != null && merchantName.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.storefront_rounded, size: 13, color: AlibabaMarketplaceTokens.textMeta),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              merchantName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AlibabaMarketplaceTokens.productMeta.copyWith(
+                                color: AlibabaMarketplaceTokens.textSecondary,
                               ),
+                            ),
+                          ),
+                          if (merchantVerified || verificationLevel != 'none') ...[
+                            const SizedBox(width: 4),
+                            MarketplaceSellerBadge(
+                              name: merchantName,
+                              isVerified: merchantVerified,
+                              verificationLevel: verificationLevel,
+                              compact: true,
                             ),
                           ],
                         ],
                       ),
-                    ),
-                  // Price
-                  _buildPrice(priceFrom, priceTo, currency, compact),
-                  const SizedBox(height: 4),
-                  // Meta row: MOQ + lead time
-                  _buildMeta(minOrderQty, leadTimeDays, compact),
-                  // Seller badge
-                  if (merchantName != null && merchantName.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    MarketplaceSellerBadge(
-                      name: merchantName,
-                      isVerified: merchantVerified,
-                      verificationLevel: verificationLevel,
-                      compact: true,
-                    ),
-                  ],
-                  // Add to cart button
-                  if (onAddToCart != null && !compact) ...[
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 32,
-                      child: ElevatedButton.icon(
-                        onPressed: onAddToCart,
-                        icon: const Icon(Icons.shopping_cart_outlined, size: 14),
-                        label: const Text('Ajouter',
-                            style: TextStyle(fontSize: 12)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              AlibabaMarketplaceTokens.primaryOrange,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                    ],
+                    const SizedBox(height: 10),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _Price(
+                                from: listing['price_from'],
+                                to: listing['price_to'],
+                                currency: currency,
+                                compact: compact,
+                              ),
+                              _Meta(
+                                moq: listing['min_order_qty'],
+                                leadDays: listing['lead_time_days'],
+                                sales: salesCount,
+                              ),
+                            ],
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
                         ),
-                      ),
+                        if (canAdd && compact) ...[
+                          const SizedBox(width: 8),
+                          MarketplaceAddToCartButton(onAdd: add, compact: true),
+                        ],
+                      ],
                     ),
+                    if (canAdd && !compact) ...[
+                      const SizedBox(height: 12),
+                      MarketplaceAddToCartButton(onAdd: add, label: 'Ajouter au panier'),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+}
 
-  static Widget _buildPrice(
-      dynamic priceFrom, dynamic priceTo, String currency, bool compact) {
-    if (priceFrom == null && priceTo == null) {
-      return Text(
+class _Pill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _Pill({required this.icon, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: AlibabaMarketplaceTokens.shadowColored(color),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: Colors.white),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Price extends StatelessWidget {
+  final dynamic from;
+  final dynamic to;
+  final String currency;
+  final bool compact;
+
+  const _Price({required this.from, required this.to, required this.currency, required this.compact});
+
+  @override
+  Widget build(BuildContext context) {
+    final f = from is num ? from as num : null;
+    final t = to is num ? to as num : null;
+    if (f == null && t == null) {
+      return const Text(
         'Prix sur demande',
         style: TextStyle(
-          fontSize: compact ? 11 : 12,
-          fontWeight: FontWeight.w500,
-          color: AlibabaMarketplaceTokens.textMeta,
-          fontStyle: FontStyle.italic,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: AlibabaMarketplaceTokens.brand,
         ),
       );
     }
 
-    final from = priceFrom is num ? priceFrom : null;
-    final to = priceTo is num ? priceTo : null;
-
-    String text;
-    if (from != null && to != null && from != to) {
-      text = '${_formatNum(from)} - ${_formatNum(to)} $currency';
-    } else if (from != null) {
-      text = '${_formatNum(from)} $currency';
+    final String main;
+    if (f != null && t != null && f != t) {
+      main = '${AlibabaMarketplaceTokens.formatPrice(f)} – ${AlibabaMarketplaceTokens.formatPrice(t)}';
     } else {
-      text = '${_formatNum(to!)} $currency';
+      main = AlibabaMarketplaceTokens.formatPrice((f ?? t)!);
     }
 
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: compact ? 14 : 16,
-        fontWeight: FontWeight.w900,
-        color: AlibabaMarketplaceTokens.price,
-        height: 1.1,
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: main,
+            style: AlibabaMarketplaceTokens.priceStyle.copyWith(fontSize: compact ? 16 : 19),
+          ),
+          TextSpan(
+            text: ' $currency',
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AlibabaMarketplaceTokens.textSecondary,
+            ),
+          ),
+        ],
       ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
+}
 
-  static String _formatNum(num n) {
-    if (n is int || n == n.roundToDouble()) {
-      return n.toInt().toString().replaceAllMapped(
-          RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]} ');
-    }
-    return n.toStringAsFixed(0).replaceAllMapped(
-        RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]} ');
-  }
+class _Meta extends StatelessWidget {
+  final dynamic moq;
+  final dynamic leadDays;
+  final int sales;
 
-  static Widget _buildMeta(dynamic moq, dynamic leadDays, bool compact) {
+  const _Meta({required this.moq, required this.leadDays, required this.sales});
+
+  @override
+  Widget build(BuildContext context) {
     final parts = <String>[];
-    if (moq != null && moq is int && moq > 0) {
-      parts.add('MOQ: $moq');
-    }
-    if (leadDays != null && leadDays is int && leadDays > 0) {
-      parts.add('$leadDays j.');
-    }
-
+    if (sales > 0) parts.add('$sales vendu${sales > 1 ? 's' : ''}');
+    if (moq is num && moq > 1) parts.add('Min. $moq');
+    if (leadDays is num && leadDays > 0) parts.add('$leadDays j');
     if (parts.isEmpty) return const SizedBox.shrink();
-
-    return Text(
-      parts.join(' · '),
-      style: TextStyle(
-        fontSize: compact ? 10 : 11,
-        color: AlibabaMarketplaceTokens.textMeta,
-        fontWeight: FontWeight.w500,
+    return Padding(
+      padding: const EdgeInsets.only(top: 3),
+      child: Text(
+        parts.join(' · '),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: AlibabaMarketplaceTokens.productMeta,
       ),
     );
   }

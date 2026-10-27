@@ -109,20 +109,18 @@ class _MarketplaceMediaCarouselState extends State<MarketplaceMediaCarousel> {
         height: widget.height,
         width: double.infinity,
         fit: BoxFit.cover,
+        fadeInDuration: const Duration(milliseconds: 350),
+        fadeInCurve: Curves.easeOut,
         placeholder: (_, __) => Container(
-          color: const Color(0xFFF5F5F5),
+          color: const Color(0xFFEEF2FF),
           child: const Center(
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
+            child: Icon(Icons.image_rounded, color: Color(0xFFC7D2FE), size: 34),
           ),
         ),
         errorWidget: (_, __, ___) => Container(
-          color: const Color(0xFFF5F5F5),
-          child: const Icon(Icons.image_not_supported_outlined,
-              color: Color(0xFFBDBDBD), size: 32),
+          color: const Color(0xFFF1F3F9),
+          child: const Icon(Icons.image_not_supported_rounded,
+              color: Color(0xFFCBD5E1), size: 32),
         ),
       ),
     );
@@ -134,12 +132,16 @@ class _MarketplaceMediaCarouselState extends State<MarketplaceMediaCarousel> {
       child: Container(
         height: widget.height,
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
+          gradient: const LinearGradient(
+            colors: [Color(0xFFEEF2FF), Color(0xFFF5F3FF)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           borderRadius: widget.borderRadius,
         ),
         child: const Center(
-          child: Icon(Icons.shopping_bag_outlined,
-              color: Color(0xFFBDBDBD), size: 40),
+          child: Icon(Icons.shopping_bag_rounded,
+              color: Color(0xFFC7D2FE), size: 44),
         ),
       ),
     );

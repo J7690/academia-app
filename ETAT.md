@@ -10,6 +10,33 @@
 
 ---
 
+> ### 🟠 AU 27/10 — CHANTIER MARKETPLACE (05–07/10) : serveur en ligne, app à moitié écrite
+>
+> Relevé du 27/10 (lecture seule). Références : `academia_app/docs/marketplace_etat_des_lieux_2026-10-05.md`
+> et `marketplace_regles_metier.md` (séquestre façon Jumia/Etsy).
+> - **Base : tout est en production** — les 3 migrations du 05, 06 et 07/10
+>   (23/23 fonctions présentes, confirmation LigdiCash branchée sur le
+>   séquestre, cron `marketplace_sla` 2 011 exécutions sans échec), mais
+>   **hors registre** `schema_migrations` et **jamais commitées**.
+>   `send-push-notifications` déployée avec la branche marketplace.
+> - **Essai E2E rejoué le 27/10 en transaction annulée : 0 échec** (paiement →
+>   séquestre → livraison → versement 90 %, litige remboursé, annulations,
+>   accès refusés).
+> - **Usage réel : nul** — 0 paiement marketplace, dernière commande le
+>   16/04 ; les 4 commandes `pending` ont été annulées par le cron le 06/10.
+> - **App : 16 fichiers modifiés + 1 nouveau, non commités.** Logique du 06/10
+>   (détail commande, console marchand, tour de contrôle) : compile. Refonte
+>   visuelle du 07/10 : `student_opportunities_tab.dart` **s'arrêtait sur
+>   `// PART3`** — 8 composants jamais écrits, 20 erreurs.
+>   **Réparé le 27/10 (non commité)** : les 8 composants écrits ;
+>   `flutter analyze lib` → **0 erreur** sur toute l'app ; aperçu web isolé
+>   vu (en-tête, filtres, feuille de tri, onglet Compte). Non vus : bulles de
+>   catégories (0 catégorie en base) et bandeau « Paiement protégé » (liste
+>   des articles réservée aux comptes connectés).
+> - **Toujours ouverts** : S1 (`landing-media` modifiable et supprimable par
+>   tout compte connecté — mesuré), B6 (2 comptes marchands sur 4 sans fiche
+>   `marketplace_merchants`), 0 catégorie, écrans admin paiements / avis.
+
 > ### 🟠 AU 27/10, fin d'après-midi — formations courtes, lot 2 : base en production, app poussée sur `main` (relevé Netlify : voir journal)
 >
 > **Guichet espèces + tableau de session.** Migration `20261027150000`

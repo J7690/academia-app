@@ -264,8 +264,16 @@ function buildFcmMessage(event: any) {
   let title = "Academia";
   let body = "";
 
+  // --- Marketplace : titre et texte rédigés côté serveur (app.mp_notify) ---
+  if (
+    (domain === "student_marketplace" || domain === "merchant_marketplace" || domain === "admin_marketplace") &&
+    typeof payload.push_title === "string" && payload.push_title.length > 0
+  ) {
+    title = payload.push_title;
+    body = typeof payload.push_body === "string" ? payload.push_body : "";
+
   // --- Candidatures ---
-  if (domain === "student_applications" && type === "message") {
+  } else if (domain === "student_applications" && type === "message") {
     title = "💬 Nouvelle réponse à ta candidature";
     body = "Un message a été ajouté à ton dossier";
   } else if (domain === "admin_applications" && type === "message") {
