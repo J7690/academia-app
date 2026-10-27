@@ -8,6 +8,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../../../providers/student_marketplace_listings_provider_v1.dart';
 import '../../../providers/student_marketplace_categories_provider_v1.dart';
 import '../../../providers/student_marketplace_cart_provider_v1.dart';
+import '../../../providers/student_short_trainings_provider.dart';
 import '../../../widgets/app_snack.dart';
 import '../../../widgets/marketplace/alibaba_marketplace_tokens.dart';
 import '../../../widgets/marketplace/alibaba_press_scale.dart';
@@ -24,6 +25,7 @@ import '../marketplace/student_marketplace_product_detail_screen_v1.dart';
 import '../marketplace/student_marketplace_my_orders_screen_v1.dart';
 import '../../share/share_service.dart';
 import '../../share/share_mode_provider.dart';
+import '../../short_trainings/short_training_checkout_sheet.dart';
 
 typedef _T = AlibabaMarketplaceTokens;
 
@@ -62,6 +64,8 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadInitialData();
       context.read<StudentMarketplaceCartProviderV1>().loadCart();
+      final trainings = context.read<StudentShortTrainingsProvider>();
+      if (trainings.publicSessions.isEmpty) trainings.loadPublicSessions();
     });
   }
 
@@ -427,6 +431,7 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
           _buildHeader(provider.total),
           SliverToBoxAdapter(child: _buildQuickFilters()),
           SliverToBoxAdapter(child: _buildCategories(categoriesProvider.rootCategories)),
+          SliverToBoxAdapter(child: _buildShortTrainingsRail()),
         ];
 
         if (loadingFirst) {
@@ -788,6 +793,110 @@ class _StudentOpportunitiesTabState extends State<StudentOpportunitiesTab> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Les formations courtes dans la boutique (27/10) : même formulaire
+  /// « payer, c'est s'inscrire » que l'accueil et la page publique.
+  Widget _buildShortTrainingsRail() {
+    return Consumer<StudentShortTrainingsProvider>(
+      builder: (context, trainings, _) {
+        final sessions = trainings.publicSessions;
+        if (sessions.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(top: 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: AlibabaSectionHeader(
+                  title: 'Formations',
+                  subtitle: 'Inscription et paiement en une minute',
+                  icon: Icons.school_rounded,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 150,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: sessions.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    final s = sessions[index];
+                    final price = s['price'] is num ? s['price'] as num : num.tryParse('${s['price']}') ?? 0;
+                    return MarketplaceReveal(
+                      index: index,
+                      from: const Offset(0.15, 0),
+                      child: AlibabaPressScale(
+                        onTap: () => ShortTrainingCheckoutSheet.show(context, s, onChanged: () {
+                          trainings.loadPublicSessions();
+                          trainings.loadMyTrainings();
+                        }),
+                        borderRadius: BorderRadius.circular(_T.radiusCard),
+                        child: Container(
+                          width: 250,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: _T.surface,
+                            borderRadius: BorderRadius.circular(_T.radiusCard),
+                            border: Border.all(color: _T.divider),
+                            boxShadow: _T.shadowSoft,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                (s['organizer_name'] ?? 'Nexiom Group').toString().toUpperCase(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 10, letterSpacing: 1, fontWeight: FontWeight.w800, color: _T.success),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                s['title']?.toString() ?? '',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: _T.productTitle,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                formatShortTrainingDates(s['start_at'], s['end_at']),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: _T.productMeta,
+                              ),
+                              const Spacer(),
+                              Row(
+                                children: [
+                                  Expanded(child: Text(formatFcfa(price), style: _T.priceStyle)),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: _T.brand,
+                                      borderRadius: BorderRadius.circular(_T.radiusChip),
+                                    ),
+                                    child: const Text("Je m'inscris",
+                                        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

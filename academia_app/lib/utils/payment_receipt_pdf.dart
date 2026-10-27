@@ -422,7 +422,9 @@ Future<Uint8List> construirePdfRecu({
                 border: pw.Border.all(color: _vert, width: 1.2),
                 borderRadius: pw.BorderRadius.circular(3),
               ),
-              child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+              child: pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+               pw.Expanded(
+                child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
                 _intertitre('FORMATION'),
                 pw.SizedBox(height: 7),
                 pw.Row(children: [
@@ -446,6 +448,31 @@ Future<Uint8List> construirePdfRecu({
                   pw.Text(fcMentions,
                       style: pw.TextStyle(
                           fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: _vertFonce)),
+                ],
+                ]),
+               ),
+                // LE TICKET (27/10) : scanné à l'entrée depuis le tableau de
+                // session (`app_admin_short_training_check_ticket`). Le QR porte
+                // le numéro et 12 caractères de l'empreinte, que le serveur
+                // compare : un numéro recopié ne passe pas pour un QR. 112 points,
+                // comme le bon de courtage — taille mesurée pour un écran de
+                // téléphone (cf. bon_courtage_pdf.dart). Ne pas réduire.
+                if (empreinte.length >= 12) ...[
+                  pw.SizedBox(width: 12),
+                  pw.Column(children: [
+                    pw.BarcodeWidget(
+                      barcode: pw.Barcode.qrCode(
+                          errorCorrectLevel: pw.BarcodeQRCorrectionLevel.medium),
+                      data: 'ACADEMIA-FC:$numero:${empreinte.substring(0, 12)}',
+                      width: 112,
+                      height: 112,
+                      drawText: false,
+                      color: _encre,
+                    ),
+                    pw.SizedBox(height: 3),
+                    pw.Text("Ticket d'entrée",
+                        style: const pw.TextStyle(fontSize: 7.5, color: _grisClair)),
+                  ]),
                 ],
               ]),
             ),

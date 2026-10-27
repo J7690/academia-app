@@ -6,6 +6,7 @@ import '../../../providers/student_short_trainings_provider.dart';
 import '../../../providers/student_short_training_messages_provider.dart';
 import '../../../providers/student_home_slots_provider.dart';
 import '../../short_trainings/short_training_checkout_sheet.dart';
+import '../../short_trainings/short_training_links.dart';
 
 class StudentShortTrainingsSection extends StatefulWidget {
   const StudentShortTrainingsSection({super.key});
@@ -239,6 +240,13 @@ class _StudentShortTrainingsSectionState extends State<StudentShortTrainingsSect
             } else {
               sessions = provider.publicSessions;
             }
+            // Arrivé par un lien `?formation=` puis connecté : on ouvre le
+            // formulaire si la page publique ne l'a pas déjà fait.
+            ShortTrainingDeepLink.maybeOpen(context, provider.publicSessions,
+                onChanged: () {
+              provider.loadPublicSessions();
+              provider.loadMyTrainings();
+            });
 
             if (provider.isLoading && sessions.isEmpty) {
               return const Center(child: CircularProgressIndicator());

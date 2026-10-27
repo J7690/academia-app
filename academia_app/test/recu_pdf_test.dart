@@ -237,6 +237,85 @@ void main() {
     );
   });
 
+  test('reçu de formation courte — bloc FORMATION et ticket QR', () async {
+    // Le cas qui tient le plus de place sur la page : bloc FORMATION complet,
+    // QR de 112 points, mentions. Si la page déborde, `pw.Page` lève une
+    // erreur et ce test échoue ; si le bloc disparaît, le script le voit.
+    await composer(
+      'recu_formation_courte',
+      {
+        'currency': 'XOF',
+        'reference_code': 'FC-20261027101500-1a2b3c',
+        'student_id': '0fc48f26-1f57-4e6b-96f9-1690f111cad3',
+      },
+      {
+        'receipt_number': 'REC-2026-000040',
+        'issued_at': '2026-10-27T10:16:00+00:00',
+        'student_name': 'KABORE Issouf',
+        'student_phone': '+226 70 00 00 00',
+        'training_name': "Production d'asticots de mouches domestiques",
+        'signature_hash':
+            '1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f809',
+        'snapshot': {
+          'version': 2,
+          'numero': 'REC-2026-000040',
+          'motif': 'short_training',
+          'libelle': 'Inscription — formation pratique',
+          'designation':
+              "Production d'asticots de mouches domestiques pour l'alimentation animale · du 14/11/2026 au 15/11/2026",
+          'montant': 10000,
+          'montant_source': 'encaisse',
+          'devise': 'XOF',
+          'emetteur': {
+            'raison_sociale': 'NEXIOM GROUP',
+            'ville': 'Ouagadougou',
+            'pays': 'Burkina Faso',
+            'rccm': 'BF-OUA-01-2025-B13-13341',
+            'ifu': '00281802P',
+            'telephone': '73 93 43 92',
+            'email': 'contact@academiea.com',
+            'site': 'www.app.academiea.com',
+          },
+          'payeur': {
+            'nom': 'KABORE Issouf',
+            'telephone': '+226 70 00 00 00',
+          },
+          'reglement': {
+            'canal': 'ligdicash',
+            'moyen': 'Mobile money — Orange Burkina',
+            'encaisse_le': '2026-10-27T10:15:00+00:00',
+            'reference_academia': 'FC-20261027101500-1a2b3c',
+            'reference_operateur': 'PP231027.1234.A56789',
+          },
+          'formation_courte': {
+            'titre': "Production d'asticots de mouches domestiques pour l'alimentation animale",
+            'organisateur': 'Nexiom Group',
+            'dates': 'du 14/11/2026 au 15/11/2026',
+            'lieu_accueil': 'Siège de Nexiom Group, Tanghin',
+            'lieu_pratique': 'Kamboinssin',
+            'avantages': [
+              "Mise à disposition d'un boîtier de production (protection)",
+              'Conseils techniques pour démarrer votre production',
+              'Appui pour la commercialisation via notre réseau (MRC)',
+              'Orientation sur la transformation (larves séchées, farine)',
+            ],
+            'mentions':
+                'Aucun remboursement après le début de la formation. Ce reçu est à présenter le jour de la formation.',
+          },
+        },
+      },
+      attendus: [
+        'Inscription — formation pratique',
+        'FORMATION',
+        'Kamboinssin',
+        'Tanghin',
+        'Aucun remboursement après le début de la formation',
+        'Ticket d\'entrée',
+        '10 000 XOF',
+      ],
+    );
+  });
+
   test('montant en toutes lettres — les pièges du français', () async {
     // 80 → « quatre-vingts » avec un s ; 81 → sans. 71 → « soixante et onze ».
     // 2000 → « deux mille », jamais « deux milles ».

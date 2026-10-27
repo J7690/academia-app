@@ -20,6 +20,7 @@ import 'signup_screen.dart';
 import 'phone_signup_screen.dart';
 import '../share/share_service.dart';
 import '../short_trainings/short_training_checkout_sheet.dart';
+import '../short_trainings/short_training_links.dart';
 import '../share/share_mode_provider.dart';
 import '../share/widgets/share_signature.dart';
 import '../../services/analytics_tracking_service.dart';
@@ -1469,6 +1470,9 @@ class _MarketingLandingViewState extends State<_MarketingLandingView> {
     final partners = landing.partners;
     final whyCards = landing.whyCards;
     final shortTrainingHighlights = landing.shortTrainingHighlights;
+    // Lien partagé `?formation=<slug>` : ouvre le formulaire (une fois).
+    ShortTrainingDeepLink.maybeOpen(context, shortTrainingHighlights,
+        onChanged: landing.loadPublicLandingContent);
     final opportunityHighlights = landing.opportunityHighlights;
     final onlineCourseHighlights = landing.onlineCourseHighlights;
 

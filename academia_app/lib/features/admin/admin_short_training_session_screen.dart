@@ -3,11 +3,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../config/supabase_config.dart';
 import '../auth/phone_rules.dart';
 import '../short_trainings/short_training_checkout_sheet.dart';
+import '../short_trainings/short_training_links.dart';
 
 const Color _kGreen = Color(0xFF1EA75C);
 const Color _kNavy = Color(0xFF0A2540);
@@ -173,6 +175,22 @@ class _AdminShortTrainingSessionScreenState extends State<AdminShortTrainingSess
     if (done == true) await _load();
   }
 
+  Future<void> _ouvrirScan() async {
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => _ScanTicketsScreen(
+        sessionId: widget.sessionId,
+        title: _session['title']?.toString() ?? 'Session',
+      ),
+    ));
+    await _load();
+  }
+
+  Future<void> _copierLien() async {
+    final url = shortTrainingShareUrl(_session['slug'].toString(), src: 'admin');
+    await Clipboard.setData(ClipboardData(text: url));
+    _snack('Lien copié : $url');
+  }
+
   Future<void> _copierPresence() async {
     final confirmes = _rows.where((r) => r['etat'] == 'confirmee').toList();
     final buf = StringBuffer()
@@ -197,6 +215,16 @@ class _AdminShortTrainingSessionScreenState extends State<AdminShortTrainingSess
       appBar: AppBar(
         title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
         actions: [
+          IconButton(
+            tooltip: "Scanner les tickets à l'entrée",
+            onPressed: _session.isEmpty ? null : _ouvrirScan,
+            icon: const Icon(Icons.qr_code_scanner),
+          ),
+          IconButton(
+            tooltip: "Copier le lien d'inscription",
+            onPressed: (_session['slug'] ?? '').toString().isEmpty ? null : _copierLien,
+            icon: const Icon(Icons.link),
+          ),
           IconButton(tooltip: 'Copier la liste de présence', onPressed: _rows.isEmpty ? null : _copierPresence, icon: const Icon(Icons.copy_all)),
           IconButton(tooltip: 'Actualiser', onPressed: _loading ? null : _load, icon: const Icon(Icons.refresh)),
         ],
@@ -258,6 +286,7 @@ class _AdminShortTrainingSessionScreenState extends State<AdminShortTrainingSess
           const SizedBox(height: 12),
           Wrap(spacing: 10, runSpacing: 10, children: [
             _kpi('Places confirmées', capacity == null ? '$confirmes' : '$confirmes / $capacity', _kGreen),
+            _kpi('Présents', '${(_totals['presents'] as num?)?.toInt() ?? 0} / $confirmes', const Color(0xFF0EA5E9)),
             _kpi('À valider', '$aValider', aValider > 0 ? _kOrange : _kGrey),
             _kpi('Encaissé', formatFcfa((_totals['encaisse'] as num?) ?? 0), _kNavy),
           ]),
@@ -328,6 +357,7 @@ class _AdminShortTrainingSessionScreenState extends State<AdminShortTrainingSess
       _libelleCanal(r['channel'] ?? r['payment_method']),
       if ((r['external_reference'] ?? '').toString().isNotEmpty) 'Réf. ${r['external_reference']}',
       if ((r['receipt_number'] ?? '').toString().isNotEmpty) '${r['receipt_number']}',
+      if (r['checked_in_at'] != null) 'Présent ${_heure(r['checked_in_at'])}',
     ].where((e) => e.isNotEmpty);
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -364,6 +394,153 @@ class _AdminShortTrainingSessionScreenState extends State<AdminShortTrainingSess
             ],
           ]),
         ]),
+      ),
+    );
+  }
+}
+
+String _heure(dynamic v) {
+  final d = DateTime.tryParse('${v ?? ''}')?.toLocal();
+  if (d == null) return '';
+  return '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+}
+
+/// Contrôle des tickets à l'entrée (27/10) : le QR du reçu
+/// (« ACADEMIA-FC:<n° de reçu>:<12 car. d'empreinte> ») ou le numéro tapé.
+/// Le serveur dit présent, déjà présent, autre session, faux ou inconnu.
+class _ScanTicketsScreen extends StatefulWidget {
+  const _ScanTicketsScreen({required this.sessionId, required this.title});
+  final String sessionId;
+  final String title;
+
+  @override
+  State<_ScanTicketsScreen> createState() => _ScanTicketsScreenState();
+}
+
+class _ScanTicketsScreenState extends State<_ScanTicketsScreen> {
+  final _client = Supabase.instance.client;
+  final MobileScannerController _controleur = MobileScannerController(
+    detectionSpeed: DetectionSpeed.noDuplicates,
+    formats: const [BarcodeFormat.qrCode],
+  );
+  final _saisie = TextEditingController();
+  bool _enCours = false;
+  Map<String, dynamic>? _resultat;
+  String? _dernierCode;
+  DateTime? _dernierInstant;
+  int _presents = 0;
+
+  @override
+  void dispose() {
+    _controleur.dispose();
+    _saisie.dispose();
+    super.dispose();
+  }
+
+  Future<void> _verifier(String code) async {
+    final c = code.trim();
+    if (c.isEmpty || _enCours) return;
+    // Le même QR reste devant la caméra : on ne le revérifie pas aussitôt.
+    final now = DateTime.now();
+    if (c == _dernierCode && _dernierInstant != null && now.difference(_dernierInstant!).inSeconds < 4) return;
+    _dernierCode = c;
+    _dernierInstant = now;
+    setState(() => _enCours = true);
+    try {
+      final res = await _client.rpc('app_admin_short_training_check_ticket',
+          params: {'p_session_id': widget.sessionId, 'p_code': c});
+      final data = res is Map ? Map<String, dynamic>.from(res) : <String, dynamic>{'message': 'Réponse vide.'};
+      if (data['resultat'] == 'present') _presents++;
+      HapticFeedback.mediumImpact();
+      setState(() => _resultat = data);
+    } catch (e) {
+      setState(() => _resultat = {'success': false, 'message': 'Erreur réseau : $e'});
+    } finally {
+      if (mounted) setState(() => _enCours = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r = _resultat;
+    final etat = r?['resultat']?.toString();
+    final (couleur, icone) = switch (etat) {
+      'present' => (_kGreen, Icons.check_circle),
+      'deja_present' => (_kOrange, Icons.info),
+      null => (_kGrey, Icons.qr_code),
+      _ => (const Color(0xFFB91C1C), Icons.cancel),
+    };
+    return Scaffold(
+      appBar: AppBar(title: Text('Entrée — ${widget.title}', maxLines: 1, overflow: TextOverflow.ellipsis)),
+      body: Column(
+        children: [
+          Expanded(
+            child: MobileScanner(
+              controller: _controleur,
+              onDetect: (capture) {
+                for (final b in capture.barcodes) {
+                  final v = b.rawValue;
+                  if (v != null && v.toUpperCase().startsWith('ACADEMIA-FC:')) {
+                    _verifier(v);
+                    return;
+                  }
+                }
+              },
+              errorBuilder: (context, erreur) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'Caméra indisponible (${erreur.errorCode.name}). Saisissez le numéro du reçu ci-dessous.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Container(
+            width: double.infinity,
+            color: couleur.withValues(alpha: 0.1),
+            padding: const EdgeInsets.all(16),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Icon(icone, color: couleur, size: 32),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    r == null
+                        ? 'Présentez le QR du reçu devant la caméra.'
+                        : [r['nom'], r['message']].where((e) => e != null && '$e'.isNotEmpty).join(' — '),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: couleur),
+                  ),
+                ),
+                if (_enCours) const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+              ]),
+              const SizedBox(height: 6),
+              Text('$_presents entrée(s) enregistrée(s) depuis l\'ouverture de cet écran.',
+                  style: const TextStyle(fontSize: 12, color: _kGrey)),
+              const SizedBox(height: 10),
+              Row(children: [
+                Expanded(
+                  child: TextField(
+                    controller: _saisie,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: const InputDecoration(
+                      labelText: 'Ou numéro du reçu (REC-2026-…)',
+                      isDense: true,
+                      border: OutlineInputBorder(),
+                    ),
+                    onSubmitted: _verifier,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _enCours ? null : () => _verifier(_saisie.text),
+                  child: const Text('Vérifier'),
+                ),
+              ]),
+            ]),
+          ),
+        ],
       ),
     );
   }

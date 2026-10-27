@@ -313,10 +313,14 @@ class MerchantMarketplaceConsoleProviderV2 extends ChangeNotifier {
 
     final safeName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
     final ts = DateTime.now().millisecondsSinceEpoch;
+    // Le chemin commence par l'id du marchand : c'est la seule zone de
+    // `marketplace-media` où il a le droit d'écrire (migration 20261027180000 ;
+    // `landing-media` est réservé aux administrateurs depuis le 27/10).
     final storagePath = '${user.id}/marketplace/$id/${ts}_$safeName';
+    const bucket = 'marketplace-media';
 
     try {
-      await _client.storage.from('landing-media').uploadBinary(
+      await _client.storage.from(bucket).uploadBinary(
             storagePath,
             bytes,
             fileOptions: FileOptions(
@@ -325,8 +329,7 @@ class MerchantMarketplaceConsoleProviderV2 extends ChangeNotifier {
             ),
           );
 
-      final publicUrl =
-          _client.storage.from('landing-media').getPublicUrl(storagePath);
+      final publicUrl = _client.storage.from(bucket).getPublicUrl(storagePath);
 
       final response = await _client.rpc(
         'app_merchant_add_marketplace_listing_media',
@@ -338,6 +341,7 @@ class MerchantMarketplaceConsoleProviderV2 extends ChangeNotifier {
           'p_external_url': null,
           'p_title': null,
           'p_description': null,
+          'p_storage_bucket': bucket,
         },
       );
 

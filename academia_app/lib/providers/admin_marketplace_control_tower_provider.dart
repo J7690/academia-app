@@ -480,10 +480,13 @@ class AdminMarketplaceControlTowerProvider extends ChangeNotifier {
 
     final safeName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
     final ts = DateTime.now().millisecondsSinceEpoch;
+    // Les médias d'annonces vont dans `marketplace-media`, sous le dossier de
+    // l'admin (migration 20261027180000) : `landing-media` reste celui du site.
     final storagePath = '${user.id}/admin/marketplace/$id/${ts}_$safeName';
+    const bucket = 'marketplace-media';
 
     try {
-      await _client.storage.from('landing-media').uploadBinary(
+      await _client.storage.from(bucket).uploadBinary(
             storagePath,
             bytes,
             fileOptions: FileOptions(
@@ -492,8 +495,7 @@ class AdminMarketplaceControlTowerProvider extends ChangeNotifier {
             ),
           );
 
-      final publicUrl =
-          _client.storage.from('landing-media').getPublicUrl(storagePath);
+      final publicUrl = _client.storage.from(bucket).getPublicUrl(storagePath);
 
       final response = await _client.rpc(
         'app_admin_add_marketplace_listing_media',
@@ -505,6 +507,7 @@ class AdminMarketplaceControlTowerProvider extends ChangeNotifier {
           'p_external_url': null,
           'p_title': null,
           'p_description': null,
+          'p_storage_bucket': bucket,
         },
       );
 

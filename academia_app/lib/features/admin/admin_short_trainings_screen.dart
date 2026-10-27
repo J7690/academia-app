@@ -1,7 +1,10 @@
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/admin_short_trainings_provider.dart';
+import '../../providers/landing_content_provider.dart';
 import '../../providers/admin_short_training_messages_provider.dart';
 import 'admin_short_training_session_screen.dart';
 
@@ -79,6 +82,24 @@ class _AdminShortTrainingsScreenState extends State<AdminShortTrainingsScreen> {
     final priceController =
         TextEditingController(text: training?['price']?.toString() ?? '');
     bool isActive = training == null ? true : training['is_active'] != false;
+    // Fiche complète (27/10) : affiche, organisateur, avantages, reçu, contact.
+    final posterController =
+        TextEditingController(text: training?['poster_url']?.toString() ?? '');
+    final organizerController = TextEditingController(
+        text: training?['organizer_name']?.toString() ?? 'Nexiom Group');
+    final benefitsController = TextEditingController(
+        text: ((training?['benefits'] as List?) ?? const [])
+            .map((e) => '$e')
+            .join('\n'));
+    final mentionsController = TextEditingController(
+        text: training?['receipt_mentions']?.toString() ?? '');
+    final contactController = TextEditingController(
+        text: training?['contact_whatsapp']?.toString() ?? '');
+    final slugController =
+        TextEditingController(text: training?['slug']?.toString() ?? '');
+    bool isFeatured = training?['is_featured'] == true;
+    bool uploadingPoster = false;
+    final landing = context.read<LandingContentProvider>();
 
     await showDialog<void>(
       context: context,
@@ -157,6 +178,101 @@ class _AdminShortTrainingsScreenState extends State<AdminShortTrainingsScreen> {
                       },
                       title: const Text('Formation active'),
                     ),
+                    const Divider(height: 24),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Page publique et reçu',
+                          style: TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: organizerController,
+                      decoration: const InputDecoration(
+                        labelText: 'Organisateur (Nexiom Group ou partenaire)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: posterController,
+                            decoration: const InputDecoration(
+                              labelText: "Affiche (adresse de l'image)",
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        uploadingPoster
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : IconButton(
+                                tooltip: 'Envoyer une image',
+                                icon: const Icon(Icons.upload_file),
+                                onPressed: () async {
+                                  final picked = await FilePicker.platform.pickFiles(
+                                    type: FileType.image,
+                                    withData: true,
+                                  );
+                                  final file = picked?.files.single;
+                                  if (file == null || file.bytes == null) return;
+                                  setStateDialog(() => uploadingPoster = true);
+                                  // `landing-media` : écriture réservée aux admins (S1, 27/10).
+                                  final url = await landing.uploadLandingFile(
+                                    bytes: Uint8List.fromList(file.bytes!),
+                                    fileName: file.name,
+                                    mimeType: file.extension,
+                                    folder: 'formations',
+                                  );
+                                  setStateDialog(() {
+                                    uploadingPoster = false;
+                                    if (url != null) posterController.text = url;
+                                  });
+                                },
+                              ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: benefitsController,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        labelText: 'Avantages inclus (un par ligne)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: mentionsController,
+                      maxLines: 2,
+                      decoration: const InputDecoration(
+                        labelText: 'Mentions du reçu',
+                        hintText:
+                            'Vide = « Aucun remboursement après le début de la formation… »',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: contactController,
+                      decoration: const InputDecoration(
+                        labelText: 'Contact WhatsApp',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: slugController,
+                      decoration: const InputDecoration(
+                        labelText: 'Lien court (vide = tiré du titre)',
+                        prefixText: '?formation=',
+                      ),
+                    ),
+                    SwitchListTile(
+                      value: isFeatured,
+                      onChanged: (value) => setStateDialog(() => isFeatured = value),
+                      title: const Text('À la une (page publique)'),
+                    ),
                   ],
                 ),
               ),
@@ -204,6 +320,18 @@ class _AdminShortTrainingsScreenState extends State<AdminShortTrainingsScreen> {
                       durationDays: durationDays,
                       price: price,
                       isActive: isActive,
+                      // Chaîne vide = effacer ; le serveur garde la valeur si NULL.
+                      posterUrl: posterController.text.trim(),
+                      organizerName: organizerController.text.trim(),
+                      benefits: benefitsController.text
+                          .split('\n')
+                          .map((e) => e.trim())
+                          .where((e) => e.isNotEmpty)
+                          .toList(),
+                      receiptMentions: mentionsController.text.trim(),
+                      contactWhatsapp: contactController.text.trim(),
+                      isFeatured: isFeatured,
+                      slug: slugController.text.trim(),
                     );
                     if (!mounted) return;
                     if (ok) {
@@ -576,6 +704,16 @@ class _AdminShortTrainingsScreenState extends State<AdminShortTrainingsScreen> {
     String status = session?['status']?.toString() ?? 'open';
     bool isActive = session == null ? true : session['is_active'] != false;
     final String? sessionId = session?['id']?.toString();
+    // Deux lieux et date limite (27/10) : accueil au siège, pratique ailleurs.
+    final welcomeController = TextEditingController(
+      text: session?['welcome_location']?.toString() ?? '',
+    );
+    final practiceController = TextEditingController(
+      text: session?['practice_location']?.toString() ?? '',
+    );
+    final deadlineController = TextEditingController(
+      text: session?['registration_deadline']?.toString() ?? '',
+    );
 
     await showDialog<void>(
       context: context,
@@ -607,6 +745,27 @@ class _AdminShortTrainingsScreenState extends State<AdminShortTrainingsScreen> {
                       controller: locationController,
                       decoration: const InputDecoration(
                         labelText: 'Lieu',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: welcomeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Accueil et inscriptions (ex. Siège de Nexiom Group, Tanghin)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: practiceController,
+                      decoration: const InputDecoration(
+                        labelText: 'Formation pratique (ex. Kamboinssin)',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: deadlineController,
+                      decoration: const InputDecoration(
+                        labelText: "Date limite d'inscription (vide = jusqu'au début)",
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -705,6 +864,21 @@ class _AdminShortTrainingsScreenState extends State<AdminShortTrainingsScreen> {
                       return;
                     }
 
+                    final deadlineText = deadlineController.text.trim();
+                    final deadline = deadlineText.isEmpty
+                        ? null
+                        : _parseDateTimeFromInput(deadlineText);
+                    if (deadlineText.isNotEmpty && deadline == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Format de date limite invalide. Utilisez le même format que pour la date de début.',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+
                     final capacityText = capacityController.text.trim();
                     final capacity = capacityText.isEmpty
                         ? null
@@ -721,6 +895,10 @@ class _AdminShortTrainingsScreenState extends State<AdminShortTrainingsScreen> {
                       capacity: capacity,
                       status: status,
                       isActive: isActive,
+                      welcomeLocation: welcomeController.text.trim(),
+                      practiceLocation: practiceController.text.trim(),
+                      registrationDeadline: deadline,
+                      clearDeadline: deadlineText.isEmpty,
                     );
                     if (!mounted) return;
                     if (ok) {
@@ -774,7 +952,7 @@ class _AdminShortTrainingsScreenState extends State<AdminShortTrainingsScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Formations courtes Nexium Group',
+                      'Formations courtes',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,

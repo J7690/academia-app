@@ -10,6 +10,28 @@
 
 ---
 
+> ### 🟢 AU 27/10, soir — marketplace + formations courtes TERMINÉS, un seul commit
+>
+> Tout appliqué en base après essais annulés, puis un commit unique et un
+> passage sur `main` (relevé ls-remote / Netlify : voir journal).
+>
+> | Volet | Base (migration) | Essai | App |
+> |---|---|---|---|
+> | S1 `landing-media` admin seul, marchands dans `marketplace-media` | `20261027180000` | faille vue avant, 18/18 | consoles basculées |
+> | B6 fiches marchand garanties (déclencheur + 4 comptes régularisés, dont le compte de revue Play) | `20261027190000` | 5/5 | — |
+> | Catégories : 9 rubriques, 26 sous-rubriques | idem | idem | bulles visibles |
+> | Avis : `app_admin_moderate_review` **sans garde** (un anonyme masquait un avis) corrigé + liste | `20261027200000` | faille vue avant, 7/7 | onglets Paiements et Avis |
+> | Formations : fiche admin complète (affiche, avantages, deux lieux, date limite, mentions, lien court) | `20261027210000` | 15/15 | dialogues admin |
+> | Ticket QR sur le reçu + contrôle à l'entrée + présences | idem | idem | scan dans le tableau |
+> | Rangée « Formations » dans la boutique, lien `?formation=<slug>` | — | — | page publique, accueil, boutique |
+> | 7 fichiers vides supprimés | — | — | — |
+>
+> **Mesuré** : `flutter analyze lib` 0 erreur ; `flutter build web --release`
+> réussi ; reçu PDF de formation : 1 page, QR décodé à 72/96/150 dpi
+> (`ACADEMIA-FC:<n°>:<12 car.>`), `verifier_recu_pdf.py` 13/13.
+> **Non vu en réel** : un paiement LigdiCash marketplace, un scan à l'entrée,
+> la boutique avec un compte étudiant connecté.
+
 > ### 🟠 AU 27/10 — CHANTIER MARKETPLACE (05–07/10) : serveur en ligne, app à moitié écrite
 >
 > Relevé du 27/10 (lecture seule). Références : `academia_app/docs/marketplace_etat_des_lieux_2026-10-05.md`
@@ -33,8 +55,19 @@
 >   vu (en-tête, filtres, feuille de tri, onglet Compte). Non vus : bulles de
 >   catégories (0 catégorie en base) et bandeau « Paiement protégé » (liste
 >   des articles réservée aux comptes connectés).
-> - **Toujours ouverts** : S1 (`landing-media` modifiable et supprimable par
->   tout compte connecté — mesuré), B6 (2 comptes marchands sur 4 sans fiche
+> - **S1 FERMÉE le 27/10** (migration `20261027180000`, appliquée) :
+>   `landing-media` = écriture admin seulement ; `marketplace-media` = chaque
+>   marchand dans son dossier `<id>/…`, admin partout (modération). Essai
+>   annulé : faille **démontrée avant** (un étudiant déposait et remplaçait un
+>   fichier admin), **18/18 après** (`supabase/tests/stockage_s1_rollback.sql`).
+>   La faille allait plus loin que prévu : le déclencheur
+>   `on_landing_media_object_insert` faisait de toute vidéo déposée sous
+>   `…/landing/hero-video/` la vidéo d'accueil du site.
+>   ⚠️ **Effet sur la version en ligne** : sa console marchand dépose encore
+>   dans `landing-media` → **refusé** tant que la branche marketplace n'est
+>   pas sur `main` (la nouvelle version écrit dans `marketplace-media`).
+>   Écrans admin non concernés. Code Flutter modifié, **non commité**.
+> - **Toujours ouverts** : B6 (2 comptes marchands sur 4 sans fiche
 >   `marketplace_merchants`), 0 catégorie, écrans admin paiements / avis.
 
 > ### 🟠 AU 27/10, fin d'après-midi — formations courtes, lot 2 : base en production, app poussée sur `main` (relevé Netlify : voir journal)

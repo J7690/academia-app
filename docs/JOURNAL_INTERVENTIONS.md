@@ -3663,3 +3663,17 @@ pour ne pas faire basculer la session admin via le BroadcastChannel de gotrue). 
 Les 8 composants manquants de `student_opportunities_tab.dart` écrits (le fichier s'arrêtait sur
 `// PART3`) ; `flutter analyze lib` → 0 erreur. Essai E2E rejoué en transaction annulée : 0 échec.
 Commité sur `candidature-dossier-inline`, **non poussé sur `main`** (à voir d'abord avec un compte étudiant).
+
+**27/10/2026 (soir) — Faille S1 fermée : `landing-media` réservé aux admins, marchands dans `marketplace-media`.**
+Migration `20261027180000` appliquée après essai annulé (faille démontrée avant ; 18/18 après).
+Fonctions d'ajout de média : paramètre `p_storage_bucket` (défaut `landing-media` pour l'app installée).
+Console marchand et tour de contrôle basculées vers `marketplace-media`. Non commité.
+Effet : la console marchand de la version en ligne ne peut plus déposer d'image jusqu'au passage de la branche sur `main`.
+
+**27/10/2026 (nuit) — Fin des chantiers marketplace et formations courtes, commit unique.**
+Migrations appliquées après essais annulés : `20261027190000` (B6 + catégories, 5/5),
+`20261027200000` (avis : garde manquante démontrée puis corrigée, 7/7), `20261027210000`
+(fiche formation admin, ticket QR, présences, 15/15). App : onglets admin Paiements/Avis,
+dialogues de formation complets, rangée Formations dans la boutique, lien `?formation=`,
+QR sur le reçu (décodé 72/96/150 dpi), scan des tickets ; 7 fichiers vides supprimés.
+`flutter analyze lib` 0 erreur, `flutter build web --release` réussi.

@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../widgets/ligdicash_payment_sheet.dart';
 import '../auth/phone_rules.dart';
+import 'short_training_links.dart';
 
 const Color _kGreen = Color(0xFF1EA75C);
 const Color _kNavy = Color(0xFF0A2540);
@@ -372,8 +373,19 @@ class _ShortTrainingCheckoutSheetState extends State<ShortTrainingCheckoutSheet>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(organizer.toUpperCase(),
-            style: const TextStyle(fontSize: 11, letterSpacing: 1.1, fontWeight: FontWeight.w700, color: _kGreen)),
+        Row(children: [
+          Expanded(
+            child: Text(organizer.toUpperCase(),
+                style: const TextStyle(fontSize: 11, letterSpacing: 1.1, fontWeight: FontWeight.w700, color: _kGreen)),
+          ),
+          if ((_s['slug'] ?? '').toString().isNotEmpty)
+            IconButton(
+              tooltip: 'Partager cette formation',
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.ios_share_rounded, size: 20, color: _kNavy),
+              onPressed: () => shareShortTraining(context, _s),
+            ),
+        ]),
         const SizedBox(height: 4),
         Text(_title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: _kNavy)),
         const SizedBox(height: 8),

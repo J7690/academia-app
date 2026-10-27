@@ -104,6 +104,13 @@ class AdminShortTrainingsProvider extends ChangeNotifier {
     int? durationDays,
     double? price,
     bool? isActive,
+    String? posterUrl,
+    String? organizerName,
+    List<String>? benefits,
+    String? receiptMentions,
+    String? contactWhatsapp,
+    bool? isFeatured,
+    String? slug,
   }) async {
     _setLoading(true);
     _setError(null);
@@ -120,6 +127,14 @@ class AdminShortTrainingsProvider extends ChangeNotifier {
           'p_duration_days': durationDays,
           'p_price': price,
           'p_is_active': isActive,
+          // NULL = inchangé côté serveur ; chaîne vide = effacé.
+          'p_poster_url': posterUrl,
+          'p_organizer_name': organizerName,
+          'p_benefits': benefits,
+          'p_receipt_mentions': receiptMentions,
+          'p_contact_whatsapp': contactWhatsapp,
+          'p_is_featured': isFeatured,
+          'p_slug': slug,
         },
       );
       if (response is! Map<String, dynamic> || response['success'] != true) {
@@ -150,6 +165,10 @@ class AdminShortTrainingsProvider extends ChangeNotifier {
     int? capacity,
     String? status,
     bool? isActive,
+    String? welcomeLocation,
+    String? practiceLocation,
+    DateTime? registrationDeadline,
+    bool clearDeadline = false,
   }) async {
     _setLoading(true);
     _setError(null);
@@ -165,6 +184,10 @@ class AdminShortTrainingsProvider extends ChangeNotifier {
           'p_capacity': capacity,
           'p_status': status,
           'p_is_active': isActive,
+          'p_welcome_location': welcomeLocation,
+          'p_practice_location': practiceLocation,
+          'p_registration_deadline': registrationDeadline?.toIso8601String(),
+          'p_clear_deadline': clearDeadline,
         },
       );
       if (response is! Map<String, dynamic> || response['success'] != true) {

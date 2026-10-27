@@ -20,6 +20,7 @@ import '../../providers/student_online_courses_provider.dart';
 import '../../providers/home_formations_provider.dart';
 import '../../providers/student_short_trainings_provider.dart';
 import '../short_trainings/short_training_checkout_sheet.dart';
+import '../short_trainings/short_training_links.dart';
 import '../../providers/student_weather_provider.dart';
 import '../../providers/student_announcements_provider.dart';
 import '../../providers/student_academic_calendar_provider.dart';
@@ -2599,6 +2600,11 @@ class _MobileShortTrainingsRow extends StatelessWidget {
         } else {
           sessions = provider.publicSessions;
         }
+        ShortTrainingDeepLink.maybeOpen(context, provider.publicSessions,
+            onChanged: () {
+          provider.loadPublicSessions();
+          provider.loadMyTrainings();
+        });
 
         if (provider.isLoading && sessions.isEmpty) {
           return const SizedBox(

@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 
 import '../../providers/admin_marketplace_control_tower_provider.dart';
+import 'admin_marketplace_payments_reviews_tabs.dart';
 import '../../widgets/marketplace/marketplace_shimmer.dart';
 
 class AdminMarketplaceControlTowerScreen extends StatefulWidget {
@@ -996,17 +997,21 @@ class _AdminMarketplaceControlTowerScreenState
       child: Consumer<AdminMarketplaceControlTowerProvider>(
         builder: (context, provider, child) {
           return DefaultTabController(
-            length: 4,
+            length: 6,
             child: Scaffold(
               backgroundColor: const Color(0xFFF3F4F6),
               appBar: AppBar(
                 title: const Text('Marketplace (Admin)'),
                 bottom: const TabBar(
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
                   tabs: [
                     Tab(text: 'En attente'),
                     Tab(text: 'Publiées'),
                     Tab(text: 'Marchands'),
                     Tab(text: 'Commandes'),
+                    Tab(text: 'Paiements'),
+                    Tab(text: 'Avis'),
                   ],
                 ),
                 actions: [
@@ -1037,6 +1042,8 @@ class _AdminMarketplaceControlTowerScreenState
                         _buildPublishedTab(provider),
                         _buildMerchantsTab(provider),
                         _buildOrdersTab(provider),
+                        const AdminMarketplacePaymentsTab(),
+                        const AdminMarketplaceReviewsTab(),
                       ],
                     ),
                   ),
