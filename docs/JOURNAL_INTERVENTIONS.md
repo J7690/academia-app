@@ -3649,3 +3649,9 @@ l'essai et corrigé : créer une session échouait (`app_notify_short_training_s
 lisait `registrations.training_id`). Session Nexiom asticots (14–15/11, 10 000 F) saisie.
 Flutter : formulaire unique `short_training_checkout_sheet.dart`, page publique, accueil,
 rangée mobile, reçu PDF — analysé, non commité, non déployé.
+
+**27/10/2026 (fin d'après-midi) — Formations courtes, lot 2 : guichet espèces et tableau de session.**
+Lot 1 poussé sur `main` (`ad705dc` → `22e4fba`), Netlify reconstruit (ETag `ddd9c9bb…`, bundle
+contrôlé). Lot 2 : migration `20261027150000` appliquée après essai annulé 18/18 ;
+écran admin de session + formulaire guichet (création de compte par `/auth/v1/signup` en HTTP,
+pour ne pas faire basculer la session admin via le BroadcastChannel de gotrue). Non commité.

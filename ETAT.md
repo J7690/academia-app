@@ -10,6 +10,48 @@
 
 ---
 
+> ### 🟠 AU 27/10, fin d'après-midi — formations courtes, lot 2 : base en production, app poussée sur `main` (relevé Netlify : voir journal)
+>
+> **Guichet espèces + tableau de session.** Migration `20261027150000`
+> appliquée après essai annulé **18/18** (`supabase/tests/formations_courtes_guichet_rollback.sql`) :
+> - `app_admin_find_students_by_phone` — retrouve un compte par le numéro
+>   (8 chiffres, espaces ou indicatif acceptés) ;
+> - `app_admin_short_training_cash` — espèces confirmées par l'admin, place
+>   confirmée, reçu émis, commissions générées ; refuse le double encaissement,
+>   un Mobile Money déclaré non tranché, un paiement en ligne en cours, la
+>   session complète (sauf case « dépasser ») et la formation terminée ;
+> - `app_admin_short_training_session_board` — inscrits avec état lisible
+>   (confirmée / à valider / en cours / expirée / refusée), totaux par moyen.
+> - Contrôle admin par `raw_app_meta_data` (pas `raw_user_meta_data`).
+> - Lu en production sur la session Nexiom : 0 inscrit à 14 h.
+>
+> **Écran** `features/admin/admin_short_training_session_screen.dart` (ouvert
+> par « Inscrits et guichet » dans Admin › Formations courtes) : totaux,
+> filtres, Valider / Refuser un Mobile Money déclaré (fonctions existantes),
+> copie de la liste de présence, et le formulaire guichet. **Analysé, NON
+> commité, NON vu à l'écran** (exigerait une connexion admin réelle).
+>
+> ⚠️ **Piège évité** : créer le compte d'un client depuis la session admin
+> avec un second `SupabaseClient` ferait **basculer l'admin sur ce compte**
+> sur le web (gotrue diffuse les connexions sur un BroadcastChannel commun
+> `sb-<projet>-auth-token`). Le guichet appelle `/auth/v1/signup` en HTTP
+> direct ; le code à 6 chiffres est saisi par la personne. **Non éprouvé en
+> réel** : créer un compte au guichet n'a pas été joué (aucun compte factice
+> créé en production).
+
+> ### 🟢 AU 27/10, 13 h 40 — lot 1 commité `22e4fba` et POUSSÉ SUR `main`
+>
+> `git ls-remote origin main` : `ad705dc` avant → **`22e4fba`** après (avance
+> rapide). 14 fichiers du lot seuls ; les 23 fichiers du chantier marketplace
+> restent hors commit (la copie de travail ne compile pas, cf. ci-dessous).
+> **Netlify reconstruit, mesuré** : ETag de `main.dart.js` `a029528f…` avant →
+> **`ddd9c9bb…`** après, stable sur 3 relevés (variantes compressée et non
+> compressée) ; le bundle en ligne contient `app_short_training_checkout` ;
+> `/affiches/asticots-novembre-2026.webp` servie en `image/webp`. Pendant la
+> propagation (~15 min), l'edge a renvoyé des ETag mêlés : ne pas conclure sur
+> un seul relevé. **Non vérifié** : un paiement réel de bout en bout.
+> (Le bloc ci-dessous a été écrit avant le commit ; il décrit le contenu.)
+
 > ### 🟠 AU 27/10 (après-midi) — formations courtes, lot 1 : BASE EN PRODUCTION, APP NON DÉPLOYÉE
 >
 > **« Payer, c'est s'inscrire »** — décisions de Jocelyn : compte créé dans le

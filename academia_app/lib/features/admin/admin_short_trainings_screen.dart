@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/admin_short_trainings_provider.dart';
 import '../../providers/admin_short_training_messages_provider.dart';
+import 'admin_short_training_session_screen.dart';
 
 class AdminShortTrainingsScreen extends StatefulWidget {
   const AdminShortTrainingsScreen({super.key});
@@ -409,116 +410,17 @@ class _AdminShortTrainingsScreenState extends State<AdminShortTrainingsScreen> {
     );
   }
 
-  Future<void> _openRegistrationsDialog(String sessionId) async {
-    final provider = context.read<AdminShortTrainingsProvider>();
-    final registrations = await provider.loadRegistrations(sessionId);
+  /// Le tableau de session (lot 2) : inscrits, totaux, guichet espèces,
+  /// validation des Mobile Money déclarés. Remplace la liste brute ci-dessous.
+  Future<void> _openSessionBoard(String sessionId) async {
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => AdminShortTrainingSessionScreen(
+        sessionId: sessionId,
+        onOpenMessages: _openRegistrationMessagesSheet,
+      ),
+    ));
     if (!mounted) return;
-
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Inscriptions à la session'),
-          content: SizedBox(
-            width: 500,
-            child: registrations.isEmpty
-                ? const Text('Aucune inscription pour cette session pour le moment.')
-                : ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: registrations.length,
-                    itemBuilder: (context, index) {
-                      final r = registrations[index];
-                      final studentName = r['student_full_name']?.toString() ?? '';
-                      final registrationId =
-                          r['registration_id']?.toString() ?? '';
-                      final profilePhone =
-                          (r['contact_phone'] ?? r['student_profile_phone'] ?? '')
-                              .toString();
-                      final email = r['student_email']?.toString() ?? '';
-                      final status = r['status']?.toString() ?? '';
-                      final paymentMethod = r['payment_method']?.toString() ?? '';
-                      final preferredChannel =
-                          r['preferred_channel']?.toString() ?? '';
-                      final wantsInvoice = r['wants_invoice'] == true;
-                      final companyName = r['company_name']?.toString() ?? '';
-                      final createdAt = r['created_at']?.toString() ?? '';
-
-                      final details = <String>[
-                        if (profilePhone.isNotEmpty) 'Tel: $profilePhone',
-                        if (email.isNotEmpty) 'Email: $email',
-                        if (paymentMethod.isNotEmpty) 'Paiement: $paymentMethod',
-                        if (preferredChannel.isNotEmpty)
-                          'Canal: $preferredChannel',
-                        if (wantsInvoice) 'Facture souhaitée',
-                        if (companyName.isNotEmpty) 'Entreprise: $companyName',
-                        if (createdAt.isNotEmpty) 'Inscrit le: $createdAt',
-                      ];
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                studentName.isNotEmpty
-                                    ? studentName
-                                    : 'Étudiant inconnu',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text('Statut : $status'),
-                              if (details.isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  details.join(' · '),
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              ],
-                              if ((r['notes']?.toString() ?? '').isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  r['notes'].toString(),
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              ],
-                              const SizedBox(height: 4),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton.icon(
-                                  onPressed: registrationId.isEmpty
-                                      ? null
-                                      : () {
-                                          _openRegistrationMessagesSheet(
-                                            registrationId,
-                                            studentName,
-                                          );
-                                        },
-                                  icon: const Icon(Icons.chat_bubble_outline),
-                                  label: const Text('Messages'),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-              child: const Text('Fermer'),
-            ),
-          ],
-        );
-      },
-    );
+    context.read<AdminShortTrainingsProvider>().loadTrainings();
   }
 
   Future<void> _openSessionsSheet(Map<String, dynamic> training) async {
@@ -622,9 +524,10 @@ class _AdminShortTrainingsScreenState extends State<AdminShortTrainingsScreen> {
                                       onPressed: sessionId.isEmpty
                                           ? null
                                           : () {
-                                              _openRegistrationsDialog(sessionId);
+                                              Navigator.of(sheetContext).pop();
+                                              _openSessionBoard(sessionId);
                                             },
-                                      child: const Text('Inscriptions'),
+                                      child: const Text('Inscrits et guichet'),
                                     ),
                                     TextButton(
                                       onPressed: trainingId.isEmpty
