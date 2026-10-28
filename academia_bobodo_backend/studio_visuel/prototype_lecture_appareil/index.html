@@ -1,0 +1,826 @@
+<title>Lecteur de capsule 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;600&family=Poppins:wght@600&display=swap">
+<style>
+/* Mise en page : une colonne étroite, la scène 16:9 en tête, les mesures dessous.
+   Un seul thème, sombre, parce que la scène est un écran de cinéma. */
+:root {
+  --nuit: #04070f;
+  --panneau: #0a1120;
+  --ligne: #1b2840;
+  --encre: #e6edf7;
+  --gris: #8b9ab3;
+  --bleu: #4d94ff;
+  --rouge: #ff4a32;
+  --ok: #3fcf8e;
+  --alerte: #ffb020;
+  --f-texte: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-donnee: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+html, body { background: var(--nuit); color: var(--encre); }
+body {
+  font-family: var(--f-texte); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px 32px;
+}
+main { max-width: 760px; margin: 0 auto; display: grid; gap: 18px; }
+header { display: grid; gap: 4px; }
+.etiquette { font-family: var(--f-donnee); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+h1 { font-size: 20px; line-height: 1.25; margin: 0; font-weight: 600; text-wrap: balance; }
+.scene {
+  position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9;
+  background: #000; border: 1px solid var(--ligne); border-radius: 6px; overflow: hidden;
+}
+.scene canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hud {
+  position: absolute; top: 8px; left: 8px; padding: 3px 7px; border-radius: 4px;
+  background: rgba(4, 7, 15, .72); font-family: var(--f-donnee); font-size: 11px; color: var(--encre);
+  font-variant-numeric: tabular-nums; pointer-events: none;
+}
+.hud b { color: var(--ok); font-weight: 500; }
+.hud b.lent { color: var(--alerte); }
+.voile {
+  position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
+  background: rgba(4, 7, 15, .55); color: var(--encre); font-size: 14px; padding: 16px;
+}
+.commandes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button, select {
+  font: 600 14px var(--f-texte); color: var(--encre); background: var(--panneau);
+  border: 1px solid var(--ligne); border-radius: 6px; padding: 9px 14px; cursor: pointer;
+}
+button.principal { background: var(--bleu); border-color: var(--bleu); color: #04070f; }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible, select:focus-visible { outline: 2px solid var(--bleu); outline-offset: 2px; }
+.mesures { display: grid; gap: 10px; }
+.mesures h2, .notes h2 { font-size: 13px; margin: 0; font-family: var(--f-donnee); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--gris); }
+.tableau-cadre { overflow-x: auto; border: 1px solid var(--ligne); border-radius: 6px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+td, th { padding: 7px 10px; border-bottom: 1px solid var(--ligne); text-align: left; vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { color: var(--gris); font-weight: 400; width: 46%; }
+td { font-family: var(--f-donnee); font-variant-numeric: tabular-nums; min-width: 0; word-break: break-word; }
+.seuil-ok { color: var(--ok); } .seuil-ko { color: var(--alerte); }
+.export-resultat { display: grid; gap: 8px; }
+.export-resultat video { width: 100%; max-width: 100%; border-radius: 6px; border: 1px solid var(--ligne); background: #000; }
+.notes { display: grid; gap: 6px; color: var(--gris); font-size: 13px; }
+.notes p { margin: 0; max-width: 65ch; }
+@media (prefers-reduced-motion: reduce) { .hud { transition: none; } }
+</style>
+
+<main>
+  <header>
+    <span class="etiquette">Prototype · lecture sur l'appareil · capsule 168ccb14</span>
+    <h1>Le cerveau : notre centre de commande</h1>
+  </header>
+
+  <div class="scene" id="scene">
+    <canvas id="toile" aria-label="Scène 3D de la capsule"></canvas>
+    <div class="hud" id="hud">— i/s</div>
+    <div class="voile" id="voile">Chargement de la scène…</div>
+  </div>
+
+  <div class="commandes">
+    <button class="principal" id="lancer" disabled>Lancer</button>
+    <label class="etiquette" for="palier">Palier</label>
+    <select id="palier">
+      <option value="auto">Automatique</option>
+      <option value="complet">Complet</option>
+      <option value="leger">Léger</option>
+    </select>
+    <button id="exporter" disabled>Exporter 10 s</button>
+    <button id="banc" disabled>Banc 5 s</button>
+    <button id="plein">Plein écran</button>
+  </div>
+  <div class="commandes">
+    <label class="etiquette" for="temps">Position</label>
+    <input type="range" id="temps" min="0" max="44.8" step="0.1" value="0.6" style="flex:1; min-width:0; accent-color: var(--bleu)">
+    <span class="etiquette" id="temps-val" style="font-variant-numeric: tabular-nums">0,6 s</span>
+  </div>
+
+  <section class="mesures">
+    <h2>Mesures de cet appareil</h2>
+    <div class="tableau-cadre">
+      <table><tbody id="mesures"></tbody></table>
+    </div>
+    <div class="commandes">
+      <button id="copier">Copier les mesures</button>
+      <span class="etiquette" id="copie-etat"></span>
+    </div>
+    <div class="export-resultat" id="export-resultat"></div>
+  </section>
+
+  <section class="notes">
+    <h2>Ce que montre cette page</h2>
+    <p>La vidéo n'est pas téléchargée : la scène est dessinée en direct par votre téléphone, à partir de la capsule « le cerveau » (5 scènes, 44,8 s) et de sa vraie narration. Seuls la voix (358 Ko) et un corps 3D (57 Ko) sont chargés.</p>
+    <p>Le choix des deux décors par scène est fait à la main pour ce prototype. Dans la chaîne réelle, l'IA le donnerait avec la capsule.</p>
+    <p>Corps : maillage de base MakeHuman, CC0 1.0. Voix : Voxtral, telle que produite le 04/09 pour cette capsule. Moteur : three.js 0.178 (MIT). Export : Mediabunny 1.61.3 (MPL-2.0).</p>
+  </section>
+</main>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.178.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const T0 = performance.now();
+const $ = (id) => document.getElementById(id);
+
+// ── La capsule réelle (app.studio_jobs 168ccb14, lue le 28/10) ─────────────
+// Seuls la narration et les durées mesurées sont repris. Le décor de chaque
+// scène est choisi à la main : c'est l'information que l'IA fournirait.
+const CAPSULE = {
+  titre: 'Le cerveau : notre centre de commande',
+  scenes: [
+    { duree: 7.69, decor: 'corps', foyer: 'tete', plan: 'approche',
+      narration: "Le cerveau est l'organe le plus complexe de notre corps. Il est divisé en deux hémisphères, chacun ayant des fonctions spécifiques." },
+    { duree: 9.13, decor: 'gouttes', plan: 'rase',
+      narration: "Des milliards de neurones, de minuscules cellules nerveuses, communiquent entre eux. Ils forment un réseau complexe pour traiter l'information." },
+    { duree: 9.97, decor: 'corps', foyer: 'tete', flux: 1, plan: 'profil',
+      narration: "Le cerveau reçoit des informations de nos sens, les interprète et envoie des commandes. C'est ainsi que nous pensons, ressentons et agissons." },
+    { duree: 10.14, decor: 'gouttes', plan: 'arc',
+      narration: "Bien que tous les animaux aient un cerveau, celui de l'homme est particulièrement développé. Il nous permet des capacités uniques comme le langage et la créativité." },
+    { duree: 7.89, decor: 'corps', foyer: 'thorax', flux: 1, plan: 'reference',
+      narration: "Le cerveau a besoin d'un apport constant en oxygène et en nutriments. Le sang circule sans cesse pour le maintenir en pleine forme." },
+  ],
+};
+let cumul = 0;
+for (const s of CAPSULE.scenes) { s.debut = cumul; cumul += s.duree; }
+const DUREE = cumul;
+
+// Sous-titres : chaque phrase reçoit une part de la scène au prorata de sa longueur.
+const PHRASES = [];
+for (const s of CAPSULE.scenes) {
+  const morceaux = s.narration.match(/[^.!?]+[.!?]+/g) || [s.narration];
+  const total = morceaux.reduce((a, m) => a + m.trim().length, 0);
+  let t = s.debut;
+  for (const m of morceaux) {
+    const d = s.duree * m.trim().length / total;
+    PHRASES.push({ debut: t, fin: t + d, texte: m.trim() });
+    t += d;
+  }
+}
+
+// ── Paliers ─────────────────────────────────────────────────────────────
+const PALIERS = {
+  complet: { L: 1280, H: 720, bloom: 1.0, echantillons: 4, particules: 1.0, octaves: 4 },
+  leger:   { L: 854,  H: 480, bloom: 0.5, echantillons: 0, particules: 0.45, octaves: 3 },
+};
+
+// ── Bruit GLSL partagé, déterministe ───────────────────────────────────
+const BRUIT = `
+float h21(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
+float bruit(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.0-2.0*f);
+  return mix(mix(h21(i),h21(i+vec2(1,0)),u.x), mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),u.x), u.y); }
+uniform float uOctaves;
+float fbm(vec2 p){ float s=0.0, a=0.5; for(int i=0;i<4;i++){ if(float(i)>=uOctaves) break; s+=a*bruit(p); p*=2.03; a*=0.5; } return s; }
+`;
+
+const BLEU = new THREE.Color(0x2f7dff);
+const BLEU_VIF = new THREE.Color(0x8cc2ff);
+const ROUGE = new THREE.Color(0xff2a10);
+const ORANGE = new THREE.Color(0xff8a3a);
+
+const communs = {
+  uTemps: { value: 0 },
+  uOctaves: { value: 4 },
+  uEchelle: { value: 720 },      // hauteur de rendu, pour la taille des points
+};
+
+// Fond : brume en bandes, calculée plein écran. Aucun fichier.
+function fondBrume(teinte, hauteurBandes) {
+  const m = new THREE.ShaderMaterial({
+    uniforms: { ...communs, uTeinte: { value: teinte }, uBandes: { value: hauteurBandes } },
+    vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.9999, 1.0); }`,
+    fragmentShader: BRUIT + `
+      uniform float uTemps; uniform vec3 uTeinte; uniform float uBandes; varying vec2 vUv;
+      void main(){
+        vec2 p = vec2(vUv.x*2.2, vUv.y*1.2);
+        float n = fbm(p*1.6 + vec2(uTemps*0.035, 0.0));
+        float bandes = sin((vUv.y + n*0.35)*uBandes + uTemps*0.12)*0.5+0.5;
+        bandes = smoothstep(0.35, 1.0, bandes) * (0.55 + 0.45*fbm(p*3.0 - uTemps*0.02));
+        float vignette = smoothstep(1.15, 0.25, length(vUv-vec2(0.5,0.48))*1.6);
+        vec3 c = vec3(0.004,0.010,0.030) + uTeinte*bandes*0.42*vignette + uTeinte*0.05*vignette;
+        gl_FragColor = vec4(c, 1.0);
+      }`,
+    depthWrite: false, depthTest: false,
+  });
+  const q = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), m);
+  q.frustumCulled = false; q.renderOrder = -10;
+  return q;
+}
+
+// Arêtes : bleu, virant au rouge près du foyer (uniforme, donc animable).
+function matiereAretes(opacite) {
+  return new THREE.ShaderMaterial({
+    uniforms: { ...communs, uFoyer: { value: new THREE.Vector3() }, uRayon: { value: 0.12 },
+      uBleu: { value: BLEU }, uRouge: { value: ROUGE }, uOpacite: { value: opacite }, uChaleur: { value: 1 } },
+    vertexShader: `uniform vec3 uFoyer; uniform float uRayon; varying float vChaud; varying float vProf;
+      void main(){ vChaud = 1.0 - smoothstep(0.0, uRayon, distance(position, uFoyer));
+        vec4 mv = modelViewMatrix*vec4(position,1.0); vProf = -mv.z; gl_Position = projectionMatrix*mv; }`,
+    fragmentShader: `uniform vec3 uBleu, uRouge; uniform float uOpacite, uTemps, uChaleur; varying float vChaud; varying float vProf;
+      void main(){ float k = vChaud*uChaleur; float pulse = 0.8 + 0.2*sin(uTemps*5.0);
+        vec3 c = mix(uBleu, uRouge*(1.6*pulse), k);
+        float a = uOpacite*(0.6 + 0.9*k) * clamp(14.0/vProf, 0.25, 1.0);
+        gl_FragColor = vec4(c*a, 1.0); }`,
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+}
+
+// Sommets lumineux et particules : un disque doux par point.
+function matierePoints(taille, couleur, opacite) {
+  return new THREE.ShaderMaterial({
+    uniforms: { ...communs, uTaille: { value: taille }, uCouleur: { value: couleur }, uOpacite: { value: opacite },
+      uFoyer: { value: new THREE.Vector3() }, uRayon: { value: 0.12 }, uRouge: { value: ORANGE }, uChaleur: { value: 1 } },
+    vertexShader: `uniform float uTaille, uEchelle, uRayon; uniform vec3 uFoyer; varying float vChaud;
+      void main(){ vChaud = 1.0 - smoothstep(0.0, uRayon, distance(position, uFoyer));
+        vec4 mv = modelViewMatrix*vec4(position,1.0);
+        gl_PointSize = uTaille * uEchelle / max(0.1, -mv.z); gl_Position = projectionMatrix*mv; }`,
+    fragmentShader: `uniform vec3 uCouleur, uRouge; uniform float uOpacite, uChaleur; varying float vChaud;
+      void main(){ float d = length(gl_PointCoord-0.5); if(d>0.5) discard;
+        float a = smoothstep(0.5, 0.0, d)*uOpacite; vec3 c = mix(uCouleur, uRouge*1.8, vChaud*uChaleur);
+        gl_FragColor = vec4(c*a, 1.0); }`,
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+}
+
+// Peau de verre : ne s'allume qu'en incidence rasante (Fresnel).
+function matiereVerre(couleur, force) {
+  return new THREE.ShaderMaterial({
+    uniforms: { uCouleur: { value: couleur }, uForce: { value: force } },
+    vertexShader: `varying vec3 vN; varying vec3 vV;
+      void main(){ vec4 mv = modelViewMatrix*vec4(position,1.0); vN = normalize(normalMatrix*normal); vV = normalize(-mv.xyz);
+        gl_Position = projectionMatrix*mv; }`,
+    fragmentShader: `uniform vec3 uCouleur; uniform float uForce; varying vec3 vN; varying vec3 vV;
+      void main(){ float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.6);
+        gl_FragColor = vec4(uCouleur*f*uForce, 1.0); }`,
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+  });
+}
+
+// Le foyer : un nuage de braises qui bouillonne, plus des braises qui s'échappent.
+// Positions calculées dans le shader depuis le temps : rendu déterministe.
+function foyerEtFlux(nBraises, nFuite) {
+  const g = new THREE.Group();
+  const graine = (i, k) => { const x = Math.sin(i*127.1 + k*311.7)*43758.5453; return x - Math.floor(x); };
+
+  const geoB = new THREE.BufferGeometry();
+  const pB = new Float32Array(nBraises*3), rB = new Float32Array(nBraises*4);
+  for (let i = 0; i < nBraises; i++) for (let k = 0; k < 4; k++) rB[i*4+k] = graine(i, k);
+  geoB.setAttribute('position', new THREE.BufferAttribute(pB, 3));
+  geoB.setAttribute('aAlea', new THREE.BufferAttribute(rB, 4));
+  const matB = new THREE.ShaderMaterial({
+    uniforms: { ...communs, uCentre: { value: new THREE.Vector3() }, uTaille: { value: 0.035 }, uAmpleur: { value: 0.07 } },
+    vertexShader: `attribute vec4 aAlea; uniform vec3 uCentre; uniform float uTemps, uTaille, uEchelle, uAmpleur; varying float vA;
+      void main(){ float t = uTemps*(0.4+aAlea.w*0.8) + aAlea.x*6.283;
+        vec3 dir = normalize(vec3(sin(aAlea.x*6.283+t*0.7), cos(aAlea.y*6.283+t*0.5), sin(aAlea.z*6.283-t*0.6)));
+        float r = uAmpleur * pow(aAlea.w, 0.6) * (0.75 + 0.25*sin(t*1.3));
+        vec3 p = uCentre + dir*r*vec3(1.4, 1.0, 0.9);
+        vec4 mv = modelViewMatrix*vec4(p,1.0); vA = 1.0 - aAlea.w*0.6;
+        gl_PointSize = uTaille*uEchelle*(0.5+aAlea.y)/max(0.1,-mv.z); gl_Position = projectionMatrix*mv; }`,
+    fragmentShader: `varying float vA; void main(){ float d = length(gl_PointCoord-0.5); if(d>0.5) discard;
+        float a = smoothstep(0.5,0.0,d)*vA; vec3 c = mix(vec3(1.0,0.12,0.02), vec3(1.0,0.55,0.2), vA*0.6);
+        gl_FragColor = vec4(c*a*1.6, 1.0); }`,
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+  const braises = new THREE.Points(geoB, matB); braises.frustumCulled = false;
+  g.add(braises);
+
+  const geoF = new THREE.BufferGeometry();
+  const pF = new Float32Array(nFuite*3), rF = new Float32Array(nFuite*4);
+  for (let i = 0; i < nFuite; i++) for (let k = 0; k < 4; k++) rF[i*4+k] = graine(i + 9000, k);
+  geoF.setAttribute('position', new THREE.BufferAttribute(pF, 3));
+  geoF.setAttribute('aAlea', new THREE.BufferAttribute(rF, 4));
+  const matF = new THREE.ShaderMaterial({
+    uniforms: { ...communs, uCentre: { value: new THREE.Vector3() }, uDirection: { value: new THREE.Vector3(0, -1, 0) },
+      uLongueur: { value: 0.55 }, uTaille: { value: 0.02 }, uFlux: { value: 1 } },
+    vertexShader: `attribute vec4 aAlea; uniform vec3 uCentre, uDirection; uniform float uTemps, uLongueur, uTaille, uEchelle, uFlux; varying float vA;
+      void main(){ float avance = fract(uTemps*(0.05+aAlea.x*0.09) + aAlea.y);
+        vec3 ecart = normalize(vec3(aAlea.z-0.5, aAlea.w-0.5, aAlea.x-0.5)) * (0.02 + 0.10*avance) * (0.4+aAlea.w);
+        vec3 p = uCentre + uDirection*avance*uLongueur*(0.4+aAlea.z) + ecart
+               + 0.015*vec3(sin(uTemps*2.0+aAlea.x*20.0), cos(uTemps*1.7+aAlea.y*20.0), 0.0);
+        vec4 mv = modelViewMatrix*vec4(p,1.0); vA = (1.0-avance)*smoothstep(0.0,0.08,avance)*uFlux;
+        gl_PointSize = uTaille*uEchelle*(0.4+aAlea.w)/max(0.1,-mv.z); gl_Position = projectionMatrix*mv; }`,
+    fragmentShader: `varying float vA; void main(){ float d = length(gl_PointCoord-0.5); if(d>0.5) discard;
+        float a = smoothstep(0.5,0.0,d)*vA; gl_FragColor = vec4(vec3(1.0,0.18,0.06)*a*1.4, 1.0); }`,
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+  const fuite = new THREE.Points(geoF, matF); fuite.frustumCulled = false;
+  g.add(fuite);
+  return { groupe: g, braises: matB, fuite: matF };
+}
+
+// ── Décor 1 : le corps allongé (référence, image 1) ──────────────────────
+function decorCorps(donnees, palier) {
+  const scene = new THREE.Scene();
+  scene.add(fondBrume(new THREE.Color(0x1f5fd0), 9.0));
+
+  const e = donnees.echelle, v = donnees.v;
+  const pos = new Float32Array(v.length);
+  for (let i = 0; i < v.length; i++) pos[i] = v[i] / e;
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setIndex(donnees.f);
+  geo.computeVertexNormals();
+
+  // Le corps vit dans ses coordonnées d'origine (pieds en 0, tête en 1) :
+  // le foyer s'y exprime donc simplement, et l'ensemble est tourné d'un bloc.
+  const corps = new THREE.Group();
+  // Dosage mesuré à l'image : au-delà, le halo fond le filaire en aplat blanc
+  // (le défaut déjà vu sur le volcan, ETAT §4.2 bis).
+  const aretes = matiereAretes(0.2);
+  const points = matierePoints(0.005, BLEU_VIF, 0.35);
+  corps.add(new THREE.Mesh(geo, matiereVerre(BLEU, 0.28)));
+  corps.add(new THREE.LineSegments(new THREE.WireframeGeometry(geo), aretes));
+  corps.add(new THREE.Points(geo, points));
+  const f = foyerEtFlux(Math.round(700*palier.particules), Math.round(900*palier.particules));
+  corps.add(f.groupe);
+
+  const allonge = new THREE.Group();
+  corps.rotation.z = Math.PI/2;                 // tête vers la gauche
+  allonge.add(corps);
+  allonge.rotation.x = -Math.PI/2 + 0.42;       // sur le dos, un peu tourné vers nous
+  allonge.scale.setScalar(6.2);
+  allonge.position.set(3.1, -0.2, 0);
+  scene.add(allonge);
+
+  const FOYERS = { tete: new THREE.Vector3(0, 0.925, 0.0), thorax: new THREE.Vector3(0, 0.72, 0.03) };
+  return {
+    scene,
+    regler(s, local) {
+      const p = FOYERS[s.foyer] || FOYERS.thorax;
+      const rayon = s.foyer === 'tete' ? 0.085 : 0.13;
+      for (const m of [aretes, points]) { m.uniforms.uFoyer.value.copy(p); m.uniforms.uRayon.value = rayon; }
+      f.braises.uniforms.uCentre.value.copy(p);
+      f.braises.uniforms.uAmpleur.value = rayon*0.62;
+      f.fuite.uniforms.uCentre.value.copy(p);
+      // Vers les pieds (la commande descend) ; au thorax, la chaleur s'échappe aussi en dehors.
+      f.fuite.uniforms.uDirection.value.set(0, -1, s.foyer === 'thorax' ? 0.35 : 0.05).normalize();
+      f.fuite.uniforms.uFlux.value = s.flux ? Math.min(1, local*3) : 0.25;
+      const monte = Math.min(1, local*2.5);
+      aretes.uniforms.uChaleur.value = monte; points.uniforms.uChaleur.value = monte;
+    },
+    // Position dans la scène d'un point du corps (tête, thorax), pour viser.
+    cible(nom) { return corps.localToWorld((FOYERS[nom] || FOYERS.thorax).clone()); },
+    allonge, corps,
+  };
+}
+
+// ── Décor 2 : gouttes de verre sur grille, lueur qui affleure (image 2) ────
+function decorGouttes(palier) {
+  const scene = new THREE.Scene();
+  scene.add(fondBrume(new THREE.Color(0x1a4fb8), 6.0));
+
+  // La lueur rouge sous la grille : un plan de bruit, juste en dessous.
+  const lueur = new THREE.Mesh(new THREE.PlaneGeometry(90, 90),
+    new THREE.ShaderMaterial({
+      uniforms: { ...communs },
+      vertexShader: `varying vec3 vP; void main(){ vP = (modelMatrix*vec4(position,1.0)).xyz; gl_Position = projectionMatrix*viewMatrix*vec4(vP,1.0); }`,
+      fragmentShader: BRUIT + `uniform float uTemps; varying vec3 vP;
+        void main(){ float n = fbm(vP.xz*0.16 + vec2(uTemps*0.03, -uTemps*0.02));
+          float tache = smoothstep(0.52, 0.85, n); float loin = smoothstep(42.0, 6.0, length(vP.xz));
+          gl_FragColor = vec4(vec3(1.0,0.10,0.03)*tache*0.9*loin, 1.0); }`,
+      transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+  lueur.rotation.x = -Math.PI/2; lueur.position.y = -0.06;
+  scene.add(lueur);
+
+  const plan = new THREE.PlaneGeometry(70, 70, 70, 70);
+  const lignes = new THREE.LineSegments(new THREE.WireframeGeometry(plan),
+    new THREE.ShaderMaterial({
+      uniforms: { ...communs },
+      vertexShader: BRUIT + `uniform float uTemps; varying float vChaud; varying float vProf;
+        void main(){ vec3 p = position.xzy; p.z = -p.z;
+          p.y = 0.12*sin(p.x*0.25+uTemps*0.4)*cos(p.z*0.21);
+          vChaud = smoothstep(0.52, 0.85, fbm(p.xz*0.16 + vec2(uTemps*0.03, -uTemps*0.02)));
+          vec4 mv = modelViewMatrix*vec4(p,1.0); vProf = -mv.z; gl_Position = projectionMatrix*mv; }`,
+      fragmentShader: `varying float vChaud; varying float vProf;
+        void main(){ float loin = clamp(1.0 - vProf/38.0, 0.0, 1.0);
+          vec3 c = mix(vec3(0.16,0.42,1.0)*0.55, vec3(1.0,0.22,0.08)*1.2, vChaud);
+          gl_FragColor = vec4(c*loin*loin, 1.0); }`,
+      transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+  scene.add(lignes);
+
+  // Une goutte : ovoïde facetté, peau de verre + arêtes + sommets.
+  const geo = new THREE.IcosahedronGeometry(1, 2);
+  geo.scale(0.72, 1.0, 0.72);
+  geo.computeVertexNormals();
+  const aretes = matiereAretes(0.5); aretes.uniforms.uRayon.value = 0;
+  const points = matierePoints(0.012, BLEU_VIF, 0.6); points.uniforms.uRayon.value = 0;
+  const verre = matiereVerre(new THREE.Color(0x6fb0ff), 1.0);
+  const POSES = [
+    [0, 0.62, 0, 0.62], [-2.3, 0.5, -2.2, 0.5], [2.4, 0.48, -1.6, 0.46], [-4.6, 0.38, -6.5, 0.4],
+    [4.9, 0.42, -7.4, 0.44], [0.9, 0.3, -10, 0.34], [-1.4, 0.2, 2.2, 0.2], [3.2, 0.18, 1.6, 0.16],
+    [-6.5, 0.32, -2.5, 0.3], [6.8, 0.3, -3.4, 0.28],
+  ];
+  const nb = palier.particules < 1 ? 7 : POSES.length;
+  const gouttes = [];
+  for (let i = 0; i < nb; i++) {
+    const [x, y, z, s] = POSES[i];
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(geo, verre));
+    g.add(new THREE.LineSegments(new THREE.WireframeGeometry(geo), aretes));
+    g.add(new THREE.Points(geo, points));
+    g.position.set(x, y + s*0.98, z); g.scale.setScalar(s); g.rotation.y = i*0.7;
+    g.userData.base = g.position.y; g.userData.i = i;
+    scene.add(g); gouttes.push(g);
+  }
+  return {
+    scene,
+    regler(s, local, t) {
+      for (const g of gouttes) {
+        g.position.y = g.userData.base + 0.04*Math.sin(t*0.9 + g.userData.i*1.7);
+        g.rotation.y = g.userData.i*0.7 + t*0.08;
+      }
+    },
+  };
+}
+
+// ── Caméra : un mouvement lent par plan, fonction pure du temps ───────────
+const lisse = (x) => x*x*(3 - 2*x);
+function poserCamera(cam, s, local, decors) {
+  const k = lisse(Math.min(1, Math.max(0, local)));
+  if (s.decor === 'corps') {
+    const tete = decors.corps.cible('tete'), thorax = decors.corps.cible('thorax');
+    if (s.plan === 'approche') {
+      cam.position.set(-1.6 + 0.6*k, 1.5 - 0.3*k, 3.6 - 1.2*k); cam.lookAt(tete.x + 0.4, tete.y - 0.1, tete.z);
+    } else if (s.plan === 'profil') {
+      cam.position.set(-2.4 + 3.0*k, 2.6, 7.6 - 0.6*k); cam.lookAt(0.2*k, 0.1, 0);
+    } else {
+      cam.position.set(1.2 - 1.6*k, 2.1 + 0.2*k, 6.2 - 0.8*k); cam.lookAt(thorax.x + 1.6, thorax.y - 0.35, thorax.z);
+    }
+  } else {
+    if (s.plan === 'rase') {
+      cam.position.set(-1.0 + 1.6*k, 1.15, 6.4 - 2.2*k); cam.lookAt(0.2, 0.75, -1.5);
+    } else {
+      const a = -0.5 + 1.0*k;
+      cam.position.set(Math.sin(a)*6.0, 1.6 - 0.3*k, Math.cos(a)*6.0); cam.lookAt(0, 0.6, -1.2);
+    }
+  }
+}
+
+// ── Mise en place ───────────────────────────────────────────────────────
+const toile = $('toile');
+const renderer = new THREE.WebGLRenderer({ canvas: toile, antialias: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(1);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+const camera = new THREE.PerspectiveCamera(36, 16/9, 0.05, 200);
+
+// Les sous-titres sont dessinés DANS la toile WebGL, après le halo :
+// c'est ce qui les fait entrer dans l'export sans montage.
+const ortho = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+const surcouche = new THREE.Scene();
+const toileTexte = document.createElement('canvas');
+const ctxTexte = toileTexte.getContext('2d');
+const texteTex = new THREE.CanvasTexture(toileTexte);
+texteTex.colorSpace = THREE.SRGBColorSpace;
+const bandeau = new THREE.Mesh(new THREE.PlaneGeometry(2, 0.34),
+  new THREE.MeshBasicMaterial({ map: texteTex, transparent: true, depthTest: false, toneMapped: false }));
+bandeau.position.y = -1 + 0.24;
+surcouche.add(bandeau);
+const noir = new THREE.Mesh(new THREE.PlaneGeometry(2, 2),
+  new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0, depthTest: false }));
+surcouche.add(noir);
+let texteCourant = null;
+
+// TAILLE FIXE, QUEL QUE SOIT LE PALIER. Mesuré à l'image : redimensionner la
+// toile du texte au changement de palier laissait l'ancienne phrase sous la
+// nouvelle (la texture WebGL garde sa taille d'origine, seul un coin est réécrit).
+toileTexte.width = 1280; toileTexte.height = Math.round(720*0.17);
+function dessinerTexte(texte) {
+  if (texte === texteCourant) return;
+  texteCourant = texte;
+  const L = toileTexte.width, H = 720;
+  const c = ctxTexte, taille = Math.round(H*0.042);
+  c.clearRect(0, 0, toileTexte.width, toileTexte.height);
+  if (texte) {
+    c.font = `600 ${taille}px Poppins, "IBM Plex Sans", sans-serif`;
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    const largeurMax = L*0.82, mots = texte.split(' '), lignes = [];
+    let l = '';
+    for (const m of mots) { const essai = l ? l + ' ' + m : m; if (c.measureText(essai).width > largeurMax && l) { lignes.push(l); l = m; } else l = essai; }
+    if (l) lignes.push(l);
+    const pas = taille*1.25, y0 = toileTexte.height/2 - (lignes.length - 1)*pas/2;
+    c.shadowColor = 'rgba(0,0,0,0.85)'; c.shadowBlur = taille*0.35; c.fillStyle = '#ffffff';
+    lignes.forEach((li, i) => c.fillText(li, L/2, y0 + i*pas));
+  }
+  texteTex.needsUpdate = true;
+}
+
+let palierNom = 'complet', palier = PALIERS.complet, composer = null, bloom = null, decors = null, donneesCorps = null;
+function construire(nom) {
+  palierNom = nom; palier = PALIERS[nom];
+  renderer.setSize(palier.L, palier.H, false);
+  communs.uOctaves.value = palier.octaves;
+  communs.uEchelle.value = palier.H;
+  const cible = new THREE.WebGLRenderTarget(palier.L, palier.H, { type: THREE.HalfFloatType, samples: palier.echantillons });
+  composer?.dispose();
+  composer = new EffectComposer(renderer, cible);
+  composer.setPixelRatio(1);
+  composer.setSize(palier.L, palier.H);
+  const passe = new RenderPass(new THREE.Scene(), camera);
+  composer.addPass(passe);
+  bloom = new UnrealBloomPass(new THREE.Vector2(palier.L*palier.bloom, palier.H*palier.bloom), 0.85, 0.5, 0.18);
+  composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+  decors = { corps: decorCorps(donneesCorps, palier), gouttes: decorGouttes(palier) };
+  for (const d of Object.values(decors)) d.scene.updateMatrixWorld(true);
+  composer.passes[0].scene = decors.corps.scene;
+  texteCourant = null;
+}
+
+function sceneA(t) {
+  const sc = CAPSULE.scenes;
+  for (let i = sc.length - 1; i >= 0; i--) if (t >= sc[i].debut) return [sc[i], i];
+  return [sc[0], 0];
+}
+
+// Dessine l'image de l'instant t. Fonction pure du temps : c'est ce qui permet
+// de lire en direct ET d'exporter image par image le même film.
+function dessiner(t) {
+  t = Math.max(0, Math.min(DUREE - 0.001, t));
+  const [s] = sceneA(t);
+  const local = (t - s.debut)/s.duree;
+  communs.uTemps.value = t;
+  const d = decors[s.decor];
+  d.regler(s, local, t);
+  poserCamera(camera, s, local, decors);
+  composer.passes[0].scene = d.scene;
+  const phrase = PHRASES.find((p) => t >= p.debut && t < p.fin);
+  dessinerTexte(phrase ? phrase.texte : '');
+  const bord = Math.min(t - s.debut, s.debut + s.duree - t);
+  // Fondu au noir de 0,35 s à chaque changement de plan.
+  noir.material.opacity = Math.max(0, 1 - bord/0.35);
+  composer.render();
+  renderer.autoClear = false;
+  renderer.render(surcouche, ortho);
+  renderer.autoClear = true;
+}
+
+// ── Mesures ─────────────────────────────────────────────────────────────
+const stats = { complet: [], leger: [] };
+const M = { premiereImage: null, pret: null, bascule: null, export: null, gpu: '—', webgl: '—' };
+function infosGpu() {
+  const gl = renderer.getContext();
+  M.webgl = renderer.capabilities.isWebGL2 ? 'WebGL2' : 'WebGL1';
+  const ext = gl.getExtension('WEBGL_debug_renderer_info');
+  M.gpu = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+}
+function resume(liste) {
+  if (liste.length < 10) return null;
+  const tri = [...liste].sort((a, b) => a - b);
+  const moy = liste.reduce((a, b) => a + b, 0)/liste.length;
+  const p95 = tri[Math.floor(tri.length*0.95)];
+  return { ips: 1000/moy, ips5: 1000/p95, ms: moy, n: liste.length };
+}
+function octets() {
+  let n = 0;
+  for (const r of performance.getEntriesByType('resource')) n += r.transferSize || r.encodedBodySize || 0;
+  return n;
+}
+function lignes() {
+  const out = [];
+  const ua = navigator.userAgent.match(/Android [^;)]+|iPhone OS [^ ]+|Windows NT [^;)]+|Mac OS X [^;)]+/);
+  out.push(['Appareil', (ua ? ua[0] : navigator.platform) + ' · ' + (navigator.hardwareConcurrency || '?') + ' cœurs' + (navigator.deviceMemory ? ' · ' + navigator.deviceMemory + ' Go' : '')]);
+  out.push(['Processeur graphique', M.gpu]);
+  out.push(['Contexte', M.webgl + ' · palier ' + palierNom + ' (' + palier.L + '×' + palier.H + ')']);
+  out.push(['Première image', M.premiereImage ? (M.premiereImage/1000).toFixed(2) + ' s après l\'ouverture' : '—']);
+  out.push(['Données chargées', (octets()/1e6).toFixed(2) + ' Mo (page, moteur, voix, corps)']);
+  for (const nom of ['complet', 'leger']) {
+    const r = resume(stats[nom]);
+    out.push(['Palier ' + (nom === 'leger' ? 'léger' : nom),
+      r ? `${r.ips.toFixed(1)} i/s moyen · ${r.ips5.toFixed(1)} i/s au pire 5 % · ${r.ms.toFixed(1)} ms · ${r.n} images` : 'pas encore mesuré',
+      r ? (r.ips >= 24 ? 'ok' : 'ko') : null]);
+  }
+  out.push(['Banc de rendu (capacité brute)', M.banc || 'pas encore lancé', M.bancOk === undefined ? null : (M.bancOk ? 'ok' : 'ko')]);
+  out.push(['Bascule automatique', M.bascule || 'aucune']);
+  out.push(['Export 10 s', M.export || 'pas encore lancé', M.exportOk === undefined ? null : (M.exportOk ? 'ok' : 'ko')]);
+  return out;
+}
+function afficherMesures() {
+  const l = lignes();
+  $('mesures').innerHTML = l.map(([k, v, etat]) =>
+    `<tr><th>${k}</th><td class="${etat === 'ok' ? 'seuil-ok' : etat === 'ko' ? 'seuil-ko' : ''}">${v}</td></tr>`).join('');
+  envoyerMesures(l);
+}
+// Servie par le poste (téléphone relié en USB, `adb reverse`), la page renvoie
+// ses mesures au poste : rien à recopier à la main. Ailleurs, l'envoi échoue
+// en silence et la page n'en dépend pas.
+function envoyerMesures(l) {
+  if (!['127.0.0.1', 'localhost'].includes(location.hostname)) return;
+  try {
+    fetch('/mesures', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quand: new Date().toISOString(), mesures: Object.fromEntries(l.map(([k, v]) => [k, v])) }) })
+      .catch(() => {});
+  } catch (e) {}
+}
+
+// ── Lecture : l'horloge est la voix ────────────────────────────────────
+let audioCtx = null, voix = null, source = null, departAudio = 0, enLecture = false, tFixe = 0, exportEnCours = false;
+let dernier = 0, fenetre = [], debutLecture = 0;
+
+function boucle(maintenant) {
+  requestAnimationFrame(boucle);
+  if (exportEnCours) return;
+  const t = enLecture ? audioCtx.currentTime - departAudio : tFixe;
+  if (enLecture && t >= DUREE) { arreter(); return; }
+  dessiner(t);
+  if (enLecture) { $('temps').value = t.toFixed(1); $('temps-val').textContent = t.toFixed(1).replace('.', ',') + ' s'; }
+  if (M.premiereImage === null) { M.premiereImage = performance.now(); afficherMesures(); }
+  if (enLecture && dernier) {
+    const dt = maintenant - dernier;
+    if (dt < 1000) { stats[palierNom].push(dt); fenetre.push(dt); if (fenetre.length > 60) fenetre.shift(); }
+    const r = fenetre.length >= 20 ? 1000/(fenetre.reduce((a, b) => a + b, 0)/fenetre.length) : null;
+    const hud = $('hud');
+    hud.innerHTML = r ? `<b class="${r < 24 ? 'lent' : ''}">${r.toFixed(0)} i/s</b> · ${palierNom === 'leger' ? 'léger' : 'complet'}` : '…';
+    // Bascule : en automatique, après 3 s de lecture, si la moyenne glissante passe sous 24 i/s.
+    if ($('palier').value === 'auto' && palierNom === 'complet' && r !== null && r < 24 && maintenant - debutLecture > 3000) {
+      M.bascule = `vers léger à t = ${t.toFixed(1)} s (${r.toFixed(1)} i/s)`;
+      construire('leger'); fenetre = [];
+    }
+  }
+  dernier = enLecture ? maintenant : 0;
+}
+
+function lancer() {
+  if (!audioCtx) return;
+  if (enLecture) { tFixe = audioCtx.currentTime - departAudio; arreter(); return; }
+  audioCtx.resume();
+  source = audioCtx.createBufferSource();
+  source.buffer = voix; source.connect(audioCtx.destination);
+  const depuis = tFixe >= DUREE - 0.05 ? 0 : tFixe;
+  departAudio = audioCtx.currentTime - depuis;
+  source.start(0, depuis);
+  enLecture = true; debutLecture = performance.now(); fenetre = [];
+  $('lancer').textContent = 'Pause';
+}
+function arreter() {
+  if (source) { try { source.stop(); } catch (e) {} source = null; }
+  if (enLecture && tFixe >= DUREE - 0.05) tFixe = 0;
+  enLecture = false; dernier = 0;
+  $('lancer').textContent = 'Lancer';
+  afficherMesures();
+}
+
+// ── Banc : combien d'images ce GPU rend-il, sans l'écran pour le brider ? ──
+// La lecture en direct est plafonnée par la fréquence de l'écran et par le
+// navigateur (onglet masqué, économie d'énergie). Le banc enchaîne les images
+// et force la fin de chacune (lecture d'un pixel) : il mesure la capacité.
+function banc() {
+  const avant = palierNom, px = new Uint8Array(4), gl = renderer.getContext();
+  const res = {};
+  if (enLecture) { tFixe = audioCtx.currentTime - departAudio; arreter(); }
+  for (const nom of ['complet', 'leger']) {
+    construire(nom);
+    for (let i = 0; i < 5; i++) dessiner(30 + i*0.04);   // chauffe : compilation des shaders
+    gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    let n = 0; const d = performance.now();
+    while (performance.now() - d < 2500) {
+      dessiner(1 + (n % 1100)*0.04);                     // parcourt les cinq scènes
+      gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      n++;
+    }
+    res[nom] = n/((performance.now() - d)/1000);
+  }
+  construire(avant);
+  M.bancOk = res.leger >= 24;
+  M.banc = `complet ${res.complet.toFixed(1)} i/s · léger ${res.leger.toFixed(1)} i/s`;
+  afficherMesures();
+}
+
+// ── Export : WebCodecs + Mediabunny, image par image ────────────────────
+async function exporter() {
+  const bouton = $('exporter');
+  bouton.disabled = true; $('lancer').disabled = true;
+  if (enLecture) { tFixe = audioCtx.currentTime - departAudio; arreter(); }
+  exportEnCours = true;
+  const zone = $('export-resultat');
+  zone.innerHTML = '<span class="etiquette">Export en cours…</span>';
+  const FPS = 25, SECONDES = 10, N = FPS*SECONDES;
+  const debut = performance.now();
+  try {
+    if (!('VideoEncoder' in window)) throw new Error('WebCodecs absent de ce navigateur');
+    const MB = await import('https://cdn.jsdelivr.net/npm/mediabunny@1.61.3/dist/bundles/mediabunny.min.mjs');
+    const L = palier.L, H = palier.H;
+    const codecV = await MB.getFirstEncodableVideoCodec(['avc', 'vp9', 'av1'], { width: L, height: H });
+    if (!codecV) throw new Error('aucun encodeur vidéo disponible');
+    const codecA = await MB.getFirstEncodableAudioCodec(codecV === 'avc' ? ['aac', 'opus'] : ['opus', 'aac']);
+    const format = codecV === 'avc' ? new MB.Mp4OutputFormat() : new MB.WebMOutputFormat();
+    const sortie = new MB.Output({ format, target: new MB.BufferTarget() });
+    // Copie dans une toile 2D juste après chaque rendu : on n'a pas besoin de
+    // `preserveDrawingBuffer`, qui coûte cher sur les GPU mobiles.
+    const copie = document.createElement('canvas'); copie.width = L; copie.height = H;
+    const cc = copie.getContext('2d');
+    const video = new MB.CanvasSource(copie, { codec: codecV, bitrate: MB.QUALITY_MEDIUM });
+    sortie.addVideoTrack(video, { frameRate: FPS });
+    let audio = null;
+    if (codecA) { audio = new MB.AudioBufferSource({ codec: codecA, bitrate: MB.QUALITY_MEDIUM }); sortie.addAudioTrack(audio); }
+    await sortie.start();
+    for (let i = 0; i < N; i++) {
+      dessiner(i/FPS);
+      cc.drawImage(toile, 0, 0, L, H);
+      await video.add(i/FPS, 1/FPS);
+      if (i % 25 === 0) zone.innerHTML = `<span class="etiquette">Export : ${Math.round(100*i/N)} %</span>`;
+    }
+    if (audio) {
+      const sr = voix.sampleRate, n = Math.min(voix.length, Math.round(SECONDES*sr));
+      const extrait = new AudioBuffer({ length: n, numberOfChannels: voix.numberOfChannels, sampleRate: sr });
+      for (let c = 0; c < voix.numberOfChannels; c++) extrait.copyToChannel(voix.getChannelData(c).subarray(0, n), c);
+      await audio.add(extrait);
+    }
+    await sortie.finalize();
+    const octetsFichier = sortie.target.buffer.byteLength;
+    const duree = (performance.now() - debut)/1000;
+    M.exportOk = duree < 30;
+    M.export = `${duree.toFixed(1)} s pour 10 s de vidéo (${(10/duree).toFixed(2)}× le temps réel) · ${(octetsFichier/1e6).toFixed(2)} Mo · ${codecV}${codecA ? ' + ' + codecA : ' sans son'} · ${L}×${H}`;
+    const blob = new Blob([sortie.target.buffer], { type: codecV === 'avc' ? 'video/mp4' : 'video/webm' });
+    zone.innerHTML = '';
+    const v = document.createElement('video');
+    v.controls = true; v.playsInline = true; v.src = URL.createObjectURL(blob);
+    v.onerror = () => { zone.innerHTML = '<span class="etiquette">Fichier produit ; ce cadre ne permet pas de le relire ici.</span>'; };
+    zone.appendChild(v);
+  } catch (e) {
+    M.exportOk = false;
+    M.export = 'échec : ' + (e && e.message ? e.message : e);
+    zone.innerHTML = '';
+  } finally {
+    exportEnCours = false; bouton.disabled = false; $('lancer').disabled = false;
+    afficherMesures();
+  }
+}
+
+// ── Démarrage ───────────────────────────────────────────────────────────
+async function demarrer() {
+  try {
+    const [rc, ra] = await Promise.all([fetch('corps.json'), fetch('narration.mp3')]);
+    if (!rc.ok || !ra.ok) throw new Error('fichiers de la capsule introuvables');
+    donneesCorps = await rc.json();
+    const brut = await ra.arrayBuffer();
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    voix = await audioCtx.decodeAudioData(brut);
+    try { await document.fonts.load('600 30px Poppins'); } catch (e) {}
+    infosGpu();
+    construire($('palier').value === 'leger' ? 'leger' : 'complet');
+    M.pret = performance.now() - T0;
+    tFixe = 0.6;
+    $('voile').hidden = true;
+    $('lancer').disabled = false; $('exporter').disabled = false; $('banc').disabled = false;
+    requestAnimationFrame(boucle);
+    afficherMesures();
+    // `#auto` : banc puis export enchaînés sans toucher l'écran. La lecture,
+    // elle, attend un appui : le navigateur n'ouvre le son qu'après un geste.
+    if (location.hash === '#auto') {
+      setTimeout(() => { banc(); exporter(); }, 1500);
+    }
+  } catch (e) {
+    $('voile').textContent = 'La scène n\'a pas pu démarrer : ' + (e && e.message ? e.message : e);
+  }
+}
+
+$('lancer').addEventListener('click', lancer);
+$('temps').addEventListener('input', (e) => {
+  const t = Number(e.target.value);
+  $('temps-val').textContent = t.toFixed(1).replace('.', ',') + ' s';
+  if (enLecture) { arreter(); }
+  tFixe = t;
+});
+$('exporter').addEventListener('click', exporter);
+$('banc').addEventListener('click', () => {
+  $('banc').disabled = true; $('banc').textContent = 'Banc en cours (l\'image se fige 5 s)…';
+  setTimeout(() => { try { banc(); } finally { $('banc').disabled = false; $('banc').textContent = 'Banc 5 s'; } }, 50);
+});
+$('palier').addEventListener('change', (e) => {
+  const v = e.target.value;
+  const voulu = v === 'leger' ? 'leger' : 'complet';
+  if (voulu !== palierNom) { construire(voulu); fenetre = []; }
+  afficherMesures();
+});
+$('plein').addEventListener('click', async () => {
+  try { await $('scene').requestFullscreen(); } catch (e) { $('plein').disabled = true; }
+});
+$('copier').addEventListener('click', async () => {
+  const texte = 'Prototype lecteur 3D — ' + new Date().toLocaleString('fr-FR') + '\n' +
+    lignes().map(([k, v]) => `${k} : ${v}`).join('\n');
+  try { await navigator.clipboard.writeText(texte); $('copie-etat').textContent = 'Mesures copiées'; }
+  catch (e) {
+    const zone = $('export-resultat'); const pre = document.createElement('pre');
+    pre.textContent = texte; pre.style.whiteSpace = 'pre-wrap'; pre.style.fontFamily = 'var(--f-donnee)'; pre.style.fontSize = '12px';
+    zone.prepend(pre); $('copie-etat').textContent = 'Copie refusée : texte affiché ci-dessous';
+  }
+});
+afficherMesures();
+demarrer();
+</script>

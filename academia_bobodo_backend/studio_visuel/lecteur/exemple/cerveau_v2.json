@@ -1,0 +1,58 @@
+{
+ "format": 2,
+ "titre": "Le cerveau : notre centre de commande",
+ "voix": "narration.mp3",
+ "source": "app.studio_jobs 168ccb14 (narration et durées réelles) ; décors choisis à la main",
+ "scenes": [
+  {
+   "id": "s1",
+   "intention": "structure",
+   "decor": "corps",
+   "plan": "approche",
+   "duree_s": 7.69,
+   "narration": "Le cerveau est l'organe le plus complexe de notre corps. Il est divisé en deux hémisphères, chacun ayant des fonctions spécifiques.",
+   "foyer": "tete",
+   "gestes": []
+  },
+  {
+   "id": "s2",
+   "intention": "structure",
+   "decor": "gouttes",
+   "plan": "rase",
+   "duree_s": 9.13,
+   "narration": "Des milliards de neurones, de minuscules cellules nerveuses, communiquent entre eux. Ils forment un réseau complexe pour traiter l'information.",
+   "gestes": []
+  },
+  {
+   "id": "s3",
+   "intention": "processus",
+   "decor": "corps",
+   "plan": "profil",
+   "duree_s": 9.97,
+   "narration": "Le cerveau reçoit des informations de nos sens, les interprète et envoie des commandes. C'est ainsi que nous pensons, ressentons et agissons.",
+   "foyer": "tete",
+   "flux": true,
+   "gestes": []
+  },
+  {
+   "id": "s4",
+   "intention": "comparaison",
+   "decor": "gouttes",
+   "plan": "arc",
+   "duree_s": 10.14,
+   "narration": "Bien que tous les animaux aient un cerveau, celui de l'homme est particulièrement développé. Il nous permet des capacités uniques comme le langage et la créativité.",
+   "gestes": []
+  },
+  {
+   "id": "s5",
+   "intention": "flux",
+   "decor": "corps",
+   "plan": "reference",
+   "duree_s": 7.89,
+   "narration": "Le cerveau a besoin d'un apport constant en oxygène et en nutriments. Le sang circule sans cesse pour le maintenir en pleine forme.",
+   "foyer": "thorax",
+   "flux": true,
+   "gestes": []
+  }
+ ]
+}

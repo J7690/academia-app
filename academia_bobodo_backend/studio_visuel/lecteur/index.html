@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecteur de capsule 3D</title>
+<!--
+  Le lecteur Academia. Tout est local (three.js et Mediabunny dans vendor/) :
+  embarqué dans l'application, il ne dépend d'aucun réseau tiers.
+
+  Paramètres :
+    ?capsule=<url du JSON>      capsule v0, v1 ou v2 (défaut : exemple/cerveau_v2.json)
+    &voix=<url audio>           narration d'un seul tenant (v1) ; en v2, chaque scène porte la sienne
+    &verifier=1                 vérifie chaque scène sans la jouer
+    &lot=<url d'un index JSON>  vérifie une liste de capsules, l'une après l'autre
+    &palier=leger|complet       force le palier (défaut : automatique)
+-->
+<style>
+:root {
+  --nuit: #04070f; --panneau: #0a1120; --ligne: #1b2840; --encre: #e6edf7; --gris: #8b9ab3;
+  --bleu: #4d94ff; --ok: #3fcf8e; --alerte: #ffb020;
+  --f-texte: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-donnee: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+/* Police des sous-titres embarquée (OFL, vendor/poppins/OFL.txt) : aucun appel réseau. */
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 600; font-display: block;
+  src: url(./vendor/poppins/poppins-600-latin.woff2) format('woff2'); }
+/* Sans cette règle, `display: grid` l'emporte sur l'attribut `hidden` :
+   mesuré à l'image, le voile « Chargement… » restait posé sur la scène. */
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--nuit); color: var(--encre); }
+body { font: 15px/1.5 var(--f-texte); padding: max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px)); }
+main { max-width: 860px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-size: 18px; margin: 0; font-weight: 600; }
+.etiquette { font: 11px var(--f-donnee); letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+.scene { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 6px; overflow: hidden; }
+.scene canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hud { position: absolute; top: 8px; left: 8px; padding: 3px 7px; border-radius: 4px; background: rgba(4,7,15,.72); font: 11px var(--f-donnee); font-variant-numeric: tabular-nums; }
+.hud b { color: var(--ok); font-weight: 500; } .hud b.lent { color: var(--alerte); }
+.voile { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; background: rgba(4,7,15,.6); padding: 16px; }
+.commandes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button, select { font: 600 14px var(--f-texte); color: var(--encre); background: var(--panneau); border: 1px solid var(--ligne); border-radius: 6px; padding: 9px 14px; cursor: pointer; }
+button.principal { background: var(--bleu); border-color: var(--bleu); color: #04070f; }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--bleu); outline-offset: 2px; }
+.cadre { overflow-x: auto; border: 1px solid var(--ligne); border-radius: 6px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+td, th { padding: 6px 9px; border-bottom: 1px solid var(--ligne); text-align: left; vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { color: var(--gris); font-weight: 400; }
+td { font-family: var(--f-donnee); font-variant-numeric: tabular-nums; }
+.ok { color: var(--ok); } .ko { color: var(--alerte); }
+.notes { color: var(--gris); font-size: 13px; }
+/* Mode application : la scène occupe l'écran, rien d'autre ne s'affiche. */
+body.app { padding: 0; height: 100vh; display: grid; place-items: center; background: #000; }
+body.app main { max-width: none; width: 100%; gap: 0; }
+body.app main > :not(.scene) { display: none; }
+body.app .scene { border-radius: 0; }
+body.app .hud { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <span class="etiquette" id="sur-titre">Lecteur Academia · capsule jouée par l'appareil</span>
+    <h1 id="titre">—</h1>
+  </div>
+  <div class="scene">
+    <canvas id="toile" aria-label="Scène 3D de la capsule"></canvas>
+    <div class="hud" id="hud">—</div>
+    <div class="voile" id="voile">Chargement…</div>
+  </div>
+  <div class="commandes">
+    <button class="principal" id="lancer" disabled>Lancer</button>
+    <label class="etiquette" for="palier">Palier</label>
+    <select id="palier"><option value="auto">Automatique</option><option value="complet">Complet</option><option value="leger">Léger</option></select>
+    <button id="exporter" disabled>Exporter 10 s</button>
+    <button id="verifier" disabled>Vérifier</button>
+  </div>
+  <div class="commandes">
+    <label class="etiquette" for="temps">Position</label>
+    <input type="range" id="temps" min="0" max="60" step="0.1" value="0.6" style="flex:1; min-width:0; accent-color: var(--bleu)">
+    <span class="etiquette" id="temps-val">0,6 s</span>
+  </div>
+  <div class="cadre"><table><tbody id="mesures"></tbody></table></div>
+  <div class="cadre" id="cadre-verif" hidden><table><thead id="verif-tete"></thead><tbody id="verif"></tbody></table></div>
+  <p class="notes" id="credits"></p>
+</main>
+
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.min.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
+<script type="module">
+import { creerLecteur, normaliserCapsule, recalerSurVoix, ralentir } from './lecteur.js';
+
+const $ = (id) => document.getElementById(id);
+const T0 = performance.now();
+const P = new URLSearchParams(location.search);
+// Dans l'application : la scène seule, plein écran, sans les mesures d'atelier.
+const APP = P.get('app') === '1';
+if (APP) document.body.classList.add('app');
+const M = { premiere: null, gpu: '—', webgl: '—', bascule: null, export: null, stats: { complet: [], leger: [] }, voix: '—', objets: '—' };
+let lecteur = null, capsule = null, index = null;
+let audioCtx = null, voix = null, source = null, depart = 0, enLecture = false, tFixe = 0.6, horlogeMuette = 0;
+let dernier = 0, fenetre = [], debutLecture = 0, occupe = false;
+
+async function json(url) { const r = await fetch(url); if (!r.ok) throw new Error(`${url} : HTTP ${r.status}`); return r.json(); }
+
+function envoyer(type, donnees) {
+  if (!['127.0.0.1', 'localhost'].includes(location.hostname)) return;
+  fetch('/mesures', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, quand: new Date().toISOString(), ...donnees }) }).catch(() => {});
+}
+
+// ── Mesures ──────────────────────────────────────────────────────────────
+function resume(l) {
+  if (l.length < 10) return null;
+  const tri = [...l].sort((a, b) => a - b), moy = l.reduce((a, b) => a + b, 0) / l.length;
+  return { ips: 1000 / moy, ips5: 1000 / tri[Math.floor(tri.length * 0.95)], n: l.length };
+}
+function lignes() {
+  const o = [['Capsule', `${capsule ? `v${capsule.version} · ${capsule.scenes.length} scènes · ${capsule.duree.toFixed(1)} s` : '—'}`],
+    // Une dégradation qu'on ne lit nulle part n'existe pas : celles de la capsule
+    // (archétype v0, décor inconnu) s'affichent ici, pas seulement au journal.
+    ['Dégradations de la capsule', capsule?.journal.length ? capsule.journal.join(' ; ') : 'aucune'],
+    ['Voix', M.voix], ['Objets convoqués', M.objets], ['Processeur graphique', M.gpu],
+    ['Contexte', `${M.webgl} · palier ${lecteur?.palierNom || '—'}`],
+    ['Première image', M.premiere ? `${(M.premiere / 1000).toFixed(2)} s` : '—']];
+  for (const n of ['complet', 'leger']) { const r = resume(M.stats[n]); o.push([`Lecture, palier ${n === 'leger' ? 'léger' : n}`, r ? `${r.ips.toFixed(1)} i/s · ${r.ips5.toFixed(1)} au pire 5 % · ${r.n} images` : '—']); }
+  if (modeFlux) {
+    const s = (x) => (x === null ? '—' : `${(x / 1000).toFixed(2)} s`);
+    o.push(['Appui → voix de la scène 1 prête', s(MF.premiereVoix)],
+      ['Appui → première image PARLÉE', s(MF.premiereImageParlee)],
+      ['Appui → toutes les voix', s(MF.toutesVoix)],
+      ['Serveur (TTS par scène)', MF.ttsMs.length ? MF.ttsMs.map((x) => (x / 1000).toFixed(1)).join(' · ') + ' s' : (MF.serveur ? 'toutes en cache' : '—')],
+      ['Erreurs de voix', MF.erreurs.join(' ; ') || 'aucune']);
+  }
+  o.push(['Bascule automatique', M.bascule || 'aucune'], ['Export 10 s', M.export || '—']);
+  return o;
+}
+function afficher() {
+  const l = lignes();
+  $('mesures').innerHTML = l.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join('');
+  const a = lecteur?.attributions() || [];
+  $('credits').textContent = a.length ? 'Attributions : ' + a.join(' · ') : '';
+  envoyer('mesures', { mesures: Object.fromEntries(l) });
+}
+
+// ── Voix en flux (lot 2) : une voix par scène, jouée dès qu'elle arrive ──
+// `studio-voix` rend une ligne JSON par scène, dans l'ordre d'ARRIVÉE. On
+// commence à jouer dès que la scène 1 est décodée ; si la lecture atteint une
+// scène dont la voix n'est pas encore là, l'image s'arrête sur son début et
+// attend — l'étudiant voit « voix en préparation », jamais une scène muette.
+const TEMPO = Number(P.get('tempo') || 0.88);
+const MF = { demande: null, premiereVoix: null, premiereImageParlee: null, toutesVoix: null, serveur: null, ttsMs: [], erreurs: [] };
+let modeFlux = false, fluxLance = false, tampons = [], attente = false, tPos = 0, repere = 0, rangJoue = -1, sourceScene = null;
+
+// D'où vient la voix. Par l'adresse (essais : `?flux=…&job=…`), ou par
+// l'application (mode `?app=1`), qui fournit le jeton de l'étudiant — jamais
+// dans l'adresse : un jeton dans une URL finit dans un historique.
+let FLUX = P.get('flux'), JOB = P.get('job'), JETON = null, CLE = null;
+
+async function ecouterFlux() {
+  fluxLance = true; MF.demande = performance.now();
+  const r = await fetch(FLUX, JOB ? { method: 'POST', headers: { 'Content-Type': 'application/json',
+    ...(JETON ? { Authorization: 'Bearer ' + JETON } : {}), ...(CLE ? { apikey: CLE } : {}) },
+    body: JSON.stringify({ job_id: JOB }) } : {});
+  if (!r.ok || !r.body) throw new Error(`voix : HTTP ${r.status}`);
+  const lu = r.body.getReader(), dec = new TextDecoder(), travaux = [];
+  let reste = '';
+  for (;;) {
+    const { done, value } = await lu.read();
+    if (done) break;
+    reste += dec.decode(value, { stream: true });
+    let i;
+    while ((i = reste.indexOf('\n')) >= 0) { const l = reste.slice(0, i); reste = reste.slice(i + 1); if (l.trim()) travaux.push(ligneFlux(JSON.parse(l))); }
+  }
+  await Promise.all(travaux);
+  MF.toutesVoix = performance.now() - MF.demande;
+  voix = concatener(tampons.map((b) => (b instanceof AudioBuffer ? b : null)), capsule);   // pour l'export
+  afficher();
+}
+// LA SCÈNE 1 D'ABORD. Mesuré le 28/10 sur le vrai flux : les voix des scènes 4
+// et 5 arrivaient avant celle de la scène 1, et leur ralentissement occupait le
+// processeur — 1,9 s perdues entre « voix prête » et « voix jouée ». Les
+// téléchargements restent parallèles ; le décodage et le ralentissement, eux,
+// passent un par un, dans l'ordre des scènes disponibles.
+const enAttenteDeTraitement = new Map();
+let traitementEnCours = false;
+async function traiterParPriorite() {
+  if (traitementEnCours) return;
+  traitementEnCours = true;
+  while (enAttenteDeTraitement.size) {
+    const rang = Math.min(...enAttenteDeTraitement.keys());
+    // Tant que l'image ATTEND une scène plus ancienne, on ne s'occupe pas des
+    // suivantes : sinon la voix attendue patiente derrière une voix inutile.
+    const attendue = tampons.findIndex((x) => x === null);
+    if (attendue >= 0 && attendue < rang && enLecture && attente) {
+      traitementEnCours = false;
+      setTimeout(traiterParPriorite, 30);
+      return;
+    }
+    const { octets, fini } = enAttenteDeTraitement.get(rang); enAttenteDeTraitement.delete(rang);
+    try {
+      let b = await audioCtx.decodeAudioData(await octets);
+      if (TEMPO !== 1) b = ralentir(b, TEMPO);
+      tampons[rang] = b;
+    } catch (e) { tampons[rang] = 'muet'; MF.erreurs.push(`scène ${rang + 1} : ${e.message}`); }
+    fini();
+  }
+  traitementEnCours = false;
+}
+async function ligneFlux(o) {
+  if (o.type === 'fin') { MF.serveur = o; return; }
+  if (o.type !== 'voix') return;
+  if (o.ms_tts) MF.ttsMs.push(o.ms_tts);
+  if (o.erreur) { tampons[o.rang] = 'muet'; MF.erreurs.push(`scène ${o.rang + 1} : ${o.erreur}`); return; }
+  await new Promise((fini) => {
+    enAttenteDeTraitement.set(o.rang, { octets: fetch(o.url).then((r) => r.arrayBuffer()), fini });
+    traiterParPriorite();
+  });
+  const b = tampons[o.rang];
+  if (!(b instanceof AudioBuffer)) return;
+  if (o.rang === 0 && MF.premiereVoix === null) MF.premiereVoix = performance.now() - MF.demande;
+  recalerSurVoix(capsule, tampons.map((x) => (x instanceof AudioBuffer ? x.duration : 0)));
+  lecteur.recaler();
+  $('temps').max = capsule.duree.toFixed(1);
+}
+function sceneDe(t) { const sc = capsule.scenes; for (let i = sc.length - 1; i >= 0; i--) if (t >= sc[i].debut) return sc[i]; return sc[0]; }
+function tFlux() { return enLecture && !attente ? tPos + (audioCtx.currentTime - repere) : tPos; }
+function demarrerScene(s, decalage) {
+  if (sourceScene) { try { sourceScene.stop(); } catch (e) {} sourceScene = null; }
+  const b = tampons[s.rang];
+  tPos = s.debut + decalage; repere = audioCtx.currentTime; attente = false; rangJoue = s.rang;
+  if (b instanceof AudioBuffer && decalage < b.duration) {
+    sourceScene = audioCtx.createBufferSource(); sourceScene.buffer = b; sourceScene.connect(audioCtx.destination); sourceScene.start(0, decalage);
+  }
+  if (s.rang === 0 && MF.premiereImageParlee === null) {
+    MF.premiereImageParlee = performance.now() - MF.demande; afficher();
+    signaler('premiere_image_parlee', { ms: Math.round(MF.premiereImageParlee) });
+  }
+}
+function avancerFlux() {
+  let t = tFlux();
+  const s = sceneDe(t);
+  if (s.rang !== rangJoue) {
+    const pret = tampons[s.rang] !== undefined && tampons[s.rang] !== null;
+    const sansParole = !s.narration;
+    if (pret || sansParole) demarrerScene(s, Math.max(0, t - s.debut));
+    else { attente = true; tPos = s.debut; t = s.debut; }
+  }
+  return t;
+}
+
+// ── Lecture : l'horloge est la voix, sinon une horloge muette ────────────
+function maintenant() {
+  if (modeFlux) return tFlux();
+  if (!enLecture) return tFixe;
+  return voix ? audioCtx.currentTime - depart : (performance.now() - horlogeMuette) / 1000;
+}
+function boucle(ts) {
+  requestAnimationFrame(boucle);
+  if (occupe || !lecteur) return;
+  const t = modeFlux && enLecture ? avancerFlux() : maintenant();
+  if (enLecture && t >= capsule.duree) { arreter(); tFixe = 0; tPos = 0; signaler('fin'); return; }
+  lecteur.dessiner(t);
+  if (M.premiere === null) { M.premiere = performance.now() - T0; afficher(); }
+  if (modeFlux && enLecture && attente) { $('hud').textContent = `voix de la scène ${sceneDe(t).rang + 1} en préparation…`; dernier = 0; return; }
+  if (enLecture) {
+    $('temps').value = t.toFixed(1); $('temps-val').textContent = t.toFixed(1).replace('.', ',') + ' s';
+    if (dernier) {
+      const dt = ts - dernier;
+      if (dt < 1000) { M.stats[lecteur.palierNom].push(dt); fenetre.push(dt); if (fenetre.length > 60) fenetre.shift(); }
+      const r = fenetre.length >= 20 ? 1000 / (fenetre.reduce((a, b) => a + b, 0) / fenetre.length) : null;
+      $('hud').innerHTML = r ? `<b class="${r < 24 ? 'lent' : ''}">${r.toFixed(0)} i/s</b> · ${lecteur.palierNom === 'leger' ? 'léger' : 'complet'}` : '…';
+      if ($('palier').value === 'auto' && lecteur.palierNom === 'complet' && r !== null && r < 24 && ts - debutLecture > 3000) {
+        M.bascule = `vers léger à t = ${t.toFixed(1)} s (${r.toFixed(1)} i/s)`;
+        lecteur.palier('leger'); lecteur.preparerTout(); fenetre = [];
+      }
+    }
+    dernier = ts;
+  }
+}
+function lancer() {
+  if (modeFlux) {
+    audioCtx.resume();
+    if (enLecture) { tPos = tFlux(); if (sourceScene) { try { sourceScene.stop(); } catch (e) {} sourceScene = null; } enLecture = false; rangJoue = -1; $('lancer').textContent = 'Lancer'; afficher(); return; }
+    // L'appui EST la commande : c'est d'ici que court le chronomètre.
+    if (!fluxLance) ecouterFlux().catch((e) => { MF.erreurs.push(e.message); afficher(); });
+    if (tPos >= capsule.duree - 0.05) tPos = 0;
+    // Le repère d'horloge part de MAINTENANT : resté à 0, il faisait sauter la
+    // lecture à t = 8,1 s au premier appui, et la scène 1 n'était jamais jouée.
+    repere = audioCtx.currentTime;
+    // L'ATTENTE SE DÉCIDE ICI, pas à la première image. Mesuré le 28/10 : quand
+    // aucune image n'est dessinée (onglet masqué, appli en arrière-plan),
+    // l'horloge courait sans voix et la scène 1 était sautée.
+    const courante = sceneDe(tPos);
+    attente = !!courante.narration && !(tampons[courante.rang] instanceof AudioBuffer || tampons[courante.rang] === 'muet');
+    enLecture = true; rangJoue = -1; debutLecture = performance.now(); fenetre = []; dernier = 0;
+    $('lancer').textContent = 'Pause';
+    return;
+  }
+  if (enLecture) { tFixe = maintenant(); arreter(); return; }
+  const depuis = tFixe >= capsule.duree - 0.05 ? 0 : tFixe;
+  if (voix) {
+    audioCtx.resume(); source = audioCtx.createBufferSource(); source.buffer = voix; source.connect(audioCtx.destination);
+    depart = audioCtx.currentTime - depuis; source.start(0, depuis);
+  } else horlogeMuette = performance.now() - depuis * 1000;
+  enLecture = true; debutLecture = performance.now(); fenetre = []; dernier = 0;
+  $('lancer').textContent = 'Pause';
+}
+function arreter() {
+  if (source) { try { source.stop(); } catch (e) {} source = null; }
+  if (sourceScene) { try { sourceScene.stop(); } catch (e) {} sourceScene = null; }
+  rangJoue = -1;
+  enLecture = false; dernier = 0; $('lancer').textContent = 'Lancer'; afficher();
+}
+
+// ── Vérification : chaque scène, sans la jouer ───────────────────────────
+// La porte d'acceptation du dépôt, transposée : un objet au moins, des pixels
+// allumés, et une image qui BOUGE entre le début et la fin du plan.
+function lirePixels() {
+  const gl = lecteur.renderer.getContext(), L = gl.drawingBufferWidth, H = gl.drawingBufferHeight;
+  const px = new Uint8Array(L * H * 4); gl.readPixels(0, 0, L, H, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  return px;
+}
+function allumes(px) { let n = 0, tot = 0; for (let i = 0; i < px.length; i += 16) { tot++; if (0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2] > 80) n++; } return n / tot; }
+function ecart(a, b) { let s = 0, n = 0; for (let i = 0; i < a.length; i += 16) { s += Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]); n++; } return s / n / 3; }
+function verifierCapsule() {
+  const res = [];
+  for (const s of capsule.scenes) {
+    const d0 = performance.now();
+    const objets = lecteur.objetsScene(s.rang), journal = lecteur.journalScene(s.rang);
+    const construction = performance.now() - d0;
+    lecteur.dessiner(s.debut + s.duree * 0.15); const a = lirePixels();
+    lecteur.dessiner(s.debut + s.duree * 0.5); const m = lirePixels();
+    lecteur.dessiner(s.debut + s.duree * 0.85); const b = lirePixels();
+    const r = { scene: s.id, decor: s.decor, objets, allumes: allumes(m), mouvement: ecart(a, b), construction_ms: Math.round(construction),
+      degradations: journal.degradations };
+    r.ok = objets > 0 && r.allumes > 0.004 && r.mouvement > 0.5;
+    res.push(r);
+  }
+  return res;
+}
+function afficherVerif(lignesV) {
+  $('cadre-verif').hidden = false;
+  $('verif-tete').innerHTML = '<tr><th>capsule</th><th>scène</th><th>décor</th><th>objets</th><th>allumés</th><th>mouvement</th><th>verdict</th><th>dégradations</th></tr>';
+  $('verif').innerHTML = lignesV.map((r) => `<tr><td>${r.capsule || ''}</td><td>${r.scene}</td><td>${r.decor}</td><td>${r.objets}</td><td>${(r.allumes * 100).toFixed(1)} %</td><td>${r.mouvement.toFixed(1)}</td><td class="${r.ok ? 'ok' : 'ko'}">${r.ok ? 'ok' : 'refus'}</td><td>${r.degradations.join(' ; ')}</td></tr>`).join('');
+}
+
+// ── Chargement d'une capsule ─────────────────────────────────────────────
+async function chargerCapsule(source, urlVoix) {
+  const url = typeof source === 'string' ? source : '';
+  const brut = url ? await json(url) : source;
+  capsule = normaliserCapsule(brut);
+  $('titre').textContent = capsule.titre || url;
+  lecteur.charger(capsule);
+  M.objets = '—';
+  if (capsule.scenes.some((s) => s.gestes.some((g) => g.verbe === 'convoquer'))) {
+    // L'index : à côté du moteur dans le dépôt, dans `assets/` une fois publié.
+    for (const chemin of ['../contours/index_objets.json', './assets/index_objets.json']) {
+      if (index) break;
+      try { index = await json(chemin); } catch (e) { index = null; }
+    }
+    const rapport = await lecteur.prechargerObjets(capsule, index);
+    M.objets = rapport.join(' ; ') || '—';
+  }
+  // La voix : un seul fichier (v1) ou une par scène (v2). Dans les deux cas,
+  // c'est l'audio décodé qui fixe les durées : la voix commande l'image.
+  voix = null; M.voix = 'aucune — horloge muette';
+  if (FLUX) {
+    // Lot 2 : la voix viendra en flux au premier appui. Les durées de la capsule
+    // servent de durées provisoires jusqu'à l'arrivée de chaque voix.
+    // Le contexte audio d'abord : sans lui, le premier appui plantait sur
+    // `audioCtx.resume()` (mesuré dans la console le 28/10).
+    // 24 kHz : la voix n'en demande pas plus, et c'est deux fois moins de
+    // décodage et de ralentissement qu'à 48 kHz (mesuré : 0,8 s + 0,4 s par scène).
+    try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 }); }
+    catch (e) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    modeFlux = true; tampons = new Array(capsule.scenes.length).fill(null); tPos = 0;
+    M.voix = `en flux, une par scène (tempo ${TEMPO})`;
+    $('temps').max = capsule.duree.toFixed(1); lecteur.preparerTout();
+    return;
+  }
+  const urlsScenes = capsule.scenes.map((s) => s.voix);
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (urlsScenes.some(Boolean)) {
+      const tampons = await Promise.all(urlsScenes.map(async (u) => u ? audioCtx.decodeAudioData(await (await fetch(u)).arrayBuffer()) : null));
+      recalerSurVoix(capsule, tampons.map((b) => (b ? b.duration : 0)));
+      voix = concatener(tampons, capsule); lecteur.recaler(); M.voix = `${tampons.filter(Boolean).length} voix de scène`;
+    } else if (urlVoix || capsule.voix) {
+      const u = urlVoix || new URL(capsule.voix, new URL(url, location.href)).href;
+      voix = await audioCtx.decodeAudioData(await (await fetch(u)).arrayBuffer()); M.voix = `${voix.duration.toFixed(1)} s, un seul tenant`;
+    }
+  } catch (e) { M.voix = 'échec : ' + e.message + ' — horloge muette'; voix = null; }
+  $('temps').max = capsule.duree.toFixed(1);
+  lecteur.preparerTout();
+}
+// Les voix de scène mises bout à bout, chacune à l'instant où sa scène commence.
+function concatener(tampons, cap) {
+  const sr = audioCtx.sampleRate, n = Math.ceil(cap.duree * sr);
+  const sortie = audioCtx.createBuffer(1, n, sr), d = sortie.getChannelData(0);
+  tampons.forEach((b, i) => { if (!b) return; const src = b.getChannelData(0), o = Math.round(cap.scenes[i].debut * sr); d.set(src.subarray(0, Math.min(src.length, n - o)), o); });
+  return sortie;
+}
+
+// ── Export 10 s ──────────────────────────────────────────────────────────
+async function exporter() {
+  occupe = true; $('exporter').disabled = true; if (enLecture) { tFixe = maintenant(); arreter(); }
+  const FPS = 25, N = Math.min(250, Math.floor(capsule.duree * FPS)), d0 = performance.now();
+  try {
+    const MB = await import('./vendor/mediabunny/mediabunny.min.mjs');
+    const p = lecteur.palierCourant, codecV = await MB.getFirstEncodableVideoCodec(['avc', 'vp9', 'av1'], { width: p.L, height: p.H });
+    if (!codecV) throw new Error('aucun encodeur vidéo');
+    const codecA = voix ? await MB.getFirstEncodableAudioCodec(codecV === 'avc' ? ['aac', 'opus'] : ['opus', 'aac']) : null;
+    const sortie = new MB.Output({ format: codecV === 'avc' ? new MB.Mp4OutputFormat() : new MB.WebMOutputFormat(), target: new MB.BufferTarget() });
+    const copie = document.createElement('canvas'); copie.width = p.L; copie.height = p.H; const cc = copie.getContext('2d');
+    const video = new MB.CanvasSource(copie, { codec: codecV, bitrate: MB.QUALITY_MEDIUM }); sortie.addVideoTrack(video, { frameRate: FPS });
+    let audio = null; if (codecA) { audio = new MB.AudioBufferSource({ codec: codecA, bitrate: MB.QUALITY_MEDIUM }); sortie.addAudioTrack(audio); }
+    await sortie.start();
+    for (let i = 0; i < N; i++) { lecteur.dessiner(i / FPS); cc.drawImage($('toile'), 0, 0); await video.add(i / FPS, 1 / FPS); }
+    if (audio) {
+      const n = Math.min(voix.length, Math.round(N / FPS * voix.sampleRate));
+      const ex = new AudioBuffer({ length: n, numberOfChannels: voix.numberOfChannels, sampleRate: voix.sampleRate });
+      for (let c = 0; c < voix.numberOfChannels; c++) ex.copyToChannel(voix.getChannelData(c).subarray(0, n), c);
+      await audio.add(ex);
+    }
+    await sortie.finalize();
+    const s = (performance.now() - d0) / 1000;
+    M.export = `${s.toFixed(1)} s pour ${(N / FPS).toFixed(0)} s · ${(sortie.target.buffer.byteLength / 1e6).toFixed(2)} Mo · ${codecV}${codecA ? ' + ' + codecA : ' sans son'}`;
+  } catch (e) { M.export = 'échec : ' + e.message; }
+  occupe = false; $('exporter').disabled = false; afficher();
+}
+
+// ── Démarrage ────────────────────────────────────────────────────────────
+async function demarrer() {
+  try {
+    try { await document.fonts.load('600 30px Poppins'); } catch (e) {}
+    const corps = await json('./assets/corps.json');
+    lecteur = creerLecteur($('toile'), { corps });
+    const gl = lecteur.renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info');
+    M.gpu = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+    M.webgl = lecteur.renderer.capabilities.isWebGL2 ? 'WebGL2' : 'WebGL1';
+    lecteur.palier(P.get('palier') === 'leger' ? 'leger' : 'complet');
+    if (P.get('palier')) $('palier').value = P.get('palier');
+
+    if (P.get('lot')) {                      // vérification d'une liste de capsules
+      const liste = await json(P.get('lot')), base = P.get('lot').replace(/[^/]*$/, ''), toutes = [];
+      for (const [i, c] of liste.entries()) {
+        $('voile').textContent = `Vérification ${i + 1}/${liste.length} : ${c.titre}`;
+        try {
+          await chargerCapsule(base + c.job + '.json', null);
+          const r = verifierCapsule().map((x) => ({ ...x, capsule: `${c.job} ${c.titre} (v${capsule.version})` }));
+          toutes.push(...r); afficherVerif(toutes);
+          envoyer('verification', { job: c.job, titre: c.titre, version: capsule.version, objets: M.objets, journal: capsule.journal, scenes: r });
+        } catch (e) {
+          toutes.push({ capsule: c.job, scene: '—', decor: '—', objets: 0, allumes: 0, mouvement: 0, ok: false, degradations: ['chargement : ' + e.message] });
+          envoyer('verification', { job: c.job, erreur: e.message });
+        }
+      }
+      envoyer('fin_lot', { capsules: liste.length, scenes: toutes.length, refus: toutes.filter((x) => !x.ok).length });
+    } else if (APP) {
+      // La capsule de l'étudiant, lue AVEC SON JETON : la règle d'accès
+      // « l'étudiant lit ses propres travaux » garantit la propriété.
+      const cfg = await attendreConfiguration();
+      JOB = cfg.job; JETON = cfg.jeton; CLE = cfg.cleAnon;
+      FLUX = `${cfg.supabaseUrl}/functions/v1/studio-voix`;
+      const r = await fetch(`${cfg.supabaseUrl}/rest/v1/studio_jobs?id=eq.${encodeURIComponent(JOB)}&select=manifeste`,
+        { headers: { apikey: CLE, Authorization: 'Bearer ' + JETON, 'Accept-Profile': 'app' } });
+      if (!r.ok) throw Object.assign(new Error(`capsule : HTTP ${r.status}`), { code: 'capsule' });
+      const lignes = await r.json();
+      if (!lignes.length || !lignes[0].manifeste) throw Object.assign(new Error('capsule introuvable'), { code: 'capsule' });
+      await chargerCapsule(lignes[0].manifeste, null);
+    } else {
+      await chargerCapsule(P.get('capsule') || './exemple/cerveau_v2.json', P.get('voix'));
+      if (P.get('verifier')) { const r = verifierCapsule(); afficherVerif(r); envoyer('verification', { scenes: r }); }
+    }
+    $('voile').hidden = true;
+    for (const id of ['lancer', 'exporter', 'verifier']) $(id).disabled = false;
+    requestAnimationFrame(boucle); afficher();
+    if (APP) {
+      signaler('pret', { gpu: M.gpu, webgl: M.webgl, scenes: capsule.scenes.length });
+      // Démarrage sans appui : l'application autorise le son sans geste. Si le
+      // navigateur le refuse quand même, on le DIT et on attend un toucher.
+      lancer();
+      setTimeout(() => {
+        if (audioCtx && audioCtx.state !== 'running') {
+          $('voile').textContent = 'Touchez l\'écran pour lancer le cours'; $('voile').hidden = false;
+          $('voile').addEventListener('click', () => { $('voile').hidden = true; audioCtx.resume(); }, { once: true });
+        }
+      }, 600);
+    }
+  } catch (e) {
+    $('voile').textContent = 'Le lecteur n\'a pas pu démarrer : ' + e.message;
+    envoyer('erreur', { message: e.message });
+    // L'application bascule alors sur la vidéo fabriquée par le serveur.
+    signaler('erreur', { code: e.code || (lecteur ? 'lecteur' : 'webgl'), message: e.message });
+  }
+}
+
+// ── Mode application : configuration et messages ─────────────────────────
+function signaler(type, donnees = {}) {
+  try { window.Academia?.postMessage(JSON.stringify({ type, ...donnees })); } catch (e) {}
+}
+function attendreConfiguration(delaiMs = 15000) {
+  return new Promise((ok, ko) => {
+    const debut = performance.now();
+    (function guetter() {
+      const c = window.__academia;
+      if (c && c.job && c.jeton && c.supabaseUrl && c.cleAnon) return ok(c);
+      if (performance.now() - debut > delaiMs) return ko(Object.assign(new Error('configuration absente'), { code: 'configuration' }));
+      setTimeout(guetter, 50);
+    })();
+  });
+}
+
+$('lancer').addEventListener('click', lancer);
+$('exporter').addEventListener('click', exporter);
+$('verifier').addEventListener('click', () => { if (enLecture) { tFixe = maintenant(); arreter(); } occupe = true; afficherVerif(verifierCapsule()); occupe = false; });
+$('palier').addEventListener('change', (e) => { const n = e.target.value === 'leger' ? 'leger' : 'complet'; if (n !== lecteur.palierNom) { lecteur.palier(n); lecteur.preparerTout(); fenetre = []; } afficher(); });
+$('temps').addEventListener('input', (e) => { if (enLecture) arreter(); tFixe = tPos = Number(e.target.value); $('temps-val').textContent = tFixe.toFixed(1).replace('.', ',') + ' s'; });
+demarrer();
+</script>
+</body>
+</html>

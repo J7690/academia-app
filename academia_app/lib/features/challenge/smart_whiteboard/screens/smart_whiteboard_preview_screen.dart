@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/smart_whiteboard_provider.dart';
+import 'capsule_lecteur_screen.dart';
 import '../../../student/video_publish_screen.dart';
 import '../../../../video/academia_playback_view.dart';
 
@@ -30,6 +31,12 @@ class _SmartWhiteboardPreviewScreenState extends State<SmartWhiteboardPreviewScr
 
   /// Ce qui a échoué, en clair. Tant qu'il est nul, on fabrique encore.
   String? _erreur;
+
+  /// Le travail 3D joué sur le téléphone : de quoi le « Revoir ».
+  String? _capsuleJouee;
+
+  /// Vrai quand le cours est un tableau : il ne se fabrique plus (LWS supprimé).
+  bool _indisponible = false;
 
   @override
   void initState() {
@@ -78,10 +85,24 @@ class _SmartWhiteboardPreviewScreenState extends State<SmartWhiteboardPreviewScr
 
       // Les deux fabrications ne se suivent pas de la même façon : le tableau
       // interroge `whiteboard_renders`, l'animation `studio_etat_travail`.
+      // PLUS D'ATTENTE QUI NE FINIT JAMAIS. Le serveur LWS, qui préparait les
+      // vidéos 3D et écrivait les tableaux, a été supprimé le 22/09/2026.
+      // Attendre ici, c'était 45 minutes de sablier pour rien.
       if (provider.estAnimation3d) {
-        await provider.suivreCapsule3d();
-      } else {
-        await provider.pollRenderJob();
+        // Une capsule déjà fabriquée garde sa vidéo ; sinon elle se JOUE sur
+        // le téléphone (lecteur 3D, voix par `studio-voix`), en quelques secondes.
+        if (!await provider.capsuleDejaPrete()) {
+          if (!mounted) return;
+          await _jouerCapsule(provider.currentRenderJobId!);
+          return;
+        }
+      } else if (!await provider.tableauDejaPret()) {
+        if (!mounted) return;
+        setState(() {
+          _isPolling = false;
+          _indisponible = true;
+        });
+        return;
       }
       if (!mounted) return;
 
@@ -101,7 +122,7 @@ class _SmartWhiteboardPreviewScreenState extends State<SmartWhiteboardPreviewScr
       // 07/08, et c'est ici qu'il se corrige.
       setState(() {
         _erreur = provider.errorMessage ??
-            "La vidéo n'a pas pu être fabriquée. Ton cours reste enregistré.";
+            "La vidéo n'a pas pu être fabriquée. Votre cours reste enregistré.";
       });
     } else if (widget.projectId != null) {
       // RATTRAPER UNE CAPSULE DONT ON A PERDU L'IDENTIFIANT.
@@ -140,7 +161,30 @@ class _SmartWhiteboardPreviewScreenState extends State<SmartWhiteboardPreviewScr
     }
   }
 
+  /// Ouvre le lecteur 3D, puis dit ce qui s'est passé : rejouable, ou
+  /// impossible sur ce téléphone — jamais une attente sans issue.
+  Future<void> _jouerCapsule(String jobId) async {
+    final issue = await CapsuleLecteurScreen.ouvrir(context, jobId);
+    if (!mounted) return;
+    setState(() {
+      _isPolling = false;
+      _capsuleJouee = jobId;
+      _erreur = issue == CapsuleLecteurIssue.repli
+          ? "Ce téléphone n'a pas pu jouer l'animation 3D. Votre cours est "
+              'enregistré : réessayez avec une meilleure connexion, ou depuis '
+              'un autre téléphone.'
+          : null;
+    });
+  }
+
   Future<void> _reessayer() async {
+    // Après un échec du lecteur, « Réessayer » le rouvre — il n'y a plus de
+    // vidéo à refabriquer sur un serveur.
+    if (_capsuleJouee != null) {
+      setState(() => _erreur = null);
+      await _jouerCapsule(_capsuleJouee!);
+      return;
+    }
     final provider = context.read<SmartWhiteboardProvider>();
     setState(() {
       _erreur = null;
@@ -230,6 +274,61 @@ class _SmartWhiteboardPreviewScreenState extends State<SmartWhiteboardPreviewScr
       );
     }
 
+    // TABLEAU : on le dit, sans proposer un « Réessayer » qui ne mènerait à rien.
+    if (_indisponible) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 28),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.pause_circle_outline, size: 46, color: Color(0xFFB45309)),
+              SizedBox(height: 14),
+              Text(
+                'Le tableau manuscrit est momentanément indisponible',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+              SizedBox(height: 8),
+              Text(
+                "Votre cours est enregistré. En attendant, l'animation 3D est "
+                'disponible pour tout nouveau sujet.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, height: 1.45, color: Color(0xFF6B7280)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // CAPSULE JOUÉE SUR LE TÉLÉPHONE : on propose de la revoir.
+    if (_capsuleJouee != null && _erreur == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.play_circle_outline, size: 52, color: Color(0xFF1EA75C)),
+              const SizedBox(height: 14),
+              const Text(
+                'Votre animation se joue sur ce téléphone',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: () => _jouerCapsule(_capsuleJouee!),
+                icon: const Icon(Icons.replay),
+                label: const Text("Revoir l'animation"),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     // ÉCHEC : on le dit, et on propose de réessayer.
     if (_erreur != null) {
       return Center(
@@ -276,7 +375,7 @@ class _SmartWhiteboardPreviewScreenState extends State<SmartWhiteboardPreviewScr
     // le suivi de sa capsule.
     final attente = provider.estAnimation3d
         ? "L'animation demande une machine dédiée : compte trois à quatre minutes."
-        : "Ton cours s'écrit au tableau : deux à trois minutes.";
+        : "Votre cours s'écrit au tableau : deux à trois minutes.";
 
     return Center(
       child: Padding(

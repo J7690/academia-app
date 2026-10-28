@@ -38,7 +38,11 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_svg: ^2.0.11
   animate_do: ^4.2.0
-  
+  # Lecteur de capsule 3D joué par l'appareil (capsule_lecteur_screen.dart).
+  # 4.14.1 : dernière version compatible avec Flutter 3.38 (poste et Netlify).
+  webview_flutter: ^4.14.1
+  webview_flutter_android: ^4.0.0
+
   # Sélection de fichiers (upload de documents de candidature)
   file_picker: ^10.3.6
   

@@ -1,0 +1,4119 @@
+{
+ "source": "whiteboard-storyboard-smoke (consigne v2, 1er passage), requêtes 135605-135654, 28/10/2026 12:33 UTC, google/gemini-2.5-flash",
+ "essais": [
+  {
+   "sujet": "dérivées d'une fonction",
+   "ms_llm": 12152,
+   "titre": "Les dérivées d'une fonction",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "une fonction et sa courbe",
+     "verbes": [
+      "napper",
+      "silhouetter",
+      "sculpter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "la pente d'une tangente",
+     "verbes": [
+      "napper",
+      "silhouetter",
+      "sculpter",
+      "silhouetter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "dérivée positive, négative, nulle",
+     "verbes": [
+      "extruder",
+      "extruder",
+      "extruder",
+      "ecrire",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "corps",
+     "foyer": "tete",
+     "flux": false,
+     "intention": "echelle",
+     "sujet": "vitesse et accélération",
+     "verbes": [
+      "ecrire",
+      "extruder",
+      "ecrire",
+      "extruder"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "applications des dérivées",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "convoquer",
+      "ecrire",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": [
+      "engrenage",
+      "balance",
+      "plante"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "économie",
+   "ms_llm": 10344,
+   "titre": "Principes de l'économie",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "la notion de rareté",
+     "verbes": [
+      "sculpter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "offre et demande",
+     "verbes": [
+      "silhouetter",
+      "silhouetter",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "circulation de l'argent",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "extruder",
+      "extruder",
+      "silhouetter"
+     ],
+     "termes": [
+      "maison",
+      "usine"
+     ]
+    },
+    {
+     "id": "s4",
+     "decor": "corps",
+     "foyer": "tete",
+     "flux": false,
+     "intention": "processus",
+     "sujet": "décisions économiques",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "echelle",
+     "sujet": "l'économie mondiale",
+     "verbes": [
+      "convoquer",
+      "silhouetter"
+     ],
+     "termes": [
+      "globe"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "le volcan",
+   "ms_llm": 8858,
+   "titre": "Le Volcan : Structure et Éruption",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "un volcan",
+     "verbes": [
+      "convoquer",
+      "napper"
+     ],
+     "termes": [
+      "volcan"
+     ]
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": "sujet",
+     "flux": true,
+     "intention": "structure",
+     "sujet": "les couches du volcan",
+     "verbes": [
+      "convoquer",
+      "silhouetter",
+      "sculpter"
+     ],
+     "termes": [
+      "volcan"
+     ]
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": "sujet",
+     "flux": true,
+     "intention": "processus",
+     "sujet": "l'éruption volcanique",
+     "verbes": [
+      "convoquer",
+      "silhouetter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": [
+      "volcan"
+     ]
+    },
+    {
+     "id": "s4",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "la lave et les cendres",
+     "verbes": [
+      "silhouetter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "volcans actifs et éteints",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": [
+      "volcan",
+      "montagne"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "le pétrole",
+   "ms_llm": 10097,
+   "titre": "Le pétrole, de la roche à l'énergie",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "formation du pétrole",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "napper"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "transformation en pétrole",
+     "verbes": [
+      "silhouetter",
+      "sculpter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "gisement de pétrole",
+     "verbes": [
+      "silhouetter",
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "extraction du pétrole",
+     "verbes": [
+      "silhouetter",
+      "sculpter",
+      "sculpter",
+      "extruder"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "utilisation du pétrole",
+     "verbes": [
+      "convoquer",
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": [
+      "circuit"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "loi normale centrée réduite",
+   "ms_llm": 9400,
+   "titre": "La loi normale centrée réduite",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "la courbe en cloche",
+     "verbes": [
+      "silhouetter",
+      "napper"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "données réelles et moyenne",
+     "verbes": [
+      "silhouetter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "centrage et réduction",
+     "verbes": [
+      "silhouetter",
+      "silhouetter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "la loi normale centrée réduite",
+     "verbes": [
+      "silhouetter",
+      "ecrire",
+      "napper"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "application aux données",
+     "verbes": [
+      "silhouetter",
+      "extruder"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "poussée d'Archimède",
+   "ms_llm": 12938,
+   "titre": "La poussée d'Archimède",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "un objet dans l'eau",
+     "verbes": [
+      "sculpter",
+      "revolutionner",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "forces de pression de l'eau",
+     "verbes": [
+      "sculpter",
+      "extruder",
+      "extruder",
+      "extruder",
+      "extruder"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "poids de l'objet et poids du fluide déplacé",
+     "verbes": [
+      "sculpter",
+      "extruder",
+      "sculpter",
+      "extruder",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "flottaison et immersion",
+     "verbes": [
+      "silhouetter",
+      "revolutionner",
+      "silhouetter",
+      "revolutionner"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "echelle",
+     "sujet": "applications de la poussée d'Archimède",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "convoquer"
+     ],
+     "termes": [
+      "bateau",
+      "nuage",
+      "globe"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "primitive d'une fonction",
+   "ms_llm": 11620,
+   "titre": "La primitive d'une fonction",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "une fonction et sa courbe",
+     "verbes": [
+      "napper",
+      "silhouetter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "l'aire sous la courbe",
+     "verbes": [
+      "napper",
+      "silhouetter",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "la fonction primitive",
+     "verbes": [
+      "napper",
+      "silhouetter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "relation entre fonction et primitive",
+     "verbes": [
+      "napper",
+      "silhouetter",
+      "ecrire",
+      "silhouetter",
+      "ecrire",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "calculer une primitive",
+     "verbes": [
+      "napper",
+      "ecrire",
+      "extruder",
+      "extruder"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "sciences de l'éducation",
+   "ms_llm": 8638,
+   "titre": "Comprendre les sciences de l'éducation",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "les sciences de l'éducation",
+     "verbes": [
+      "ecrire",
+      "extruder",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "corps",
+     "foyer": "tete",
+     "flux": false,
+     "intention": "processus",
+     "sujet": "le développement de l'enfant",
+     "verbes": [
+      "convoquer",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": [
+      "cerveau"
+     ]
+    },
+    {
+     "id": "s3",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "les méthodes d'enseignement",
+     "verbes": [
+      "extruder",
+      "extruder",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "l'impact de l'environnement",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "ecrire"
+     ],
+     "termes": [
+      "maison",
+      "arbre"
+     ]
+    },
+    {
+     "id": "s5",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": true,
+     "intention": "flux",
+     "sujet": "la diffusion des connaissances",
+     "verbes": [
+      "sculpter",
+      "revolutionner",
+      "revolutionner"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "économétrie",
+   "ms_llm": 9715,
+   "titre": "Introduction à l'économétrie",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "qu'est-ce que l'économétrie",
+     "verbes": [
+      "ecrire",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "collecte et organisation des données",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "modélisation et estimation",
+     "verbes": [
+      "silhouetter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "prévisions et politiques économiques",
+     "verbes": [
+      "convoquer",
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": [
+      "globe"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "la foudre",
+   "ms_llm": 7189,
+   "titre": "La foudre : un phénomène naturel puissant",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "le nuage d'orage",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "napper"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "séparation des charges électriques",
+     "verbes": [
+      "ecrire",
+      "ecrire",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "le canal ionisé",
+     "verbes": [
+      "silhouetter",
+      "sculpter",
+      "napper"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "impact de la foudre",
+     "verbes": [
+      "silhouetter",
+      "extruder",
+      "napper"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "le cerveau",
+   "ms_llm": 6174,
+   "titre": "Le Cerveau : Centre de Commande",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "corps",
+     "foyer": "tete",
+     "flux": false,
+     "intention": "objet",
+     "sujet": "le cerveau et ses fonctions",
+     "verbes": [
+      "convoquer"
+     ],
+     "termes": [
+      "cerveau"
+     ]
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "les neurones et leurs connexions",
+     "verbes": [
+      "convoquer",
+      "silhouetter"
+     ],
+     "termes": [
+      "neurone"
+     ]
+    },
+    {
+     "id": "s3",
+     "decor": "corps",
+     "foyer": "tete",
+     "flux": true,
+     "intention": "flux",
+     "sujet": "l'influx nerveux",
+     "verbes": [
+      "convoquer"
+     ],
+     "termes": [
+      "cerveau"
+     ]
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "apprentissage et mémoire",
+     "verbes": [
+      "extruder",
+      "extruder",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "corps",
+     "foyer": "tete",
+     "flux": false,
+     "intention": "echelle",
+     "sujet": "l'importance du cerveau",
+     "verbes": [
+      "convoquer"
+     ],
+     "termes": [
+      "cerveau"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "le ventilateur",
+   "ms_llm": 12651,
+   "titre": "Le ventilateur : principes et fonctionnement",
+   "corrections": [
+    "s4: foyer « peau » inconnu, ramene a thorax"
+   ],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "un ventilateur simple",
+     "verbes": [
+      "silhouetter",
+      "extruder",
+      "extruder",
+      "extruder",
+      "extruder",
+      "extruder"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "les pales déplacent l'air",
+     "verbes": [
+      "silhouetter",
+      "extruder",
+      "extruder",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "le déplacement des molécules d'air",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "corps",
+     "foyer": "thorax",
+     "flux": true,
+     "intention": "processus",
+     "sujet": "l'évaporation de la sueur",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "ventilateur vs climatiseur",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "loi macro-économique",
+   "ms_llm": 11890,
+   "titre": "Les lois macro-économiques",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "la macro-économie",
+     "verbes": [
+      "napper",
+      "extruder",
+      "extruder",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "l'offre et la demande",
+     "verbes": [
+      "silhouetter",
+      "silhouetter",
+      "silhouetter",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "le circuit économique",
+     "verbes": [
+      "sculpter",
+      "ecrire",
+      "sculpter",
+      "ecrire",
+      "silhouetter",
+      "extruder"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "corps",
+     "foyer": "tete",
+     "flux": false,
+     "intention": "structure",
+     "sujet": "les politiques économiques",
+     "verbes": [
+      "convoquer",
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": [
+      "cerveau"
+     ]
+    },
+    {
+     "id": "s5",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "impact des politiques",
+     "verbes": [
+      "silhouetter",
+      "ecrire",
+      "silhouetter",
+      "ecrire"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "biologie",
+   "ms_llm": 9105,
+   "titre": "Les fondements de la vie",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "la cellule, unité de base",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "corps",
+     "foyer": "thorax",
+     "flux": false,
+     "intention": "processus",
+     "sujet": "la respiration cellulaire",
+     "verbes": [
+      "convoquer",
+      "silhouetter"
+     ],
+     "termes": [
+      "poumon"
+     ]
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "la circulation sanguine",
+     "verbes": [
+      "convoquer",
+      "silhouetter",
+      "silhouetter"
+     ],
+     "termes": [
+      "coeur"
+     ]
+    },
+    {
+     "id": "s4",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "echelle",
+     "sujet": "la diversité du vivant",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "ecrire"
+     ],
+     "termes": [
+      "bacterie",
+      "arbre"
+     ]
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "l'évolution de la vie",
+     "verbes": [
+      "extruder",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "l'univers",
+   "ms_llm": 9002,
+   "titre": "L'Univers, notre cosmos",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "echelle",
+     "sujet": "l'immensité de l'Univers",
+     "verbes": [
+      "napper",
+      "sculpter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "les galaxies et étoiles",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "l'expansion de l'Univers",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "silhouetter",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "la Terre, notre planète",
+     "verbes": [
+      "convoquer",
+      "sculpter",
+      "silhouetter"
+     ],
+     "termes": [
+      "planete"
+     ]
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "l'énergie des étoiles",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "silhouetter",
+      "silhouetter"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "le domaine de définition",
+   "ms_llm": 12696,
+   "titre": "Le domaine de définition",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "une fonction mathématique",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "entrée et sortie de la fonction",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "l'ensemble des valeurs acceptées",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "exemples de domaines de définition",
+     "verbes": [
+      "ecrire",
+      "ecrire",
+      "ecrire",
+      "ecrire",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "déterminer le domaine",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "photosynthèse",
+   "ms_llm": 9390,
+   "titre": "La Photosynthèse",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "la feuille, lieu de la photosynthèse",
+     "verbes": [
+      "convoquer",
+      "ecrire"
+     ],
+     "termes": [
+      "feuille"
+     ]
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "les cellules végétales et chloroplastes",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "les ingrédients de la photosynthèse",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "sculpter",
+      "ecrire",
+      "revolutionner",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "corps",
+     "foyer": "ventre",
+     "flux": true,
+     "intention": "flux",
+     "sujet": "la transformation en sucres et oxygène",
+     "verbes": [
+      "sculpter",
+      "ecrire",
+      "sculpter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "echelle",
+     "sujet": "l'importance de la photosynthèse",
+     "verbes": [
+      "convoquer",
+      "silhouetter",
+      "ecrire"
+     ],
+     "termes": [
+      "globe"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "probabilités",
+   "ms_llm": 12006,
+   "titre": "Comprendre les Probabilités",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "l'incertitude et le hasard",
+     "verbes": [
+      "sculpter",
+      "ecrire",
+      "sculpter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "lancer un dé",
+     "verbes": [
+      "sculpter",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "probabilité d'un événement",
+     "verbes": [
+      "extruder",
+      "extruder",
+      "ecrire",
+      "extruder",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "echelle",
+     "sujet": "la loi des grands nombres",
+     "verbes": [
+      "napper",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "applications des probabilités",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "convoquer",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": [
+      "nuage",
+      "coeur",
+      "piece"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "chaîne alimentaire",
+   "ms_llm": 8234,
+   "titre": "La chaîne alimentaire",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "les producteurs : les plantes",
+     "verbes": [
+      "convoquer",
+      "convoquer"
+     ],
+     "termes": [
+      "plante",
+      "soleil"
+     ]
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "les herbivores mangent les plantes",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "extruder"
+     ],
+     "termes": [
+      "plante",
+      "insecte"
+     ]
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "les carnivores mangent les herbivores",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "extruder"
+     ],
+     "termes": [
+      "insecte",
+      "oiseau"
+     ]
+    },
+    {
+     "id": "s4",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "le cycle de la matière",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "silhouetter"
+     ],
+     "termes": [
+      "bacterie",
+      "plante"
+     ]
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "l'équilibre de l'écosystème",
+     "verbes": [
+      "silhouetter",
+      "ecrire",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "électricité",
+   "ms_llm": 7616,
+   "titre": "L'électricité, une énergie essentielle",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "les sources d'électricité",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "convoquer"
+     ],
+     "termes": [
+      "eolienne",
+      "panneau solaire",
+      "barrage"
+     ]
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "les électrons en mouvement",
+     "verbes": [
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": true,
+     "intention": "flux",
+     "sujet": "le courant électrique",
+     "verbes": [
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "l'énergie électrique transformée",
+     "verbes": [
+      "extruder",
+      "sculpter",
+      "convoquer"
+     ],
+     "termes": [
+      "engrenage"
+     ]
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "echelle",
+     "sujet": "l'électricité dans nos maisons",
+     "verbes": [
+      "convoquer",
+      "extruder",
+      "silhouetter"
+     ],
+     "termes": [
+      "maison"
+     ]
+    }
+   ]
+  },
+  {
+   "requete": 135625,
+   "http": 503,
+   "echec": {
+    "code": "BOOT_ERROR",
+    "message": "Function failed to start (please check logs)"
+   }
+  },
+  {
+   "sujet": "géomètre",
+   "ms_llm": 10771,
+   "titre": "Le métier de géomètre",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "le géomètre et son équipement",
+     "verbes": [
+      "silhouetter",
+      "sculpter",
+      "extruder"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "mesure et délimitation d'un terrain",
+     "verbes": [
+      "napper",
+      "silhouetter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "plan cadastral et limites de propriété",
+     "verbes": [
+      "extruder",
+      "silhouetter",
+      "silhouetter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "application dans l'urbanisme et la construction",
+     "verbes": [
+      "extruder",
+      "extruder",
+      "convoquer",
+      "ecrire"
+     ],
+     "termes": [
+      "maison"
+     ]
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "importance du géomètre",
+     "verbes": [
+      "convoquer",
+      "silhouetter",
+      "ecrire"
+     ],
+     "termes": [
+      "globe"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "la continuité",
+   "ms_llm": 11278,
+   "titre": "La Continuité",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "une ligne continue",
+     "verbes": [
+      "silhouetter",
+      "napper"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "ligne continue et ligne discontinue",
+     "verbes": [
+      "silhouetter",
+      "silhouetter",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "un flux continu de gouttes",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "corps",
+     "foyer": "thorax",
+     "flux": true,
+     "intention": "flux",
+     "sujet": "la circulation sanguine",
+     "verbes": [
+      "convoquer",
+      "silhouetter",
+      "silhouetter"
+     ],
+     "termes": [
+      "coeur"
+     ]
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "la croissance d'un arbre",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "convoquer",
+      "extruder",
+      "extruder"
+     ],
+     "termes": [
+      "graine",
+      "plante",
+      "arbre"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "la date",
+   "ms_llm": 12732,
+   "titre": "Comprendre la date",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "le globe terrestre et son axe",
+     "verbes": [
+      "convoquer",
+      "silhouetter"
+     ],
+     "termes": [
+      "globe"
+     ]
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "la rotation de la Terre et le jour",
+     "verbes": [
+      "convoquer",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": [
+      "globe"
+     ]
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "la révolution de la Terre autour du Soleil",
+     "verbes": [
+      "convoquer",
+      "sculpter",
+      "silhouetter",
+      "ecrire"
+     ],
+     "termes": [
+      "planete"
+     ]
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "l'organisation du calendrier",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "différents systèmes de datation",
+     "verbes": [
+      "ecrire",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s6",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "l'importance de la date",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "silhouetter"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "la germination",
+   "ms_llm": 9084,
+   "titre": "La germination : éveil de la vie",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "une graine au repos",
+     "verbes": [
+      "convoquer",
+      "ecrire"
+     ],
+     "termes": [
+      "graine"
+     ]
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "l'absorption de l'eau",
+     "verbes": [
+      "sculpter",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "émergence de la radicule",
+     "verbes": [
+      "convoquer",
+      "silhouetter",
+      "napper"
+     ],
+     "termes": [
+      "graine"
+     ]
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "développement de la plantule",
+     "verbes": [
+      "convoquer",
+      "silhouetter",
+      "convoquer",
+      "convoquer"
+     ],
+     "termes": [
+      "graine",
+      "feuille",
+      "feuille"
+     ]
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "la croissance vers la lumière",
+     "verbes": [
+      "silhouetter",
+      "extruder",
+      "napper"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "la gravité",
+   "ms_llm": 11139,
+   "titre": "Comprendre la gravité",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "la Terre et la Lune",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "silhouetter"
+     ],
+     "termes": [
+      "planete",
+      "planete"
+     ]
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "la chute d'une pomme",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "extruder",
+      "extruder"
+     ],
+     "termes": [
+      "arbre",
+      "fruit"
+     ]
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "la masse et la distance",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "gravité faible et forte",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": [
+      "planete",
+      "planete"
+     ]
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "les marées et les orbites",
+     "verbes": [
+      "convoquer",
+      "silhouetter",
+      "convoquer",
+      "silhouetter"
+     ],
+     "termes": [
+      "globe",
+      "planete"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "la sociologie",
+   "ms_llm": 8612,
+   "titre": "Introduction à la Sociologie",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "la sociologie comme discipline",
+     "verbes": [
+      "ecrire",
+      "napper",
+      "extruder"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "individus et groupes sociaux",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "les interactions sociales",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "silhouetter",
+      "extruder"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "echelle",
+     "sujet": "impact sur la société",
+     "verbes": [
+      "convoquer",
+      "extruder",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": [
+      "globe"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "la tondeuse",
+   "ms_llm": 10602,
+   "titre": "La tondeuse : comprendre son fonctionnement",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "la tondeuse et ses composants",
+     "verbes": [
+      "extruder",
+      "sculpter",
+      "extruder",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "le mouvement de la lame",
+     "verbes": [
+      "extruder",
+      "silhouetter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "herbe coupée vs herbe non coupée",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "ecrire",
+      "silhouetter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "entretien de la tondeuse",
+     "verbes": [
+      "extruder",
+      "silhouetter",
+      "sculpter",
+      "ecrire",
+      "extruder"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "le marketing",
+   "ms_llm": 15237,
+   "titre": "Comprendre le Marketing",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "le marketing comme pont",
+     "verbes": [
+      "silhouetter",
+      "extruder",
+      "extruder"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "identifier les besoins",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "convoquer",
+      "convoquer",
+      "convoquer"
+     ],
+     "termes": [
+      "graine",
+      "graine",
+      "graine"
+     ]
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "les 4 P du marketing mix",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "corps",
+     "foyer": "tete",
+     "flux": true,
+     "intention": "flux",
+     "sujet": "la communication et l'engagement",
+     "verbes": [
+      "silhouetter",
+      "extruder"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "l'adaptation et l'évolution",
+     "verbes": [
+      "silhouetter",
+      "extruder",
+      "extruder"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "le système décimal : définition, règles et histoire",
+   "ms_llm": 14392,
+   "titre": "Le système décimal",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "les dix chiffres du système décimal",
+     "verbes": [
+      "ecrire",
+      "napper"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "la valeur de position des chiffres",
+     "verbes": [
+      "ecrire",
+      "ecrire",
+      "ecrire",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "echelle",
+     "sujet": "le regroupement par dix",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "l'origine historique du système décimal",
+     "verbes": [
+      "convoquer",
+      "silhouetter",
+      "silhouetter"
+     ],
+     "termes": [
+      "globe"
+     ]
+    },
+    {
+     "id": "s5",
+     "decor": "corps",
+     "foyer": "bras",
+     "flux": false,
+     "intention": "structure",
+     "sujet": "les doigts comme outil de comptage",
+     "verbes": [
+      "silhouetter",
+      "silhouetter"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "les nuages",
+   "ms_llm": 7647,
+   "titre": "La vie des nuages",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "un nuage se forme",
+     "verbes": [
+      "convoquer",
+      "extruder",
+      "silhouetter"
+     ],
+     "termes": [
+      "nuage"
+     ]
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "les gouttes d'eau dans le nuage",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "les nuages se déplacent",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "convoquer",
+      "silhouetter"
+     ],
+     "termes": [
+      "nuage",
+      "nuage",
+      "nuage"
+     ]
+    },
+    {
+     "id": "s4",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "la pluie tombe des nuages",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "silhouetter"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "management de projet",
+   "ms_llm": 8182,
+   "titre": "Les étapes du management de projet",
+   "corrections": [
+    "s5.g0: base « pyramide » inconnue, ramenee a ovoide"
+   ],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "Le projet, une idée à construire",
+     "verbes": [
+      "sculpter",
+      "ecrire",
+      "napper"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "Planification et organisation des tâches",
+     "verbes": [
+      "extruder",
+      "extruder",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "L'équipe, un ensemble d'individus",
+     "verbes": [
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "Suivi et contrôle de l'avancement",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "convoquer"
+     ],
+     "termes": [
+      "balance"
+     ]
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "Clôture et bilan du projet",
+     "verbes": [
+      "sculpter",
+      "ecrire",
+      "convoquer"
+     ],
+     "termes": [
+      "livre"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "la pluie",
+   "ms_llm": 9703,
+   "titre": "Le cycle de l'eau et la pluie",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "l'évaporation de l'eau",
+     "verbes": [
+      "napper",
+      "sculpter",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "formation des nuages",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "les gouttes de pluie tombent",
+     "verbes": [
+      "revolutionner",
+      "revolutionner",
+      "revolutionner"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "l'eau retourne à la terre",
+     "verbes": [
+      "napper",
+      "silhouetter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "corps",
+     "foyer": "ventre",
+     "flux": true,
+     "intention": "echelle",
+     "sujet": "importance de la pluie pour la vie",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "revolutionner"
+     ],
+     "termes": [
+      "plante",
+      "arbre"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "rendement",
+   "ms_llm": 11685,
+   "titre": "Comprendre le Rendement",
+   "corrections": [
+    "s2.g0: base « entonnoir » inconnue, ramenee a ovoide",
+    "s2.g1: base « vase » inconnue, ramenee a ovoide"
+   ],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "une machine qui produit",
+     "verbes": [
+      "silhouetter",
+      "extruder",
+      "extruder"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "matière première et produit",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "input vs output",
+     "verbes": [
+      "extruder",
+      "extruder",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "corps",
+     "foyer": "thorax",
+     "flux": true,
+     "intention": "processus",
+     "sujet": "le corps humain et l'énergie",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "convoquer"
+     ],
+     "termes": [
+      "estomac",
+      "coeur",
+      "muscle"
+     ]
+    },
+    {
+     "id": "s5",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "echelle",
+     "sujet": "optimisation du rendement",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "ecrire",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "topologie",
+   "ms_llm": 9459,
+   "titre": "Introduction à la topologie",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "formes géométriques",
+     "verbes": [
+      "sculpter",
+      "extruder",
+      "revolutionner"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "déformation d'une sphère en cube",
+     "verbes": [
+      "sculpter",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "tasse et beignet",
+     "verbes": [
+      "revolutionner",
+      "silhouetter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "réseaux et connexions",
+     "verbes": [
+      "silhouetter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "utilisation de ce, cet, cette",
+   "ms_llm": 10141,
+   "titre": "Ce, Cet, Cette : Choisir le bon démonstratif",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "les pronoms démonstratifs",
+     "verbes": [
+      "ecrire",
+      "ecrire",
+      "ecrire",
+      "extruder"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "ce pour le masculin singulier",
+     "verbes": [
+      "ecrire",
+      "convoquer",
+      "ecrire",
+      "extruder"
+     ],
+     "termes": [
+      "livre"
+     ]
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "cet pour le masculin singulier voyelle",
+     "verbes": [
+      "ecrire",
+      "convoquer",
+      "ecrire",
+      "extruder"
+     ],
+     "termes": [
+      "arbre"
+     ]
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "cette pour le féminin singulier",
+     "verbes": [
+      "ecrire",
+      "convoquer",
+      "ecrire",
+      "extruder"
+     ],
+     "termes": [
+      "fleur"
+     ]
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "récapitulatif des règles",
+     "verbes": [
+      "ecrire",
+      "ecrire",
+      "ecrire",
+      "ecrire",
+      "ecrire",
+      "ecrire",
+      "extruder"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "le vertige",
+   "ms_llm": 7038,
+   "titre": "Comprendre le vertige",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "corps",
+     "foyer": "tete",
+     "flux": false,
+     "intention": "structure",
+     "sujet": "l'oreille interne et l'équilibre",
+     "verbes": [
+      "convoquer",
+      "ecrire"
+     ],
+     "termes": [
+      "oreille"
+     ]
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "le mouvement des fluides dans l'oreille",
+     "verbes": [
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "corps",
+     "foyer": "tete",
+     "flux": true,
+     "intention": "processus",
+     "sujet": "le signal envoyé au cerveau",
+     "verbes": [
+      "convoquer",
+      "silhouetter"
+     ],
+     "termes": [
+      "cerveau"
+     ]
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "équilibre et déséquilibre",
+     "verbes": [
+      "extruder",
+      "extruder",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "la digestion",
+   "ms_llm": 7752,
+   "titre": "La digestion, étape par étape",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "corps",
+     "foyer": "tete",
+     "flux": false,
+     "intention": "processus",
+     "sujet": "la mastication et la salive",
+     "verbes": [
+      "convoquer",
+      "convoquer",
+      "sculpter",
+      "ecrire"
+     ],
+     "termes": [
+      "dent",
+      "dent"
+     ]
+    },
+    {
+     "id": "s2",
+     "decor": "corps",
+     "foyer": "thorax",
+     "flux": false,
+     "intention": "flux",
+     "sujet": "le bol alimentaire dans l'œsophage",
+     "verbes": [
+      "silhouetter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "corps",
+     "foyer": "ventre",
+     "flux": true,
+     "intention": "processus",
+     "sujet": "la transformation dans l'estomac",
+     "verbes": [
+      "convoquer",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": [
+      "estomac"
+     ]
+    },
+    {
+     "id": "s4",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "l'absorption des nutriments",
+     "verbes": [
+      "silhouetter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "corps",
+     "foyer": "bassin",
+     "flux": false,
+     "intention": "processus",
+     "sujet": "l'élimination des déchets",
+     "verbes": [
+      "silhouetter",
+      "sculpter"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "la respiration",
+   "ms_llm": 12132,
+   "titre": "La Respiration : Un Échange Vital",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "corps",
+     "foyer": "thorax",
+     "flux": false,
+     "intention": "structure",
+     "sujet": "les voies respiratoires",
+     "verbes": [
+      "silhouetter",
+      "sculpter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "corps",
+     "foyer": "thorax",
+     "flux": true,
+     "intention": "processus",
+     "sujet": "l'air atteint les poumons",
+     "verbes": [
+      "silhouetter",
+      "convoquer",
+      "convoquer"
+     ],
+     "termes": [
+      "poumon",
+      "poumon"
+     ]
+    },
+    {
+     "id": "s3",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "les alvéoles pulmonaires",
+     "verbes": [
+      "silhouetter",
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": true,
+     "intention": "flux",
+     "sujet": "échange oxygène et dioxyde de carbone",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "corps",
+     "foyer": "thorax",
+     "flux": true,
+     "intention": "processus",
+     "sujet": "le rôle du diaphragme",
+     "verbes": [
+      "silhouetter",
+      "extruder",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s6",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "echelle",
+     "sujet": "l'importance de la respiration",
+     "verbes": [
+      "revolutionner",
+      "extruder",
+      "extruder"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "le paludisme",
+   "ms_llm": 8350,
+   "titre": "Comprendre le Paludisme",
+   "corrections": [
+    "s3: foyer « foie » inconnu, ramene a thorax"
+   ],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "le moustique anophèle",
+     "verbes": [
+      "convoquer",
+      "ecrire"
+     ],
+     "termes": [
+      "insecte"
+     ]
+    },
+    {
+     "id": "s2",
+     "decor": "corps",
+     "foyer": "bras",
+     "flux": true,
+     "intention": "flux",
+     "sujet": "le parasite entre dans le corps",
+     "verbes": [
+      "silhouetter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "corps",
+     "foyer": "thorax",
+     "flux": false,
+     "intention": "processus",
+     "sujet": "le parasite se développe dans le foie",
+     "verbes": [
+      "convoquer",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": [
+      "foie"
+     ]
+    },
+    {
+     "id": "s4",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": true,
+     "intention": "flux",
+     "sujet": "les parasites détruisent les globules rouges",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "prévention et traitement du paludisme",
+     "verbes": [
+      "silhouetter",
+      "convoquer",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": [
+      "medicament"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "la circulation sanguine",
+   "ms_llm": 7568,
+   "titre": "La circulation sanguine",
+   "corrections": [
+    "s4: foyer « poumon » inconnu, ramene a thorax"
+   ],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "corps",
+     "foyer": "thorax",
+     "flux": false,
+     "intention": "objet",
+     "sujet": "le cœur, moteur du corps",
+     "verbes": [
+      "convoquer"
+     ],
+     "termes": [
+      "coeur"
+     ]
+    },
+    {
+     "id": "s2",
+     "decor": "corps",
+     "foyer": "thorax",
+     "flux": true,
+     "intention": "flux",
+     "sujet": "le sang circule dans les vaisseaux",
+     "verbes": [
+      "silhouetter",
+      "convoquer"
+     ],
+     "termes": [
+      "coeur"
+     ]
+    },
+    {
+     "id": "s3",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "les composants du sang",
+     "verbes": [
+      "sculpter",
+      "ecrire",
+      "sculpter",
+      "ecrire",
+      "sculpter",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "corps",
+     "foyer": "thorax",
+     "flux": true,
+     "intention": "processus",
+     "sujet": "le rôle des poumons dans l'oxygénation",
+     "verbes": [
+      "convoquer",
+      "silhouetter"
+     ],
+     "termes": [
+      "poumon"
+     ]
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "echelle",
+     "sujet": "le réseau vasculaire",
+     "verbes": [
+      "napper",
+      "silhouetter",
+      "ecrire"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "la régulation de la température du corps",
+   "ms_llm": 11958,
+   "titre": "Régulation de la température corporelle",
+   "corrections": [
+    "s2: foyer « peau » inconnu, ramene a thorax"
+   ],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "corps",
+     "foyer": "tete",
+     "flux": false,
+     "intention": "objet",
+     "sujet": "le cerveau régule la température",
+     "verbes": [
+      "convoquer"
+     ],
+     "termes": [
+      "cerveau"
+     ]
+    },
+    {
+     "id": "s2",
+     "decor": "corps",
+     "foyer": "thorax",
+     "flux": true,
+     "intention": "processus",
+     "sujet": "la transpiration pour refroidir",
+     "verbes": [
+      "silhouetter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "corps",
+     "foyer": "jambes",
+     "flux": true,
+     "intention": "flux",
+     "sujet": "les vaisseaux sanguins régulent la chaleur",
+     "verbes": [
+      "silhouetter",
+      "silhouetter",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "les frissons produisent de la chaleur",
+     "verbes": [
+      "convoquer",
+      "extruder",
+      "extruder"
+     ],
+     "termes": [
+      "muscle"
+     ]
+    },
+    {
+     "id": "s5",
+     "decor": "corps",
+     "foyer": "thorax",
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "l'équilibre thermique est vital",
+     "verbes": [
+      "convoquer",
+      "extruder",
+      "extruder",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": [
+      "thermometre"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "la cellule",
+   "ms_llm": 8621,
+   "titre": "La cellule, unité de vie",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "une cellule simple",
+     "verbes": [
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "les composants d'une cellule",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "corps",
+     "foyer": "thorax",
+     "flux": false,
+     "intention": "echelle",
+     "sujet": "cellules dans le corps humain",
+     "verbes": [
+      "convoquer",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": [
+      "corps humain"
+     ]
+    },
+    {
+     "id": "s4",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": true,
+     "intention": "processus",
+     "sujet": "division cellulaire",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "cellule animale et végétale",
+     "verbes": [
+      "sculpter",
+      "ecrire",
+      "extruder",
+      "sculpter",
+      "ecrire"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "les états de la matière",
+   "ms_llm": 14716,
+   "titre": "Les états de la matière",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "la matière à l'état solide",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "le passage de solide à liquide",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "le passage de liquide à gazeux",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "les changements d'état de la matière",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire",
+      "silhouetter",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "echelle",
+     "sujet": "l'état plasma",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "silhouetter"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "le cycle de l'eau",
+   "ms_llm": 8310,
+   "titre": "Le cycle de l'eau",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "l'évaporation de l'eau",
+     "verbes": [
+      "napper",
+      "sculpter",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": true,
+     "intention": "processus",
+     "sujet": "la condensation des gouttelettes",
+     "verbes": [
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "les précipitations",
+     "verbes": [
+      "convoquer",
+      "silhouetter"
+     ],
+     "termes": [
+      "nuage"
+     ]
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "le ruissellement et l'infiltration",
+     "verbes": [
+      "napper",
+      "silhouetter",
+      "convoquer"
+     ],
+     "termes": [
+      "arbre"
+     ]
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "le retour à l'océan",
+     "verbes": [
+      "convoquer",
+      "silhouetter"
+     ],
+     "termes": [
+      "globe"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "la propagation d'une épidémie",
+   "ms_llm": 7983,
+   "titre": "Propagation d'une épidémie",
+   "corrections": [
+    "s4: image identique a s3 (memes gestes, memes coordonnees)"
+   ],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "une population saine",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": true,
+     "intention": "processus",
+     "sujet": "l'arrivée du virus",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": true,
+     "intention": "flux",
+     "sujet": "le virus se propage",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": true,
+     "intention": "flux",
+     "sujet": "l'épidémie s'étend",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "les mesures de prévention",
+     "verbes": [
+      "convoquer",
+      "extruder",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": [
+      "main"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "la démocratie",
+   "ms_llm": 13666,
+   "titre": "Comprendre la Démocratie",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "le principe de la démocratie",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "le vote des citoyens",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "extruder"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "la séparation des pouvoirs",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "les piliers de la démocratie",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire",
+      "extruder"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "démocratie et dictature",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "l'inflation",
+   "ms_llm": 12626,
+   "titre": "Comprendre l'inflation",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "le pouvoir d'achat",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "l'augmentation des prix",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "la circulation de l'argent",
+     "verbes": [
+      "silhouetter",
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "les causes de l'inflation",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "corps",
+     "foyer": "ventre",
+     "flux": true,
+     "intention": "comparaison",
+     "sujet": "les effets sur l'économie",
+     "verbes": [
+      "extruder",
+      "ecrire",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    }
+   ]
+  },
+  {
+   "sujet": "la désertification au Sahel",
+   "ms_llm": 10478,
+   "titre": "La désertification au Sahel",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "le Sahel et le désert",
+     "verbes": [
+      "napper",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gouttes",
+     "foyer": null,
+     "flux": false,
+     "intention": "comparaison",
+     "sujet": "pluie et sécheresse",
+     "verbes": [
+      "sculpter",
+      "sculpter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "dégradation des sols",
+     "verbes": [
+      "napper",
+      "silhouetter",
+      "sculpter",
+      "sculpter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "l'avancée du désert",
+     "verbes": [
+      "napper",
+      "extruder",
+      "silhouetter"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s5",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "solutions contre la désertification",
+     "verbes": [
+      "napper",
+      "convoquer",
+      "convoquer",
+      "convoquer"
+     ],
+     "termes": [
+      "arbre",
+      "graine",
+      "puits"
+     ]
+    }
+   ]
+  },
+  {
+   "sujet": "le théorème de Pythagore",
+   "ms_llm": 9016,
+   "titre": "Le théorème de Pythagore",
+   "corrections": [],
+   "scenes": [
+    {
+     "id": "s1",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "objet",
+     "sujet": "le triangle rectangle",
+     "verbes": [
+      "silhouetter",
+      "extruder",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s2",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "structure",
+     "sujet": "les côtés du triangle",
+     "verbes": [
+      "silhouetter",
+      "ecrire",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s3",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "processus",
+     "sujet": "les carrés des côtés",
+     "verbes": [
+      "silhouetter",
+      "extruder",
+      "extruder",
+      "extruder"
+     ],
+     "termes": []
+    },
+    {
+     "id": "s4",
+     "decor": "gestes",
+     "foyer": null,
+     "flux": false,
+     "intention": "flux",
+     "sujet": "la formule de Pythagore",
+     "verbes": [
+      "silhouetter",
+      "ecrire",
+      "ecrire",
+      "ecrire",
+      "ecrire"
+     ],
+     "termes": []
+    }
+   ]
+  }
+ ]
+}

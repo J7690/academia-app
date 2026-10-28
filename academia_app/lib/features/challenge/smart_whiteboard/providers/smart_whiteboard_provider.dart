@@ -716,6 +716,34 @@ class SmartWhiteboardProvider extends ChangeNotifier {
     }
   }
 
+  /// UNE SEULE question au serveur : cette capsule a-t-elle déjà sa vidéo ?
+  ///
+  /// Depuis la suppression du serveur LWS (22/09/2026), aucune vidéo nouvelle
+  /// ne se fabrique : le préparateur qui précédait la machine GPU n'existe
+  /// plus. Les capsules déjà fabriquées gardent la leur ; les autres se jouent
+  /// sur le téléphone. Cette méthode les départage sans boucler ni mettre
+  /// l'écran en erreur — `suivreCapsule3d` attendait jusqu'à 45 minutes une
+  /// vidéo qui ne pouvait plus venir.
+  Future<bool> capsuleDejaPrete() async {
+    if (_currentRenderJobId == null) return false;
+    try {
+      final etat = await _renderService.getStudioStatus(_currentRenderJobId!);
+      final statut = etat['statut']?.toString();
+      if (statut != 'preview_ready' && statut != 'approved') return false;
+      final chemin = etat['chemin_video']?.toString();
+      if (chemin == null || chemin.isEmpty) return false;
+      final url = await _renderService.urlCapsuleStudio(chemin);
+      if (url == null) return false;
+      _renderVideoUrl = url;
+      _etapeEnCours = null;
+      _setState(SmartWhiteboardState.done);
+      return true;
+    } catch (e) {
+      debugPrint('[STUDIO] capsuleDejaPrete : $e');
+      return false;
+    }
+  }
+
   /// Suit une capsule 3D jusqu'à sa mise à disposition, ou jusqu'à l'échec.
   ///
   /// Renvoie `true` si la vidéo est prête. À chaque tour, `etapeEnCours` porte
@@ -749,7 +777,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
     while (true) {
       if (DateTime.now().difference(depart) > limite) {
         _setError('La fabrication dépasse le temps prévu. '
-            'Ton cours reste enregistré : rouvre-le plus tard.');
+            'Votre cours reste enregistré : rouvrez-le plus tard.');
         return false;
       }
 
@@ -766,7 +794,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
         debugPrint('[STUDIO] suivi interrompu ($echecs/$echecsToleres) : $e');
         if (echecs >= echecsToleres) {
           _setError('La connexion ne répond plus. '
-              'Ton cours continue de se fabriquer : rouvre-le dans un moment.');
+              'Votre cours continue de se fabriquer : rouvrez-le dans un moment.');
           return false;
         }
         await Future.delayed(intervalle);
@@ -785,7 +813,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       if (statut == null || statut.isEmpty) {
         _setError(etat['error']?.toString() == 'introuvable'
             ? 'Ce cours est introuvable. Il a peut-être été supprimé.'
-            : "La fabrication ne répond pas. Ton cours reste enregistré.");
+            : "La fabrication ne répond pas. Votre cours reste enregistré.");
         return false;
       }
 
@@ -797,7 +825,7 @@ class SmartWhiteboardProvider extends ChangeNotifier {
 
       if (statut == 'failed') {
         _setError(etat['erreur']?.toString() ??
-            'La fabrication a échoué. Ton cours reste enregistré.');
+            'La fabrication a échoué. Votre cours reste enregistré.');
         return false;
       }
 
@@ -862,6 +890,24 @@ class SmartWhiteboardProvider extends ChangeNotifier {
       }
     } catch (e) {
       _setError(e.toString());
+    }
+  }
+
+  /// UNE seule lecture, sans attente : le tableau a-t-il déjà sa vidéo ?
+  /// Ceux fabriqués avant la suppression de LWS (22/09/2026) la gardent ; les
+  /// autres ne la recevront jamais — inutile de les attendre 5 minutes.
+  Future<bool> tableauDejaPret() async {
+    if (_currentRenderJobId == null) return false;
+    try {
+      final url = await _renderService.getRenderVideoUrl(_currentRenderJobId!);
+      if (url == null || url.isEmpty) return false;
+      _renderVideoUrl = url;
+      _previewVideoUrl = null;
+      _setState(SmartWhiteboardState.done);
+      return true;
+    } catch (e) {
+      debugPrint('[WB] tableauDejaPret : $e');
+      return false;
     }
   }
 

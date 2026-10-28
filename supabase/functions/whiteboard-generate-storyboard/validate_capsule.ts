@@ -37,6 +37,76 @@ export const VERBES = [
 
 const BASES = ["ovoide", "sphere", "galet", "goutte", "lentille"] as const;
 
+// ── Décors (capsule v2, 28/10/2026) ─────────────────────────────────────
+// Le lecteur sur l'appareil (studio_visuel/lecteur/) sait jouer deux décors
+// tout faits : un CORPS allongé avec un foyer, et des GOUTTES sur une grille.
+// L'IA choisit ; on nettoie, on ne rejette pas.
+//
+// COMPATIBILITÉ AVEC LE POD. La chaîne GPU actuelle ignore `decor` et ne
+// dessine que des gestes. Une scène « corps » ou « gouttes » sans geste y
+// serait VIDE — donc on lui ajoute des gestes de repli marqués `pour: "pod"`,
+// que le lecteur, lui, ignore. Les deux chaînes restent servies par la même capsule.
+export const DECORS = ["gestes", "corps", "gouttes"] as const;
+export const ZONES = ["tete", "thorax", "ventre", "bassin", "jambes", "bras"] as const;
+const ORGANES: Record<string, string> = {
+  cerveau: "tete", crane: "tete", oeil: "tete", yeux: "tete", oreille: "tete", bouche: "tete", dent: "tete", nez: "tete",
+  coeur: "thorax", poumon: "thorax", poumons: "thorax", poitrine: "thorax", peau: "thorax", sang: "thorax",
+  estomac: "ventre", foie: "ventre", intestin: "ventre", intestins: "ventre", rein: "ventre", reins: "ventre", pancreas: "ventre",
+  vessie: "bassin", uterus: "bassin", hanche: "bassin",
+  jambe: "jambes", genou: "jambes", pied: "jambes", pieds: "jambes",
+  main: "bras", mains: "bras", doigt: "bras", doigts: "bras", coude: "bras",
+};
+const PLANS: Record<string, readonly string[]> = {
+  corps: ["approche", "profil", "reference"],
+  gouttes: ["rase", "arc"],
+};
+const REPLI_POD: Record<string, Record<string, unknown>[]> = {
+  corps: [
+    { verbe: "convoquer", role: "sujet", pour: "pod",
+      parametres: { terme: "corps humain", taille: 4, position: [0, 0, 0] } },
+  ],
+  gouttes: [
+    { verbe: "napper", role: "structure", pour: "pod", parametres: { cote: 60, pas: 46, amplitude: 0.8 } },
+    { verbe: "sculpter", role: "sujet", pour: "pod",
+      parametres: { base: "goutte", echelle: 0.9, facettes: 2, position: [-2, 0, 0.6], deformation: 0, graine: 1 } },
+    { verbe: "sculpter", role: "sujet", pour: "pod",
+      parametres: { base: "goutte", echelle: 1.2, facettes: 2, position: [0, -1, 0.8], deformation: 0, graine: 2 } },
+    { verbe: "sculpter", role: "sujet", pour: "pod",
+      parametres: { base: "goutte", echelle: 0.8, facettes: 2, position: [2.2, 0, 0.5], deformation: 0, graine: 3 } },
+  ],
+};
+
+/** Le décor d'une scène, nettoyé. Chaque écart est NOMMÉ dans `corr`. */
+function validerDecor(s: Record<string, unknown>, id: string, corrections: string[]) {
+  let decor = String(s.decor ?? "gestes").trim() || "gestes";
+  if (!(DECORS as readonly string[]).includes(decor)) {
+    corrections.push(`${id}: decor « ${decor} » inconnu, ramene a gestes`);
+    decor = "gestes";
+  }
+  const brut = s.foyer == null ? "" : String(s.foyer).trim();
+  let foyer: string | null = null;
+  if (decor === "corps") {
+    // Le modèle nomme parfois l'ORGANE au lieu de la zone (mesuré le 28/10 :
+    // « foie », « poumon », « peau ») : on le range dans sa zone plutôt qu'au thorax.
+    const zone = (ZONES as readonly string[]).includes(brut) ? brut : ORGANES[brut.toLowerCase()];
+    foyer = zone ?? "thorax";
+    if (brut && foyer !== brut) corrections.push(`${id}: foyer « ${brut} » ramene a ${foyer}`);
+  } else if (decor === "gestes") {
+    // L'énergie a besoin d'un référent : seul « sujet » est admis hors du corps.
+    if (brut === "sujet") foyer = "sujet";
+    else if (brut) corrections.push(`${id}: foyer « ${brut} » ignore hors du decor corps`);
+  } else if (brut) {
+    corrections.push(`${id}: foyer ignore en decor gouttes`);
+  }
+  const flux = s.flux === true || s.flux === "true";
+  let plan = String(s.plan ?? "").trim();
+  if (plan && !(PLANS[decor] ?? []).includes(plan)) {
+    corrections.push(`${id}: plan « ${plan} » inconnu pour le decor ${decor}, ignore`);
+    plan = "";
+  }
+  return { decor, foyer, flux, plan };
+}
+
 const MAX_SCENES = 6;
 const MAX_GESTES = 8;
 const MIN_DUREE = 4;
@@ -256,8 +326,24 @@ export function validateCapsule(brut: unknown): Resultat {
 
     const narration = String(s.narration ?? "").trim();
     const sujet = String(s.sujet ?? "").trim();
+    const { decor, foyer, flux, plan } = validerDecor(s, id, corrections);
+    if (decor === "corps") {
+      // Un organe convoqué en décor corps se poserait PAR-DESSUS le corps : le
+      // foyer le montre déjà. Mesuré le 28/10 : 21 scènes sur 35 le faisaient.
+      const avant = gestes.length;
+      for (let k = gestes.length - 1; k >= 0; k--) if (gestes[k].verbe === "convoquer") gestes.splice(k, 1);
+      if (gestes.length < avant) corrections.push(`${id}: ${avant - gestes.length} objet(s) convoque(s) retire(s) du decor corps, le foyer le montre`);
+    }
 
-    if (!gestes.length) {
+    if (!gestes.length && decor !== "gestes") {
+      // Le décor montre déjà le sujet sur l'appareil ; le pod, lui, a besoin
+      // de gestes. Repli marqué, ignoré par le lecteur — pas une correction.
+      if (!sujet && !narration) {
+        corr(corrections, `${id}: scene vide, ecartee`);
+        continue;
+      }
+      gestes.push(...REPLI_POD[decor].map((g) => structuredClone(g)));
+    } else if (!gestes.length) {
       // AUCUN GESTE N'A TENU. On ne remplace pas par une forme generique : on
       // ecrit le sujet. C'est la degradation, et elle est nommee.
       if (!sujet && !narration) {
@@ -272,10 +358,15 @@ export function validateCapsule(brut: unknown): Resultat {
       corr(corrections, `${id}: aucun geste exploitable, repli sur le texte`);
     }
 
-    scenes.push({
+    const scene: Record<string, unknown> = {
       id, intention, sujet, narration, gestes,
       duree_s: borner(nombre(s.duree_s, 12), MIN_DUREE, MAX_DUREE),
-    });
+      decor,
+    };
+    if (foyer) scene.foyer = foyer;
+    if (flux) scene.flux = true;
+    if (plan) scene.plan = plan;
+    scenes.push(scene);
   }
 
   if (!scenes.length) {
@@ -323,8 +414,12 @@ function corr(liste: string[], message: string): void {
  * l'IMAGE qu'on compare, pas l'intention.
  */
 function empreinte(scene: Record<string, unknown>): string {
-  const gestes = (scene.gestes as Record<string, unknown>[]) ?? [];
-  return gestes.map((g) => {
+  // Les gestes de repli du pod ne font pas l'image sur l'appareil : on les ôte,
+  // et c'est le décor (avec son foyer et son cadrage) qui la fait.
+  const gestes = ((scene.gestes as Record<string, unknown>[]) ?? []).filter((g) => g.pour !== "pod");
+  const decor = scene.decor && scene.decor !== "gestes"
+    ? `${scene.decor}:${scene.foyer ?? ""}:${scene.plan || scene.intention}|` : "";
+  return decor + gestes.map((g) => {
     const p = { ...(g.parametres as Record<string, unknown> ?? {}) };
     delete p.nom;
     return `${g.verbe}(${JSON.stringify(p)})`;

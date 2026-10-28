@@ -33,6 +33,42 @@ Le moteur exécute ta description telle quelle.
 
 ════════ CE QUE TU DÉCIDES ════════
 
+0. LE DÉCOR de chaque scène — le monde dans lequel elle se passe. Trois décors :
+
+   corps     un corps humain allongé, en fil de fer lumineux, avec un FOYER
+             rouge à l'endroit où ça se passe. Pour tout ce qui parle du corps :
+             un organe, une fonction (respirer, digérer, penser, transpirer),
+             l'effort, une maladie, un médicament, la croissance.
+             "foyer" : tete | thorax | ventre | bassin | jambes | bras
+             (le cerveau → tete ; le cœur, les poumons → thorax ; l'estomac,
+             le foie → ventre).
+
+   gouttes   des gouttes de verre posées sur une grille lumineuse, dans la
+             brume. Pour une POPULATION d'unités semblables : des cellules, des
+             neurones, des molécules, des bactéries, des gouttes d'eau, des
+             graines, des individus dans une société, des électeurs.
+
+   gestes    tu FABRIQUES la scène avec les verbes ci-dessous (c'est le décor
+             par défaut). Pour un objet, une machine, un lieu, un paysage, une
+             forme, une idée abstraite.
+
+   "flux": true quand quelque chose CIRCULE, se propage ou s'échappe (le sang,
+   la chaleur, l'influx nerveux, une épidémie) : des particules sortent du foyer.
+   "foyer": "sujet" en décor gestes, seulement si l'objet CONTIENT une énergie
+   (un volcan, un moteur, une réaction) : une masse rouge s'y loge. Jamais
+   ailleurs : une masse rouge sans raison est un décor qui ment.
+
+   Le décor corps, SEULEMENT quand la scène parle du corps HUMAIN. Une plante,
+   la pluie, l'économie, une décision, une fonction mathématique : jamais en
+   décor corps, même pour « varier ». Un corps sans rapport avec la phrase est
+   un décor qui ment (mesuré le 28/10 : photosynthèse et inflation « dans le
+   ventre »).
+   Varie les décors quand le sujet s'y prête ; un cours sur le corps peut rester
+   en décor corps en changeant de foyer.
+   En décor corps, N'AJOUTE PAS d'organe avec convoquer : le foyer le montre déjà,
+   et l'organe se poserait par-dessus le corps. Au plus un mot (ecrire).
+   En décor gouttes, les gestes sont facultatifs (0 à 2).
+
 1. L'INTENTION de chaque scène — ce qu'elle fait comprendre. Six possibles :
 
    objet        montrer la chose elle-même (un organe, une machine, un fruit)
@@ -176,6 +212,7 @@ UNIQUEMENT ce JSON, sans texte autour, sans balise Markdown :
   "scenes": [
     {
       "id": "s1",
+      "decor": "gestes",
       "intention": "structure",
       "sujet": "ce que cette scène montre, en 3 à 6 mots",
       "narration": "Ce que la voix dit. Phrases courtes, ton d'enseignant.",
@@ -191,6 +228,17 @@ UNIQUEMENT ce JSON, sans texte autour, sans balise Markdown :
           "parametres": { "base": "goutte", "echelle": 1.35, "facettes": 2,
                           "position": [-1.25,0,0.1], "deformation": 0.08 } }
       ]
+    },
+    {
+      "id": "s2",
+      "decor": "corps",
+      "foyer": "thorax",
+      "flux": true,
+      "intention": "flux",
+      "sujet": "le sang part du cœur",
+      "narration": "…",
+      "duree_s": 12,
+      "gestes": []
     }
   ]
 }

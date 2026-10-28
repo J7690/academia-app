@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Tout passe en HTTPS, comme le veut Android depuis l'API 28 — SAUF la boucle
+  locale du téléphone (127.0.0.1, localhost).
+
+  Pourquoi cette exception : le lecteur de capsule 3D s'essaie depuis le poste,
+  relié au téléphone par `adb reverse` (capsule_lecteur_screen.dart,
+  LECTEUR_URL). Le 28/10/2026, l'essai réel a échoué sur
+  `net::ERR_CLEARTEXT_NOT_PERMITTED`. La boucle locale ne sort jamais du
+  téléphone : l'autoriser n'ouvre aucun trafic en clair vers l'extérieur.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>

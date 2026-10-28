@@ -20,7 +20,9 @@ class SmartWhiteboardInputScreen extends StatefulWidget {
 class _SmartWhiteboardInputScreenState extends State<SmartWhiteboardInputScreen> {
   // Mode selection
   InputMode _selectedMode = InputMode.simpleSubject;
-  ProductionType _selectedProduction = ProductionType.tableau;
+  // L'ANIMATION PAR DÉFAUT, ET LE TABLEAU FERMÉ : le serveur qui écrivait les
+  // tableaux (LWS) a été supprimé le 22/09/2026. Voir `ProductionType.tableauDisponible`.
+  ProductionType _selectedProduction = ProductionType.animation;
 
   // Form controllers
   final TextEditingController _subjectController = TextEditingController();
@@ -307,7 +309,7 @@ class _SmartWhiteboardInputScreenState extends State<SmartWhiteboardInputScreen>
                         Expanded(
                           child: Text(
                             'La voix est incluse : elle commande le rythme des '
-                            'images. Les formes sont composées à partir de ton '
+                            'images. Les formes sont composées à partir de votre '
                             'sujet.',
                             style: TextStyle(fontSize: 13),
                           ),
@@ -358,6 +360,7 @@ class _SmartWhiteboardInputScreenState extends State<SmartWhiteboardInputScreen>
               value: ProductionType.tableau,
               icon: Icon(Icons.edit_outlined),
               label: Text('Tableau'),
+              enabled: ProductionType.tableauDisponible,
             ),
             ButtonSegment(
               value: ProductionType.animation,
@@ -377,6 +380,13 @@ class _SmartWhiteboardInputScreenState extends State<SmartWhiteboardInputScreen>
           _selectedProduction.description,
           style: const TextStyle(fontSize: 12.5, color: Color(0xFF6B7280), height: 1.4),
         ),
+        if (!ProductionType.tableauDisponible) ...[
+          const SizedBox(height: 6),
+          const Text(
+            'Le tableau manuscrit est momentanément indisponible.',
+            style: TextStyle(fontSize: 12.5, color: Color(0xFFB45309), height: 1.4),
+          ),
+        ],
       ],
     );
   }
@@ -510,13 +520,19 @@ enum ProductionType {
   /// sur une machine à carte graphique, louée à la seconde.
   animation;
 
+  /// Le tableau s'écrivait sur le serveur LWS, supprimé le 22/09/2026 faute de
+  /// renouvellement (cf. ETAT.md, docs/RECOMMANDATION_APRES_LWS_2026-10-28.md).
+  /// Le proposer faisait payer à l'étudiant un cours qui ne sortait jamais.
+  /// Repasser à `true` le jour où le tableau se jouera sur le téléphone.
+  static const bool tableauDisponible = false;
+
   String get apiValue => this == ProductionType.tableau ? 'vision2' : 'studio';
 
   String get description => this == ProductionType.tableau
       ? "Le cours s'écrit au tableau pendant que la voix l'explique, avec les "
-          "mots-clés entourés. Prêt en deux à trois minutes."
+          "mots-clés entourés."
       : "Le cours devient une animation en volume — formes lumineuses, caméra "
-          "qui se déplace, ambiance sonore. Rendu plus long.";
+          "qui se déplace, voix. Elle se joue sur votre téléphone en quelques secondes.";
 }
 
 enum InputMode {
