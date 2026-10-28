@@ -1,0 +1,565 @@
+{
+ "source": "Objaverse (ODC-By) + Cap3D — licences verifiees objet par objet",
+ "licences_retenues": [
+  "by",
+  "by-sa",
+  "cc0"
+ ],
+ "attribution_requise": true,
+ "plafond_triangles": 20000,
+ "compression": "EXT_meshopt_compression + quantification 14 bits",
+ "termes": {
+  "cerveau": {
+   "fichier": "cerveau.glb",
+   "octets": 72332,
+   "triangles": 18003,
+   "triangles_origine": 18003,
+   "uid": "7a9bab32bb82497c93ba6ca9162daa33",
+   "licence": "by"
+  },
+  "neurone": {
+   "fichier": "neurone.glb",
+   "octets": 85452,
+   "triangles": 18532,
+   "triangles_origine": 6376556,
+   "uid": "ab78907b908f45d8a31ba8a9a604cd61",
+   "licence": "by"
+  },
+  "coeur": {
+   "fichier": "coeur.glb",
+   "octets": 92796,
+   "triangles": 19735,
+   "triangles_origine": 258171,
+   "uid": "b2bab3306ab043b9968883f370581116",
+   "licence": "by"
+  },
+  "poumon": {
+   "fichier": "poumon.glb",
+   "octets": 97772,
+   "triangles": 19952,
+   "triangles_origine": 133944,
+   "uid": "ab3c9dce586a4975982afa27aa61585d",
+   "licence": "by"
+  },
+  "rein": {
+   "fichier": "rein.glb",
+   "octets": 93760,
+   "triangles": 20000,
+   "triangles_origine": 54998,
+   "uid": "a33c807e44074177ab20b949b97ef837",
+   "licence": "by"
+  },
+  "estomac": {
+   "fichier": "estomac.glb",
+   "octets": 96924,
+   "triangles": 20000,
+   "triangles_origine": 48986,
+   "uid": "7ed21193e58244fea89bccb611019674",
+   "licence": "by"
+  },
+  "foie": {
+   "fichier": "foie.glb",
+   "octets": 87148,
+   "triangles": 19999,
+   "triangles_origine": 32778,
+   "uid": "861d1048bf8d47a2abc52d64476d9458",
+   "licence": "by"
+  },
+  "squelette": {
+   "fichier": "squelette.glb",
+   "octets": 65476,
+   "triangles": 14134,
+   "triangles_origine": 14134,
+   "uid": "8fdd03c69ead48c5867c6693a78729bd",
+   "licence": "by"
+  },
+  "os": {
+   "fichier": "os.glb",
+   "octets": 109588,
+   "triangles": 20000,
+   "triangles_origine": 486961,
+   "uid": "2b0b22873d7440d0a9dc674f2d7acc1b",
+   "licence": "by"
+  },
+  "crane": {
+   "fichier": "crane.glb",
+   "octets": 102572,
+   "triangles": 20000,
+   "triangles_origine": 29062,
+   "uid": "f8afa50eb758405e989873718b940661",
+   "licence": "by"
+  },
+  "corps humain": {
+   "fichier": "corps_humain.glb",
+   "octets": 109956,
+   "triangles": 20000,
+   "triangles_origine": 2330624,
+   "uid": "dc517f5f21e94294b1021d23c97a1ba4",
+   "licence": "by"
+  },
+  "oeil": {
+   "fichier": "oeil.glb",
+   "octets": 13940,
+   "triangles": 2688,
+   "triangles_origine": 2688,
+   "uid": "fe29f952b31b4293aa65df961167358e",
+   "licence": "by"
+  },
+  "dent": {
+   "fichier": "dent.glb",
+   "octets": 90256,
+   "triangles": 19999,
+   "triangles_origine": 150930,
+   "uid": "2f2f57e880fd4644a27f3e24e59f90d0",
+   "licence": "by"
+  },
+  "muscle": {
+   "fichier": "muscle.glb",
+   "octets": 122796,
+   "triangles": 19998,
+   "triangles_origine": 1353088,
+   "uid": "5b3c8e21cb214357ab76c8710d835d11",
+   "licence": "by"
+  },
+  "peau": {
+   "fichier": "peau.glb",
+   "octets": 88180,
+   "triangles": 19962,
+   "triangles_origine": 653928,
+   "uid": "bf864eec8ba4422c83817b12613a6e64",
+   "licence": "by"
+  },
+  "sang": {
+   "fichier": "sang.glb",
+   "octets": 112456,
+   "triangles": 12620,
+   "triangles_origine": 12620,
+   "uid": "d792dde9f01c4a6b8cfaece591c9b267",
+   "licence": "by"
+  },
+  "cellule": {
+   "fichier": "cellule.glb",
+   "octets": 80284,
+   "triangles": 20000,
+   "triangles_origine": 219744,
+   "uid": "8d5f094da45b4069ad6288542f0835e9",
+   "licence": "by"
+  },
+  "adn": {
+   "fichier": "adn.glb",
+   "octets": 39436,
+   "triangles": 11512,
+   "triangles_origine": 11512,
+   "uid": "e3f82ab0c50a490bbace8d5ccc4698b8",
+   "licence": "by"
+  },
+  "virus": {
+   "fichier": "virus.glb",
+   "octets": 101612,
+   "triangles": 19998,
+   "triangles_origine": 70644,
+   "uid": "6833a2ae42234d09a676d324ab9d753d",
+   "licence": "by"
+  },
+  "bacterie": {
+   "fichier": "bacterie.glb",
+   "octets": 119892,
+   "triangles": 19998,
+   "triangles_origine": 38920,
+   "uid": "b226ccd1e0984c7d9c97eaa691da1397",
+   "licence": "by"
+  },
+  "graine": {
+   "fichier": "graine.glb",
+   "octets": 77208,
+   "triangles": 20000,
+   "triangles_origine": 25344,
+   "uid": "a78ef12e1b2643c094d9c81a21136fd8",
+   "licence": "by"
+  },
+  "germination": {
+   "fichier": "germination.glb",
+   "octets": 149912,
+   "triangles": 19998,
+   "triangles_origine": 38088,
+   "uid": "f6c2c1e6637e4e5eae085c8f7545b2b9",
+   "licence": "by"
+  },
+  "plante": {
+   "fichier": "plante.glb",
+   "octets": 108956,
+   "triangles": 19998,
+   "triangles_origine": 440806,
+   "uid": "14f80dc03d934e5a8657c6c11a58b7aa",
+   "licence": "by"
+  },
+  "feuille": {
+   "fichier": "feuille.glb",
+   "octets": 46064,
+   "triangles": 7026,
+   "triangles_origine": 7026,
+   "uid": "eb167acc4621447fb3e20cc97ac76262",
+   "licence": "by"
+  },
+  "fleur": {
+   "fichier": "fleur.glb",
+   "octets": 95888,
+   "triangles": 20000,
+   "triangles_origine": 60359,
+   "uid": "31438a94fd5844bcbaea293c009d0812",
+   "licence": "by"
+  },
+  "racine": {
+   "fichier": "racine.glb",
+   "octets": 5304,
+   "triangles": 733,
+   "triangles_origine": 733,
+   "uid": "90d529b510b64fe8846b4ed597ae50f7",
+   "licence": "by"
+  },
+  "arbre": {
+   "fichier": "arbre.glb",
+   "octets": 126204,
+   "triangles": 16775,
+   "triangles_origine": 16775,
+   "uid": "7376a540d36e4d969bff7a9e4bfce38f",
+   "licence": "by"
+  },
+  "fruit": {
+   "fichier": "fruit.glb",
+   "octets": 75728,
+   "triangles": 19094,
+   "triangles_origine": 116764,
+   "uid": "955d09c7df624d77900b5500c5f5a1ac",
+   "licence": "by"
+  },
+  "insecte": {
+   "fichier": "insecte.glb",
+   "octets": 86952,
+   "triangles": 19997,
+   "triangles_origine": 219682,
+   "uid": "5738c014bf344613a3ea93f11b9d7219",
+   "licence": "by"
+  },
+  "poisson": {
+   "fichier": "poisson.glb",
+   "octets": 115964,
+   "triangles": 19988,
+   "triangles_origine": 2538313,
+   "uid": "55d3a5c2a4ec4139ac336fc7b19956c7",
+   "licence": "by"
+  },
+  "oiseau": {
+   "fichier": "oiseau.glb",
+   "octets": 106712,
+   "triangles": 19982,
+   "triangles_origine": 771326,
+   "uid": "e07991d7b74e4ac4a71451d3f614b259",
+   "licence": "by"
+  },
+  "atome": {
+   "fichier": "atome.glb",
+   "octets": 116236,
+   "triangles": 20000,
+   "triangles_origine": 199296,
+   "uid": "c9b783f0f225463cb4493292a8c33065",
+   "licence": "by"
+  },
+  "molecule": {
+   "fichier": "molecule.glb",
+   "octets": 122652,
+   "triangles": 20000,
+   "triangles_origine": 24056,
+   "uid": "bd9bc58d87194a3ab5b416ee4601483d",
+   "licence": "by"
+  },
+  "aimant": {
+   "fichier": "aimant.glb",
+   "octets": 73880,
+   "triangles": 19744,
+   "triangles_origine": 27368,
+   "uid": "bf578d1b7e1b4952a836d19f13889da6",
+   "licence": "by"
+  },
+  "pendule": {
+   "fichier": "pendule.glb",
+   "octets": 178756,
+   "triangles": 19999,
+   "triangles_origine": 35400,
+   "uid": "520e472fb3d64ac1886cbf1e9530e30c",
+   "licence": "by"
+  },
+  "prisme": {
+   "fichier": "prisme.glb",
+   "octets": 3040,
+   "triangles": 334,
+   "triangles_origine": 334,
+   "uid": "ddeff7c126884b36b731c0cc541a5f27",
+   "licence": "by"
+  },
+  "circuit": {
+   "fichier": "circuit.glb",
+   "octets": 25252,
+   "triangles": 7104,
+   "triangles_origine": 7104,
+   "uid": "e6037b2aa13c4a2e8250a9f6cf520bbf",
+   "licence": "by"
+  },
+  "pile": {
+   "fichier": "pile.glb",
+   "octets": 2776,
+   "triangles": 272,
+   "triangles_origine": 272,
+   "uid": "cccf3dcca7be4365b22ff59433024586",
+   "licence": "by"
+  },
+  "engrenage": {
+   "fichier": "engrenage.glb",
+   "octets": 55176,
+   "triangles": 10692,
+   "triangles_origine": 10692,
+   "uid": "c108317a98fb4eefbfa55bfe7fe88a05",
+   "licence": "by"
+  },
+  "ressort": {
+   "fichier": "ressort.glb",
+   "octets": 92724,
+   "triangles": 19990,
+   "triangles_origine": 240252,
+   "uid": "d550d1355d7340cab710a05fdfe2aa1c",
+   "licence": "by"
+  },
+  "thermometre": {
+   "fichier": "thermometre.glb",
+   "octets": 13760,
+   "triangles": 2996,
+   "triangles_origine": 2996,
+   "uid": "5ef4251b270c4997aca6931a094f9621",
+   "licence": "by"
+  },
+  "balance": {
+   "fichier": "balance.glb",
+   "octets": 6700,
+   "triangles": 980,
+   "triangles_origine": 980,
+   "uid": "73b31a00e15a48fd99721b80865ff70c",
+   "licence": "by"
+  },
+  "volcan": {
+   "fichier": "volcan.glb",
+   "octets": 96112,
+   "triangles": 20000,
+   "triangles_origine": 118919,
+   "uid": "a091df401e8b40c0869a67ef6321328c",
+   "licence": "by"
+  },
+  "montagne": {
+   "fichier": "montagne.glb",
+   "octets": 67640,
+   "triangles": 17707.333333333332,
+   "triangles_origine": 25787.333333333332,
+   "uid": "2595a9b548bf4679808d5515935caa7b",
+   "licence": "by"
+  },
+  "riviere": {
+   "fichier": "riviere.glb",
+   "octets": 106204,
+   "triangles": 19990,
+   "triangles_origine": 1000000,
+   "uid": "1039feb7cda74956b1c9b277f6219c2e",
+   "licence": "by"
+  },
+  "nuage": {
+   "fichier": "nuage.glb",
+   "octets": 185320,
+   "triangles": 4598,
+   "triangles_origine": 4598,
+   "uid": "251b2387a91040a98da7b51bc5ca686e",
+   "licence": "by"
+  },
+  "globe": {
+   "fichier": "globe.glb",
+   "octets": 10428,
+   "triangles": 1920,
+   "triangles_origine": 1920,
+   "uid": "c5a9e43bf8c744e394b916dcefc0b0af",
+   "licence": "by"
+  },
+  "planete": {
+   "fichier": "planete.glb",
+   "octets": 28700,
+   "triangles": 5888,
+   "triangles_origine": 5888,
+   "uid": "a30ff3a5f4f3477d87fc534e0d1df7e2",
+   "licence": "by"
+  },
+  "roche": {
+   "fichier": "roche.glb",
+   "octets": 50468,
+   "triangles": 11074,
+   "triangles_origine": 11074,
+   "uid": "4e0d1490192d4d488f1041ff4ff9acf2",
+   "licence": "by"
+  },
+  "cristal": {
+   "fichier": "cristal.glb",
+   "octets": 96104,
+   "triangles": 19998,
+   "triangles_origine": 1012208,
+   "uid": "73146e37b9814b8fac6da5aa130f81f3",
+   "licence": "by"
+  },
+  "goutte": {
+   "fichier": "goutte.glb",
+   "octets": 30164,
+   "triangles": 8144,
+   "triangles_origine": 8144,
+   "uid": "51f585fb1cc04691bd390bc10d383168",
+   "licence": "by"
+  },
+  "pyramide": {
+   "fichier": "pyramide.glb",
+   "octets": 9436,
+   "triangles": 1620,
+   "triangles_origine": 1620,
+   "uid": "6573d5c6792c44889cf7d71ba87ef68f",
+   "licence": "by"
+  },
+  "chateau": {
+   "fichier": "chateau.glb",
+   "octets": 109192,
+   "triangles": 19996,
+   "triangles_origine": 2000000,
+   "uid": "5c77188b8a67400187ca68b5115bed8c",
+   "licence": "by"
+  },
+  "temple": {
+   "fichier": "temple.glb",
+   "octets": 79692,
+   "triangles": 19554,
+   "triangles_origine": 335422,
+   "uid": "61b663c7ef5f48948af624410c364540",
+   "licence": "by"
+  },
+  "statue": {
+   "fichier": "statue.glb",
+   "octets": 80568,
+   "triangles": 19932,
+   "triangles_origine": 63058,
+   "uid": "e15aa13e83ee4ba7b2f702bb9138ffa1",
+   "licence": "by"
+  },
+  "piece": {
+   "fichier": "piece.glb",
+   "octets": 98152,
+   "triangles": 20000,
+   "triangles_origine": 180000,
+   "uid": "75c50060d8544b1fb283f6a80cbceb1f",
+   "licence": "by"
+  },
+  "vase": {
+   "fichier": "vase.glb",
+   "octets": 86576,
+   "triangles": 19999,
+   "triangles_origine": 45910,
+   "uid": "1ac4581e09b04ea6968a50e404a781ce",
+   "licence": "by"
+  },
+  "livre": {
+   "fichier": "livre.glb",
+   "octets": 2968,
+   "triangles": 258,
+   "triangles_origine": 258,
+   "uid": "03f935f1c9174cfdbcc512db947395ec",
+   "licence": "by"
+  },
+  "parchemin": {
+   "fichier": "parchemin.glb",
+   "octets": 13180,
+   "triangles": 2640,
+   "triangles_origine": 2640,
+   "uid": "8f383d36da0e494a9cea4929d872eee7",
+   "licence": "by"
+  },
+  "tracteur": {
+   "fichier": "tracteur.glb",
+   "octets": 82084,
+   "triangles": 19947,
+   "triangles_origine": 522424,
+   "uid": "60fa82cf22c542089421f7cb54e01f93",
+   "licence": "by"
+  },
+  "charrue": {
+   "fichier": "charrue.glb",
+   "octets": 100196,
+   "triangles": 19910,
+   "triangles_origine": 285459,
+   "uid": "f09363172a0f436c8eac7876acf6e212",
+   "licence": "by"
+  },
+  "puits": {
+   "fichier": "puits.glb",
+   "octets": 7556,
+   "triangles": 1236,
+   "triangles_origine": 1236,
+   "uid": "64d453f5c70e4e009e195e20af399335",
+   "licence": "by"
+  },
+  "panneau solaire": {
+   "fichier": "panneau_solaire.glb",
+   "octets": 46564,
+   "triangles": 9650,
+   "triangles_origine": 9650,
+   "uid": "3cac37e2da1a4ebfb03f41d62da83f75",
+   "licence": "by"
+  },
+  "eolienne": {
+   "fichier": "eolienne.glb",
+   "octets": 536556,
+   "triangles": 12598,
+   "triangles_origine": 12598,
+   "uid": "de33ad9f7d364c628e08008b6d0a2561",
+   "licence": "by"
+  },
+  "pont": {
+   "fichier": "pont.glb",
+   "octets": 75788,
+   "triangles": 19672,
+   "triangles_origine": 128206,
+   "uid": "7c98fb287a8f4b9b99c2236ab40a560e",
+   "licence": "by"
+  },
+  "barrage": {
+   "fichier": "barrage.glb",
+   "octets": 105768,
+   "triangles": 20000,
+   "triangles_origine": 365165,
+   "uid": "2be951293a1447e08d48e4410c398c2e",
+   "licence": "by"
+  },
+  "microscope": {
+   "fichier": "microscope.glb",
+   "octets": 140808,
+   "triangles": 19668,
+   "triangles_origine": 103618,
+   "uid": "fb21c4f65bf0461f9ff0b6f2b70331ff",
+   "licence": "by-sa"
+  },
+  "maison": {
+   "fichier": "maison.glb",
+   "octets": 14156,
+   "triangles": 3032,
+   "triangles_origine": 3032,
+   "uid": "30eb637595a541dea97641cb465b3ab8",
+   "licence": "by"
+  },
+  "outil": {
+   "fichier": "outil.glb",
+   "octets": 5864,
+   "triangles": 994,
+   "triangles_origine": 994,
+   "uid": "cdfabbef2573450190120ae3c2e82042",
+   "licence": "by"
+  }
+ }
+}

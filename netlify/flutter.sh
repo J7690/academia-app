@@ -26,3 +26,6 @@ cp "$LECTEUR/index.html" "$LECTEUR/lecteur.js" build/web/lecteur/
 cp -r "$LECTEUR/vendor" build/web/lecteur/
 cp "$LECTEUR/assets/corps.json" build/web/lecteur/assets/
 cp ../academia_bobodo_backend/studio_visuel/contours/index_objets.json build/web/lecteur/assets/
+# Les objets du sujet ALLÉGÉS (≈ 100 Ko chacun au lieu de 4,9 Mo en médiane),
+# servis par le même site que le lecteur : outils_objets/publier_objets_legers.mjs.
+cp -r "$LECTEUR/assets/objets" build/web/lecteur/assets/

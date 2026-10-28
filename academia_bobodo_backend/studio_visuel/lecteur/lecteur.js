@@ -26,6 +26,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 // ── Paliers, réglés sur la mesure du TECNO ───────────────────────────────
 export const PALIERS = {
@@ -218,6 +219,20 @@ function matiereVerre(couleur, force) {
 
 /** Un objet = peau de verre + arêtes + sommets. Un maillage dense ne garde que
  *  ses arêtes marquées : sinon le halo le fond en aplat blanc (ETAT §4.2 bis). */
+/** Les objets allégés gardent leurs positions en entiers 16 bits normalisés
+ *  (quantification glTF). `applyMatrix4` y écrirait le résultat EN ENTIERS, écrêtés
+ *  à [-1, 1] : mesuré le 28/10, l'oiseau allégé donnait un écran blanc. On repasse
+ *  donc en flottants avant toute transformation. */
+function enFlottants(geo) {
+  const a = geo.attributes.position;
+  if (a && !(a.array instanceof Float32Array)) {
+    const f = new Float32Array(a.count * 3);
+    for (let i = 0; i < a.count; i++) { f[3 * i] = a.getX(i); f[3 * i + 1] = a.getY(i); f[3 * i + 2] = a.getZ(i); }
+    geo.setAttribute('position', new THREE.BufferAttribute(f, 3));
+  }
+  return geo;
+}
+
 function habiller(geo, ctx, role) {
   if (!geo.attributes.normal) geo.computeVertexNormals();
   const g = new THREE.Group();
@@ -397,7 +412,7 @@ const VERBES = {
     o.scene.updateMatrixWorld(true);
     o.scene.traverse((n) => {
       if (n.isMesh && n.geometry) {
-        const geo = n.geometry.clone(); geo.applyMatrix4(n.matrixWorld);
+        const geo = enFlottants(n.geometry.clone()); geo.applyMatrix4(n.matrixWorld);
         g.add(habiller(geo, ctx, role));
       }
     });
@@ -694,18 +709,24 @@ export function creerLecteur(toile, { corps = null } = {}) {
    *  370 Mo ; « rivière » a tenu le TECNO 25 s sans rien afficher.
    *  `delaiMs` borne l'ATTENTE, pas le téléchargement : un objet en retard est
    *  encore rangé à son arrivée, et sert aux scènes pas encore construites. */
-  async function prechargerObjets(capsule, index, delaiMs = 25000, plafondOctets = Infinity) {
+  /*  `legers` : l'index des objets ALLÉGÉS servis à côté du lecteur
+   *  (assets/objets/, ≈ 100 Ko chacun, cf. outils_objets/publier_objets_legers.mjs).
+   *  Il passe AVANT l'original d'Objaverse ; son poids y est écrit, donc pas de HEAD. */
+  async function prechargerObjets(capsule, index, delaiMs = 25000, plafondOctets = Infinity, legers = null, baseLegers = './assets/objets/') {
     const termes = new Set();
     for (const s of capsule.scenes) for (const g of s.gestes) if (g.verbe === 'convoquer') termes.add(g.parametres?.terme);
-    const loader = new GLTFLoader(), rapport = [];
+    const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder), rapport = [];
     await Promise.all([...termes].filter(Boolean).map(async (terme) => {
-      const resolu = capsule.objets?.[terme] || (index?.termes?.[terme] || [])[0];
+      const leger = legers?.termes?.[terme];
+      const resolu = capsule.objets?.[terme]
+        || (leger && { ...leger, url: baseLegers + leger.fichier })
+        || (index?.termes?.[terme] || [])[0];
       if (!resolu) { rapport.push(`${terme} : absent de l'index`); return; }
       const url = resolu.url || BASE_OBJETS + resolu.chemin;
       try {
         if (plafondOctets < Infinity) {
           // Taille inconnue = écarté : on ne fait pas payer à l'étudiant un téléchargement sans borne.
-          const octets = Number((await fetch(url, { method: 'HEAD' })).headers.get('content-length')) || 0;
+          const octets = resolu.octets || Number((await fetch(url, { method: 'HEAD' })).headers.get('content-length')) || 0;
           if (!octets || octets > plafondOctets) {
             rapport.push(`${terme} : écarté (${octets ? (octets / 1e6).toFixed(1) + ' Mo' : 'taille inconnue'})`);
             return;

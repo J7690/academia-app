@@ -101,7 +101,7 @@ const P = new URLSearchParams(location.search);
 const APP = P.get('app') === '1';
 if (APP) document.body.classList.add('app');
 const M = { premiere: null, gpu: '—', webgl: '—', bascule: null, export: null, stats: { complet: [], leger: [] }, voix: '—', objets: '—' };
-let lecteur = null, capsule = null, index = null;
+let lecteur = null, capsule = null, index = null, legers = null;
 let audioCtx = null, voix = null, source = null, depart = 0, enLecture = false, tFixe = 0.6, horlogeMuette = 0;
 let dernier = 0, fenetre = [], debutLecture = 0, occupe = false;
 
@@ -362,10 +362,13 @@ async function chargerCapsule(source, urlVoix) {
       if (index) break;
       try { index = await json(chemin); } catch (e) { index = null; }
     }
+    // Les objets ALLÉGÉS (≈ 100 Ko, servis à côté du lecteur) passent avant les
+    // originaux d'Objaverse ; sans leur index, on retombe sur les originaux.
+    if (!legers) { try { legers = await json('./assets/objets/index.json'); } catch (e) { legers = null; } }
     // Sur le téléphone (mode application) : 3 Mo au plus par objet, et 8 s
     // d'attente au plus avant de jouer — l'application abandonne à 25 s.
-    const rapport = APP ? await lecteur.prechargerObjets(capsule, index, 8000, 3e6)
-      : await lecteur.prechargerObjets(capsule, index);
+    const rapport = APP ? await lecteur.prechargerObjets(capsule, index, 8000, 3e6, legers)
+      : await lecteur.prechargerObjets(capsule, index, 25000, Infinity, legers);
     M.objets = rapport.join(' ; ') || '—';
   }
   // La voix : un seul fichier (v1) ou une par scène (v2). Dans les deux cas,
