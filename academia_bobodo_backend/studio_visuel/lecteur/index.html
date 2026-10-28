@@ -362,7 +362,10 @@ async function chargerCapsule(source, urlVoix) {
       if (index) break;
       try { index = await json(chemin); } catch (e) { index = null; }
     }
-    const rapport = await lecteur.prechargerObjets(capsule, index);
+    // Sur le téléphone (mode application) : 3 Mo au plus par objet, et 8 s
+    // d'attente au plus avant de jouer — l'application abandonne à 25 s.
+    const rapport = APP ? await lecteur.prechargerObjets(capsule, index, 8000, 3e6)
+      : await lecteur.prechargerObjets(capsule, index);
     M.objets = rapport.join(' ; ') || '—';
   }
   // La voix : un seul fichier (v1) ou une par scène (v2). Dans les deux cas,

@@ -686,8 +686,15 @@ export function creerLecteur(toile, { corps = null } = {}) {
     return s;
   }
 
-  /** Télécharge les objets `convoquer` d'une capsule (v1 : par l'index ; v2 : `objets` résolus). */
-  async function prechargerObjets(capsule, index, delaiMs = 25000) {
+  /** Télécharge les objets `convoquer` d'une capsule (v1 : par l'index ; v2 : `objets` résolus).
+   *
+   *  `plafondOctets` : sur le téléphone, un objet plus lourd est ÉCARTÉ avant
+   *  téléchargement — la scène se joue sans lui (chaque geste est isolé). Mesuré
+   *  le 28/10 : médiane de l'index 4,9 Mo, « rivière » 35,8 Mo, « neurone »
+   *  370 Mo ; « rivière » a tenu le TECNO 25 s sans rien afficher.
+   *  `delaiMs` borne l'ATTENTE, pas le téléchargement : un objet en retard est
+   *  encore rangé à son arrivée, et sert aux scènes pas encore construites. */
+  async function prechargerObjets(capsule, index, delaiMs = 25000, plafondOctets = Infinity) {
     const termes = new Set();
     for (const s of capsule.scenes) for (const g of s.gestes) if (g.verbe === 'convoquer') termes.add(g.parametres?.terme);
     const loader = new GLTFLoader(), rapport = [];
@@ -696,8 +703,19 @@ export function creerLecteur(toile, { corps = null } = {}) {
       if (!resolu) { rapport.push(`${terme} : absent de l'index`); return; }
       const url = resolu.url || BASE_OBJETS + resolu.chemin;
       try {
-        const gltf = await Promise.race([loader.loadAsync(url), new Promise((_, r) => setTimeout(() => r(new Error('délai dépassé')), delaiMs))]);
-        etat.objets.set(terme, { scene: gltf.scene, attribution: resolu.attribution || `Modèle 3D : sketchfab.com/3d-models/${resolu.uid} (CC-${String(resolu.licence || 'by').toUpperCase()})` });
+        if (plafondOctets < Infinity) {
+          // Taille inconnue = écarté : on ne fait pas payer à l'étudiant un téléchargement sans borne.
+          const octets = Number((await fetch(url, { method: 'HEAD' })).headers.get('content-length')) || 0;
+          if (!octets || octets > plafondOctets) {
+            rapport.push(`${terme} : écarté (${octets ? (octets / 1e6).toFixed(1) + ' Mo' : 'taille inconnue'})`);
+            return;
+          }
+        }
+        const ranger = (gltf) => etat.objets.set(terme, { scene: gltf.scene, attribution: resolu.attribution || `Modèle 3D : sketchfab.com/3d-models/${resolu.uid} (CC-${String(resolu.licence || 'by').toUpperCase()})` });
+        const chargement = loader.loadAsync(url);
+        const gltf = await Promise.race([chargement, new Promise((_, r) => setTimeout(() => r(new Error('délai dépassé')), delaiMs))])
+          .catch((e) => { chargement.then(ranger).catch(() => {}); throw e; });
+        ranger(gltf);
         rapport.push(`${terme} : chargé`);
       } catch (e) { rapport.push(`${terme} : ${e.message}`); }
     }));
