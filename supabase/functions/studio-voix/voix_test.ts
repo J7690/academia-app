@@ -14,6 +14,14 @@ Deno.test('scenesAVoixer remplace un identifiant douteux et borne le texte', () 
   assertEquals(r[0].texte.length, MAX_CARACTERES);
 });
 
+Deno.test('scenesAVoixer lit la capsule rangée sous storyboard, comme en base', () => {
+  // Forme réelle de app.studio_jobs.manifeste (travail 54da352d, 28/10/2026).
+  const r = scenesAVoixer({ discipline: 'scientific', project_id: 'p', storyboard: { titre: 'Le cycle de l\'eau', scenes: [
+    { id: 's1', narration: 'L\'eau couvre la Terre.' }, { id: 's2', narration: 'Elle s\'évapore.' },
+  ] } });
+  assertEquals(r.map((s) => s.id), ['s1', 's2']);
+});
+
 Deno.test('scenesAVoixer ne plante pas sur un manifeste vide ou faux', () => {
   assertEquals(scenesAVoixer(null), []);
   assertEquals(scenesAVoixer({ scenes: 'non' }), []);

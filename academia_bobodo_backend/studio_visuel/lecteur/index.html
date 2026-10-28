@@ -471,7 +471,11 @@ async function demarrer() {
       if (!r.ok) throw Object.assign(new Error(`capsule : HTTP ${r.status}`), { code: 'capsule' });
       const lignes = await r.json();
       if (!lignes.length || !lignes[0].manifeste) throw Object.assign(new Error('capsule introuvable'), { code: 'capsule' });
-      await chargerCapsule(lignes[0].manifeste, null);
+      // En base, la capsule est rangée sous `storyboard` (à côté de
+      // `discipline` et `project_id`). La lire à la racine donnait 0 scène :
+      // essai réel du 28/10 sur le TECNO, travail 54da352d.
+      const m = lignes[0].manifeste;
+      await chargerCapsule(m.storyboard && typeof m.storyboard === 'object' ? m.storyboard : m, null);
     } else {
       await chargerCapsule(P.get('capsule') || './exemple/cerveau_v2.json', P.get('voix'));
       if (P.get('verifier')) { const r = verifierCapsule(); afficherVerif(r); envoyer('verification', { scenes: r }); }

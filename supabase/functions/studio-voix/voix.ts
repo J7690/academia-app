@@ -5,10 +5,20 @@ export const PARALLELE_MAX = 8;          // au-delà, on attend : une capsule a 
 
 export interface SceneAVoixer { rang: number; id: string; texte: string; }
 
+/** La capsule d'un manifeste. En base, `studio_creer_travail_etudiant` la range
+ *  sous `storyboard`, à côté de `discipline` et `project_id` ; l'appel interne
+ *  peut la passer telle quelle. Mesuré le 28/10 sur le travail 54da352d : lire
+ *  `manifeste.scenes` donnait 0 scène, donc « aucune narration ». */
+export function capsuleDuManifeste(manifeste: unknown): { scenes?: unknown[] } | null {
+  const m = manifeste as { storyboard?: unknown; scenes?: unknown } | null;
+  if (m && typeof m.storyboard === 'object' && m.storyboard !== null) return m.storyboard as { scenes?: unknown[] };
+  return (m as { scenes?: unknown[] }) ?? null;
+}
+
 /** Les scènes qui ont quelque chose à dire, dans l'ordre. Une scène sans
  *  narration n'est pas une erreur : elle sera jouée en silence, et le lecteur le dit. */
 export function scenesAVoixer(manifeste: unknown): SceneAVoixer[] {
-  const scenes = (manifeste as { scenes?: unknown[] })?.scenes;
+  const scenes = capsuleDuManifeste(manifeste)?.scenes;
   if (!Array.isArray(scenes)) return [];
   const out: SceneAVoixer[] = [];
   scenes.forEach((s, rang) => {
