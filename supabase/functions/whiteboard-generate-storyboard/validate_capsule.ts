@@ -33,7 +33,42 @@ export const VERBES = [
   // dessine un volcan point par point, alors il rend une forme neutre.
   "convoquer",
   "silhouetter", "revolutionner", "extruder", "sculpter", "napper", "ecrire",
+  // PHENOMENES ET ACCESSOIRES (28/10/2026). Le cours « le feu » (travail
+  // 818a6e6e) ne montrait ni flamme, ni air, ni combustible : aucun verbe ne
+  // savait faire BOUGER quelque chose. Ceux-ci sont des equations du lecteur
+  // (lecteur.js, PHENOMENES et ACCESSOIRES) — aucun fichier, aucune licence.
+  "flamme", "ecoulement", "pluie", "souffle", "foudre",
+  "fleche", "etiquette", "molecule",
 ] as const;
+
+// VALEUR COUPLEE avec MOLECULES de lecteur.js et la liste de prompt_capsule.ts :
+// une formule absente ici serait ecartee, absente du lecteur elle ne s'afficherait pas.
+export const MOLECULES = ["H2", "O2", "N2", "CO", "CO2", "H2O", "CH4", "NH3", "NaCl"] as const;
+const COULEURS_SOUFFLE = ["bleu", "blanc", "rouge"] as const;
+
+// LES 69 TERMES DE `convoquer` (29/10/2026). VALEUR COUPLEE avec
+// contours/index_objets.json et la liste ecrite dans prompt_capsule.ts :
+// validate_capsule_termes_test.ts compare les trois. Avant elle, une capsule
+// « le feu » demandant « bois » passait avec ZERO correction, et l'objet
+// manquait a l'image sans que personne ne l'ait dit.
+export const TERMES_OBJETS = [
+  "adn", "aimant", "arbre", "atome", "bacterie", "balance", "barrage", "cellule",
+  "cerveau", "charrue", "chateau", "circuit", "coeur", "corps humain", "crane",
+  "cristal", "dent", "engrenage", "eolienne", "estomac", "feuille", "fleur",
+  "foie", "fruit", "germination", "globe", "goutte", "graine", "insecte",
+  "livre", "maison", "microscope", "molecule", "montagne", "muscle", "neurone",
+  "nuage", "oeil", "oiseau", "os", "outil", "panneau solaire", "parchemin",
+  "peau", "pendule", "piece", "pile", "planete", "plante", "poisson", "pont",
+  "poumon", "prisme", "puits", "pyramide", "racine", "rein", "ressort",
+  "riviere", "roche", "sang", "squelette", "statue", "temple", "thermometre",
+  "tracteur", "vase", "virus", "volcan",
+] as const;
+
+/** « Le Cœur », « rivière », « l'atome » -> l'écriture de l'index. */
+function termeCanonique(brut: string): string {
+  return brut.toLowerCase().replace(/œ/g, "oe").normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/^(le|la|les|un|une|des)\s+|^l['’]\s*/, "").replace(/\s+/g, " ").trim();
+}
 
 const BASES = ["ovoide", "sphere", "galet", "goutte", "lentille"] as const;
 
@@ -188,7 +223,16 @@ function validerGeste(brut: unknown, id: string, rang: number,
       corr.push(`${id}.g${rang}: convoquer sans terme, geste ecarte`);
       return null;
     }
-    p.terme = terme;
+    // Ecriture ramenee a celle de l'index ; un terme absent est GARDE (le
+    // moteur retombe sur une forme, le lecteur montre le reste de la scene)
+    // mais NOMME : l'objet ne viendra pas.
+    const canon = termeCanonique(terme);
+    if ((TERMES_OBJETS as readonly string[]).includes(canon)) {
+      p.terme = canon;
+    } else {
+      p.terme = terme;
+      corr.push(`${id}.g${rang}: objet « ${terme} » hors bibliotheque (69 termes), il ne s'affichera pas`);
+    }
     const taille = Number(pIn.taille);
     p.taille = Number.isFinite(taille) && taille > 0.2 && taille < 12
       ? taille : 2.0;
@@ -287,6 +331,69 @@ function validerGeste(brut: unknown, id: string, rang: number,
     }
     p.texte = texte.slice(0, 60);
     p.taille = borner(nombre(pIn.taille, 1.2), 0.4, 2.5);
+    p.position = point3(pIn.position) ?? [0, 0, 0];
+
+  } else if (verbe === "flamme") {
+    p.taille = borner(nombre(pIn.taille, 1.2), 0.3, 6);
+    p.position = point3(pIn.position) ?? [0, 0, 0];
+
+  } else if (verbe === "ecoulement") {
+    const chemin: [number, number, number][] = [];
+    for (const pt of (Array.isArray(pIn.chemin) ? pIn.chemin : [])) {
+      const q = point3(pt);
+      if (q && chemin.length < 12) chemin.push(q);
+    }
+    if (chemin.length < 2) {
+      // Pas de lit trace : un cours d'eau droit, plutot qu'aucune eau.
+      corr.push(`${id}.g${rang}: ecoulement sans chemin, lit droit par defaut`);
+      chemin.splice(0, chemin.length, [-3, 0, 0], [0, 0.5, 0], [3, 0, 0]);
+    }
+    p.chemin = chemin;
+    p.largeur = borner(nombre(pIn.largeur, 0.7), 0.1, 3);
+    p.cailloux = pIn.cailloux !== false;
+
+  } else if (verbe === "pluie") {
+    const z = point2(pIn.zone);
+    p.zone = z ? [borner(Math.abs(z[0]), 1, 12), borner(Math.abs(z[1]), 1, 12)] : [6, 4];
+    p.hauteur = borner(nombre(pIn.hauteur, 4), 1, 10);
+    p.intensite = borner(nombre(pIn.intensite, 1), 0.2, 2);
+    p.position = point3(pIn.position) ?? [0, 0, 0];
+
+  } else if (verbe === "souffle" || verbe === "foudre" || verbe === "fleche") {
+    // Trois verbes tendus d'un point a un autre.
+    const de = point3(pIn.de), vers = point3(pIn.vers);
+    if (!de || !vers) {
+      corr.push(`${id}.g${rang}: ${verbe} sans « de » et « vers », ecarte`);
+      return null;
+    }
+    p.de = de; p.vers = vers;
+    if (verbe === "souffle") {
+      const c = String(pIn.couleur ?? "bleu");
+      p.couleur = (COULEURS_SOUFFLE as readonly string[]).includes(c) ? c : "bleu";
+    }
+    const texte = String(pIn.texte ?? "").trim();
+    if (texte && verbe !== "foudre") p.texte = texte.slice(0, 30);
+
+  } else if (verbe === "etiquette") {
+    const texte = String(pIn.texte ?? "").trim();
+    if (!texte) {
+      corr.push(`${id}.g${rang}: etiquette sans texte, ecartee`);
+      return null;
+    }
+    p.texte = texte.slice(0, 30);
+    p.cible = point3(pIn.cible) ?? [0, 0, 0];
+    p.cote = pIn.cote === "gauche" ? "gauche" : "droite";
+
+  } else if (verbe === "molecule") {
+    // « O₂ », « o2 », « H2 O » : on ramene a l'ecriture du lecteur.
+    const brute = String(pIn.formule ?? "").replace(/[₀-₉]/g, (c) => String(c.charCodeAt(0) - 8320)).replace(/\s/g, "");
+    const formule = MOLECULES.find((m) => m.toLowerCase() === brute.toLowerCase());
+    if (!formule) {
+      corr.push(`${id}.g${rang}: molecule « ${brute || "absente"} » inconnue, ecartee`);
+      return null;
+    }
+    p.formule = formule;
+    p.taille = borner(nombre(pIn.taille, 1.4), 0.3, 6);
     p.position = point3(pIn.position) ?? [0, 0, 0];
   }
 

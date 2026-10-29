@@ -344,6 +344,267 @@ function panneauTexte(texte, hauteur, couleur = '#cfe3ff') {
   return m;
 }
 
+// ── Phénomènes et accessoires (phase B, 28/10/2026) ──────────────────────
+// Ce qui manquait au cours « le feu » (travail 818a6e6e) : rien ne brûlait,
+// rien ne coulait, l'air n'existait pas. Tout est ÉQUATION — aucun fichier,
+// aucune licence (doctrine de contours/fabriquer_contours.py) — et tout bouge
+// par `uTemps` : une fonction pure du temps, donc l'export reste image pour
+// image la lecture. Coordonnées des paramètres : celles de la capsule (z vers
+// le haut), converties par `v`.
+const alea = (i, k) => { const x = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); };
+const vec = (p, d = [0, 0, 0]) => { const [x, y, z] = Array.isArray(p) ? p : d; return v(+x || 0, +y || 0, +z || 0); };
+const borne = (x, a, b, d) => Math.max(a, Math.min(b, Number.isFinite(+x) ? +x : d));
+
+/** Un nuage de particules : `aAlea` (4 tirages fixes par particule) et des
+ *  positions de repos qui servent au CADRAGE (le shader, lui, les déplace). */
+function particules(n, graine, repos, matiere) {
+  const pos = new Float32Array(n * 3), a = new Float32Array(n * 4);
+  for (let i = 0; i < n; i++) {
+    for (let k = 0; k < 4; k++) a[i * 4 + k] = alea(i + graine, k);
+    const p = repos(i, a.subarray(i * 4, i * 4 + 4)); pos[i * 3] = p.x; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('aAlea', new THREE.BufferAttribute(a, 4));
+  const pts = new THREE.Points(geo, matiere); pts.frustumCulled = false;
+  return pts;
+}
+const POINT_ROND = `float d = length(gl_PointCoord-0.5); if(d>0.5) discard; float rond = smoothstep(0.5,0.0,d);`;
+
+/** Un polyligne échantillonné en N points réguliers, pour qu'un shader le parcoure. */
+function echantillonner(points, n = 48) {
+  const courbe = new THREE.CatmullRomCurve3(points, false, 'centripetal');
+  return courbe.getSpacedPoints(n - 1);
+}
+
+/** Atomes : rayon (Å, ramené) et liaisons des molécules courantes. Géométrie
+ *  réelle (angles et longueurs publiés), pas un dessin approximatif. */
+const ATOMES = { H: 0.32, C: 0.62, N: 0.58, O: 0.56, Na: 0.9, Cl: 0.8 };
+const MOLECULES = (() => {
+  const tetra = [[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]].map(([x, y, z]) => [x * 0.63, y * 0.63, z * 0.63]);
+  const a = 104.5 * Math.PI / 360, oh = 0.96;
+  return {
+    H2: [[['H', [-0.37, 0, 0]], ['H', [0.37, 0, 0]]], [[0, 1]]],
+    O2: [[['O', [-0.6, 0, 0]], ['O', [0.6, 0, 0]]], [[0, 1, 2]]],
+    N2: [[['N', [-0.55, 0, 0]], ['N', [0.55, 0, 0]]], [[0, 1, 3]]],
+    CO: [[['C', [-0.56, 0, 0]], ['O', [0.56, 0, 0]]], [[0, 1, 3]]],
+    CO2: [[['O', [-1.16, 0, 0]], ['C', [0, 0, 0]], ['O', [1.16, 0, 0]]], [[0, 1, 2], [1, 2, 2]]],
+    H2O: [[['O', [0, 0, 0]], ['H', [oh * Math.sin(a), 0, -oh * Math.cos(a)]], ['H', [-oh * Math.sin(a), 0, -oh * Math.cos(a)]]], [[0, 1], [0, 2]]],
+    CH4: [[['C', [0, 0, 0]], ...tetra.map((p) => ['H', p])], [[0, 1], [0, 2], [0, 3], [0, 4]]],
+    NH3: [[['N', [0, 0, 0.12]], ['H', [0.94, 0, -0.3]], ['H', [-0.47, 0.81, -0.3]], ['H', [-0.47, -0.81, -0.3]]], [[0, 1], [0, 2], [0, 3]]],
+    NaCl: [[['Na', [-1.18, 0, 0]], ['Cl', [1.18, 0, 0]]], [[0, 1]]],
+  };
+})();
+export const MOLECULES_CONNUES = Object.keys(MOLECULES);
+
+const PHENOMENES = {
+  /** Une flamme : particules qui montent, blanches à la base, rouges au sommet. */
+  flamme(p, ctx) {
+    const T = borne(p.taille, 0.3, 6, 1.2), n = Math.round(900 * (ctx.palier?.particules ?? 1));
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { ...ctx.communs, uT: { value: T } },
+      vertexShader: `attribute vec4 aAlea; uniform float uTemps, uEchelle, uT; varying float vH; varying float vA;
+        void main(){ float ph = fract(uTemps*(0.55+aAlea.x*0.6) + aAlea.y); vH = ph;
+          float r = uT*0.28*(1.0-ph*0.85)*sqrt(aAlea.z);
+          float ang = aAlea.w*6.283 + uTemps*(1.5+aAlea.x);
+          vec3 q = vec3(cos(ang)*r + 0.06*uT*sin(uTemps*7.0+aAlea.z*30.0)*ph, ph*uT*1.35, sin(ang)*r);
+          vec4 mv = modelViewMatrix*vec4(q,1.0); vA = smoothstep(0.0,0.08,ph)*(1.0-ph);
+          gl_PointSize = 0.05*uT*uEchelle*(1.2-ph)/max(0.1,-mv.z); gl_Position = projectionMatrix*mv; }`,
+      fragmentShader: `varying float vH; varying float vA; void main(){ ${POINT_ROND}
+          vec3 c = mix(vec3(1.0,0.85,0.55), mix(vec3(1.0,0.45,0.08), vec3(1.0,0.08,0.02), smoothstep(0.35,0.8,vH)), smoothstep(0.0,0.3,vH));
+          gl_FragColor = vec4(c*rond*vA*1.5, 1.0); }`,
+      transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const g = new THREE.Group();
+    g.add(particules(n, 101, (i, a) => new THREE.Vector3((a[0] - 0.5) * T * 0.5, a[1] * T * 1.35, (a[2] - 0.5) * T * 0.5), mat));
+    return placer(g, p);
+  },
+
+  /** De l'eau qui coule le long d'un chemin, avec des cailloux sur les rives. */
+  ecoulement(p, ctx) {
+    const brut = Array.isArray(p.chemin) && p.chemin.length >= 2 ? p.chemin : [[-3, 0, 0], [0, 0.6, 0], [3, 0, 0]];
+    const pts = echantillonner(brut.slice(0, 12).map((q) => vec(q)), 48);
+    const L = borne(p.largeur, 0.1, 3, 0.7), n = Math.round(1400 * (ctx.palier?.particules ?? 1));
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { ...ctx.communs, uChemin: { value: pts }, uL: { value: L } },
+      vertexShader: `attribute vec4 aAlea; uniform float uTemps, uEchelle, uL; uniform vec3 uChemin[48]; varying float vA;
+        void main(){ float s = fract(uTemps*(0.08+aAlea.x*0.05) + aAlea.y) * 47.0;
+          int i = int(floor(s)); float f = fract(s);
+          vec3 a = uChemin[i], b = uChemin[min(i+1,47)];
+          vec3 dir = normalize(b - a + vec3(1e-4)); vec3 lat = normalize(cross(dir, vec3(0.0,1.0,0.0)) + vec3(1e-4));
+          vec3 q = mix(a, b, f) + lat*(aAlea.z-0.5)*uL + vec3(0.0, 0.03*sin(uTemps*3.0+aAlea.w*20.0), 0.0);
+          vec4 mv = modelViewMatrix*vec4(q,1.0); vA = 0.55 + 0.45*sin(uTemps*4.0 + aAlea.w*40.0);
+          gl_PointSize = 0.03*uEchelle*(0.6+aAlea.w)/max(0.1,-mv.z); gl_Position = projectionMatrix*mv; }`,
+      fragmentShader: `varying float vA; void main(){ ${POINT_ROND} gl_FragColor = vec4(vec3(0.55,0.8,1.0)*rond*vA, 1.0); }`,
+      transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const g = new THREE.Group();
+    g.add(particules(n, 202, (i, a) => pts[Math.floor(a[1] * 47)], mat));
+    // Les rives : deux traits, et des cailloux de part et d'autre.
+    for (const cote of [-1, 1]) {
+      const bord = pts.map((q, i) => {
+        const d = pts[Math.min(i + 1, 47)].clone().sub(pts[Math.max(i - 1, 0)]).normalize();
+        return q.clone().add(new THREE.Vector3().crossVectors(d, new THREE.Vector3(0, 1, 0)).normalize().multiplyScalar(cote * L * 0.62));
+      });
+      g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(bord), matiereAretes(ctx.communs, ctx.chaleur, 0.35)));
+      if (p.cailloux !== false) for (let k = 0; k < 9; k++) {
+        const q = bord[Math.floor(alea(k, cote + 3) * 47)];
+        const geo = new THREE.IcosahedronGeometry(0.08 + 0.14 * alea(k, cote + 5), 0);
+        geo.scale(1, 0.6, 0.8 + 0.4 * alea(k, 7));
+        const c = habiller(geo, ctx, 'structure'); c.position.copy(q).add(new THREE.Vector3(0, 0.04, 0));
+        c.rotation.y = alea(k, 9) * 6.28; g.add(c);
+      }
+    }
+    g.userData.sansEntree = true; // posé en coordonnées du monde : il apparaît, sans grandir depuis l'origine
+    return g;
+  },
+
+  /** La pluie : des traits qui tombent, en boucle. */
+  pluie(p, ctx) {
+    const [lx, ly] = Array.isArray(p.zone) ? p.zone : [6, 4];
+    const H = borne(p.hauteur, 1, 10, 4), n = Math.round(600 * borne(p.intensite, 0.2, 2, 1) * (ctx.palier?.particules ?? 1));
+    const pos = new Float32Array(n * 6), a = new Float32Array(n * 8), bout = new Float32Array(n * 2);
+    for (let i = 0; i < n; i++) for (let e = 0; e < 2; e++) {
+      for (let k = 0; k < 4; k++) a[(i * 2 + e) * 4 + k] = alea(i + 303, k);
+      bout[i * 2 + e] = e;
+      pos.set([(alea(i + 303, 0) - 0.5) * lx, alea(i + 303, 1) * H, (alea(i + 303, 2) - 0.5) * ly], (i * 2 + e) * 3);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('aAlea', new THREE.BufferAttribute(a, 4));
+    geo.setAttribute('aBout', new THREE.BufferAttribute(bout, 1));
+    const lignes = new THREE.LineSegments(geo, new THREE.ShaderMaterial({
+      uniforms: { ...ctx.communs, uH: { value: H } },
+      vertexShader: `attribute vec4 aAlea; attribute float aBout; uniform float uTemps, uH; varying float vA;
+        void main(){ float y = uH*(1.0 - fract(uTemps*(0.7+aAlea.w*0.5) + aAlea.y)) + aBout*0.18;
+          vec3 q = vec3(position.x, y, position.z); vA = aBout;
+          gl_Position = projectionMatrix*modelViewMatrix*vec4(q,1.0); }`,
+      // Discrète : mesurée le 28/10, une pluie à pleine intensité noyait la rivière.
+      fragmentShader: `varying float vA; void main(){ gl_FragColor = vec4(vec3(0.6,0.8,1.0)*(0.06+0.3*vA), 1.0); }`,
+      transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+    lignes.frustumCulled = false;
+    const g = new THREE.Group(); g.add(lignes);
+    return placer(g, p);
+  },
+
+  /** Un souffle : de l'air, du vent, un gaz, de la chaleur — de `de` vers `vers`. */
+  souffle(p, ctx) {
+    const A = vec(p.de, [-2.5, 0, 0.5]), B = vec(p.vers, [2.5, 0, 0.5]);
+    const teinte = { rouge: [1.0, 0.25, 0.08], blanc: [0.85, 0.92, 1.0], bleu: [0.35, 0.65, 1.0] }[p.couleur] || [0.75, 0.88, 1.0];
+    const n = Math.round(700 * (ctx.palier?.particules ?? 1)), ecart = A.distanceTo(B) * 0.12;
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { ...ctx.communs, uA: { value: A }, uB: { value: B }, uE: { value: ecart }, uC: { value: new THREE.Vector3(...teinte) } },
+      vertexShader: `attribute vec4 aAlea; uniform float uTemps, uEchelle, uE; uniform vec3 uA, uB; varying float vA;
+        void main(){ float s = fract(uTemps*(0.12+aAlea.x*0.1) + aAlea.y);
+          vec3 q = mix(uA, uB, s) + uE*vec3(sin(s*9.0+aAlea.z*20.0+uTemps), cos(s*7.0+aAlea.w*20.0-uTemps*0.8), sin(s*5.0+aAlea.x*30.0))*(0.3+aAlea.w);
+          vec4 mv = modelViewMatrix*vec4(q,1.0); vA = smoothstep(0.0,0.1,s)*smoothstep(1.0,0.75,s);
+          gl_PointSize = 0.028*uEchelle*(0.5+aAlea.z)/max(0.1,-mv.z); gl_Position = projectionMatrix*mv; }`,
+      fragmentShader: `uniform vec3 uC; varying float vA; void main(){ ${POINT_ROND} gl_FragColor = vec4(uC*rond*vA, 1.0); }`,
+      transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const g = new THREE.Group();
+    g.add(particules(n, 404, (i, a) => A.clone().lerp(B, a[1]), mat));
+    if (p.texte) g.add(placerMonde(panneauTexte(String(p.texte).slice(0, 30), 0.4), A.clone().lerp(B, 0.5).add(new THREE.Vector3(0, ecart * 2.2, 0))));
+    g.userData.sansEntree = true; // posé en coordonnées du monde : il apparaît, sans grandir depuis l'origine
+    return g;
+  },
+
+  /** La foudre : un éclair brisé qui frappe toutes les 2,5 s. */
+  foudre(p, ctx) {
+    const A = vec(p.de, [0, 0, 4]), B = vec(p.vers, [0, 0, 0]);
+    let pts = [A, B];
+    for (let niv = 0; niv < 5; niv++) {
+      const s = [pts[0]];
+      for (let i = 1; i < pts.length; i++) {
+        const m = pts[i - 1].clone().lerp(pts[i], 0.5), l = pts[i - 1].distanceTo(pts[i]) * 0.22;
+        m.add(new THREE.Vector3((alea(niv * 31 + i, 1) - 0.5) * l, 0, (alea(niv * 31 + i, 2) - 0.5) * l));
+        s.push(m, pts[i]);
+      }
+      pts = s;
+    }
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { ...ctx.communs },
+      vertexShader: `void main(){ gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+      fragmentShader: `uniform float uTemps; void main(){ float c = mod(uTemps, 2.5);
+          float f = (c < 0.12 ? 1.0 : 0.0) + (c > 0.2 && c < 0.28 ? 0.7 : 0.0) + 0.06;
+          gl_FragColor = vec4(vec3(0.8,0.9,1.0)*f*1.6, 1.0); }`,
+      transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const g = new THREE.Group(); g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat));
+    g.userData.sansEntree = true; // posé en coordonnées du monde : il apparaît, sans grandir depuis l'origine
+    return g;
+  },
+};
+
+/** Place un objet à une position déjà convertie (monde). */
+const placerMonde = (o, q) => { o.position.copy(q); return o; };
+
+const ACCESSOIRES = {
+  /** Une flèche qui SE TRACE de `de` à `vers`, avec son mot au milieu. */
+  fleche(p, ctx) {
+    const A = vec(p.de, [-1.5, 0, 0]), B = vec(p.vers, [1.5, 0, 0]);
+    const d = B.clone().sub(A), L = d.length() || 1;
+    const corps = new THREE.Group();
+    // Base de la tige en 0 : elle doit grandir depuis `de`, pas depuis son milieu
+    // (mesuré le 28/10 : la tige s'arrêtait avant la pointe).
+    const tige = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1, 6).translate(0, 0.5, 0), new THREE.MeshBasicMaterial({ color: 0xffb07a, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+    corps.add(tige);
+    const pointe = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.24, 10), tige.material); corps.add(pointe);
+    const g = new THREE.Group(); g.position.copy(A); g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.clone().normalize());
+    g.add(corps);
+    const out = new THREE.Group(); out.add(g);
+    if (p.texte) out.add(placerMonde(panneauTexte(String(p.texte).slice(0, 30), 0.38, '#ffd2b0'), A.clone().lerp(B, 0.5).add(new THREE.Vector3(0, 0.35, 0))));
+    out.userData.animer = (sec) => {
+      const k = lisse(Math.min(1, Math.max(0, sec / 0.9)));
+      tige.scale.y = Math.max(0.001, (L - 0.2) * k); pointe.position.y = (L - 0.2) * k + 0.12; pointe.visible = k > 0.02;
+    };
+    out.userData.sansEntree = true;
+    return out;
+  },
+
+  /** Une étiquette : un trait part du point visé, le mot s'affiche au bout. */
+  etiquette(p, ctx) {
+    const C = vec(p.cible, [0, 0, 0]), sens = p.cote === 'gauche' ? -1 : 1;
+    const bout = C.clone().add(new THREE.Vector3(sens * 1.1, 0.7, 0));
+    const g = new THREE.Group();
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([C, bout]), matiereAretes(ctx.communs, ctx.chaleur, 0.6)));
+    const pastille = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), new THREE.MeshBasicMaterial({ color: 0xcfe3ff }));
+    g.add(placerMonde(pastille, C));
+    const m = panneauTexte(String(p.texte || '').slice(0, 30) || '…', 0.36);
+    m.position.copy(bout).add(new THREE.Vector3(sens * 0.4, 0.05, 0)); g.add(m);
+    g.userData.sansEntree = true; // posé en coordonnées du monde : il apparaît, sans grandir depuis l'origine
+    return g;
+  },
+
+  /** Une molécule en boules et bâtonnets, à sa géométrie réelle. */
+  molecule(p, ctx, role) {
+    const f = String(p.formule || '').replace(/[₀-₉]/g, (c) => String(c.charCodeAt(0) - 8320)).replace(/\s/g, '');
+    const def = MOLECULES[f];
+    if (!def) throw new Error(`molécule « ${p.formule} » inconnue (connues : ${MOLECULES_CONNUES.join(', ')})`);
+    const [atomes, liaisons] = def;
+    const g = new THREE.Group();
+    const P = atomes.map(([, q]) => v(q[0], q[1], q[2]));
+    for (const [i, j, ordre = 1] of liaisons) for (let k = 0; k < ordre; k++) {
+      const a = P[i].clone(), b = P[j].clone(), d = b.clone().sub(a);
+      const decal = new THREE.Vector3(0, (k - (ordre - 1) / 2) * 0.12, 0);
+      const cyl = new THREE.CylinderGeometry(0.035, 0.035, d.length(), 6); cyl.translate(0, d.length() / 2, 0);
+      const b1 = new THREE.Mesh(cyl, new THREE.MeshBasicMaterial({ color: 0x4f8cff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+      b1.position.copy(a).add(decal); b1.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); g.add(b1);
+    }
+    atomes.forEach(([el], i) => {
+      const s = habiller(new THREE.IcosahedronGeometry(ATOMES[el] * 0.55, 1), ctx, el === 'H' ? 'structure' : role);
+      g.add(placerMonde(s, P[i]));
+      const t = panneauTexte(el, 0.28, '#ffffff'); g.add(placerMonde(t, P[i].clone().add(new THREE.Vector3(0, ATOMES[el] * 0.55 + 0.18, 0))));
+    });
+    const T = borne(p.taille, 0.3, 6, 1.4);
+    g.scale.setScalar(T / 1.6);
+    const out = new THREE.Group(); out.add(g);
+    out.userData.animer = (sec) => { g.rotation.y = sec * 0.5; };
+    return placer(out, p);
+  },
+};
+
 // ── Les verbes, portés de academia3d_web.js (mêmes paramètres) ───────────
 const BASES = { ovoide: [0.78, 0.78, 1.00], sphere: [1, 1, 1], galet: [1.00, 0.72, 0.55], goutte: [0.70, 0.70, 1.35], lentille: [1.00, 1.00, 0.32] };
 const placer = (o, p) => { const [x, y, z] = p.position || [0, 0, 0]; o.position.copy(v(x ?? 0, y ?? 0, z ?? 0)); return o; };
@@ -425,6 +686,7 @@ const VERBES = {
     return placer(enveloppe, p);
   },
 };
+Object.assign(VERBES, PHENOMENES, ACCESSOIRES);
 export const VERBES_CONNUS = Object.keys(VERBES);
 
 // ── Cadrage (porté de academia3d_web.js) : mesuré sur ce qui existe ──────
@@ -526,12 +788,23 @@ function construireScene(s, ctx) {
     journal.faits.push(`cadrage « ${s.intention} » à ${cadre.distance.toFixed(1)} u`);
   }
   const faces = []; scene.traverse((n) => { if (n.userData.face) faces.push(n); });
+  // L'ENTRÉE EN SCÈNE : chaque élément arrive à son tour (le sujet d'abord),
+  // en 0,7 s, au lieu d'être là dès la première image. Le sol reste posé.
+  const entrants = poses.filter(([, vb]) => vb !== 'napper');
+  const departs = entrants.map((_, i) => 0.25 + Math.min(s.duree * 0.45, 1.1 * i));
+  const entree = (sec, d) => { const k = Math.min(1, Math.max(0, (sec - d) / 0.7)); return 1 + 2.2 * Math.pow(k - 1, 3) + 1.2 * Math.pow(k - 1, 2); };
   // Un décor porte son sujet (le corps, les gouttes) : il compte comme un objet.
   const objetsDecor = (s.decor === 'corps' && ctx.corps) || s.decor === 'gouttes' ? 1 : 0;
   return {
     scene, journal, objets: poses.length + objetsDecor,
     regler(local, t, cam) {
       regler(local, t);
+      const sec = local * s.duree;
+      entrants.forEach(([o], i) => {
+        const e = o.userData.sansEntree ? 1 : entree(sec, departs[i]);
+        o.scale.setScalar(Math.max(0.0001, e)); o.visible = sec >= departs[i] - 0.01 || o.userData.sansEntree;
+        o.userData.animer?.(Math.max(0, sec - departs[i]), t);
+      });
       cadre.poser(cam, lisse(Math.min(1, Math.max(0, local))));
       for (const f of faces) f.quaternion.copy(cam.quaternion);
       const monte = Math.min(1, local * 2.5);
@@ -623,6 +896,23 @@ export function creerLecteur(toile, { corps = null } = {}) {
   credit.position.y = 1 - 40 / 720 - 0.02; surcouche.add(credit);
   const noir = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({ color: 0, transparent: true, opacity: 0, depthTest: false }));
   surcouche.add(noir);
+  // LE LOGO ACADEMIA, qui saute aux quatre coins toutes les 3 s — comme le
+  // filigrane des jeux (watermark_service.dart : opacité 0,35, 8 % de la
+  // hauteur). Dessiné dans la toile : il est donc aussi dans la vidéo exportée.
+  // Coins choisis pour ne couvrir ni l'attribution (en haut à droite, sous elle)
+  // ni les sous-titres (82 % de la largeur, centrés).
+  const logo = new THREE.Mesh(new THREE.PlaneGeometry(0.16 * (240 / 218) * (720 / 1280), 0.16),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthTest: false, toneMapped: false }));
+  new THREE.TextureLoader().load(new URL('./assets/marque/academia_logo.png', document.baseURI).href, (tex) => {
+    tex.colorSpace = THREE.SRGBColorSpace; logo.material.map = tex; logo.material.needsUpdate = true;
+  });
+  surcouche.add(logo);
+  const COINS = [[-0.89, 0.8], [0.89, -0.87], [0.89, 0.8], [-0.89, -0.87]];
+  function placerLogo(t) {
+    const n = Math.floor(t / 3), f = t - n * 3, [x, y] = COINS[n % 4];
+    logo.position.set(x, y, 0);
+    logo.material.opacity = logo.material.map ? 0.35 * Math.min(1, f / 0.25, (3 - f) / 0.25) : 0;
+  }
   let texteCourant = null, creditCourant = null;
 
   function ecrireTexte(texte) {
@@ -695,6 +985,7 @@ export function creerLecteur(toile, { corps = null } = {}) {
     ecrireTexte(ph ? ph.texte : '');
     const attr = etat.attributionsParScene.get(s.rang) || [];
     ecrireCredit(attr.length ? attr.join(' · ') : '');
+    placerLogo(t);
     noir.material.opacity = Math.max(0, 1 - Math.min(t - s.debut, s.debut + s.duree - t) / 0.35);
     etat.composer.render();
     renderer.autoClear = false; renderer.render(surcouche, ortho); renderer.autoClear = true;

@@ -29,3 +29,5 @@ cp ../academia_bobodo_backend/studio_visuel/contours/index_objets.json build/web
 # Les objets du sujet ALLÉGÉS (≈ 100 Ko chacun au lieu de 4,9 Mo en médiane),
 # servis par le même site que le lecteur : outils_objets/publier_objets_legers.mjs.
 cp -r "$LECTEUR/assets/objets" build/web/lecteur/assets/
+# Le logo de la marque, qui saute aux quatre coins (lecteur.js, comme watermark_service.dart).
+cp -r "$LECTEUR/assets/marque" build/web/lecteur/assets/

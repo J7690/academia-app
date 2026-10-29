@@ -31,7 +31,7 @@ function role(jeton: string): string {
   catch { return ''; }
 }
 
-async function essaiCapsule(subject: string): Promise<Record<string, unknown>> {
+async function essaiCapsule(subject: string, complet = false): Promise<Record<string, unknown>> {
   const t0 = Date.now();
   const messages = [{ role: 'system', content: getCapsulePrompt('simple_subject', 'scientific') }, { role: 'user', content: `Sujet : "${subject}"` }];
   let cascade;
@@ -54,6 +54,8 @@ async function essaiCapsule(subject: string): Promise<Record<string, unknown>> {
   return {
     step: 'done', ok: true, subject, model: cascade.model, ms_llm,
     tokens_output: cascade.usage.completion_tokens || 0, titre: vc.capsule!.titre, scenes, corrections: vc.corrections,
+    // `complet` : la capsule entière, pour la rejouer dans le lecteur (banc de la phase B).
+    ...(complet ? { capsule: vc.capsule } : {}),
   };
 }
 
@@ -68,7 +70,7 @@ serve(async (req: Request) => {
   try {
     const body = await req.json().catch(() => ({}));
     const subject = typeof body.subject === 'string' && body.subject.trim() ? body.subject.trim() : 'La Loi Normale Centree Reduite';
-    if (body.engine === 'studio') return jsonResponse(await essaiCapsule(subject.slice(0, 200)));
+    if (body.engine === 'studio') return jsonResponse(await essaiCapsule(subject.slice(0, 200), body.complet === true));
     const renderer = typeof body.renderer === 'string' ? body.renderer : 'notebook';
     const theme = typeof body.theme === 'string' ? body.theme : 'notebook';
 

@@ -81,7 +81,8 @@ Le moteur exécute ta description telle quelle.
    C'est l'intention qui adapte la vidéo au sujet. La forme n'en est que la
    conséquence.
 
-2. LES GESTES qui fabriquent la scène. Sept verbes.
+2. LES GESTES qui fabriquent la scène. Sept verbes de forme, puis cinq
+   phénomènes et trois accessoires (plus bas).
 
    convoquer    FAIT VENIR UN OBJET RÉEL, par son nom. Le seul verbe qui ne
                 dessine pas : il va chercher un modèle 3D existant.
@@ -188,6 +189,40 @@ Le moteur exécute ta description telle quelle.
                 un mot, un chiffre ou une formule dit toujours le sujet.
                 parametres: { texte: "...", taille: 0.8 à 1.6 }
 
+   LES PHÉNOMÈNES — ILS BOUGENT. Dès que la phrase parle de feu, d'eau qui
+   coule, de pluie, d'air, de vent, de gaz, de chaleur qui se propage ou
+   d'électricité, MONTRE-LE avec eux : une vidéo qui n'illustre pas ne fait pas
+   mieux qu'un texte écrit.
+
+   flamme       un feu qui brûle. { taille: 0.5 à 3, position: [x,y,z] }
+   ecoulement   de l'eau qui coule le long d'un lit, cailloux sur les rives.
+                { chemin: [[x,y,z], …] (2 à 12 points, au sol z≈0),
+                  largeur: 0.3 à 1.5 }  Rivière, ruissellement, sang dans un
+                vaisseau, lave, tout liquide qui avance.
+   pluie        des gouttes qui tombent. { zone: [largeur, profondeur],
+                hauteur: 2 à 5, intensite: 0.5 à 1.5, position: [x,y,z] }
+   souffle      un courant d'air, de vent, de gaz ou de chaleur, d'un point à
+                un autre. { de: [x,y,z], vers: [x,y,z],
+                couleur: "bleu" (air, eau) | "blanc" (vapeur, fumée) |
+                "rouge" (chaleur, énergie), texte: "oxygène" }
+   foudre       un éclair qui frappe. { de: [x,y,z], vers: [x,y,z] }
+
+   LES ACCESSOIRES — ILS DÉSIGNENT. Ils montrent ce que dit la phrase.
+
+   fleche       une flèche qui se trace, avec son mot. { de, vers, texte }
+                Pour une étape, une transformation, un sens de circulation.
+   etiquette    un trait qui part d'un point et le nomme.
+                { cible: [x,y,z], texte: "noyau", cote: "gauche" | "droite" }
+   molecule     une molécule en boules et bâtonnets, à sa vraie géométrie.
+                { formule, taille: 1 à 2.5, position: [x,y,z] }
+                FORMULES CONNUES, et elles seules :
+                H2, O2, N2, CO, CO2, H2O, CH4, NH3, NaCl
+
+   EXEMPLE — « le feu a besoin d'un combustible, d'oxygène et de chaleur » :
+     flamme (sujet) au centre ; souffle "bleu" de [3,0,1] vers [0,0,0.5] avec
+     texte "oxygène" ; molecule O2 à [2.5,0,1.5] ; etiquette "chaleur" sur la
+     flamme ; et convoquer "arbre" à gauche pour le bois s'il est nommé.
+
 3. LE RÔLE de chaque geste : "sujet" (ce dont on parle) ou "structure" (ce qui
    l'entoure et le situe). Le moteur en tire l'intensité lumineuse.
 
@@ -278,7 +313,8 @@ FLÈCHE VERS LE HAUT — un contour debout, hampe puis pointe :
   changeant que la narration est la faute la plus grave de cette tâche.
 • Une forme qui conviendrait à n'importe quel cours est une forme ratée.
 • Budget de parole : 250 mots au total, répartis. La voix commande la durée.
-• 2 à 4 gestes par scène. Un seul geste donne presque toujours une image pauvre.
+• 2 à 5 gestes par scène. Un seul geste donne presque toujours une image pauvre.
+  Au moins un phénomène ou un accessoire dès que la phrase en nomme un.
 • Si le sujet est abstrait et qu'aucune forme concrète ne s'impose, choisis une
   MÉTAPHORE VISUELLE et rends-la explicitement — ou écris le mot. Mieux vaut un
   mot juste qu'une forme décorative.`;
