@@ -89,7 +89,9 @@ serve(async (req: Request) => {
     // LA CHAINE EN COUCHES (29/10/2026), derriere un interrupteur : un metier par
     // appel (chaine_capsule.ts). ETEINTE tant que le banc ne l'a pas departagee de
     // l'appel unique ; s'allume par le secret CAPSULE_CHAINE=1, sans redeploiement.
-    const enCouches = pourAnimation && Deno.env.get('CAPSULE_CHAINE') === '1';
+    // SUJET SIMPLE SEULEMENT : le scenariste ne recoit que le sujet. Un texte, un
+    // plan ou un cours fournis par l'etudiant passent par l'appel unique, qui les lit.
+    const enCouches = pourAnimation && mode === 'simple_subject' && Deno.env.get('CAPSULE_CHAINE') === '1';
     let cascadeResult: CascadeResult;
     let parsed: unknown;
     let vcChaine: ReturnType<typeof validateCapsule> | null = null;
