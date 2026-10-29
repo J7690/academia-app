@@ -7,6 +7,7 @@ import 'app_navigator.dart';
 
 import '../features/admin/admin_applications_screen.dart';
 import '../features/admin/admin_audience_screen.dart';
+import '../features/admin/admin_bobodo_screen.dart';
 import '../features/commercial/commercial_manager_info_screen.dart';
 import '../features/admin/admin_challenges_screen.dart';
 import '../features/admin/admin_communities_screen.dart';
@@ -136,6 +137,8 @@ class NotificationRouter {
         return const AdminApplicationsScreen();
       case 'admin_support':
         return const AdminSupportScreen();
+      case 'admin_bobodo':
+        return const AdminBobodoScreen();
       case 'admin_communities':
         return const AdminCommunitiesScreen();
       case 'admin_marketplace':

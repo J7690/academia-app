@@ -8,6 +8,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'notification_router.dart';
+import 'notification_navigateur_stub.dart'
+    if (dart.library.html) 'notification_navigateur_html.dart';
 
 /// Service centralisé pour la gestion des notifications push (FCM) côté Flutter.
 ///
@@ -260,7 +262,16 @@ class PushNotificationService {
     );
     final notification = message.notification;
     if (notification == null) return;
-    if (kIsWeb) return;
+    if (kIsWeb) {
+      // Onglet au premier plan : Firebase n'affiche rien de lui-même.
+      // Ce `return` nu faisait disparaître toute alerte reçue console ouverte.
+      afficherNotificationNavigateur(
+        notification.title ?? 'Academia',
+        notification.body ?? '',
+        auClic: () => _handleMessageOpenedApp(message),
+      );
+      return;
+    }
 
     _localNotifications.show(
       notification.hashCode,

@@ -10,6 +10,56 @@
 
 ---
 
+> ### 🟢 AU 29/10 — l'administrateur ne recevait plus d'alertes : quatre causes, corrigées (base, Edge Function, app poussée sur `main` — relevé dans le journal)
+>
+> **Mesuré** : la file `app.notification_events` est saine (cron chaque minute,
+> 0 en attente ; support, comptes, candidatures émis et traités). La rupture
+> est à la **livraison** :
+> - `wendenkoote@gmail.com` n'a **plus aucun jeton Android actif depuis le
+>   10/09** : le dernier (21 h 21) a été repris à 21 h 41 par le compte étudiant
+>   `dickogrh@gmail.com` sur le même téléphone (règle « un appareil = une
+>   session » de `app_register_device_token`), puis déclaré mort par FCM. Depuis,
+>   le compte admin ne s'est plus jamais enregistré sur un téléphone. Seul
+>   appareil actif : un **jeton web** (vu le 29/10 à 16 h 09).
+> - Sur le web, `_handleForegroundMessage` faisait `if (kIsWeb) return;` :
+>   **toute alerte reçue console ouverte était jetée sans affichage**.
+> - **Bobodo** : aucun événement `admin_bobodo` depuis l'origine — le seul
+>   déclencheur ne prévient que l'étudiant. L'alerte n'a jamais existé.
+> - Hors cause : l'enregistrement Android marche pour les autres (13
+>   utilisateurs vus la semaine du 26/10).
+>
+> **Écrit (non commité, non déployé)** : `notification_navigateur_{stub,html}.dart`
+> + branchement dans `push_notification_service.dart` (notification navigateur
+> au premier plan) ; route `admin_bobodo` → `AdminBobodoScreen` ;
+> migration `20261029180000_alerte_admin_bobodo.sql` (1ʳᵉ question d'une
+> session, puis après 30 min de silence, à tous les admins) ; texte
+> « 🤖 Bobodo sollicité » dans `send-push-notifications`. `flutter analyze` :
+> 0 erreur ; `deno check` OK ; migration éprouvée en bloc annulé : 7 admins →
+> 7 alertes, relance 0, réponse 0, **0 ligne restée**.
+> **Appliqué le 29/10 vers 17 h 08 UTC (accord de Jocelyn)** : migration
+> `alerte_admin_bobodo` (registre `20261029170653`, déclencheur actif, non
+> exécutable par `anon`) ; `send-push-notifications` **v93 → v94** (v93 lue
+> avant : identique à la copie locale hors ajout Bobodo).
+>
+> 🔴 **4ᵉ cause, trouvée en vérifiant** : le cron et le déclencheur d'envoi
+> immédiat appellent `send-push-notifications` **sans en-tête Authorization**
+> alors qu'elle exige un JWT → `POST | 401` à chaque minute (déjà sur v93).
+> La file n'avance que si une application ouverte déclenche l'envoi. Délais
+> mesurés sur les alertes admin : jusqu'à **538 min** (25/10), médiane 3 à 6 h
+> certains jours. Correctif écrit : `20261029190000_push_appel_authentifie.sql`
+> (passage par `app.appeler_fonction_edge`, clé du Vault) ; éprouvé en bloc
+> annulé : 2 requêtes, toutes autorisées, 0 ligne restée. **Appliqué le 29/10
+> (accord de Jocelyn)**. Mesuré : cron 17 h 14 et 17 h 15 → 401 « Missing
+> authorization header » ; **17 h 16 → 200 `{"success":true,"processed":0}`**
+> (pg_net et journaux de la fonction v94). Non encore vu : une vraie alerte
+> créée puis livrée dans la minute.
+>
+> **Reste** : pousser l'app sur `main` (notification web au premier plan) ;
+> **se reconnecter en admin sur le téléphone** ; `flutter build web` non lancé.
+> Vu en passant, hors chantier : un autre appel `pg_net` rend 401
+> `not_authenticated` chaque minute, et le cron RunPod rend
+> `liste_runpod: echec`.
+
 > ### 🟢 AU 27/10, soir — marketplace + formations courtes TERMINÉS, un seul commit
 >
 > Tout appliqué en base après essais annulés, puis un commit unique et un

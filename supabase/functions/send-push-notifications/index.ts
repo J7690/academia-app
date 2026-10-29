@@ -550,6 +550,13 @@ function buildFcmMessage(event: any) {
     body = "Nouvelle activité support — répondez rapidement !";
 
   // --- Admin: bobodo ---
+  // VALEUR COUPLÉE : domaine/type émis par `app_notify_admin_bobodo`
+  // (migration 20261029180000).
+  } else if (domain === "admin_bobodo" && type === "new_question") {
+    const studentName = payload.student_name || "Un étudiant";
+    const preview = payload.content_preview || "";
+    title = "🤖 Bobodo sollicité";
+    body = preview ? `${studentName} : ${preview}` : `${studentName} pose une question à Bobodo`;
   } else if (domain === "admin_bobodo") {
     title = "🤖 Bobodo";
     body = "Nouvelle activité Bobodo";

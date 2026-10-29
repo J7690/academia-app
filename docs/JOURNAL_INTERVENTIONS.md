@@ -3677,3 +3677,21 @@ Migrations appliquées après essais annulés : `20261027190000` (B6 + catégori
 dialogues de formation complets, rangée Formations dans la boutique, lien `?formation=`,
 QR sur le reçu (décodé 72/96/150 dpi), scan des tickets ; 7 fichiers vides supprimés.
 `flutter analyze lib` 0 erreur, `flutter build web --release` réussi.
+**29/10/2026 — Alertes administrateur muettes : diagnostic mesuré et correctifs écrits.** File de notifications saine
+(cron chaque minute, 0 en attente). Cause 1 : le compte admin n'a plus de jeton Android actif depuis le 10/09 (téléphone
+repris par le compte étudiant `dickogrh@gmail.com`, règle « un appareil = une session ») ; seul un jeton web reste. Cause 2 :
+sur le web, les alertes reçues onglet ouvert étaient jetées (`if (kIsWeb) return;`). Cause 3 : aucune alerte admin Bobodo
+n'a jamais été émise (0 `admin_bobodo`). Écrits : notification navigateur au premier plan, route `admin_bobodo`, migration
+`20261029180000_alerte_admin_bobodo.sql` (éprouvée en bloc annulé : 7/0/0, 0 ligne restée), texte Edge Function. Analyse
+0 erreur, `deno check` OK. Rien d'appliqué, déployé, commité ni poussé.
+**29/10/2026 — Alerte admin Bobodo en production ; 4ᵉ cause trouvée (cron en 401).** Accord de Jocelyn (« Oui, applique ») :
+migration `alerte_admin_bobodo` appliquée (registre 20261029170653), `send-push-notifications` v93 → v94 (v93 relue avant :
+identique hors ajout). En vérifiant les journaux : le cron et `trg_instant_push_notification` appellent la fonction SANS
+Authorization alors que verify_jwt = true → POST 401 chaque minute, file traitée seulement quand une app ouverte la déclenche
+(délais admin jusqu'à 538 min). Correctif écrit `20261029190000_push_appel_authentifie.sql` (via `app.appeler_fonction_edge`),
+éprouvé en bloc annulé (2 requêtes autorisées, 0 ligne restée), NON appliqué : accord demandé.
+**29/10/2026 — Cron d'envoi des notifications réparé (accord de Jocelyn : « Oui, applique-le »).** Migration
+`push_appel_authentifie` appliquée : `app_run_send_push_notifications` et `trg_instant_push_notification` passent par
+`app.appeler_fonction_edge` (clé du Vault). Mesuré : 17 h 14 et 17 h 15 → 401 « Missing authorization header » ; 17 h 16 →
+200 `{"success":true,"processed":0}` (pg_net + journaux v94). Non vu : une vraie alerte livrée de bout en bout. Relevé hors
+chantier : un autre appel pg_net en 401 `not_authenticated` chaque minute ; cron RunPod `liste_runpod: echec`.
