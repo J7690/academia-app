@@ -22,9 +22,9 @@ Fichiers : `supabase/functions/whiteboard-generate-storyboard/chaine_capsule.ts`
 `prompt_capsule.ts` (l'invite découpée en sections, recollée **à l'octet près** pour
 le mode un appel — vérifié par `chaine_capsule_test.ts`). Tests : 73/73.
 
-**En production, la chaîne est ÉTEINTE.** `index.ts` ne la prend que si le secret
-`CAPSULE_CHAINE=1` existe, et la génération déployée (v71) ne contient pas encore ce
-code. Seule la fonction d'essai `whiteboard-storyboard-smoke` (v7) la joue.
+**En production depuis le 29/10 à 18 h 57 UTC** (génération v73, `main` = `52ee1dd`),
+pour les capsules 3D en « sujet simple ». Les autres modes (texte, plan, cours fourni)
+gardent l'appel unique, qui lit ce que l'étudiant a fourni.
 
 ## 2. Le choix des modèles : qualification, puis disponibilité, puis le banc
 
@@ -152,9 +152,39 @@ Lecture :
 - Le refus en prose de Haiku pendant une reprise : cause non établie (la consigne de
   défaut transmise n'a pas été relue).
 
-## 7. Pour l'allumer en production (décision de Jocelyn)
+## 7. Mise en production (29/10, sur décision de Jocelyn)
 
-1. Déployer `whiteboard-generate-storyboard` avec ce code (il apporte aussi le lot B2,
-   la chimie exacte).
-2. Créer le secret `CAPSULE_CHAINE=1`. Sans lui, rien ne change pour les étudiants.
-3. Éteindre = supprimer le secret ; aucun redéploiement.
+1. Lecteur sur `main` d'abord (`a3bfbc0`), vérifié sur Netlify : sans lui, les
+   téléphones n'auraient pas su jouer les équations.
+2. Génération v72 (chimie exacte), puis v73 (chaîne allumée par défaut).
+3. **Le secret qui devait l'allumer n'a jamais atteint les fonctions** : trois relevés
+   `capsule_chaine_present: false`, dont un sur une fonction redéployée APRÈS la pose.
+   Le sens a donc été inversé : la chaîne tourne par défaut, **`CAPSULE_CHAINE=0` la
+   coupe**, sans redéploiement. Un interrupteur dont l'absence prive les étudiants de
+   la fonction est fragile ; un interrupteur de panne ne l'est pas.
+4. Contrôle sans commande d'étudiant : `whiteboard-storyboard-smoke`
+   `{"engine":"etat"}` dit si un secret coupe la chaîne, jamais sa valeur.
+
+## 8. L'ambiance de la capsule (29/10, soir — écrite, non en ligne)
+
+Demande de Jocelyn : « on n'est pas obligé de choisir le décor bleu ». Une **ambiance**
+par capsule, choisie par le **scénariste** d'après la matière, nettoyée par le code :
+
+| ambiance | couleur | lointain | matières |
+|---|---|---|---|
+| `nuit` | bleu d'origine | aucun | corps humain, santé, technologie |
+| `savane` | ambre du soir | baobabs, soleil couchant | histoire, géographie, société, Afrique |
+| `foret` | vert | lisière de conifères | le vivant, l'agriculture |
+| `cosmos` | violet | étoiles, planète | physique, chimie, astronomie |
+| `ardoise` | gris craie | aucun | mathématiques, langues |
+
+- **Valeur couplée** : `AMBIANCES` de `validate_capsule.ts`, l'invite du scénariste, et
+  `AMBIANCES` de `lecteur.js`. `validate_capsule_ambiance_test.ts` compare les trois.
+- **Dégradation** : absente → `nuit` en silence ; inconnue → `nuit`, nommée dans
+  `corrections`. Un lecteur ancien ignore le champ et joue `nuit`.
+- **Mesuré** (fonction d'essai v11) : 5 sujets, 5 ambiances attendues. Planche des
+  capsules réelles : `captures_ambiances_2026-10-29/planche_capsules_reelles.jpg`.
+- **Écarté** : `papier` (fond clair) — le halo additif s'inverse en taches ; le
+  lointain en 3D — traits parasites dès que la caméra plonge ; le vert « protégé »
+  dans la passe — mesuré sans effet, le halo le délave déjà en `nuit`.
+- **Ordre de mise en ligne** : lecteur sur `main` d'abord, génération ensuite.

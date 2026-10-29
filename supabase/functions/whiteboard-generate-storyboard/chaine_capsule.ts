@@ -44,6 +44,7 @@ UNIQUEMENT ce JSON :
 
 {
   "titre": "titre court et concret",
+  "ambiance": "savane",
   "scenes": [
     { "id": "s1", "decor": "gestes", "intention": "processus",
       "sujet": "ce que la scène montre, en 3 à 6 mots",
@@ -54,6 +55,20 @@ UNIQUEMENT ce JSON :
 }
 
 (« foyer », « flux » et « plan » s'ajoutent quand le décor les demande.)
+
+════════ L'AMBIANCE DE LA CAPSULE ════════
+
+Une seule pour toute la capsule : la couleur et le lointain qui situent le cours.
+   nuit     bleu nuit, sans lointain — le corps humain, la santé, la technologie,
+            l'électricité, l'informatique
+   savane   ambre du soir, baobabs et soleil couchant — l'histoire, la géographie,
+            la société, l'économie, le Burkina et l'Afrique, l'eau et le climat
+   foret    vert, lisière d'arbres — le vivant : plantes, animaux, écologie,
+            agriculture, alimentation
+   cosmos   violet, étoiles et planète — la physique, la chimie, l'astronomie,
+            l'énergie
+   ardoise  gris craie — les mathématiques, la logique, les langues
+Choisis d'après la MATIÈRE du sujet ; en cas de doute, nuit.
 
 ════════ CE QUI FAIT UN BON COURS ════════
 
@@ -150,8 +165,8 @@ export async function genererCapsuleEnCouches(sujet: string, appeler: Appeler) {
       return [];
     }
   }));
-  const brut: { titre: unknown; scenes: Record<string, unknown>[] } =
-    { titre: plan.titre, scenes: scenes.map((s, i) => ({ ...s, gestes: faites[i] })) };
+  const brut: { titre: unknown; ambiance: unknown; scenes: Record<string, unknown>[] } =
+    { titre: plan.titre, ambiance: plan.ambiance, scenes: scenes.map((s, i) => ({ ...s, gestes: faites[i] })) };
 
   // 3. Le contrôleur : valider, puis reprendre UNE fois les scènes en défaut.
   let vc = validateCapsule(brut);

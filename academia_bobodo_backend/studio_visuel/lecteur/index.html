@@ -517,6 +517,9 @@ async function demarrer() {
     M.gpu = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
     M.webgl = lecteur.renderer.capabilities.isWebGL2 ? 'WebGL2' : 'WebGL1';
     lecteur.palier(P.get('palier') === 'leger' ? 'leger' : 'complet');
+    // `&ambiance=savane` impose une ambiance (banc d'essai) ; sans lui, c'est celle
+    // de la capsule, choisie par le scénariste (lecteur.js, AMBIANCES).
+    if (P.get('ambiance')) lecteur.ambiance(P.get('ambiance'));
     if (P.get('palier')) $('palier').value = P.get('palier');
 
     if (P.get('lot')) {                      // vérification d'une liste de capsules

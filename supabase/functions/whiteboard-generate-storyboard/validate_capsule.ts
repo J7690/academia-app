@@ -77,6 +77,12 @@ function termeCanonique(brut: string): string {
 
 const BASES = ["ovoide", "sphere", "galet", "goutte", "lentille"] as const;
 
+// LES AMBIANCES (29/10/2026). VALEUR COUPLÉE avec AMBIANCES de lecteur.js, qui
+// les dessine : couleur de toute la capsule et lointain (savane, lisière, ciel).
+// `papier` existe dans le lecteur mais n'est pas proposé : son rendu n'est pas
+// prêt (halo inversé en taches, planche docs/captures_ambiances_2026-10-29/).
+export const AMBIANCES = ["nuit", "savane", "foret", "cosmos", "ardoise"] as const;
+
 // ── Décors (capsule v2, 28/10/2026) ─────────────────────────────────────
 // Le lecteur sur l'appareil (studio_visuel/lecteur/) sait jouer deux décors
 // tout faits : un CORPS allongé avec un foyer, et des GOUTTES sur une grille.
@@ -547,12 +553,23 @@ export function validateCapsule(brut: unknown): Resultat {
     valid: true,
     capsule: {
       titre: String(src.titre ?? "").slice(0, 120),
+      ambiance: ambianceDe(src.ambiance, corrections),
       format: { largeur: 1080, hauteur: 1920, fps: 25 },
       scenes,
       corrections,
     },
     corrections,
   };
+}
+
+/** L'ambiance de la capsule : absente -> `nuit` en silence (le rendu d'origine) ;
+ *  inconnue -> `nuit`, et c'est dit. */
+function ambianceDe(brut: unknown, corrections: string[]): string {
+  const a = String(brut ?? "").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  if (!a) return "nuit";
+  if ((AMBIANCES as readonly string[]).includes(a)) return a;
+  corrections.push(`ambiance « ${String(brut).slice(0, 30)} » inconnue, ramenee a nuit`);
+  return "nuit";
 }
 
 function corr(liste: string[], message: string): void {

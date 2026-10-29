@@ -25,6 +25,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
@@ -43,6 +44,47 @@ const BLEU_VIF = new THREE.Color(0x8cc2ff);
 const ROUGE = new THREE.Color(0xff2a10);
 const ORANGE = new THREE.Color(0xff8a3a);
 const BASE_OBJETS = 'https://huggingface.co/datasets/allenai/objaverse/resolve/main/';
+
+// ── Les AMBIANCES (29/10/2026, PROTOTYPE) ────────────────────────────────
+// Jocelyn : « on n'est pas obligé de choisir le décor bleu ». Tout le lecteur
+// est en lumière ADDITIVE sur fond sombre — c'est ce qui donne le halo. Plutôt
+// que de repeindre chaque matière, une passe en fin de chaîne lit chaque pixel
+// comme une part FROIDE (la structure, bleue) et une part CHAUDE (l'énergie,
+// rouge), et les recolore. La règle des deux teintes reste vraie dans chaque
+// ambiance ; seules les teintes changent. `nuit` = le rendu d'origine, intact.
+// `papier` inverse le support : encre sur papier, pour un fond CLAIR.
+export const AMBIANCES = {
+  nuit: null,
+  // La part CHAUDE dit l'énergie (flamme, foyer) : elle reste chaude partout.
+  // Mesuré au premier essai : un accent turquoise rendait la flamme bleu-vert.
+  savane:  { froid: [1.00, 0.72, 0.34], chaud: [1.00, 0.16, 0.10], papier: null },   // ambre du soir, feu rouge
+  foret:   { froid: [0.35, 0.95, 0.62], chaud: [1.00, 0.55, 0.22], papier: null },   // vert vivant, feu orangé
+  // Craie ADOUCIE : à 0,9 le blanc saturait sous le halo et l'équation devenait
+  // illisible (mesuré le 29/10, planche docs/captures_ambiances_2026-10-29/).
+  ardoise: { froid: [0.58, 0.62, 0.68], chaud: [1.00, 0.68, 0.18], papier: null },   // craie sur tableau, feu jaune
+  cosmos:  { froid: [0.70, 0.45, 1.00], chaud: [1.00, 0.60, 0.20], papier: null },   // violet profond, feu or
+  papier:  { froid: [0.10, 0.20, 0.42], chaud: [0.80, 0.16, 0.10], papier: [0.96, 0.93, 0.86] }, // encre sur cahier
+};
+const PasseAmbiance = {
+  uniforms: { tDiffuse: { value: null }, uFroid: { value: new THREE.Vector3(1, 1, 1) }, uChaud: { value: new THREE.Vector3(1, 1, 1) },
+    uPapier: { value: new THREE.Vector3(1, 1, 1) }, uMode: { value: 0 } },
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+  // Après OutputPass : couleurs d'affichage. S1/S2 = le bleu et le rouge du
+  // moteur une fois passés par le halo et la tonalité ; le reste (blanc) est gardé.
+  fragmentShader: `uniform sampler2D tDiffuse; uniform vec3 uFroid, uChaud, uPapier; uniform float uMode; varying vec2 vUv;
+    const vec3 S1 = vec3(0.30, 0.55, 1.00); const vec3 S2 = vec3(1.00, 0.30, 0.16);
+    void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb;
+      float a11 = dot(S1,S1), a12 = dot(S1,S2), a22 = dot(S2,S2), b1 = dot(S1,c), b2 = dot(S2,c), det = a11*a22 - a12*a12;
+      float a = max((b1*a22 - b2*a12)/det, 0.0), b = max((a11*b2 - a12*b1)/det, 0.0);
+      vec3 r = max(c - a*S1 - b*S2, 0.0); float w = (r.r + r.g + r.b)/3.0;
+      if (uMode < 0.5) { gl_FragColor = vec4(a*uFroid + b*uChaud + vec3(w), 1.0); return; }
+      // Sur papier, le halo inversé devenait une tache : seules les parts nettes
+      // (traits, flamme, texte) déposent de l'encre ; la brume reste du papier.
+      vec3 o = uPapier;
+      o = mix(o, uFroid, smoothstep(0.10, 0.70, a)); o = mix(o, uChaud, smoothstep(0.08, 0.55, b));
+      o = mix(o, vec3(0.06), smoothstep(0.10, 0.60, w));
+      gl_FragColor = vec4(o, 1.0); }`,
+};
 
 // ── Normalisation : une seule forme interne, quel que soit le format ──────
 const DECORS = ['gestes', 'corps', 'gouttes', 'repli'];
@@ -72,7 +114,9 @@ export function normaliserCapsule(brut) {
   }
   const version = scenes.some((s) => s.decor === 'corps' || s.decor === 'gouttes' || s.voix) ? 2
     : (scenes.some((s) => s.gestes.length) ? 1 : 0);
-  return { titre: brut.titre || '', version, scenes, duree: debut, journal, objets: brut.objets || null, voix: brut.voix || null };
+  // `ambiance` : choisie par le scénariste pour toute la capsule (validate_capsule.ts).
+  const ambiance = typeof brut.ambiance === 'string' && AMBIANCES[brut.ambiance] !== undefined ? brut.ambiance : 'nuit';
+  return { titre: brut.titre || '', version, scenes, duree: debut, journal, objets: brut.objets || null, voix: brut.voix || null, ambiance };
 }
 
 /** La voix commande l'image : on recale les durées sur l'audio réellement décodé.
@@ -939,6 +983,86 @@ function cadreur(objets, intention, aspect, fov) {
 }
 const lisse = (x) => x * x * (3 - 2 * x);
 
+// ── L'horizon de l'ambiance (29/10/2026) ─────────────────────────────────
+// Un lointain par ambiance : il SITUE le cours (la savane du soir, la lisière,
+// le ciel) sans rien dire à la place du sujet. C'est un FOND D'ÉCRAN, comme la
+// brume, et non un objet 3D : posé en 3D, il sortait du cadre dès que la caméra
+// montait (mesuré le 29/10 : traits parasites en haut de l'image, s1 et s4).
+// Dessiné en lumière froide/chaude, la passe d'ambiance le teinte comme le reste.
+// `nuit`, `ardoise`, `papier` : aucun lointain.
+const hasard = (i) => { const x = Math.sin(i * 127.1) * 43758.5453; return x - Math.floor(x); };
+const LOINTAINS = new Map();
+function toileLointain(nom) {
+  if (LOINTAINS.has(nom)) return LOINTAINS.get(nom);
+  const L = 1280, H = 720, toile = document.createElement('canvas'); toile.width = L; toile.height = H;
+  const c = toile.getContext('2d'), FROID = 'rgba(47,125,255,', CHAUD = 'rgba(255,42,16,';
+  const sol = H * 0.6;                                     // la ligne d'horizon, au-dessus des sous-titres
+  const collines = (amp, f, phase) => (x) => sol - amp * (0.6 + 0.4 * Math.sin(x * f + phase)) - amp * 0.3 * Math.sin(x * f * 2.7 + 1);
+  const trait = (alpha, largeur) => { c.strokeStyle = FROID + alpha + ')'; c.lineWidth = largeur; };
+  if (nom === 'savane') {
+    // Le soleil couchant, à moitié sous l'horizon : la part CHAUDE du lointain.
+    const g = c.createRadialGradient(L * 0.14, sol, 6, L * 0.14, sol, 120);
+    g.addColorStop(0, CHAUD + '0.55)'); g.addColorStop(0.45, CHAUD + '0.22)'); g.addColorStop(1, CHAUD + '0)');
+    c.fillStyle = g; c.fillRect(0, 0, L, sol);
+    c.strokeStyle = CHAUD + '0.8)'; c.lineWidth = 2; c.beginPath(); c.arc(L * 0.14, sol, 52, Math.PI, 0); c.stroke();
+    const h = collines(26, 0.006, 0.8);
+    trait(0.55, 2); c.beginPath(); for (let x = 0; x <= L; x += 8) x ? c.lineTo(x, h(x)) : c.moveTo(x, h(x)); c.stroke();
+    // Les baobabs : tronc renflé, couronne en éventail.
+    for (const [x, t] of [[0.05, 0.8], [0.27, 0.55], [0.8, 1.0], [0.95, 0.65]]) {
+      const bx = L * x, by = h(bx), th = 120 * t, tw = 16 * t;
+      trait(0.6, 2);
+      c.beginPath(); c.moveTo(bx - tw, by); c.quadraticCurveTo(bx - tw * 1.5, by - th * 0.5, bx - tw * 0.6, by - th);
+      c.moveTo(bx + tw, by); c.quadraticCurveTo(bx + tw * 1.5, by - th * 0.5, bx + tw * 0.6, by - th); c.stroke();
+      for (let b = 0; b < 7; b++) {
+        const a = Math.PI * (1.08 + 0.84 * b / 6), l = th * (0.38 + 0.18 * hasard(b + x * 10));
+        const ex = bx + Math.cos(a) * l, ey = by - th + Math.sin(a) * l * 0.55;
+        c.beginPath(); c.moveTo(bx, by - th); c.lineTo(ex, ey);
+        for (const s of [-1, 1]) { c.moveTo(ex, ey); c.lineTo(ex + Math.cos(a + s * 0.6) * l * 0.3, ey + Math.sin(a + s * 0.6) * l * 0.2); }
+        c.stroke();
+      }
+    }
+  } else if (nom === 'foret') {
+    const h = collines(10, 0.01, 0.3);
+    for (let i = 0; i < 38; i++) {                         // une lisière de conifères, basse : elle ne monte pas jusqu'au texte
+      const x = i * L / 37 + (hasard(i) - 0.5) * 18, haut = 34 + 46 * hasard(i + 50), larg = haut * 0.3, y0 = h(x);
+      trait(0.35 + 0.25 * hasard(i + 7), 1.6);
+      for (let k = 0; k < 3; k++) {
+        const y = y0 - haut * k / 3.3, l = larg * (1 - k * 0.25);
+        c.beginPath(); c.moveTo(x - l, y); c.lineTo(x, y - haut * 0.42); c.lineTo(x + l, y); c.stroke();
+      }
+    }
+    trait(0.4, 1.5); c.beginPath(); c.moveTo(0, h(0)); for (let x = 8; x <= L; x += 8) c.lineTo(x, h(x)); c.stroke();
+  } else if (nom === 'cosmos') {
+    for (let i = 0; i < 520; i++) {                        // des étoiles, plus denses vers le haut
+      const x = hasard(i) * L, y = Math.pow(hasard(i + 999), 1.6) * sol, r = 0.6 + 1.6 * Math.pow(hasard(i + 77), 3);
+      c.fillStyle = FROID + (0.35 + 0.6 * hasard(i + 33)) + ')'; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+    }
+    const px = L * 0.9, py = H * 0.11, pr = 34;           // une planète annelée, dans le coin : jamais sur le sujet
+    const g = c.createRadialGradient(px - pr * 0.4, py - pr * 0.4, 4, px, py, pr);
+    g.addColorStop(0, FROID + '0.35)'); g.addColorStop(1, FROID + '0.08)');
+    c.fillStyle = g; c.beginPath(); c.arc(px, py, pr, 0, Math.PI * 2); c.fill();
+    trait(0.6, 1.5); c.stroke();
+    c.strokeStyle = CHAUD + '0.65)'; c.lineWidth = 2; c.beginPath(); c.ellipse(px, py, pr * 1.9, pr * 0.42, -0.3, 0, Math.PI * 2); c.stroke();
+  }
+  const tex = new THREE.CanvasTexture(toile); tex.colorSpace = THREE.SRGBColorSpace;
+  LOINTAINS.set(nom, tex);
+  return tex;
+}
+function horizon(nom) {
+  if (!['savane', 'foret', 'cosmos'].includes(nom)) return null;
+  const m = new THREE.ShaderMaterial({
+    uniforms: { tLointain: { value: toileLointain(nom) } },
+    vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.9998, 1.0); }`,
+    // À moitié : mesuré le 29/10, à pleine force le lointain passait DEVANT le sujet
+    // (part allumée de l'image 33 % -> 69 %, équation couverte par le soleil).
+    fragmentShader: `uniform sampler2D tLointain; varying vec2 vUv; void main(){ gl_FragColor = vec4(texture2D(tLointain, vUv).rgb*0.5, 1.0); }`,
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false,
+  });
+  const q = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), m);
+  q.frustumCulled = false; q.renderOrder = -9; q.userData.decor = true;
+  return q;
+}
+
 // ── Construction d'une scène ─────────────────────────────────────────────
 function construireScene(s, ctx) {
   const scene = new THREE.Scene();
@@ -946,6 +1070,8 @@ function construireScene(s, ctx) {
   const chaleur = { uFoyer: { value: new THREE.Vector3() }, uRayon: { value: 0 }, uChaleur: { value: 0 } };
   const c = { ...ctx, chaleur };
   scene.add(fondBrume(ctx.communs, new THREE.Color(s.decor === 'gouttes' ? 0x1a4fb8 : 0x1f5fd0), s.decor === 'gouttes' ? 6 : 9));
+  const lointain = horizon(ctx.ambiance);
+  if (lointain) scene.add(lointain);
   const poses = [];
   let foyer = null, cadre = null, regler = () => {};
 
@@ -1173,7 +1299,8 @@ export function creerLecteur(toile, { corps = null } = {}) {
       for (const m of texte.split(' ')) { const e = l ? l + ' ' + m : m; if (c.measureText(e).width > L * 0.82 && l) { lignes.push(l); l = m; } else l = e; }
       if (l) lignes.push(l);
       const pas = taille * 1.25, y0 = toileTexte.height / 2 - (lignes.length - 1) * pas / 2;
-      c.shadowColor = 'rgba(0,0,0,0.85)'; c.shadowBlur = taille * 0.35; c.fillStyle = '#ffffff';
+      const papier = !!AMBIANCES[etat.ambiance]?.papier;
+      c.shadowColor = papier ? 'rgba(255,250,240,0.9)' : 'rgba(0,0,0,0.85)'; c.shadowBlur = taille * 0.35; c.fillStyle = papier ? '#14233f' : '#ffffff';
       lignes.forEach((li, i) => c.fillText(li, L / 2, y0 + i * pas));
     }
     texTexte.needsUpdate = true;
@@ -1186,7 +1313,18 @@ export function creerLecteur(toile, { corps = null } = {}) {
   }
 
   const etat = { capsule: null, phrases: [], palierNom: 'complet', palier: PALIERS.complet, composer: null, cache: new Map(),
-    objets: new Map(), attributionsParScene: new Map() };
+    objets: new Map(), attributionsParScene: new Map(), ambiance: 'nuit', passeAmbiance: null };
+
+  function appliquerAmbiance() {
+    const a = AMBIANCES[etat.ambiance], p = etat.passeAmbiance;
+    if (!p) return;
+    p.enabled = !!a;                       // `nuit` : aucune passe, rendu d'origine au pixel près
+    if (!a) return;
+    p.uniforms.uFroid.value.set(...a.froid); p.uniforms.uChaud.value.set(...a.chaud);
+    p.uniforms.uMode.value = a.papier ? 1 : 0;
+    if (a.papier) p.uniforms.uPapier.value.set(...a.papier);
+    texteCourant = null;                   // les sous-titres changent de couleur sur papier
+  }
 
   function vider() {
     for (const s of etat.cache.values()) s.scene.traverse((n) => { n.geometry?.dispose?.(); n.material?.dispose?.(); });
@@ -1203,13 +1341,16 @@ export function creerLecteur(toile, { corps = null } = {}) {
     comp.addPass(new RenderPass(new THREE.Scene(), camera));
     comp.addPass(new UnrealBloomPass(new THREE.Vector2(p.L * p.bloom, p.H * p.bloom), 0.85, 0.5, 0.18));
     comp.addPass(new OutputPass());
+    etat.passeAmbiance = new ShaderPass(PasseAmbiance);
+    comp.addPass(etat.passeAmbiance);
     etat.composer = comp;
+    appliquerAmbiance();
     vider();
   }
   function sceneDe(s) {
     if (!etat.cache.has(s.rang)) {
       const attributions = new Set();
-      const sc = construireScene(s, { communs, palier: etat.palier, corps, objets: etat.objets, attributions, aspect: 16 / 9, fov: FOV });
+      const sc = construireScene(s, { communs, palier: etat.palier, corps, objets: etat.objets, attributions, aspect: 16 / 9, fov: FOV, ambiance: etat.ambiance });
       etat.attributionsParScene.set(s.rang, [...attributions]);
       etat.cache.set(s.rang, sc);
     }
@@ -1286,7 +1427,18 @@ export function creerLecteur(toile, { corps = null } = {}) {
     renderer, camera, PALIERS,
     get palierNom() { return etat.palierNom; }, get palierCourant() { return etat.palier; }, get capsule() { return etat.capsule; },
     palier, dessiner, prechargerObjets,
-    charger(capsule) { etat.capsule = capsule; etat.phrases = phrasesDe(capsule); vider(); texteCourant = null; },
+    charger(capsule) {
+      etat.capsule = capsule; etat.phrases = phrasesDe(capsule); vider(); texteCourant = null;
+      // L'ambiance de la capsule, sauf si on en a imposé une (paramètre `&ambiance=`).
+      if (!etat.ambianceImposee) { etat.ambiance = capsule.ambiance || 'nuit'; appliquerAmbiance(); }
+    },
+    /** Impose une ambiance (AMBIANCES) ; un nom inconnu ramène à `nuit`. Les scènes
+     *  sont reconstruites : l'horizon fait partie de la scène. */
+    ambiance(nom) {
+      etat.ambiance = AMBIANCES[nom] !== undefined ? nom : 'nuit'; etat.ambianceImposee = true;
+      appliquerAmbiance(); vider(); return etat.ambiance;
+    },
+    get ambianceNom() { return etat.ambiance; },
     // Seuls les sous-titres dépendent des durées : les scènes construites
     // restent valables (la caméra suit la FRACTION du plan, pas la seconde).
     // Ne rien reconstruire ici, sinon chaque voix arrivée ferait accrocher la lecture.
