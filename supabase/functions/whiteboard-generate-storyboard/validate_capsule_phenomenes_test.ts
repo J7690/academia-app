@@ -25,14 +25,44 @@ Deno.test("le cours sur le feu passe tel quel : flamme, souffle d'oxygène, mol�
   assertEquals(corr, []);
 });
 
-Deno.test("molécule : les écritures courantes sont ramenées, l'inconnue est écartée et dite", () => {
+Deno.test("molécule : les écritures courantes sont ramenées, l'illisible est écartée et dite", () => {
+  // Depuis le lot B2 (29/10), toute formule LISIBLE passe : sa géométrie vient de PubChem.
   const { gestes, corr } = avec(
     { verbe: "molecule", parametres: { formule: "H₂O" } },
     { verbe: "molecule", parametres: { formule: "co2" } },
-    { verbe: "molecule", parametres: { formule: "C6H12O6" } },
+    { verbe: "molecule", parametres: { formule: "C6H12O6", nom: "glucose" } },
+    { verbe: "molecule", parametres: { formule: "Xy2" } },
   );
-  assertEquals(gestes.map((g) => P(g).formule), ["H2O", "CO2"]);
-  assert(corr.some((c) => c.includes("C6H12O6") && c.includes("ecartee")));
+  assertEquals(gestes.map((g) => P(g).formule), ["H2O", "CO2", "C6H12O6"]);
+  assertEquals(P(gestes[2]).nom, "glucose");
+  assert(corr.some((c) => c.includes("Xy2") && c.includes("ecartee")));
+});
+
+Deno.test("réaction : les coefficients sont calculés, les faux du modèle ignorés", () => {
+  const { gestes, corr } = avec(
+    { verbe: "reaction", role: "sujet", parametres: { equation: "3 H2 + O2 -> 5 H2O" } },
+  );
+  const e = P(gestes[0]).especes as Record<string, unknown>[];
+  assertEquals(e.map((x) => [x.formule, x.cote, x.coef]), [["H2", "reactif", 2], ["O2", "reactif", 1], ["H2O", "produit", 2]]);
+  assertEquals(corr, []);
+});
+
+Deno.test("réaction impossible ou ambiguë : écartée, jamais affichée fausse", () => {
+  const { gestes, corr } = avec(
+    { verbe: "reaction", parametres: { equation: "H2 -> O2" } },
+    { verbe: "reaction", parametres: { equation: "H2 + O2 -> H2O + H2O2" } },
+    { verbe: "flamme", parametres: {} },
+  );
+  assertEquals(gestes.map((g) => g.verbe), ["flamme"]);
+  assertEquals(corr.filter((c) => c.includes("reaction")).length, 2);
+});
+
+Deno.test("réaction : les noms des espèces sont gardés, rangés par formule", () => {
+  const { gestes } = avec(
+    { verbe: "reaction", parametres: { equation: "CO₂ + H₂O → C₆H₁₂O₆ + O₂", noms: { "C₆H₁₂O₆": "glucose" } } },
+  );
+  assertEquals(P(gestes[0]).noms, { C6H12O6: "glucose" });
+  assertEquals((P(gestes[0]).especes as Record<string, unknown>[]).map((x) => x.coef), [6, 6, 1, 6]);
 });
 
 Deno.test("souffle, foudre et flèche sans extrémités : écartés, pas inventés", () => {

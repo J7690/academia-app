@@ -99,6 +99,9 @@ const T0 = performance.now();
 const P = new URLSearchParams(location.search);
 // Dans l'application : la scène seule, plein écran, sans les mesures d'atelier.
 const APP = P.get('app') === '1';
+// `exporter=1` : l'application demande la VIDÉO de la capsule (télécharger,
+// publier dans le Challenge) au lieu de la jouer.
+const EXPORT_APP = APP && P.get('exporter') === '1';
 if (APP) document.body.classList.add('app');
 const M = { premiere: null, gpu: '—', webgl: '—', bascule: null, export: null, stats: { complet: [], leger: [] }, voix: '—', objets: '—' };
 let lecteur = null, capsule = null, index = null, legers = null;
@@ -439,6 +442,71 @@ async function exporter() {
   occupe = false; $('exporter').disabled = false; afficher();
 }
 
+// ── Export complet pour l'application (télécharger, publier) ─────────────
+// Plus de serveur pour fabriquer le MP4 (LWS supprimé le 22/09) : c'est le
+// téléphone qui le fabrique, image par image, comme l'export de 10 s ci-dessus,
+// mais sur toute la capsule et AVEC la voix, le logo et les attributions — tout
+// est dessiné dans la toile. Le fichier repart vers l'application en morceaux
+// base64 : un canal JavaScript ne transporte que du texte.
+async function voix48k(b) {
+  // L'encodeur AAC d'Android refuse souvent 24 kHz ; la voix est fabriquée à 24 kHz.
+  if (b.sampleRate === 48000) return b;
+  const oc = new OfflineAudioContext(1, Math.ceil(b.duration * 48000), 48000);
+  const s = oc.createBufferSource(); s.buffer = b; s.connect(oc.destination); s.start();
+  return oc.startRendering();
+}
+async function exporterPourApp() {
+  occupe = true;
+  const voile = (txt) => { $('voile').textContent = txt; $('voile').hidden = false; };
+  let verrou = null;
+  try { verrou = await navigator.wakeLock?.request('screen'); } catch (e) {}
+  const d0 = performance.now();
+  try {
+    voile('Préparation de la voix…');
+    // Toutes les voix d'abord : ce sont elles qui fixent la durée de chaque scène.
+    if (FLUX && !voix) await ecouterFlux();
+    const FPS = 25, N = Math.ceil(capsule.duree * FPS);
+    const MB = await import('./vendor/mediabunny/mediabunny.min.mjs');
+    const p = lecteur.palierCourant, codecV = await MB.getFirstEncodableVideoCodec(['avc', 'vp9', 'av1'], { width: p.L, height: p.H });
+    if (!codecV) throw Object.assign(new Error('ce téléphone ne sait pas encoder de vidéo'), { code: 'export' });
+    const mp4 = codecV === 'avc';
+    const voix48 = voix ? await voix48k(voix) : null;
+    const codecA = voix48 ? await MB.getFirstEncodableAudioCodec(mp4 ? ['aac', 'opus'] : ['opus', 'aac'], { numberOfChannels: 1, sampleRate: 48000 }) : null;
+    const sortie = new MB.Output({ format: mp4 ? new MB.Mp4OutputFormat() : new MB.WebMOutputFormat(), target: new MB.BufferTarget() });
+    const copie = document.createElement('canvas'); copie.width = p.L; copie.height = p.H; const cc = copie.getContext('2d');
+    const video = new MB.CanvasSource(copie, { codec: codecV, bitrate: MB.QUALITY_MEDIUM }); sortie.addVideoTrack(video, { frameRate: FPS });
+    let audio = null; if (codecA) { audio = new MB.AudioBufferSource({ codec: codecA, bitrate: MB.QUALITY_MEDIUM }); sortie.addAudioTrack(audio); }
+    await sortie.start();
+    for (let i = 0; i < N; i++) {
+      lecteur.dessiner(i / FPS); cc.drawImage($('toile'), 0, 0); await video.add(i / FPS, 1 / FPS);
+      if (i % 25 === 0) { const pc = Math.floor(i / N * 100); voile(`Fabrication de la vidéo… ${pc} %`); signaler('export_progres', { p: i / N }); }
+    }
+    if (audio) await audio.add(voix48);
+    await sortie.finalize();
+    voile('Transfert de la vidéo…');
+    const octets = new Uint8Array(sortie.target.buffer), TAILLE = 393216;   // 384 Ko, multiple de 3
+    const n = Math.ceil(octets.length / TAILLE);
+    for (let i = 0; i < n; i++) {
+      const m = octets.subarray(i * TAILLE, (i + 1) * TAILLE);
+      let bin = '';
+      for (let j = 0; j < m.length; j += 0x8000) bin += String.fromCharCode.apply(null, m.subarray(j, j + 0x8000));
+      signaler('video_morceau', { i, n, b64: btoa(bin) });
+      if (i % 4 === 3) await new Promise((r) => setTimeout(r, 0));
+    }
+    // `mime`, pas `type` : `signaler` range le type du MESSAGE sous `type`, et
+    // le format l'écrasait (essai du 29/10 : « video/mp4 » reçu au lieu de « video_fin »).
+    signaler('video_fin', { n, octets: octets.length, mime: mp4 ? 'video/mp4' : 'video/webm', duree_ms: Math.round(N / FPS * 1000),
+      secondes: Math.round((performance.now() - d0) / 100) / 10, codecs: codecV + (codecA ? ' + ' + codecA : ' sans son') });
+    voile('Vidéo prête');
+  } catch (e) {
+    voile('La vidéo n\'a pas pu être fabriquée : ' + e.message);
+    signaler('erreur', { code: e.code || 'export', message: e.message });
+  } finally {
+    try { await verrou?.release(); } catch (e) {}
+    occupe = false;
+  }
+}
+
 // ── Démarrage ────────────────────────────────────────────────────────────
 async function demarrer() {
   try {
@@ -489,7 +557,10 @@ async function demarrer() {
     $('voile').hidden = true;
     for (const id of ['lancer', 'exporter', 'verifier']) $(id).disabled = false;
     requestAnimationFrame(boucle); afficher();
-    if (APP) {
+    if (EXPORT_APP) {
+      signaler('pret', { gpu: M.gpu, webgl: M.webgl, scenes: capsule.scenes.length });
+      await exporterPourApp();
+    } else if (APP) {
       signaler('pret', { gpu: M.gpu, webgl: M.webgl, scenes: capsule.scenes.length });
       // Démarrage sans appui : l'application autorise le son sans geste. Si le
       // navigateur le refuse quand même, on le DIT et on attend un toucher.

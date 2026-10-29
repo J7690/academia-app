@@ -21,6 +21,8 @@ import { validateStoryboard } from './validate.ts';
 import { getSystemPrompt } from './prompt.ts';
 import { getCapsulePrompt } from './prompt_capsule.ts';
 import { validateCapsule } from './validate_capsule.ts';
+import { resoudreChimie } from './chimie.ts';
+import { appelerReel, genererCapsuleEnCouches } from './chaine_capsule.ts';
 import { callWithCascade, stripCodeFences, type CascadeResult } from './llm.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
@@ -84,25 +86,43 @@ serve(async (req: Request) => {
     }
     const messages = [ { role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt } ];
 
+    // LA CHAINE EN COUCHES (29/10/2026), derriere un interrupteur : un metier par
+    // appel (chaine_capsule.ts). ETEINTE tant que le banc ne l'a pas departagee de
+    // l'appel unique ; s'allume par le secret CAPSULE_CHAINE=1, sans redeploiement.
+    const enCouches = pourAnimation && Deno.env.get('CAPSULE_CHAINE') === '1';
     let cascadeResult: CascadeResult;
-    try { cascadeResult = await callWithCascade(messages, 4500); }
-    catch (e) { await supabase.rpc('app_student_refund_credits', { p_reservation_id: reservationId }); return jsonResponse({ error: 'llm_error', detail: (e as Error).message?.slice(0, 300) }, 502); }
-
-    const jsonToParse = stripCodeFences(cascadeResult.content);
-
     let parsed: unknown;
-    try { parsed = JSON.parse(jsonToParse); }
-    catch (e) { await supabase.rpc('app_student_refund_credits', { p_reservation_id: reservationId }); return jsonResponse({ error: 'invalid_json', detail: (e as Error).message?.slice(0, 300), raw: cascadeResult.content.slice(0, 500) }, 500); }
+    let vcChaine: ReturnType<typeof validateCapsule> | null = null;
+    if (enCouches) {
+      try {
+        const r = await genererCapsuleEnCouches(subject, appelerReel());
+        vcChaine = r.vc;
+        const sortie = r.etapes.reduce((s, e) => s + e.jetonsSortie, 0);
+        cascadeResult = { content: '', model: 'chaine:' + [...new Set(r.etapes.map((e) => e.model))].join('+'), tier: 'chaine',
+          usage: { prompt_tokens: 0, completion_tokens: sortie, total_tokens: sortie }, costUsd: r.etapes.reduce((s, e) => s + e.coutUsd, 0) };
+      } catch (e) { await supabase.rpc('app_student_refund_credits', { p_reservation_id: reservationId }); return jsonResponse({ error: 'llm_error', detail: (e as Error).message?.slice(0, 300) }, 502); }
+    } else {
+      try { cascadeResult = await callWithCascade(messages, 4500); }
+      catch (e) { await supabase.rpc('app_student_refund_credits', { p_reservation_id: reservationId }); return jsonResponse({ error: 'llm_error', detail: (e as Error).message?.slice(0, 300) }, 502); }
+
+      const jsonToParse = stripCodeFences(cascadeResult.content);
+      try { parsed = JSON.parse(jsonToParse); }
+      catch (e) { await supabase.rpc('app_student_refund_credits', { p_reservation_id: reservationId }); return jsonResponse({ error: 'invalid_json', detail: (e as Error).message?.slice(0, 300), raw: cascadeResult.content.slice(0, 500) }, 500); }
+    }
 
     // ON NETTOIE, ON NE REJETTE PAS -- des deux cotes. Un refus fait perdre
     // a l'etudiant ses credits ET sa video ; on ne refuse donc que
     // l'irrecuperable, et ce refus declenche un remboursement.
     let sb: Record<string, unknown>;
     if (pourAnimation) {
-      const vc = validateCapsule(parsed);
+      const vc = vcChaine ?? validateCapsule(parsed);
       if (!vc.valid) { await supabase.rpc('app_student_refund_credits', { p_reservation_id: reservationId }); return jsonResponse({ error: 'invalid_capsule', detail: vc.error, raw: cascadeResult.content.slice(0, 500) }, 500); }
       sb = vc.capsule as Record<string, unknown>;
       sb.corrections = vc.corrections;
+      // La vraie géométrie des molécules (PubChem), AVANT la lecture : le téléphone
+      // reçoit une capsule complète. Jamais bloquant — un échec écrit la formule.
+      try { await resoudreChimie(sb, vc.corrections); }
+      catch (e) { vc.corrections.push(`chimie non resolue : ${(e as Error).message?.slice(0, 120)}`); }
     } else {
       const validation = validateStoryboard(parsed);
       if (!validation.valid) { await supabase.rpc('app_student_refund_credits', { p_reservation_id: reservationId }); return jsonResponse({ error: 'invalid_storyboard', detail: validation.error, raw: cascadeResult.content.slice(0, 500) }, 500); }

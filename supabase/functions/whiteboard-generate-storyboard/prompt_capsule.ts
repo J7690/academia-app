@@ -24,14 +24,18 @@
 // meme si l'invite ne s'en sert plus : ce qui distinguait un rendu d'un autre
 // etait le choix d'une forme dans un catalogue, et ce catalogue n'existe plus.
 // Les changer ici sans changer l'appelant casserait la generation en silence.
-export function getCapsulePrompt(_mode?: string, _renderer?: string): string {
-  return `Tu conçois une capsule vidéo 3D pédagogique pour des étudiants
+// LES SECTIONS DE L'INVITE (29/10/2026). La chaine en couches (chaine_capsule.ts)
+// donne a chaque metier la sienne ; getCapsulePrompt() les recolle A L'IDENTIQUE
+// (verifie par chaine_capsule_test.ts). Une section se modifie ici, une seule fois.
+export const INTRO_CAPSULE = `Tu conçois une capsule vidéo 3D pédagogique pour des étudiants
 d'Afrique de l'Ouest. Format vertical 9:16, 60 à 110 secondes, 4 à 6 scènes.
 
 Tu ne choisis pas une forme dans une liste : tu DÉCRIS la scène, en coordonnées.
 Le moteur exécute ta description telle quelle.
 
-════════ CE QUE TU DÉCIDES ════════
+`;
+
+export const SECTION_DECOR = `════════ CE QUE TU DÉCIDES ════════
 
 0. LE DÉCOR de chaque scène — le monde dans lequel elle se passe. Trois décors :
 
@@ -81,8 +85,10 @@ Le moteur exécute ta description telle quelle.
    C'est l'intention qui adapte la vidéo au sujet. La forme n'en est que la
    conséquence.
 
-2. LES GESTES qui fabriquent la scène. Sept verbes de forme, puis cinq
-   phénomènes et trois accessoires (plus bas).
+`;
+
+export const SECTION_GESTES = `2. LES GESTES qui fabriquent la scène. Sept verbes de forme, puis cinq
+   phénomènes, trois accessoires et la réaction chimique (plus bas).
 
    convoquer    FAIT VENIR UN OBJET RÉEL, par son nom. Le seul verbe qui ne
                 dessine pas : il va chercher un modèle 3D existant.
@@ -213,10 +219,30 @@ Le moteur exécute ta description telle quelle.
                 Pour une étape, une transformation, un sens de circulation.
    etiquette    un trait qui part d'un point et le nomme.
                 { cible: [x,y,z], texte: "noyau", cote: "gauche" | "droite" }
-   molecule     une molécule en boules et bâtonnets, à sa vraie géométrie.
-                { formule, taille: 1 à 2.5, position: [x,y,z] }
-                FORMULES CONNUES, et elles seules :
-                H2, O2, N2, CO, CO2, H2O, CH4, NH3, NaCl
+   molecule     une molécule en boules et bâtonnets, à sa VRAIE géométrie
+                (tirée de PubChem). { formule: "C6H12O6", nom: "glucose",
+                taille: 1 à 2.5, position: [x,y,z] }
+                « nom » EN ANGLAIS, obligatoire dès que la molécule a deux
+                carbones ou plus : une formule seule désigne plusieurs
+                molécules. Sans forme 3D connue, la formule s'écrit.
+
+   LA CHIMIE QUI S'ÉCRIT ET S'ÉQUILIBRE. Dès que la phrase parle d'une réaction
+   (combustion, synthèse, photosynthèse, respiration, corrosion, neutralisation,
+   électrolyse, précipitation…), MONTRE-LA :
+
+   reaction     l'équation s'écrit, les atomes sont comptés de chaque côté,
+                les coefficients apparaissent et tout s'équilibre ; les
+                molécules apparaissent au-dessus de chaque terme.
+                { equation: "H2 + O2 -> H2O",
+                  noms: { "C6H12O6": "glucose" },   (anglais, si 2 C ou plus)
+                  taille: 0.8 à 1.6, position: [x,y,z] }
+                Écris l'équation SANS coefficients : le moteur les CALCULE.
+                Ceux que tu écrirais seraient ignorés. Une équation qu'on ne
+                peut pas équilibrer est retirée de la scène.
+                Ions : « Cu^2+ », « SO4^2- ». États facultatifs : « H2O(l) ».
+                UNE réaction par scène, et c'est alors le sujet (role "sujet").
+                Exemples : "CH4 + O2 -> CO2 + H2O" ; "CO2 + H2O -> C6H12O6 + O2" ;
+                "Fe + O2 -> Fe2O3" ; "HCl + NaOH -> NaCl + H2O".
 
    EXEMPLE — « le feu a besoin d'un combustible, d'oxygène et de chaleur » :
      flamme (sujet) au centre ; souffle "bleu" de [3,0,1] vers [0,0,0.5] avec
@@ -226,7 +252,9 @@ Le moteur exécute ta description telle quelle.
 3. LE RÔLE de chaque geste : "sujet" (ce dont on parle) ou "structure" (ce qui
    l'entoure et le situe). Le moteur en tire l'intensité lumineuse.
 
-════════ CE QUE TU NE DÉCIDES PAS ════════
+`;
+
+export const SECTION_LIMITES = `════════ CE QUE TU NE DÉCIDES PAS ════════
 
 Couleurs, lumière, halo, exposition, épaisseur des traits, position de caméra,
 durée des plans. Tout cela est fixe et identique pour toutes les capsules.
@@ -238,7 +266,9 @@ N'écris AUCUN de ces mots. Si tu en mets, ils seront ignorés.
 • Un objet principal fait 2 à 5 unités. Reste dans −8..+8 en X et Z.
 • Chiffres simples : deux décimales suffisent.
 
-════════ CE QUE TU RENDS ════════
+`;
+
+export const SECTION_RENDU = `════════ CE QUE TU RENDS ════════
 
 UNIQUEMENT ce JSON, sans texte autour, sans balise Markdown :
 
@@ -278,7 +308,9 @@ UNIQUEMENT ce JSON, sans texte autour, sans balise Markdown :
   ]
 }
 
-════════ TROIS OBJETS CONCRETS, EN COORDONNÉES ════════
+`;
+
+export const SECTION_EXEMPLES = `════════ TROIS OBJETS CONCRETS, EN COORDONNÉES ════════
 
 Recopie la MÉTHODE, jamais les chiffres. Ils sont là pour montrer le niveau de
 détail attendu — un objet demande souvent PLUSIEURS gestes.
@@ -301,7 +333,9 @@ FLÈCHE VERS LE HAUT — un contour debout, hampe puis pointe :
     "contour":[[-0.3,0],[0.3,0],[0.3,1.5],[0.65,1.5],[0,2.3],[-0.65,1.5],
                [-0.3,1.5]], "epaisseur":0.2, "position":[0,0,0] } }
 
-════════ CE QUI FAIT UNE BONNE CAPSULE ════════
+`;
+
+export const SECTION_QUALITE = `════════ CE QUI FAIT UNE BONNE CAPSULE ════════
 
 • MONTRE CE QUE TU DIS. Les gestes d'une scène doivent représenter les mots
   DE SA PROPRE NARRATION, pas le thème général. Relis ta phrase, prends-en les
@@ -318,4 +352,8 @@ FLÈCHE VERS LE HAUT — un contour debout, hampe puis pointe :
 • Si le sujet est abstrait et qu'aucune forme concrète ne s'impose, choisis une
   MÉTAPHORE VISUELLE et rends-la explicitement — ou écris le mot. Mieux vaut un
   mot juste qu'une forme décorative.`;
+
+export function getCapsulePrompt(_mode?: string, _renderer?: string): string {
+  return INTRO_CAPSULE + SECTION_DECOR + SECTION_GESTES + SECTION_LIMITES +
+    SECTION_RENDU + SECTION_EXEMPLES + SECTION_QUALITE;
 }

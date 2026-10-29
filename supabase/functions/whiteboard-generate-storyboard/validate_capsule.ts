@@ -20,6 +20,8 @@
 // ferait perdre a l'etudiant ses credits ET sa video. Mais nettoyer n'a jamais
 // voulu dire se taire : chaque correction est nommee et remonte avec la capsule.
 
+import { equilibrer, lireEquation, lireEspece } from "./chimie.ts";
+
 export const INTENTIONS = [
   "objet", "processus", "comparaison", "structure", "echelle", "flux",
 ] as const;
@@ -39,6 +41,9 @@ export const VERBES = [
   // (lecteur.js, PHENOMENES et ACCESSOIRES) — aucun fichier, aucune licence.
   "flamme", "ecoulement", "pluie", "souffle", "foudre",
   "fleche", "etiquette", "molecule",
+  // CHIMIE CALCULÉE (lot B2, 29/10/2026) : l'IA écrit la réaction, chimie.ts en
+  // calcule les coefficients. Voir docs/STUDIO_3D_VOCABULAIRE_UNIVERSEL_2026-10-29.md.
+  "reaction",
 ] as const;
 
 // VALEUR COUPLEE avec MOLECULES de lecteur.js et la liste de prompt_capsule.ts :
@@ -385,16 +390,57 @@ function validerGeste(brut: unknown, id: string, rang: number,
     p.cote = pIn.cote === "gauche" ? "gauche" : "droite";
 
   } else if (verbe === "molecule") {
-    // « O₂ », « o2 », « H2 O » : on ramene a l'ecriture du lecteur.
+    // « O₂ », « o2 », « H2 O » : on ramene a l'ecriture du lecteur. Hors des neuf
+    // qu'il dessine de memoire, toute formule LISIBLE est admise (lot B2) : sa vraie
+    // geometrie vient de PubChem apres la validation (chimie.ts, resoudreChimie).
     const brute = String(pIn.formule ?? "").replace(/[₀-₉]/g, (c) => String(c.charCodeAt(0) - 8320)).replace(/\s/g, "");
-    const formule = MOLECULES.find((m) => m.toLowerCase() === brute.toLowerCase());
-    if (!formule) {
-      corr.push(`${id}.g${rang}: molecule « ${brute || "absente"} » inconnue, ecartee`);
+    const nom = String(pIn.nom ?? "").trim().slice(0, 40);
+    let formule: string | undefined = MOLECULES.find((m) => m.toLowerCase() === brute.toLowerCase());
+    if (!formule && brute) {
+      try { formule = lireEspece(brute).formule; } catch { formule = undefined; }
+    }
+    if (!formule && !nom) {
+      corr.push(`${id}.g${rang}: molecule « ${brute || "absente"} » illisible, ecartee`);
       return null;
     }
-    p.formule = formule;
+    if (formule) p.formule = formule;
+    if (nom) p.nom = nom;
     p.taille = borner(nombre(pIn.taille, 1.4), 0.3, 6);
     p.position = point3(pIn.position) ?? [0, 0, 0];
+
+  } else if (verbe === "reaction") {
+    // ON N'AFFICHE JAMAIS UNE EQUATION FAUSSE. Les coefficients du modele sont
+    // ignores ; s'il n'existe pas d'equilibre unique, la reaction est ecartee.
+    const texte = String(pIn.equation ?? "").trim().slice(0, 160);
+    try {
+      const { reactifs, produits, reversible } = lireEquation(texte);
+      const r = equilibrer(reactifs, produits);
+      if ("erreur" in r) {
+        corr.push(`${id}.g${rang}: reaction « ${texte} » ecartee : ${r.erreur}`);
+        return null;
+      }
+      p.especes = [...reactifs.map((e) => ({ ...e, cote: "reactif" })), ...produits.map((e) => ({ ...e, cote: "produit" }))]
+        .map((e, i) => {
+          const o: Record<string, unknown> = { formule: e.formule, atomes: e.atomes, charge: e.charge, cote: e.cote, coef: r.coefficients[i] };
+          if (e.etat) o.etat = e.etat;
+          return o;
+        });
+      p.reversible = reversible;
+    } catch (e) {
+      corr.push(`${id}.g${rang}: reaction « ${texte || "absente"} » illisible (${(e as Error).message}), ecartee`);
+      return null;
+    }
+    // Les noms (en anglais) que le modele donne aux especes : pour aller chercher
+    // la bonne molecule, pas un isomere de meme formule.
+    if (pIn.noms && typeof pIn.noms === "object") {
+      const noms: Record<string, string> = {};
+      for (const [f, n] of Object.entries(pIn.noms as Record<string, unknown>).slice(0, 6)) {
+        try { noms[lireEspece(f).formule] = String(n).trim().slice(0, 40); } catch { /* formule illisible : ignoree */ }
+      }
+      if (Object.keys(noms).length) p.noms = noms;
+    }
+    p.taille = borner(nombre(pIn.taille, 1.0), 0.5, 2.5);
+    p.position = point3(pIn.position) ?? [0, 0, 1.6];
   }
 
   return { verbe, role, parametres: p };

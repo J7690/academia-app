@@ -379,7 +379,10 @@ function echantillonner(points, n = 48) {
 
 /** Atomes : rayon (Å, ramené) et liaisons des molécules courantes. Géométrie
  *  réelle (angles et longueurs publiés), pas un dessin approximatif. */
-const ATOMES = { H: 0.32, C: 0.62, N: 0.58, O: 0.56, Na: 0.9, Cl: 0.8 };
+const ATOMES = { H: 0.32, C: 0.62, N: 0.58, O: 0.56, Na: 0.9, Cl: 0.8,
+  // Lot B2 : les éléments des molécules tirées de PubChem (rayons covalents, ramenés).
+  F: 0.5, S: 0.82, P: 0.84, Br: 0.9, I: 1.0, K: 1.1, Ca: 1.0, Mg: 0.95, Fe: 0.9, Cu: 0.9, Zn: 0.88, Al: 0.88, Si: 0.84, Li: 0.85, B: 0.66 };
+const rayonAtome = (el) => ATOMES[el] ?? 0.75;
 const MOLECULES = (() => {
   const tetra = [[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]].map(([x, y, z]) => [x * 0.63, y * 0.63, z * 0.63]);
   const a = 104.5 * Math.PI / 360, oh = 0.96;
@@ -577,33 +580,249 @@ const ACCESSOIRES = {
     return g;
   },
 
-  /** Une molécule en boules et bâtonnets, à sa géométrie réelle. */
+  /** Une molécule en boules et bâtonnets, à sa géométrie réelle : celle que le
+   *  lecteur connaît, ou celle de PubChem jointe par le serveur (`geometrie`). */
   molecule(p, ctx, role) {
     const f = String(p.formule || '').replace(/[₀-₉]/g, (c) => String(c.charCodeAt(0) - 8320)).replace(/\s/g, '');
-    const def = MOLECULES[f];
-    if (!def) throw new Error(`molécule « ${p.formule} » inconnue (connues : ${MOLECULES_CONNUES.join(', ')})`);
-    const [atomes, liaisons] = def;
-    const g = new THREE.Group();
-    const P = atomes.map(([, q]) => v(q[0], q[1], q[2]));
-    for (const [i, j, ordre = 1] of liaisons) for (let k = 0; k < ordre; k++) {
-      const a = P[i].clone(), b = P[j].clone(), d = b.clone().sub(a);
-      const decal = new THREE.Vector3(0, (k - (ordre - 1) / 2) * 0.12, 0);
-      const cyl = new THREE.CylinderGeometry(0.035, 0.035, d.length(), 6); cyl.translate(0, d.length() / 2, 0);
-      const b1 = new THREE.Mesh(cyl, new THREE.MeshBasicMaterial({ color: 0x4f8cff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
-      b1.position.copy(a).add(decal); b1.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); g.add(b1);
-    }
-    atomes.forEach(([el], i) => {
-      const s = habiller(new THREE.IcosahedronGeometry(ATOMES[el] * 0.55, 1), ctx, el === 'H' ? 'structure' : role);
-      g.add(placerMonde(s, P[i]));
-      const t = panneauTexte(el, 0.28, '#ffffff'); g.add(placerMonde(t, P[i].clone().add(new THREE.Vector3(0, ATOMES[el] * 0.55 + 0.18, 0))));
-    });
+    const def = definitionMolecule(f, p.geometrie);
     const T = borne(p.taille, 0.3, 6, 1.4);
-    g.scale.setScalar(T / 1.6);
+    if (!def) {
+      // Ni connue ni trouvée sur PubChem : la formule ÉCRITE, plutôt qu'un vide.
+      if (!f) throw new Error(`molécule « ${p.nom || '?'} » sans formule ni géométrie`);
+      return placer(panneauFormule([{ formule: f }], T * 0.5), p);
+    }
+    if (p.geometrie?.source) ctx.attributions.add(`Molécule : ${p.geometrie.source}`);
+    const g = construireMolecule(def, ctx, role);
+    g.scale.setScalar(T / Math.max(1.6, g.userData.etendue));
     const out = new THREE.Group(); out.add(g);
     out.userData.animer = (sec) => { g.rotation.y = sec * 0.5; };
     return placer(out, p);
   },
+
+  /** Une réaction qui S'ÉQUILIBRE à l'écran (lot B2, 29/10/2026).
+   *
+   *  Les coefficients viennent du serveur (`chimie.ts`, calcul exact) : le lecteur
+   *  ne les invente pas. La scène : l'équation s'écrit terme à terme, les atomes
+   *  sont comptés de chaque côté (rouge quand ça ne tombe pas juste), les
+   *  coefficients se posent un à un, et tout passe au vert. Au-dessus de chaque
+   *  terme, autant de molécules que le coefficient en demande. Fonction pure du
+   *  temps écoulé, comme le reste : l'export reste image pour image la lecture. */
+  reaction(p, ctx, role) {
+    const especes = Array.isArray(p.especes) ? p.especes : [];
+    if (especes.length < 2 || especes.some((e) => !e.formule || !Number.isFinite(e.coef))) throw new Error('réaction sans espèces équilibrées');
+    const T = borne(p.taille, 0.5, 2.5, 1.0);
+    const plan = new PlanReaction(especes, p.reversible);
+    const panneau = plan.panneau(T);
+    const groupe = new THREE.Group(); groupe.add(panneau.mesh); groupe.userData.face = true;
+    // Les molécules au-dessus de chaque terme : de 1 au coefficient, à mesure qu'il se pose.
+    const copies = especes.map((e, i) => {
+      const def = definitionMolecule(e.formule, e.geometrie);
+      if (!def) return [];
+      if (e.geometrie?.source) ctx.attributions.add(`Molécule : ${e.geometrie.source}`);
+      const max = def[0].length <= 4 ? 6 : 3, n = Math.min(e.coef, max);
+      return Array.from({ length: n }, (_, k) => {
+        const m = construireMolecule(def, ctx, role, false);
+        const echelle = (T * 0.34) / Math.max(0.7, m.userData.etendue);
+        m.scale.setScalar(echelle);
+        const col = k % 3, rang = Math.floor(k / 3);
+        const pas = T * 0.38;
+        m.position.set(panneau.xTerme(i) + (col - (Math.min(n, 3) - 1) / 2) * pas, panneau.hauteur * 0.5 + T * 0.32 + rang * pas, 0);
+        m.visible = false; groupe.add(m);
+        return m;
+      });
+    });
+    const out = new THREE.Group(); out.add(groupe);
+    out.userData.animer = (sec) => {
+      const etat = plan.etat(sec);
+      panneau.dessiner(etat);
+      copies.forEach((liste, i) => liste.forEach((m, k) => {
+        const n = etat.coefsPoses[i] ? especes[i].coef : 1;
+        m.visible = etat.termes > i && k < n;
+        m.rotation.y = sec * 0.6 + i;
+      }));
+    };
+    return placer(out, p);
+  },
 };
+
+/** [atomes, liaisons] d'une molécule : mémoire du lecteur, sinon géométrie du serveur. */
+function definitionMolecule(formule, geometrie) {
+  if (MOLECULES[formule]) return MOLECULES[formule];
+  if (geometrie?.atomes?.length && Array.isArray(geometrie.liaisons)) {
+    return [geometrie.atomes.map(([el, x, y, z]) => [el, [+x || 0, +y || 0, +z || 0]]), geometrie.liaisons];
+  }
+  return null;
+}
+
+/** Boules et bâtonnets ; `userData.etendue` = diamètre, pour l'échelle. Les
+ *  étiquettes d'atomes ne s'affichent que sur les petites molécules : sur le
+ *  glucose (24 atomes) elles recouvriraient tout. */
+function construireMolecule([atomes, liaisons], ctx, role, etiquettes = true) {
+  const g = new THREE.Group();
+  const P = atomes.map(([, q]) => v(q[0], q[1], q[2]));
+  const matLiaison = new THREE.MeshBasicMaterial({ color: 0x4f8cff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+  for (const [i, j, ordre = 1] of liaisons) {
+    if (!P[i] || !P[j]) continue;
+    for (let k = 0; k < ordre; k++) {
+      const a = P[i].clone(), b = P[j].clone(), d = b.clone().sub(a);
+      const decal = new THREE.Vector3(0, (k - (ordre - 1) / 2) * 0.12, 0);
+      const cyl = new THREE.CylinderGeometry(0.035, 0.035, d.length(), 6); cyl.translate(0, d.length() / 2, 0);
+      const b1 = new THREE.Mesh(cyl, matLiaison);
+      b1.position.copy(a).add(decal); b1.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); g.add(b1);
+    }
+  }
+  const lourds = atomes.filter(([el]) => el !== 'H').length;
+  const nommer = etiquettes && (atomes.length <= 12 || lourds <= 14);
+  atomes.forEach(([el], i) => {
+    const r = rayonAtome(el);
+    g.add(placerMonde(habiller(new THREE.IcosahedronGeometry(r * 0.55, 1), ctx, el === 'H' ? 'structure' : role), P[i]));
+    if (nommer && (atomes.length <= 12 || el !== 'H')) {
+      g.add(placerMonde(panneauTexte(el, 0.28, '#ffffff'), P[i].clone().add(new THREE.Vector3(0, r * 0.55 + 0.18, 0))));
+    }
+  });
+  g.userData.etendue = 2 * Math.max(0.4, ...P.map((q, i) => q.length() + rayonAtome(atomes[i][0]) * 0.55));
+  return g;
+}
+
+// ── Formules écrites : indices et charges à leur place ───────────────────
+// « Ca(OH)2 » -> Ca(OH)₂ ; « SO4^2- » -> SO₄²⁻. Dessiné à la main dans la toile :
+// Poppins n'a pas les chiffres en indice, et une police de secours les ferait
+// changer de forme au milieu d'une formule.
+function morceauxFormule(f) {
+  const out = []; let i = 0;
+  const s = String(f);
+  while (i < s.length) {
+    if (s[i] === '^') {
+      const m = s.slice(i + 1).match(/^(\d*)([+-])/);
+      if (m) { out.push({ t: (m[1] === '1' ? '' : m[1]) + (m[2] === '-' ? '−' : '+'), haut: true }); i += 1 + m[0].length; continue; }
+    }
+    if (/\d/.test(s[i]) && i > 0 && /[A-Za-z)\]]/.test(s[i - 1])) {
+      const m = s.slice(i).match(/^\d+/)[0]; out.push({ t: m, bas: true }); i += m.length; continue;
+    }
+    out.push({ t: s[i] }); i++;
+  }
+  return out;
+}
+function largeurFormule(c, f, px) {
+  let l = 0;
+  for (const m of morceauxFormule(f)) { c.font = `600 ${m.bas || m.haut ? px * 0.6 : px}px Poppins, sans-serif`; l += c.measureText(m.t).width; }
+  return l;
+}
+function ecrireFormule(c, f, x, y, px) {
+  for (const m of morceauxFormule(f)) {
+    c.font = `600 ${m.bas || m.haut ? px * 0.6 : px}px Poppins, sans-serif`;
+    c.fillText(m.t, x, y + (m.bas ? px * 0.28 : m.haut ? -px * 0.38 : 0));
+    x += c.measureText(m.t).width;
+  }
+  return x;
+}
+
+/** Une ou plusieurs formules écrites, en panneau tourné vers la caméra. */
+function panneauFormule(especes, hauteur) {
+  const toile = document.createElement('canvas'), c = toile.getContext('2d'), px = 110;
+  const texte = especes.map((e) => e.formule);
+  const l = Math.min(2048, Math.ceil(texte.reduce((s, f) => s + largeurFormule(c, f, px), 0) + px * (texte.length + 1)));
+  toile.width = l; toile.height = Math.round(px * 1.7);
+  c.textBaseline = 'middle'; c.shadowColor = '#3f8cff'; c.shadowBlur = px * 0.25; c.fillStyle = '#cfe3ff';
+  let x = px * 0.5;
+  texte.forEach((f, i) => { if (i) { c.font = `600 ${px}px Poppins, sans-serif`; c.fillText(' + ', x, toile.height / 2); x += c.measureText(' + ').width; } x = ecrireFormule(c, f, x, toile.height / 2, px); });
+  const tex = new THREE.CanvasTexture(toile); tex.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(hauteur * l / toile.height, hauteur),
+    new THREE.MeshBasicMaterial({ map: tex, color: 0x6f86a8, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  m.userData.face = true;
+  return m;
+}
+
+/** Le déroulé d'une réaction, et sa toile. Temps en secondes depuis l'entrée. */
+class PlanReaction {
+  constructor(especes, reversible) {
+    this.especes = especes; this.reversible = !!reversible;
+    this.nR = especes.filter((e) => e.cote === 'reactif').length;
+    this.elements = [...new Set(especes.flatMap((e) => Object.keys(e.atomes || {})))];
+    // Les coefficients à poser : ceux qui ne valent pas 1, dans l'ordre de l'équation.
+    this.aPoser = especes.map((e, i) => (e.coef !== 1 ? i : -1)).filter((i) => i >= 0);
+    this.tTermes = 0.35 * especes.length + 0.3; // un terme toutes les 0,35 s
+    this.tComptes = this.tTermes + 0.6;
+    this.tCoefs = this.tComptes + 1.4;
+    this.tVert = this.tCoefs + 0.9 * this.aPoser.length + 0.3;
+  }
+  etat(sec) {
+    const termes = Math.min(this.especes.length, Math.floor(sec / 0.35));
+    const poses = Math.max(0, Math.min(this.aPoser.length, Math.floor((sec - this.tCoefs) / 0.9) + 1));
+    const coefsPoses = this.especes.map((_, i) => this.aPoser.indexOf(i) >= 0 && this.aPoser.indexOf(i) < poses);
+    const dernier = poses > 0 ? this.aPoser[poses - 1] : -1;
+    return { termes, comptes: sec >= this.tComptes, coefsPoses, dernier, vert: sec >= this.tVert };
+  }
+  /** Les atomes de chaque côté, avec les coefficients déjà posés. */
+  compte(coefsPoses) {
+    return this.elements.map((el) => {
+      let g = 0, d = 0;
+      this.especes.forEach((e, i) => { const n = (e.atomes?.[el] || 0) * (coefsPoses[i] ? e.coef : 1); if (i < this.nR) g += n; else d += n; });
+      return [el, g, d];
+    });
+  }
+  panneau(T) {
+    const toile = document.createElement('canvas'), c = toile.getContext('2d'), px = 120, pxC = 62;
+    const fleche = this.reversible ? ' ⇌ ' : ' → ';
+    // La place de chaque terme est fixée UNE FOIS, coefficient final compris : rien
+    // ne glisse quand un coefficient se pose.
+    c.font = `600 ${px}px Poppins, sans-serif`;
+    const lPlus = c.measureText(' + ').width, lFleche = c.measureText(fleche).width;
+    const places = []; let x = px * 0.4;
+    this.especes.forEach((e, i) => {
+      if (i) x += i === this.nR ? lFleche : lPlus;
+      c.font = `700 ${px}px Poppins, sans-serif`;
+      const lc = e.coef !== 1 ? c.measureText(String(e.coef)).width + px * 0.08 : 0;
+      const lf = largeurFormule(c, e.formule, px);
+      places.push({ x, lc, lf }); x += lc + lf;
+    });
+    const largeur = Math.min(4096, Math.ceil(x + px * 0.4));
+    toile.width = largeur; toile.height = Math.round(px * 1.6 + pxC * 1.9);
+    const ligne1 = px * 0.85, ligne2 = px * 1.6 + pxC * 0.8;
+    const tex = new THREE.CanvasTexture(toile); tex.colorSpace = THREE.SRGBColorSpace;
+    const hauteur = T * (toile.height / (px * 1.6)) * 0.7;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(hauteur * largeur / toile.height, hauteur),
+      new THREE.MeshBasicMaterial({ map: tex, color: 0xb4b4b4, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+    let derniereCle = '';
+    const dessiner = (etat) => {
+      const cle = JSON.stringify(etat);
+      if (cle === derniereCle) return;
+      derniereCle = cle;
+      c.clearRect(0, 0, toile.width, toile.height);
+      c.textBaseline = 'middle'; c.shadowColor = '#3f8cff'; c.shadowBlur = px * 0.2;
+      this.especes.forEach((e, i) => {
+        if (i >= etat.termes) return;
+        const { x: xi, lc } = places[i];
+        if (i) { c.font = `600 ${px}px Poppins, sans-serif`; c.fillStyle = '#9fc2ff'; c.fillText(i === this.nR ? fleche : ' + ', xi - (i === this.nR ? lFleche : lPlus), ligne1); }
+        if (etat.coefsPoses[i]) {
+          c.font = `700 ${px}px Poppins, sans-serif`; c.fillStyle = etat.vert ? '#7dffb0' : i === etat.dernier ? '#ffd27a' : '#ffb07a';
+          c.fillText(String(e.coef), xi, ligne1);
+        }
+        c.fillStyle = etat.vert ? '#d9ffe8' : '#e6f0ff';
+        ecrireFormule(c, e.formule, xi + lc, ligne1, px);
+      });
+      if (etat.comptes) {
+        // « H 2 | 2 » par élément : le bilan qui se lit, rouge tant qu'il est faux.
+        const comptes = this.compte(etat.coefsPoses);
+        const pas = toile.width / (comptes.length + 1);
+        c.font = `600 ${pxC}px Poppins, sans-serif`; c.textAlign = 'center';
+        comptes.forEach(([el, g, d], k) => {
+          c.fillStyle = g === d ? '#7dffb0' : '#ff7a6b';
+          c.fillText(`${el}  ${g} | ${d}`, pas * (k + 1), ligne2);
+        });
+        c.textAlign = 'left';
+      }
+      tex.needsUpdate = true;
+    };
+    dessiner(this.etat(0));
+    const echelle = hauteur / toile.height;
+    return {
+      mesh, dessiner, hauteur,
+      // Le centre d'un terme, en unités de la scène (le panneau est centré en 0).
+      xTerme: (i) => (places[i].x + places[i].lc + places[i].lf / 2 - toile.width / 2) * echelle,
+    };
+  }
+}
 
 // ── Les verbes, portés de academia3d_web.js (mêmes paramètres) ───────────
 const BASES = { ovoide: [0.78, 0.78, 1.00], sphere: [1, 1, 1], galet: [1.00, 0.72, 0.55], goutte: [0.70, 0.70, 1.35], lentille: [1.00, 1.00, 0.32] };
@@ -744,9 +963,16 @@ function construireScene(s, ctx) {
   const gestes = s.decor === 'repli'
     ? [{ verbe: 'napper', parametres: { cote: 60 } }, { verbe: 'ecrire', role: 'sujet', parametres: { texte: s.texteRepli || '…', taille: 0.55, position: [0, 0, 1.2] } }]
     : s.gestes;
+  // Un mot déjà porté par un souffle, une flèche ou une étiquette n'est pas
+  // répété par une seconde étiquette (mesuré le 29/10, « la combustion » : « chaleur »
+  // deux fois l'une sous l'autre). Seule l'étiquette en double est omise.
+  const motsVus = new Set();
   for (const [rang, g] of gestes.entries()) {
     const faire = VERBES[g.verbe];
     if (!faire) { journal.degradations.push(`geste ${rang} : verbe « ${g.verbe} » inconnu`); continue; }
+    const mot = ['souffle', 'fleche', 'etiquette'].includes(g.verbe) ? String(g.parametres?.texte || '').trim().toLowerCase() : '';
+    if (mot && g.verbe === 'etiquette' && motsVus.has(mot)) { journal.faits.push(`étiquette « ${mot} » en double, omise`); continue; }
+    if (mot) motsVus.add(mot);
     try {
       const o = faire(g.parametres || {}, c, g.role);
       scene.add(o); poses.push([o, g.verbe, g.role]);
@@ -762,6 +988,28 @@ function construireScene(s, ctx) {
     scene.add(o); poses.push([o, 'ecrire', 'sujet']);
   }
   scene.updateMatrixWorld(true);
+
+  // UN MOT NE SE POSE PAS SUR LE SUJET (29/10/2026). Le modèle donne au texte la
+  // position du sujet, faute de mieux — [0,0,0] : « Triangle du feu » couvrait la
+  // flamme, « CO » s'y perdait. C'est au code de mettre en page : chaque texte qui
+  // chevauche un objet est levé au-dessus de lui, d'après les boîtes RÉELLES ; le
+  // cadrage, calculé ensuite, le prend dans l'image. Les boîtes démesurées (systèmes
+  // de particules à boîte artificielle) sont ignorées plutôt que d'envoyer le mot au ciel.
+  const boite = (o) => new THREE.Box3().setFromObject(o);
+  const mesurable = (b) => !b.isEmpty() && b.getSize(new THREE.Vector3()).length() < 40;
+  const occupees = poses.filter(([, vb]) => vb !== 'napper' && vb !== 'ecrire').map(([o]) => boite(o)).filter(mesurable);
+  for (const [o, vb] of poses) {
+    if (vb !== 'ecrire') continue;
+    let b = boite(o), leve = 0;
+    for (let k = 0; k < 6 && mesurable(b); k++) {
+      const gene = occupees.filter((x) => x.intersectsBox(b));
+      if (!gene.length) break;
+      const d = Math.max(...gene.map((x) => x.max.y)) - b.min.y + 0.25;
+      o.position.y += d; leve += d; o.updateMatrixWorld(true); b = boite(o);
+    }
+    if (leve) journal.faits.push(`texte levé de ${leve.toFixed(1)} u au-dessus du sujet`);
+    if (mesurable(b)) occupees.push(b);
+  }
 
   // Foyer sur un geste : au centre du sujet (v2, `foyer: "sujet"`).
   if (!foyer && s.foyer) {

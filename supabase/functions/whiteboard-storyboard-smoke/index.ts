@@ -25,24 +25,47 @@ import { getCapsulePrompt } from '../whiteboard-generate-storyboard/prompt_capsu
 import { callWithCascade, stripCodeFences } from '../whiteboard-generate-storyboard/llm.ts';
 import { validateStoryboard } from '../whiteboard-generate-storyboard/validate.ts';
 import { validateCapsule } from '../whiteboard-generate-storyboard/validate_capsule.ts';
+import { resoudreChimie } from '../whiteboard-generate-storyboard/chimie.ts';
+import { appelerReel, type Etape, genererCapsuleEnCouches } from '../whiteboard-generate-storyboard/chaine_capsule.ts';
+import type { Reglages, Role } from '../whiteboard-generate-storyboard/llm.ts';
 
 function role(jeton: string): string {
   try { return JSON.parse(atob(jeton.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).role ?? ''; }
   catch { return ''; }
 }
 
-async function essaiCapsule(subject: string, complet = false): Promise<Record<string, unknown>> {
+/** MODE CHAÎNE (29/10/2026) : `{ "chaine": true, "roles": { "scenariste": ["…"] } }`
+ *  fabrique la capsule en couches (chaine_capsule.ts) et rend, en plus, chaque
+ *  étape (métier, modèle, temps, coût réel, essais) : c'est le banc des métiers. */
+async function essaiCapsule(subject: string, complet = false, chaine = false, roles?: Partial<Record<Role, string[]>>, reglages?: Partial<Record<Role, Reglages>>): Promise<Record<string, unknown>> {
   const t0 = Date.now();
-  const messages = [{ role: 'system', content: getCapsulePrompt('simple_subject', 'scientific') }, { role: 'user', content: `Sujet : "${subject}"` }];
-  let cascade;
-  try { cascade = await callWithCascade(messages, 4500); }
-  catch (e) { return { step: 'llm', ok: false, subject, detail: (e as Error).message?.slice(0, 300) }; }
+  let vc: ReturnType<typeof validateCapsule>;
+  let model = '', tokens_output = 0, etapes: Etape[] = [], reprises: string[] = [], a_montrer: Record<string, unknown> = {};
+  if (chaine) {
+    try {
+      const r = await genererCapsuleEnCouches(subject, appelerReel(roles, reglages));
+      vc = r.vc; etapes = r.etapes; reprises = r.reprises;
+      model = 'chaine'; tokens_output = etapes.reduce((s, e) => s + e.jetonsSortie, 0);
+      for (const s of r.brut.scenes) a_montrer[String(s.id)] = s.a_montrer;
+    } catch (e) { return { step: 'llm', ok: false, subject, detail: (e as Error).message?.slice(0, 300), ms_llm: Date.now() - t0 }; }
+  } else {
+    const messages = [{ role: 'system', content: getCapsulePrompt('simple_subject', 'scientific') }, { role: 'user', content: `Sujet : "${subject}"` }];
+    let cascade;
+    try { cascade = await callWithCascade(messages, 4500); }
+    catch (e) { return { step: 'llm', ok: false, subject, detail: (e as Error).message?.slice(0, 300) }; }
+    let parsed: unknown;
+    try { parsed = JSON.parse(stripCodeFences(cascade.content)); }
+    catch (e) { return { step: 'json_parse', ok: false, subject, ms_llm: Date.now() - t0, model: cascade.model, detail: (e as Error).message?.slice(0, 200) }; }
+    vc = validateCapsule(parsed);
+    model = cascade.model; tokens_output = cascade.usage.completion_tokens || 0;
+  }
   const ms_llm = Date.now() - t0;
-  let parsed: unknown;
-  try { parsed = JSON.parse(stripCodeFences(cascade.content)); }
-  catch (e) { return { step: 'json_parse', ok: false, subject, ms_llm, model: cascade.model, detail: (e as Error).message?.slice(0, 200) }; }
-  const vc = validateCapsule(parsed);
-  if (!vc.valid) return { step: 'validate', ok: false, subject, ms_llm, model: cascade.model, detail: vc.error };
+  if (!vc.valid) return { step: 'validate', ok: false, subject, ms_llm, model, detail: vc.error };
+  // Même trajet que la production : la chimie résolue après la validation.
+  const t1 = Date.now();
+  try { await resoudreChimie(vc.capsule!, vc.corrections); }
+  catch (e) { vc.corrections.push(`chimie non resolue : ${(e as Error).message?.slice(0, 120)}`); }
+  const ms_chimie = Date.now() - t1;
   const scenes = (vc.capsule!.scenes as Record<string, unknown>[]).map((s) => {
     const gestes = (s.gestes as Record<string, unknown>[]).filter((g) => g.pour !== 'pod');
     return {
@@ -52,8 +75,9 @@ async function essaiCapsule(subject: string, complet = false): Promise<Record<st
     };
   });
   return {
-    step: 'done', ok: true, subject, model: cascade.model, ms_llm,
-    tokens_output: cascade.usage.completion_tokens || 0, titre: vc.capsule!.titre, scenes, corrections: vc.corrections,
+    step: 'done', ok: true, subject, model, ms_llm, ms_chimie,
+    tokens_output, titre: vc.capsule!.titre, scenes, corrections: vc.corrections,
+    ...(chaine ? { etapes, reprises, a_montrer, cout_usd: Math.round(etapes.reduce((s, e) => s + e.coutUsd, 0) * 1e5) / 1e5 } : {}),
     // `complet` : la capsule entière, pour la rejouer dans le lecteur (banc de la phase B).
     ...(complet ? { capsule: vc.capsule } : {}),
   };
@@ -70,7 +94,11 @@ serve(async (req: Request) => {
   try {
     const body = await req.json().catch(() => ({}));
     const subject = typeof body.subject === 'string' && body.subject.trim() ? body.subject.trim() : 'La Loi Normale Centree Reduite';
-    if (body.engine === 'studio') return jsonResponse(await essaiCapsule(subject.slice(0, 200), body.complet === true));
+    if (body.engine === 'studio') {
+      const roles = body.roles && typeof body.roles === 'object' ? body.roles as Partial<Record<Role, string[]>> : undefined;
+      const reglages = body.reglages && typeof body.reglages === 'object' ? body.reglages as Partial<Record<Role, Reglages>> : undefined;
+      return jsonResponse(await essaiCapsule(subject.slice(0, 200), body.complet === true, body.chaine === true, roles, reglages));
+    }
     const renderer = typeof body.renderer === 'string' ? body.renderer : 'notebook';
     const theme = typeof body.theme === 'string' ? body.theme : 'notebook';
 
