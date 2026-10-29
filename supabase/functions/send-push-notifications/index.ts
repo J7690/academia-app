@@ -7,6 +7,7 @@
 // aux devices enregistrés dans app.user_device_tokens.
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { alerteMeriteCourriel, type AlerteCourriel, envoyerCopiesCourriel } from "./courriel.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -752,9 +753,29 @@ async function sendFcm(token: string, message: { notification: any; data: any })
 serve(async (_req) => {
   try {
     const events = await fetchPendingEvents(100);
+    const alertesCourriel: AlerteCourriel[] = [];
     for (const event of events) {
       try {
         const tokens = await fetchActiveTokens(event.user_id);
+        // Avant le test « aucun appareil » : c'est justement là que le
+        // courriel sert le plus. Isolé : une charge utile inattendue ne doit
+        // pas faire échouer l'événement (il serait relu à chaque minute).
+        if (alerteMeriteCourriel(event.domain)) {
+          try {
+            const apercu = buildFcmMessage(event);
+            alertesCourriel.push({
+              eventId: event.id,
+              userId: event.user_id,
+              domain: event.domain,
+              titre: apercu.notification.title,
+              corps: apercu.notification.body,
+              creeLe: event.created_at,
+              telephones: tokens.filter((t: any) => t.platform !== "web").length,
+            });
+          } catch (e) {
+            console.error("[COURRIEL] alerte non composée", event.id, e);
+          }
+        }
         if (!tokens.length) {
           await markProcessed(event.id);
           continue;
@@ -781,6 +802,8 @@ serve(async (_req) => {
         await markFailed(event.id, err);
       }
     }
+
+    await envoyerCopiesCourriel(alertesCourriel, { url: SUPABASE_URL!, cle: SUPABASE_SERVICE_ROLE_KEY! });
 
     return new Response(
       JSON.stringify({ success: true, processed: events.length }),

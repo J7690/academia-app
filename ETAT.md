@@ -59,6 +59,30 @@
 > Vu en passant, hors chantier : un autre appel `pg_net` rend 401
 > `not_authenticated` chaque minute, et le cron RunPod rend
 > `liste_runpod: echec`.
+>
+> 🟡 **Filet de secours, écrit le 29/10 au soir — base et fonction EN PRODUCTION
+> (accord de Jocelyn, ~19 h 40 UTC), app poussée sur `main` (relevé dans le journal)**. Migration
+> registre `20261029193925` (1 destinataire, `anon` sans droit) ;
+> `send-push-notifications` **v94 → v95** (CLI `--use-api`, `verify_jwt`
+> toujours actif : appel nu → 401) ; cron 19 h 43 → 200. Non encore vu : une
+> alerte admin traversant v95 (aucune émise depuis). Le bandeau n'apparaîtra
+> qu'au rechargement de la console. Objectif : que la perte du téléphone admin ne passe plus inaperçue
+> sept semaines.
+> - `20261029200000_filet_alertes_admin.sql` : `app.alertes_courriel_destinataires`
+>   (amorcée avec `wendenkoote@gmail.com`), `app.alertes_courriel_envois`
+>   (anti-doublon par `event_id` + journal), RPC `app_admin_etat_alertes()`.
+>   Éprouvée en bloc annulé : 0 téléphone / 1 navigateur pour Jocelyn ;
+>   réservation 1 puis 0 ; échec remonté ; non-admin refusé ; **0 objet resté**.
+> - `send-push-notifications/courriel.ts` (+ `courriel_test.ts`, **6/6**) : copie
+>   des alertes `admin_*` sauf `admin_audience`, un courriel par passage.
+>   `deno check index.ts` OK. **Inerte** : aucun secret `RESEND_API_KEY` ni
+>   `RESEND_FROM_EMAIL` dans le projet (relevé `supabase secrets list`).
+> - `admin_alertes_bandeau.dart`, au-dessus des onglets d'`AdminDashboardScreen`.
+> - **Bloquant hors code** : un compte Resend et un domaine vérifié
+>   (`academiea.com`), à créer par Jocelyn. Conséquence vue en passant :
+>   `app.email_queue` (reçus) a **20 courriels `pending` jamais partis**, faute
+>   de la même clé. Aucun cron ne vide cette file : poser la clé ne les
+>   enverra pas d'un coup.
 
 > ### 🟢 AU 27/10, soir — marketplace + formations courtes TERMINÉS, un seul commit
 >

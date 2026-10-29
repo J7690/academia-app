@@ -20,6 +20,7 @@ import 'admin_online_courses_screen.dart';
 import 'admin_short_trainings_screen.dart';
 import 'admin_university_sites_screen.dart';
 import 'admin_bobodo_screen.dart';
+import 'admin_alertes_bandeau.dart';
 import 'prep_concours/admin_prep_concours_screen.dart';
 import 'admin_landing_screen.dart';
 import 'admin_student_home_screen.dart';
@@ -460,50 +461,57 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ],
               ),
             ),
-            body: TabBarView(
+            body: Column(
               children: [
-                AdminApplicationsScreen(),
-                AdminPaymentsScreen(),
-                const AdminDocumentsScreen(),
-                AdminProgramsScreen(),
-                const AdminMarketplaceControlTowerScreen(),
-                AdminCommunitiesScreen(),
-                AdminChallengesScreen(),
-                AdminCourseLibraryScreen(),
-                AdminOnlineCoursesScreen(),
-                const _AdminLiveTab(),
-                AdminShortTrainingsScreen(),
-                AdminUniversitySitesScreen(),
-                AdminBobodoScreen(),
-                AdminPrepConcoursScreen(),
-                AdminStudentHomeScreen(),
-                AdminLandingScreen(),
-                AdminHeroAccueilScreen(),
-                AdminHeroVideoEncoderScreen(),
-                // L'ordre suit celui des onglets :
-                //   'Partage commissions' · '👥 Comptes' · 'Grille commissions'
-                // Ces deux premières vues étaient inversées : l'onglet Comptes
-                // affichait la répartition des commissions, et inversement.
-                ChangeNotifierProvider(
-                  create: (_) => AdminCommissionShareConfigProvider(),
-                  child: const AdminCommissionShareConfigScreen(),
+                const AdminAlertesBandeau(),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      AdminApplicationsScreen(),
+                      AdminPaymentsScreen(),
+                      const AdminDocumentsScreen(),
+                      AdminProgramsScreen(),
+                      const AdminMarketplaceControlTowerScreen(),
+                      AdminCommunitiesScreen(),
+                      AdminChallengesScreen(),
+                      AdminCourseLibraryScreen(),
+                      AdminOnlineCoursesScreen(),
+                      const _AdminLiveTab(),
+                      AdminShortTrainingsScreen(),
+                      AdminUniversitySitesScreen(),
+                      AdminBobodoScreen(),
+                      AdminPrepConcoursScreen(),
+                      AdminStudentHomeScreen(),
+                      AdminLandingScreen(),
+                      AdminHeroAccueilScreen(),
+                      AdminHeroVideoEncoderScreen(),
+                      // L'ordre suit celui des onglets :
+                      //   'Partage commissions' · '👥 Comptes' · 'Grille commissions'
+                      // Ces deux premières vues étaient inversées : l'onglet Comptes
+                      // affichait la répartition des commissions, et inversement.
+                      ChangeNotifierProvider(
+                        create: (_) => AdminCommissionShareConfigProvider(),
+                        child: const AdminCommissionShareConfigScreen(),
+                      ),
+                      const AdminAccountsScreen(),
+                      ChangeNotifierProvider(
+                        create: (_) => AdminCommissionRulesProvider(),
+                        child: const AdminCommissionRulesScreen(),
+                      ),
+                      AdminTdScreen(),
+                      AdminAcademicCommunicationScreen(),
+                      ChangeNotifierProvider(
+                        create: (_) => AdminSupportProvider(),
+                        child: const AdminSupportScreen(),
+                      ),
+                      const AdminFinanceScreen(),
+                      const AdminPricingScreen(),
+                      const AdminModerationScreen(),
+                      const AdminAnalyticsScreen(),
+                      const AdminCommercialCoordinationScreen(),
+                    ],
+                  ),
                 ),
-                const AdminAccountsScreen(),
-                ChangeNotifierProvider(
-                  create: (_) => AdminCommissionRulesProvider(),
-                  child: const AdminCommissionRulesScreen(),
-                ),
-                AdminTdScreen(),
-                AdminAcademicCommunicationScreen(),
-                ChangeNotifierProvider(
-                  create: (_) => AdminSupportProvider(),
-                  child: const AdminSupportScreen(),
-                ),
-                const AdminFinanceScreen(),
-                const AdminPricingScreen(),
-                const AdminModerationScreen(),
-                const AdminAnalyticsScreen(),
-                const AdminCommercialCoordinationScreen(),
               ],
             ),
           );

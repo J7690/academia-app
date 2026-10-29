@@ -3695,3 +3695,24 @@ Authorization alors que verify_jwt = true → POST 401 chaque minute, file trait
 `app.appeler_fonction_edge` (clé du Vault). Mesuré : 17 h 14 et 17 h 15 → 401 « Missing authorization header » ; 17 h 16 →
 200 `{"success":true,"processed":0}` (pg_net + journaux v94). Non vu : une vraie alerte livrée de bout en bout. Relevé hors
 chantier : un autre appel pg_net en 401 `not_authenticated` chaque minute ; cron RunPod `liste_runpod: echec`.
+**29/10/2026 — Alertes : poussé sur main et déployé (accord de Jocelyn : « Oui, pousse-le »).** Commit `207fc52` (9 fichiers,
+seuls les paragraphes du lot dans ETAT et journal, greffés sur HEAD), construit au-dessus de `b88bcb1` poussé entre-temps par
+une autre session. Vérifié avant : `flutter build web --release --pwa-strategy=none` (Flutter 3.38.6, celui de Netlify) sur
+copie propre = main + les 4 fichiers Dart, 720 s, réussi. `main` `b88bcb1` → `207fc52` (ls-remote). Netlify : ETag
+`ebc44c7b…` → `0896aa1f…` à 17 h 48 UTC, 3 relevés stables, témoin du code (`icons/Icon-192.png`) présent dans le bundle
+compressé et non compressé. Non vu : une notification affichée dans un vrai navigateur, onglet ouvert.
+**29/10/2026 — Filet de secours des alertes admin, écrit (accord de Jocelyn : « Oui, prépare-le » ; NON appliqué, NON déployé, NON commité).**
+Relevé préalable : `supabase secrets list` n'a **aucun** secret d'envoi de courriel (ni `RESEND_API_KEY`, ni autre) ;
+`app.email_queue` porte 20 reçus `pending` depuis le 22/10, jamais partis, et aucun cron ne la vide. Écrit :
+migration `20261029200000_filet_alertes_admin.sql` (destinataires, journal anti-doublon, `app_admin_etat_alertes`),
+`send-push-notifications/courriel.ts` (copie `admin_*` sauf `admin_audience`, inerte sans clé) + `courriel_test.ts`
+(6/6), `deno check index.ts` OK ; bandeau `admin_alertes_bandeau.dart` au-dessus des onglets de la console. Migration
+éprouvée en bloc annulé : 0 téléphone / 1 navigateur pour l'admin, réservation 1 puis 0, échec remonté, non-admin
+refusé, 0 objet resté (`to_regclass` nul après). Non éprouvé : l'insertion PostgREST `ignore-duplicates` depuis la
+fonction, et un vrai envoi Resend.
+**29/10/2026 ~19 h 40 UTC — Filet de secours appliqué (accord de Jocelyn : « Oui, applique »).** Migration
+`filet_alertes_admin` (registre `20261029193925`) : 1 destinataire (`wendenkoote@gmail.com`), 0 envoi, `anon` sans
+exécution, `authenticated` sans lecture des tables. Fonction déployée lue avant : v94 = `index.ts` du commit `207fc52`
+(copie locale = v94 + 23 lignes ajoutées). `supabase functions deploy --use-api` → **v95** (index.ts + courriel.ts) ;
+appel sans en-tête → 401 (JWT toujours exigé) ; cron 19 h 43 → 200 `processed:0`. Aucune alerte admin émise depuis :
+chemin courriel non encore traversé en production (inerte de toute façon, sans clé Resend). App (bandeau) non commitée.
