@@ -86,12 +86,15 @@ serve(async (req: Request) => {
     }
     const messages = [ { role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt } ];
 
-    // LA CHAINE EN COUCHES (29/10/2026), derriere un interrupteur : un metier par
-    // appel (chaine_capsule.ts). ETEINTE tant que le banc ne l'a pas departagee de
-    // l'appel unique ; s'allume par le secret CAPSULE_CHAINE=1, sans redeploiement.
+    // LA CHAINE EN COUCHES (29/10/2026) : un metier par appel (chaine_capsule.ts).
+    // ALLUMEE PAR DEFAUT apres le banc de 20 sujets (docs/STUDIO_3D_CHAINE_EN_COUCHES_
+    // 2026-10-29.md). Le secret CAPSULE_CHAINE=0 l'ETEINT sans redeploiement. Pourquoi
+    // ce sens : poser un secret a ALLUMER a echoue trois fois le 29/10 (tableau de
+    // bord, secret jamais vu par les fonctions) ; un secret qui coupe n'est utile qu'en
+    // cas de panne, et son absence ne prive plus les etudiants de la chaine.
     // SUJET SIMPLE SEULEMENT : le scenariste ne recoit que le sujet. Un texte, un
     // plan ou un cours fournis par l'etudiant passent par l'appel unique, qui les lit.
-    const enCouches = pourAnimation && mode === 'simple_subject' && Deno.env.get('CAPSULE_CHAINE') === '1';
+    const enCouches = pourAnimation && mode === 'simple_subject' && Deno.env.get('CAPSULE_CHAINE') !== '0';
     let cascadeResult: CascadeResult;
     let parsed: unknown;
     let vcChaine: ReturnType<typeof validateCapsule> | null = null;

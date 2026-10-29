@@ -93,7 +93,15 @@ serve(async (req: Request) => {
   if (role(jeton) !== 'service_role') return jsonResponse({ error: 'service_role_requis' }, 403);
   try {
     const body = await req.json().catch(() => ({}));
-    const subject = typeof body.subject === 'string' && body.subject.trim() ? body.subject.trim() : 'La Loi Normale Centree Reduite';
+    // `{ "engine": "etat" }` : les interrupteurs que la PRODUCTION lit (29/10/2026).
+    // Les secrets valent pour toutes les fonctions du projet ; ce client ne peut pas
+    // les lire dans le tableau de bord. On dit s'ils sont poses, jamais leur valeur.
+    if (body.engine === 'etat') {
+      const v = Deno.env.get('CAPSULE_CHAINE');
+      // La chaine est allumee par defaut ; seul CAPSULE_CHAINE=0 la coupe (index.ts).
+      return jsonResponse({ capsule_chaine_present: v !== undefined, chaine_coupee_par_secret: v === '0', openrouter_roles_present: !!Deno.env.get('OPENROUTER_ROLES') });
+    }
+    const subject =typeof body.subject === 'string' && body.subject.trim() ? body.subject.trim() : 'La Loi Normale Centree Reduite';
     if (body.engine === 'studio') {
       const roles = body.roles && typeof body.roles === 'object' ? body.roles as Partial<Record<Role, string[]>> : undefined;
       const reglages = body.reglages && typeof body.reglages === 'object' ? body.reglages as Partial<Record<Role, Reglages>> : undefined;
