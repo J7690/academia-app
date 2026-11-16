@@ -188,6 +188,9 @@ class _Carte extends StatelessWidget {
     final transmisLe = DateTime.tryParse((bon['transferred_at'] ?? '').toString());
     final consomme = (bon['consumed_at'] ?? '').toString().isNotEmpty;
     final expire = bon['expire'] == true;
+    // EN RÉSERVE (14/11) : reçu et bon préparés pour un paiement fait hors
+    // application. Le candidat et l'école ne les voient pas encore.
+    final enReserve = bon['en_reserve'] == true;
 
     return Container(
       decoration: BoxDecoration(
@@ -224,6 +227,12 @@ class _Carte extends StatelessWidget {
                                 ? const Color(0xFFB3261E)
                                 : const Color(0xFF14663A),
                       ),
+                      if (enReserve)
+                        const _Puce(
+                          texte: 'EN RÉSERVE · INVISIBLE POUR LE CANDIDAT',
+                          fond: Color(0xFFFFF1F0),
+                          encre: Color(0xFFB3261E),
+                        ),
                       if (manuel)
                         const _Puce(
                           texte: 'SAISIE MANUELLE',
@@ -282,12 +291,22 @@ class _Carte extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: FilledButton.icon(
-                onPressed:
-                    transmisLe != null ? null : () => _transferer(context),
-                icon: const Icon(Icons.send_outlined, size: 16),
-                label: Text(transmisLe == null ? 'Transmettre' : 'Transmis'),
-              ),
+              child: enReserve
+                  ? FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF14663A)),
+                      onPressed: () => _publier(context),
+                      icon: const Icon(Icons.payments_outlined, size: 16),
+                      label: const Text('Argent reçu : publier'),
+                    )
+                  : FilledButton.icon(
+                      onPressed: transmisLe != null
+                          ? null
+                          : () => _transferer(context),
+                      icon: const Icon(Icons.send_outlined, size: 16),
+                      label: Text(
+                          transmisLe == null ? 'Transmettre' : 'Transmis'),
+                    ),
             ),
           ]),
         ],
@@ -319,6 +338,38 @@ class _Carte extends StatelessWidget {
       messager.showSnackBar(
           SnackBar(content: Text('Le bon n\'a pas pu être préparé : $e')));
     }
+  }
+
+  Future<void> _publier(BuildContext context) async {
+    final p = context.read<AdminBrokerageVouchersProvider>();
+    final messager = ScaffoldMessenger.of(context);
+    final candidat = (bon['etudiant'] ?? 'le candidat').toString();
+
+    // ON DEMANDE CONFIRMATION : la publication ne se défait pas. Elle montre
+    // le reçu au candidat, ce qui atteste que l'argent est encaissé.
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('L\'argent est-il bien reçu ?'),
+        content: Text(
+          'Le reçu et le bon apparaîtront dans l\'espace de $candidat, qui '
+          'recevra une notification. Le dossier sera aussi visible par '
+          'l\'établissement.\n\nCette action ne se défait pas.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(c, false),
+              child: const Text('Annuler')),
+          FilledButton(
+              onPressed: () => Navigator.pop(c, true),
+              child: const Text('Oui, publier')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    final r = await p.publier((bon['payment_id'] ?? '').toString());
+    messager.showSnackBar(SnackBar(content: Text(r.message)));
   }
 
   Future<void> _transferer(BuildContext context) async {

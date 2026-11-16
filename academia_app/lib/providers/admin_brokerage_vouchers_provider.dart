@@ -82,6 +82,34 @@ class AdminBrokerageVouchersProvider extends ChangeNotifier {
     }
   }
 
+  /// Lève la réserve d'un reçu et d'un bon préparés pour un paiement fait
+  /// HORS application (14/11/2026). L'administrateur l'appelle une fois
+  /// l'argent reçu : le candidat voit alors son reçu et son bon, et reçoit
+  /// la notification « Paiement confirmé ».
+  Future<({bool reussi, String message})> publier(String paymentId) async {
+    try {
+      final reponse = await _client.rpc(
+        'app_admin_publier_documents_en_reserve',
+        params: {'p_payment_id': paymentId},
+      );
+      if (reponse is! Map<String, dynamic> || reponse['success'] != true) {
+        return (
+          reussi: false,
+          message: _message(reponse is Map<String, dynamic>
+              ? reponse['error']?.toString()
+              : null),
+        );
+      }
+      await charger();
+      return (
+        reussi: true,
+        message: (reponse['message'] ?? 'Documents publiés.').toString(),
+      );
+    } catch (e) {
+      return (reussi: false, message: 'La publication a échoué : $e');
+    }
+  }
+
   /// Chaque refus du serveur porte un nom. Afficher le code brut à l'écran est
   /// le défaut corrigé le 09/09 sur six formulaires d'un coup.
   static String _message(String? code) {
@@ -92,6 +120,11 @@ class AdminBrokerageVouchersProvider extends ChangeNotifier {
         return 'Session expirée. Reconnecte-toi et réessaie.';
       case 'bon_introuvable':
         return 'Ce bon est introuvable.';
+      case 'bon_en_reserve':
+        return 'Ce bon est en réserve : publiez-le d\'abord, une fois '
+            'l\'argent reçu.';
+      case 'reserve_introuvable':
+        return 'Ces documents ne sont pas en réserve.';
       default:
         return code == null || code.isEmpty
             ? 'Les bons de courtage n\'ont pas pu être chargés.'
